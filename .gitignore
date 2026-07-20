@@ -1,7 +1,9 @@
 W1/temp/
+W2/temp/
 **/Thumbs.db
 *.tif
 *.tif.aux.xml
 **/node_modules/
-W1/report/pg*.jpg
-W1/report/package*.json
+**/pg*.jpg
+**/r1pg*.jpg
+**/package*.json
