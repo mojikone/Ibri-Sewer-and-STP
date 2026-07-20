@@ -1,5 +1,5 @@
-# DESIGN CRITERIA — PAM-GUD-203 Wastewater Design Guidelines v1.0 (Rev 01)
-All page refs = printed page number of PAM-GUD-203 (201 pp). **Nothing here may be altered without re-reading the source.**
+# DESIGN CRITERIA — PAM-GUD-203 (201 pp) + PAM-GUD-201 General Design Guidelines v1.0 (152 pp)
+Refs: `p##` = PAM-GUD-203; `G1-p##` = PAM-GUD-201. **Nothing here may be altered without re-reading the source.**
 
 ## 1. Hydraulic design — gravity sewers (§4.2, p24–28)
 | Item | Value | Ref |
@@ -99,12 +99,32 @@ All page refs = printed page number of PAM-GUD-203 (201 pp). **Nothing here may 
 ## 10. Vacuum systems (§9, p56–62) — screening only
 - For low-density population, flat terrain, high groundwater where gravity uneconomical (p56). Max flows/lengths per Table 26 (p60): DN90 1 L/s; DN250 20 L/s, 1500 m.
 
-## 11. Flow estimation chain (binding logic)
-1. Per-capita consumption: **from NWS Integrated Master Plan** (p65) → `[GAP-1]` value not in PAM-GUD-203.
-2. Infiltration allowance: **per PAM/AM-GUD-201 General Design Guidelines** (p65) → `[GAP-2]` document not provided.
-3. Network peaking factor (PfWW defined in abbreviations p11 but no value given in GUD-203) → `[GAP-3]`, expect in GUD-201.
-4. STP: +10% operational safety (p65).
-5. Scope design horizon: **completion + 25 yr or ultimate/saturated**; model years: start (TBA), 2030, 2055, ultimate; 5-yr intervals for projections (scope p3(51), p14(62), p15(63)).
+## 11. Flow estimation chain (BINDING — PAM-GUD-201 §7, GAP-1..3 CLOSED)
+| Step | Value | Ref |
+|---|---|---|
+| Population from plots | Population = plots × avg properties/plot × occupancy rate; OR = Population/Housing Units from **NCSI** latest wilayat data (value itself = `[GAP-5]`, methodology fixed) | G1-p58 |
+| Domestic consumption — **Adh Dhahirah** | **164 l/c/d** (IMP 2024 baseline, Tab 11; validate w/ NWS) | G1-p60 |
+| Non-domestic | +**22%** of domestic LPCD (Adh Dhahirah ratio); or land-use unit rates Tab 12 (school 130 l/pupil, hospital 650 l/bed, shops 12.2 l/m²…) | G1-p60–61 |
+| Governmental | +**14%** of domestic LPCD | G1-p60 |
+| Return rate water→WW | Domestic & tanker **85%**; non-domestic/governmental **54%** (Tab 19) | G1-p71 |
+| WW peak factor | Merrimack Qpdf = 2.65·Qadf^0.879 (Ml/d, >100 properties) or IMP2024 **Peltier: PfWW = 1.5 + 1/√Qm** (Qm in l/s); hourly PF ≤ **5.0** | G1-p71–72 |
+| Infiltration | New networks: **720 L/d per km** of sewer; existing inland: 10% of WW flow; GW/coastal existing: up to 40% (no stormwater) | G1-p72 |
+| Yellow tankers | ≈17% of STP inflow (2024); design coverage 100% by end of planning period; check early-stage self-cleansing | G1-p73 |
+| STP design margin | +**10%** on incoming flow | G1-p73, p65 |
+| TSE production ratio | 95% of STP inlet | G1-p73 |
+| Design/planning life | planning cycle **25 yr**; civils 50, mech 20, pipes 50 yr | G1-p57 |
+| Scope horizon | completion + 25 yr or ultimate/saturated; model years start/2030/2055/ultimate; 5-yr projection intervals | scope p3, p14–15 |
+
+## 11b. Wadi crossings (PAM-GUD-201 §9.3 — supplements §6 above)
+| Item | Value | Ref |
+|---|---|---|
+| Data & approvals | wadi bed profiles/cross-sections, flood frequency 1:20/1:50/1:100, bed material, bed-level change — from CAA & **MoAFWR**; MoAFWR approval required | G1-p85 |
+| Pipe material | **DI over crossing length + 15 m each side**, mechanical/detachable joints | G1-p86 |
+| Protection | per NWS std dwg **PAM-STD-404**; anti-flotation check (empty pipe, flood/high GW) | G1-p86 |
+| Cover in soft soil | **min 2.0 m** (vs 1.5 m force-main GUD-203 p52) | G1-p86 |
+| Valves | isolation + air valves both sides of active/major crossings; washout at low point one side; **no chambers/markers in wadi bed or embankments**; all accessible during flood | G1-p86 |
+| Road crossings | trenchless preferred; reinstatement per Oman Highway Design Manual | G1-p85 |
+| Falaj crossings | buffer zones, protection, min safe excavation distances | G1-p86 |
 
 ## 12. Surveys (§13, p197)
 - Topo survey along proposed routes w/ X,Y,Z Omani national datum; designer picks appropriate DTM. CCTV per NF EN 13508-2 for existing assets.
