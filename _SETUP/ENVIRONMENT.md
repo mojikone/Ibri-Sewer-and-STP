@@ -32,10 +32,13 @@ Pipelines: `W1/py/s1_roads_graph.py` (road graph + dual detection) → `W2/py/s3
 `https://github.com/mojikone/SWNETWROK.git` — user's stormwater network pipeline; architecture reference for gravity routing (territory assignment, invert routing, fan-out). Assessment in `_BRAIN/04_TOOLS.md`.
 
 ## 6. Memory
-`memory-snapshot/` in this folder is a copy of the Claude auto-memory for this project (machine-local at `~/.claude/projects/<slug>/memory/`). On a new machine, read it once — or copy it to the new machine's corresponding auto-memory path — so past feedback and project facts carry over. The durable engineering knowledge is all in `_BRAIN/`; the memory files are behavioural (how the user wants work done).
+`memory-snapshot/` mirrors the Claude auto-memory (`~/.claude/projects/D--Mojtaba-Renardet-2621-Ibri-Sewer-STP/memory/`). Migration is same-machine/same-folder, so the live memory persists across subscriptions; `bootstrap.ps1` restores it from this snapshot automatically if it is ever missing. Durable engineering knowledge is in `_BRAIN/`; memory files are behavioural.
 
 ## 7. User's global preferences
-The user keeps private global instructions in `~/.claude/CLAUDE.md` (challenge-first tone, confidence tags, [PRESERVE-CHECK] protocol for code edits, no-push-without-instruction rule, Arabic→Persian training format). That file is per-machine: transfer it manually to the new machine — it is deliberately NOT committed to this public repo.
+`~/.claude/CLAUDE.md` (challenge-first tone, confidence tags, [PRESERVE-CHECK], no-push rule) is machine-local and persists across subscription changes on this machine. Not in the repo.
+
+## 8b. Fully automated first run
+`bootstrap.ps1` (this folder): restores root `CLAUDE.md` + `.mcp.json` from `_SETUP` copies, restores auto-memory, installs missing python deps, verifies all data paths, git remote and Word COM. The root `CLAUDE.md` instructs the new instance to run it once.
 
 ## 8. Client data (NOT in repo)
 `D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Data\` — scope.pdf, PAM-GUD-203, PAM-GUD-201, Sample.docx, figures F1–F3, MoHUP shapefiles; `Hydraulic\Terrain\` — NSA_DEM.tif (DSM), DTM_terrain_mask.tif (DTM, authoritative); `Hydraulic\SHP\` — roads, streams, landuse, plots. These stay on the project drive; the new instance must have the same drive/paths or update path constants at the top of the py scripts.
