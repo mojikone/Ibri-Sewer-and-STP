@@ -17,6 +17,7 @@ Concept→detailed design + supervision of wastewater network, treated-effluent 
 9. SLS: consolidate — one station per contiguous non-gravity pocket (12 m max cover rule, GUD-203 p33), cascade stations within ~1.5 km, absorb pockets <50 plots to detail design.
 10. Responses to the user: concise, bullets and tables.
 11. Git: commit one logical change per commit; **never push without explicit instruction**. Remote: https://github.com/mojikone/Ibri-Sewer-and-STP.git (PUBLIC — user accepted on record 2026-07-20).
+12. **README.md is a living summary**: with every substantive commit, add a dated row on top of its "Current state" table and correct the key-numbers table if results changed. A commit that changes outputs but not README is incomplete.
 
 ## Folder map
 | Path (relative to this repo root `Hydraulic/Claude/`) | Content |
