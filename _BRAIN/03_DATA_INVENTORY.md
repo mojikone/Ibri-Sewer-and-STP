@@ -14,6 +14,12 @@ Project CRS: **EPSG:32640** (WGS84 / UTM 40N). QGIS project: `Hydraulic/QGIS/QGI
 | Sample report | Data/sample report/ | **EMPTY** | — | **GAP-4: no styling source; ask user** |
 | Figures F1–F3 | Data/Drawing & Figures | 3 PDFs | project location, existing sewer, design-stage boundaries | F2/F3 define As-built vs new-design areas — read before zoning finalisation |
 
+## F2 read-off (user screenshot 2026-07-20 — verify against GIS when provided)
+- Existing sewer system serves the **NE district** (Al Araqi area, ~466–471E / 2574–2581N approx) — yellow network inside blue boundary.
+- An **existing trunk/TE corridor runs from that district SW to the existing STP** (long blue-outlined strip through town center ~449E,2567N). New trunk concept must assess its route, capacity and condition (TOR: integration + hydraulic assessment of existing systems).
+- Existing STP sits inside its own blue boundary at SW. Titleblock: Nama WS, "Figure No. 2 Existing Sewer and TE Systems", DRWG GEN-AM-F2-002-0.
+- W2+ implication: NE zones overlap the already-served area → those zones' flows partly existing customers, not new connections; trunk options should evaluate reuse/paralleling of the existing corridor.
+
 ## Terrain intelligence (computed 2026-07-20, DSM-grade)
 - STP ground ≈ **327.6 m**; main Ibri cluster (47,520 plots, 40.5 km²) median ≈ 374.3 m → median available straight-line grade to STP ≈ **3.6 m/km**; p25 ≈ 3.2.
 - Gravity viable for ~95% of plots (Smin trunk ≥900 mm = 0.75 m/m‰, Tab 11). Low-grade (<1 m/km): ~2.8% of plots; below STP+5 m: ~5.4% → SLS candidate pockets.

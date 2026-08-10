@@ -205,6 +205,8 @@ table(["Land use class", "Plots", "Area (km2)"], [
 caption("Table — Land use within the project boundary (MoHUP cadastre)")
 pic(os.path.join(MAPS, "W2_M1_Study_Area.png"))
 caption("Map M1 — Study area, MoH plots and existing STP")
+H(2, "Existing sewer and TE system")
+para("Figure No. 2 of the Terms of Reference (Existing Sewer and TE Systems) shows that a sewer system is already in operation in the north-eastern district of the agglomeration (Al Araqi area), connected to the existing STP by a trunk corridor running south-west through the town. The concept design must therefore (i) verify the route, capacity, condition and hydraulic performance of this existing trunk and its district network against the design-horizon flows, (ii) integrate or redesign it as required, and (iii) decide whether the new trunk system parallels, reuses or replaces the existing corridor. The as-built records, drawings and previous design documentation of this system are first-priority data items (Section 8). Zones overlapping the served district contain existing customers, whose flows are already reaching the STP and must not be double-counted in phasing.")
 para("Terrain falls from the jebel foothills in the north and east towards the south-west. Within the built-up area, ground levels range from about 320 m near the STP to about 490 m at the north-eastern settlements. Wadi channels dissect the entire area and control both the gravity drainage pattern and the crossing inventory of any trunk system. Terrain analysis in this report uses the project digital terrain model (5 m); as the topographic survey is ongoing, all levels are indicative.")
 pic(os.path.join(MAPS, "W2_M2_Terrain.png"))
 caption("Map M2 — Terrain and drainage (DTM)")
@@ -270,6 +272,9 @@ table(["#", "Data item", "Source", "Use"], [
  ["16", "Wadi flood studies, aflaj inventory and protection requirements", "MoAFWR / CAA", "Crossing design and approvals"],
  ["17", "Survey control: benchmarks and national datum references in the wilayat", "NSA / NWS", "Topographic survey datum"],
  ["18", "NWS standard drawings (PAM-STD series), as-built/GIS specifications, BD data requirements", "NWS", "Deliverable compliance"],
+ ["19", "Existing sewer & TE network files: as-built DWG/CAD and GIS/shapefiles, incl. Figure F2 source data (critical)", "NWS", "Integration; served-area mapping"],
+ ["20", "Previous design reports, hydraulic models and calculations of the existing system and trunk to the STP (critical)", "NWS", "Capacity verification"],
+ ["21", "Existing trunk main details: diameter, material, invert profile, condition/CCTV records, connection points", "NWS O&M", "Reuse vs replace decision"],
 ], widths=[0.35, 2.9, 1.2, 2.0], font=8)
 
 # ================= 9 CONCLUSIONS =================
