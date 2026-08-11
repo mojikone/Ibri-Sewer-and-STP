@@ -16,6 +16,19 @@ foreach ($pair in @(
   } else { Write-Host ("PASS   " + $pair.dst) }
 }
 
+# 1b. Global user instructions (~/.claude/CLAUDE.md) — restore if missing, never overwrite
+$globalSrc = Join-Path $setup "global-CLAUDE.md"
+$globalDst = "$env:USERPROFILE\.claude\CLAUDE.md"
+if (-not (Test-Path (Split-Path $globalDst))) { New-Item -ItemType Directory -Force (Split-Path $globalDst) | Out-Null }
+if (-not (Test-Path $globalDst)) {
+  Copy-Item $globalSrc $globalDst
+  Write-Host "FIXED  restored global instructions -> $globalDst"
+} else {
+  $a = (Get-FileHash $globalSrc).Hash; $b = (Get-FileHash $globalDst).Hash
+  if ($a -eq $b) { Write-Host "PASS   global instructions in sync" }
+  else { Write-Host "DRIFT  ~/.claude/CLAUDE.md differs from _SETUP/global-CLAUDE.md (live file kept; refresh the repo copy if the live one is newer)" }
+}
+
 # 2. Auto-memory: restore snapshot if machine memory folder is empty/missing
 if (-not (Test-Path $mem)) { New-Item -ItemType Directory -Force $mem | Out-Null }
 $have = @(Get-ChildItem $mem -Filter *.md -ErrorAction SilentlyContinue)

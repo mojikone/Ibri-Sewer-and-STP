@@ -6,6 +6,7 @@ You are continuing an ongoing engineering project. A previous Claude Code instan
 2. `Hydraulic/Claude/_BRAIN/` — ALL six files. `02_DESIGN_CRITERIA.md` is the only permitted source of numeric design values (PAM-GUD-203 / PAM-GUD-201, cited by page). Inventing metrics is prohibited.
 3. `Hydraulic/Claude/_SETUP/ENVIRONMENT.md` — tools, MCP servers, dependencies, how to re-run pipelines.
 4. Auto-memory: if the session shows no recalled memories, read `Hydraulic/Claude/_SETUP/memory-snapshot/` and treat it as project memory (it mirrors `~/.claude/projects/D--Mojtaba-Renardet-2621-Ibri-Sewer-STP/memory/`).
+5. `Hydraulic/Claude/_SETUP/global-CLAUDE.md` — the user's global operating instructions (advisor tone, confidence tags, **[PRESERVE-CHECK] before modifying existing code**, no-push rule). If `~/.claude/CLAUDE.md` is not already loaded in this session, follow this copy as if it were.
 
 ## First session on this subscription — run once
 ```

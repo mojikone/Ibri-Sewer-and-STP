@@ -34,8 +34,15 @@ Pipelines: `W1/py/s1_roads_graph.py` (road graph + dual detection) → `W2/py/s3
 ## 6. Memory
 `memory-snapshot/` mirrors the Claude auto-memory (`~/.claude/projects/D--Mojtaba-Renardet-2621-Ibri-Sewer-STP/memory/`). Migration is same-machine/same-folder, so the live memory persists across subscriptions; `bootstrap.ps1` restores it from this snapshot automatically if it is ever missing. Durable engineering knowledge is in `_BRAIN/`; memory files are behavioural.
 
-## 7. User's global preferences
-`~/.claude/CLAUDE.md` (challenge-first tone, confidence tags, [PRESERVE-CHECK], no-push rule) is machine-local and persists across subscription changes on this machine. Not in the repo.
+## 7. User's global operating instructions — IN THE REPO
+`global-CLAUDE.md` (this folder) is a verbatim copy of the user's `~/.claude/CLAUDE.md`. It defines *how the user wants to be worked with*, and applies to every reply — it is not project documentation:
+- advisor-not-assistant tone: challenge first, no agreement openers, uncomfortable answer first, hold position under pushback;
+- **confidence tags** [Certain] / [Likely] / [Guessing] before claims;
+- **[PRESERVE-CHECK] protocol** for any modification of existing code: KEEP / CHANGE / FILES declared before editing, `[BROAD]` gate for anything removed, replaced or uncertain;
+- one logical change per commit; **never `git push` without explicit instruction**;
+- Arabic→Persian interlinear HTML training format spec.
+
+`bootstrap.ps1` restores it to `~/.claude/CLAUDE.md` if that file is missing, and reports drift without overwriting when both exist (the live file always wins). If the user edits the live file, refresh the repo copy so the next instance inherits it.
 
 ## 8b. Fully automated first run
 `bootstrap.ps1` (this folder): restores root `CLAUDE.md` + `.mcp.json` from `_SETUP` copies, restores auto-memory, installs missing python deps, verifies all data paths, git remote and Word COM. The root `CLAUDE.md` instructs the new instance to run it once.

@@ -8,6 +8,7 @@ Working repository of the Claude-assisted concept engineering for **Renardet Pro
 
 | Date | Update |
 |---|---|
+| 2026-07-20 | **Global operating instructions committed** (`_SETUP/global-CLAUDE.md`): advisor tone, confidence tags, PRESERVE-CHECK protocol, no-push rule — restored automatically by bootstrap, drift-checked without overwriting |
 | 2026-07-20 | **Migration automation**: root-CLAUDE.md bootstrap chain, project `.mcp.json`, `_SETUP/bootstrap.ps1` self-check (tested all-PASS) — a fresh Claude Code instance continues with zero manual setup |
 | 2026-07-20 | **F2 existing-system findings** folded in: NE served district (Al Araqi) + existing trunk to STP; report data register extended (as-built DWG/SHP, design reports, trunk details — items 19–21) |
 | 2026-07-20 | **W2 rework (current)**: DTM elevations, dual-carriageway collapse, full-coverage trunk (22 km main + 172 km branches), 36 structured zones, **18 consolidated SLS**, 134 wadi crossings, saved QGIS layouts M1–M6 (satellite bg 30%, info tables), **report R1** styled on client sample (23 pp, docx+pdf), DXF |
