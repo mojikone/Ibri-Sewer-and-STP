@@ -8,6 +8,7 @@ Working repository of the Claude-assisted concept engineering for **Renardet Pro
 
 | Date | Update |
 |---|---|
+| 2026-08-14 | **T01 Rev 1** (37 pp): all 28 review comments addressed — abbreviations, extensive exec summary, lists of figures/tables, teaching-level explanations, native OMML equations, 6 figures (chain, diurnal, 2 route flowcharts, NCSI population, Peltier-vs-Merrimack), electricity-accounts route (G1-p58), saturation-vs-dated-horizons section, conclusions/recommendations/references/appendix; 150-km tanker risk flagged |
 | 2026-08-14 | **T01 as styled Word report** (`TUTORIALS/T01_*.docx/.pdf`, 9 pp): Sample.docx shell via `make_tutorial_t01_docx.py`, chain diagram, TOC + PDF via Word COM |
 | 2026-08-14 | **Tutorial T01 — Sewage Flow & Load Calculation** (`TUTORIALS/`): full chain population→flows→loads with worked example + standard-vs-R0 reconciliation register |
 | 2026-08-14 | **PAM-GUD-202 Water & TSE Guidelines** filed (`_STANDARDS/` + `Data/`), criteria extracted to `_BRAIN/02` §12b (`G2-p##` refs); Inception R0 package registered — NCSI population (Ibri 183,564 @2024) partly closes GAP-5, R0 adopted values in `_BRAIN/02` §12c |

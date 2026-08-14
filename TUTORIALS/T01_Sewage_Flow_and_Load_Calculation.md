@@ -1,6 +1,8 @@
 # Tutorial T01 — Sewage Flow & Pollution Load Calculation
 **Project 2621 Ibri Sewer, TE & STP · Renardet / NWS · 2026-08-14**
 
+> **This markdown is the quick-reference digest.** The full tutorial (Rev 1, 37 pp — teaching-level explanations, native equations, route flowcharts, charts, references, appendix) is `T01_Sewage_Flow_and_Load_Calculation.docx/.pdf` in this folder, addressing all Rev 0 review comments.
+
 How to go from *population* to *design flows* and *organic loads*, step by step, using only the values the NWS manuals permit. Every number is cited: `p##` = PAM-GUD-203, `G1-p##` = PAM-GUD-201, `G2-p##` = PAM-GUD-202, `R0` = Ibri Inception Report R0 demand workbook (Aug 2026).
 
 ---
