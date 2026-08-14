@@ -11,8 +11,11 @@ Project CRS: **EPSG:32640** (WGS84 / UTM 40N). QGIS project: `Hydraulic/QGIS/QGI
 | Road_Centercline | SHP/Road centerline | **57,584** lines, 10,894 km | regional 137×104 km extent; only `OldstNm` populated | **.shx stale → provider reports 0 features — repair (ogr2ogr rewrite). No hierarchy attributes. Dual carriageways = two parallel polylines (user) → detect arterials geometrically (parallel pair + betweenness), then merge** |
 | Streams NSA 2m | SHP/Streams | 20,318 lines | `STRM_VAL` threshold value; regional extent | derived from DEM (DSM!) — wadi lines indicative |
 | Layout template | Hydraulic/QGIS/Layout template.qpt | — | report map template (from previous project) | use for all report maps |
-| Sample report | Data/sample report/ | **EMPTY** | — | **GAP-4: no styling source; ask user** |
+| Sample report | Data/sample report/Sample.docx | 1 docx | styling shell for R1+ reports | GAP-4 CLOSED — used by `W2/report/make_report_r1.py` |
 | Figures F1–F3 | Data/Drawing & Figures | 3 PDFs | project location, existing sewer, design-stage boundaries | F2/F3 define As-built vs new-design areas — read before zoning finalisation |
+| **PAM-GUD-202** Water & TSE v1.0 | `_STANDARDS/` (in repo) + Data/ | 177 pp | water/TSE networks: velocities, head loss, pressures, PS, reservoirs, tankers | criteria extracted → 02 §12b (`G2-p##`) |
+| Inception R0 package | Data/Received/2621/inception report - R0/ | docx+pdf+xlsx+kmz+dwg | **`Ibri Sewer Demand R0 2026 08 03.xlsx` = NCSI pop (Ibri 183,564 @2024) + full demand chain**; boundary kmz/dwg | R0 adopted values → 02 §12c; reconcile any new calc against it |
+| Kick-off presentation + as-built jpgs | Data/Received/2621/ | pptx/pdf + 2 jpg | kickoff slides; `STP_As_Built.jpg`, `Sewerage Network.jpg` | jpgs = leads for GAP-6/GAP-7 (existing STP + network) — not yet read |
 
 ## F2 read-off (user screenshot 2026-07-20 — verify against GIS when provided)
 - Existing sewer system serves the **NE district** (Al Araqi area, ~466–471E / 2574–2581N approx) — yellow network inside blue boundary.
