@@ -1,5 +1,5 @@
-# DESIGN CRITERIA — PAM-GUD-203 (201 pp) + PAM-GUD-201 General Design Guidelines v1.0 (152 pp)
-Refs: `p##` = PAM-GUD-203; `G1-p##` = PAM-GUD-201. **Nothing here may be altered without re-reading the source.**
+# DESIGN CRITERIA — PAM-GUD-203 (201 pp) + PAM-GUD-201 (152 pp) + PAM-GUD-202 (177 pp)
+Refs: `p##` = PAM-GUD-203; `G1-p##` = PAM-GUD-201; `G2-p##` = PAM-GUD-202 Water & TSE Design Guidelines v1.0 (added 2026-08-14, in `_STANDARDS/` + `Data/`). **Nothing here may be altered without re-reading the source.**
 
 ## 1. Hydraulic design — gravity sewers (§4.2, p24–28)
 | Item | Value | Ref |
@@ -125,6 +125,32 @@ Refs: `p##` = PAM-GUD-203; `G1-p##` = PAM-GUD-201. **Nothing here may be altered
 | Valves | isolation + air valves both sides of active/major crossings; washout at low point one side; **no chambers/markers in wadi bed or embankments**; all accessible during flood | G1-p86 |
 | Road crossings | trenchless preferred; reinstatement per Oman Highway Design Manual | G1-p85 |
 | Falaj crossings | buffer zones, protection, min safe excavation distances | G1-p86 |
+
+## 12b. Water & TSE networks — PAM-GUD-202 (§7 Transmission, §9 Distribution)
+| Item | Value | Ref |
+|---|---|---|
+| Transmission velocity | 1.0 ≤ v < 2.0 m/s (1.5 m/s common practical peak, 25-yr horizon) | G2-p103–104 |
+| Head loss equations | Darcy-Weisbach (large pipes/high v) or Hazen-Williams (small dia); others need NWS Hydraulic Team approval | G2-p104 |
+| Roughness (age-dependent, Tab 21) | DI: C 140→120, ε 0.26→0.45 mm (0→20 yr); GRP C 150 / ε 0.005; HDPE C 150 / ε 0.007; PVC C 150 / ε 0.0015 | G2-p104 |
+| **TE pipeline roughness penalty** | **ε +30 %, Hazen-Williams C −10 %** vs tabulated potable values | G2-p104 Note |
+| Max linear head loss | transmission < **5.0 m/km**; distribution < **3.0 m/km** | G2-p105, p136 |
+| Distribution velocity | **0.4 ≤ v < 1.5 m/s** (below 0.4 → water-quality/age model + 0.2 mg/l residual Cl proof) | G2-p136 |
+| Distribution pressure | min **1.5 bar** worst point peak-hour; max **4 bar**; fire flow: pressure stays positive | G2-p137 |
+| Distribution pipe material | PE100 ≤ 1000 mm (fixed OD series); DI > 300 mm and at road/wadi crossings | G2-p138 |
+| Pumping stations, reservoirs, surge | §5 storage classes, §6 PS design + NPSH/transient, §10 surge analysis mandatory ref | G2-p53+, p70+, p144 |
+| Tanker filling stations | peak-hour factor 1.5–2.0 on avg flow; ≥ 2 concurrent bays; +20 % reserve; ≥ 1 m³/min per bay @ 2–4 bar | G2-p154 |
+
+## 12c. Ibri Inception R0 adopted values (workbook `Ibri Sewer Demand R0 2026 08 03.xlsx`, received 2026-08)
+Project-specific adoptions — reconcile against GUD-201 §11 above; deviations flagged:
+| Item | R0 value | vs standard |
+|---|---|---|
+| Population basis | NCSI wilayat series: Ibri 183,564 (2024), growth ≈ 2.4–3.0 %/yr, settlement disaggregation | consistent G1-p58 |
+| Domestic LPCD (Adh Dhahirah) | **163.5 l/c/d** (computed from actual consumption 2021–24) | ≈ GUD-201 Tab 11 164 |
+| Return ratios | domestic & tanker 0.85; non-domestic & governmental 0.54 | = G1-p71 |
+| Infiltration | **10 % of WW flow** (settlement-conditional) | GUD-201 says 720 L/d/km for NEW networks — flag at kickoff |
+| Tanker catchment | settlements within **25 km** of STP | not in GUD; R0 assumption |
+| Weekly peak | +20 % | not in GUD-201 PF chain; R0 assumption |
+| STP margin | +10 %; TE production 95 %; sludge 0.25 kg/m³ | = G1-p73 (sludge rate R0-only) |
 
 ## 12. Surveys (§13, p197)
 - Topo survey along proposed routes w/ X,Y,Z Omani national datum; designer picks appropriate DTM. CCTV per NF EN 13508-2 for existing assets.

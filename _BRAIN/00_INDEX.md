@@ -7,7 +7,8 @@
 2. Scope obligations live in `01_SCOPE_REGISTER.md`. Outputs must map to scope items.
 3. Data quality flags in `03_DATA_INVENTORY.md` are binding (e.g. DEM is rough DSM → no invert design from it, screening only).
 4. Work happens in `../W1`, `../W2`, ... (new folder = rework iteration). BRAIN is shared across all W folders and updated as knowledge grows.
-5. Report follows `Data/sample report` styling — **currently EMPTY → styling unresolved, see 05_GAPS**. Maps use `Hydraulic/QGIS/Layout template.qpt`.
+5. Report follows `Data/sample report/Sample.docx` styling (GAP-4 closed; shell used by `W2/report/make_report_r1.py`). Maps use `Hydraulic/QGIS/Layout template.qpt`.
+6. Standards PDFs live in `Data/` (client set) and `_STANDARDS/` (repo, portable): PAM-GUD-201, -202, -203. Criteria refs: `p##`=203, `G1-p##`=201, `G2-p##`=202.
 
 ## Files
 | File | Content |
