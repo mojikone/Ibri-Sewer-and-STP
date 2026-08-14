@@ -8,6 +8,7 @@ Working repository of the Claude-assisted concept engineering for **Renardet Pro
 
 | Date | Update |
 |---|---|
+| 2026-08-14 | **T01 Rev 2** (47 pp, 13 figures): Rev-1 comments addressed — R0 workbook decoded (master WWG equation traced from cell formulas, +20% weekly peak found baked into WWG series), Appendix B documents 5 tabs with equations + 4 charts, settlement populations to 2100 charted, future-plots/stub-out section, horizon logic corrected (saturation likely beyond 2055 — projections cross provisional ceiling mid-century), Peltier-vs-Merrimack element allocation, demand/return charts |
 | 2026-08-14 | **`_CLIENT/` added**: Inception Report R0 (pdf+docx) + demand workbook pushed for remote access — user explicitly accepted public-repo exposure of these client documents |
 | 2026-08-14 | **T01 Rev 1** (37 pp): all 28 review comments addressed — abbreviations, extensive exec summary, lists of figures/tables, teaching-level explanations, native OMML equations, 6 figures (chain, diurnal, 2 route flowcharts, NCSI population, Peltier-vs-Merrimack), electricity-accounts route (G1-p58), saturation-vs-dated-horizons section, conclusions/recommendations/references/appendix; 150-km tanker risk flagged |
 | 2026-08-14 | **T01 as styled Word report** (`TUTORIALS/T01_*.docx/.pdf`, 9 pp): Sample.docx shell via `make_tutorial_t01_docx.py`, chain diagram, TOC + PDF via Word COM |

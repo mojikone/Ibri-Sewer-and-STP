@@ -107,8 +107,14 @@ def route_chart(path, title, steps, color="#2E5C9E", fill="#EAF1FB"):
     fig.savefig(path, dpi=200, bbox_inches="tight"); plt.close(fig)
 
 POPCHART = os.path.join(IMG, "t01_population.png")
+SETTLCHART = os.path.join(IMG, "t01_pop_settlements.png")
 NCSI = {2021: 168409, 2022: 173418, 2023: 178477, 2024: 183564, 2025: 187962, 2026: 193116,
         2027: 198344, 2028: 203659, 2029: 209063, 2030: 213637, 2031: 219186, 2032: 224840, 2033: 227736}
+import json
+_ps_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "pop_series.json")
+POP_SERIES = json.load(open(_ps_path)) if os.path.exists(_ps_path) else None
+def _sv(name, year):
+    return POP_SERIES[name][str(year)] if POP_SERIES else None
 def make_pop():
     yrs = sorted(NCSI); pop = [NCSI[y] / 1000 for y in yrs]
     fig, ax = plt.subplots(figsize=(7.0, 3.2))
@@ -121,6 +127,129 @@ def make_pop():
     ax.set_xticks(yrs[::2])
     style_ax(ax)
     fig.savefig(POPCHART, dpi=200, bbox_inches="tight"); plt.close(fig)
+
+def make_pop_settlements():
+    series = [("IBRI", BLUE), ("AD DARIZ", ORANGE), ("AL ARAQI", "#009E73"), ("TOTAL", "#444444")]
+    fig, ax = plt.subplots(figsize=(7.2, 3.8))
+    for name, col in series:
+        yrs = sorted(int(y) for y in POP_SERIES[name])
+        vals = [POP_SERIES[name][str(y)] / 1000 for y in yrs]
+        ls = "--" if name == "TOTAL" else "-"
+        ax.plot(yrs, vals, color=col, lw=2.0, ls=ls, zorder=3)
+        lbl = "Project TOTAL (50 settlements)" if name == "TOTAL" else name
+        dy = {"AD DARIZ": 9, "AL ARAQI": -9}.get(name, 0)
+        ax.annotate(lbl, xy=(yrs[-1], vals[-1]), xytext=(4, dy), textcoords="offset points",
+                    fontsize=8.6, color=col, fontweight="bold", va="center")
+    ax.set_xlim(2023, 2126)
+    ax.set_xticks(range(2030, 2101, 10))
+    ax.set_xlabel("year", fontsize=9, color=INK)
+    ax.set_ylabel("population (thousands)", fontsize=9, color=INK)
+    style_ax(ax)
+    fig.savefig(SETTLCHART, dpi=200, bbox_inches="tight"); plt.close(fig)
+
+_extra_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "r0_extra.json")
+EXTRA = json.load(open(_extra_path)) if os.path.exists(_extra_path) else None
+DEMAND_BUILDUP = os.path.join(IMG, "t01_demand_buildup.png")
+RETURN_CHART = os.path.join(IMG, "t01_return.png")
+RAMP_CHART = os.path.join(IMG, "t01_ramp.png")
+TANKER_CHART = os.path.join(IMG, "t01_tankers.png")
+LPCD_CHART = os.path.join(IMG, "t01_lpcd.png")
+WWG_CHART = os.path.join(IMG, "t01_wwg.png")
+
+def make_demand_buildup():
+    fig, ax = plt.subplots(figsize=(7.0, 1.9))
+    segs = [("Domestic  164", 164.0, BLUE), ("Non-domestic  36.1", 36.1, ORANGE), ("Governmental  23.0", 23.0, "#009E73")]
+    left = 0
+    for lbl, v, col in segs:
+        ax.barh([0], [v], left=left, color=col, height=0.5, zorder=3)
+        ax.text(left + v / 2, 0.45, lbl, ha="center", fontsize=9, color=col, fontweight="bold")
+        left += v
+    ax.text(left + 3, 0, f"total  {left:.0f} l/c/d", va="center", fontsize=10, color=INK, fontweight="bold")
+    ax.set_xlim(0, 265); ax.set_ylim(-0.6, 0.9); ax.set_yticks([])
+    ax.set_xlabel("litres per capita per day", fontsize=9, color=INK)
+    style_ax(ax); ax.grid(False); ax.spines["left"].set_visible(False)
+    fig.savefig(DEMAND_BUILDUP, dpi=200, bbox_inches="tight"); plt.close(fig)
+
+def make_return_chart():
+    cats = ["Domestic", "Non-dom + gov", "TOTAL"]
+    supplied = [164.0, 59.1, 223.1]
+    returned = [139.4, 31.9, 171.3]
+    x = np.arange(3); w = 0.34
+    fig, ax = plt.subplots(figsize=(7.0, 3.0))
+    ax.bar(x - w / 2, supplied, w, color="#9CC7E4", zorder=3, label="water supplied")
+    ax.bar(x + w / 2, returned, w, color=BLUE, zorder=3, label="returned as sewage")
+    for i in range(3):
+        ax.text(x[i] - w / 2, supplied[i] + 4, f"{supplied[i]:.0f}", ha="center", fontsize=9, color="#6A93B5")
+        ax.text(x[i] + w / 2, returned[i] + 4, f"{returned[i]:.0f}", ha="center", fontsize=9, color=BLUE, fontweight="bold")
+    ax.set_xticks(x); ax.set_xticklabels(cats, fontsize=9.5)
+    ax.set_ylabel("l/c/d", fontsize=9, color=INK); ax.set_ylim(0, 260)
+    ax.legend(fontsize=8.5, frameon=False, loc="upper left")
+    style_ax(ax)
+    fig.savefig(RETURN_CHART, dpi=200, bbox_inches="tight"); plt.close(fig)
+
+def make_ramp_chart():
+    ramp = {int(y): v for y, v in EXTRA["ramp"].items()}
+    yrs = sorted(ramp); vals = [ramp[y] * 100 for y in yrs]
+    fig, ax = plt.subplots(figsize=(7.0, 2.9))
+    ax.plot(yrs, vals, color=BLUE, lw=2.2, zorder=3)
+    ax.axhline(100, color="#999999", lw=1.0, ls=":")
+    ax.annotate("46.7% (2021)", xy=(2021, 46.7), xytext=(2024, 36), fontsize=9, color=INK,
+                arrowprops=dict(arrowstyle="->", color="#777777"))
+    ax.annotate(f"100% reached {EXTRA['ramp_100']}", xy=(EXTRA["ramp_100"], 100), xytext=(EXTRA["ramp_100"] - 22, 82),
+                fontsize=9, color=INK, arrowprops=dict(arrowstyle="->", color="#777777"))
+    ax.set_xlim(2020, 2101); ax.set_ylim(30, 112)
+    ax.set_xlabel("year", fontsize=9, color=INK); ax.set_ylabel("connected population (%)", fontsize=9, color=INK)
+    style_ax(ax)
+    fig.savefig(RAMP_CHART, dpi=200, bbox_inches="tight"); plt.close(fig)
+
+def make_tanker_chart():
+    top = EXTRA["tanker_top"][::-1]
+    names = [t[0] for t in top]; vals = [t[1] for t in top]
+    fig, ax = plt.subplots(figsize=(7.0, 3.4))
+    ax.barh(names, vals, color=BLUE, height=0.62, zorder=3)
+    for i, v in enumerate(vals):
+        ax.text(v + 3, i, f"{v:.0f}", va="center", fontsize=8.6, color=INK)
+    ax.set_xlabel("tankered volume 2024 (m3/d, held constant in R0)", fontsize=9, color=INK)
+    ax.tick_params(axis="y", labelsize=8.6)
+    ax.set_xlim(0, max(vals) * 1.16)
+    style_ax(ax)
+    fig.savefig(TANKER_CHART, dpi=200, bbox_inches="tight"); plt.close(fig)
+
+def make_lpcd_chart():
+    lp = sorted([t for t in EXTRA["lpcd"] if 50 < t[1] < 400 and "governorate" not in t[0].lower()],
+                key=lambda t: t[1])
+    names = [t[0] for t in lp]; vals = [t[1] for t in lp]
+    cols = [ORANGE if n == "Adh Dhahirah" else "#9CC7E4" for n in names]
+    fig, ax = plt.subplots(figsize=(7.0, 3.4))
+    ax.barh(names, vals, color=cols, height=0.62, zorder=3)
+    for i, v in enumerate(vals):
+        bold = names[i] == "Adh Dhahirah"
+        ax.text(v + 2, i, f"{v:.1f}", va="center", fontsize=8.6, color=INK, fontweight="bold" if bold else "normal")
+    ax.set_xlabel("domestic consumption 2024 (l/c/d)", fontsize=9, color=INK)
+    ax.tick_params(axis="y", labelsize=8.6)
+    ax.set_xlim(0, max(vals) * 1.15)
+    style_ax(ax)
+    fig.savefig(LPCD_CHART, dpi=200, bbox_inches="tight"); plt.close(fig)
+
+def make_wwg_chart():
+    series = [("IBRI", BLUE), ("AD DARIZ", ORANGE), ("AL ARAQI", "#009E73"), ("TOTAL", "#444444")]
+    fig, ax = plt.subplots(figsize=(7.2, 3.8))
+    for name, col in series:
+        d = EXTRA["wwg"][name]
+        yrs = sorted(int(y) for y in d)
+        vals = [d[str(y)] / 1000 for y in yrs]
+        ls = "--" if name == "TOTAL" else "-"
+        ax.plot(yrs, vals, color=col, lw=2.0, ls=ls, zorder=3)
+        lbl = "Project TOTAL" if name == "TOTAL" else name
+        dy = {"AD DARIZ": 9, "AL ARAQI": -9}.get(name, 0)
+        ax.annotate(lbl, xy=(yrs[-1], vals[-1]), xytext=(4, dy), textcoords="offset points",
+                    fontsize=8.6, color=col, fontweight="bold", va="center")
+    ax.set_xlim(2023, 2118)
+    ax.set_xticks(range(2030, 2101, 10))
+    ax.set_xlabel("year", fontsize=9, color=INK)
+    ax.set_ylabel("WW generation (1000 m3/d, incl. +20% weekly peak)", fontsize=8.5, color=INK)
+    style_ax(ax)
+    fig.savefig(WWG_CHART, dpi=200, bbox_inches="tight"); plt.close(fig)
 
 PFCHART = os.path.join(IMG, "t01_pf.png")
 def make_pf():
@@ -146,6 +275,9 @@ def make_pf():
     fig.savefig(PFCHART, dpi=200, bbox_inches="tight"); plt.close(fig)
 
 make_chain(); make_diurnal(); make_pop(); make_pf()
+if POP_SERIES: make_pop_settlements()
+make_demand_buildup(); make_return_chart()
+if EXTRA: make_ramp_chart(); make_tanker_chart(); make_lpcd_chart(); make_wwg_chart()
 route_chart(ROUTE_CENSUS, "Route A — Census projection (dated horizons 2030 / 2055)", [
     ("NCSI wilayat population series", "official census + forecast, Ibri wilayat, from 2020 onward (G201-p58-59)"),
     ("Project the growth", "apply the NCSI forecast (or fitted growth rate) at 5-year intervals to each model year"),
@@ -292,7 +424,7 @@ except KeyError:
 para("Tender No. T/2719110/2025", align=WD_ALIGN_PARAGRAPH.CENTER, size=13)
 para("", space_after=40)
 para(SUB, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, size=20, color="0000CC")
-para("Revision 1 — August 2026 (addresses review comments on Rev 0)", align=WD_ALIGN_PARAGRAPH.CENTER, size=12)
+para("Revision 2 — August 2026 (addresses review comments on Rev 0 and Rev 1)", align=WD_ALIGN_PARAGRAPH.CENTER, size=12)
 para("", space_after=80)
 para("Renardet S.A. & Partners Consulting Engineers", align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, size=13)
 para("Project No. 2621", align=WD_ALIGN_PARAGRAPH.CENTER, size=12)
@@ -395,7 +527,7 @@ para("Every quantity in this tutorial — water, sewage, BOD, sludge — is gene
 H(2, "Route A — census projection (for the dated model years)")
 para("Route A answers: how many people will actually live here in 2030, in 2055? It starts from the official NCSI population series and works downward in scale:")
 bullet("The NCSI series for Ibri wilayat is the authoritative starting point (G201-p58-59). The current figures, taken from the R0 workbook, are shown in Table 4 and Figure 3.", bold_lead="Start from the wilayat series. ")
-bullet("NCSI publishes forecasts; where projection beyond them is needed, a growth rate fitted to the series is applied at the 5-year intervals required by the TOR (start year, 2030, 2055).", bold_lead="Project the growth. ")
+bullet("NCSI publishes forecasts; where projection beyond them is needed, a growth rate fitted to the series is applied at the 5-year intervals required by the TOR (start year, 2030, 2055). For this project the route is already implemented: the R0 workbook tab 'Project Pop Settlements' carries the projected population of all 50 project settlements, year by year, out to 2100 (Appendix B).", bold_lead="Project the growth. ")
 bullet("The wilayat total is split over settlements in proportion to their shares in the latest census (G201-p58) — a settlement holding 4 percent of the census population receives 4 percent of every projected total.", bold_lead="Disaggregate to settlements. ")
 bullet("Where a project zone covers only part of a settlement, the guideline directs a pro-rata split by the number of electricity accounts in the area, obtained from NWS (G201-p58). Electricity accounts are a reliable proxy for occupied dwellings because effectively every occupied dwelling has a metered connection — this is also why the TOR (p12) lists electricity data among the required flow-assessment inputs.", bold_lead="Split below settlement level by electricity accounts. ")
 pic(ROUTE_CENSUS, w=5.9)
@@ -407,20 +539,33 @@ table(["Year", "2021", "2022", "2023", "2024", "2026", "2028", "2030", "2032", "
 tab_caption("NCSI population series for Ibri wilayat (from the R0 workbook; selected years)")
 pic(POPCHART, w=5.9)
 fig_caption("NCSI population series and forecast for Ibri wilayat, 2021-2033")
+if POP_SERIES:
+    para(f"At project level, the R0 workbook projects each of the 50 settlements to 2100. Figure 5 shows the three largest (IBRI town, AD DARIZ, AL ARAQI) and the project total: from {(_sv('TOTAL', 2024)/1000):.0f} thousand (2024) the project population reaches {(_sv('TOTAL', 2055)/1000):.0f} thousand by 2055 and {(_sv('TOTAL', 2100)/1000):.0f} thousand by 2100 — the R0 projection grows throughout, i.e. it contains no saturation ceiling of its own (see the discussion of Section 5.4).")
+    pic(SETTLCHART, w=6.0)
+    fig_caption("R0 projected populations to 2100 — IBRI, AD DARIZ, AL ARAQI and project total (workbook tab 'Project Pop Settlements')")
 H(2, "Route B — plots x occupancy (for the ultimate horizon)")
 para("Route B answers a different question: how many people can this area hold when it is fully built? It works upward from the cadastre:")
 equation(mr("Population") + mr(" = ") + ssub(mr("N"), mr("plots")) + mr(" × ") + ssub(mr("n"), mr("prop")) + mr(" × ") + mr("OR"))
 para("where N(plots) is the number of plots of a given typology inside the zone, n(prop) is the average number of properties (dwellings) each such plot carries at build-out, and OR is the occupancy rate (G201-p58):")
 equation(mr("OR") + mr(" = ") + frac(mr("Population"), mr("Housing units")))
-para("Both OR inputs come from the NCSI data portal, which publishes population and housing-unit counts from 2020 at governorate and wilayat level (G201-p59). The guideline adds two cautions: plot subdivision must be checked so that the effective number of housing units is not understated, and development speed must temper the assumption that all plots fill up (G201-p59).")
+para("Both OR inputs come from the NCSI data portal, which publishes population and housing-unit counts from 2020 at governorate and wilayat level (G201-p59). The guideline adds two cautions:")
+bullet("check plot subdivision, so that the effective number of housing units created is not understated when large plots split into several dwellings (G201-p59).", bold_lead="Subdivision: ")
+bullet("temper the assumption that all plots fill up — build-out takes decades, so the saturation population is a ceiling, not a date (G201-p59).", bold_lead="Development speed: ")
 pic(ROUTE_PLOTS, w=5.9)
 fig_caption("Route B — from cadastral plots to the saturation population")
 H(2, "How the two routes fit together — saturation vs dated horizons")
 para("The two routes serve different design decisions, and understanding their relationship is essential:")
 bullet("The master-plan plots define the maximum development the planning framework allows. Multiplying all plots by properties-per-plot and occupancy gives the saturation population — a ceiling, not a forecast. It says nothing about when that ceiling is reached.")
 bullet("The census projection gives the population trajectory in time — but knows nothing about the physical ceiling; extrapolated far enough it would eventually exceed what the plots can hold.")
-bullet("The two are reconciled by using each where it is authoritative: buried pipes have a 50-year design life (G201-p57) and cannot economically be re-laid, so the network is sized once, for the Route B saturation flow. The STP is modular and is expanded in phases, so each phase is sized for a Route A dated horizon (2030, 2055). The TOR's design horizon rule — completion + 25 years or ultimate, whichever governs — expresses exactly this: if the Route A projection at completion + 25 years exceeds saturation, saturation caps it.")
-bullet("Consistency check: zone-by-zone, the Route A population at any horizon must remain below the Route B ceiling. Where a projection exceeds the ceiling, either the growth allocation to that zone is too high or the plot data is stale (new subdivisions) — the discrepancy must be resolved, not ignored.")
+bullet("The two are reconciled by using each where it is authoritative: buried pipes have a 50-year design life (G201-p57) and cannot economically be re-laid, so the network is dimensioned against the long-term (saturation) flows. The STP is modular and expanded in phases, so each phase is sized for a Route A dated horizon (2030, 2055).")
+bullet("The TOR's design horizon rule — completion + 25 years or ultimate (saturated) — has two possible readings, and which applies depends on which event comes first. If saturation is reached before completion + 25 years, saturation is the design condition. If — as the client appears to expect, and the R0 projections support — saturation lies beyond completion + 25 years (i.e. after roughly 2055), then the contractual design flow is that of the governing 5-year interval projection year (populations are computed for every year, but the design horizon snaps to the TOR's 5-year grid), and the saturation flow serves as the long-term capacity check for the trunk sewers. The binding reading shall be confirmed with NWS at kickoff.")
+bullet("Consistency check: zone-by-zone, the Route A trajectory must be compared against the Route B ceiling. The current numbers show why this matters: the R0 projection for the project area grows continuously to about 691 thousand by 2100 with no built-in ceiling, while the provisional plot-based saturation (at the assumed occupancy of 6.0) is far lower — the two cross somewhere in mid-century. Either the occupancy/properties-per-plot assumptions understate the ceiling, or the projection overshoots the developable land. Resolving this — with NCSI housing data and MoHUP planned plots — is a first-priority kickoff task, because it decides which quantity governs the network.")
+H(2, "Future plots and stub-outs — how undeveloped land enters the design")
+para("Within the project boundary many plots are only planned polygons — subdivided but empty land. They generate no sewage today, yet the TOR requires that all plots, built, open and under construction, be provided with connections. The design handles them as follows:")
+bullet("every plot, including future ones, contributes its saturation population to the flows used to dimension the pipes. This is precisely why Route B counts plots rather than people: an empty plot is a future flow with a known magnitude and location.", bold_lead="Pipes are dimensioned for the long-term flow including future plots: ")
+bullet("at the frontage of each future plot or undeveloped sub-area, a capped connection (stub-out) or capped lateral is built with the main sewer, sized for that area's future flow. When the plot develops, it connects without excavating the road again. Downstream of every stub-out, the pipes are dimensioned to carry the future inflow — so yes, the reader's understanding is correct: a stub-out is a commitment that flow will one day enter there, and the downstream system is designed to accept it.", bold_lead="Stub-outs reserve the connection: ")
+bullet("population and flow projections (Route A) distribute the dated-year population over the settlements as they exist and grow; future plots fill progressively toward saturation. The dated-year flows therefore drive the phased facilities (STP modules, pumping equipment), not the pipe diameters.", bold_lead="Projections fill the plots over time: ")
+bullet("a sewer dimensioned for future flows runs nearly empty in its early years, and the risk is sediment deposition, not capacity. This is why the minimum self-cleansing criteria (0.75 m/s at peak, or the tractive-force check at network heads, G203-p26-27) must be verified at the start-year flows, not only at the horizon — the standard early-years check of every staged network.", bold_lead="The early-years check is the flip side: ")
 H(2, "Is the available plot data ready for this?")
 para("Partly. The MoHUP cadastral layer for Ibri contains 61,272 plot polygons with land-use classification and a built-type attribute, which is sufficient for counting and classifying plots per zone (Route B's first input). Two of the three factors are, however, not yet supported by data: the average properties per plot (requires the subdivision check of G201-p59) and the occupancy rate (requires NCSI housing-unit counts, which are not included in the R0 package — its workbook carries population only). Both are on the kickoff data request; until they arrive, screening uses a tagged assumption (OR = 6.0) and results are reported as scaling linearly with it.")
 
@@ -441,6 +586,9 @@ table(["Component", "Basis", "Value (l/c/d)", "Source"], [
  ["Total water demand", "sum (aggregate planning view)", "223", "—"],
 ], widths=[1.7, 2.4, 1.2, 1.9], font=9)
 tab_caption("Water demand build-up for Ibri (aggregate per-capita view)")
+pic(DEMAND_BUILDUP, w=6.0)
+fig_caption("Water demand build-up: how 223 l/c/d is assembled from its three components")
+para("Appendix B.4 charts the measured domestic consumption of all eleven governorates — Adh Dhahirah's 163.5 l/c/d sits close to the national average, supporting the 164 l/c/d design value.")
 
 # ================= 6 STEP 3 RETURN =================
 H(1, "Step 3 — Wastewater Return")
@@ -453,7 +601,9 @@ table(["Stream", "Return rate", "Why this value"], [
 tab_caption("Return rates to the sewer by consumer stream (G201-p71 Table 19)")
 para("The per-capita wastewater generation follows by applying each return rate to its own stream and summing the results. As in Step 2, the summation is the aggregate planning view — each stream keeps its own rate, and only the resulting sewage quantities (which do all end up in the same pipe) are added:")
 equation(q_("ww") + mr(" = ") + q_("dom") + mr(" × 0.85 + (") + q_("nd") + mr(" + ") + q_("gov") + mr(") × 0.54"))
-para("For Ibri: 164 × 0.85 + (36.1 + 23.0) × 0.54 = 139.4 + 31.9 ≈ 171 l/c/d of sewage per person. This single number now carries the whole demand side of the calculation.")
+para("For Ibri: 164 × 0.85 + (36.1 + 23.0) × 0.54 = 139.4 + 31.9 ≈ 171 l/c/d of sewage per person. This single number now carries the whole demand side of the calculation. The figure below shows the two streams side by side — supplied water against what actually returns as sewage:")
+pic(RETURN_CHART, w=5.9)
+fig_caption("From water to sewage: supplied vs returned volumes per stream (l/c/d)")
 
 # ================= 7 STEP 4 ADDITIONS =================
 H(1, "Step 4 — Additions: Infiltration and Tankered Sewage")
@@ -485,14 +635,19 @@ bullet("gives the ratio of the peak-hour flow to the average flow. Developed for
 equation(mr("PF") + mr(" = 1.5 + ") + frac(mr("1"), sqrt(Q("m"))))
 bullet("is a regression fitted to observed maximum-day flows (US practice, valid above ~100 connected properties); it returns the peak-day flow directly, both flows in Ml/d:", bold_lead="Merrimack (peak-day flow) ")
 equation(Q("pdf") + mr(" = 2.65 × ") + ssup(mr("(") + Q("adf") + mr(")"), mr("0.879")))
-para("Both are capped by the absolute limit PF ≤ 5.0 on the hourly factor (G201-p72). Figure 6 plots the two over the practically relevant flow range.")
+para("Both are capped by the absolute limit PF ≤ 5.0 on the hourly factor (G201-p72). Figure 9 plots the two over the practically relevant flow range.")
 pic(PFCHART, w=5.9)
 fig_caption("Peltier and Merrimack peak factors versus average flow, with the PF = 5.0 cap and the worked example marked")
-para("Why do they disagree (1.72 vs 2.48 at 20 L/s)? Three reasons, all visible in Figure 6:")
+para("Why do they disagree (1.72 vs 2.48 at 20 L/s)? Three reasons, all visible in Figure 9:")
 bullet("Peltier's 1.5 asymptote is a peak-hour ratio for large flows; Merrimack tracks the maximum day, and its implied factor (2.65 × Qadf to the power −0.121) stays higher across the range. A peak day and a peak hour are different events.", bold_lead="Different peak definitions. ")
 bullet("Peltier was fitted to Omani IMP data; Merrimack to New England systems with different habits, appliances and infiltration behaviour. Empirical regressions carry their calibration data with them.", bold_lead="Different source data. ")
 bullet("Merrimack's exponent makes its factor fall very slowly with size, so the divergence grows for large flows.", bold_lead="Different damping. ")
-para("Practical guidance: use Peltier for hydraulic (peak-hour) sizing as the current IMP method, use Merrimack as a peak-day cross-check for storage and process buffering, and obtain NWS's confirmation of the binding choice at kickoff — the difference is roughly 40 percent of pipe capacity, which is not a rounding issue. The R0 model additionally applies a +20 percent weekly peak with no guideline source; it is flagged in Section 15.")
+H(2, "Which formula for which element — and where Qm comes from")
+para("A common shorthand is 'Peltier for the pipes, Merrimack for the STP'. That is close, but one refinement is needed:")
+bullet("Network hydraulic sizing (pipes, pump stations) — Peltier. These elements are governed by the peak hour, which is what Peltier estimates; it is also the current IMP 2024 method.")
+bullet("STP — both, in different places. The plant's hydraulic pass-through (headworks, screens, channels) is also sized on the peak hour (PHF). Merrimack's peak-day flow governs the day-scale elements: flow equalisation, storage, emergency lagoons and process buffering, where what matters is the worst day's volume, not the worst hour's rate. The biological process itself uses neither — it is sized on AAF plus loads (Section 12).")
+para("So Merrimack is one of the STP's design checks, not the STP sizing method wholesale. The allocation above is standard practice; NWS's confirmation of the binding formula per element is on the kickoff list — the difference is roughly 40 percent of pipe capacity, which is not a rounding issue. The R0 model additionally applies a +20 percent weekly peak with no guideline source; it is flagged in Section 15 (and note that the R0 workbook's WW Generation series already contains this factor — Appendix B).")
+para("Where do the Qm values come from? Qm is not an external data item: it is the computed mean (average) flow at the point being designed — the output of Step 5 accumulated through the network. Every pipe reach has its own Qm (the sum of all upstream zone flows), the STP inlet's Qm is the total Qadf, and each value comes from the flow model at that node. No measurement is needed to apply Peltier at design time; the STP inflow records requested from NWS serve to calibrate these computed values, not to replace them.")
 
 # ================= 10 STEP 7 LOADS =================
 H(1, "Step 7 — Organic (Pollution) Loads")
@@ -612,6 +767,60 @@ table(["Year"] + [str(y) for y in yrs],
       [["Population"] + [f"{NCSI[y]:,}" for y in yrs]], font=7)
 tab_caption("Full NCSI population series for Ibri wilayat as carried in the R0 workbook (2021-2033)")
 para("Growth rates implied by the series decline from 2.97 %/yr (2022) to 1.29 %/yr (2033). The connected-population ratio in the R0 workbook (share of population on the potable network) rises from 46.7% (2021) to 74.6% (2033).")
+
+# ================= APPENDIX B =================
+H(1, "Appendix B — The R0 Demand Workbook, Tab by Tab")
+para("This appendix documents the structure, data and equations of the R0 demand workbook ('Ibri Sewer Demand R0 2026 08 03.xlsx'), so that its results can be reproduced and audited. The description below was established by tracing the workbook's cell formulas directly; the master equation of B.6 is the exact formula implemented per settlement and year.")
+H(2, "B.1  'Project Pop Settlements' — the population engine")
+para("One row per project settlement (50 settlements), one column per year from 2023 to 2100. Each cell looks up the settlement's projected population from the wilayat-level settlement projection ('Ibri Pop Settlements', 240 settlements), which in turn distributes the NCSI wilayat series (Appendix A) over settlements by their constant census shares — exactly Route A of Section 5. Key values: project total 116 thousand (2024), 238 thousand (2055), 691 thousand (2100); largest settlements IBRI town, AD DARIZ, AL ARAQI (Figure 5). The projection applies growth throughout — it contains no saturation ceiling (see Section 5.4).")
+H(2, "B.2  'Project W Pop Connected' — who is on the water network")
+para("Same layout; each cell multiplies the settlement population by the wilayat-wide connected-population ratio c(y) (tab 'Pop_Wilayat', row 'W_Pop_Connected'):")
+equation(ssub(mr("P"), mr("conn,s")) + mr("(y) = ") + ssub(mr("P"), mr("s")) + mr("(y) × c(y)"))
+para("The ratio ramps linearly from 46.7% (2021) through 74.6% (2033), reaching 100% in 2070 and staying there — i.e. the model assumes universal water-network coverage only from 2070 onward. Only the connected population generates billed water demand in the model; the remainder appears through the tanker stream.")
+pic(RAMP_CHART, w=5.9)
+fig_caption("Connected-population ratio c(y) in the R0 model: 46.7% (2021) ramping to 100% (2070)")
+H(2, "B.3  'Project Tankers' — the unconnected stream")
+para("One row per settlement, columns 2024-2100, values in m3/d of tankered water-consumption equivalent. Two modelling choices to note: (i) only settlements within 25 km of the STP by road contribute (criteria tab, 'Maximum Distance from STP by road' = 25 km) — an R0 assumption with no guideline source, flagged in Section 15; (ii) the series is constant at its 2024 estimate for every year — tanker volumes are not grown nor phased out, which is conservative for the STP but inconsistent with the guideline's expectation that coverage reaches 100% and tankering declines (G201-p73). Both points are on the kickoff confirmation list.")
+pic(TANKER_CHART, w=5.9)
+fig_caption("Ten largest tanker-served settlements in the R0 model (2024 volumes, project total 942 m3/d)")
+H(2, "B.4  'Water Demand Criteria' — the demand rate library")
+para("Holds, per governorate and year: the domestic per-capita consumption computed from billing (Adh Dhahirah: 163.5 l/c/d from 2024 onward, the value used throughout the model), the governmental consumption ratio (Adh Dhahirah: 0.140, i.e. 14.0% of domestic) and the non-domestic ratio (Adh Dhahirah: 0.218, i.e. 21.8% of domestic). These are the workbook's counterparts of the guideline values 164 l/c/d, 14% and 22% (G201-p60-61) — agreement is essentially exact, because both derive from the same IMP/billing basis.")
+pic(LPCD_CHART, w=5.9)
+fig_caption("Measured domestic consumption by governorate, 2024 (Adh Dhahirah highlighted; workbook 'Water Demand Criteria')")
+H(2, "B.5  'Wastewater Criteria' — the conversion constants")
+table(["Constant", "Value", "Role"], [
+ ["Domestic return ratio", "0.85", "share of domestic water becoming sewage (G201-p71)"],
+ ["Tanker return ratio", "0.85", "same, for tankered consumption"],
+ ["Non-domestic return ratio", "0.54", "share of non-domestic water becoming sewage"],
+ ["Governmental return ratio", "0.54", "share of governmental water becoming sewage"],
+ ["Infiltration ratio", "0.10", "added to sewage flow; workbook note: applied only to settlements with an existing network"],
+ ["Max tanker distance", "25 km", "tanker catchment cut-off (B.3)"],
+ ["Weekly peak", "0.20", "+20% factor applied inside the WW Generation series (B.6)"],
+ ["STP margin coefficient", "0.10", "operational allowance, applied at STP sizing"],
+ ["TE production rate", "0.95", "TSE = 95% of STP inlet"],
+ ["Sludge rate", "0.25 kg/m3", "planning sludge production"],
+], widths=[2.0, 1.0, 3.5], font=8)
+tab_caption("Constants of the 'Wastewater Criteria' tab (all marked 'can be adjusted' in the workbook)")
+H(2, "B.6  'Project WW Generation' — the master equation")
+para("Each cell of the WW Generation tab computes, for settlement s and year y (traced from the cell formulas):")
+equation(ssub(mr("WWG"), mr("s")) + mr(" = ") + mr("[ ") + ssub(mr("P"), mr("conn,s")) + mr(" × ") + frac(mr("L"), mr("1000")) + mr(" × (") + ssub(mr("R"), mr("dom")) + mr(" + ") + ssub(mr("R"), mr("nd")) + mr("×") + ssub(mr("r"), mr("nd")) + mr(" + ") + ssub(mr("R"), mr("gov")) + mr("×") + ssub(mr("r"), mr("gov")) + mr(") × (1 + i) + ") + ssub(mr("T"), mr("s")) + mr(" × ") + ssub(mr("R"), mr("tank")) + mr(" ] × (1 + w)"))
+table(["Symbol", "Meaning", "Value"], [
+ ["P(conn,s)", "connected population of settlement s (B.2)", "per settlement/year"],
+ ["L", "domestic per-capita demand, l/c/d (B.4)", "163.5"],
+ ["R(dom), R(tank)", "domestic / tanker return ratios", "0.85"],
+ ["R(nd), R(gov)", "non-domestic / governmental return ratios", "0.54"],
+ ["r(nd), r(gov)", "non-domestic / governmental consumption ratios (B.4)", "0.218 / 0.140"],
+ ["i", "infiltration ratio (network settlements)", "0.10"],
+ ["T(s)", "tankered volume of settlement s, m3/d (B.3)", "constant 2024 values"],
+ ["w", "weekly peak factor", "0.20"],
+], widths=[1.3, 3.5, 1.7], font=8)
+tab_caption("Symbols of the R0 master equation")
+para("Two audit findings matter when using these numbers:")
+bullet("the (1 + w) factor means every WWG value is 20 percent above the average-flow chain of this tutorial. R0's WWG is therefore closer to a 'design weekly flow' than to Qadf, and it must not be fed into formulas expecting an average (e.g. Peltier's Qm) without first removing the factor.", bold_lead="The WW Generation series already includes the +20% weekly peak: ")
+bullet("in this workbook infiltration enters as a ratio of sewage flow (B.5), not as the guideline's 720 L/d/km of pipe — the deviation discussed in Sections 8 and 15.", bold_lead="Infiltration is inside the generation formula: ")
+pic(WWG_CHART, w=6.0)
+fig_caption("R0 wastewater generation to 2100 — three largest settlements and project total ('Project WW Generation'; values include the +20% weekly peak)")
+para("With these two caveats, the workbook chain is exactly the chain of this tutorial: Steps 1 (B.1-B.2), 2 (B.4), 3-4 (B.5, B.3) and 5 (B.6), with the peaking and STP steps applied downstream of it. The project WW generation reaches about 14,200 m3/d in 2024, 46,500 m3/d by 2055 and 157,000 m3/d by 2100 (weekly-peak basis; divide by 1.2 for the average-flow equivalent).")
 
 # ---- populate List of Figures / List of Tables at the front markers ----
 def fill_list(marker, items):
