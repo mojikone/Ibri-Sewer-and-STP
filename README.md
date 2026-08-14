@@ -8,6 +8,8 @@ Working repository of the Claude-assisted concept engineering for **Renardet Pro
 
 | Date | Update |
 |---|---|
+| 2026-08-14 | **Tutorial T01 — Sewage Flow & Load Calculation** (`TUTORIALS/`): full chain population→flows→loads with worked example + standard-vs-R0 reconciliation register |
+| 2026-08-14 | **PAM-GUD-202 Water & TSE Guidelines** filed (`_STANDARDS/` + `Data/`), criteria extracted to `_BRAIN/02` §12b (`G2-p##` refs); Inception R0 package registered — NCSI population (Ibri 183,564 @2024) partly closes GAP-5, R0 adopted values in `_BRAIN/02` §12c |
 | 2026-07-20 | **Global operating instructions committed** (`_SETUP/global-CLAUDE.md`): advisor tone, confidence tags, PRESERVE-CHECK protocol, no-push rule — restored automatically by bootstrap, drift-checked without overwriting |
 | 2026-07-20 | **Migration automation**: root-CLAUDE.md bootstrap chain, project `.mcp.json`, `_SETUP/bootstrap.ps1` self-check (tested all-PASS) — a fresh Claude Code instance continues with zero manual setup |
 | 2026-07-20 | **F2 existing-system findings** folded in: NE served district (Al Araqi) + existing trunk to STP; report data register extended (as-built DWG/SHP, design reports, trunk details — items 19–21) |
@@ -35,6 +37,8 @@ Working repository of the Claude-assisted concept engineering for **Renardet Pro
 | `CLAUDE.md` | Agent working rules + reading order (mandatory) |
 | `_BRAIN/` | Source of truth: scope register, page-cited design criteria, data inventory, tools, gaps, W2 feedback constraints |
 | `_SETUP/` | Migration/bootstrap: environment guide, MCP config, memory snapshot, `bootstrap.ps1` |
+| `_STANDARDS/` | Standards PDFs kept in-repo for remote access (PAM-GUD-202; 201/203 remain in `Data/`) |
+| `TUTORIALS/` | Method tutorials (T01: sewage flow & load calculation) |
 | `W1/`, `W2/` | Iteration outputs: `py/` pipelines (re-runnable), `shp/`, `dwg/` (DXF), `img/maps/`, `report/` |
 | `W2/report/Ibri_Concept_Screening_R1.docx/.pdf` | **Latest deliverable report** |
 
