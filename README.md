@@ -8,6 +8,7 @@ Working repository of the Claude-assisted concept engineering for **Renardet Pro
 
 | Date | Update |
 |---|---|
+| 2026-08-15 | **W3 A6 — 3-class layer v4 (built/planned/agriculture)**: per-plot vegetation fraction from imagery → AGRI class (100% capture of known farms, 2.2% false rate); **empty-LANDUSE plots (39,838) characterized**: 36% built, 6% farms, 58% vacant; `MoH_Plots_class_v4.shp` (black/white/green QML); AGRI feeds TE demand mapping |
 | 2026-08-15 | **W3 A5b — z18 re-check → built v3**: 12,237 z18 tiles, retrained classifier (95.9% acc), 2,736 planned→built flips (agri plots gated at 0.8 to kill palm-row false positives) → `MoH_Plots_built_v3.shp` (+`PROB18`, `SRC`); IBRI 57.2% built (b/impl 0.87), AL WAHRAH undercount fixed (0.99); **IBRI's remaining ~44k capacity < 2055 spillover demand** |
 | 2026-08-15 | **W3 A5a — unparceled buildings layer**: 2,799 MS-footprint buildings (380k m² roof; IBRI 1,325) intersect NO cadastral plot → `Unparceled_Buildings.shp` (red style) — confirms user-reported MoH_Plots gaps; MoHUP cadastre completion added to data requests |
 | 2026-08-14 | **W3 A4 — overlay style delivered**: `MoH_Plots_built_v2.qml` (auto-style: no fill, black outline = built, white = planned) + 3 rendered imagery-overlay verification maps (IBRI core, AD DARIZ, AT TAYYIB edge) |
