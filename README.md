@@ -8,6 +8,7 @@ Working repository of the Claude-assisted concept engineering for **Renardet Pro
 
 | Date | Update |
 |---|---|
+| 2026-08-14 | **W3 A4 — overlay style delivered**: `MoH_Plots_built_v2.qml` (auto-style: no fill, black outline = built, white = planned) + 3 rendered imagery-overlay verification maps (IBRI core, AD DARIZ, AT TAYYIB edge) |
 | 2026-08-14 | **W3 A3 — built/planned classification finalized**: Esri z17 imagery (6,550 tiles, full boundary, mosaic kept off-repo) + texture classifier (88.8% train acc, validated 0.91–0.98 built/implied-dwellings in former no-coverage zones) → `MoH_Plots_built_v2.shp` with `BUILT_FIN` for all 61,272 plots; **IBRI 52.4% built**, AT TAYYIB 89% vacant; BAT boundary anomaly flagged |
 | 2026-08-14 | **W3 A2 — spillover growth model** (user intent: growth continues past IBRI's fill, relocating to adjacent zones): 2055 allocation shifts −43k IBRI → +27k AT TAYYIB (+AD DIBAYSHI, AL QURAYN, AL JIBAYYAH, AL JAHLI); totals conserved; **whole boundary saturates ≈2062–2070** — 407k of R0's 2100 projection unhousable at OR 6.0 → NCSI/MoHUP data gates model validity beyond ~2060 |
 | 2026-08-14 | **W3 A1 — settlement capacity & built/vacant analysis**: IBRI land ceiling (94k @ OR 6.0) crossed by R0 projection ≈ **2038** (146% utilized @2055) → growth must reallocate to AT TAYYIB (99% vacant, 47k capacity) etc.; area-wide saturation ≈ 2070; `BUILT_MS` field added to plots via MS Building Footprints (34% IBRI built; 7 settlements = footprint coverage gaps); shp+csv+charts in `W3/` |
