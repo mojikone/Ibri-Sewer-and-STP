@@ -8,6 +8,7 @@ Working repository of the Claude-assisted concept engineering for **Renardet Pro
 
 | Date | Update |
 |---|---|
+| 2026-08-15 | **W3 A5b — z18 re-check → built v3**: 12,237 z18 tiles, retrained classifier (95.9% acc), 2,736 planned→built flips (agri plots gated at 0.8 to kill palm-row false positives) → `MoH_Plots_built_v3.shp` (+`PROB18`, `SRC`); IBRI 57.2% built (b/impl 0.87), AL WAHRAH undercount fixed (0.99); **IBRI's remaining ~44k capacity < 2055 spillover demand** |
 | 2026-08-15 | **W3 A5a — unparceled buildings layer**: 2,799 MS-footprint buildings (380k m² roof; IBRI 1,325) intersect NO cadastral plot → `Unparceled_Buildings.shp` (red style) — confirms user-reported MoH_Plots gaps; MoHUP cadastre completion added to data requests |
 | 2026-08-14 | **W3 A4 — overlay style delivered**: `MoH_Plots_built_v2.qml` (auto-style: no fill, black outline = built, white = planned) + 3 rendered imagery-overlay verification maps (IBRI core, AD DARIZ, AT TAYYIB edge) |
 | 2026-08-14 | **W3 A3 — built/planned classification finalized**: Esri z17 imagery (6,550 tiles, full boundary, mosaic kept off-repo) + texture classifier (88.8% train acc, validated 0.91–0.98 built/implied-dwellings in former no-coverage zones) → `MoH_Plots_built_v2.shp` with `BUILT_FIN` for all 61,272 plots; **IBRI 52.4% built**, AT TAYYIB 89% vacant; BAT boundary anomaly flagged |
