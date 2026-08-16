@@ -26,8 +26,12 @@ from shapely.ops import unary_union
 
 ROOT = Path(r"D:\Mojtaba\Renardet\2621 Ibri Sewer STP")
 KMZ = ROOT / "Data/Received/2621/inception report - R0/Final_Boundary_IBRI.kmz"
+XLSX = ROOT / "Data/Received/2621/inception report - R0/Ibri Sewer Demand R0 2026 08 03.xlsx"
+XL_CODE = "Ibri Pop Settlements"           # all Ibri settlements, 2023-2050, keyed TOWN_CODE
+XL_PROJ = "Project Pop Settlements"        # the 25 project towns, 2023-2100, keyed Name
 OUTDIR = ROOT / "Hydraulic/SHP/Towns"
 EPSG_OUT = 32640
+YR_LAST = 2100                             # KMZ stops at 2050; xlsx runs to 2100
 
 AR_CODE = "الرمز الوطني المميز للمعلم"
 AR_NAME = "الاسم"
@@ -74,6 +78,42 @@ def polygons(pm: str):
         inner = list(rings(pb, "innerBoundaryIs"))
         for o in outer:
             yield Polygon(o, inner)
+
+
+def excel_pop() -> pd.DataFrame:
+    """
+    Population series 2023..YR_LAST for the 25 project towns.
+
+    'Project Pop Settlements' is the only sheet that runs past 2050, but it is
+    keyed by name; 'Ibri Pop Settlements' is keyed by TOWN_CODE and stops at
+    2050. Read both, key the output by TOWN_CODE via the name, and assert the
+    two agree on their common years.
+    """
+    xl = pd.read_excel(XLSX, sheet_name=[XL_CODE, XL_PROJ])
+    cod = xl[XL_CODE].dropna(subset=["TOWN_CODE"]).copy()
+    cod["TOWN_CODE"] = cod["TOWN_CODE"].astype(str).str.strip()
+    cod["NAMEEN"] = cod["NAMEEN"].astype(str).str.strip()
+
+    prj = xl[XL_PROJ]
+    prj = prj[pd.to_numeric(prj["No."], errors="coerce").notna()].copy()
+    prj["Name"] = prj["Name"].astype(str).str.strip()
+    prj = prj.rename(columns={c: f"Pop_{c.split()[1]}" for c in prj.columns
+                              if isinstance(c, str) and c.startswith("Pop ")})
+
+    both = prj.merge(cod, left_on="Name", right_on="NAMEEN", how="left")
+    if both["TOWN_CODE"].isna().any():
+        raise SystemExit(f"{XL_PROJ} names absent from {XL_CODE}: "
+                         f"{both.loc[both.TOWN_CODE.isna(), 'Name'].tolist()}")
+    common = [y for y in range(2023, 2051) if y in cod.columns]
+    delta = max(float((both[f"Pop_{y}"].astype(float)
+                       - both[y].astype(float)).abs().max()) for y in common)
+    if delta > 1e-6:
+        raise SystemExit(f"{XL_PROJ} vs {XL_CODE} disagree, max {delta}")
+    print(f"xlsx cross-check OK: '{XL_PROJ}' == '{XL_CODE}' over "
+          f"{len(common)} common years")
+
+    yrs = [y for y in range(2023, YR_LAST + 1) if f"Pop_{y}" in both.columns]
+    return both[["TOWN_CODE"] + [f"Pop_{y}" for y in yrs]].copy(), yrs
 
 
 def main():
@@ -138,11 +178,36 @@ def main():
     if nopoint:
         print(f"NOTE: polygon(s) with no point (NAME_AR/CODE null): {nopoint}")
 
+    # ------------------ extend the series to YR_LAST from the demand xlsx ---
+    xlp, xlyrs = excel_pop()
+    m["TOWN"] = m["TOWN"].astype(str).str.strip()
+    m = m.merge(xlp, left_on="TOWN", right_on="TOWN_CODE", how="left",
+                suffixes=("", "_xl"))
+    missing = m.loc[m.TOWN_CODE.isna(), "NAME_EN"].tolist()
+    if missing:
+        raise SystemExit(f"TOWN code not found in the workbook: {missing}")
+
+    # self-check: the KMZ integers must stay ROUND() of the workbook values
+    worst = 0.0
+    for c in popcols:
+        k = pd.to_numeric(m[c], errors="coerce")
+        x = pd.to_numeric(m[c + "_xl"], errors="coerce").round()
+        worst = max(worst, float((k - x).abs().max()))
+    if worst:
+        raise SystemExit(f"KMZ vs workbook mismatch on 2023-2050, max {worst}")
+    print(f"cross-check OK: KMZ Pop_2023..2050 == round(xlsx) for all "
+          f"{len(m)} towns x {len(popcols)} years")
+
+    # 2023-2050 keep the KMZ value (proven identical); 2051+ come from the xlsx
+    popcols = [f"Pop_{y}" for y in xlyrs]
+    m = m.drop(columns=[c for c in m.columns if c.endswith("_xl")]
+                       + ["TOWN_CODE"])
+
     # ------------------------------------------------------------ output ---
     out = m.to_crs(EPSG_OUT)
     out["AREA_KM2"] = (out.geometry.area / 1e6).round(4)
     for c in popcols:
-        out[c] = pd.to_numeric(out[c], errors="coerce").astype("Int64")
+        out[c] = pd.to_numeric(out[c], errors="coerce").round().astype("Int64")
     out = out[["NAME_EN", "NAME_AR", "CODE", "TOWN", "AREA_KM2"] + popcols
               + ["geometry"]].sort_values("NAME_EN").reset_index(drop=True)
     out.insert(0, "TOWN_ID", range(1, len(out) + 1))
@@ -164,8 +229,10 @@ def main():
               f"(KMZ attribute Area = {bg.Area.iloc[0]})")
 
     print(f"\nwrote {shp} : {len(out)} features, {len(out.columns)-1} fields")
-    print(out[["TOWN_ID", "NAME_EN", "NAME_AR", "CODE", "TOWN", "AREA_KM2",
-               "Pop_2025", "Pop_2050"]].to_string(index=False))
+    show = ["TOWN_ID", "NAME_EN", "NAME_AR", "CODE", "TOWN", "AREA_KM2",
+            "Pop_2025", "Pop_2030", "Pop_2055", "Pop_2100"]
+    print(out[show].to_string(index=False))
+    print("totals:", {c: int(out[c].sum()) for c in show[6:]})
 
 
 if __name__ == "__main__":
