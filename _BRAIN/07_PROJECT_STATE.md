@@ -33,7 +33,8 @@ Concept→detailed design + supervision of sewer network, TE network and STP cap
 | W1 (superseded) | First pass: trunk + 20 zones, 125 SLS candidates |
 | W2 (delivered) | 36 zones, trunk 22+172 km, 18 SLS, 134 wadi crossings, report R1 (Sample.docx style), QGIS layouts M1–M6, DXF |
 | T01 tutorial | Rev 2: full flow/load chain, native equations, R0 workbook decoded (incl. its +20 % weekly peak baked into WWG series) |
-| W3 (analysis, current) | A1 capacity (IBRI ceiling crossed ≈2038) · A2 spillover (−43k IBRI → +27k AT TAYYIB @2055; totals conserved) · A3–A5 built classification v3 (z17+z18, 95.9 % train acc) · A5a unparceled buildings · A6 3-class layer v4 + empty-LANDUSE characterization |
+| W3 (analysis, current) | A1 capacity (IBRI ceiling crossed ≈2038) · A2 spillover (−43k IBRI → +27k AT TAYYIB @2055; totals conserved) · A3–A5 built classification v3 (z17+z18, 95.9 % train acc) · A5a unparceled buildings · A6 3-class layer v4 + empty-LANDUSE characterization · **A7** load allocation per town + data-request note (key: request *persons per built plot* ≈ 6.0–6.96 as a product, not OR alone; non-dom/gov % ratios are a FALLBACK — land-use unit rates are the method, 02 amended) · **A8** `A8_load_calc.xlsx` transparent formula-driven load workbook (12 named inputs) · **A9** criteria audit vs all three guidelines (145 issues: 83 missing rules, 59 incomplete, 3 misread — incl. tractive-force τ^1.23 term; fixes folded into 02, remainder recorded for detail design) |
+| Towns layer | 26 settlement polygons (from R0 kmz) as QGIS layer with population series to 2100 attached from the demand workbook |
 | **Next (W4)** | **Network design in a TEST BOUNDARY** (user-announced): apply doctrine §2 — plot-level saturation loads → pipe sizing; SewerGEMS seed; then three concept options, F2 georeferencing, capacity rerun with A6 farm correction |
 
 ## 5. Key numbers (screening grade, scale with OR 6.0 `[GAP-5]`)
