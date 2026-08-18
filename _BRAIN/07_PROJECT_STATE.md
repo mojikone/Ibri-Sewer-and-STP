@@ -23,7 +23,7 @@ Concept→detailed design + supervision of sewer network, TE network and STP cap
 | Cadastre | MoH_Plots 61,272 (65 % LANDUSE empty — characterized by imagery, A6); **2,799 buildings have NO plot** (A5a `Unparceled_Buildings.shp`) |
 | Plot status layers (W3/shp) | `MoH_Plots_class_v4.shp` = CLASS B/P/A (built 17,961 / planned 36,945 / agri 6,366) + BUILT_FIN, VEGFRAC, PROB18; QML styles included (black/white/green) |
 | Settlement zones | 26 polygons from R0 kmz; TANAM/SATWAH/AL MAKHTIBYAH/BAT boundaries WRONG (miss their plots); 24 of 50 workbook settlements have no polygon |
-| Terrain | DTM_terrain_mask.tif 5 m (authoritative); NSA_DEM 4 m is a **DTM too** (corrected 2026-08-14 — NO buildings anywhere in the DEMs); 0.5 m terrain blend (misleading "Sat_" folder name) |
+| Terrain | **`Data/Terrain/Sat_0p5m/IBRI_0p5_VRT2.vrt` 0.5 m blend = authoritative (user 2026-08-18)**; DTM_terrain_mask.tif 5 m superseded (was W1–W3 source); NSA_DEM 4 m screening only; NO buildings in any DEM; "Sat_" folder name misleading — it is terrain |
 | Imagery (LOCAL ONLY, not in repo) | `Hydraulic/Imagery/`: esri_z17_mosaic_3857.tif (80 MB, full boundary, 1.19 m) + z17/z18 tile stores (6,550 + ~12,400 tiles). Esri XYZ streaming for remote QGIS |
 | Existing system | F2 PDF read-off only: NE district (Al Araqi) served, existing trunk to STP — as-builts still missing (GAP-6) |
 
