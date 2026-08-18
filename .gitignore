@@ -9,3 +9,6 @@ W2/temp/
 **/package*.json
 ~$*
 _REFERENCE/
+__pycache__/
+*.pyc
+.pytest_cache/
