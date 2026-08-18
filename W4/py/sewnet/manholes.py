@@ -51,25 +51,29 @@ def _split_points(geom):
 
 
 def _cut(geom, chainages):
-    """Split a LineString at given chainages -> list of LineStrings covering it exactly."""
-    pieces = []
-    prev = 0.0
-    for c in list(chainages) + [geom.length]:
-        if c - prev < 0.5:
-            prev = max(prev, c)
+    """Split a LineString at given chainages -> pieces covering it EXACTLY end to end.
+    Cuts closer than 0.5 m to either end or to each other are dropped (the cut, never
+    the piece) — the chain from first to last vertex is always complete."""
+    L = geom.length
+    cuts = []
+    for c in sorted(set(round(c, 3) for c in chainages)):
+        if c <= 0.5 or c >= L - 0.5:
             continue
-        seg_pts = []
-        # walk vertices between prev and c, with interpolated endpoints
-        seg_pts.append(geom.interpolate(prev))
-        d = 0.0
-        coords = list(geom.coords)
-        for i in range(1, len(coords)):
-            d += math.dist(coords[i - 1], coords[i])
-            if prev < d < c:
-                seg_pts.append(type(seg_pts[0])(coords[i]))
-        seg_pts.append(geom.interpolate(c))
-        pieces.append(LineString([(p.x, p.y) for p in seg_pts]))
-        prev = c
+        if cuts and c - cuts[-1] < 0.5:
+            continue
+        cuts.append(c)
+    coords = list(geom.coords)
+    cum = [0.0]
+    for i in range(1, len(coords)):
+        cum.append(cum[-1] + math.dist(coords[i - 1], coords[i]))
+    pieces = []
+    anchors = [0.0] + cuts + [L]
+    for a, b in zip(anchors[:-1], anchors[1:]):
+        pa, pb = geom.interpolate(a), geom.interpolate(b)
+        pts = [(pa.x, pa.y)]
+        pts += [coords[i] for i, d in enumerate(cum) if a < d < b]
+        pts.append((pb.x, pb.y))
+        pieces.append(LineString(pts))
     return pieces
 
 
@@ -108,6 +112,37 @@ def place(Gd, outfall, sampler):
             pipes.append({"up": prev_key, "dn": nxt_key, "geom": piece,
                           "length": piece.length})
             prev_key = nxt_key
+
+    # contract sub-2 m reaches: manholes ~1.2 m across cannot sit 0.6 m apart — noding
+    # debris where several streets meet within a metre becomes ONE manhole (method choice)
+    MIN_REACH = 2.0
+    changed = True
+    while changed:
+        changed = False
+        for p in list(pipes):
+            if p["length"] >= MIN_REACH:
+                continue
+            u, v = p["up"], p["dn"]
+            pipes.remove(p)
+            changed = True
+            if u == v:
+                break
+            keep, drop = (u, v) if nodes[u]["kind"] == "outfall" else (v, u)
+            kx, ky = nodes[keep]["x"], nodes[keep]["y"]
+            for q in pipes:
+                if q["up"] == drop:
+                    q["up"] = keep
+                    cs = list(q["geom"].coords)
+                    q["geom"] = LineString([(kx, ky)] + cs[1:])
+                if q["dn"] == drop:
+                    q["dn"] = keep
+                    cs = list(q["geom"].coords)
+                    q["geom"] = LineString(cs[:-1] + [(kx, ky)])
+                q["length"] = q["geom"].length
+            if nodes[drop]["kind"] == "junction" and nodes[keep]["kind"] != "outfall":
+                nodes[keep]["kind"] = "junction"
+            del nodes[drop]
+            break
 
     # deterministic labels: MH-#### upstream-to-downstream by network distance to outfall
     order = _label_order(nodes, pipes, outfall)

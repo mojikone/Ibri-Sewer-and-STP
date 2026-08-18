@@ -87,7 +87,11 @@ def solve(nodes, pipes, sampler, node_min_depth=None, max_iter=5, profile_step=5
                 smin = H.smin_for(dn, q)
                 smax = H.smax_for(dn, q)
                 s_rec = (inv - target) / L if L > 0 else smin
-                S = max(s_rec, smin)
+                # governing slope: recovery toward min cover, but never below the DN's
+                # hydraulic minimum NOR below the 40 mm total-fall construction guard
+                # (2 x 20 mm line/level tolerance, G203-p29 §4.3.1 — short reaches)
+                S = max(s_rec, smin, C.FALL_TOLERANCE / L if L > 0 else smin)
+                p["s_rec"] = s_rec
                 drop_up = 0.0
                 if smax is not None and S > smax:
                     # velocity cap: lay at Smax, take the surplus as a drop at the
@@ -117,13 +121,31 @@ def solve(nodes, pipes, sampler, node_min_depth=None, max_iter=5, profile_step=5
                     drops[n].append({"pipe": p["label"], "height": drop_up,
                                      "type": "backdrop" if drop_up <= C.BACKDROP_MAX else "vortex"})
 
-        # ---- resize with laid slopes; iterate if any DN changed
+        # ---- resize: evaluate each candidate DN at the slope THAT DN would be laid at
+        # (recovery slope if the terrain gives it, else the DN's own minimum). Sizing a
+        # big pipe at its own flat minimum and then re-checking an even bigger pipe at a
+        # still flatter minimum is a ratchet to absurd diameters — and violates the
+        # no-oversizing rule (G203-p29). Smallest compliant DN wins each iteration.
         changed = 0
         for p in pipes:
-            dn_new, y, v = H.size_pipe(p["qpeak_m3s"], p["slope"])
-            if dn_new is None:                       # cannot carry even at DN max — flatten next pass
-                dn_new, y, v = C.DN_SERIES[-1], None, None
-            if dn_new > p["dn_mm"]:
+            q = p["qpeak_m3s"]
+            L = p["length"]
+            s_rec = p.get("s_rec", p["slope"])
+            pick = None
+            for dn_c in C.DN_SERIES:
+                S_c = max(s_rec, H.smin_for(dn_c, q),
+                          C.FALL_TOLERANCE / L if L > 0 else 0.0)
+                smax_c = H.smax_for(dn_c, q)
+                if smax_c is not None and S_c > smax_c:
+                    S_c = smax_c
+                y, v = H.solve_dod(dn_c / 1000.0, S_c, q)
+                if y is not None and y <= H.dod_limit(dn_c) and (v is None or v <= C.V_MAX + 0.01):
+                    pick = (dn_c, y, v)
+                    break
+            if pick is None:                          # even DN1200 fails — keep max, audit reports
+                pick = (C.DN_SERIES[-1], None, None)
+            dn_new, y, v = pick
+            if dn_new != p["dn_mm"]:
                 p["dn_mm"] = dn_new
                 changed += 1
             p["dod"] = y

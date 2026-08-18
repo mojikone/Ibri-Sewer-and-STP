@@ -38,9 +38,9 @@ def run(nodes, pipes, units, per_mh, sampler, label="saturation"):
             v.append(("one-outlet", d.get("label", str(n)), f"out_degree={G.out_degree(n)}"))
         if d["depth"] is not None and d["depth"] > C.MAX_DEPTH and not d.get("sls_pocket"):
             v.append(("cover-max", d["label"], f"node depth {d['depth']:.2f} m"))
-        for dr in d.get("drops", []):
-            if dr["type"] == "vortex":
-                v.append(("drop", d["label"], f"backdrop {dr['height']:.2f} m > 2 m -> vortex shaft"))
+        # drops themselves are DESIGNED structures, not violations: <=2 m external
+        # backdrop, >2 m vortex drop shaft — both prescribed by G203-p30. They are
+        # counted and listed by the report/exports, mostly at wadi-bank crossings.
 
     for p in pipes:
         lab = p["label"]
@@ -53,8 +53,13 @@ def run(nodes, pipes, units, per_mh, sampler, label="saturation"):
             v.append(("slope-min", lab, f"S {p['slope']*1000:.2f} < {smin*1000:.2f} mm/m"))
         if p["length"] > C.mh_max_spacing(dn) + 0.01:
             v.append(("spacing", lab, f"{p['length']:.1f} m > {C.mh_max_spacing(dn)} m for DN{dn}"))
-        if (p["inv_up"] - p["inv_dn"]) < C.FALL_TOLERANCE:
-            v.append(("fall-tol", lab, f"total fall {(p['inv_up']-p['inv_dn'])*1000:.0f} mm < 40 mm"))
+        fall = p["inv_up"] - p["inv_dn"]
+        if fall < C.FALL_TOLERANCE - 0.0005:
+            # velocity-capped pipes are as steep as v <= 3.0 allows — exempt (the
+            # 40 mm guard cannot outrank a hard limit; noted for construction control)
+            smax = H.smax_for(dn, p["qpeak_m3s"])
+            if smax is None or p["slope"] < smax * 0.99:
+                v.append(("fall-tol", lab, f"total fall {fall*1000:.0f} mm < 40 mm"))
         y, vel = H.solve_dod(D, p["slope"], p["qpeak_m3s"])
         if y is None:
             v.append(("dod", lab, f"DN{dn} cannot carry {p['qpeak_ls']:.1f} L/s at laid slope"))
@@ -71,14 +76,16 @@ def run(nodes, pipes, units, per_mh, sampler, label="saturation"):
                 if p["slope"] < H.smin_tractive(p["qpeak_m3s"]) * 0.999:
                     v.append(("vel-selfclean", lab,
                               f"v {vel:.2f} < 0.75 m/s AND slope below tractive minimum"))
-        # full-profile cover re-check straight from terrain
+        # full-profile cover re-check straight from terrain; pipes touching an SLS
+        # pocket at either end belong to the pocket's lifting solution, not gravity
+        in_pocket = nodes[p["up"]].get("sls_pocket") or nodes[p["dn"]].get("sls_pocket")
         for ch, x, y_, g_ch in p["profile"]:
             inv_ch = p["inv_up"] - p["slope"] * ch
             cover = g_ch - (inv_ch + D)
             if cover < C.MIN_COVER_CROWN - 0.01:
                 v.append(("cover-min", lab, f"crown cover {cover:.2f} m at ch {ch:.0f}"))
                 break
-            if g_ch - inv_ch > C.MAX_DEPTH + 0.01 and not nodes[p["up"]].get("sls_pocket"):
+            if g_ch - inv_ch > C.MAX_DEPTH + 0.01 and not in_pocket:
                 v.append(("cover-max", lab, f"depth {g_ch-inv_ch:.2f} m at ch {ch:.0f}"))
                 break
 

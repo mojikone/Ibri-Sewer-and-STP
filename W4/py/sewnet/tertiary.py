@@ -41,9 +41,11 @@ def connectability(units_by_mh, nodes, sampler):
                    "plot_z": zu, "dist": dist, "margin": margin, "ok": margin >= 0.0}
             results.append(rec)
             if margin < 0.0:
-                # manhole must sit deeper by the deficit for this unit to connect
+                # manhole must sit deeper by the deficit for this unit to connect;
+                # capped 0.5 m short of the 12 m limit so mid-span depth between the
+                # deepened node and rising ground cannot breach MAX_DEPTH
                 req_depth = node["z"] - (head - C.CONN_CHECK_SLOPE * dist)
-                cap = C.MAX_DEPTH
+                cap = C.MAX_DEPTH - 0.5
                 deepen[mh] = min(max(deepen.get(mh, 0.0), req_depth), cap)
     return results, deepen
 
