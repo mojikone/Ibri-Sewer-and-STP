@@ -61,6 +61,15 @@ def mh_max_spacing(dn):
 
 MH_SPLIT_LEN = 100.0     # initial split length — satisfies every spacing class (conservative)
 
+# One physical outlet per structure (user rule, 2026-08-18; SWNETWROK FANOUT_GAP_M = 10 m).
+# A junction takes many inlets but only ONE outgoing pipe. Any other pipe leaving that
+# point must START clear of the chamber: at the next house connection along the street,
+# or FANOUT_OFFSET_M if that connection sits closer than the offset.
+FANOUT_OFFSET_M = 10.0
+MH_MIN_CLEAR_M = 3.0     # two distinct chambers may never sit closer than this (audit)
+MH_SNAP_M = MH_MIN_CLEAR_M   # chambers closer than the clearance ARE one structure: merge
+                             # them, then the tree re-derivation resolves the extra outlet
+
 DROP_TRIGGER = 0.60      # m invert difference at a manhole -> backdrop required (G203-p30)
 BACKDROP_MAX = 2.0       # m external backdrop max; beyond -> vortex drop shaft (G203-p30 §4.4, A9)
 
@@ -138,6 +147,10 @@ ASSUMPTIONS = {
     "CROSS_STREET_FRONTAGE": (40.0, "an off-tree street edge gets a sewer when >=1 loaded unit "
                               "lies within this lateral distance (m) — summit-split into two "
                               "head branches; empty streets stay unsewered (method choice)"),
+    "FANOUT_OFFSET": (10.0, "a branch leaving a junction that already has an outlet starts at the "
+                      "next house connection, or 10 m away if that connection is nearer — user "
+                      "rule 2026-08-18, matching SWNETWROK FANOUT_GAP_M; the gap length itself is "
+                      "a layout convention, not a PAM-GUD value"),
 }
 TAU_PA = ASSUMPTIONS["TAU_PA"][0]
 OCCUPANCY = ASSUMPTIONS["OCCUPANCY"][0]

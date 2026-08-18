@@ -90,7 +90,7 @@ def test_manhole_spacing_and_labels():
     topo.mark_arterials(Gu)
     outfall = topo.nkey(0.0, 0.0)
     Gd, _ = topo.build_tree(Gu, outfall)
-    nodes, pipes = manholes.place(Gd, outfall, s)
+    nodes, pipes, _sr = manholes.place(Gd, outfall, s)
     assert all(p["length"] <= C.MH_SPLIT_LEN + 0.01 for p in pipes)
     assert sum(1 for n in nodes.values() if n["kind"] == "spacing") == 4   # 450/100 -> 5 pieces
     labels = [n["label"] for n in nodes.values()]
@@ -108,7 +108,7 @@ def test_bend_split():
     Gu = topo.build_undirected(segs, s)
     outfall = topo.nkey(0.0, 0.0)
     Gd, _ = topo.build_tree(Gu, outfall)
-    nodes, pipes = manholes.place(Gd, outfall, s)
+    nodes, pipes, _sr = manholes.place(Gd, outfall, s)
     kinds = [n["kind"] for n in nodes.values()]
     assert len(pipes) >= 2                        # split at the 90-degree bend
 
@@ -119,3 +119,45 @@ def test_boundary_repair(tmp_path):
     gpd.GeoDataFrame(geometry=[poly], crs="EPSG:32640").to_file(tmp_path / "b.shp")
     b = prep.load_boundary(str(tmp_path / "b.shp"))
     assert b.is_valid and b.area == pytest.approx(10000.0)
+
+
+def test_one_physical_outlet_per_structure():
+    """User rule 2026-08-18: two chambers at one point, each with an outlet, IS a
+    two-outlet junction. resolve_structures must merge them and offset the loser."""
+    s = FakeSampler()
+    # a main street and a side street whose head lands 5 cm from the main junction
+    nodes = {
+        (0.0, 0.0): {"x": 0.0, "y": 0.0, "z": 350.0, "kind": "outfall"},
+        (100.0, 0.0): {"x": 100.0, "y": 0.0, "z": 351.0, "kind": "junction"},
+        (100.05, 0.0): {"x": 100.05, "y": 0.0, "z": 351.0, "kind": "junction"},
+        (100.0, 60.0): {"x": 100.0, "y": 60.0, "z": 352.0, "kind": "head"},
+        (160.0, 0.0): {"x": 160.0, "y": 0.0, "z": 352.5, "kind": "head"},
+    }
+    pipes = [
+        {"up": (100.0, 0.0), "dn": (0.0, 0.0),
+         "geom": LineString([(100, 0), (0, 0)]), "length": 100.0, "label": "P1"},
+        # second chamber at the same point drains the side street -> its own outlet
+        {"up": (100.05, 0.0), "dn": (0.0, 0.0),
+         "geom": LineString([(100.05, 0), (0, 0)]), "length": 100.05, "label": "P2"},
+        {"up": (100.0, 60.0), "dn": (100.0, 0.0),
+         "geom": LineString([(100, 60), (100, 0)]), "length": 60.0, "label": "P3"},
+        {"up": (160.0, 0.0), "dn": (100.05, 0.0),
+         "geom": LineString([(160, 0), (100.05, 0)]), "length": 59.95, "label": "P4"},
+    ]
+    rep = manholes.resolve_structures(nodes, pipes, s)
+    assert rep["merged"] == 1                       # the coincident pair became one chamber
+    assert rep["fanouts"] == 1                      # which exposed a two-outlet junction
+    outs = {}
+    for p in pipes:
+        outs[p["up"]] = outs.get(p["up"], 0) + 1
+    assert all(v == 1 for v in outs.values()), "a chamber may have only ONE outgoing pipe"
+    # the losing branch now starts clear of the chamber
+    merged = [k for k in nodes if abs(nodes[k]["x"] - 100.0) < 0.2 and abs(nodes[k]["y"]) < 0.2]
+    assert len(merged) == 1
+    mx, my = nodes[merged[0]]["x"], nodes[merged[0]]["y"]
+    for p in pipes:
+        if p["up"] == merged[0]:
+            continue
+        d = math.dist(p["geom"].coords[0], (mx, my))
+        assert d >= C.FANOUT_OFFSET_M - 0.01 or p["dn"] == merged[0], \
+            f"branch starts only {d:.1f} m from the chamber"

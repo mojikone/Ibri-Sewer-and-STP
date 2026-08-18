@@ -17,3 +17,19 @@
 | F4 | minor | Plots with CLASS outside A/B/P silently vanished from the load model | Counted (`class_other`), audited as a violation if nonzero |
 
 Refuted (6): findings the verification stage could not reproduce or judged immaterial at concept stage — retained in the workflow transcript, not acted on.
+
+---
+
+## User structural audit (2026-08-18) — the two layout rules
+
+The user asked whether the SWNETWROK rules had actually been adopted: **(1) no loops, (2) one outlet per junction, with extra branches starting ~10 m clear of the chamber.** Verifying against the run output rather than the code's intent found this:
+
+| # | Rule | State before | Fix |
+|---|---|---|---|
+| U-1 | No loops | **Held.** Spanning tree by construction: 2,358 pipes over 2,359 chambers, acyclic, one component | — (invariant now asserted inside `resolve_structures`, not just at tree build) |
+| U-2 | One outlet per junction | **Held in the graph, broken on the ground.** 0 nodes had out-degree >1, but 251 chamber pairs sat within 1 m of each other (many at the same point), each with its own outlet — physically a two-outlet junction. Root cause: centimetre-level node keys from road noding plus cross-street heads planted beside existing junctions | `manholes.resolve_structures`: merge chambers within 3 m → re-derive the shortest-path tree over the merged pipe set (merging can also close a loop) → the leftover pipes are the extra outlets |
+| U-3 | Extra branch starts ~10 m clear | **Not adopted at all.** The W4 plan had said "discard the mechanism, keep the rule" — the topological rule was kept and the geometric separation never implemented, so augmented branch heads sat 2.5 m (and less) from junction chambers | `FANOUT_OFFSET_M = 10 m` in criteria; every leftover pipe is trimmed to start at the **next house connection** along its alignment, or 10 m when that connection is nearer; branches too short to keep a clear start are dropped and reported; a final pass slides any head still inside another chamber's clearance |
+
+Test-area effect: 255 chambers merged, 125 fan-outs resolved, 357 branch starts offset, 90 branches dropped (streets served from the far end); network 95.3 → 90.4 km, chambers 2,359 → 2,137.
+
+Independent verification on the exported network: loop-free **PASS**, one-outlet **PASS**, 568/569 branch heads ≥10 m clear, one chamber pair at 2.78 m (vs 3.0 m). The two residuals are reported, not suppressed. New permanent guards: `mh-clearance` and `head-offset` audit checks, assertions inside `resolve_structures`, and `test_one_physical_outlet_per_structure` on a synthetic two-chambers-at-one-point case.

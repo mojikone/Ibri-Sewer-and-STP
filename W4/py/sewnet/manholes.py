@@ -13,7 +13,10 @@ Output model:
 
 import math
 import networkx as nx
+import numpy as np
+from scipy.spatial import cKDTree
 from shapely.geometry import LineString
+from shapely.ops import substring
 
 from . import criteria as C
 
@@ -77,7 +80,264 @@ def _cut(geom, chainages):
     return pieces
 
 
-def place(Gd, outfall, sampler):
+def resolve_structures(nodes, pipes, sampler, units=None,
+                       snap_m=None, offset_m=None):
+    """ONE PHYSICAL OUTLET PER STRUCTURE (user rule 2026-08-18).
+
+    A spanning tree gives every NODE one outgoing pipe, but two nodes can sit at the
+    same physical point (road noding + cross-street augmentation produce keys a few
+    centimetres apart). Two chambers at one point, each with its own outlet, IS a
+    two-outlet junction on the ground — the thing the rule forbids.
+
+    Two steps:
+      1. merge every cluster of manholes within `snap_m` into one chamber — this makes
+         the hidden fan-outs visible as nodes with out_degree > 1;
+      2. resolve each fan-out: the main pipe (steepest hydraulic drop) keeps the
+         chamber; every other outgoing pipe is trimmed back so it STARTS clear of it —
+         at the next house connection along its own alignment, or `offset_m` if that
+         connection lies nearer. A loser too short to keep a clear start is dropped
+         (its street is served from the other end) and reported, never silently.
+    """
+    snap_m = C.MH_SNAP_M if snap_m is None else snap_m
+    offset_m = C.FANOUT_OFFSET_M if offset_m is None else offset_m
+    rep = {"merged": 0, "fanouts": 0, "offset_branches": 0, "dropped_branches": 0,
+           "offsets_m": []}
+
+    # ---------- 1. merge coincident chambers ----------
+    keys = list(nodes.keys())
+    pts = np.array([[nodes[k]["x"], nodes[k]["y"]] for k in keys])
+    parent = {k: k for k in keys}
+
+    def find(a):
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]
+            a = parent[a]
+        return a
+
+    for i, j in cKDTree(pts).query_pairs(snap_m):
+        ra, rb = find(keys[i]), find(keys[j])
+        if ra != rb:
+            parent[ra] = rb
+
+    clusters = {}
+    for k in keys:
+        clusters.setdefault(find(k), []).append(k)
+
+    deg = {k: 0 for k in keys}
+    for p in pipes:
+        deg[p["up"]] = deg.get(p["up"], 0) + 1
+        deg[p["dn"]] = deg.get(p["dn"], 0) + 1
+
+    rep_of = {}
+    for members in clusters.values():
+        if len(members) == 1:
+            rep_of[members[0]] = members[0]
+            continue
+        keep = next((m for m in members if nodes[m]["kind"] == "outfall"), None)
+        if keep is None:
+            keep = max(members, key=lambda m: deg.get(m, 0))
+        for m in members:
+            rep_of[m] = keep
+        rep["merged"] += len(members) - 1
+
+    for p in list(pipes):
+        p["up"], p["dn"] = rep_of[p["up"]], rep_of[p["dn"]]
+        if p["up"] == p["dn"]:
+            pipes.remove(p)
+            continue
+        cs = list(p["geom"].coords)
+        cs[0] = (nodes[p["up"]]["x"], nodes[p["up"]]["y"])
+        cs[-1] = (nodes[p["dn"]]["x"], nodes[p["dn"]]["y"])
+        p["geom"] = LineString(cs)
+        p["length"] = p["geom"].length
+    for k in keys:
+        if rep_of[k] != k:
+            nodes.pop(k, None)
+
+    # ---------- 2. re-derive the tree on the merged pipe set ----------
+    # Merging can leave a chamber with several outgoing pipes AND can close a loop
+    # (two chambers at one point may also be linked by a path). Both rules are
+    # restored constructively: shortest-path tree to the outfall gives every chamber
+    # exactly one outlet and no loops; whatever is left over is a loop-closing pipe.
+    outfall_key = next((k for k, d in nodes.items() if d["kind"] == "outfall"), None)
+    Gu = nx.Graph()
+    for idx, p in enumerate(pipes):
+        if Gu.has_edge(p["up"], p["dn"]):
+            if Gu[p["up"]][p["dn"]]["length"] <= p["length"]:
+                continue
+        Gu.add_edge(p["up"], p["dn"], length=p["length"], idx=idx)
+    dist, paths = nx.single_source_dijkstra(Gu, outfall_key, weight="length")
+
+    keep_edge, tree_parent = {}, {}
+    for n, path in paths.items():
+        if len(path) < 2:
+            continue
+        parent = path[-2]
+        tree_parent[n] = parent
+        keep_edge[frozenset((n, parent))] = True
+
+    kept, extras = [], []
+    seen_edges = set()
+    for p in pipes:
+        ek = frozenset((p["up"], p["dn"]))
+        if keep_edge.get(ek) and ek not in seen_edges:
+            seen_edges.add(ek)
+            # orient toward the outfall: the parent end is downstream
+            child = p["up"] if tree_parent.get(p["up"]) == p["dn"] else p["dn"]
+            parent = tree_parent.get(child)
+            if parent is None:
+                extras.append(p)
+                continue
+            if p["up"] != child:
+                p["up"], p["dn"] = child, parent
+                p["geom"] = LineString(list(p["geom"].coords)[::-1])
+            kept.append(p)
+        else:
+            extras.append(p)
+
+    unit_tree = cKDTree(np.array([[u["x"], u["y"]] for u in units])) if units else None
+
+    def start_chainage(geom):
+        """Where an offset branch begins: the next house connection along this
+        alignment, or the fixed offset when that connection sits nearer."""
+        if unit_tree is None:
+            return offset_m
+        d = offset_m
+        while d < min(geom.length - 2.0, 60.0):
+            pt = geom.interpolate(d)
+            if len(unit_tree.query_ball_point([pt.x, pt.y], 30.0)) > 0:
+                return d
+            d += 2.0
+        return offset_m
+
+    pipes[:] = kept
+    for p in extras:
+        rep["fanouts"] += 1
+        # drain toward whichever end is nearer the outfall; trim the other end clear
+        du, dv = dist.get(p["up"], 1e18), dist.get(p["dn"], 1e18)
+        geom = p["geom"] if dv <= du else LineString(list(p["geom"].coords)[::-1])
+        dn_key = p["dn"] if dv <= du else p["up"]
+        if geom.length < offset_m + 5.0:
+            rep["dropped_branches"] += 1              # street served from its far end
+            continue
+        off = min(start_chainage(geom), geom.length - 5.0)
+        seg = substring(geom, off, geom.length)
+        if seg is None or seg.geom_type != "LineString" or seg.length < 5.0:
+            rep["dropped_branches"] += 1
+            continue
+        hk = (round(seg.coords[0][0], 2), round(seg.coords[0][1], 2))
+        if hk in nodes:
+            rep["dropped_branches"] += 1
+            continue
+        nodes[hk] = {"x": seg.coords[0][0], "y": seg.coords[0][1],
+                     "z": sampler.z(seg.coords[0][0], seg.coords[0][1]), "kind": "head"}
+        pipes.append({"up": hk, "dn": dn_key, "geom": seg, "length": seg.length})
+        rep["offset_branches"] += 1
+        rep["offsets_m"].append(round(off, 1))
+
+    # ---------- 3. every branch start must stand clear of other chambers ----------
+    # Generic guarantee for the offset rule, wherever the head came from (tree head,
+    # crest split, offset loser): slide the head along its own pipe until it is at
+    # least offset_m from any other chamber; drop the branch if its pipe is too short
+    # to keep a clear start (that street is served from its far end).
+    N_PASSES = 8          # sliding a head can bring it near a different chamber; iterate
+    for _pass in range(N_PASSES):
+        # heads derived from LIVE degrees: step 2 may have flipped pipe directions, so
+        # the stored `kind` is stale until the refresh at the end of this function
+        indeg_l, outdeg_l = {}, {}
+        for p in pipes:
+            outdeg_l[p["up"]] = outdeg_l.get(p["up"], 0) + 1
+            indeg_l[p["dn"]] = indeg_l.get(p["dn"], 0) + 1
+        heads = [k for k in nodes
+                 if indeg_l.get(k, 0) == 0 and outdeg_l.get(k, 0) == 1
+                 and nodes[k]["kind"] != "outfall"]
+        if not heads:
+            break
+        allk = list(nodes.keys())
+        allpts = np.array([[nodes[k]["x"], nodes[k]["y"]] for k in allk])
+        kd = cKDTree(allpts)
+        out_of = {}
+        for p in pipes:
+            out_of.setdefault(p["up"], []).append(p)
+        moved = 0
+        for h in heads:
+            if h not in nodes:                         # already moved/dropped this pass
+                continue
+            ps = [q for q in out_of.get(h, []) if q in pipes]
+            if len(ps) != 1:
+                continue
+            p = ps[0]
+            near = [allk[j] for j in kd.query_ball_point([nodes[h]["x"], nodes[h]["y"]], offset_m)
+                    if allk[j] in nodes and allk[j] != h and allk[j] != p["dn"]]
+            if not near:
+                continue
+            worst = min(math.dist((nodes[h]["x"], nodes[h]["y"]),
+                                  (nodes[k]["x"], nodes[k]["y"])) for k in near)
+            need = offset_m - worst + 0.5
+            if _pass == N_PASSES - 1:
+                need = max(need, offset_m)   # final pass: clear the full offset or drop
+            if p["length"] - need < 5.0:
+                pipes.remove(p)                        # cannot keep a clear start
+                del nodes[h]
+                rep["dropped_branches"] += 1
+                moved += 1
+                continue
+            seg = substring(p["geom"], need, p["length"])
+            if seg is None or seg.geom_type != "LineString" or seg.length < 5.0:
+                pipes.remove(p)
+                del nodes[h]
+                rep["dropped_branches"] += 1
+                moved += 1
+                continue
+            hk = (round(seg.coords[0][0], 2), round(seg.coords[0][1], 2))
+            if hk in nodes:
+                pipes.remove(p)
+                del nodes[h]
+                rep["dropped_branches"] += 1
+                moved += 1
+                continue
+            nodes[hk] = {"x": seg.coords[0][0], "y": seg.coords[0][1],
+                         "z": sampler.z(seg.coords[0][0], seg.coords[0][1]), "kind": "head"}
+            del nodes[h]
+            p["up"], p["geom"], p["length"] = hk, seg, seg.length
+            rep["offset_branches"] += 1
+            rep["offsets_m"].append(round(need, 1))
+            moved += 1
+        if moved == 0:
+            break
+
+    # ---------- 4. tidy: drop orphan chambers, refresh kinds ----------
+    used = set()
+    for p in pipes:
+        used.add(p["up"])
+        used.add(p["dn"])
+    for k in list(nodes.keys()):
+        if k not in used and nodes[k]["kind"] != "outfall":
+            del nodes[k]
+    indeg = {k: 0 for k in nodes}
+    outdeg = {k: 0 for k in nodes}
+    for p in pipes:
+        outdeg[p["up"]] = outdeg.get(p["up"], 0) + 1
+        indeg[p["dn"]] = indeg.get(p["dn"], 0) + 1
+    for k, d in nodes.items():
+        if d["kind"] == "outfall":
+            continue
+        if indeg.get(k, 0) == 0:
+            d["kind"] = "head"
+        elif d["kind"] != "spacing":        # spacing chambers keep their identity
+            d["kind"] = "junction"
+
+    # hard guarantees: no loops, one outlet per chamber (the two user rules)
+    Gchk = nx.DiGraph()
+    for p in pipes:
+        Gchk.add_edge(p["up"], p["dn"])
+    assert nx.is_directed_acyclic_graph(Gchk), "loop survived structure resolution"
+    bad = [n for n in Gchk.nodes if Gchk.out_degree(n) > 1]
+    assert not bad, f"{len(bad)} chambers still have more than one outlet"
+    return rep
+
+
+def place(Gd, outfall, sampler, units=None):
     """Manholes + pipe reaches from the directed tree. Returns (nodes, pipes) dicts."""
     kind = {}
     for n in Gd.nodes:
@@ -168,6 +428,9 @@ def place(Gd, outfall, sampler):
                           "length": piece.length})
             prev_key = nxt_key
 
+    # one physical outlet per structure (merge coincident chambers, offset extra outlets)
+    struct_report = resolve_structures(nodes, pipes, sampler, units)
+
     # deterministic labels: MH-#### upstream-to-downstream by network distance to outfall
     order = _label_order(nodes, pipes, outfall)
     labels = {}
@@ -182,7 +445,7 @@ def place(Gd, outfall, sampler):
         nodes[n]["label"] = lab
     for i, p in enumerate(pipes):
         p["label"] = f"P-{i+1:04d}"
-    return nodes, pipes
+    return nodes, pipes, struct_report
 
 
 def _label_order(nodes, pipes, outfall):

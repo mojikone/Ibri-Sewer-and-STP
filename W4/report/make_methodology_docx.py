@@ -29,6 +29,8 @@ aug = S["augmentation"]
 lp = S["lowplots"]
 ld = S["loads"]
 dn_km = S["dn_km"]
+sr = S.get("structures", {})
+VIOL = json.load(open(os.path.join(W4, "run", "violations.json")))
 
 doc = Document()
 
@@ -159,7 +161,7 @@ table(["Item", "Value"], [
     ["Network designed", f"{S['n_nodes']:,} manholes / {S['net_km']:.1f} km"],
     ["Peak flow at outfall", f"{S['qpeak_outfall_ls']:.0f} L/s (Qadf {S['qadf_outfall_m3d']:,.0f} m3/d)"],
     ["Audit result", f"{S['violations']} violations"],
-    ["Code / tests", "W4/py/sewnet — 43 pytest cases, Table-11 gate"],
+    ["Code / tests", "W4/py/sewnet — 44 pytest cases, Table-11 gate"],
 ], widths=[2.2, 4.0], font=10)
 pagebreak()
 
@@ -172,12 +174,14 @@ pagebreak()
 H(1, "Executive summary")
 para("We built the sewer design pipeline, proved it end to end on the "
      f"{S['s1']['boundary_ha']:.0f} ha test boundary, put it through a 21-agent adversarial "
-     "review, fixed everything the review confirmed, and the final design passes its own audit "
-     "with zero violations. Here is the whole story in one page.")
+     "review and a two-rule structural audit (no loops; one outlet per chamber), fixed "
+     f"everything both found, and the design now holds those rules with "
+     f"{len(VIOL)} marginal residuals out of {S['n_nodes']:,} chambers. Here is the whole story "
+     "in one page.")
 para(f"The pipeline takes four inputs — roads, classified plots, the 0.5 m terrain and a boundary — "
      f"and produces a complete gravity network: {S['n_nodes']:,} manholes, {S['net_km']:.1f} km of "
-     f"pipe ({float(dn_km['200'])/S['net_km']*100:.0f}% DN200, stepping through DN250–400 to a "
-     f"DN500 outfall leg), designed inverts everywhere, {13} seconds to run. Every one of the "
+     f"pipe ({float(dn_km['200'])/S['net_km']*100:.0f}% DN200, stepping up to a DN600 outfall leg), "
+     f"designed inverts everywhere, about 11 seconds to run. Every one of the "
      f"{ld['loaded_points']:,} loaded units ({ld['built']:,} built plots, {ld['planned']} planned, "
      f"{ld['unparceled']} unparceled buildings; {ld['farms_excluded']} farms excluded per doctrine) "
      f"lands on exactly one manhole — nothing silently dropped, mass balance closes exactly. "
@@ -188,7 +192,7 @@ para("The hydraulics were never taken on faith, and the verification regime earn
      "before it was allowed to size anything — it does, mean deviation under 2%. Then the "
      "adversarial panel attacked the code and confirmed 11 real defects, all now fixed: the "
      "spanning tree covered every road junction but skipped 25 km of cross-street edges (fixed "
-     "with the standard crest-manhole layout); pipe capacity was computed on nominal diameter "
+     "with a crest-manhole layout); pipe capacity was computed on nominal diameter "
      "while OD-designated PVC-U bores smaller (now on true SDR34 bore); a broken bisection in the "
      "velocity-cap solver; and drop structures measured against the wrong datum. 43 pytest cases "
      "lock all of it in.")
@@ -211,6 +215,14 @@ bullet(f"({S['solver']['pockets']} pocket, ~5 properties) — absorb-to-detail-d
        f"{S['drops']} drop structures ({S['vortex_sites']} vortex-class) concentrate at wadi-bank "
        f"crossings, exactly where detail design applies the G1-p85 crossing rules.",
        bold_lead="One SLS pocket appeared ")
+para(f"The structural audit found something the graph checks had hidden (section 4a): the tree "
+     f"gave every node one outlet, but {sr.get('merged', 0)} chambers sat within 3 m of another "
+     f"chamber — many at the same point — each with its own outlet. On the ground that is a "
+     f"two-outlet junction, exactly what the rule forbids. The pipeline now merges coincident "
+     f"chambers, re-derives the tree over the merged set (which also removes loops that merging "
+     f"exposes), and offsets every extra outgoing pipe so it starts at the next house connection "
+     f"or 10 m clear of the chamber — the SWNETWROK convention, which had not been adopted until "
+     f"it was called for.")
 para("Also delivered on the way: T01 Rev 3 — the tutorial now teaches Colebrook-White (§14), "
      "Table 11 derived step by step, every number independently verified.")
 para("What is proven: doctrine loads in, guideline-compliant network out, auditable and "
@@ -295,8 +307,44 @@ bullet("every candidate DN is judged at its own governing slope (no-oversizing, 
        bold_lead="Sizing without the ratchet: ")
 bullet("never a silent orphan.", bold_lead=">12 m depth becomes an SLS pocket (p33 + rule 9) — ")
 
-# ================= 4 CONNECTABILITY =================
-H(1, "4. The house-connectability check")
+# ================= 4a STRUCTURE RULES =================
+H(1, "4. Loop-free, and one outlet per chamber")
+para("Both rules are enforced constructively, not checked after the fact, and both are verified "
+     "independently on the final output.")
+para("No loops. The collection network is a spanning tree by construction: a cost-weighted "
+     "shortest-path tree to the outfall, where each chamber's single outgoing pipe is its next "
+     f"hop. Loop-closing street edges can never become pipes in that step. Final output: "
+     f"{S['n_nodes']:,} chambers, {S['n_pipes']:,} pipes, one connected component, acyclic — the "
+     "pipe count being chambers-minus-one is the arithmetic signature of a tree.")
+para("One outlet per chamber. A junction takes any number of inlets and exactly one outgoing "
+     "pipe. The catch the graph checks missed: two separate chambers can sit at the same physical "
+     "point (road noding rounds to the centimetre, and the cross-street augmentation planted "
+     "branch heads next to existing junctions). Each had one outlet in the graph; together they "
+     "were a two-outlet junction on the ground. The fix, in order:", space_after=4)
+bullet("they are one structure, which makes the hidden fan-outs visible as chambers with two "
+       "outgoing pipes;", bold_lead="merge every cluster of chambers within 3 m — ")
+bullet("because merging can also close a loop (two chambers at one point may additionally be "
+       "linked by a path). This restores one-outlet-and-no-loops in a single step and marks the "
+       "leftover pipes as loop-closers;", bold_lead="re-derive the tree over the merged pipe set, ")
+bullet("at the next house connection along its own alignment, or 10 m when that connection sits "
+       "nearer — the SWNETWROK FANOUT_GAP_M convention. A branch whose pipe is too short to keep "
+       "a clear start is dropped and reported (its street is served from the far end);",
+       bold_lead="offset every leftover pipe so it starts clear of the chamber: ")
+bullet("iterating until nothing moves.",
+       bold_lead="slide any remaining branch head clear of neighbouring chambers, ")
+para(f"Test-area result: {sr.get('merged', 0)} coincident chambers merged, "
+     f"{sr.get('fanouts', 0)} fan-outs resolved, {sr.get('offset_branches', 0)} branch starts "
+     f"offset, {sr.get('dropped_branches', 0)} branches dropped as served-from-far-end. "
+     f"Independent verification on the exported network: loop-free PASS, one-outlet PASS, 568 of "
+     f"569 branch heads at least 10 m clear, one chamber pair at 2.78 m instead of 3.0 m. Those "
+     f"residuals are reported rather than hidden — both are local layout details for detail "
+     f"design, and the audit keeps flagging them.")
+para("The same three checks now run in the audit every time (mh-clearance, head-offset, "
+     "one-outlet), with a unit test on a synthetic two-chambers-at-one-point case, so this "
+     "cannot regress silently.")
+
+# ================= 5 CONNECTABILITY =================
+H(1, "5. The house-connectability check")
 para("Roads are locally elevated for flood protection and underpasses, so houses can sit below the "
      "sewer. For every loaded unit: plot ground (0.5 m terrain) minus 0.6 m outlet depth must reach "
      "its manhole's invert with 2% fall over the connection distance. Failures raise a deepening "
@@ -309,13 +357,17 @@ pic(os.path.join(IMG_MAPS, "W4_M3_connectability.png"), 4.6,
 pagebreak()
 
 # ================= 5 RESULTS =================
-H(1, "5. Test-boundary results")
+H(1, "6. Test-boundary results")
 table(["Quantity", "Value"], [
     ["Area / roads / network",
      f"{S['s1']['boundary_ha']:.0f} ha / {S['s1']['len_km']:.1f} km roads / {S['net_km']:.1f} km "
      f"sewers ({aug['added_km']} km from cross-street augmentation; {aug['skipped_km']} km of "
      f"unloaded streets deliberately unsewered)"],
-    ["Manholes / pipes", f"{S['n_nodes']:,} / {S['n_pipes']:,} (single tree, one outfall)"],
+    ["Manholes / pipes", f"{S['n_nodes']:,} / {S['n_pipes']:,} (single tree, one outfall — chambers minus one)"],
+    ["Structure rules (section 4)", f"{sr.get('merged',0)} coincident chambers merged · "
+                                   f"{sr.get('fanouts',0)} fan-outs resolved · "
+                                   f"{sr.get('offset_branches',0)} branch starts offset · "
+                                   f"{sr.get('dropped_branches',0)} branches dropped"],
     ["Diameters", " · ".join(f"DN{k} {v} km" for k, v in dn_km.items())],
     ["Loaded units", f"{ld['loaded_points']:,} (built {ld['built']:,} + planned {ld['planned']} + "
                      f"unparceled {ld['unparceled']}); farms excluded {ld['farms_excluded']}"],
@@ -330,8 +382,9 @@ table(["Quantity", "Value"], [
     ["SLS pockets", f"{S['solver']['pockets']} (~5 properties, absorb per rule 9)"],
     ["Low plots", f"{lp['flagged']} flagged, {lp['residual']} residual after deepening "
                   f"{lp['deepened_mh']} manholes"],
-    ["Audit", f"{S['violations']} violations (saturation run, including independent drop "
-              f"re-derivation)"],
+    ["Audit", f"{S['violations']} violations — structural residuals only (one chamber pair at "
+              f"2.78 m vs the 3.0 m clearance; one branch head at 9.1 m vs the 10 m offset); "
+              f"everything else clean, including independent drop re-derivation"],
     ["Self-cleansing transparency",
      f"{sc['below_075_at_peak']:,}/{sc['pipes']:,} pipes below 0.75 m/s at saturation peak — "
      f"compliant via tractive at tau=1 Pa [GAP-9]; {sc['would_fail_at_tau2']:,} would need "
@@ -345,7 +398,7 @@ pic(os.path.join(IMG_MAPS, "W4_M2_depth.png"), 4.4,
 pagebreak()
 
 # ================= 6 SEWERGEMS =================
-H(1, "6. SewerGEMS package and referee protocol")
+H(1, "7. SewerGEMS package and referee protocol")
 para("W4/sewergems/ holds MANHOLES, CONDUITS and OUTFALL shapefiles built to the Bentley-documented "
      "ModelBuilder mappings (explicit START_ND/STOP_ND plus vertex-snapped geometry digitised "
      "upstream to downstream, elevations not depths, numeric mm diameters), LOADS.xlsx "
@@ -359,7 +412,7 @@ para("After the model run, paste SewerGEMS discharge, velocity and d/D into REFE
      "'verified' until the two engines agree — deliberately a separate run, not a self-check.")
 
 # ================= 7 ASSUMPTIONS =================
-H(1, "7. Assumptions register")
+H(1, "8. Assumptions register")
 para("Tagged in criteria.ASSUMPTIONS with the same wording, and reported in every deliverable:")
 table(["Assumption", "Basis / exposure"], [
     ["tau = 1 Pa", "GUD-203 gives no numeric design tractive stress [GAP-9]; largest redesign "
@@ -376,10 +429,12 @@ table(["Assumption", "Basis / exposure"], [
     ["Gravity in-road position", "taken from the force-main clause (p51, A9) as an inference"],
     ["PF held below 100 properties", "G1-p71 prescribes no formula there; Peltier held the same way"],
     ["Infiltration unpeaked", "add-order not stated in GUD-201 — kickoff item"],
+    ["10 m branch-start offset, 3 m chamber clearance",
+     "layout conventions from SWNETWROK and the user's rule, not PAM-GUD values"],
 ], widths=[2.2, 4.1], font=9)
 
 # ================= 8 LIMITATIONS =================
-H(1, "8. Limitations and what changes at full scale")
+H(1, "9. Limitations and what changes at full scale")
 bullet("the pipeline designs subnetworks into the given connection points, which are config "
        "entries, not structure.", bold_lead="The trunk is user-finalised (settled 2026-08-18) — ")
 bullet("multi-connection territory competition is the W5 structural addition.",
@@ -391,13 +446,18 @@ bullet("flat trunk profiles at scale need survey-grade data — already a regist
                  "(G1-p36); ")
 bullet("pin it at the kickoff.", bold_lead="tau = 1 Pa carries the largest redesign exposure — ")
 
-H(1, "9. Adversarial review")
+H(1, "10. Adversarial review and structural audit")
 para("A 21-agent skeptic panel attacked the hydraulic core after the first audit-clean run: four "
      "attack lenses (Colebrook-White implementation, solver clause compliance, load/audit doctrine, "
      "executed edge cases) followed by independent verification of every raw finding. 17 raw "
      "findings, 11 confirmed, 11 fixed, 6 refuted. The full register with fixes is in "
      "W4/docs/REVIEW_FINDINGS.md; the headline four were cross-street coverage (+25.3 km), the "
      "true PVC bore correction, the drop-datum correction, and the velocity-cap bisection repair.")
+para("A second, user-driven audit then checked the two layout rules directly against the run "
+     "output: no loops (held) and one outlet per junction (held in the graph, broken on the "
+     "ground — see section 4). The 10 m branch-start offset had not been implemented at all; it "
+     "now is, with permanent audit checks and a unit test. Both audits are recorded in "
+     "W4/docs/REVIEW_FINDINGS.md.")
 
 doc.save(OUT)
 print("saved", OUT)

@@ -103,6 +103,41 @@ def run(nodes, pipes, units, per_mh, sampler, label="saturation", load_stats=Non
                 v.append(("cover-max", lab, f"depth {g_ch-inv_ch:.2f} m at ch {ch:.0f}"))
                 break
 
+    # ---- physical structure rules (user 2026-08-18) ----
+    # (a) no two chambers may occupy the same point: two coincident manholes each with
+    #     their own outlet ARE a two-outlet junction on the ground, even though the
+    #     graph shows out_degree 1 on each;
+    # (b) a branch leaving a junction that already has an outlet must start clear of it.
+    import numpy as _np
+    from scipy.spatial import cKDTree as _KD
+    nkeys = list(nodes.keys())
+    if len(nkeys) > 1:
+        npts = _np.array([[nodes[k]["x"], nodes[k]["y"]] for k in nkeys])
+        kidx = {k: i for i, k in enumerate(nkeys)}
+        linked = set()
+        for p in pipes:
+            linked.add(frozenset((kidx[p["up"]], kidx[p["dn"]])))
+        kd = _KD(npts)
+        for i, j in kd.query_pairs(C.MH_MIN_CLEAR_M):
+            if frozenset((i, j)) in linked:
+                continue          # consecutive chambers on one reach — a short pipe, not a clash
+            d = float(_np.hypot(*(npts[i] - npts[j])))
+            v.append(("mh-clearance", f"{nodes[nkeys[i]]['label']}/{nodes[nkeys[j]]['label']}",
+                      f"separate chambers {d:.2f} m apart (< {C.MH_MIN_CLEAR_M} m)"))
+        for k, d0 in nodes.items():
+            if d0["kind"] != "head":
+                continue
+            for j in kd.query_ball_point(npts[kidx[k]], C.FANOUT_OFFSET_M):
+                other = nkeys[j]
+                if other == k or frozenset((kidx[k], j)) in linked:
+                    continue
+                if nodes[other]["kind"] in ("junction", "outfall"):
+                    dd = float(_np.hypot(*(npts[kidx[k]] - npts[j])))
+                    v.append(("head-offset", d0["label"],
+                              f"branch starts {dd:.1f} m from {nodes[other]['label']} "
+                              f"(< {C.FANOUT_OFFSET_M} m offset)"))
+                    break
+
     # mass balance: outfall Qadf == units * unit load (+ nothing lost)
     outfall = [n for n, d in nodes.items() if d["kind"] == "outfall"][0]
     q_in = sum(G[u][outfall]["obj"]["qadf_m3d"] for u in G.predecessors(outfall))

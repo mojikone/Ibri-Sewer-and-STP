@@ -44,7 +44,7 @@ def straight_network(sampler, length=400.0, units_spec=((0, 3), (200, 2))):
     outfall = topo.nkey(0.0, 0.0)
     Gd, unreach = topo.build_tree(Gu, outfall)
     assert not unreach
-    nodes, pipes = manholes.place(Gd, outfall, sampler)
+    nodes, pipes, _sr = manholes.place(Gd, outfall, sampler)
     units = []
     k = 0
     for x, cnt in units_spec:

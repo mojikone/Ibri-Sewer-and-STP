@@ -19,6 +19,8 @@ from shapely.strtree import STRtree
 CLIMB_PENALTY = 300.0    # m of equivalent length per m of uphill climb (W2 s3 KCLIMB — method choice)
 ARTERIAL_FACTOR = 0.70   # prefer arterial/wide corridors (W2 s3 rf — method choice)
 
+from .criteria import FANOUT_OFFSET_M as FANOUT_OFFSET  # branch-start clearance (user rule)
+
 
 def nkey(x, y):
     return (round(x, 2), round(y, 2))
@@ -162,9 +164,21 @@ def augment_cross_streets(Gu, Gd, sampler, units, frontage_m=40.0):
             continue
         prof = sampler.profile(geom, 5.0)
         ch = max(prof, key=lambda r: r[3])[0]
-        ch = min(max(ch, 2.0), geom.length - 2.0)
-        for start, end, corner in ((max(ch - 0.5, 1.0), 0.0, ca),
-                                   (min(ch + 0.5, geom.length - 1.0), geom.length, cb)):
+        L = geom.length
+        ch = min(max(ch, 2.0), L - 2.0)
+        # Crest layout under the one-outlet rule (user 2026-08-18): the crest chamber
+        # drains ONE way; the branch draining the other way starts FANOUT_OFFSET_M past
+        # it, so the two heads are never neighbours. Each head also stays clear of the
+        # opposite corner chamber, which already has its own outlet.
+        off = FANOUT_OFFSET
+        hA = min(ch, L - off)                        # branch draining to corner ca
+        hB = max(ch + off, off)                      # branch draining to corner cb
+        if L < 2 * off + 10.0:               # short street: one branch only, to the low corner
+            low = ca if sampler.z(*geom.coords[0][:2]) < sampler.z(*geom.coords[-1][:2]) else cb
+            plan = [(L - off, L, cb)] if low is cb else [(off, 0.0, ca)]
+        else:
+            plan = [(hA, 0.0, ca), (hB, L, cb)]
+        for start, end, corner in plan:
             seg = substring(geom, start, end)          # oriented summit -> corner
             if seg is None or seg.length < 1.0 or seg.geom_type != "LineString":
                 continue

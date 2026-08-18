@@ -52,9 +52,12 @@ def main():
 
     # ---- S3 manholes
     log("S3 manholes ...")
-    nodes, pipes = manholes.place(Gd, outfall, sampler)
+    nodes, pipes, sreport = manholes.place(Gd, outfall, sampler, units=units)
     log(f"  {len(nodes)} manholes, {len(pipes)} pipe reaches, "
         f"{sum(p['length'] for p in pipes)/1000:.1f} km")
+    log(f"  one-outlet enforcement: {sreport['merged']} coincident chambers merged -> "
+        f"{sreport['fanouts']} fan-outs resolved ({sreport['offset_branches']} branches offset, "
+        f"{sreport['dropped_branches']} dropped as served-from-far-end)")
 
     # ---- S4 assignment
     log("S4 assignment ...")
@@ -116,7 +119,7 @@ def main():
         "qadf_outfall_m3d": q_out_adf, "qpeak_outfall_ls": q_out_peak,
         "dn_km": {str(k): round(v / 1000.0, 3) for k, v in sorted(dn_hist.items())},
         "violations": len(violations), "startyear_flags": len(sy_flags),
-        "selfclean": sc, "augmentation": aug,
+        "selfclean": sc, "augmentation": aug, "structures": sreport,
         "max_depth_m": max(n["depth"] for n in nodes.values() if n["depth"] is not None),
         "drops": sum(len(n["drops"]) for n in nodes.values()),
         "vortex_sites": sum(1 for n in nodes.values()

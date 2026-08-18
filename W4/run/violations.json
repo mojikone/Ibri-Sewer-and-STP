@@ -1,1 +1,12 @@
-[]
+[
+  [
+    "mh-clearance",
+    "MH-1312/MH-1360",
+    "separate chambers 2.78 m apart (< 3.0 m)"
+  ],
+  [
+    "head-offset",
+    "MH-2023",
+    "branch starts 9.1 m from MH-2053 (< 10.0 m offset)"
+  ]
+]
