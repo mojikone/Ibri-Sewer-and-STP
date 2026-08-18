@@ -36,14 +36,19 @@ class TestHandCalcFixtures:
         q = H.q_full(0.315, 0.00270)
         assert q == pytest.approx(0.0577, rel=0.03)
 
-    def test_tractive_at_1_lps(self):
-        # Smin = 2.33e-4 * 1 * (0.001)^-0.461 = 2.33e-4 * 24.16 = 0.00563
-        assert H.smin_tractive(0.001) == pytest.approx(0.00563, rel=0.02)
+    def test_tractive_at_2_lps(self):
+        # Smin = 2.33e-4 * 1 * (0.002)^-0.461 = 2.33e-4 * 17.55 = 0.00409
+        assert H.smin_tractive(0.002) == pytest.approx(0.00409, rel=0.02)
 
-    def test_tractive_steeper_than_table11_at_heads(self):
-        # at 1 L/s a DN200 needs more than Table 11's 5.0 mm/m
-        assert H.smin_for(200, 0.001) > C.TABLE11[200]
-        # at 10 L/s Table 11 governs again
+    def test_tractive_floor_at_mara_qmin(self):
+        # below 1.5 L/s the formula holds at its 1.5 L/s value (~4.7 mm/m ~ Table 11 DN200)
+        assert H.smin_tractive(0.0001) == H.smin_tractive(C.TRACTIVE_QMIN)
+        assert H.smin_tractive(C.TRACTIVE_QMIN) == pytest.approx(0.00467, rel=0.02)
+
+    def test_table11_governs_at_tau_1(self):
+        # with tau = 1 Pa the floored tractive minimum sits just under Table 11 DN200,
+        # so Table 11 governs across the range; tractive takes over only if NWS sets tau > 1
+        assert H.smin_for(200, 0.001) == C.TABLE11[200]
         assert H.smin_for(200, 0.010) == C.TABLE11[200]
 
     def test_pf_merrimack_hold_value(self):

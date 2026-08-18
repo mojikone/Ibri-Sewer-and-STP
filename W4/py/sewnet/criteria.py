@@ -35,6 +35,11 @@ DN_MIN_MAIN = 200        # OD200 minimum main sewer (G203-p22 Tab 6)
 # Tractive-force minimum gradient at low-flow heads (G203-p27 §4.2.2.1, A9-corrected form):
 # Smin = K * tau^1.23 * Q^-0.461, Q in m3/s
 TRACTIVE_K = 2.33e-4
+TRACTIVE_QMIN = 0.0015   # m3/s — Mara's simplified-sewerage minimum design flow (1.5 L/s):
+                         # the formula's own literature basis evaluates it at no less than
+                         # this; unfloored it demands unbounded slopes as Q -> 0.
+                         # At the floor, tractive = 4.7 mm/m ~= Table 11's DN200 minimum —
+                         # the two methods meet. ASSUMPTION (with TAU_PA, GAP-9).
 
 # ---------------------------------------------------------------- manholes / depth
 # Max spacing by DN (G203-p30 Tab 12): DN200-315: 100 m; 350-900: 120; 1000-1400: 150; >1400: 200

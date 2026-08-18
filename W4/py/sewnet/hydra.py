@@ -73,10 +73,11 @@ def solve_dod(D, S, Q):
 
 def smin_tractive(Q):
     """Tractive-force minimum gradient (G203-p27 §4.2.2.1, A9-corrected):
-    Smin = 2.33e-4 * tau^1.23 * Q^-0.461, Q in m3/s, tau in Pa (GAP-9: tau = 1 Pa assumed)."""
-    if Q <= 0:
-        return C.TABLE11[200]
-    return C.TRACTIVE_K * (C.TAU_PA ** 1.23) * (Q ** -0.461)
+    Smin = 2.33e-4 * tau^1.23 * Q^-0.461, Q in m3/s, tau in Pa (GAP-9: tau = 1 Pa assumed).
+    Q floored at Mara's 1.5 L/s minimum design flow (criteria.TRACTIVE_QMIN) — the
+    formula's own literature convention; unfloored it demands unbounded slope as Q -> 0."""
+    q = max(Q, C.TRACTIVE_QMIN)
+    return C.TRACTIVE_K * (C.TAU_PA ** 1.23) * (q ** -0.461)
 
 
 def smin_for(dn, q_peak):
