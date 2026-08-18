@@ -33,3 +33,27 @@ The user asked whether the SWNETWROK rules had actually been adopted: **(1) no l
 Test-area effect: 255 chambers merged, 125 fan-outs resolved, 357 branch starts offset, 90 branches dropped (streets served from the far end); network 95.3 → 90.4 km, chambers 2,359 → 2,137.
 
 Independent verification on the exported network: loop-free **PASS**, one-outlet **PASS**, 568/569 branch heads ≥10 m clear, one chamber pair at 2.78 m (vs 3.0 m). The two residuals are reported, not suppressed. New permanent guards: `mh-clearance` and `head-offset` audit checks, assertions inside `resolve_structures`, and `test_one_physical_outlet_per_structure` on a synthetic two-chambers-at-one-point case.
+
+---
+
+## Refactor + road-treatment review (2026-08-18, 33 agents)
+
+Run after the object-model refactor and the new road-treatment stage. 29 raw findings, **17 confirmed, all fixed**; 12 refuted. The refactor itself was clean (the equality gate held) — the damage was in the new treatment stage and in one check the refactor dropped.
+
+| ID | Sev | What was wrong | Fix |
+|---|---|---|---|
+| RT-2 | critical | **The roundabout detector collapsed city blocks.** Circularity 4πA/P² ≥ 0.60 is vacuous — a square scores 0.785, a triangle 0.605 — so 12 of 15 "roundabouts" were residential blocks with plots inside, destroying 1.34 km of real street and welding 50 corner nodes up to 26 m away | Shape alone cannot tell a roundabout from a block, so the test is now evidence-based: **no plot inside the ring** (decisive), equivalent radius ≤ 30 m, at least two approach arms, curved arcs. 22 rings now rejected for plots inside, 44 for straight edges |
+| RT-1 | critical | A blanket `length > 1.0` filter in the roundabout step deleted **every** sub-metre segment, not just re-anchored legs — 46 of 108 deletions had nothing to do with roundabouts, and one was the sole bridge to a 164-node sub-network. This, not stub removal, drove unreachable nodes 9 → 28 | The filter applies only to legs the step actually re-anchored. Unreachable nodes now 12; stubs dropped 18 → 1, confirming 17 were debris the stage created itself |
+| F1 | critical | **The refactor silently dropped the over-capacity check.** A reach whose diameter cannot pass its peak flow returns `dod = None`; the new check skipped None instead of failing, so a surcharged pipe passed every hydraulic test | `_dod` now fails explicitly on `None` with "CANNOT CARRY … surcharged" |
+| RT-7 | major | The outfall moved uphill (z 351.24 → 351.63, 665 m away) because `_dissolve` deletes degree-2 nodes — and the true lowest boundary node was one of them | The outfall is chosen on the **raw** graph and its node protected through treatment. Back at z 351.24 |
+| RT-5 | major | Vertex de-duplication could drop a segment's **terminal** vertex, moving the endpoint beyond the 1 cm node key and detaching the corridor | Terminal vertex always preserved |
+| F3 | major | The audit turned any crashing check into `NOT_CHECKABLE`, and the tally counted it as a pass — a broken check could hide a real violation | `NOT_CHECKABLE` now counts as a failure; the table reports the three states separately |
+| F4/chambers | major | `enforce_spacing` runs after the tree assertion and could hand an existing chamber a second outlet when a cut landed on its key | Cuts landing on an existing chamber are skipped and the chain closed |
+| F2/chambers | major | The change-of-direction rule went unenforced after re-anchoring: bends appeared post-merge with nothing to re-split them | `enforce_spacing` now splits on bends as well as length |
+| RT-4/F6 | major | Main-road classification was computed, exported and **never applied**, while the docstring claimed it excluded corridors | Documented honestly as advisory-only pending your hierarchy layer; the corridor layer carries MAIN_ROAD / ELIGIBLE for review |
+| RT-6/F8 | minor | `ROAD_BEND_DEG` and `ROAD_CHORD_DEV_M` were registered as active criteria but dead — the placer used a hardcoded 45° and the audit 45.5° | Placer and audit both read `ROAD_BEND_DEG`; the unused chord constant is declared as a W5 item |
+| — | labelling | 14 of the 26 collapsed rings are 0.2–4 m noding slivers, not roundabouts | Reported separately as `sliver_rings_collapsed` — both collapse, but a 2 m triangle is not called a roundabout |
+
+Refuted (12), each reproduced but judged immaterial or misattributed: frozen-dataclass sharing of TABLE11, `fingerprint` dead code, cover-check bore-vs-OD (12 mm, non-binding), `_cut`'s 0.5 m rule (never fires), and others — all retained in the workflow transcript.
+
+**Net effect of the fixes:** chambers 2,137 → 1,655 (−23 %), network 90.4 → 89.5 km, unreachable nodes 28 → 12, max depth 15.1 → 13.4 m, audit failures 5 → **2** (inlet angle, and 152 house connections over 50 m).

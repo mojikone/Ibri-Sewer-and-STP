@@ -73,10 +73,17 @@ class SewerDesignPipeline:
 
         if cfg.treat_roads:
             self.log("S1b road treatment -> sewer corridors ...")
+            # the outfall is chosen on the RAW graph and its node protected through
+            # treatment: dissolving degree-2 nodes would otherwise delete the true low
+            # point and move the outfall uphill (review RT-7)
+            probe = TreeBuilder(sampler, C, cfg.outfall_expected, cfg.outfall_override)
+            raw_of, raw_rep = probe.pick_outfall(probe.build_undirected(segs), boundary)
             rt = RoadTreatment(sampler, C)
-            segs = rt.run(segs, units, out_path=cfg.corridors_out)
+            segs = rt.run(segs, units, out_path=cfg.corridors_out, protect={raw_of})
             self.reports["road_treatment"] = rt.report
             self.log(f"   {rt.report}")
+            self.log(f"   outfall candidate protected at ({raw_rep['x']:.1f}, "
+                     f"{raw_rep['y']:.1f}) z={raw_rep['z']:.2f}")
 
         self.log("S2 topology: tree to the outfall ...")
         tb = TreeBuilder(sampler, C, cfg.outfall_expected, cfg.outfall_override)

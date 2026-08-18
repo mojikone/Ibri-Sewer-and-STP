@@ -76,7 +76,12 @@ class Criteria:
     ROAD_BEND_DEG: float = 30.0       # deflection above this needs a chamber
     ROAD_CHORD_DEV_M: float = 0.50    # curve offset from the chord needing a chamber
     ROUNDABOUT_PERIM_M: float = 150.0 # ring shorter than this may be a roundabout
-    ROUNDABOUT_CIRC: float = 0.60     # circularity 4*pi*A/P^2 above this = roundabout
+    ROUNDABOUT_R_MAX: float = 30.0    # equivalent radius cap — roundabouts are small.
+                                      # (A circularity test was tried and REMOVED: a square
+                                      #  scores 0.785 and a triangle 0.605, so every city
+                                      #  block passed it — review RT-2. A ring is now a
+                                      #  roundabout only if no plot lies inside it, every
+                                      #  node has an approach arm, and the arcs are curved.)
     STUB_MIN_M: float = 8.0           # dangling stub shorter than this, no frontage -> drop
 
     # ---------------------------------------------------------------- tertiary
@@ -190,10 +195,11 @@ class Criteria:
                              "physical-size convention"),
             "MH_ROUND_STEP": (self.MH_ROUND_STEP, "round spacing to 10 m (5 m fallback) "
                               "rather than exact equal division — user rule 2026-08-18"),
-            "ROAD_TREATMENT": ((self.ROAD_COLLINEAR_DEG, self.ROAD_BEND_DEG,
-                                self.ROAD_CHORD_DEV_M),
-                               "collinear/bend/chord thresholds for turning raw centrelines "
-                               "into sewer corridors — method choices, tune on review"),
+            "ROAD_TREATMENT": ((self.ROAD_COLLINEAR_DEG, self.ROAD_BEND_DEG),
+                               "collinear-dissolve and bend-split thresholds for turning raw "
+                               "centrelines into sewer corridors — method choices, tune on "
+                               "review. ROAD_CHORD_DEV_M is declared but NOT yet enforced "
+                               "(chord-deviation splitting is a W5 item)"),
             "MH_SIZES": ("DN1000 to 3 m / DN1200 to 6 m / DN1500 deeper", "chamber internal "
                          "sizes vs depth — GUD-203 says only 'sufficient size'; no table "
                          "exists (verified); no hydraulic effect at concept"),

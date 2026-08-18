@@ -117,12 +117,21 @@ def _self_cleansing(ctx):
 
 
 def _dod(ctx):
+    """d/D limit AND capacity. A reach whose diameter cannot pass its peak flow at the
+    laid slope returns dod None — that is a surcharged pipe, the worst failure there is,
+    and it must never be silently skipped (review F1: the refactor dropped this branch)."""
     C = ctx.crit
-    bad = [Finding(r.label, f"d/D {r.dod:.2f} > {H.dod_limit(r.dn_mm, C)}")
-           for r in ctx.net.reaches
-           if r.dod is not None and r.dod > H.dod_limit(r.dn_mm, C) + 0.005]
+    bad = []
+    for r in ctx.net.reaches:
+        if r.dod is None:
+            bad.append(Finding(r.label, f"DN{r.dn_mm} CANNOT CARRY {r.qpeak_ls:.1f} L/s at "
+                                        f"{r.slope*1000:.2f} mm/m — surcharged"))
+        elif r.dod > H.dod_limit(r.dn_mm, C) + 0.005:
+            bad.append(Finding(r.label, f"d/D {r.dod:.2f} > {H.dod_limit(r.dn_mm, C)}"))
     worst = max((r.dod or 0) for r in ctx.net.reaches) if ctx.net.reaches else 0
-    return ("FAIL" if bad else "PASS", f"deepest flow d/D {worst:.3f}", bad)
+    n_sur = sum(1 for r in ctx.net.reaches if r.dod is None)
+    return ("FAIL" if bad else "PASS",
+            f"deepest flow d/D {worst:.3f}" + (f"; {n_sur} surcharged" if n_sur else ""), bad)
 
 
 def _reverse_gradient(ctx):
@@ -203,7 +212,7 @@ def _bends(ctx):
             d = abs(math.degrees(a2 - a1)) % 360.0
             m = max(m, min(d, 360.0 - d))
         worst = max(worst, m)
-        if m > 45.5:
+        if m > ctx.crit.ROAD_BEND_DEG + 0.5:
             bad.append(Finding(r.label, f"interior deflection {m:.0f} deg"))
     return ("FAIL" if bad else "PASS", f"largest interior deflection {worst:.0f} deg", bad)
 
@@ -356,7 +365,7 @@ REGISTRY = [
     Check("C1", "Chambers", "Maximum spacing", "G203-p30 Tab 12",
           "100 m (DN200-315) / 120 / 150 / 200", _spacing),
     Check("C2", "Chambers", "Chamber at change of direction", "G203-p30",
-          "bend over 45 deg breaks the reach", _bends),
+          "a bend sharper than the declared threshold breaks the reach", _bends),
     Check("C3", "Chambers", "Drop / backdrop bookkeeping", "G203-p30 4.4",
           "inlet drop > 600 mm recorded as backdrop; > 2 m as vortex shaft", _drops),
     Check("C4", "Chambers", "Inlet angle", "G203-p30",
@@ -398,17 +407,25 @@ class Auditor:
     # ---------------- reporting ----------------
     @property
     def failures(self):
+        """A check that could not run is NOT a pass — a crashing check would otherwise
+        hide a real violation behind a quiet label (review F3)."""
+        return [r for r in self.results if r.status in ("FAIL", "NOT_CHECKABLE")]
+
+    @property
+    def hard_failures(self):
         return [r for r in self.results if r.status == "FAIL"]
 
     def table(self):
-        lines = [f"{'ID':4} {'STATUS':5} {'CHECK':38} {'REF':28} FOUND",
+        lines = [f"{'ID':4} {'STATUS':13} {'CHECK':38} {'REF':28} FOUND",
                  "-" * 150]
         for r in self.results:
-            lines.append(f"{r.id:4} {r.status:5} {r.title[:38]:38} {r.reference[:28]:28} "
+            lines.append(f"{r.id:4} {r.status:13} {r.title[:38]:38} {r.reference[:28]:28} "
                          f"{r.summary}")
-        n_f = len(self.failures)
+        n_f = len(self.hard_failures)
+        n_x = sum(1 for r in self.results if r.status == "NOT_CHECKABLE")
         lines.append("-" * 150)
-        lines.append(f"{len(self.results)} checks: {len(self.results)-n_f} pass, {n_f} fail")
+        lines.append(f"{len(self.results)} checks: {len(self.results)-n_f-n_x} pass, "
+                     f"{n_f} fail, {n_x} could not run (counted as failures)")
         return "\n".join(lines)
 
     def as_dicts(self):

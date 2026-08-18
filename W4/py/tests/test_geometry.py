@@ -222,3 +222,42 @@ def test_network_invariant_catches_a_second_outlet():
     net.add_reach(key_of(50, 0), key_of(100, 0), LineString([(50, 0), (100, 0)]))
     with pytest.raises(AssertionError):
         net.assert_one_outlet()
+
+
+def test_city_block_is_NOT_a_roundabout():
+    """The first circularity test scored a square at 0.785 and collapsed 12 residential
+    blocks as 'roundabouts', destroying 1.3 km of street (review RT-2). A block encircles
+    plots; a roundabout encircles carriageway."""
+    from sewnet.model import LoadUnit
+    s = 35.0
+    corners = [(0, 0), (s, 0), (s, s), (0, s)]
+    segs = [LineString([corners[i], corners[(i + 1) % 4]]) for i in range(4)]
+    segs.append(LineString([(-100, s / 2), (0, s / 2)]))          # west leg
+    segs.append(LineString([(s, s / 2), (s + 100, s / 2)]))       # east leg
+    segs.append(LineString([(0, s / 2), (s, s / 2)]))             # through street
+    units = [LoadUnit(id="p1", x=s / 2, y=s * 0.8, cls="B", src="plot")]   # a plot inside
+    rt = RoadTreatment(FakeSampler(), C)
+    out = rt.run(segs, units=units)
+    assert rt.report["roundabouts_collapsed"] == 0
+    assert rt.report["rings_rejected"]["plots_inside"] >= 1
+    assert sum(g.length for g in out) >= 4 * s - 1                # block streets survive
+
+
+def test_short_connector_is_not_deleted_by_the_roundabout_step():
+    """A blanket sub-metre filter deleted legitimate connectors — one was the sole bridge
+    to a 164-node sub-network (review RT-1). Only re-anchored legs may be dropped."""
+    segs = [LineString([(0, 0), (60, 0)]),
+            LineString([(60, 0), (60.84, 0.06)]),                # 0.84 m bridge
+            LineString([(60.84, 0.06), (140, 0)])]
+    rt = RoadTreatment(FakeSampler(), C)
+    out = rt.run(segs, units=[])
+    assert sum(g.length for g in out) == pytest.approx(140.0, abs=1.0)
+
+
+def test_terminal_vertex_survives_dedup():
+    """Dropping the last vertex moves the endpoint beyond the 1 cm node key and detaches
+    the corridor from the graph (review RT-5)."""
+    segs = [LineString([(0, 0), (50, 0), (50.05, 0)])]
+    rt = RoadTreatment(FakeSampler(), C)
+    out = rt.run(segs, units=[])
+    assert out[0].coords[-1] == pytest.approx((50.05, 0.0))

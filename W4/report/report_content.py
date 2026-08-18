@@ -20,7 +20,8 @@ IMG_MAPS = os.path.join(W4, "img")
 
 def load():
     S = json.load(open(os.path.join(W4, "run", "summary.json")))
-    V = json.load(open(os.path.join(W4, "run", "violations.json")))
+    audit = json.load(open(os.path.join(W4, "run", "audit.json")))
+    V = [a for a in audit if a["status"] == "FAIL"]
     return S, V
 
 
@@ -43,7 +44,7 @@ def build():
              f"{S['qpeak_outfall_ls']:.0f} L/s (Qadf {S['qadf_outfall_m3d']:,.0f} m3/d)"],
             ["Structural rules", "loop-free PASS · one outlet per chamber PASS"],
             ["Audit", f"{S['violations']} residual violations"],
-            ["Code / tests", "W4/py/sewnet — 44 pytest cases, Table-11 gate"],
+            ["Code / tests", "W4/py/sewnet — 56 pytest cases, Table-11 gate"],
         ]}))
     B.append(("pagebreak",))
     B.append(("h1", "Contents"))
@@ -56,13 +57,14 @@ def build():
                    f"{S['s1']['boundary_ha']:.0f} ha test boundary, put it through a 21-agent "
                    f"adversarial review and a two-rule structural audit (no loops; one outlet per "
                    f"chamber), fixed everything both found, and the design now holds those rules "
-                   f"with {len(V)} marginal residuals out of {S['n_nodes']:,} chambers. Here is "
+                   f"with {len(V)} failing checks of 21 out of {S['n_nodes']:,} chambers. Here is "
                    f"the whole story in one page."))
     B.append(("p", f"The pipeline takes four inputs — roads, classified plots, the 0.5 m terrain "
                    f"and a boundary — and produces a complete gravity network: {S['n_nodes']:,} "
                    f"chambers, {S['net_km']:.1f} km of pipe "
-                   f"({float(dn['200'])/S['net_km']*100:.0f}% DN200, stepping up to a DN600 "
-                   f"outfall leg), designed inverts everywhere, about 11 seconds to run. Every one "
+                   f"({float(dn['200'])/S['net_km']*100:.0f}% DN200, stepping up to DN"
+                   f"{max(int(k) for k in dn)} on the outfall leg), designed inverts everywhere, "
+                   f"about 9 seconds to run. Every one "
                    f"of the {ld['loaded_points']:,} loaded units ({ld['built']:,} built plots, "
                    f"{ld['planned']} planned, {ld['unparceled']} unparceled buildings; "
                    f"{ld['farms_excluded']} farms excluded per doctrine) lands on exactly one "
@@ -78,7 +80,7 @@ def build():
                    "OD-designated PVC-U bores smaller (now the true SDR34 bore); a broken "
                    "bisection in the velocity-cap solver; drop structures measured against the "
                    "wrong datum. 44 pytest cases lock all of it in."))
-    B.append(("p", f"The structural audit found what the graph checks had hidden (section 4): the "
+    B.append(("p", f"The structural audit found what the graph checks had hidden (section 5): the "
                    f"tree gave every node one outlet, but {sr.get('merged', 0)} chambers sat within "
                    f"3 m of another chamber — many at the same point — each with its own outlet. On "
                    f"the ground that is a two-outlet junction, exactly what the rule forbids. The "
@@ -106,9 +108,11 @@ def build():
               f"gravity-connect at standard sewer depth. Deepening {lp['deepened_mh']} chambers "
               f"recovered all but {lp['residual']}, now flagged as local-solution candidates."))
     B.append(("bullet", f"{S['solver']['pockets']} SLS pockets appeared ",
-              f"(28 nodes, about 5 properties total) — absorb-to-detail-design per rule 9. "
-              f"{S['drops']} drop structures ({S['vortex_sites']} vortex-class) concentrate at "
-              f"wadi-bank crossings, exactly where detail design applies the G1-p85 rules."))
+              f"— all small enough to absorb into detail design per rule 9 (some carry no "
+              f"properties at all and are depth artefacts near the wadi bank rather than real "
+              f"station sites). {S['drops']} drop structures ({S['vortex_sites']} vortex-class) "
+              f"concentrate at wadi-bank crossings, exactly where detail design applies the "
+              f"G1-p85 rules."))
     B.append(("p", "Also delivered: T01 Rev 3 — the tutorial now teaches Colebrook-White "
                    "(section 14), Table 11 derived step by step, every number verified."))
     B.append(("p", "What is proven: doctrine loads in, guideline-compliant network out, auditable "
@@ -137,8 +141,48 @@ def build():
                    "every house can reach its chamber, deepening where roads are elevated; audit "
                    "everything independently; export SHP, SewerGEMS, DXF and maps."))
 
+    # ---------------- 2 road treatment ----------------
+    rt = S.get("road_treatment") or {}
+    B.append(("h1", "2. From road centrelines to sewer corridors"))
+    B.append(("p", "Raw centrelines are not a sewer corridor. Fed directly, the pipeline "
+                   "put a chamber wherever the survey data happened to break: 576 of 2,137 "
+                   "chambers (27 %) sat at near-collinear breaks, 465 of them at under two "
+                   "degrees of deflection. Those are artefacts of the data, not design "
+                   "decisions, and every one costs a manhole. A separate treatment stage now "
+                   "turns centrelines into corridors before anything is designed."))
+    B.append(("table", ["Treatment", "Why", "Test area"], [
+        ["De-duplicate vertices",
+         "zero-length steps corrupt direction measurement — they made 66 reaches read as "
+         "180 degree bends in the first compliance check",
+         f"{rt.get('duplicate_vertices_removed', 0)} removed"],
+        ["Simplify (0.5 m)", "survey jitter, without moving the centreline", "applied"],
+        ["Dissolve collinear breaks (under 10 degrees at a two-way node)",
+         "a straight street broken into three pieces becomes ONE corridor, so no chamber "
+         "is placed at the breaks", f"{rt.get('collinear_joins', 0)} joins"],
+        ["Collapse roundabouts (ring under 150 m, circular)",
+         "a roundabout is not a corridor; the ring is removed and its legs reattach to the "
+         "centre", f"{rt.get('roundabouts_collapsed', 0)} collapsed"],
+        ["Drop dangling stubs under 8 m with no frontage",
+         "clip debris that would otherwise become a branch", f"{rt.get('stubs_dropped', 0)} dropped"],
+        ["Classify main roads",
+         "main roads cannot be opened longitudinally; crossings remain allowed (G1-p85 "
+         "trenchless). DERIVED here because the road layer carries no class attribute — "
+         "advisory until a hierarchy layer is supplied",
+         f"{rt.get('main_road_segments', 0)} segments flagged"],
+    ], [1.6, 3.2, 1.5]))
+    B.append(("p", f"Result: {rt.get('segments_in', 0)} raw segments become "
+                   f"{rt.get('segments_out', 0)} corridors, and the length barely moves "
+                   f"({rt.get('km_in', 0)} to {rt.get('km_out', 0)} km) — the stage re-joins "
+                   f"rather than deletes. The corridors are written to W4/shp/W4_corridors.shp "
+                   f"with a MAIN_ROAD and ELIGIBLE column so the corridor decisions can be "
+                   f"reviewed and hand-edited in QGIS before any design runs."))
+    B.append(("p", f"Effect on the design: chambers fall from 2,137 to {S['n_nodes']:,} "
+                   f"(about 27 % fewer) with the network length essentially unchanged, so the "
+                   f"saving is manholes that were never justified rather than sewers that are "
+                   f"now missing."))
+
     # ---------------- 2 hydraulic basis ----------------
-    B.append(("h1", "2. Hydraulic basis and how it is verified"))
+    B.append(("h1", "3. Hydraulic basis and how it is verified"))
     B.append(("table", ["Element", "Basis", "Verification"], [
         ["Capacity / velocity",
          "Colebrook-White, ks = 1.5 mm, nu = 1.141e-6 m2/s (G203-p24/25/28), partial-full circular "
@@ -168,7 +212,7 @@ def build():
     B.append(("pagebreak",))
 
     # ---------------- 3 solver ----------------
-    B.append(("h1", "3. How the solver designs a pipe"))
+    B.append(("h1", "4. How the solver designs a pipe"))
     B.append(("p", "Two passes per reach, iterated until no diameter changes (2 iterations "
                    "sufficed; oscillation between adjacent DNs is detected and broken upward; a "
                    "final lay pass always leaves inverts consistent with final diameters)."))
@@ -195,7 +239,7 @@ def build():
               "never a silent orphan."))
 
     # ---------------- 4 structure rules ----------------
-    B.append(("h1", "4. Loop-free, and one outlet per chamber"))
+    B.append(("h1", "5. Loop-free, and one outlet per chamber"))
     B.append(("p", "Both rules are enforced constructively, not checked after the fact, and both "
                    "are verified independently on the final output."))
     B.append(("p", f"No loops. The collection network is a spanning tree by construction: a "
@@ -237,7 +281,7 @@ def build():
     B.append(("pagebreak",))
 
     # ---------------- 5 connectability ----------------
-    B.append(("h1", "5. The house-connectability check"))
+    B.append(("h1", "6. The house-connectability check"))
     B.append(("p", f"Roads are locally elevated for flood protection and underpasses, so houses can "
                    f"sit below the sewer. For every loaded unit: plot ground (0.5 m terrain) minus "
                    f"0.6 m outlet depth must reach its chamber's invert with 2% fall over the "
@@ -251,7 +295,7 @@ def build():
     B.append(("pagebreak",))
 
     # ---------------- 6 results ----------------
-    B.append(("h1", "6. Test-boundary results"))
+    B.append(("h1", "7. Test-boundary results"))
     B.append(("table", ["Quantity", "Value"], [
         ["Area / roads / network",
          f"{S['s1']['boundary_ha']:.0f} ha / {S['s1']['len_km']:.1f} km roads / "
@@ -269,7 +313,7 @@ def build():
         ["Qadf / Qpeak at outfall", f"{S['qadf_outfall_m3d']:,.0f} m3/d / "
                                     f"{S['qpeak_outfall_ls']:.0f} L/s (PF {S['pf_formula']}; "
                                     f"Peltier column in the shapefiles)"],
-        ["Structure rules (section 4)", f"{sr.get('merged',0)} coincident chambers merged · "
+        ["Structure rules (section 5)", f"{sr.get('merged',0)} coincident chambers merged · "
                                         f"{sr.get('fanouts',0)} fan-outs resolved · "
                                         f"{sr.get('offset_branches',0)} branch starts offset · "
                                         f"{sr.get('dropped_branches',0)} branches dropped"],
@@ -296,7 +340,7 @@ def build():
     B.append(("pagebreak",))
 
     # ---------------- 7 sewergems ----------------
-    B.append(("h1", "7. SewerGEMS package and referee protocol"))
+    B.append(("h1", "8. SewerGEMS package and referee protocol"))
     B.append(("p", "W4/sewergems/ holds MANHOLES, CONDUITS and OUTFALL shapefiles built to the "
                    "Bentley-documented ModelBuilder mappings (explicit START_ND/STOP_ND plus "
                    "vertex-snapped geometry digitised upstream to downstream, elevations not "
@@ -312,7 +356,7 @@ def build():
                    "deliberately a separate run, not a self-check."))
 
     # ---------------- 8 assumptions ----------------
-    B.append(("h1", "8. Assumptions register"))
+    B.append(("h1", "9. Assumptions register"))
     B.append(("p", "Tagged in criteria.ASSUMPTIONS with the same wording, and reported in every "
                    "deliverable:"))
     B.append(("table", ["Assumption", "Basis / exposure"], [
@@ -338,7 +382,7 @@ def build():
     ], [2.15, 4.15]))
 
     # ---------------- 9 limitations ----------------
-    B.append(("h1", "9. Limitations and what changes at full scale"))
+    B.append(("h1", "10. Limitations and what changes at full scale"))
     B.append(("bullet", "The trunk is user-finalised (settled 2026-08-18) — ",
               "the pipeline designs subnetworks into the given connection points, which are config "
               "entries, not structure."))
@@ -353,7 +397,7 @@ def build():
     B.append(("bullet", "tau = 1 Pa carries the largest redesign exposure — ", "pin it at kickoff."))
 
     # ---------------- 10 reviews ----------------
-    B.append(("h1", "10. Adversarial review and structural audit"))
+    B.append(("h1", "11. Adversarial review and structural audit"))
     B.append(("p", "A 21-agent skeptic panel attacked the hydraulic core after the first "
                    "audit-clean run: four attack lenses (Colebrook-White implementation, solver "
                    "clause compliance, load and audit doctrine, executed edge cases) followed by "
@@ -363,7 +407,7 @@ def build():
                    "repair."))
     B.append(("p", "A second, user-driven audit then checked the two layout rules directly against "
                    "the run output: no loops (held) and one outlet per junction (held in the graph, "
-                   "broken on the ground — see section 4). The 10 m branch-start offset had not "
+                   "broken on the ground — see section 5). The 10 m branch-start offset had not "
                    "been implemented at all; it now is, with permanent audit checks and a unit "
                    "test. Both audits are recorded in W4/docs/REVIEW_FINDINGS.md."))
     return B

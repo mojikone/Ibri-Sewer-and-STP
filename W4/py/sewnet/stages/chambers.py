@@ -16,8 +16,9 @@ from shapely.geometry import LineString
 from ..criteria import DEFAULT
 from ..model import Network, key_of
 
-BEND_ANGLE_DEG = 45.0     # split a run at interior vertices deflecting more than this
 MIN_REACH_M = 2.0         # chambers cannot sit closer than this along one run
+# the bend threshold lives in Criteria (ROAD_BEND_DEG) so the audit and the placer can
+# never disagree about what counts as a change of direction (review RT-6)
 
 
 class ChamberPlacer:
@@ -62,7 +63,7 @@ class ChamberPlacer:
             a1 = math.atan2(coords[i][1] - coords[i - 1][1], coords[i][0] - coords[i - 1][0])
             a2 = math.atan2(coords[i + 1][1] - coords[i][1], coords[i + 1][0] - coords[i][0])
             d = abs(math.degrees(a2 - a1)) % 360.0
-            if min(d, 360.0 - d) > BEND_ANGLE_DEG:
+            if min(d, 360.0 - d) > self.crit.ROAD_BEND_DEG:
                 breaks.append(acc)
         cuts = list(breaks)
         anchors = [0.0] + breaks + [geom.length]
@@ -159,15 +160,20 @@ class ChamberPlacer:
 
     def enforce_spacing(self, net: Network, limit=None):
         """Final guard, run AFTER StructureResolver: merging chambers re-anchors reach
-        endpoints, which can nudge a reach past its spacing class. Split anything over."""
+        endpoints, which can nudge a reach past its spacing class OR introduce a sharp
+        bend. Split anything over-length or over-bent (review F2/chambers)."""
         limit = limit or self.crit.MH_SPLIT_LEN
         n_split = 0
-        for r in [x for x in net.reaches if x.length > limit + 0.005]:
+        needs = [x for x in net.reaches
+                 if x.length > limit + 0.005 or self._max_bend(x.geom) > self.crit.ROAD_BEND_DEG]
+        for r in needs:
             net.remove_reach(r)
-            run, cuts = 0.0, []
-            for piece in self.split_lengths(r.length, limit)[:-1]:
-                run += piece
-                cuts.append(run)
+            cuts = self._split_points(r.geom)
+            if not cuts:
+                run = 0.0
+                for piece in self.split_lengths(r.length, limit)[:-1]:
+                    run += piece
+                    cuts.append(run)
             prev = r.up
             pcs = self._cut(r.geom, cuts)
             for i, piece in enumerate(pcs):
@@ -178,6 +184,22 @@ class ChamberPlacer:
                 prev = nxt
             n_split += 1
         return n_split
+
+    @staticmethod
+    def _max_bend(geom):
+        """Largest interior deflection, measured on cleaned vertices — duplicate points
+        otherwise read as a 180 degree bend."""
+        cs = [geom.coords[0]]
+        for p in list(geom.coords)[1:]:
+            if math.dist(cs[-1], p) >= 0.5:
+                cs.append(p)
+        m = 0.0
+        for i in range(1, len(cs) - 1):
+            a1 = math.atan2(cs[i][1] - cs[i - 1][1], cs[i][0] - cs[i - 1][0])
+            a2 = math.atan2(cs[i + 1][1] - cs[i][1], cs[i + 1][0] - cs[i][0])
+            d = abs(math.degrees(a2 - a1)) % 360.0
+            m = max(m, min(d, 360.0 - d))
+        return m
 
     def _resplit(self, net: Network):
         """Endpoint re-anchoring can push a piece past the spacing limit; heal here so an
