@@ -96,7 +96,8 @@ Guarantees the export makes: unique labels; single-part polylines digitized upst
 
 ## 7. Open decisions for your review
 
-1. **Test outfall location.** My default: auto-select the lowest road node on/near the boundary in the terrain-fall direction, write it to `outfall.shp`, and let you override with your own point file. If you already know where this test network should discharge (existing trunk? toward the STP?), give me a point and it becomes the config.
+0. **Division of labor (user, 2026-08-18): the MAIN pipe is user-finalized, not generated.** W2's auto-trunk ran through alleys with excessive bends — not acceptable. The pipeline takes the user's trunk alignment as fixed input; its job is the SUBNETWORKS: each grows toward a connection point on the trunk (multi-outlet), subnetwork extents fall out of invert feasibility, and non-gravity pockets become SLS proposals (rule 9). Consequence for S2: tree weights include road class/width so collectors also prefer proper streets over alleys and minimize bends.
+1. **Test-area connection point(s).** Replaces the old outfall question: either the user marks the trunk/connection point(s) for the 551 ha test area up front, or the test runs with an assumed connection at the boundary's natural exit node and the real trunk swaps in later (connections are config, the pipeline is indifferent).
 2. **PF default Merrimack** (guideline "is to be used") **with Peltier as a config switch** — but W2/A8 used Peltier, so the test report will show both columns for the outfall node. OK?
 3. **Tertiary layer is schematic** (riders/PCS drawn and rule-checked, but hydraulic design stops at collectors; rider loads lump at manholes). Full tertiary hydraulics would be detail-design scope. OK for W4?
 4. **Formula: Colebrook-White default** (Table 11's own basis), Manning available by config. OK?
