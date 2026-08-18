@@ -52,8 +52,17 @@ def main(argv):
         "structures": reports["structures"], "lowplots": reports["lowplots"],
         "road_treatment": reports.get("road_treatment"),
         "augmentation": reports["tree"]["augmentation"],
+        # the outfall may receive several reaches; each PIPE is sized for its own peak,
+        # but the peak the outfall/STP sees is the peak factor applied to the COMBINED
+        # average flow — summing individually-peaked arrivals would over-count
         "qadf_outfall_m3d": sum(r.qadf_m3d for r in out_reaches),
-        "qpeak_outfall_ls": sum(r.qpeak_ls for r in out_reaches),
+        "qpeak_outfall_ls": round(
+            (DEFAULT.pf_merrimack(max(sum(r.qadf_m3d for r in out_reaches) / 1000.0,
+                                      DEFAULT.PF_HOLD_PROPERTIES * DEFAULT.PLOT_QADF_M3D / 1000.0))
+             * sum(r.qadf_m3d for r in out_reaches)
+             + sum(r.infil_m3d for r in out_reaches)) * 1000.0 / 86400.0, 2),
+        "qpeak_sum_of_arrivals_ls": round(sum(r.qpeak_ls for r in out_reaches), 2),
+        "n_outfall_reaches": len(out_reaches),
         "dn_km": {str(k): round(v / 1000.0, 3) for k, v in sorted(dn_km.items())},
         "violations": len(auditor.failures),
         "selfclean": reports["selfclean"], "startyear_flags": reports["startyear_flags"],

@@ -94,6 +94,9 @@ class SewerDesignPipeline:
         self.log("S3b one outlet per structure ...")
         resolver = StructureResolver(sampler, C)
         net = resolver.run(net, units)
+        respaced = placer.enforce_spacing(net)      # merging can lengthen a reach
+        if respaced:
+            self.log(f"   {respaced} reaches re-split after chamber merging")
         Labeller.run(net)
         self.reports["structures"] = {k: v for k, v in resolver.report.items()
                                       if k != "offsets_m"}

@@ -46,7 +46,9 @@ class ChamberPlacer:
             lens = [base + step if i < k else base for i in range(n)]
             odd = L - sum(lens)
             if abs(odd) > 1e-9:
-                lens[-1] += odd                     # odd metres ride on the last reach
+                # the odd metres go on the reach with the most headroom, never on the
+                # last one blindly — that could push a reach past the maximum spacing
+                lens[lens.index(min(lens))] += odd
             if all(x > 0 for x in lens) and max(lens) <= max_len + 1e-6:
                 return lens
         return [L / n] * n
@@ -154,6 +156,28 @@ class ChamberPlacer:
                     net.chambers[keep].kind = "junction"
                 del net.chambers[drop]
                 break
+
+    def enforce_spacing(self, net: Network, limit=None):
+        """Final guard, run AFTER StructureResolver: merging chambers re-anchors reach
+        endpoints, which can nudge a reach past its spacing class. Split anything over."""
+        limit = limit or self.crit.MH_SPLIT_LEN
+        n_split = 0
+        for r in [x for x in net.reaches if x.length > limit + 0.005]:
+            net.remove_reach(r)
+            run, cuts = 0.0, []
+            for piece in self.split_lengths(r.length, limit)[:-1]:
+                run += piece
+                cuts.append(run)
+            prev = r.up
+            pcs = self._cut(r.geom, cuts)
+            for i, piece in enumerate(pcs):
+                nxt = r.dn if i == len(pcs) - 1 else \
+                    net.add_chamber(piece.coords[-1][0], piece.coords[-1][1],
+                                    self.sampler.z(*piece.coords[-1][:2]), "spacing")
+                net.add_reach(prev, nxt, piece)
+                prev = nxt
+            n_split += 1
+        return n_split
 
     def _resplit(self, net: Network):
         """Endpoint re-anchoring can push a piece past the spacing limit; heal here so an
