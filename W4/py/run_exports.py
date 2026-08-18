@@ -19,33 +19,28 @@ def log(m):
 
 def main():
     st = pickle.load(open(os.path.join(cfg.OUT_RUN, "state.pkl"), "rb"))
-    nodes, pipes = st["nodes"], st["pipes"]
+    net = st["network"]
     boundary = wkt.loads(st["boundary_wkt"])
     summary = st["summary"]
-
-    # rebuild per_mh with node keys (state stores label lists) — reconstruct from conn
-    per_mh_units = {}
-    for r in st["conn"]:
-        per_mh_units.setdefault(r["mh_key"], []).append(r)
+    per_mh_units = st["per_chamber"]
 
     log("SHP ...")
-    export_shp.write_all(cfg.OUT_SHP, nodes, pipes, st["riders"], st["still_low"],
+    export_shp.write_all(cfg.OUT_SHP, net, st["riders"], st["still_low"],
                          st["pockets"], boundary, st["of_rep"])
     log("SewerGEMS package ...")
-    n_loads = export_gems.write_all(cfg.OUT_GEMS, nodes, pipes, per_mh_units,
-                                    st["of_rep"], st["outfall"])
+    n_loads = export_gems.write_all(cfg.OUT_GEMS, net, per_mh_units, st["of_rep"])
     log(f"  {n_loads} load rows")
     log("DXF ...")
     os.makedirs(cfg.OUT_DXF, exist_ok=True)
     export_dxf.write(os.path.join(cfg.OUT_DXF, "W4_test_boundary_design.dxf"),
-                     nodes, pipes, st["riders"], st["pockets"], st["of_rep"])
+                     net, st["riders"], st["pockets"], st["of_rep"])
     log("maps ...")
     os.makedirs(cfg.OUT_IMG, exist_ok=True)
     maps.network_map(os.path.join(cfg.OUT_IMG, "W4_M1_network_by_dn.png"),
-                     nodes, pipes, st["pockets"], st["of_rep"], boundary, summary)
-    maps.depth_map(os.path.join(cfg.OUT_IMG, "W4_M2_depth.png"), nodes, pipes, boundary, summary)
+                     net, st["pockets"], st["of_rep"], boundary, summary)
+    maps.depth_map(os.path.join(cfg.OUT_IMG, "W4_M2_depth.png"), net, boundary, summary)
     maps.lowplot_map(os.path.join(cfg.OUT_IMG, "W4_M3_connectability.png"),
-                     nodes, pipes, st["conn"], st["still_low"], boundary, summary)
+                     net, st["conn"], st["still_low"], boundary, summary)
     log("done")
 
 
