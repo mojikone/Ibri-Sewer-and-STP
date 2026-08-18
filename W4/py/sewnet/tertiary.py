@@ -38,6 +38,7 @@ def connectability(units_by_mh, nodes, sampler):
             need = node["invert"] + C.CONN_CHECK_SLOPE * dist
             margin = head - need
             rec = {"id": u["id"], "mh": nodes[mh]["label"], "mh_key": mh, "cls": u["cls"],
+                   "x": u["x"], "y": u["y"],
                    "plot_z": zu, "dist": dist, "margin": margin, "ok": margin >= 0.0}
             results.append(rec)
             if margin < 0.0:
