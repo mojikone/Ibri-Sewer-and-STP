@@ -1,16 +1,26 @@
-"""Design-core tests: loads accumulation, the sizing/invert solver, tertiary
-connectability, audit — all on synthetic fixtures with hand-checkable answers."""
+"""Design-core tests: load accumulation, the coupled sizing/invert solver, house
+connectability and the audit registry — synthetic fixtures with hand-checkable answers."""
 
 import math
-import pytest
+
 import networkx as nx
+import pytest
 from shapely.geometry import LineString
 
-from sewnet import criteria as C, hydra as H, topo, manholes, loads, solver, tertiary, audit
+from sewnet import hydra as H
+from sewnet.criteria import DEFAULT as C
+from sewnet.model import LoadUnit, key_of
+from sewnet.stages.audit import Auditor, selfclean_stats, start_year_selfclean
+from sewnet.stages.chambers import ChamberPlacer, Labeller
+from sewnet.stages.connectability import ConnectabilityStage
+from sewnet.stages.hydraulic import HydraulicDesigner
+from sewnet.stages.loads import LoadAllocator
+from sewnet.stages.tree import TreeBuilder
 
 
 class PlaneSampler:
-    """Ground plane falling toward (0,0) at `gx` along x and `gy` along y."""
+    """Ground plane falling toward (0,0) at `gx` along x."""
+
     def __init__(self, gx=0.01, gy=0.0, z0=350.0):
         self.gx, self.gy, self.z0 = gx, gy, z0
 
@@ -28,141 +38,163 @@ class PlaneSampler:
 
 
 class DipSampler(PlaneSampler):
-    """Plane with a sharp 2 m ground dip near x=150 (10 m wide) — mid-span cover trap."""
+    """Plane with a sharp 2 m ground dip near x=150 — the mid-span cover trap."""
+
     def z(self, x, y):
         base = super().z(x, y)
-        if 145.0 <= x <= 155.0:
-            return base - 2.0
-        return base
+        return base - 2.0 if 145.0 <= x <= 155.0 else base
 
 
 def straight_network(sampler, length=400.0, units_spec=((0, 3), (200, 2))):
-    """One straight street along x, outfall at (0,0); units_spec = ((x_pos, count), ...)."""
     segs = [LineString([(0, 0), (length, 0)])]
-    Gu = topo.build_undirected(segs, sampler)
-    topo.mark_arterials(Gu)
-    outfall = topo.nkey(0.0, 0.0)
-    Gd, unreach = topo.build_tree(Gu, outfall)
+    tb = TreeBuilder(sampler, C)
+    Gu = tb.build_undirected(segs)
+    tb.mark_arterials(Gu)
+    outfall = key_of(0.0, 0.0)
+    Gd, unreach = tb.build_tree(Gu, outfall)
     assert not unreach
-    nodes, pipes, _sr = manholes.place(Gd, outfall, sampler)
-    units = []
-    k = 0
+    net = ChamberPlacer(sampler, C, round_spacing=False).run(Gd, outfall)
+    Labeller.run(net)
+
+    units, k = [], 0
     for x, cnt in units_spec:
         for _ in range(cnt):
-            units.append({"id": f"u{k}", "x": x, "y": 8.0, "cls": "B", "src": "plot"})
+            units.append(LoadUnit(id=f"u{k}", x=x, y=8.0, cls="B", src="plot"))
             k += 1
-    per_mh, maxd = loads.assign_to_manholes(units, nodes)
-    loads.accumulate(pipes, per_mh)
-    return nodes, pipes, units, per_mh, outfall
+    alloc = LoadAllocator(C)
+    per_chamber, _ = alloc.run(net, units)
+    return net, units, per_chamber, outfall
 
 
+# ---------------------------------------------------------------- loads
 def test_accumulation_monotone_and_mass_balance():
-    s = PlaneSampler()
-    nodes, pipes, units, per_mh, outfall = straight_network(s)
-    # order pipes by distance downstream; qadf must be non-decreasing toward outfall
-    G = nx.DiGraph()
-    for p in pipes:
-        G.add_edge(p["up"], p["dn"], obj=p)
-    qs = []
-    n = outfall
-    chain = []
+    net, units, per_chamber, outfall = straight_network(PlaneSampler())
+    G = net.digraph()
+    chain, n = [], outfall
     while True:
         preds = list(G.predecessors(n))
         if not preds:
             break
-        p = G[preds[0]][n]["obj"]
-        chain.append(p)
+        chain.append(G[preds[0]][n]["reach"])
         n = preds[0]
-    chain.reverse()  # head -> outfall
+    chain.reverse()
     for a, b in zip(chain[:-1], chain[1:]):
-        assert b["qadf_m3d"] >= a["qadf_m3d"] - 1e-9
-    assert chain[-1]["qadf_m3d"] == pytest.approx(5 * C.PLOT_QADF_M3D, rel=1e-6)
+        assert b.qadf_m3d >= a.qadf_m3d - 1e-9
+    assert chain[-1].qadf_m3d == pytest.approx(5 * C.PLOT_QADF_M3D, rel=1e-6)
 
 
-def test_solver_basic_profile():
+def test_every_unit_is_assigned():
+    net, units, per_chamber, _ = straight_network(PlaneSampler())
+    assert sum(len(v) for v in per_chamber.values()) == len(units)
+    assert all(u.chamber is not None for u in units)
+
+
+# ---------------------------------------------------------------- solver
+def test_solver_basic_profile_is_audit_clean():
     s = PlaneSampler(gx=0.01)
-    nodes, pipes, units, per_mh, outfall = straight_network(s)
-    rep = solver.solve(nodes, pipes, s)
+    net, units, per_chamber, _ = straight_network(s)
+    rep = HydraulicDesigner(s, C).run(net)
     assert rep["converged"]
     assert not rep["pockets"]
-    for p in pipes:
-        assert p["inv_up"] > p["inv_dn"]                      # no reverse gradients
-        assert p["slope"] >= H.smin_for(p["dn_mm"], p["qpeak_m3s"]) * 0.999
-        assert p["dn_mm"] >= C.DN_MIN_MAIN
-    # audit must be clean
-    v = audit.run(nodes, pipes, units, per_mh, s)
-    assert v == [], f"violations: {v}"
+    for r in net.reaches:
+        assert r.inv_up > r.inv_dn                                  # no reverse gradient
+        assert r.slope >= H.smin_for(r.dn_mm, r.qpeak_m3s, C) * 0.999
+        assert r.dn_mm >= C.DN_MIN_MAIN
+    auditor = Auditor(C)
+    auditor.run(net, units, per_chamber, s, {}, [])
+    assert auditor.failures == [], [f.title for f in auditor.failures]
 
 
 def test_solver_respects_midspan_dip():
     s = DipSampler(gx=0.01)
-    nodes, pipes, units, per_mh, outfall = straight_network(s)
-    rep = solver.solve(nodes, pipes, s)
-    # the pipe crossing the dip must keep 1.3 m crown cover under the dip floor
-    for p in pipes:
-        for ch, x, y, g in p["profile"]:
-            inv = p["inv_up"] - p["slope"] * ch
-            cover = g - (inv + p["dn_mm"] / 1000.0)
-            assert cover >= C.MIN_COVER_CROWN - 0.02, f"{p['label']} cover {cover:.2f} at ch {ch}"
-    v = audit.run(nodes, pipes, units, per_mh, s)
-    assert [x for x in v if x[0] == "cover-min"] == []
+    net, units, per_chamber, _ = straight_network(s)
+    HydraulicDesigner(s, C).run(net)
+    for r in net.reaches:
+        for ch, x, y, g in r.profile:
+            cover = g - ((r.inv_up - r.slope * ch) + C.internal_diameter(r.dn_mm))
+            assert cover >= C.MIN_COVER_CROWN - 0.02
 
 
-def test_solver_steep_terrain_creates_drops_not_speeding():
-    # 8% ground fall with a big flow: velocity must cap at 3 m/s, drops absorb the rest
+def test_steep_terrain_caps_velocity_and_books_drops():
     s = PlaneSampler(gx=0.08)
-    nodes, pipes, units, per_mh, outfall = straight_network(
-        s, units_spec=((0, 2000), (200, 1000)))   # big flows -> velocity cap binds
-    rep = solver.solve(nodes, pipes, s)
-    v = audit.run(nodes, pipes, units, per_mh, s)
-    assert [x for x in v if x[0] == "vel-max"] == [], v
-    assert [x for x in v if x[0].startswith("drop")] == [], v   # bookkeeping must be exact
-    total_drop = sum(d["height"] for n in nodes.values() for d in n.get("drops", []))
-    assert total_drop > 0.5                        # steep ground surplus went into drops
+    net, units, per_chamber, _ = straight_network(s, units_spec=((0, 2000), (200, 1000)))
+    HydraulicDesigner(s, C).run(net)
+    auditor = Auditor(C)
+    auditor.run(net, units, per_chamber, s, {}, [])
+    failed = {f.id for f in auditor.failures}
+    assert "A4" not in failed, "velocity cap breached"
+    assert "C3" not in failed, "drop bookkeeping wrong"
+    total_drop = sum(d["height"] for c in net.chambers.values() for d in c.drops)
+    assert total_drop > 0.5
 
 
-def test_deep_pocket_becomes_sls():
-    # ground RISES 5% toward the outfall for 300 m -> pipes must dig ever deeper
-    s = PlaneSampler(gx=-0.05)                     # z falls away from outfall
-    nodes, pipes, units, per_mh, outfall = straight_network(s, length=400.0)
-    rep = solver.solve(nodes, pipes, s)
+def test_adverse_terrain_becomes_an_sls_pocket():
+    s = PlaneSampler(gx=-0.05)                    # ground falls AWAY from the outfall
+    net, units, per_chamber, _ = straight_network(s, length=400.0)
+    rep = HydraulicDesigner(s, C).run(net)
     assert rep["n_failed_depth"] > 0
     assert rep["pockets"], "adverse terrain must produce an SLS pocket, not silence"
 
 
-def test_tertiary_low_plot_flag_and_deepening():
+# ---------------------------------------------------------------- connectability
+def test_low_plots_flagged_then_recovered_by_deepening():
     s = PlaneSampler(gx=0.01)
-    nodes, pipes, units, per_mh, outfall = straight_network(s)
-    solver.solve(nodes, pipes, s)
+    net, units, per_chamber, _ = straight_network(s)
+    designer = HydraulicDesigner(s, C)
+    designer.run(net)
 
-    class LowPlotSampler(PlaneSampler):
+    class LowPlots(PlaneSampler):
         def z(self, x, y):
-            if y > 4.0:                            # plots sit 3 m below the road
-                return super().z(x, y) - 3.0
-            return super().z(x, y)
+            return super().z(x, y) - (3.0 if y > 4.0 else 0.0)   # houses 3 m below the road
 
-    ls = LowPlotSampler(gx=0.01)
-    res, deepen = tertiary.connectability(per_mh, nodes, ls)
+    stage = ConnectabilityStage(LowPlots(gx=0.01), C)
+    res, deepen = stage.check(net, per_chamber)
     assert any(not r["ok"] for r in res)
-    assert deepen                                   # a deepening requirement was raised
-    rep = solver.solve(nodes, pipes, s, node_min_depth=deepen)
-    still = tertiary.recheck(res, nodes)
+    assert deepen
+    stage.apply_deepening(net, deepen)
+    designer.run(net)
+    still = stage.recheck(res, net, C)
     assert len(still) < sum(1 for r in res if not r["ok"]) or not still
 
 
-def test_riders_grouping():
+def test_riders_group_at_most_three_connections():
     s = PlaneSampler()
-    nodes, pipes, units, per_mh, outfall = straight_network(s, units_spec=((0, 7),))
-    rs = tertiary.riders(per_mh, nodes)
-    assert sum(r["n_units"] for r in rs) == 7
-    assert all(r["n_units"] <= C.MAX_HCC_PER_RIDER for r in rs)
-    assert len(rs) == 3                             # 3+3+1
+    net, units, per_chamber, _ = straight_network(s, units_spec=((0, 7),))
+    riders = ConnectabilityStage(s, C).riders(net, per_chamber)
+    assert sum(r["n_units"] for r in riders) == 7
+    assert all(r["n_units"] <= C.MAX_HCC_PER_RIDER for r in riders)
+    assert len(riders) == 3                       # 3 + 3 + 1
+
+
+# ---------------------------------------------------------------- audit registry
+def test_audit_registry_reports_every_check():
+    s = PlaneSampler(gx=0.01)
+    net, units, per_chamber, _ = straight_network(s)
+    HydraulicDesigner(s, C).run(net)
+    auditor = Auditor(C)
+    results = auditor.run(net, units, per_chamber, s, {}, [])
+    assert len(results) >= 20
+    assert all(r.reference for r in results)      # every check cites its source
+    assert all(r.status in ("PASS", "FAIL", "NOT_CHECKABLE") for r in results)
+    assert "checks:" in auditor.table()
 
 
 def test_start_year_flags_are_operational_not_failures():
     s = PlaneSampler(gx=0.01)
-    nodes, pipes, units, per_mh, outfall = straight_network(s)
-    solver.solve(nodes, pipes, s)
-    flags = audit.start_year_selfclean(nodes, pipes, per_mh)
+    net, units, per_chamber, _ = straight_network(s)
+    HydraulicDesigner(s, C).run(net)
+    flags = start_year_selfclean(net, per_chamber, C)
     for f in flags:
         assert "v_start" in f and "tractive_ok" in f
+    stats = selfclean_stats(net, C)
+    assert stats["pipes"] == len(net.reaches)
+    assert "would_fail_at_tau2" in stats
+
+
+def test_tau_sensitivity_is_a_config_change_not_a_code_edit():
+    """The criteria object exists so GAP-9 can be tested without touching code."""
+    from dataclasses import replace
+    tau2 = replace(C, TAU_PA=2.0)
+    assert H.smin_tractive(0.002, tau2) > H.smin_tractive(0.002, C)
+    assert H.smin_tractive(0.002, tau2) / H.smin_tractive(0.002, C) == pytest.approx(
+        2.0 ** 1.23, rel=0.01)

@@ -18,7 +18,7 @@ import os
 import geopandas as gpd
 from shapely.geometry import Point
 
-from . import criteria as C
+from .criteria import DEFAULT as C
 
 CRS = "EPSG:32640"
 
@@ -62,34 +62,36 @@ losses at concept stage) and from the GVF engine vs our normal-depth assumption.
 """
 
 
-def write_all(out_dir, nodes, pipes, per_mh_units, of_rep, outfall_key):
+def write_all(out_dir, net, per_mh_units, of_rep, crit=C):
     os.makedirs(out_dir, exist_ok=True)
+    nodes, pipes, outfall_key = net.chambers, net.reaches, net.outfall
+    C = crit
 
-    mh_keys = [k for k, n in nodes.items() if n["kind"] != "outfall"]
+    mh_keys = [k for k, n in nodes.items() if n.kind != "outfall"]
     mh = gpd.GeoDataFrame({
-        "LABEL": [nodes[k]["label"] for k in mh_keys],
-        "GRD_EL": [round(nodes[k]["z"], 3) for k in mh_keys],
-        "INV_EL": [round(nodes[k]["invert"], 3) for k in mh_keys],
+        "LABEL": [nodes[k].label for k in mh_keys],
+        "GRD_EL": [round(nodes[k].z, 3) for k in mh_keys],
+        "INV_EL": [round(nodes[k].invert, 3) for k in mh_keys],
         "MH_DIA": [1.2 for _ in mh_keys],   # typical ladder (criteria.ASSUMPTIONS MH_SIZES)
-    }, geometry=[Point(nodes[k]["x"], nodes[k]["y"]) for k in mh_keys], crs=CRS)
+    }, geometry=[Point(nodes[k].xy) for k in mh_keys], crs=CRS)
     mh.to_file(os.path.join(out_dir, "MANHOLES.shp"), encoding="utf-8")
 
     cd = gpd.GeoDataFrame({
-        "LABEL": [p["label"] for p in pipes],
-        "START_ND": [nodes[p["up"]]["label"] for p in pipes],
-        "STOP_ND": [nodes[p["dn"]]["label"] for p in pipes],
-        "DIA_MM": [p["dn_mm"] for p in pipes],
-        "MATERIAL": [p["material"] for p in pipes],
+        "LABEL": [p.label for p in pipes],
+        "START_ND": [nodes[p.up].label for p in pipes],
+        "STOP_ND": [nodes[p.dn].label for p in pipes],
+        "DIA_MM": [p.dn_mm for p in pipes],
+        "MATERIAL": [p.material for p in pipes],
         "MANNING_N": [C.MANNING_N_EXPORT for _ in pipes],
-        "INV_UP": [round(p["inv_up"], 3) for p in pipes],
-        "INV_DN": [round(p["inv_dn"], 3) for p in pipes],
-        "LEN_M": [round(p["length"], 2) for p in pipes],
-    }, geometry=[p["geom"] for p in pipes], crs=CRS)
+        "INV_UP": [round(p.inv_up, 3) for p in pipes],
+        "INV_DN": [round(p.inv_dn, 3) for p in pipes],
+        "LEN_M": [round(p.length, 2) for p in pipes],
+    }, geometry=[p.geom for p in pipes], crs=CRS)
     cd.to_file(os.path.join(out_dir, "CONDUITS.shp"), encoding="utf-8")
 
     of = gpd.GeoDataFrame({
         "LABEL": ["OF-1"], "GRD_EL": [round(of_rep["z"], 3)],
-        "INV_EL": [round(nodes[outfall_key]["invert"], 3)],
+        "INV_EL": [round(nodes[outfall_key].invert, 3)],
     }, geometry=[Point(of_rep["x"], of_rep["y"])], crs=CRS)
     of.to_file(os.path.join(out_dir, "OUTFALL.shp"), encoding="utf-8")
 
@@ -100,7 +102,7 @@ def write_all(out_dir, nodes, pipes, per_mh_units, of_rep, outfall_key):
         if n_units == 0:
             continue
         q_ls = n_units * C.PLOT_QADF_LS
-        rows.append((nodes[k]["label"], "Sanitary Pattern Load", round(q_ls, 4), "Fixed"))
+        rows.append((nodes[k].label, "Sanitary Pattern Load", round(q_ls, 4), "Fixed"))
     with open(os.path.join(out_dir, "LOADS.csv"), "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["MH_LABEL", "LOADTYPE", "BASEFLOW", "PATTERN"])
@@ -122,10 +124,10 @@ def write_all(out_dir, nodes, pipes, per_mh_units, of_rep, outfall_key):
         w.writerow(["LABEL", "DIA_MM", "SLOPE_PMIL", "OUR_Q_LS", "OUR_V_MS", "OUR_DOD",
                     "SG_Q_LS", "SG_V_MS", "SG_DOD", "DQ_PCT", "DV_PCT"])
         for p in pipes:
-            w.writerow([p["label"], p["dn_mm"], round(p["slope"] * 1000, 3),
-                        round(p["qpeak_ls"], 2),
-                        round(p["vel"], 3) if p.get("vel") else "",
-                        round(p["dod"], 3) if p.get("dod") else "", "", "", "", "", ""])
+            w.writerow([p.label, p.dn_mm, round(p.slope * 1000, 3),
+                        round(p.qpeak_ls, 2),
+                        round(p.vel, 3) if p.vel else "",
+                        round(p.dod, 3) if p.dod else "", "", "", "", "", ""])
 
     with open(os.path.join(out_dir, "IMPORT_PROCEDURE.md"), "w", encoding="utf-8") as f:
         f.write(PROCEDURE)

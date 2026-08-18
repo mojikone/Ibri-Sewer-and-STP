@@ -49,20 +49,21 @@ def _frame(ax, boundary, title, databox):
             bbox=dict(boxstyle="round", fc="white", ec="#555", alpha=0.92))
 
 
-def network_map(path, nodes, pipes, pockets, of_rep, boundary, summary):
+def network_map(path, net, pockets, of_rep, boundary, summary):
+    nodes, pipes = net.chambers, net.reaches
     fig, ax = plt.subplots(figsize=(11, 15), dpi=140)
     _background(ax, boundary.bounds)
     for p in pipes:
-        xs, ys = zip(*p["geom"].coords)
-        ax.plot(xs, ys, color=DN_COLOR.get(p["dn_mm"], "#7f8c8d"),
-                lw=0.6 + p["dn_mm"] / 400.0, zorder=3)
+        xs, ys = zip(*p.geom.coords)
+        ax.plot(xs, ys, color=DN_COLOR.get(p.dn_mm, "#7f8c8d"),
+                lw=0.6 + p.dn_mm / 400.0, zorder=3)
     ax.plot(of_rep["x"], of_rep["y"], marker="v", ms=14, color="red", zorder=8)
     ax.annotate("OUTFALL", (of_rep["x"], of_rep["y"]), textcoords="offset points",
                 xytext=(8, -12), fontsize=9, color="red", weight="bold", zorder=8)
     for pk in pockets:
         s = nodes[pk["site"]]
-        ax.plot(s["x"], s["y"], marker="s", ms=10, mfc="none", mec="red", mew=2, zorder=8)
-        ax.annotate(f"SLS ({pk['n_props']}p)", (s["x"], s["y"]), textcoords="offset points",
+        ax.plot(s.x, s.y, marker="s", ms=10, mfc="none", mec="red", mew=2, zorder=8)
+        ax.annotate(f"SLS ({pk['n_props']}p)", (s.x, s.y), textcoords="offset points",
                     xytext=(8, 8), fontsize=8, color="red", zorder=8)
     dn_km = summary["dn_km"]
     handles = [Line2D([], [], color=DN_COLOR[int(k)], lw=2,
@@ -82,7 +83,8 @@ def network_map(path, nodes, pipes, pockets, of_rep, boundary, summary):
     plt.close(fig)
 
 
-def depth_map(path, nodes, pipes, boundary, summary):
+def depth_map(path, net, boundary, summary):
+    nodes, pipes = net.chambers, net.reaches
     fig, ax = plt.subplots(figsize=(11, 15), dpi=140)
     _background(ax, boundary.bounds)
     import matplotlib.cm as cm
@@ -90,13 +92,13 @@ def depth_map(path, nodes, pipes, boundary, summary):
     norm = mcolors.Normalize(vmin=1.5, vmax=12.0)
     cmap = cm.get_cmap("plasma") if hasattr(cm, "get_cmap") else plt.get_cmap("plasma")
     for p in pipes:
-        d = nodes[p["dn"]].get("depth") or 2.0
-        xs, ys = zip(*p["geom"].coords)
+        d = nodes[p.dn].depth or 2.0
+        xs, ys = zip(*p.geom.coords)
         ax.plot(xs, ys, color=cmap(norm(d)), lw=1.2, zorder=3)
     sm = cm.ScalarMappable(norm=norm, cmap=cmap)
     cbar = fig.colorbar(sm, ax=ax, shrink=0.5, pad=0.01)
     cbar.set_label("downstream manhole depth (m)", fontsize=9)
-    deep = [n for n in nodes.values() if (n.get("depth") or 0) > 8.0]
+    deep = [n for n in nodes.values() if (n.depth or 0) > 8.0]
     box = (f"DEPTH PROFILE\nmax depth {summary['max_depth_m']:.1f} m\n"
            f"manholes > 8 m: {len(deep)}\n"
            f"drops/backdrops: {summary['drops']}\n"
@@ -106,11 +108,12 @@ def depth_map(path, nodes, pipes, boundary, summary):
     plt.close(fig)
 
 
-def lowplot_map(path, nodes, pipes, conn, still_low, boundary, summary):
+def lowplot_map(path, net, conn, still_low, boundary, summary):
+    nodes, pipes = net.chambers, net.reaches
     fig, ax = plt.subplots(figsize=(11, 15), dpi=140)
     _background(ax, boundary.bounds)
     for p in pipes:
-        xs, ys = zip(*p["geom"].coords)
+        xs, ys = zip(*p.geom.coords)
         ax.plot(xs, ys, color="#7f8c8d", lw=0.5, zorder=2)
     ok = [r for r in conn if r["ok"]]
     ax.scatter([r["x"] for r in ok], [r["y"] for r in ok], s=2, color="#27ae60",

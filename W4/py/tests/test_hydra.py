@@ -9,7 +9,7 @@ Gate 2: hand-calculated fixtures must match.
 import math
 import pytest
 
-from sewnet import criteria as C
+from sewnet.criteria import DEFAULT as C
 from sewnet import hydra as H
 
 

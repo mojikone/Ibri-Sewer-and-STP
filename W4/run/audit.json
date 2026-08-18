@@ -1,0 +1,653 @@
+[
+  {
+    "id": "A1",
+    "group": "Pipes & hydraulics",
+    "check": "Minimum main diameter",
+    "reference": "G203-p22 Tab 6",
+    "requirement": "DN200 minimum",
+    "status": "PASS",
+    "found": "smallest DN used 200",
+    "findings": []
+  },
+  {
+    "id": "A2",
+    "group": "Pipes & hydraulics",
+    "check": "Material by diameter",
+    "reference": "G203-p22/23 Tab 6-7",
+    "requirement": "PVC-U to DN315, GRP above",
+    "status": "PASS",
+    "found": "materials ['GRP', 'PVC-U']",
+    "findings": []
+  },
+  {
+    "id": "A3",
+    "group": "Pipes & hydraulics",
+    "check": "Minimum gradient",
+    "reference": "G203-p29 Tab 11 + p27",
+    "requirement": "steeper of Table 11 and the tractive minimum",
+    "status": "PASS",
+    "found": "flattest laid 1.25 mm/m",
+    "findings": []
+  },
+  {
+    "id": "A4",
+    "group": "Pipes & hydraulics",
+    "check": "Maximum velocity",
+    "reference": "G203-p27",
+    "requirement": "v <= 3.0 m/s at design depth",
+    "status": "PASS",
+    "found": "highest v 1.71 m/s",
+    "findings": []
+  },
+  {
+    "id": "A5",
+    "group": "Pipes & hydraulics",
+    "check": "Self-cleansing at peak",
+    "reference": "G203-p26-27",
+    "requirement": "v >= 0.75 m/s or the tractive-force minimum gradient",
+    "status": "PASS",
+    "found": "2038/2136 reaches below 0.75 m/s, all tractive-compliant at tau=1.0 Pa [GAP-9]",
+    "findings": []
+  },
+  {
+    "id": "A6",
+    "group": "Pipes & hydraulics",
+    "check": "Proportional depth d/D",
+    "reference": "G203-p27 Tab 10",
+    "requirement": "<=0.65 (DN<=350), <=0.50 (DN>350)",
+    "status": "PASS",
+    "found": "deepest flow d/D 0.650",
+    "findings": []
+  },
+  {
+    "id": "A7",
+    "group": "Pipes & hydraulics",
+    "check": "No reverse gradient",
+    "reference": "G203-p29 4.3.1",
+    "requirement": "inv_up > inv_dn on every reach",
+    "status": "PASS",
+    "found": "0 reversed reaches",
+    "findings": []
+  },
+  {
+    "id": "A8",
+    "group": "Pipes & hydraulics",
+    "check": "Construction tolerance guard",
+    "reference": "G203-p29 4.3.1 (A9)",
+    "requirement": "reach fall > 40 mm unless velocity-capped",
+    "status": "PASS",
+    "found": "0 reaches under 40 mm fall",
+    "findings": []
+  },
+  {
+    "id": "B1",
+    "group": "Cover & depth",
+    "check": "Minimum cover to crown",
+    "reference": "G203-p33 4.6.3",
+    "requirement": ">= 1.30 m along the whole profile",
+    "status": "PASS",
+    "found": "worst cover 1.35 m (P-0033)",
+    "findings": []
+  },
+  {
+    "id": "B2",
+    "group": "Cover & depth",
+    "check": "Maximum depth",
+    "reference": "G203-p33 + rule 9",
+    "requirement": "<= 12 m, deeper becomes an SLS pocket",
+    "status": "PASS",
+    "found": "deepest chamber 15.15 m",
+    "findings": []
+  },
+  {
+    "id": "C1",
+    "group": "Chambers",
+    "check": "Maximum spacing",
+    "reference": "G203-p30 Tab 12",
+    "requirement": "100 m (DN200-315) / 120 / 150 / 200",
+    "status": "PASS",
+    "found": "longest reach 99.9 m",
+    "findings": []
+  },
+  {
+    "id": "C2",
+    "group": "Chambers",
+    "check": "Chamber at change of direction",
+    "reference": "G203-p30",
+    "requirement": "bend over 45 deg breaks the reach",
+    "status": "FAIL",
+    "found": "largest interior deflection 121 deg",
+    "findings": [
+      {
+        "element": "P-0080",
+        "detail": "interior deflection 91 deg"
+      },
+      {
+        "element": "P-0298",
+        "detail": "interior deflection 81 deg"
+      },
+      {
+        "element": "P-0797",
+        "detail": "interior deflection 67 deg"
+      },
+      {
+        "element": "P-1044",
+        "detail": "interior deflection 86 deg"
+      },
+      {
+        "element": "P-1076",
+        "detail": "interior deflection 121 deg"
+      },
+      {
+        "element": "P-1904",
+        "detail": "interior deflection 77 deg"
+      },
+      {
+        "element": "P-2083",
+        "detail": "interior deflection 61 deg"
+      }
+    ]
+  },
+  {
+    "id": "C3",
+    "group": "Chambers",
+    "check": "Drop / backdrop bookkeeping",
+    "reference": "G203-p30 4.4",
+    "requirement": "inlet drop > 600 mm recorded as backdrop; > 2 m as vortex shaft",
+    "status": "PASS",
+    "found": "382 drops (225 vortex-class)",
+    "findings": []
+  },
+  {
+    "id": "C4",
+    "group": "Chambers",
+    "check": "Inlet angle",
+    "reference": "G203-p30",
+    "requirement": "no inlet at less than 90 deg to the direction of flow",
+    "status": "FAIL",
+    "found": "272 of 2136 inlets under 90 deg",
+    "findings": [
+      {
+        "element": "MH-1953",
+        "detail": "inlet P-0026 meets the outlet at 89 deg"
+      },
+      {
+        "element": "MH-1813",
+        "detail": "inlet P-0034 meets the outlet at 88 deg"
+      },
+      {
+        "element": "MH-1781",
+        "detail": "inlet P-0033 meets the outlet at 83 deg"
+      },
+      {
+        "element": "MH-1780",
+        "detail": "inlet P-1647 meets the outlet at 83 deg"
+      },
+      {
+        "element": "MH-1874",
+        "detail": "inlet P-0039 meets the outlet at 88 deg"
+      },
+      {
+        "element": "MH-1837",
+        "detail": "inlet P-0045 meets the outlet at 88 deg"
+      },
+      {
+        "element": "MH-1941",
+        "detail": "inlet P-1658 meets the outlet at 76 deg"
+      },
+      {
+        "element": "MH-1906",
+        "detail": "inlet P-0048 meets the outlet at 81 deg"
+      },
+      {
+        "element": "MH-1885",
+        "detail": "inlet P-1659 meets the outlet at 24 deg"
+      },
+      {
+        "element": "MH-1875",
+        "detail": "inlet P-0050 meets the outlet at 80 deg"
+      },
+      {
+        "element": "MH-1815",
+        "detail": "inlet P-0071 meets the outlet at 85 deg"
+      },
+      {
+        "element": "MH-1696",
+        "detail": "inlet P-0889 meets the outlet at 56 deg"
+      },
+      {
+        "element": "MH-1896",
+        "detail": "inlet P-1662 meets the outlet at 86 deg"
+      },
+      {
+        "element": "MH-1728",
+        "detail": "inlet P-1666 meets the outlet at 13 deg"
+      },
+      {
+        "element": "MH-2049",
+        "detail": "inlet P-0289 meets the outlet at 10 deg"
+      },
+      {
+        "element": "MH-2076",
+        "detail": "inlet P-0083 meets the outlet at 36 deg"
+      },
+      {
+        "element": "MH-2073",
+        "detail": "inlet P-0298 meets the outlet at 39 deg"
+      },
+      {
+        "element": "MH-1635",
+        "detail": "inlet P-0094 meets the outlet at 73 deg"
+      },
+      {
+        "element": "MH-1691",
+        "detail": "inlet P-1678 meets the outlet at 48 deg"
+      },
+      {
+        "element": "MH-1765",
+        "detail": "inlet P-1681 meets the outlet at 74 deg"
+      },
+      {
+        "element": "MH-1749",
+        "detail": "inlet P-0901 meets the outlet at 76 deg"
+      },
+      {
+        "element": "MH-1828",
+        "detail": "inlet P-0265 meets the outlet at 75 deg"
+      },
+      {
+        "element": "MH-2000",
+        "detail": "inlet P-2073 meets the outlet at 9 deg"
+      },
+      {
+        "element": "MH-2052",
+        "detail": "inlet P-0293 meets the outlet at 15 deg"
+      },
+      {
+        "element": "MH-1963",
+        "detail": "inlet P-1682 meets the outlet at 62 deg"
+      },
+      {
+        "element": "MH-1774",
+        "detail": "inlet P-0902 meets the outlet at 87 deg"
+      },
+      {
+        "element": "MH-1863",
+        "detail": "inlet P-1687 meets the outlet at 18 deg"
+      },
+      {
+        "element": "MH-1677",
+        "detail": "inlet P-0905 meets the outlet at 52 deg"
+      },
+      {
+        "element": "MH-1942",
+        "detail": "inlet P-0311 meets the outlet at 86 deg"
+      },
+      {
+        "element": "MH-1709",
+        "detail": "inlet P-0335 meets the outlet at 84 deg"
+      },
+      {
+        "element": "MH-1886",
+        "detail": "inlet P-0350 meets the outlet at 88 deg"
+      },
+      {
+        "element": "MH-1759",
+        "detail": "inlet P-0498 meets the outlet at 83 deg"
+      },
+      {
+        "element": "MH-1744",
+        "detail": "inlet P-0360 meets the outlet at 86 deg"
+      },
+      {
+        "element": "MH-1753",
+        "detail": "inlet P-1699 meets the outlet at 86 deg"
+      },
+      {
+        "element": "MH-1698",
+        "detail": "inlet P-1698 meets the outlet at 87 deg"
+      },
+      {
+        "element": "MH-1634",
+        "detail": "inlet P-1704 meets the outlet at 81 deg"
+      },
+      {
+        "element": "MH-1748",
+        "detail": "inlet P-0380 meets the outlet at 84 deg"
+      },
+      {
+        "element": "MH-1676",
+        "detail": "inlet P-0520 meets the outlet at 84 deg"
+      },
+      {
+        "element": "MH-1676",
+        "detail": "inlet P-1705 meets the outlet at 9 deg"
+      },
+      {
+        "element": "MH-1869",
+        "detail": "inlet P-1643 meets the outlet at 61 deg"
+      },
+      {
+        "element": "MH-1868",
+        "detail": "inlet P-0323 meets the outlet at 67 deg"
+      },
+      {
+        "element": "MH-1679",
+        "detail": "inlet P-0441 meets the outlet at 88 deg"
+      },
+      {
+        "element": "MH-1560",
+        "detail": "inlet P-1702 meets the outlet at 80 deg"
+      },
+      {
+        "element": "MH-1311",
+        "detail": "inlet P-0495 meets the outlet at 0 deg"
+      },
+      {
+        "element": "MH-1311",
+        "detail": "inlet P-1718 meets the outlet at 86 deg"
+      },
+      {
+        "element": "MH-1580",
+        "detail": "inlet P-2080 meets the outlet at 88 deg"
+      },
+      {
+        "element": "MH-1486",
+        "detail": "inlet P-0552 meets the outlet at 55 deg"
+      },
+      {
+        "element": "MH-1553",
+        "detail": "inlet P-0911 meets the outlet at 79 deg"
+      },
+      {
+        "element": "MH-1655",
+        "detail": "inlet P-1724 meets the outlet at 83 deg"
+      },
+      {
+        "element": "MH-1665",
+        "detail": "inlet P-0519 meets the outlet at 87 deg"
+      }
+    ]
+  },
+  {
+    "id": "C5",
+    "group": "Chambers",
+    "check": "One outlet per chamber",
+    "reference": "user rule / SWNETWROK",
+    "requirement": "exactly one outgoing reach",
+    "status": "PASS",
+    "found": "0 chambers with more than one outlet",
+    "findings": []
+  },
+  {
+    "id": "C6",
+    "group": "Chambers",
+    "check": "No loops",
+    "reference": "user rule",
+    "requirement": "tree draining to a single outfall",
+    "status": "PASS",
+    "found": "2137 chambers / 2136 reaches, 1 component, acyclic=True",
+    "findings": []
+  },
+  {
+    "id": "C7",
+    "group": "Chambers",
+    "check": "Chamber clearance",
+    "reference": "layout convention (no PAM minimum exists)",
+    "requirement": "distinct chambers at least 3 m apart",
+    "status": "FAIL",
+    "found": "1 pairs closer than 3.0 m",
+    "findings": [
+      {
+        "element": "MH-1312/MH-1360",
+        "detail": "2.78 m apart"
+      }
+    ]
+  },
+  {
+    "id": "C8",
+    "group": "Chambers",
+    "check": "Branch start offset",
+    "reference": "user rule / SWNETWROK 10 m",
+    "requirement": "branch starts at the next house connection or 10 m clear",
+    "status": "FAIL",
+    "found": "568/569 branch heads clear",
+    "findings": [
+      {
+        "element": "MH-2023",
+        "detail": "starts 9.1 m from MH-2053"
+      }
+    ]
+  },
+  {
+    "id": "D1",
+    "group": "Tertiary",
+    "check": "Property connection length",
+    "reference": "G203-p18 Tab 4 (A9)",
+    "requirement": "<= 50 m, else an intermediate chamber",
+    "status": "FAIL",
+    "found": "120/2987 connections over 50.0 m; longest 151 m",
+    "findings": [
+      {
+        "element": "1133776",
+        "detail": "51 m to MH-1601"
+      },
+      {
+        "element": "1135030",
+        "detail": "57 m to MH-0892"
+      },
+      {
+        "element": "1134046",
+        "detail": "53 m to MH-1134"
+      },
+      {
+        "element": "1134332",
+        "detail": "61 m to MH-1524"
+      },
+      {
+        "element": "1134648",
+        "detail": "55 m to MH-1000"
+      },
+      {
+        "element": "1134626",
+        "detail": "52 m to MH-0748"
+      },
+      {
+        "element": "1134647",
+        "detail": "55 m to MH-0961"
+      },
+      {
+        "element": "1134771",
+        "detail": "52 m to MH-0032"
+      },
+      {
+        "element": "1134897",
+        "detail": "89 m to MH-1881"
+      },
+      {
+        "element": "1134902",
+        "detail": "56 m to MH-1793"
+      },
+      {
+        "element": "1134904",
+        "detail": "57 m to MH-1833"
+      },
+      {
+        "element": "U247",
+        "detail": "53 m to MH-0898"
+      },
+      {
+        "element": "1135022",
+        "detail": "54 m to MH-0938"
+      },
+      {
+        "element": "1135175",
+        "detail": "56 m to MH-0938"
+      },
+      {
+        "element": "1135044",
+        "detail": "57 m to MH-0843"
+      },
+      {
+        "element": "1135040",
+        "detail": "62 m to MH-0798"
+      },
+      {
+        "element": "1135052",
+        "detail": "50 m to MH-0518"
+      },
+      {
+        "element": "1135074",
+        "detail": "66 m to MH-0366"
+      },
+      {
+        "element": "U230",
+        "detail": "51 m to MH-0351"
+      },
+      {
+        "element": "1135153",
+        "detail": "50 m to MH-0880"
+      },
+      {
+        "element": "1135156",
+        "detail": "58 m to MH-0880"
+      },
+      {
+        "element": "1137876",
+        "detail": "72 m to MH-0880"
+      },
+      {
+        "element": "1135155",
+        "detail": "55 m to MH-0932"
+      },
+      {
+        "element": "1135163",
+        "detail": "56 m to MH-0998"
+      },
+      {
+        "element": "1135187",
+        "detail": "94 m to MH-0784"
+      },
+      {
+        "element": "1135330",
+        "detail": "52 m to MH-0552"
+      },
+      {
+        "element": "1135337",
+        "detail": "51 m to MH-0588"
+      },
+      {
+        "element": "1135378",
+        "detail": "62 m to MH-0462"
+      },
+      {
+        "element": "1135379",
+        "detail": "75 m to MH-0462"
+      },
+      {
+        "element": "1140668",
+        "detail": "54 m to MH-0462"
+      },
+      {
+        "element": "U46",
+        "detail": "72 m to MH-0462"
+      },
+      {
+        "element": "1140794",
+        "detail": "58 m to MH-0141"
+      },
+      {
+        "element": "1140795",
+        "detail": "53 m to MH-0141"
+      },
+      {
+        "element": "U205",
+        "detail": "60 m to MH-0238"
+      },
+      {
+        "element": "1135582",
+        "detail": "56 m to MH-1663"
+      },
+      {
+        "element": "1135621",
+        "detail": "54 m to MH-0333"
+      },
+      {
+        "element": "1137562",
+        "detail": "51 m to MH-0333"
+      },
+      {
+        "element": "1135624",
+        "detail": "50 m to MH-0358"
+      },
+      {
+        "element": "1135669",
+        "detail": "51 m to MH-0697"
+      },
+      {
+        "element": "1135776",
+        "detail": "73 m to MH-1402"
+      },
+      {
+        "element": "1137411",
+        "detail": "51 m to MH-1402"
+      },
+      {
+        "element": "1155593",
+        "detail": "66 m to MH-0168"
+      },
+      {
+        "element": "1155594",
+        "detail": "69 m to MH-0168"
+      },
+      {
+        "element": "1155611",
+        "detail": "57 m to MH-0168"
+      },
+      {
+        "element": "1140625",
+        "detail": "54 m to MH-0344"
+      },
+      {
+        "element": "1140711",
+        "detail": "58 m to MH-0344"
+      },
+      {
+        "element": "1139987",
+        "detail": "60 m to MH-0288"
+      },
+      {
+        "element": "1140552",
+        "detail": "61 m to MH-0048"
+      },
+      {
+        "element": "1140793",
+        "detail": "53 m to MH-0287"
+      },
+      {
+        "element": "1137255",
+        "detail": "108 m to MH-0750"
+      }
+    ]
+  },
+  {
+    "id": "E1",
+    "group": "Loads",
+    "check": "Mass balance",
+    "reference": "bookkeeping",
+    "requirement": "unit loads arrive at the outfall",
+    "status": "PASS",
+    "found": "outfall receives 3,070.0 m3/d vs 3,070.0 m3/d of unit loads",
+    "findings": []
+  },
+  {
+    "id": "E2",
+    "group": "Loads",
+    "check": "Every unit assigned",
+    "reference": "doctrine (zero silent drops)",
+    "requirement": "every loaded unit lands on exactly one chamber",
+    "status": "PASS",
+    "found": "2987/2987 units assigned",
+    "findings": []
+  }
+]
