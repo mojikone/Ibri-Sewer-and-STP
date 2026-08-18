@@ -1,5 +1,5 @@
 # PROJECT-STATE — single-file orientation for any new session
-**Updated 2026-08-15. Read this FIRST, then 02_DESIGN_CRITERIA before writing any number.**
+**LIVE DOCUMENT (user-mandated): update with every substantive commit, alongside README.md — see CLAUDE.md rule 12. Last updated 2026-08-15. Read this FIRST, then 02_DESIGN_CRITERIA before writing any number.**
 
 ## 1. Project in three lines
 Concept→detailed design + supervision of sewer network, TE network and STP capacity for Ibri Wilayat, Oman (Client NWS, Tender T/2719110/2025, Renardet job 2621). Horizons: start / 2030 / 2055 / ultimate-saturated; ≥3 options each for sewer, TE, STP. Existing STP at E444387 N2563352 (ground ≈327.5 m); ultimate flows ≫ 20,000 m³/d ⇒ STP phasing is the pivotal decision.
