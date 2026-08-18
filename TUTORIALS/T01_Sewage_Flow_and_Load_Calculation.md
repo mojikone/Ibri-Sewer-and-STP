@@ -1,7 +1,8 @@
 # Tutorial T01 — Sewage Flow & Pollution Load Calculation
-**Project 2621 Ibri Sewer, TE & STP · Renardet / NWS · 2026-08-14**
+**Project 2621 Ibri Sewer, TE & STP · Renardet / NWS · Rev 3, 2026-08-18**
 
-> **This markdown is the quick-reference digest.** The full tutorial (Rev 1, 37 pp — teaching-level explanations, native equations, route flowcharts, charts, references, appendix) is `T01_Sewage_Flow_and_Load_Calculation.docx/.pdf` in this folder, addressing all Rev 0 review comments.
+> **This markdown is the quick-reference digest.** The full tutorial (Rev 3, 53 pp — teaching-level explanations, native equations, route flowcharts, charts, references, appendices) is `T01_Sewage_Flow_and_Load_Calculation.docx/.pdf` in this folder.
+> Changelog: Rev 3 (2026-08-18) added the Colebrook-White pipe-hydraulics chapter (tutorial §14); Rev 2 addressed all Rev 0/Rev 1 review comments.
 
 How to go from *population* to *design flows* and *organic loads*, step by step, using only the values the NWS manuals permit. Every number is cited: `p##` = PAM-GUD-203, `G1-p##` = PAM-GUD-201, `G2-p##` = PAM-GUD-202, `R0` = Ibri Inception Report R0 demand workbook (Aug 2026).
 
@@ -137,6 +138,37 @@ STP inflow = network Qadf (incl. infiltration) + tankered loads + 10 % operation
 
 - **TSE production = 95 %** of STP inlet (G1-p73) → feeds the TE network design.
 - Sludge ≈ 0.25 kg/m³ treated (R0 planning rate; refine at process design).
+
+---
+
+## Pipe hydraulics — Colebrook-White (new in Rev 3, tutorial §14)
+
+The steps above say how much sewage arrives; this says how a pipe carries it. It is the method the W4 network-design pipeline implements. G203 permits Colebrook-White or Manning (p24); the project uses CW throughout.
+
+**Full-bore velocity:**
+
+```
+V = -2·√(2gDS) · log10( ks/(3.71·D)  +  2.51·ν/(D·√(2gDS)) )
+```
+
+| Input | Value | Ref |
+|---|---|---|
+| ks (all pipe sizes & materials — the slimed operating wall, not catalogue smoothness) | **1.5 mm** | p24, p28 |
+| ν (water 15 °C, conservative design value) | **1.141e-6 m²/s** | p25 |
+| First log term = wall roughness, second = viscous resistance (dominant only in small flat pipes) | — | — |
+
+**Partial-full** (circular segment, θ from d/D): `θ = 2·arccos(1−2d/D)` · `A = D²/8·(θ−sinθ)` · `R = D/4·(1−sinθ/θ)`; substitute D → 4R in the CW equation — that substitution is the whole partial-flow method. V(half depth) = V(full); V max ≈ +14 % at d/D ≈ 0.81; Q max ≈ +7 % at d/D ≈ 0.94. Design limits at peak flow: **d/D ≤ 0.65 (D ≤ 350) / ≤ 0.50 (D > 350)** (p27 Tab 10).
+
+**Where Table 11 comes from — the punchline:** the p29 minimum gradients ARE Colebrook-White solved at self-cleansing 0.75 m/s full-bore (p26). Verified: DN200 @ 5.00 mm/m → **0.749 m/s** · DN500 @ 1.55 → **0.757** · DN900 @ 0.75 → **0.764**; all nine rows land 0.74–0.77 (spread = rounding of the published gradients).
+
+**Sizing example** — Qpeak 45 L/s, available fall 4.0 mm/m:
+
+| Candidate | Qfull @ 4.0 mm/m | At 45 L/s | Verdict |
+|---|---|---|---|
+| DN250 | 0.776 m/s → **38.1 L/s** | over-full | fails before the depth check |
+| DN315 | 0.903 m/s → **70.4 L/s** | d/D ≈ 0.58 ≤ 0.65 ✓ · V ≈ 0.96 m/s ✓ | **selected** (53 L/s at the 0.65 ceiling → 18 % headroom) |
+
+**Network heads** (tiny flows, Table 11 loses meaning): take the steeper of self-cleansing and tractive-force minimums (p27 §4.2.2): `Smin = 2.33e-4 · τ^1.23 · Q^-0.461` (Q in m³/s), **τ = 1 Pa tagged pending assumption `[GAP-9]`** — G203 fixes no numeric τ; confirm with NWS. At 1.0 L/s → 5.6 mm/m, steeper than Table 11's flattest DN200 row (5.00).
 
 ---
 

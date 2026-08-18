@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Tutorial T01 Rev 1 — Sewage Flow & Load Calculation, styled on Data/sample report/Sample.docx.
+"""Tutorial T01 Rev 3 — Sewage Flow & Load Calculation, styled on Data/sample report/Sample.docx.
 Rev 1 addresses the review comments of T01_..._commented.docx (2026-08-14).
+Rev 3 (2026-08-18): added the Colebrook-White pipe-hydraulics chapter (Section 14).
 Refs: G203-p## = PAM-GUD-203, G201-p## = PAM-GUD-201, G202-p## = PAM-GUD-202,
 R0 = Ibri Inception Report R0 demand workbook (Aug 2026)."""
 import os
@@ -274,7 +275,72 @@ def make_pf():
     style_ax(ax)
     fig.savefig(PFCHART, dpi=200, bbox_inches="tight"); plt.close(fig)
 
-make_chain(); make_diurnal(); make_pop(); make_pf()
+# ---------- Colebrook-White hydraulics (Section 14; ks = 1.5 mm G203-p24/28, nu = 1.141e-6 G203-p25) ----------
+import math
+CW_KS = 1.5e-3; CW_NU = 1.141e-6; CW_G = 9.81
+def cw_v(Dh, S):
+    """Full-bore Colebrook-White velocity (m/s) for hydraulic diameter Dh (m) at slope S (m/m)."""
+    root = math.sqrt(2 * CW_G * Dh * S)
+    return -2.0 * root * math.log10(CW_KS / (3.71 * Dh) + 2.51 * CW_NU / (Dh * root))
+def cw_partial(D, S, dD):
+    """(velocity, area, discharge) at relative depth d/D via circular-segment geometry."""
+    th = 2 * math.acos(1 - 2 * dD)
+    A = D * D / 8 * (th - math.sin(th))
+    R = A / (th * D / 2)
+    v = cw_v(4 * R, S)
+    return v, A, v * A
+TAB11 = [(200, 5.00), (250, 3.75), (315, 2.70), (400, 2.05),
+         (500, 1.55), (600, 1.25), (700, 1.00), (800, 0.85), (900, 0.75)]
+
+CW_PARTIAL_CHART = os.path.join(IMG, "t01_cw_partial.png")
+def make_cw_partial():
+    D, S = 0.315, 0.004
+    vfull = cw_v(D, S); qfull = vfull * math.pi * D * D / 4
+    dd = np.linspace(0.02, 0.999, 400)
+    vr, qr = [], []
+    for x in dd:
+        v, _, q = cw_partial(D, S, float(x))
+        vr.append(v / vfull); qr.append(q / qfull)
+    fig, ax = plt.subplots(figsize=(7.0, 3.8))
+    ax.plot(qr, dd, color=BLUE, lw=2.2, zorder=3)
+    ax.plot(vr, dd, color=ORANGE, lw=2.2, zorder=3)
+    ax.axhline(0.65, color="#777777", lw=1.1, ls="--")
+    ax.axhline(0.50, color="#AAAAAA", lw=1.1, ls=":")
+    ax.text(0.03, 0.665, "d/D limit 0.65 (D ≤ 350 mm, G203-p27 Tab 10)", fontsize=8.3, color="#555555")
+    ax.text(0.03, 0.515, "d/D limit 0.50 (D > 350 mm)", fontsize=8.3, color="#888888")
+    ax.text(0.80, 0.30, "Q / Qfull", fontsize=9.5, color=BLUE, fontweight="bold")
+    ax.text(1.02, 0.16, "V / Vfull", fontsize=9.5, color=ORANGE, fontweight="bold")
+    ax.plot([0.639], [0.581], "o", color=BLUE, ms=6)
+    ax.annotate("worked example:\n45 L/s in DN315 @ 4.0 mm/m", xy=(0.639, 0.581), xytext=(0.28, 0.78),
+                fontsize=8.6, color=INK, arrowprops=dict(arrowstyle="->", color="#777777"))
+    ax.annotate("V peaks at d/D ≈ 0.81", xy=(max(vr), 0.81), xytext=(0.62, 0.93), fontsize=8.6, color=INK,
+                arrowprops=dict(arrowstyle="->", color="#777777"))
+    ax.set_xlim(0, 1.25); ax.set_ylim(0, 1.0)
+    ax.set_xlabel("ratio to full-bore value", fontsize=9, color=INK)
+    ax.set_ylabel("relative depth d/D", fontsize=9, color=INK)
+    style_ax(ax)
+    fig.savefig(CW_PARTIAL_CHART, dpi=200, bbox_inches="tight"); plt.close(fig)
+
+CW_TAB11_CHART = os.path.join(IMG, "t01_cw_tab11.png")
+def make_cw_tab11():
+    dns = [t[0] for t in TAB11]; smins = [t[1] for t in TAB11]
+    vs = [cw_v(dn / 1000.0, s / 1000.0) for dn, s in TAB11]
+    x = np.arange(len(dns))
+    fig, ax = plt.subplots(figsize=(7.0, 3.2))
+    ax.axhline(0.75, color=ORANGE, lw=1.6, ls="--", zorder=2)
+    ax.text(0.05, 0.7535, "self-cleansing target 0.75 m/s (G203-p26)", fontsize=8.6, color=ORANGE)
+    ax.plot(x, vs, "o", color=BLUE, ms=7, zorder=3)
+    for i, v in enumerate(vs):
+        ax.text(x[i], v + 0.004, f"{v:.3f}", ha="center", fontsize=8.0, color=BLUE)
+        ax.text(x[i], 0.712, f"{smins[i]:.2f}", ha="center", fontsize=7.6, color="#777777")
+    ax.text(-0.45, 0.7045, "Table 11 gradient (mm/m):", fontsize=7.6, color="#777777", ha="left")
+    ax.set_xticks(x); ax.set_xticklabels([f"DN{d}" for d in dns], fontsize=8.6)
+    ax.set_ylim(0.70, 0.79)
+    ax.set_ylabel("CW full-bore velocity (m/s)", fontsize=9, color=INK)
+    style_ax(ax)
+    fig.savefig(CW_TAB11_CHART, dpi=200, bbox_inches="tight"); plt.close(fig)
+
+make_chain(); make_diurnal(); make_pop(); make_pf(); make_cw_partial(); make_cw_tab11()
 if POP_SERIES: make_pop_settlements()
 make_demand_buildup(); make_return_chart()
 if EXTRA: make_ramp_chart(); make_tanker_chart(); make_lpcd_chart(); make_wwg_chart()
@@ -424,7 +490,8 @@ except KeyError:
 para("Tender No. T/2719110/2025", align=WD_ALIGN_PARAGRAPH.CENTER, size=13)
 para("", space_after=40)
 para(SUB, align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, size=20, color="0000CC")
-para("Revision 2 — August 2026 (addresses review comments on Rev 0 and Rev 1)", align=WD_ALIGN_PARAGRAPH.CENTER, size=12)
+para("Revision 3 — August 2026", align=WD_ALIGN_PARAGRAPH.CENTER, size=12)
+para("Rev 3 (2026-08-18): added the pipe hydraulics chapter — Colebrook-White, partial-full flow, Table 11 derivation (Section 14). Rev 2 addressed review comments on Rev 0 and Rev 1.", align=WD_ALIGN_PARAGRAPH.CENTER, size=9, italic=True)
 para("", space_after=80)
 para("Renardet S.A. & Partners Consulting Engineers", align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, size=13)
 para("Project No. 2621", align=WD_ALIGN_PARAGRAPH.CENTER, size=12)
@@ -468,7 +535,8 @@ bullet("Sewage flow varies strongly over the day, so pipes must carry the peak, 
 bullet("Pollution is quantified independently of water use: each person contributes a fixed daily mass of organic matter (at least 60 g of BOD5 and 80 g of TSS per day) regardless of how much water dilutes it. Loads (kg/d) size the biological treatment; concentrations (mg/l) are always derived as load divided by flow — Oman's low water use makes the sewage concentrated, around 300-400 mg/l BOD5.", bold_lead="Step 7 — Organic loads (Section 11). ")
 bullet("Each design element is sized by a specific flow: gravity pipes and pumping stations by the peak-hour flow, the STP hydraulic pass-through by PHF, the biological process by AAF plus loads. The STP incoming flow adds a 10 percent operational allowance; the plant category (above/below 20,000 m3/d) determines the STP scope route per the Terms of Reference.", bold_lead="Steps 8-9 — Design flows and STP (Sections 12-13). ")
 bullet("The STP returns 95 percent of its inflow as treated sewage effluent (TSE), which feeds the TE network design, and produces sludge (about 0.25 kg per m3 treated) which is thickened, dewatered and directed to reuse or disposal under the sludge management strategy required by the scope.", bold_lead="Outputs (Section 13). ")
-para("A fully worked numerical example (Section 14) carries a hypothetical settlement of 10,000 persons through all nine steps, and a reconciliation register (Section 15) lists the four points where the R0 model and the guidelines differ (infiltration basis, weekly peak, tanker catchment radius, sludge rate) — all flagged for confirmation with NWS at the kickoff stage. Conclusions and recommendations close the report.")
+bullet("New in Rev 3: how a pipe actually carries the peak flow. The Colebrook-White equation with the guideline's fixed inputs (ks = 1.5 mm, nu = 1.141e-6 m2/s), partial-full flow and the d/D limits, the demonstration that the Table 11 minimum gradients are simply Colebrook-White solved at the self-cleansing velocity 0.75 m/s, a worked pipe-sizing example, and the tractive-force minimum gradient for network heads. This is the method the W4 network-design pipeline implements.", bold_lead="Pipe hydraulics (Section 14). ")
+para("A fully worked numerical example (Section 15) carries a hypothetical settlement of 10,000 persons through all nine steps, and a reconciliation register (Section 16) lists the four points where the R0 model and the guidelines differ (infiltration basis, weekly peak, tanker catchment radius, sludge rate) — all flagged for confirmation with NWS at the kickoff stage. Conclusions and recommendations close the report.")
 pagebreak()
 
 # ================= TOC / LOF / LOT =================
@@ -484,7 +552,7 @@ pagebreak()
 # ================= 1 INTRODUCTION =================
 H(1, "Introduction")
 H(2, "Purpose and how to read this tutorial")
-para("This document is a teaching text, not a design report: its goal is that the reader can afterwards perform and check every calculation independently. Each section first explains the concept in plain terms — what the quantity is, why it exists, what would go wrong without it — then gives the governing values and equations with their sources, and finally shows the numbers at work in the worked example of Section 14. No parameter is used without being defined, and no equation appears without its purpose stated.")
+para("This document is a teaching text, not a design report: its goal is that the reader can afterwards perform and check every calculation independently. Each section first explains the concept in plain terms — what the quantity is, why it exists, what would go wrong without it — then gives the governing values and equations with their sources, and finally shows the numbers at work in the worked example of Section 15. No parameter is used without being defined, and no equation appears without its purpose stated.")
 H(2, "Reference documents and citation convention")
 table(["Citation", "Document"], [
  ["G203-p##", "PAM-GUD-203 — Wastewater Design Guidelines v1.0 (Rev 01), page ##"],
@@ -494,7 +562,7 @@ table(["Citation", "Document"], [
  ["R0", "Inception Report R0 demand workbook (Ibri Sewer Demand R0, August 2026)"],
 ], widths=[1.1, 5.4])
 tab_caption("Reference documents and citation convention")
-para("Where the guidelines and the R0 model differ, both values are given and the difference is flagged for confirmation with NWS (Section 15).")
+para("Where the guidelines and the R0 model differ, both values are given and the difference is flagged for confirmation with NWS (Section 16).")
 
 # ================= 2 KEY CONCEPTS =================
 H(1, "Key Concepts: How Sewage Flow Behaves")
@@ -612,10 +680,10 @@ para("Sewers are not watertight. Groundwater and soil moisture enter through pip
 bullet("720 litres per day per kilometre of sewer — a linear allowance reflecting tight modern joints and (in Ibri's inland setting) deep groundwater.", bold_lead="New networks: ")
 bullet("10% of the wastewater flow; up to 40% for coastal or high-groundwater systems.", bold_lead="Existing inland networks: ")
 bullet("None. The system is strictly separate; rainfall does not enter the design flows (G201-p72).", bold_lead="Stormwater allowance: ")
-para("The R0 model provisionally applies the 10 percent rule to selected settlements. For the new Ibri network this is roughly ten times the guideline's linear allowance — a conservative choice that is safe for STP capacity but not free: carried through to ultimate flows it adds several thousand m3/d of phantom flow to the STP sizing and dilutes the design concentrations. The recommended treatment (Section 15) is to carry the guideline value as the design basis, keep 10 percent as an upper sensitivity bound, and have NWS confirm the basis at kickoff.")
+para("The R0 model provisionally applies the 10 percent rule to selected settlements. For the new Ibri network this is roughly ten times the guideline's linear allowance — a conservative choice that is safe for STP capacity but not free: carried through to ultimate flows it adds several thousand m3/d of phantom flow to the STP sizing and dilutes the design concentrations. The recommended treatment (Section 16) is to carry the guideline value as the design basis, keep 10 percent as an upper sensitivity bound, and have NWS confirm the basis at kickoff.")
 H(2, "Tankered sewage")
 para("Properties not yet connected to a network discharge to holding tanks emptied by vacuum tankers ('yellow tankers'), which discharge at the STP's tanker reception facility. Tanker sewage is therefore part of the STP inflow from day one, while network flows ramp up as connections are made. Nationally, tankers deliver about 17 percent of STP inflow today; design coverage reaches 100 percent by the end of the planning period, phasing tanker deliveries out (G201-p73). Two project-specific points:")
-bullet("The R0 model collects tankered flows from settlements within 25 km of the STP. This radius is an R0 assumption with no guideline source — it must not be mixed into design calculations until NWS confirms it (Section 15).")
+bullet("The R0 model collects tankered flows from settlements within 25 km of the STP. This radius is an R0 assumption with no guideline source — it must not be mixed into design calculations until NWS confirms it (Section 16).")
 bullet("A recent site visit found tankers delivering sewage from camps up to 150 km away. This is outside any assumption in the scope and materially affects the tanker reception sizing, the early-years flow balance and possibly the STP odour/septicity design (long-haul sewage arrives septic). It is flagged as a project risk requiring an NWS policy decision: which catchment is the Ibri STP obliged to accept?")
 
 # ================= 8 STEP 5 AVERAGE =================
@@ -623,7 +691,7 @@ H(1, "Step 5 — Average Daily Flow")
 para("The average daily flow assembles everything so far: people times per-capita sewage, plus the two additions of Step 4:")
 equation(Q("adf") + mr(" = ") + frac(mr("P × ") + q_("ww"), mr("1000")) + mr(" + ") + Q("inf") + mr(" + ") + Q("tank"))
 para("where P is the population served (capita), q(ww) the per-capita wastewater generation (l/c/d, = 171 for Ibri), Q(inf) the infiltration allowance and Q(tank) the tankered deliveries, all in m3/d. The division by 1000 converts litres to cubic metres.")
-para("Qadf equals the AAF of Section 3 and is the backbone quantity of the design: every later flow is derived from it, the biological STP sizing rests on it, and the phasing analysis compares it across model years. In the worked example (Section 14) it evaluates to 1,731 m3/d, i.e. 20.0 L/s.")
+para("Qadf equals the AAF of Section 3 and is the backbone quantity of the design: every later flow is derived from it, the biological STP sizing rests on it, and the phasing analysis compares it across model years. In the worked example (Section 15) it evaluates to 1,731 m3/d, i.e. 20.0 L/s.")
 
 # ================= 9 STEP 6 PEAKS =================
 H(1, "Step 6 — Peak Flows")
@@ -646,7 +714,7 @@ H(2, "Which formula for which element — and where Qm comes from")
 para("A common shorthand is 'Peltier for the pipes, Merrimack for the STP'. That is close, but one refinement is needed:")
 bullet("Network hydraulic sizing (pipes, pump stations) — Peltier. These elements are governed by the peak hour, which is what Peltier estimates; it is also the current IMP 2024 method.")
 bullet("STP — both, in different places. The plant's hydraulic pass-through (headworks, screens, channels) is also sized on the peak hour (PHF). Merrimack's peak-day flow governs the day-scale elements: flow equalisation, storage, emergency lagoons and process buffering, where what matters is the worst day's volume, not the worst hour's rate. The biological process itself uses neither — it is sized on AAF plus loads (Section 12).")
-para("So Merrimack is one of the STP's design checks, not the STP sizing method wholesale. The allocation above is standard practice; NWS's confirmation of the binding formula per element is on the kickoff list — the difference is roughly 40 percent of pipe capacity, which is not a rounding issue. The R0 model additionally applies a +20 percent weekly peak with no guideline source; it is flagged in Section 15 (and note that the R0 workbook's WW Generation series already contains this factor — Appendix B).")
+para("So Merrimack is one of the STP's design checks, not the STP sizing method wholesale. The allocation above is standard practice; NWS's confirmation of the binding formula per element is on the kickoff list — the difference is roughly 40 percent of pipe capacity, which is not a rounding issue. The R0 model additionally applies a +20 percent weekly peak with no guideline source; it is flagged in Section 16 (and note that the R0 workbook's WW Generation series already contains this factor — Appendix B).")
 para("Where do the Qm values come from? Qm is not an external data item: it is the computed mean (average) flow at the point being designed — the output of Step 5 accumulated through the network. Every pipe reach has its own Qm (the sum of all upstream zone flows), the STP inlet's Qm is the total Qadf, and each value comes from the flow model at that node. No measurement is needed to apply Peltier at design time; the STP inflow records requested from NWS serve to calibrate these computed values, not to replace them.")
 
 # ================= 10 STEP 7 LOADS =================
@@ -692,7 +760,70 @@ H(2, "Sludge — the by-product")
 para("Treatment concentrates the removed pollution into sludge — as a planning rate, about 0.25 kg of dry solids per m3 treated (R0). The sludge line thickens and dewaters it (volume reduction), stabilises it (odour and pathogen control), and directs it to its fate: beneficial reuse (soil conditioning, subject to quality) or landfill disposal. The TOR requires a sludge management strategy as a concept-stage deliverable, and the Step 7 TSS load is the primary input to its sizing.")
 pagebreak()
 
-# ================= 13 WORKED EXAMPLE =================
+# ================= 14 (Rev 3) COLEBROOK-WHITE PIPE HYDRAULICS =================
+H(1, "How a Pipe Carries the Flow — Colebrook-White Hydraulics")
+H(2, "Why this chapter exists")
+para("Everything so far answers one question: how much sewage arrives. Steps 1-5 built the average flow, Step 6 peaked it, Step 7 loaded it. None of it tells you whether a DN250 laid at 4 mm/m can actually carry that peak. That is a hydraulics question, and this chapter closes the gap. It also matters practically: this is exactly the method the W4 network-design pipeline implements, pipe by pipe. The guideline accepts Colebrook-White or Manning (G203-p24); this project uses Colebrook-White throughout, with the fixed inputs the guideline prescribes.")
+H(2, "The equation, piece by piece")
+para("For a pipe running exactly full, Colebrook-White gives the velocity directly — no iteration, no friction-factor chart:")
+equation(mr("V") + mr(" = −2 ") + sqrt(mr("2gDS")) + mr(" × ") + ssub(mr("log"), mr("10")) + mr("( ") +
+         frac(ssub(mr("k"), mr("s")), mr("3.71 D")) + mr(" + ") +
+         frac(mr("2.51 ν"), mr("D ") + sqrt(mr("2gDS"))) + mr(" )"))
+para("In words: gravity pulls the water down the slope; the pipe wall and the water's own viscosity hold it back; V is where the two balance. The pieces:")
+bullet("the full-bore velocity in m/s — what the pipe does when it runs exactly full.", bold_lead="V — ")
+bullet("gravity, 9.81 m/s2.", bold_lead="g — ")
+bullet("the internal pipe diameter in metres.", bold_lead="D — ")
+bullet("the hydraulic gradient in m/m — for gravity sewers, simply the pipe slope. A Table 11 value in mm/m divided by 1000.", bold_lead="S — ")
+bullet("the wall roughness, fixed at 1.5 mm for all pipe sizes and all materials (G203-p24, p28). This is deliberately not the catalogue smoothness of new PVC. A working sewer wall carries a grease-and-slime film, joints and small deposits, and after a few months a slimed PVC wall behaves much like a slimed concrete one. One value for everything is the guideline's honest way of saying so.", bold_lead="ks = 1.5 mm — ")
+bullet("the kinematic viscosity of sewage, taken as water at 15 °C (G203-p25). Cooler water is thicker and flows slower, so this is the conservative design pick: real Omani sewage is warmer and will only flow faster than computed.", bold_lead="ν = 1.141 × 10−6 m2/s — ")
+bullet("the left term is the wall-roughness resistance, the right term the viscous resistance. In sewer sizes the roughness term dominates; the viscous term only really matters in small pipes on flat slopes.", bold_lead="The two terms inside the log — ")
+H(2, "Running partly full")
+para("A gravity sewer is designed never to run full — so the full-bore V above is a reference point, not the operating condition. At a depth d in a pipe of diameter D, the water fills a circular segment. Everything follows from the angle θ that the water surface subtends at the pipe centre:")
+equation(mr("θ") + mr(" = 2 ") + ssup(mr("cos"), mr("−1")) + mr("(1 − 2d/D)"))
+equation(mr("A") + mr(" = ") + frac(ssup(mr("D"), mr("2")), mr("8")) + mr(" (θ − sin θ)") + mr(" ,    R = ") +
+         frac(mr("A"), mr("P")) + mr(" = ") + frac(mr("D"), mr("4")) + mr(" (1 − ") + frac(mr("sin θ"), mr("θ")) + mr(")"))
+para("A is the flow area, P = θD/2 the wetted perimeter, and R = A/P the hydraulic radius — flow area per unit of wall doing the braking. A full pipe has R = D/4, so replacing D with 4R in the Colebrook-White equation turns the full-bore formula into the any-depth formula. That substitution is the whole trick; there is no separate partial-flow theory.")
+para("The behaviour that falls out is worth internalising (Figure 10). At half depth the velocity equals the full-bore velocity — half the area, but also half the wall, so R is unchanged and the flow does not notice. Velocity peaks about 14 percent above full-bore at d/D ≈ 0.81, capacity about 7 percent above full-bore at d/D ≈ 0.94; both then drop as the last of the air space disappears and the top wall starts braking too. So a sewer at three-quarters depth is not a sewer in trouble — it is a sewer near its hydraulic optimum.")
+para("The guideline still caps the design depth at peak flow: d/D ≤ 0.65 for D ≤ 350 mm and d/D ≤ 0.50 for D > 350 mm (G203-p27 Tab 10). The air space is not waste — it ventilates the sewer (sulphide and odour control), absorbs the surge nobody predicted, and keeps capacity reserve precisely where the peak-factor estimate is shakiest. The stricter limit for the big pipes reflects how much more damage a surcharging trunk does.")
+pic(CW_PARTIAL_CHART, w=5.9)
+fig_caption("Partial-full behaviour of a circular sewer (Colebrook-White, DN315 at 4.0 mm/m): velocity and discharge relative to full-bore, with the d/D design limits and this chapter's sizing example marked")
+H(2, "Where Table 11 actually comes from")
+para("Every sewer designer carries the minimum-gradient table (G203-p29 Tab 11) around as if it were a separate rule. It is not. Table 11 is the Colebrook-White equation run backwards: for each diameter, find the slope at which the full-bore velocity equals the self-cleansing minimum of 0.75 m/s (G203-p26). Nothing else goes in. Here is DN200 at its tabulated 5.00 mm/m, step by step:")
+bullet("2gDS = 2 × 9.81 × 0.200 × 0.00500 = 0.01962 m2/s2, so √(2gDS) = 0.1401 m/s.")
+bullet("Roughness term: ks/(3.71 D) = 0.0015/0.742 = 0.00202.")
+bullet("Viscous term: 2.51ν/(D·√(2gDS)) = 2.51 × 1.141e-6/(0.200 × 0.1401) = 1.02e-4 — twenty times smaller, as promised.")
+bullet("Sum = 0.00212; log10 = −2.673.")
+bullet("V = −2 × 0.1401 × (−2.673) = 0.749 m/s ≈ 0.75 m/s. That is the whole derivation.")
+para("The same check on every row of Table 11 (computed live by this document's build script):")
+table(["DN (mm)", "Table 11 minimum gradient (mm/m)", "CW full-bore velocity at that gradient (m/s)"],
+      [[f"DN{dn}", f"{sm:.2f}", f"{cw_v(dn/1000.0, sm/1000.0):.3f}"] for dn, sm in TAB11],
+      widths=[1.3, 2.6, 2.6], font=9)
+tab_caption("G203 Table 11 minimum gradients reproduced by Colebrook-White at 0.75 m/s full-bore")
+para("Every row lands between 0.74 and 0.77 m/s — the spread is only the rounding of the published gradients. Two consequences. First, if you trust the equation you can reproduce, extend or interpolate the table; the W4 pipeline does exactly this check on every pipe. Second, the table's logic is full-bore: at the actual (partial) peak depth the velocity differs, which is why the 0.75 m/s criterion is checked at peak flow in design, and why the guideline separately handles the near-empty case (below).")
+pic(CW_TAB11_CHART, w=5.9)
+fig_caption("Colebrook-White full-bore velocity at each Table 11 minimum gradient — the entire table reproduces the 0.75 m/s self-cleansing target")
+H(2, "A worked sizing example")
+para("A street collects Qpeak = 45 L/s (say, the Peltier-peaked outflow of a few zones) and the ground gives 4.0 m of fall per kilometre — S = 4.0 mm/m. The catalogue offers DN250 and DN315. In this tutorial DN is treated as the internal diameter; in detail design use the manufacturer's actual bore. Same equation, twice:")
+bullet(f"√(2gDS) = √(2 × 9.81 × 0.250 × 0.004) = 0.1401 m/s; V = {cw_v(0.250, 0.004):.3f} m/s; A = 0.0491 m2; full-bore capacity Q = V × A = {cw_v(0.250, 0.004)*3.14159265*0.0625/4*1000:.1f} L/s. That is less than 45 L/s — the pipe cannot pass the peak even running completely full. Rejected before the depth check even starts.", bold_lead="DN250: ")
+bullet(f"V = {cw_v(0.315, 0.004):.3f} m/s full-bore; A = 0.0779 m2; capacity {cw_v(0.315, 0.004)*3.14159265*0.315**2/4*1000:.1f} L/s. The 45 L/s peak uses 64 percent of that. Solving the partial-flow geometry for 45 L/s: the pipe runs at d/D ≈ 0.58 with V ≈ 0.96 m/s.", bold_lead="DN315: ")
+para("Now the checks, all against Section 12's table: depth d/D = 0.58 ≤ 0.65 (DN315 is under the 350 mm threshold, G203-p27) — passes. Velocity 0.96 m/s sits between the 0.75 m/s self-cleansing minimum and the 3.0 m/s abrasion maximum (G203-p26-27) — passes, comfortably above the preferred 0.90 m/s too. The slope 4.0 mm/m exceeds DN315's Table 11 minimum of 2.70 mm/m — passes by construction. And at the d/D = 0.65 ceiling the pipe would carry 53 L/s, so there is 18 percent of growth headroom above the design peak. DN315 it is.")
+table(["Check", "DN250 @ 4.0 mm/m", "DN315 @ 4.0 mm/m"], [
+ ["Full-bore velocity (CW)", f"{cw_v(0.250, 0.004):.3f} m/s", f"{cw_v(0.315, 0.004):.3f} m/s"],
+ ["Full-bore capacity", "38.1 L/s < 45 — fails", "70.4 L/s"],
+ ["Depth at Qpeak = 45 L/s", "— (over-full)", "d/D ≈ 0.58 ≤ 0.65 ✓"],
+ ["Velocity at Qpeak", "—", "≈ 0.96 m/s (0.75 ≤ v ≤ 3.0) ✓"],
+ ["Capacity at d/D = 0.65", "—", "53 L/s → 18% headroom"],
+ ["Verdict", "rejected", "selected"],
+], widths=[2.2, 1.9, 2.4], font=9)
+tab_caption("Worked pipe-sizing example: Qpeak = 45 L/s on a 4.0 mm/m available fall")
+H(2, "At the network heads: the tractive-force minimum")
+para("One complement, briefly. At the top ends of the network the peak flow is 1-2 L/s and 'self-cleansing at 0.75 m/s full-bore' loses its meaning — the pipe runs a few centimetres deep and Table 11's flattest gradients will not drag sand along the invert at such depths. For these reaches the guideline requires the steeper of the self-cleansing and tractive-force minimum gradients (G203-p27 §4.2.2):")
+equation(ssub(mr("S"), mr("min")) + mr(" = 2.33 × ") + ssup(mr("10"), mr("−4")) + mr(" × ") +
+         ssup(mr("τ"), mr("1.23")) + mr(" × ") + ssup(mr("Q"), mr("−0.461")))
+para("with Q in m3/s and τ the tractive tension in Pa — the shear stress the trickle must exert on the invert to move grit. G203 gives no numeric design value for τ; this project carries τ = 1 Pa as a tagged pending assumption (GAP-9), literature-based, to be confirmed with NWS. At Q = 1.0 L/s the formula gives Smin = 5.6 mm/m — steeper than the flattest use of Table 11's DN200 row (5.00 mm/m), which is precisely the point: the smaller the flow, the more slope it needs, and the table alone will not tell you that. The W4 pipeline applies this check automatically at every network head; the full treatment lives in the W4 design criteria, not here.")
+pagebreak()
+
+# ================= 15 WORKED EXAMPLE =================
 H(1, "Worked Example")
 para("The example is constructed for this tutorial (it is not taken from a source document): a hypothetical settlement of 10,000 persons, served by 25 km of new sewers, lying inland with deep groundwater — deliberately round numbers so each step is easy to follow. Values are rounded for readability.", italic=True)
 para("Walk-through of the solution:")
@@ -780,7 +911,7 @@ para("The ratio ramps linearly from 46.7% (2021) through 74.6% (2033), reaching 
 pic(RAMP_CHART, w=5.9)
 fig_caption("Connected-population ratio c(y) in the R0 model: 46.7% (2021) ramping to 100% (2070)")
 H(2, "B.3  'Project Tankers' — the unconnected stream")
-para("One row per settlement, columns 2024-2100, values in m3/d of tankered water-consumption equivalent. Two modelling choices to note: (i) only settlements within 25 km of the STP by road contribute (criteria tab, 'Maximum Distance from STP by road' = 25 km) — an R0 assumption with no guideline source, flagged in Section 15; (ii) the series is constant at its 2024 estimate for every year — tanker volumes are not grown nor phased out, which is conservative for the STP but inconsistent with the guideline's expectation that coverage reaches 100% and tankering declines (G201-p73). Both points are on the kickoff confirmation list.")
+para("One row per settlement, columns 2024-2100, values in m3/d of tankered water-consumption equivalent. Two modelling choices to note: (i) only settlements within 25 km of the STP by road contribute (criteria tab, 'Maximum Distance from STP by road' = 25 km) — an R0 assumption with no guideline source, flagged in Section 16; (ii) the series is constant at its 2024 estimate for every year — tanker volumes are not grown nor phased out, which is conservative for the STP but inconsistent with the guideline's expectation that coverage reaches 100% and tankering declines (G201-p73). Both points are on the kickoff confirmation list.")
 pic(TANKER_CHART, w=5.9)
 fig_caption("Ten largest tanker-served settlements in the R0 model (2024 volumes, project total 942 m3/d)")
 H(2, "B.4  'Water Demand Criteria' — the demand rate library")
@@ -817,7 +948,7 @@ table(["Symbol", "Meaning", "Value"], [
 tab_caption("Symbols of the R0 master equation")
 para("Two audit findings matter when using these numbers:")
 bullet("the (1 + w) factor means every WWG value is 20 percent above the average-flow chain of this tutorial. R0's WWG is therefore closer to a 'design weekly flow' than to Qadf, and it must not be fed into formulas expecting an average (e.g. Peltier's Qm) without first removing the factor.", bold_lead="The WW Generation series already includes the +20% weekly peak: ")
-bullet("in this workbook infiltration enters as a ratio of sewage flow (B.5), not as the guideline's 720 L/d/km of pipe — the deviation discussed in Sections 8 and 15.", bold_lead="Infiltration is inside the generation formula: ")
+bullet("in this workbook infiltration enters as a ratio of sewage flow (B.5), not as the guideline's 720 L/d/km of pipe — the deviation discussed in Sections 8 and 16.", bold_lead="Infiltration is inside the generation formula: ")
 pic(WWG_CHART, w=6.0)
 fig_caption("R0 wastewater generation to 2100 — three largest settlements and project total ('Project WW Generation'; values include the +20% weekly peak)")
 para("With these two caveats, the workbook chain is exactly the chain of this tutorial: Steps 1 (B.1-B.2), 2 (B.4), 3-4 (B.5, B.3) and 5 (B.6), with the peaking and STP steps applied downstream of it. The project WW generation reaches about 14,200 m3/d in 2024, 46,500 m3/d by 2055 and 157,000 m3/d by 2100 (weekly-peak basis; divide by 1.2 for the average-flow equivalent).")
