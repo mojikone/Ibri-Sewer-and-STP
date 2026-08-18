@@ -56,6 +56,16 @@ Nine stages, each a module with one job, each writing inspectable intermediates.
 | Hardcoded `D:/Projects/...` paths | one config file, paths only there | portability, W5+ reuse |
 | Broken/stale test suite | pytest on synthetic fixtures per module (TDD) | trust requires green tests |
 
+## 3b. Hydraulics first — the verification regime (user mandate 2026-08-18)
+
+Nothing hydraulic is ported on trust. The donor repo computes no hydraulics at all (autopsy §3), so the entire hydraulic layer is new — and the one donor piece with hydraulic consequences (the invert sweep) gets re-derived, not copied. The regime:
+
+1. **Solver must reproduce the guideline before it may design.** Table 11's minimum gradients ARE Colebrook-White at 0.75 m/s with ks = 1.5 mm — so our CW partial-full implementation has to reproduce all nine Table 11 values within ±5% as a pytest gate. Fail = the solver is wrong, not the table.
+2. **Hand-calc fixtures.** A set of synthetic pipes and short networks solved by hand (capacity, normal depth, velocity, invert profile with a drop and a min-slope stretch) — the pipeline must match the hand numbers before touching real data.
+3. **Invert solver re-derivation.** The donor's single-sweep "aim back to min cover, deepest arrival governs" logic is reviewed clause-by-clause against G203 (uniform slope between manholes, drop rules, backdrop limits, no reverse gradients incl. the 20 mm tolerance margin). If a single downstream sweep can't honor a clause, it becomes a two-pass solver (downstream sweep + upstream relaxation). The chosen logic and its justification go in METHODOLOGY.
+4. **SewerGEMS as referee, not just deliverable.** After import, the model runs and we compare pipe-by-pipe Q, v, d/D against the pipeline's own numbers. Disagreement >5% on any pipe = investigation, no exceptions. The test boundary isn't "done" until the two engines agree.
+5. **Engineering review pass** on every hydraulic decision rule (PF application point, infiltration add-order, junction losses ignored-vs-modeled at concept stage) — written up with page refs in METHODOLOGY so you can audit my reasoning, not just my outputs.
+
 ## 4. Inputs (locked) and the one open input
 
 | Input | Path | Note |
@@ -106,7 +116,7 @@ W4/
   img/        PNG maps (rule 4 spec)
 ```
 
-**Definition of done for the test boundary:** S7 audit passes with zero violations; every non-farm plot carries load into exactly one manhole; mass balance closes; DXF/SHP/PNG delivered; ModelBuilder import verified clean; methodology report written. Then — and only then — the same pipeline runs study-wide (per-zone, windowed terrain, the 36-zone scale risks already designed for).
+**Definition of done for the test boundary:** S7 audit passes with zero violations; every non-farm plot carries load into exactly one manhole; mass balance closes; DXF/SHP/PNG delivered; ModelBuilder import verified clean; **SewerGEMS run agrees with the pipeline pipe-by-pipe within 5% (§3b)**; methodology report written. Then — and only then — the same pipeline runs study-wide (per-zone, windowed terrain, the 36-zone scale risks already designed for).
 
 ## 9. Execution plan after your approval
 
