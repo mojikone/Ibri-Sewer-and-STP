@@ -1,6 +1,6 @@
 # BRAIN — Source of Truth (2621 Ibri Sewer & STP)
 
-**Read this folder before ANY analysis, script, map, or report work. Re-check `02_DESIGN_CRITERIA.md` before writing any number.**
+**Read `07_PROJECT_STATE.md` FIRST (single-file orientation: data, progress, settled doctrine, next tasks), then this index, then `02_DESIGN_CRITERIA.md` before writing any number.**
 
 ## Prime rules
 1. **No invented metrics.** Every slope, velocity, depth, flow, spacing, buffer used in analysis/report MUST trace to `02_DESIGN_CRITERIA.md` (with PAM-GUD-203 page ref) or be explicitly tagged `[GAP — pending source]` in `05_GAPS.md`.
@@ -18,3 +18,5 @@
 | 03_DATA_INVENTORY.md | Layers, CRS, stats, quality flags |
 | 04_TOOLS.md | Repo (SWNETWROK), MCPs, environment, file conventions |
 | 05_GAPS.md | Missing sources, open questions, items needing client/user input |
+| 06_W2_FEEDBACK.md | Binding user feedback constraints from W1 review (maps, zones, SLS, report style) |
+| 07_PROJECT_STATE.md | **START HERE** — orientation snapshot: data, doctrine, progress, key numbers, next tasks |

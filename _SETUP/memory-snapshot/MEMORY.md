@@ -1,4 +1,2 @@
-# Memory Index
-
-- [Ibri BRAIN workflow](ibri-brain-workflow.md) — read _BRAIN before any work; no invented metrics; W-folder iterations
-- [Ibri project facts](ibri-project-facts.md) — existing STP, DSM-only DEM, road layer quirks, GAP list, gravity findings
+﻿- [File transfer via public repo](file-transfer-via-public-repo.md) — user accepts public-repo exposure for remote file transfer; warn once, push on confirmation
+- [Plain wording, not literary](plain-wording-not-literary.md) — write like a colleague, not a standards document; dense prose tires them out
