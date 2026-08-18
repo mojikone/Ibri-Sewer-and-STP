@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-"""W4 Methodology & Results — Word deliverable (python-docx).
+"""W4 methodology report -> Word (.docx), rendered from the shared content blocks.
 
 INTERNAL working document: clean professional styling, NOT the client Sample.docx
 letterhead (rule 5 applies to client-facing reports; this one is for the design team).
-Content mirrors W4/docs/METHODOLOGY.md — numbers read live from W4/run/summary.json
-so the docx can never drift from the last run.
+Content and every number come from report_content.build() — the same source the PDF
+renderer uses — so the two formats cannot drift.
 
 Re-run: python W4/report/make_methodology_docx.py
+(PDF: make_methodology_pdf.py — reportlab, no Word dependency.)
 """
-import json
 import os
 
 from docx import Document
@@ -18,28 +18,18 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Inches, Pt, RGBColor
 
-W4 = r"D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\Claude\W4"
-OUT = os.path.join(W4, "report", "W4_Sewer_Network_Design_Methodology.docx")
-IMG_DOCS = os.path.join(W4, "docs", "img")
-IMG_MAPS = os.path.join(W4, "img")
+import report_content as RC
 
-S = json.load(open(os.path.join(W4, "run", "summary.json")))
-sc = S["selfclean"]
-aug = S["augmentation"]
-lp = S["lowplots"]
-ld = S["loads"]
-dn_km = S["dn_km"]
-sr = S.get("structures", {})
-VIOL = json.load(open(os.path.join(W4, "run", "violations.json")))
+OUT = os.environ.get("W4_DOCX_OUT") or os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "W4_Sewer_Network_Design_Methodology.docx")
 
 doc = Document()
 
-# ---------- base styles ----------
 st = doc.styles["Normal"]
 st.font.name = "Calibri"
 st.font.size = Pt(10.5)
 st.paragraph_format.space_after = Pt(6)
-for lvl, sz, col in ((1, 16, "1F3864"), (2, 13, "2E5A88"), (3, 11.5, "2E5A88")):
+for lvl, sz, col in ((1, 15, "1F3864"), (2, 12.5, "2E5A88")):
     h = doc.styles[f"Heading {lvl}"]
     h.font.name = "Calibri"
     h.font.size = Pt(sz)
@@ -67,20 +57,6 @@ def para(text="", align=None, bold=None, size=None, color=None, space_after=6, i
     return p
 
 
-def H(level, text):
-    return doc.add_paragraph(text, style=f"Heading {level}")
-
-
-def bullet(text, bold_lead=None):
-    p = doc.add_paragraph(style="List Bullet")
-    if bold_lead:
-        r = p.add_run(bold_lead)
-        r.bold = True
-    p.add_run(text)
-    p.paragraph_format.space_after = Pt(4)
-    return p
-
-
 def shade(cell, hexc):
     tcPr = cell._tc.get_or_add_tcPr()
     sh = OxmlElement("w:shd")
@@ -89,7 +65,7 @@ def shade(cell, hexc):
     tcPr.append(sh)
 
 
-def table(headers, rows, widths=None, font=9):
+def table(headers, rows, widths=None, font=8.6):
     t = doc.add_table(rows=1, cols=len(headers))
     t.style = "Table Grid"
     t.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -114,23 +90,13 @@ def table(headers, rows, widths=None, font=9):
     return t
 
 
-def pic(path, w=6.3, cap=None):
-    if not os.path.exists(path):
-        return
-    p = doc.add_paragraph()
-    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p.add_run().add_picture(path, width=Inches(w))
-    if cap:
-        c = doc.add_paragraph()
-        c.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        r = c.add_run(cap)
-        r.italic = True
-        r.font.size = Pt(8.5)
-        r.font.color.rgb = RGBColor.from_string("555555")
-
-
-def pagebreak():
-    doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
+def caption(text):
+    c = doc.add_paragraph()
+    c.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r = c.add_run(text)
+    r.italic = True
+    r.font.size = Pt(8.5)
+    r.font.color.rgb = RGBColor.from_string("555555")
 
 
 def toc():
@@ -145,319 +111,52 @@ def toc():
     p._p.append(fld)
 
 
-# ================= COVER =================
-para("", space_after=90)
-para("Ibri Sewer, TE & STP — Project 2621", align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, size=13,
-     color="555555")
-para("W4 — Sewer Network Design Pipeline", align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, size=26,
-     color="1F3864", space_after=8)
-para("Methodology and Test-Boundary Results", align=WD_ALIGN_PARAGRAPH.CENTER, size=16,
-     color="2E5A88", space_after=40)
-para("Internal working document — design team", align=WD_ALIGN_PARAGRAPH.CENTER, size=11,
-     italic=True, color="777777")
-para("18 August 2026", align=WD_ALIGN_PARAGRAPH.CENTER, size=11, color="777777", space_after=40)
-table(["Item", "Value"], [
-    ["Test area", f"{S['s1']['boundary_ha']:.0f} ha"],
-    ["Network designed", f"{S['n_nodes']:,} manholes / {S['net_km']:.1f} km"],
-    ["Peak flow at outfall", f"{S['qpeak_outfall_ls']:.0f} L/s (Qadf {S['qadf_outfall_m3d']:,.0f} m3/d)"],
-    ["Audit result", f"{S['violations']} violations"],
-    ["Code / tests", "W4/py/sewnet — 44 pytest cases, Table-11 gate"],
-], widths=[2.2, 4.0], font=10)
-pagebreak()
-
-# ================= TOC =================
-H(1, "Contents")
-toc()
-pagebreak()
-
-# ================= EXEC SUMMARY =================
-H(1, "Executive summary")
-para("We built the sewer design pipeline, proved it end to end on the "
-     f"{S['s1']['boundary_ha']:.0f} ha test boundary, put it through a 21-agent adversarial "
-     "review and a two-rule structural audit (no loops; one outlet per chamber), fixed "
-     f"everything both found, and the design now holds those rules with "
-     f"{len(VIOL)} marginal residuals out of {S['n_nodes']:,} chambers. Here is the whole story "
-     "in one page.")
-para(f"The pipeline takes four inputs — roads, classified plots, the 0.5 m terrain and a boundary — "
-     f"and produces a complete gravity network: {S['n_nodes']:,} manholes, {S['net_km']:.1f} km of "
-     f"pipe ({float(dn_km['200'])/S['net_km']*100:.0f}% DN200, stepping up to a DN600 outfall leg), "
-     f"designed inverts everywhere, about 11 seconds to run. Every one of the "
-     f"{ld['loaded_points']:,} loaded units ({ld['built']:,} built plots, {ld['planned']} planned, "
-     f"{ld['unparceled']} unparceled buildings; {ld['farms_excluded']} farms excluded per doctrine) "
-     f"lands on exactly one manhole — nothing silently dropped, mass balance closes exactly. "
-     f"Saturation flow at the outfall: Qadf {S['qadf_outfall_m3d']:,.0f} m3/d, peak "
-     f"{S['qpeak_outfall_ls']:.0f} L/s (Merrimack).")
-para("The hydraulics were never taken on faith, and the verification regime earned its keep. The "
-     "Colebrook-White solver had to reproduce all nine minimum gradients of G203 Table 11 (±5%) "
-     "before it was allowed to size anything — it does, mean deviation under 2%. Then the "
-     "adversarial panel attacked the code and confirmed 11 real defects, all now fixed: the "
-     "spanning tree covered every road junction but skipped 25 km of cross-street edges (fixed "
-     "with a crest-manhole layout); pipe capacity was computed on nominal diameter "
-     "while OD-designated PVC-U bores smaller (now on true SDR34 bore); a broken bisection in the "
-     "velocity-cap solver; and drop structures measured against the wrong datum. 43 pytest cases "
-     "lock all of it in.")
-para(f"The honest self-cleansing picture, on the table rather than under it: "
-     f"{sc['share_below']*100:.0f}% of pipes cannot reach 0.75 m/s at saturation peak — physically "
-     f"inevitable on small residential branches — and comply through the guideline's own "
-     f"tractive-force alternative at tau = 1 Pa, which is a pending assumption [GAP-9]. If NWS "
-     f"sets tau = 2 Pa, {sc['would_fail_at_tau2']:,} pipes need steeper slopes. That single number "
-     f"is the strongest argument for pinning tau down at the kickoff.")
-para("Three findings from the test area for your eyes:", bold=True, space_after=4)
-bullet(f"the terrain's lowest boundary road node is at ({S['outfall']['x']:.0f}, "
-       f"{S['outfall']['y']:.0f}), south-center on the main corridor, z {S['outfall']['z']:.1f} m, "
-       f"not the west edge. If the real trunk connection is elsewhere, it is one config line and a "
-       f"13-second re-run.", bold_lead=f"The outfall landed {S['outfall']['dist_to_expected_m']:.0f} m from where you expected — ")
-bullet(f"{lp['flagged']} units ({lp['flagged']/lp['checked']*100:.1f}%) could not gravity-connect "
-       f"at standard sewer depth. Deepening {lp['deepened_mh']} manholes recovered all but "
-       f"{lp['residual']}, now flagged as local-solution candidates.",
-       bold_lead="Your elevated-roads concern was justified: ")
-bullet(f"({S['solver']['pockets']} pocket, ~5 properties) — absorb-to-detail-design per rule 9. "
-       f"{S['drops']} drop structures ({S['vortex_sites']} vortex-class) concentrate at wadi-bank "
-       f"crossings, exactly where detail design applies the G1-p85 crossing rules.",
-       bold_lead="One SLS pocket appeared ")
-para(f"The structural audit found something the graph checks had hidden (section 4a): the tree "
-     f"gave every node one outlet, but {sr.get('merged', 0)} chambers sat within 3 m of another "
-     f"chamber — many at the same point — each with its own outlet. On the ground that is a "
-     f"two-outlet junction, exactly what the rule forbids. The pipeline now merges coincident "
-     f"chambers, re-derives the tree over the merged set (which also removes loops that merging "
-     f"exposes), and offsets every extra outgoing pipe so it starts at the next house connection "
-     f"or 10 m clear of the chamber — the SWNETWROK convention, which had not been adopted until "
-     f"it was called for.")
-para("Also delivered on the way: T01 Rev 3 — the tutorial now teaches Colebrook-White (§14), "
-     "Table 11 derived step by step, every number independently verified.")
-para("What is proven: doctrine loads in, guideline-compliant network out, auditable and "
-     "re-runnable, honest about its assumptions. What is not yet proven: SewerGEMS agreement (the "
-     "import package and pipe-by-pipe referee table await the ModelBuilder run), and behaviour at "
-     "36-zone scale with the finalised trunk. That is W5.", bold=False)
-pagebreak()
-
-# ================= 1 PIPELINE =================
-H(1, "1. What the pipeline is")
-para("A re-runnable Python package (sewnet) that designs a gravity sewer network inside any "
-     "boundary, given roads, loaded plots, terrain and an outfall or connection point. One config "
-     "file holds the paths; criteria.py holds every design number with its PAM-GUD page reference "
-     "— no number lives anywhere else in the code.")
-pic(os.path.join(IMG_DOCS, "pipeline_architecture.png"), 6.3,
-    "Figure 1 — Pipeline architecture. Blue = inputs, yellow = audit gate, red = SLS flag, "
-    "dashed = iteration loops.")
-para("Stages, in one breath: repair and clip the inputs; node the roads and collapse dual "
-     "carriageways; grow a loop-free tree toward the outfall (climb-penalised, arterial-preferring "
-     "— the 'no alleys' lesson); add cross-street branches wherever loaded plots front an off-tree "
-     "street (summit-split, crest-manhole layout); place manholes (junctions, bends >45°, <=100 m "
-     "spacing, sub-2 m reaches contracted); load every plot at saturation; accumulate flows with "
-     "peak factor and infiltration; size pipes and solve inverts together on the true pipe bore; "
-     "check every house can physically reach its manhole, deepening where roads are elevated; "
-     "audit everything independently; export SHP, SewerGEMS, DXF and maps.")
-
-# ================= 2 HYDRAULIC BASIS =================
-H(1, "2. Hydraulic basis and how it is verified")
-table(["Element", "Basis", "Verification"], [
-    ["Capacity / velocity",
-     "Colebrook-White, ks = 1.5 mm, nu = 1.141e-6 m2/s (G203-p24/25/28), partial-full circular "
-     "geometry, true internal bore (PVC-U OD-series derated to SDR34 ID; GRP nominal = ID)",
-     "Table-11 gate: reproduce all 9 minimum gradients at 0.75 m/s ±5% — passes at <2% mean "
-     "deviation; ID convention unit-tested"],
-    ["Minimum gradients",
-     "Steeper of Table 11 (p29) and tractive force Smin = 2.33e-4·tau^1.23·Q^-0.461 (p27, "
-     "A9-corrected), plus a 40 mm total-fall guard per reach (p29 §4.3.1)",
-     "tau = 1 Pa tagged [GAP-9]; Q floored at Mara's 1.5 L/s minimum design flow — at the floor "
-     "tractive ≈ Table 11 DN200: the methods meet"],
-    ["d/D limits", "<=0.65 (D<=350), <=0.50 (D>350) at peak (p27 Tab 10)",
-     "enforced in sizing, re-checked in audit on the true bore"],
-    ["Velocity band",
-     ">=0.75 m/s at peak or tractive-compliant (p26–27); <=3.0 m/s via a slope cap whose surplus "
-     "fall becomes a designed drop", "audit plus the transparency statistics in section 5"],
-    ["Loads",
-     "Doctrine §2: every plot at saturation, 6.0 × 171.3 l/c/d ≈ 1.03 m3/d/plot; farms zero; "
-     "infiltration 720 L/d/km unpeaked; PF Merrimack (mandatory >100 properties), held at its "
-     "100-property value below; Peltier comparison held the same way",
-     "mass balance to the outfall closes exactly; unknown CLASS values can never vanish silently"],
-], widths=[1.1, 2.7, 2.5], font=8.5)
-pic(os.path.join(IMG_DOCS, "load_chain.png"), 5.4, "Figure 2 — Load allocation chain.")
-pagebreak()
-
-# ================= 3 SOLVER =================
-H(1, "3. How the solver designs a pipe")
-para("Two passes per reach, iterated until no diameter changes (2 iterations sufficed; "
-     "oscillation between adjacent DNs is detected and broken upward; a final lay pass always "
-     "leaves inverts consistent with final diameters).")
-t = doc.add_table(rows=1, cols=2)
-t.alignment = WD_TABLE_ALIGNMENT.CENTER
-c1, c2 = t.rows[0].cells
-c1.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
-c1.paragraphs[0].add_run().add_picture(os.path.join(IMG_DOCS, "solver_step1_slope.png"),
-                                       width=Inches(2.5))
-c2.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
-c2.paragraphs[0].add_run().add_picture(os.path.join(IMG_DOCS, "solver_step2_profile.png"),
-                                       width=Inches(2.9))
-para("Figure 3 — Solver logic: step 1 sets the reach slope, step 2 resolves profile, junction and "
-     "depth.", align=WD_ALIGN_PARAGRAPH.CENTER, italic=True, size=8.5, color="555555")
-para("The details that matter:", bold=True, space_after=4)
-bullet("one straight line between manholes, never kinked.", bold_lead="Uniform slope per reach (p29) — ")
-bullet("manhole depth is construction depth, and every inlet drop is measured inlet-invert minus "
-       "outgoing-invert, so velocity-cap surpluses and cover shifts combine into the drop they "
-       "physically are. >600 mm = external backdrop, >2 m = vortex shaft (p30); the audit "
-       "re-derives every drop independently, and a missing or misclassified record is a violation.",
-       bold_lead="The chamber datum is the outgoing invert — ")
-bullet("every reach profiled at 5 m on the 0.5 m VRT; a reach riding above dipping ground is "
-       "shifted down bodily, the shift surfacing as a recorded drop.",
-       bold_lead="Mid-span cover on real terrain: ")
-bullet("every candidate DN is judged at its own governing slope (no-oversizing, p29), on its true "
-       "bore, with velocity-infeasible candidates skipped explicitly.",
-       bold_lead="Sizing without the ratchet: ")
-bullet("never a silent orphan.", bold_lead=">12 m depth becomes an SLS pocket (p33 + rule 9) — ")
-
-# ================= 4a STRUCTURE RULES =================
-H(1, "4. Loop-free, and one outlet per chamber")
-para("Both rules are enforced constructively, not checked after the fact, and both are verified "
-     "independently on the final output.")
-para("No loops. The collection network is a spanning tree by construction: a cost-weighted "
-     "shortest-path tree to the outfall, where each chamber's single outgoing pipe is its next "
-     f"hop. Loop-closing street edges can never become pipes in that step. Final output: "
-     f"{S['n_nodes']:,} chambers, {S['n_pipes']:,} pipes, one connected component, acyclic — the "
-     "pipe count being chambers-minus-one is the arithmetic signature of a tree.")
-para("One outlet per chamber. A junction takes any number of inlets and exactly one outgoing "
-     "pipe. The catch the graph checks missed: two separate chambers can sit at the same physical "
-     "point (road noding rounds to the centimetre, and the cross-street augmentation planted "
-     "branch heads next to existing junctions). Each had one outlet in the graph; together they "
-     "were a two-outlet junction on the ground. The fix, in order:", space_after=4)
-bullet("they are one structure, which makes the hidden fan-outs visible as chambers with two "
-       "outgoing pipes;", bold_lead="merge every cluster of chambers within 3 m — ")
-bullet("because merging can also close a loop (two chambers at one point may additionally be "
-       "linked by a path). This restores one-outlet-and-no-loops in a single step and marks the "
-       "leftover pipes as loop-closers;", bold_lead="re-derive the tree over the merged pipe set, ")
-bullet("at the next house connection along its own alignment, or 10 m when that connection sits "
-       "nearer — the SWNETWROK FANOUT_GAP_M convention. A branch whose pipe is too short to keep "
-       "a clear start is dropped and reported (its street is served from the far end);",
-       bold_lead="offset every leftover pipe so it starts clear of the chamber: ")
-bullet("iterating until nothing moves.",
-       bold_lead="slide any remaining branch head clear of neighbouring chambers, ")
-para(f"Test-area result: {sr.get('merged', 0)} coincident chambers merged, "
-     f"{sr.get('fanouts', 0)} fan-outs resolved, {sr.get('offset_branches', 0)} branch starts "
-     f"offset, {sr.get('dropped_branches', 0)} branches dropped as served-from-far-end. "
-     f"Independent verification on the exported network: loop-free PASS, one-outlet PASS, 568 of "
-     f"569 branch heads at least 10 m clear, one chamber pair at 2.78 m instead of 3.0 m. Those "
-     f"residuals are reported rather than hidden — both are local layout details for detail "
-     f"design, and the audit keeps flagging them.")
-para("The same three checks now run in the audit every time (mh-clearance, head-offset, "
-     "one-outlet), with a unit test on a synthetic two-chambers-at-one-point case, so this "
-     "cannot regress silently.")
-
-# ================= 5 CONNECTABILITY =================
-H(1, "5. The house-connectability check")
-para("Roads are locally elevated for flood protection and underpasses, so houses can sit below the "
-     "sewer. For every loaded unit: plot ground (0.5 m terrain) minus 0.6 m outlet depth must reach "
-     "its manhole's invert with 2% fall over the connection distance. Failures raise a deepening "
-     "requirement on that manhole (capped 0.5 m short of the 12 m limit) and the invert solve "
-     f"re-runs; anything still failing is flagged for a local solution. Test area: {lp['flagged']} "
-     f"flagged, {lp['deepened_mh']} manholes deepened, {lp['residual']} residual.")
-pic(os.path.join(IMG_MAPS, "W4_M3_connectability.png"), 4.6,
-    "Figure 4 — Plot connectability: green connectable, amber recovered by deepening, red needs a "
-    "local solution.")
-pagebreak()
-
-# ================= 5 RESULTS =================
-H(1, "6. Test-boundary results")
-table(["Quantity", "Value"], [
-    ["Area / roads / network",
-     f"{S['s1']['boundary_ha']:.0f} ha / {S['s1']['len_km']:.1f} km roads / {S['net_km']:.1f} km "
-     f"sewers ({aug['added_km']} km from cross-street augmentation; {aug['skipped_km']} km of "
-     f"unloaded streets deliberately unsewered)"],
-    ["Manholes / pipes", f"{S['n_nodes']:,} / {S['n_pipes']:,} (single tree, one outfall — chambers minus one)"],
-    ["Structure rules (section 4)", f"{sr.get('merged',0)} coincident chambers merged · "
-                                   f"{sr.get('fanouts',0)} fan-outs resolved · "
-                                   f"{sr.get('offset_branches',0)} branch starts offset · "
-                                   f"{sr.get('dropped_branches',0)} branches dropped"],
-    ["Diameters", " · ".join(f"DN{k} {v} km" for k, v in dn_km.items())],
-    ["Loaded units", f"{ld['loaded_points']:,} (built {ld['built']:,} + planned {ld['planned']} + "
-                     f"unparceled {ld['unparceled']}); farms excluded {ld['farms_excluded']}"],
-    ["Outfall", f"({S['outfall']['x']:.0f}, {S['outfall']['y']:.0f}), z {S['outfall']['z']:.2f} — "
-                f"{S['outfall']['dist_to_expected_m']:.0f} m from user expectation"],
-    ["Qadf / Qpeak at outfall", f"{S['qadf_outfall_m3d']:,.0f} m3/d / {S['qpeak_outfall_ls']:.0f} "
-                                f"L/s (PF {S['pf_formula']}; Peltier column in the shapefiles)"],
-    ["Depths", f"max {S['max_depth_m']:.1f} m (inside the SLS pocket); gravity network otherwise "
-               f"<= 12 m"],
-    ["Drops", f"{S['drops']} designed structures; {S['vortex_sites']} vortex-class (>2 m), "
-              f"concentrated at wadi-bank crossings"],
-    ["SLS pockets", f"{S['solver']['pockets']} (~5 properties, absorb per rule 9)"],
-    ["Low plots", f"{lp['flagged']} flagged, {lp['residual']} residual after deepening "
-                  f"{lp['deepened_mh']} manholes"],
-    ["Audit", f"{S['violations']} violations — structural residuals only (one chamber pair at "
-              f"2.78 m vs the 3.0 m clearance; one branch head at 9.1 m vs the 10 m offset); "
-              f"everything else clean, including independent drop re-derivation"],
-    ["Self-cleansing transparency",
-     f"{sc['below_075_at_peak']:,}/{sc['pipes']:,} pipes below 0.75 m/s at saturation peak — "
-     f"compliant via tractive at tau=1 Pa [GAP-9]; {sc['would_fail_at_tau2']:,} would need "
-     f"redesign at tau=2 Pa; start-year flags {S['startyear_flags']:,}, all tractive-compliant"],
-    ["Runtime", "~13 s design + ~5 s exports"],
-], widths=[1.7, 4.6], font=9)
-pic(os.path.join(IMG_MAPS, "W4_M1_network_by_dn.png"), 4.4,
-    "Figure 5 — Designed network by diameter, with outfall and SLS candidate.")
-pic(os.path.join(IMG_MAPS, "W4_M2_depth.png"), 4.4,
-    "Figure 6 — Excavation depth (invert below ground).")
-pagebreak()
-
-# ================= 6 SEWERGEMS =================
-H(1, "7. SewerGEMS package and referee protocol")
-para("W4/sewergems/ holds MANHOLES, CONDUITS and OUTFALL shapefiles built to the Bentley-documented "
-     "ModelBuilder mappings (explicit START_ND/STOP_ND plus vertex-snapped geometry digitised "
-     "upstream to downstream, elevations not depths, numeric mm diameters), LOADS.xlsx "
-     "(pattern-based rows, L/s per manhole), and IMPORT_PROCEDURE.md with the known traps — the "
-     "'Set Invert to Start/Stop Node = False' global edit being the one that silently deletes drop "
-     "manholes. Manning n is exported as 0.013, the ks = 1.5 mm equivalent: the Tab-8 range "
-     "0.009–0.011 conflicts with the ks mandate and would show roughly 30% phantom capacity, so "
-     "that conflict is flagged as an NWS kickoff item.")
-para("After the model run, paste SewerGEMS discharge, velocity and d/D into REFEREE_pipes.csv; any "
-     "pipe deviating more than 5% from our columns is an open investigation. The design is not "
-     "'verified' until the two engines agree — deliberately a separate run, not a self-check.")
-
-# ================= 7 ASSUMPTIONS =================
-H(1, "8. Assumptions register")
-para("Tagged in criteria.ASSUMPTIONS with the same wording, and reported in every deliverable:")
-table(["Assumption", "Basis / exposure"], [
-    ["tau = 1 Pa", "GUD-203 gives no numeric design tractive stress [GAP-9]; largest redesign "
-                   f"exposure ({sc['would_fail_at_tau2']:,} pipes at tau=2)"],
-    ["Tractive Q-floor 1.5 L/s", "Mara simplified-sewerage minimum design flow; unfloored the "
-                                 "formula demands unbounded slopes as Q approaches 0"],
-    ["PVC-U wall class SDR34/SN8", "true bore for hydraulics; actual class per PAM-SPC-207 pending"],
-    ["OR 6.0, 1 property per plot", "GAP-5 (NCSI housing units missing)"],
-    ["Plot outlet 0.6 m, 2% connection fall", "method choice for the connectability check"],
-    ["40 m frontage rule", "an off-tree street gets a sewer when a loaded unit lies within 40 m"],
-    ["Manhole size ladder", "02 has no size table; GUD-203 §4.4 re-extract pending (no hydraulic "
-                            "effect at concept)"],
-    ["Rider discharge to nearest manhole", "02 silent on the discharge point"],
-    ["Gravity in-road position", "taken from the force-main clause (p51, A9) as an inference"],
-    ["PF held below 100 properties", "G1-p71 prescribes no formula there; Peltier held the same way"],
-    ["Infiltration unpeaked", "add-order not stated in GUD-201 — kickoff item"],
-    ["10 m branch-start offset, 3 m chamber clearance",
-     "layout conventions from SWNETWROK and the user's rule, not PAM-GUD values"],
-], widths=[2.2, 4.1], font=9)
-
-# ================= 8 LIMITATIONS =================
-H(1, "9. Limitations and what changes at full scale")
-bullet("the pipeline designs subnetworks into the given connection points, which are config "
-       "entries, not structure.", bold_lead="The trunk is user-finalised (settled 2026-08-18) — ")
-bullet("multi-connection territory competition is the W5 structural addition.",
-       bold_lead="One outfall per run today; ")
-bullet("junction losses ignored (normal-depth hydraulics) — both noted for the SewerGEMS "
-       "comparison.", bold_lead="Riders are schematic; ")
-bullet("flat trunk profiles at scale need survey-grade data — already a registered data request.",
-       bold_lead="The 0.5 m terrain is concept-grade for inverts near the 0.75–1.0 mm/m minimums "
-                 "(G1-p36); ")
-bullet("pin it at the kickoff.", bold_lead="tau = 1 Pa carries the largest redesign exposure — ")
-
-H(1, "10. Adversarial review and structural audit")
-para("A 21-agent skeptic panel attacked the hydraulic core after the first audit-clean run: four "
-     "attack lenses (Colebrook-White implementation, solver clause compliance, load/audit doctrine, "
-     "executed edge cases) followed by independent verification of every raw finding. 17 raw "
-     "findings, 11 confirmed, 11 fixed, 6 refuted. The full register with fixes is in "
-     "W4/docs/REVIEW_FINDINGS.md; the headline four were cross-street coverage (+25.3 km), the "
-     "true PVC bore correction, the drop-datum correction, and the velocity-cap bisection repair.")
-para("A second, user-driven audit then checked the two layout rules directly against the run "
-     "output: no loops (held) and one outlet per junction (held in the graph, broken on the "
-     "ground — see section 4). The 10 m branch-start offset had not been implemented at all; it "
-     "now is, with permanent audit checks and a unit test. Both audits are recorded in "
-     "W4/docs/REVIEW_FINDINGS.md.")
+for b in RC.build():
+    kind = b[0]
+    if kind == "cover":
+        c = b[1]
+        para("", space_after=90)
+        para(c["eyebrow"], align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, size=13, color="555555")
+        para(c["title"], align=WD_ALIGN_PARAGRAPH.CENTER, bold=True, size=25, color="1F3864",
+             space_after=8)
+        para(c["subtitle"], align=WD_ALIGN_PARAGRAPH.CENTER, size=15, color="2E5A88",
+             space_after=40)
+        para(c["note"], align=WD_ALIGN_PARAGRAPH.CENTER, size=11, italic=True, color="777777")
+        para(c["date"], align=WD_ALIGN_PARAGRAPH.CENTER, size=11, color="777777", space_after=36)
+        table(["Item", "Value"], c["facts"], widths=[2.2, 4.0], font=10)
+    elif kind == "toc":
+        toc()
+    elif kind == "pagebreak":
+        doc.add_paragraph().add_run().add_break(WD_BREAK.PAGE)
+    elif kind == "h1":
+        doc.add_paragraph(b[1], style="Heading 1")
+    elif kind == "h2":
+        doc.add_paragraph(b[1], style="Heading 2")
+    elif kind == "p":
+        para(b[1])
+    elif kind == "bullet":
+        p = doc.add_paragraph(style="List Bullet")
+        p.add_run(b[1]).bold = True
+        p.add_run(b[2])
+        p.paragraph_format.space_after = Pt(4)
+    elif kind == "table":
+        table(b[1], b[2], widths=b[3])
+    elif kind == "img":
+        path, want, cap = b[1], b[2], b[3]
+        if os.path.exists(path):
+            p = doc.add_paragraph()
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.add_run().add_picture(path, width=Inches(want))
+            caption(cap)
+    elif kind == "img2":
+        p1, p2, cap = b[1], b[2], b[3]
+        if os.path.exists(p1) and os.path.exists(p2):
+            t = doc.add_table(rows=1, cols=2)
+            t.alignment = WD_TABLE_ALIGNMENT.CENTER
+            for cell, path, w in ((t.rows[0].cells[0], p1, 2.5), (t.rows[0].cells[1], p2, 2.9)):
+                cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+                cell.paragraphs[0].add_run().add_picture(path, width=Inches(w))
+            caption(cap)
 
 doc.save(OUT)
 print("saved", OUT)
