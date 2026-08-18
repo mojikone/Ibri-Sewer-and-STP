@@ -27,8 +27,18 @@ TABLE11 = {200: 0.00500, 250: 0.00375, 315: 0.00270, 400: 0.00205, 500: 0.00155,
            600: 0.00125, 700: 0.00100, 800: 0.00085, 900: 0.00075}
 TABLE11_FLOOR = 0.00075  # ">= DN900: 0.75 mm/m" (G203-p29)
 
-DN_SERIES = [200, 250, 315, 400, 500, 600, 700, 800, 900, 1000, 1200]  # design ladder;
-# DN interpreted as internal diameter — the interpretation under which Table 11 reproduces (verified in tests).
+DN_SERIES = [200, 250, 315, 400, 500, 600, 700, 800, 900, 1000, 1200]  # design ladder
+
+# Physical bore (adversarial review HYD-2): plastic mains in this rule set are
+# OD-designated (p22 Tab 6 "OD 200 mm"; §1 "DN150 = OD160"). PVC-U SN8 = SDR34 ->
+# ID = OD * (1 - 2/34). GRP nominal size IS the internal diameter. Table 11 itself
+# tabulates against DN (the gate test keeps that basis); CAPACITY, d/D and VELOCITY
+# are computed on the true bore. SDR class pending PAM-SPC-207 (see ASSUMPTIONS).
+def internal_diameter(dn):
+    """True internal diameter in metres for hydraulic computation."""
+    if dn <= 315:                      # PVC-U OD-series (material() cap; 315 per Tab 7)
+        return dn / 1000.0 * (1.0 - 2.0 / 34.0)
+    return dn / 1000.0                 # GRP: nominal = internal
 
 DN_MIN_MAIN = 200        # OD200 minimum main sewer (G203-p22 Tab 6)
 
@@ -95,10 +105,14 @@ PF_HOLD_PROPERTIES = 100  # below 100 properties no formula is prescribed (G1-p7
 PF_REPORT_ABOVE = 5.0     # recommendation only — never truncate, always report (G1-p72 NOTE, A9)
 
 def material(dn):
-    """Open-trench material by DN (G203-p22 Tab 6 / p23 Tab 7, conservative PVC-U cap 250)."""
-    return "PVC-U" if dn <= 250 else "GRP"
+    """Open-trench material by DN: PVC-U through the OD series to 315 (G203-p23 Tab 7
+    permits OD160-315), GRP from DN400 (p22 Tab 6). Consistent with internal_diameter()."""
+    return "PVC-U" if dn <= 315 else "GRP"
 
-MANNING_N_EXPORT = 0.010  # PVC/GRP mid-range (G203-p23 Tab 8) — SewerGEMS export field only; design uses CW
+MANNING_N_EXPORT = 0.013  # ks-equivalent of CW 1.5 mm (review HYD-3: n_eq 0.0128-0.0133
+                          # across the DN series) so the SewerGEMS model reproduces the
+                          # design hydraulics. G203-p23 Tab 8 (PVC/GRP 0.009-0.011)
+                          # conflicts with the p24/p28 ks mandate — NWS kickoff item.
 
 # ---------------------------------------------------------------- ASSUMPTIONS (tagged, must appear in reports)
 ASSUMPTIONS = {
@@ -116,6 +130,14 @@ ASSUMPTIONS = {
     "RIDER_DISCHARGE": ("nearest manhole", "rider discharge point — ABSENT from 02; assumed to nearest MH"),
     "KERB_RULES_GRAVITY": ("applied", "in-carriageway >=1 m from kerb / MH >=0.5 m from kerb is a "
                            "force-main clause (G203-p51) applied to gravity as inference (A9)"),
+    "PVC_SDR": ("SDR34/SN8", "PVC-U wall class for internal_diameter(): ID = OD*(1-2/34); "
+                "actual class per PAM-SPC-207 pending NWS — heavier walls reduce capacity further"),
+    "PF_COMPARISON_HOLD": ("100-property flow", "Peltier comparison column held at its "
+                           "100-property-equivalent flow (like Merrimack) instead of exploding "
+                           "as Q->0; NO design decision rests on the comparison column"),
+    "CROSS_STREET_FRONTAGE": (40.0, "an off-tree street edge gets a sewer when >=1 loaded unit "
+                              "lies within this lateral distance (m) — summit-split into two "
+                              "head branches; empty streets stay unsewered (method choice)"),
 }
 TAU_PA = ASSUMPTIONS["TAU_PA"][0]
 OCCUPANCY = ASSUMPTIONS["OCCUPANCY"][0]

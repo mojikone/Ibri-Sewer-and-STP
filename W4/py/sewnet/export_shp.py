@@ -52,6 +52,7 @@ def write_all(out_dir, nodes, pipes, riders, still_low, pockets, boundary, of_re
         "VEL_MS": [round(p["vel"], 2) if p.get("vel") else None for p in pipes],
         "DOD": [round(p["dod"], 3) if p.get("dod") else None for p in pipes],
         "DROP_UP": [round(p.get("drop_up", 0.0), 2) for p in pipes],
+        "DROP_DN": [round(max(p.get("drop_dn", 0.0), 0.0), 2) for p in pipes],
     }, geometry=[p["geom"] for p in pipes], crs=CRS)
     pp.to_file(os.path.join(out_dir, "W4_pipes.shp"), encoding="utf-8")
 

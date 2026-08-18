@@ -27,6 +27,8 @@ def load_plots(plots_path, unparceled_path, boundary):
     farms = inside[inside["CLASS"] == "A"]
     loaded = inside[inside["CLASS"].isin(("B", "P"))].copy()
     loaded["src"] = "plot"
+    # review F4: a CLASS outside A/B/P must surface, never vanish
+    n_other = len(inside) - len(farms) - len(loaded)
 
     unp = gpd.read_file(unparceled_path)
     unp = unp[unp.geometry.notna()]
@@ -41,7 +43,7 @@ def load_plots(plots_path, unparceled_path, boundary):
 
     stats = {"plots_inside": len(inside), "built": int((inside["CLASS"] == "B").sum()),
              "planned": int((inside["CLASS"] == "P").sum()), "farms_excluded": len(farms),
-             "unparceled": len(unp_in), "loaded_points": len(pts)}
+             "class_other": n_other, "unparceled": len(unp_in), "loaded_points": len(pts)}
     units = [{"id": oids[i], "x": p.x, "y": p.y, "cls": classes[i], "src": srcs[i]}
              for i, p in enumerate(pts)]
     return units, stats
@@ -98,7 +100,10 @@ def accumulate(pipes, per_mh, pf_formula="merrimack"):
         hold_mld = C.PF_HOLD_PROPERTIES * C.PLOT_QADF_M3D / 1000.0
         pf_m = C.pf_merrimack(max(qadf_mld, hold_mld))
         qm_ls = qadf * 1000.0 / 86400.0
-        pf_p = C.pf_peltier(max(qm_ls, 0.1))
+        # Peltier held at its 100-property flow, same convention as Merrimack
+        # (review F3; criteria.ASSUMPTIONS PF_COMPARISON_HOLD — comparison column only)
+        hold_qm = C.PF_HOLD_PROPERTIES * C.PLOT_QADF_LS
+        pf_p = C.pf_peltier(max(qm_ls, hold_qm))
         pf = pf_m if pf_formula == "merrimack" else pf_p
         p["qadf_m3d"] = qadf
         p["infil_m3d"] = infil

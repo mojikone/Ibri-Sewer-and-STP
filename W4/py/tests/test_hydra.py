@@ -95,8 +95,30 @@ class TestSizing:
     def test_smax_none_for_small_flows(self):
         assert H.smax_for(200, 0.0005) is None  # 0.5 L/s can't reach 3 m/s in a DN200
 
+    def test_smax_valid_cap_hits_3(self):
+        # 50 L/s in a DN200 bore reaches 3 m/s on steep slopes — cap must land ON 3.0
+        s = H.smax_for(200, 0.050)
+        assert s not in (None, H.INFEASIBLE) and 0.001 < s < 0.5
+        y, v = H.pipe_state(200, s, 0.050)
+        assert v == pytest.approx(3.0, abs=0.05)
+
+    def test_smax_infeasible_signals_upsize(self):
+        # review HYD-1: 100 L/s can NEVER pass a DN200 bore at v <= 3 — the old
+        # bisection returned a garbage 1e-4 slope here
+        assert H.smax_for(200, 0.100) == H.INFEASIBLE
+
     def test_smax_exists_for_big_flows(self):
-        s = H.smax_for(400, 0.100)  # 100 L/s in DN400 can hit 3 m/s on steep slope
-        if s is not None:
-            y, v = H.solve_dod(0.400, s, 0.100)
+        s = H.smax_for(400, 0.100)
+        if s not in (None, H.INFEASIBLE):
+            y, v = H.pipe_state(400, s, 0.100)
             assert v == pytest.approx(3.0, abs=0.05)
+
+    def test_internal_diameter_convention(self):
+        # review HYD-2: PVC-U OD-series derated (SDR34), GRP nominal = ID
+        assert C.internal_diameter(200) == pytest.approx(0.1882, abs=0.0005)
+        assert C.internal_diameter(400) == 0.400
+        # capacity on the true SDR34 bore is ~15% below the naive DN reading
+        # (scales ~D^2.67: 0.941^2.67 = 0.85; heavier walls would cut further — PVC_SDR assumption)
+        q_dn = H.q_full(0.200, 0.005)
+        q_id = H.q_full(C.internal_diameter(200), 0.005)
+        assert q_id / q_dn == pytest.approx(0.85, abs=0.02)

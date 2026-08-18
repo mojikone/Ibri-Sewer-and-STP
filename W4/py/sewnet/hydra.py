@@ -5,12 +5,18 @@ nu = 1.141e-6 m2/s (p25). The Table-11 gate test (tests/test_hydra.py) proves th
 module reproduces the guideline's own minimum gradients before anything is designed
 with it — if that test fails, the module is wrong, not the table.
 
-Geometry convention: D is INTERNAL diameter in metres (DN/1000 — the interpretation
-under which Table 11 reproduces; verified by the gate).
+Geometry convention (review HYD-2): capacity, d/D and velocity are computed on the
+TRUE internal bore via criteria.internal_diameter(dn) — PVC-U mains are OD-designated
+(OD200 SN8 -> ID 188.2 mm), GRP nominal = ID. Table 11 itself was tabulated against
+DN, so the gate test keeps D = DN/1000 when reproducing the guideline's table; every
+design-facing helper here (smin/smax/size/state) uses the physical bore.
 """
 
 import math
 from . import criteria as C
+
+INFEASIBLE = -1.0   # smax_for sentinel: no slope satisfies v <= V_MAX for this (dn, Q)
+                    # (the pipe is capacity-bound above the velocity limit) -> upsize
 
 
 def v_cw_R(R, S):
@@ -89,14 +95,35 @@ def smin_for(dn, q_peak):
 
 def smax_for(dn, q_peak):
     """Slope above which velocity at the design depth of flow exceeds V_MAX = 3.0 m/s
-    (G203-p27/29: max gradient governed by v <= 3.0). None if v never reaches 3.0
-    (small flows) — then no gradient cap applies."""
-    D = dn / 1000.0
-    S_CAP = 0.5
-    y, v = solve_dod(D, S_CAP, q_peak)
-    if y is None or v is None or v <= C.V_MAX:
-        return None
-    lo, hi = 1e-4, S_CAP
+    (G203-p27/29). Returns None when no cap applies (v never reaches 3.0), a slope
+    when a valid cap exists, or INFEASIBLE when the pipe cannot carry q_peak at
+    v <= 3.0 at ANY slope (capacity-bound — caller must upsize).
+
+    Review HYD-1 fix: the feasible set {S : pipe carries Q and v <= 3} is an interval
+    [S_cap, S*]; the old single bisection treated 'cannot carry' and 'too fast' as the
+    same side and collapsed. Now: (1) find S_cap (capacity bisection, monotone),
+    (2) if v(S_cap) already > V_MAX -> INFEASIBLE, (3) else bisect [S_cap, S_HI] on v."""
+    D = C.internal_diameter(dn)
+    S_HI = 0.5
+    y_hi, v_hi = solve_dod(D, S_HI, q_peak)
+    if y_hi is None:
+        return INFEASIBLE                     # cannot carry even at 50% slope
+    if v_hi <= C.V_MAX:
+        return None                           # never reaches 3 m/s — no cap
+    # capacity slope: smallest S at which the pipe carries q_peak (y not None)
+    lo, hi = 1e-5, S_HI
+    for _ in range(60):
+        mid = 0.5 * (lo + hi)
+        y, _v = solve_dod(D, mid, q_peak)
+        if y is None:
+            lo = mid
+        else:
+            hi = mid
+    s_cap = hi
+    y_c, v_c = solve_dod(D, s_cap, q_peak)
+    if y_c is None or v_c > C.V_MAX:
+        return INFEASIBLE                     # already too fast at the capacity limit
+    lo, hi = s_cap, S_HI                      # v monotone rising in S on the feasible side
     for _ in range(60):
         mid = 0.5 * (lo + hi)
         y, v = solve_dod(D, mid, q_peak)
@@ -104,19 +131,25 @@ def smax_for(dn, q_peak):
             hi = mid
         else:
             lo = mid
-    return 0.5 * (lo + hi)
+    return lo
 
 
 def dod_limit(dn):
     return C.DOD_MAX_SMALL if dn <= C.DOD_DN_THRESHOLD else C.DOD_MAX_LARGE
 
 
+def pipe_state(dn, slope, q_peak):
+    """(y, v) at the TRUE internal bore — the one call every consumer should use."""
+    return solve_dod(C.internal_diameter(dn), slope, q_peak)
+
+
 def size_pipe(q_peak, slope):
     """Smallest DN in the series carrying q_peak (m3/s) at the given laid slope within
-    its d/D limit (G203-p27 Tab 10). Returns (dn, y, v) or (None, None, None) if even
-    the largest DN fails (caller must flatten/split upstream — reported, never silent)."""
+    its d/D limit (G203-p27 Tab 10), evaluated on the true internal bore. Returns
+    (dn, y, v) or (None, None, None) if even the largest DN fails (caller must
+    flatten/split upstream — reported, never silent)."""
     for dn in C.DN_SERIES:
-        y, v = solve_dod(dn / 1000.0, slope, q_peak)
+        y, v = pipe_state(dn, slope, q_peak)
         if y is not None and y <= dod_limit(dn):
             return dn, y, v
     return None, None, None

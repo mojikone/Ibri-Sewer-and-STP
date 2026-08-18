@@ -26,7 +26,7 @@ from . import criteria as C
 from . import hydra as H
 
 
-def run(nodes, pipes, units, per_mh, sampler, label="saturation"):
+def run(nodes, pipes, units, per_mh, sampler, label="saturation", load_stats=None):
     v = []   # violations: (check, element, detail)
 
     G = nx.DiGraph()
@@ -38,9 +38,23 @@ def run(nodes, pipes, units, per_mh, sampler, label="saturation"):
             v.append(("one-outlet", d.get("label", str(n)), f"out_degree={G.out_degree(n)}"))
         if d["depth"] is not None and d["depth"] > C.MAX_DEPTH and not d.get("sls_pocket"):
             v.append(("cover-max", d["label"], f"node depth {d['depth']:.2f} m"))
-        # drops themselves are DESIGNED structures, not violations: <=2 m external
-        # backdrop, >2 m vortex drop shaft — both prescribed by G203-p30. They are
-        # counted and listed by the report/exports, mostly at wadi-bank crossings.
+        # drops are DESIGNED structures (<=2 m backdrop, >2 m vortex shaft, G203-p30),
+        # but the BOOKKEEPING is audited independently (review SOLVER-1): every inlet
+        # arriving >600 mm above the node's outgoing invert must carry a matching record.
+        recorded = {dr["pipe"]: dr for dr in d.get("drops", [])}
+        for u in G.predecessors(n):
+            p_in = G[u][n]["obj"]
+            h = p_in["inv_dn"] - d["invert"]
+            if h > C.DROP_TRIGGER + 0.001:
+                rec = recorded.get(p_in["label"])
+                if rec is None:
+                    v.append(("drop-missing", d["label"],
+                              f"inlet {p_in['label']} arrives {h:.2f} m above outgoing invert, no record"))
+                elif abs(rec["height"] - h) > 0.01 or \
+                        (h > C.BACKDROP_MAX and rec["type"] != "vortex"):
+                    v.append(("drop-mismatch", d["label"],
+                              f"inlet {p_in['label']}: real {h:.2f} m vs recorded "
+                              f"{rec['height']:.2f} m ({rec['type']})"))
 
     for p in pipes:
         lab = p["label"]
@@ -60,7 +74,7 @@ def run(nodes, pipes, units, per_mh, sampler, label="saturation"):
             smax = H.smax_for(dn, p["qpeak_m3s"])
             if smax is None or p["slope"] < smax * 0.99:
                 v.append(("fall-tol", lab, f"total fall {fall*1000:.0f} mm < 40 mm"))
-        y, vel = H.solve_dod(D, p["slope"], p["qpeak_m3s"])
+        y, vel = H.pipe_state(dn, p["slope"], p["qpeak_m3s"])
         if y is None:
             v.append(("dod", lab, f"DN{dn} cannot carry {p['qpeak_ls']:.1f} L/s at laid slope"))
         else:
@@ -98,21 +112,49 @@ def run(nodes, pipes, units, per_mh, sampler, label="saturation"):
     n_assigned = sum(len(us) for us in per_mh.values())
     if n_assigned != len(units):
         v.append(("assignment", "network", f"{len(units)-n_assigned} units unassigned"))
+    # review F4: plots with unexpected CLASS must never vanish silently
+    if load_stats and load_stats.get("class_other", 0) > 0:
+        v.append(("assignment", "plots",
+                  f"{load_stats['class_other']} plots with CLASS outside A/B/P — unhandled"))
 
     return v
 
 
+def selfclean_stats(pipes):
+    """Transparency for the 0.75 m/s question (review F1): most small branches CANNOT
+    reach 0.75 m/s at saturation peak — they comply via the tractive-force alternative
+    (G203-p27), which rests on tau = 1 Pa [GAP-9, PENDING]. This function quantifies
+    exactly how much of the network leans on that assumption, and what happens if NWS
+    sets tau = 2 Pa (Smin scales by 2^1.23 = 2.35)."""
+    n = len(pipes)
+    below = [p for p in pipes if p.get("vel") is not None and p["vel"] < C.V_SELF_CLEANSING]
+    tau2 = sum(1 for p in below
+               if p["slope"] < H.smin_tractive(p["qpeak_m3s"]) * (2.0 ** 1.23) * 0.999)
+    return {
+        "pipes": n,
+        "below_075_at_peak": len(below),
+        "share_below": round(len(below) / n, 3) if n else 0.0,
+        "compliant_via_tractive_tau1": len(below),   # slope >= tractive is enforced by design
+        "would_fail_at_tau2": tau2,
+        "note": "0.75 m/s unattainable on small branches; compliance rests on tractive "
+                "methodology at tau=1 Pa [GAP-9]. would_fail_at_tau2 = redesign exposure "
+                "if NWS doubles the design tractive stress.",
+    }
+
+
 def start_year_selfclean(nodes, pipes, per_mh, pf_formula="merrimack"):
-    """Operational flag list: pipes below 0.75 m/s when only CLASS=B (built) units load
-    the network — the doctrine §2.1 early-years check. Not a design failure (p28
-    §4.2.6 prescribes inspection/cleansing), reported separately."""
+    """Operational flag list: pipes below 0.75 m/s when only EXISTING structures load
+    the network — CLASS=B built plots AND CLASS=U unparceled buildings (review F2:
+    unparceled = buildings standing today, they belong in the start-year case). The
+    doctrine §2.1 early-years check; not a design failure (p28 §4.2.6), reported
+    separately."""
     from . import loads as L
-    b_per_mh = {mh: [u for u in us if u["cls"] == "B"] for mh, us in per_mh.items()}
+    b_per_mh = {mh: [u for u in us if u["cls"] in ("B", "U")] for mh, us in per_mh.items()}
     pipes_b = [dict(p) for p in pipes]           # shallow copies keep design DN/slope
     L.accumulate(pipes_b, b_per_mh, pf_formula)
     flags = []
     for p in pipes_b:
-        y, vel = H.solve_dod(p["dn_mm"] / 1000.0, p["slope"], p["qpeak_m3s"])
+        y, vel = H.pipe_state(p["dn_mm"], p["slope"], p["qpeak_m3s"])
         if y is not None and vel < C.V_SELF_CLEANSING:
             smin_tr = H.smin_tractive(p["qpeak_m3s"])
             ok_tractive = p["slope"] >= smin_tr

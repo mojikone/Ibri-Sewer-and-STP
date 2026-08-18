@@ -144,6 +144,30 @@ def place(Gd, outfall, sampler):
             del nodes[drop]
             break
 
+    # post-contraction re-split: endpoint re-anchoring can push a piece past the
+    # spacing limit, and any future geometry quirk must self-heal here rather than
+    # ship an unsplit reach (defense for the spacing audit, which checks the raw rule)
+    resplit = [p for p in pipes if p["length"] > C.MH_SPLIT_LEN + 0.01]
+    for p in resplit:
+        pipes.remove(p)
+        cuts = _split_points(p["geom"])
+        if not cuts:
+            n = int(math.ceil(p["length"] / C.MH_SPLIT_LEN))
+            cuts = [p["length"] * k / n for k in range(1, n)]
+        prev_key = p["up"]
+        pcs = _cut(p["geom"], cuts)
+        for i, piece in enumerate(pcs):
+            if i == len(pcs) - 1:
+                nxt_key = p["dn"]
+            else:
+                q = piece.coords[-1]
+                nxt_key = (round(q[0], 2), round(q[1], 2))
+                nodes[nxt_key] = {"x": q[0], "y": q[1], "z": sampler.z(q[0], q[1]),
+                                  "kind": "spacing"}
+            pipes.append({"up": prev_key, "dn": nxt_key, "geom": piece,
+                          "length": piece.length})
+            prev_key = nxt_key
+
     # deterministic labels: MH-#### upstream-to-downstream by network distance to outfall
     order = _label_order(nodes, pipes, outfall)
     labels = {}

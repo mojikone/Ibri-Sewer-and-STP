@@ -22,18 +22,19 @@
     "dist_to_expected_m": 733.2618048137141,
     "agrees": false
   },
-  "n_nodes": 1842,
-  "n_pipes": 1841,
-  "net_km": 70.44190767476275,
+  "n_nodes": 2359,
+  "n_pipes": 2358,
+  "net_km": 95.33501997679316,
   "loads": {
     "plots_inside": 2825,
     "built": 2217,
     "planned": 522,
     "farms_excluded": 86,
+    "class_other": 0,
     "unparceled": 248,
     "loaded_points": 2987
   },
-  "max_assign_dist_m": 177.22073526495444,
+  "max_assign_dist_m": 150.70608803938603,
   "solver": {
     "converged": true,
     "iterations": 1,
@@ -41,22 +42,37 @@
   },
   "lowplots": {
     "checked": 2987,
-    "flagged": 348,
-    "deepened_mh": 208,
-    "residual": 5
+    "flagged": 293,
+    "deepened_mh": 213,
+    "residual": 12
   },
   "qadf_outfall_m3d": 3070.0386000000008,
-  "qpeak_outfall_ls": 82.79832489677919,
+  "qpeak_outfall_ls": 83.00576749929613,
   "dn_km": {
-    "200": 66.201,
-    "250": 1.713,
-    "315": 1.301,
-    "400": 0.976,
+    "200": 90.442,
+    "250": 1.53,
+    "315": 1.547,
+    "400": 1.564,
     "500": 0.251
   },
   "violations": 0,
-  "startyear_flags": 1746,
-  "max_depth_m": 15.830628983373401,
-  "drops": 236,
+  "startyear_flags": 2278,
+  "selfclean": {
+    "pipes": 2358,
+    "below_075_at_peak": 2259,
+    "share_below": 0.958,
+    "compliant_via_tractive_tau1": 2259,
+    "would_fail_at_tau2": 1626,
+    "note": "0.75 m/s unattainable on small branches; compliance rests on tractive methodology at tau=1 Pa [GAP-9]. would_fail_at_tau2 = redesign exposure if NWS doubles the design tractive stress."
+  },
+  "augmentation": {
+    "added": 676,
+    "added_km": 25.27,
+    "skipped_empty": 14,
+    "skipped_km": 0.56
+  },
+  "max_depth_m": 15.30269536490647,
+  "drops": 398,
+  "vortex_sites": 252,
   "pf_formula": "merrimack"
 }

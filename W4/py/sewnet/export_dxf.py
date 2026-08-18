@@ -37,9 +37,9 @@ def write(path, nodes, pipes, riders, pockets, of_rep):
         for s in (1.0, -1.0):
             msp.add_line((mid.x - 1.5 * ux + 1.2 * px * s, mid.y - 1.5 * uy + 1.2 * py * s),
                          (mid.x + 1.5 * ux, mid.y + 1.5 * uy), dxfattribs={"layer": "SEW-LABEL"})
-        if p.get("drop_up", 0.0) > 0.6:
-            u = nodes[p["up"]]
-            msp.add_circle((u["x"], u["y"]), 2.5, dxfattribs={"layer": "SEW-DROP"})
+        if p.get("drop_dn", 0.0) > 0.6:     # backdrop structure sits at the receiving MH
+            d_node = nodes[p["dn"]]
+            msp.add_circle((d_node["x"], d_node["y"]), 2.5, dxfattribs={"layer": "SEW-DROP"})
 
     for n in nodes.values():
         if n["kind"] == "outfall":

@@ -13,6 +13,8 @@ import networkx as nx
 import numpy as np
 from scipy.spatial import cKDTree
 from shapely.geometry import Point
+from shapely.ops import substring
+from shapely.strtree import STRtree
 
 CLIMB_PENALTY = 300.0    # m of equivalent length per m of uphill climb (W2 s3 KCLIMB — method choice)
 ARTERIAL_FACTOR = 0.70   # prefer arterial/wide corridors (W2 s3 rf — method choice)
@@ -125,3 +127,57 @@ def build_tree(Gu, outfall):
     for n in Gd.nodes:
         assert Gd.out_degree(n) <= 1
     return Gd, unreachable
+
+
+def augment_cross_streets(Gu, Gd, sampler, units, frontage_m=40.0):
+    """Review EDGE-1 fix: a node-spanning tree omits every loop-closing street edge —
+    on the test boundary that was 25 km of streets with no pipe, forcing plots into
+    long cross-block connections. Every omitted street edge with at least one loaded
+    unit within `frontage_m` gets a sewer, split at its terrain SUMMIT into two head
+    branches draining to the corner manholes (the standard crest-manhole layout; two
+    back-to-back head nodes 1 m apart keep the one-outlet-per-manhole discipline).
+    Streets with no frontage load deliberately stay unsewered — counted, not hidden."""
+    if not units:
+        return {"added": 0, "added_km": 0.0, "skipped_empty": 0, "skipped_km": 0.0}
+    pts = [Point(u["x"], u["y"]) for u in units]
+    tree = STRtree(pts)
+    tree_pairs = {frozenset((u, v)) for u, v in Gd.edges}
+    added = skipped = 0
+    added_km = skipped_km = 0.0
+    for u, v, d in Gu.edges(data=True):
+        if frozenset((u, v)) in tree_pairs:
+            continue
+        geom = d["geom"]
+        # networkx yields undirected edges in arbitrary (u, v) order — the corner each
+        # chain drains into MUST come from the geometry ends, not the iteration order
+        ca = nkey(*geom.coords[0])
+        cb = nkey(*geom.coords[-1])
+        if ca not in Gd or cb not in Gd:    # unreachable corner — stays out, reported upstream
+            continue
+        if geom.length < 6.0:               # corner sliver — nearby units reach the corners
+            continue
+        if len(tree.query(geom.buffer(frontage_m))) == 0:
+            skipped += 1
+            skipped_km += geom.length / 1000.0
+            continue
+        prof = sampler.profile(geom, 5.0)
+        ch = max(prof, key=lambda r: r[3])[0]
+        ch = min(max(ch, 2.0), geom.length - 2.0)
+        for start, end, corner in ((max(ch - 0.5, 1.0), 0.0, ca),
+                                   (min(ch + 0.5, geom.length - 1.0), geom.length, cb)):
+            seg = substring(geom, start, end)          # oriented summit -> corner
+            if seg is None or seg.length < 1.0 or seg.geom_type != "LineString":
+                continue
+            hk = nkey(*seg.coords[0])
+            if hk in Gd:
+                continue
+            Gd.add_node(hk, x=seg.coords[0][0], y=seg.coords[0][1],
+                        z=sampler.z(*seg.coords[0][:2]))
+            Gd.add_edge(hk, corner, length=seg.length, geom=seg)
+            added += 1
+            added_km += seg.length / 1000.0
+    assert nx.is_directed_acyclic_graph(Gd)
+    for n in Gd.nodes:
+        assert Gd.out_degree(n) <= 1
+    return {"added": added, "added_km": round(added_km, 2),
+            "skipped_empty": skipped, "skipped_km": round(skipped_km, 2)}

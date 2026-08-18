@@ -116,8 +116,8 @@ def test_solver_steep_terrain_creates_drops_not_speeding():
     rep = solver.solve(nodes, pipes, s)
     v = audit.run(nodes, pipes, units, per_mh, s)
     assert [x for x in v if x[0] == "vel-max"] == [], v
-    total_drop = sum(p.get("drop_up", 0.0) for p in pipes) + \
-        sum(p.get("drop_dn", 0.0) for p in pipes if p.get("drop_dn"))
+    assert [x for x in v if x[0].startswith("drop")] == [], v   # bookkeeping must be exact
+    total_drop = sum(d["height"] for n in nodes.values() for d in n.get("drops", []))
     assert total_drop > 0.5                        # steep ground surplus went into drops
 
 

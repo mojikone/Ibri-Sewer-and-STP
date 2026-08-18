@@ -29,6 +29,11 @@ def main():
     log(f"  boundary {s1['boundary_ha']:.1f} ha, segs {s1['segs_raw']}->{s1['segs_final']}, "
         f"dual-flagged {s1['dual_flagged']}, {s1['len_km']:.1f} km")
 
+    # ---- S4a load units (needed by the cross-street augmentation)
+    log("S4a load units ...")
+    units, lstats = loads.load_plots(cfg.PLOTS_CLASS, cfg.UNPARCELED, boundary)
+    log(f"  {lstats}")
+
     # ---- S2 topology
     log("S2 topology: graph, arterials, outfall, tree ...")
     Gu = topo.build_undirected(segs, sampler)
@@ -41,6 +46,9 @@ def main():
     Gd, unreachable = topo.build_tree(Gu, outfall)
     log(f"  tree: {Gd.number_of_nodes()} nodes, {Gd.number_of_edges()} edges, "
         f"unreachable {len(unreachable)}")
+    aug = topo.augment_cross_streets(Gu, Gd, sampler, units)
+    log(f"  cross-street augmentation: +{aug['added']} branches ({aug['added_km']} km); "
+        f"unloaded streets left unsewered: {aug['skipped_empty']} ({aug['skipped_km']} km)")
 
     # ---- S3 manholes
     log("S3 manholes ...")
@@ -48,10 +56,8 @@ def main():
     log(f"  {len(nodes)} manholes, {len(pipes)} pipe reaches, "
         f"{sum(p['length'] for p in pipes)/1000:.1f} km")
 
-    # ---- S4 loads
-    log("S4 loads ...")
-    units, lstats = loads.load_plots(cfg.PLOTS_CLASS, cfg.UNPARCELED, boundary)
-    log(f"  {lstats}")
+    # ---- S4 assignment
+    log("S4 assignment ...")
     per_mh, maxdist = loads.assign_to_manholes(units, nodes)
     log(f"  all {len(units)} units assigned; max plot->MH distance {maxdist:.0f} m")
     loads.accumulate(pipes, per_mh, cfg.PF_FORMULA)
@@ -77,11 +83,16 @@ def main():
 
     # ---- S7 audit
     log("S7 audit (saturation) ...")
-    violations = audit.run(nodes, pipes, units, per_mh, sampler, label="saturation")
+    violations = audit.run(nodes, pipes, units, per_mh, sampler, label="saturation",
+                           load_stats=lstats)
     log(f"  {len(violations)} violations")
     for v in violations[:20]:
         log(f"    {v}")
-    log("S7 audit (start-year self-cleansing, CLASS=B only) ...")
+    sc = audit.selfclean_stats(pipes)
+    log(f"  self-cleansing transparency: {sc['below_075_at_peak']}/{sc['pipes']} pipes "
+        f"below 0.75 m/s at saturation peak (tractive-compliant at tau=1 Pa); "
+        f"{sc['would_fail_at_tau2']} would need redesign at tau=2 Pa [GAP-9]")
+    log("S7 audit (start-year self-cleansing, built + unparceled) ...")
     sy_flags = audit.start_year_selfclean(nodes, pipes, per_mh, cfg.PF_FORMULA)
     n_tr_ok = sum(1 for f in sy_flags if f["tractive_ok"])
     log(f"  {len(sy_flags)} pipes below 0.75 m/s at start-year; "
@@ -105,8 +116,11 @@ def main():
         "qadf_outfall_m3d": q_out_adf, "qpeak_outfall_ls": q_out_peak,
         "dn_km": {str(k): round(v / 1000.0, 3) for k, v in sorted(dn_hist.items())},
         "violations": len(violations), "startyear_flags": len(sy_flags),
+        "selfclean": sc, "augmentation": aug,
         "max_depth_m": max(n["depth"] for n in nodes.values() if n["depth"] is not None),
         "drops": sum(len(n["drops"]) for n in nodes.values()),
+        "vortex_sites": sum(1 for n in nodes.values()
+                            for d in n.get("drops", []) if d["type"] == "vortex"),
         "pf_formula": cfg.PF_FORMULA,
     }
     log(f"SUMMARY {json.dumps(summary, indent=2, default=str)[:1500]}")
