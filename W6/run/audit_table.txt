@@ -1,0 +1,25 @@
+ID   STATUS        CHECK                                  REF                          FOUND
+------------------------------------------------------------------------------------------------------------------------------------------------------
+A1   PASS          Minimum main diameter                  G203-p22 Tab 6               smallest DN used 200
+A2   PASS          Material by diameter                   G203-p22/23 Tab 6-7          materials ['GRP', 'PVC-U']
+A3   PASS          Minimum gradient                       G203-p29 Tab 11 + p27        flattest laid 1.25 mm/m
+A4   PASS          Maximum velocity                       G203-p27                     highest v 1.77 m/s
+A5   PASS          Self-cleansing at peak                 G203-p26-27                  1702/1755 reaches below 0.75 m/s, all tractive-compliant at tau=1.0 Pa [GAP-9]
+A6   PASS          Proportional depth d/D                 G203-p27 Tab 10              deepest flow d/D 0.648
+A7   PASS          No reverse gradient                    G203-p29 4.3.1               0 reversed reaches
+A8   PASS          Construction tolerance guard           G203-p29 4.3.1 (A9)          0 reaches under 40 mm fall
+B1   PASS          Minimum cover to crown                 G203-p33 4.6.3               worst cover 1.35 m (P-0067)
+B2   PASS          Maximum depth                          G203-p33 + rule 9            deepest chamber 21.33 m
+C1   PASS          Maximum spacing                        G203-p30 Tab 12              longest reach 100.0 m
+C2   PASS          Chamber at change of direction         G203-p30                     largest interior deflection 30 deg
+C3   PASS          Drop / backdrop bookkeeping            G203-p30 4.4                 385 drops (251 vortex-class)
+C4   FAIL          Inlet angle                            G203-p30                     300 of 1755 inlets under 90 deg
+C5   PASS          One outlet per chamber                 user rule / SWNETWROK        0 chambers with more than one outlet
+C6   PASS          No loops                               user rule                    1756 chambers / 1755 reaches, 1 component, acyclic=True
+C7   PASS          Chamber clearance                      layout convention (no PAM mi 0 pairs closer than 3.0 m
+C8   FAIL          Branch start offset                    user rule / SWNETWROK 10 m   586/587 branch heads clear
+D1   FAIL          Property connection length             G203-p18 Tab 4 (A9)          240/3017 connections over 50.0 m; longest 356 m
+E1   FAIL          Mass balance                           bookkeeping                  outfall receives 3,618.7 m3/d vs 3,619.6 m3/d of unit loads
+E2   PASS          Every unit assigned                    doctrine (zero silent drops) 3017/3017 units assigned
+------------------------------------------------------------------------------------------------------------------------------------------------------
+21 checks: 17 pass, 4 fail, 0 could not run (counted as failures)

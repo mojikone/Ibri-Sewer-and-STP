@@ -1,0 +1,114 @@
+{
+  "s1": {
+    "boundary_ha": 551.4533027031637,
+    "segs_raw": 1725,
+    "len_km": 97.42462152485462,
+    "dual_1": 101,
+    "dual_2": 0
+  },
+  "outfall": {
+    "x": 450881.70089730807,
+    "y": 2567308.9054028466,
+    "z": 352.999339169451,
+    "node": [
+      450881.7,
+      2567308.91
+    ],
+    "dist_to_expected_m": 1014.725230913465
+  },
+  "n_nodes": 1756,
+  "n_pipes": 1755,
+  "net_km": 78.4915750871547,
+  "loads": {
+    "plots_inside": 2825,
+    "built": 2217,
+    "planned": 522,
+    "farm_plots": 86,
+    "farm_plots_with_houses": 30,
+    "class_other": 0,
+    "unparceled": 248,
+    "loaded_points": 3017,
+    "accounts_used": 3885,
+    "plots_with_counted_props": 1322,
+    "total_properties": 4226.0,
+    "props_per_unit": 1.4
+  },
+  "solver": {
+    "converged": true,
+    "iterations": 2,
+    "pockets": 4
+  },
+  "structures": {
+    "merged": 56,
+    "fanouts": 5,
+    "offset_branches": 100,
+    "dropped_branches": 7
+  },
+  "lowplots": {
+    "checked": 3017,
+    "flagged": 129,
+    "deepened_mh": 48,
+    "residual": 0
+  },
+  "road_treatment": {
+    "segments_in": 1725,
+    "segments_out": 1388,
+    "km_in": 97.42,
+    "km_out": 84.77,
+    "points_tidied": 306,
+    "collinear_joins": 107,
+    "traffic_links_dropped": 83,
+    "empty_stubs_dropped": 4,
+    "dual_excluded": 101,
+    "two_lane_side_dropped": 0,
+    "roundabouts": 12,
+    "sliver_rings": 0,
+    "rings_rejected": {
+      "plots_inside": 69,
+      "too_big": 0,
+      "no_arms": 0,
+      "straight_sides": 2
+    }
+  },
+  "tertiary": {
+    "spurs": 2495,
+    "riders": 972,
+    "stub_outs": 522,
+    "longest_spur_m": 355.6
+  },
+  "augmentation": {
+    "added": 505,
+    "added_km": 19.3,
+    "skipped_empty": 0,
+    "skipped_km": 0.0
+  },
+  "qadf_outfall_m3d": 3618.7125,
+  "qpeak_outfall_ls": 95.65,
+  "qpeak_sum_of_arrivals_ls": 95.65,
+  "n_outfall_reaches": 1,
+  "dn_km": {
+    "200": 73.994,
+    "250": 0.767,
+    "315": 1.89,
+    "400": 0.338,
+    "500": 0.124,
+    "600": 1.379
+  },
+  "violations": 4,
+  "selfclean": {
+    "pipes": 1755,
+    "below_075_at_peak": 1702,
+    "share_below": 0.97,
+    "would_fail_at_tau2": 1177,
+    "note": "0.75 m/s unattainable on small branches; compliance rests on the tractive methodology at tau=1 Pa [GAP-9]"
+  },
+  "startyear_flags": 1717,
+  "max_depth_m": 21.33071148178584,
+  "drops": 385,
+  "vortex_sites": 251,
+  "pf_formula": "merrimack",
+  "features": {
+    "road_treatment": true,
+    "rounded_spacing": true
+  }
+}
