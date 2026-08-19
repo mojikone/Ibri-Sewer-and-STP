@@ -148,6 +148,7 @@ def test_low_plots_flagged_then_recovered_by_deepening():
             return super().z(x, y) - (3.0 if y > 4.0 else 0.0)   # houses 3 m below the road
 
     stage = ConnectabilityStage(LowPlots(gx=0.01), C)
+    per_chamber, _ = stage.attach(net, units)          # join each plot to the pipe it faces
     res, deepen = stage.check(net, per_chamber)
     assert any(not r["ok"] for r in res)
     assert deepen
@@ -160,10 +161,11 @@ def test_low_plots_flagged_then_recovered_by_deepening():
 def test_riders_group_at_most_three_connections():
     s = PlaneSampler()
     net, units, per_chamber, _ = straight_network(s, units_spec=((0, 7),))
-    riders = ConnectabilityStage(s, C).riders(net, per_chamber)
-    assert sum(r["n_units"] for r in riders) == 7
+    stage = ConnectabilityStage(s, C)
+    per_chamber, _ = stage.attach(net, units)
+    spurs, riders, stubs = stage.connections(net, per_chamber)
+    assert len(spurs) + len(stubs) == 7            # every property gets its own spur
     assert all(r["n_units"] <= C.MAX_HCC_PER_RIDER for r in riders)
-    assert len(riders) == 3                       # 3 + 3 + 1
 
 
 # ---------------------------------------------------------------- audit registry

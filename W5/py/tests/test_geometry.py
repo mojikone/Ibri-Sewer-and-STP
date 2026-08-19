@@ -100,7 +100,7 @@ def test_duplicate_vertices_removed():
     segs = [LineString([(0, 0), (50, 0), (50.001, 0), (100, 0)])]
     rt = RoadTreatment(FakeSampler(), C)
     out = rt.run(segs, units=[])
-    assert rt.report["duplicate_vertices_removed"] >= 1
+    assert rt.report["points_tidied"] >= 1
     assert len(out[0].coords) == 2              # collapses to a straight line
 
 
@@ -114,7 +114,7 @@ def test_roundabout_collapsed():
     segs.append(LineString([ring[0], (cx + 120, cy)]))     # east leg
     rt = RoadTreatment(FakeSampler(), C)
     out = rt.run(segs, units=[])
-    assert rt.report["roundabouts_collapsed"] == 1
+    assert rt.report["roundabouts"] == 1
     assert sum(g.length for g in out) < sum(g.length for g in segs)
     assert all(g.length > 50 for g in out)                 # only the legs survive
 
@@ -238,7 +238,7 @@ def test_city_block_is_NOT_a_roundabout():
     units = [LoadUnit(id="p1", x=s / 2, y=s * 0.8, cls="B", src="plot")]   # a plot inside
     rt = RoadTreatment(FakeSampler(), C)
     out = rt.run(segs, units=units)
-    assert rt.report["roundabouts_collapsed"] == 0
+    assert rt.report["roundabouts"] == 0
     assert rt.report["rings_rejected"]["plots_inside"] >= 1
     assert sum(g.length for g in out) >= 4 * s - 1                # block streets survive
 
