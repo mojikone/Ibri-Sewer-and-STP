@@ -128,12 +128,23 @@ def test_steep_terrain_caps_velocity_and_books_drops():
     assert total_drop > 0.5
 
 
-def test_adverse_terrain_becomes_an_sls_pocket():
+def test_adverse_terrain_gets_a_pump_not_a_deeper_trench():
+    """Ground falling AWAY from the outfall buries the pipe. The rule (G203-p33) is 12 m and
+    it has no exemption, so the answer is a pumping station — never a deeper trench. This is
+    the case the user found on 19 Aug, when 'pocket' chambers were being skipped by the depth
+    check and reached 21.3 m."""
     s = PlaneSampler(gx=-0.05)                    # ground falls AWAY from the outfall
     net, units, per_chamber, _ = straight_network(s, length=400.0)
     rep = HydraulicDesigner(s, C).run(net)
-    assert rep["n_failed_depth"] > 0
-    assert rep["pockets"], "adverse terrain must produce an SLS pocket, not silence"
+    assert rep["stations"] > 0, "adverse terrain must produce a pumping station, not silence"
+    assert rep["rising_mains"] > 0, "a station must discharge through a rising main"
+    assert rep["n_failed_depth"] == 0, "no chamber may pass the 12 m limit"
+    deepest = max(c.depth for c in net.chambers.values() if c.depth is not None)
+    assert deepest <= C.MAX_DEPTH + 1e-6, f"chamber {deepest:.2f} m deep, limit {C.MAX_DEPTH}"
+    for r in net.reaches:
+        if r.is_rising_main:
+            assert r.q_duty_m3s >= r.qpeak_m3s, "pump duty below the flow arriving"
+            assert C.V_SELF_CLEANSING - 5e-3 <= r.vel <= C.V_MAX + 5e-3
 
 
 # ---------------------------------------------------------------- connectability
@@ -200,3 +211,23 @@ def test_tau_sensitivity_is_a_config_change_not_a_code_edit():
     assert H.smin_tractive(0.002, tau2) > H.smin_tractive(0.002, C)
     assert H.smin_tractive(0.002, tau2) / H.smin_tractive(0.002, C) == pytest.approx(
         2.0 ** 1.23, rel=0.01)
+
+
+def test_depth_check_cannot_be_switched_off_by_calling_it_a_pocket():
+    """Regression for the fault the user found on 19 Aug 2026.
+
+    The audit used to skip any chamber flagged `sls_pocket`, so 71 chambers reached 12-21.3 m
+    and the compliance table still read PASS. Flagging a chamber must never silence the depth
+    rule, whatever the flag says."""
+    s = PlaneSampler(gx=0.01)
+    net, units, per_chamber, _ = straight_network(s)
+    HydraulicDesigner(s, C).run(net)
+    victim = max(net.chambers.values(), key=lambda c: c.depth or 0)
+    victim.invert = victim.z - (C.MAX_DEPTH + 6.0)      # 18 m deep
+    victim.depth = C.MAX_DEPTH + 6.0
+    victim.sls_pocket = True                            # the old get-out
+    victim.is_station = True                            # and the new one
+    auditor = Auditor(C)
+    auditor.run(net, units, per_chamber, s, {}, [])
+    failed = {f.id for f in auditor.failures}
+    assert "B2" in failed, "a chamber 18 m deep must fail the depth check, flagged or not"

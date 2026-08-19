@@ -89,16 +89,17 @@ def _material(ctx):
 
 def _min_gradient(ctx):
     C = ctx.crit
+    grav = [r for r in ctx.net.reaches if not r.is_rising_main]
     bad = [Finding(r.label, f"{r.slope*1000:.2f} < {H.smin_for(r.dn_mm, r.qpeak_m3s, C)*1000:.2f} mm/m")
-           for r in ctx.net.reaches if r.slope < H.smin_for(r.dn_mm, r.qpeak_m3s, C) * 0.999]
-    flat = min((r.slope for r in ctx.net.reaches), default=0) * 1000
+           for r in grav if r.slope < H.smin_for(r.dn_mm, r.qpeak_m3s, C) * 0.999]
+    flat = min((r.slope for r in grav), default=0) * 1000
     return ("FAIL" if bad else "PASS", f"flattest laid {flat:.2f} mm/m", bad)
 
 
 def _max_velocity(ctx):
     C = ctx.crit
     bad = [Finding(r.label, f"v {r.vel:.2f} m/s") for r in ctx.net.reaches
-           if r.vel is not None and r.vel > C.V_MAX + 0.01]
+           if (not r.is_rising_main) and r.vel is not None and r.vel > C.V_MAX + 0.01]
     vmax = max((r.vel or 0) for r in ctx.net.reaches) if ctx.net.reaches else 0
     return ("FAIL" if bad else "PASS", f"highest v {vmax:.2f} m/s", bad)
 
@@ -107,7 +108,8 @@ def _self_cleansing(ctx):
     """0.75 m/s is unattainable on small head branches — G203-p27 offers the tractive-force
     methodology exactly for that case. A violation needs BOTH criteria missed."""
     C = ctx.crit
-    below = [r for r in ctx.net.reaches if r.vel is not None and r.vel < C.V_SELF_CLEANSING]
+    below = [r for r in ctx.net.reaches
+             if (not r.is_rising_main) and r.vel is not None and r.vel < C.V_SELF_CLEANSING]
     bad = [Finding(r.label, f"v {r.vel:.2f} m/s and slope under the tractive minimum")
            for r in below if r.slope < H.smin_tractive(r.qpeak_m3s, C) * 0.999]
     n = len(ctx.net.reaches)
@@ -123,6 +125,8 @@ def _dod(ctx):
     C = ctx.crit
     bad = []
     for r in ctx.net.reaches:
+        if r.is_rising_main:
+            continue                     # pumped: sized as a force main, not by d/D
         if r.dod is None:
             bad.append(Finding(r.label, f"DN{r.dn_mm} CANNOT CARRY {r.qpeak_ls:.1f} L/s at "
                                         f"{r.slope*1000:.2f} mm/m — surcharged"))
@@ -136,7 +140,8 @@ def _dod(ctx):
 
 def _reverse_gradient(ctx):
     bad = [Finding(r.label, f"inv_up {r.inv_up:.3f} <= inv_dn {r.inv_dn:.3f}")
-           for r in ctx.net.reaches if r.inv_up is not None and r.inv_up <= r.inv_dn]
+           for r in ctx.net.reaches
+           if (not r.is_rising_main) and r.inv_up is not None and r.inv_up <= r.inv_dn]
     return ("FAIL" if bad else "PASS", f"{len(bad)} reversed reaches", bad)
 
 
@@ -144,7 +149,7 @@ def _fall_tolerance(ctx):
     C = ctx.crit
     bad = []
     for r in ctx.net.reaches:
-        if r.fall >= C.FALL_TOLERANCE - 0.0005:
+        if r.is_rising_main or r.fall >= C.FALL_TOLERANCE - 0.0005:
             continue
         smax = H.smax_for(r.dn_mm, r.qpeak_m3s, C)     # velocity-capped reaches are exempt
         if smax is None or smax == H.INFEASIBLE or r.slope < smax * 0.99:
@@ -168,11 +173,13 @@ def _cover(ctx):
 
 
 def _max_depth(ctx):
+    """HARD limit (G203-p33). No exemptions: if a chamber would go deeper than 12 m a
+    pumping station must be placed before it. Exempting 'pockets' from this check was the
+    hole that let 71 chambers reach 21 m with no pump (found by the user 2026-08-19)."""
     C = ctx.crit
-    bad = []
+    bad = [Finding(c.label, f"chamber {c.depth:.2f} m deep")
+           for c in ctx.net.chambers.values() if (c.depth or 0) > C.MAX_DEPTH + 0.01]
     for r in ctx.net.reaches:
-        if ctx.net.chambers[r.up].sls_pocket or ctx.net.chambers[r.dn].sls_pocket:
-            continue
         for chn, _x, _y, g in r.profile:
             if g - (r.inv_up - r.slope * chn) > C.MAX_DEPTH + 0.01:
                 bad.append(Finding(r.label, f"depth {g-(r.inv_up-r.slope*chn):.2f} m"))
@@ -322,7 +329,12 @@ def _pcs_length(ctx):
 def _mass_balance(ctx):
     C = ctx.crit
     net = ctx.net
-    q_in = sum(ctx.G[u][net.outfall]["reach"].qadf_m3d for u in ctx.G.predecessors(net.outfall))
+    # plots that join AT the outfall chamber never travel down a pipe, so they have to be
+    # added by hand or the balance looks short by their load (found 19 Aug: 1 property)
+    at_outfall = sum(getattr(u, "n_props", 1.0)
+                     for u in ctx.per_chamber.get(net.outfall, [])) * C.PLOT_QADF_M3D
+    q_in = sum(ctx.G[u][net.outfall]["reach"].qadf_m3d
+               for u in ctx.G.predecessors(net.outfall)) + at_outfall
     expect = sum(getattr(u, "n_props", 1.0) for v in ctx.per_chamber.values()
                  for u in v) * C.PLOT_QADF_M3D
     ok = abs(q_in - expect) < 0.5
@@ -340,6 +352,25 @@ def _assignment(ctx):
         bad.append(Finding("plots", f"{ctx.load_stats['class_other']} plots with an "
                                     f"unexpected CLASS"))
     return ("FAIL" if bad else "PASS", f"{n_assigned}/{len(ctx.units)} units assigned", bad)
+
+
+def _rising_mains(ctx):
+    """Pumped pipes: G203-p50 wants the flow between 0.75 and 3.0 m/s in a force main."""
+    C = ctx.crit
+    rms = [r for r in ctx.net.reaches if r.is_rising_main]
+    if not rms:
+        return ("PASS", "no pumping needed", [])
+    bad = []
+    for r in rms:
+        v = r.vel or 0.0
+        if v < C.V_SELF_CLEANSING - 0.005 or v > C.V_MAX + 0.005:
+            bad.append(Finding(r.label, f"pumped flow {v:.2f} m/s outside 0.75-3.0"))
+        if r.q_duty_m3s < r.qpeak_m3s - 1e-9:
+            bad.append(Finding(r.label, "pump duty below the flow arriving"))
+    tot = sum(r.length for r in rms)
+    return ("FAIL" if bad else "PASS",
+            f"{len(rms)} rising mains, {tot:.0f} m, duty {min(r.vel for r in rms):.2f}"
+            f"-{max(r.vel for r in rms):.2f} m/s", bad)
 
 
 REGISTRY = [
@@ -379,6 +410,8 @@ REGISTRY = [
           "distinct chambers at least 3 m apart", _clearance),
     Check("C8", "Chambers", "Branch start offset", "user rule / SWNETWROK 10 m",
           "branch starts at the next house connection or 10 m clear", _branch_offset),
+    Check("A9", "Pipes & hydraulics", "Rising mains", "G203-p50 8.1",
+          "pumped flow between 0.75 and 3.0 m/s", _rising_mains),
     Check("D1", "Tertiary", "Property connection length", "G203-p18 Tab 4 (A9)",
           "<= 50 m, else an intermediate chamber", _pcs_length),
     Check("E1", "Loads", "Mass balance", "bookkeeping",

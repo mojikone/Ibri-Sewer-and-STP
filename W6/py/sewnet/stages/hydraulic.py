@@ -21,6 +21,7 @@ review. The rules:
     (review SOLVER-3); a final lay pass always leaves inverts consistent with diameters.
 """
 
+import math
 import networkx as nx
 
 from .. import hydra as H
@@ -40,6 +41,12 @@ class HydraulicDesigner:
     def _lay(self, net: Network, G, order):
         C = self.crit
         invert, drops = {}, {k: [] for k in net.chambers}
+        # start every pass clean: a pump placed in an earlier pass may not be needed once
+        # diameters change, and a stale flag would double-count stations
+        for c in net.chambers.values():
+            c.is_station, c.lift_m = False, 0.0
+        for r in net.reaches:
+            r.is_rising_main = False
 
         for n in order:
             ch = net.chambers[n]
@@ -77,6 +84,29 @@ class HydraulicDesigner:
                     i_up -= deficit
                     drop_up += deficit
 
+                # HARD LIMIT (G203-p33): a chamber may never be deeper than MAX_DEPTH.
+                # If this pipe would land the next chamber past it, a pump goes HERE and
+                # the pipe becomes a rising main that discharges shallow — so the network
+                # continues by gravity from there.
+                inv_dn_gravity = i_up - S * r.length
+                too_deep = (target_ch.z - inv_dn_gravity) > C.MAX_DEPTH
+                if not too_deep:                     # the trench between chambers counts too
+                    for chn, _x, _y, g_ch in r.profile:
+                        if g_ch - (i_up - S * chn) > C.MAX_DEPTH:
+                            too_deep = True
+                            break
+                if too_deep:
+                    ch.is_station = True
+                    ch.lift_m = max(0.0, (target_ch.z - tgt_depth) - i_up)
+                    r.is_rising_main = True
+                    r.inv_up = i_up
+                    r.inv_dn = target_ch.z - tgt_depth   # discharges at normal cover
+                    r.slope = (r.inv_up - r.inv_dn) / r.length if r.length else 0.0
+                    r.drop_up = drop_up
+                    r.s_rec = s_rec
+                    node_inv = i_up
+                    continue
+
                 r.s_rec, r.slope = s_rec, S
                 r.inv_up, r.inv_dn, r.drop_up = i_up, i_up - S * r.length, drop_up
                 node_inv = i_up                          # chamber built to its outgoing invert
@@ -89,6 +119,38 @@ class HydraulicDesigner:
                     drops[n].append({"pipe": r.label, "height": h,
                                      "type": "backdrop" if h <= C.BACKDROP_MAX else "vortex"})
         return invert, drops
+
+    def _size_rising_mains(self, net: Network):
+        """Size a pumped pipe.
+
+        A pump does not run at the rate sewage arrives — it fills a wet well and then
+        empties it at its own duty rate. So the pipe is sized on the DUTY flow, and the
+        duty is chosen to keep the pumped flow between 0.75 and 3.0 m/s (G203-p50 8.1):
+        fast enough to keep solids moving, slow enough to avoid surge damage. The duty can
+        never be less than the flow arriving, or the wet well would never empty."""
+        C = self.crit
+        for r in net.reaches:
+            if not r.is_rising_main:
+                continue
+            pick = None
+            for dn in C.DN_SERIES:
+                if dn < C.DN_TERTIARY:
+                    continue                     # smallest practical rising main
+                d = C.internal_diameter(dn)
+                area = math.pi * d * d / 4.0
+                q_slow, q_fast = C.V_SELF_CLEANSING * area, C.V_MAX * area
+                if r.qpeak_m3s <= q_fast:        # this pipe can pass the arriving flow
+                    duty = max(r.qpeak_m3s, q_slow)
+                    pick = (dn, duty, duty / area)
+                    break
+            if pick is None:                     # very large flow: take the biggest pipe
+                dn = C.DN_SERIES[-1]
+                d = C.internal_diameter(dn)
+                area = math.pi * d * d / 4.0
+                pick = (dn, r.qpeak_m3s, r.qpeak_m3s / area)
+            r.dn_mm, r.q_duty_m3s, r.vel = pick[0], pick[1], pick[2]
+            r.dod = None
+            r.material = C.material(r.dn_mm)
 
     # ---------------- stage entry point ----------------
     def run(self, net: Network):
@@ -107,6 +169,8 @@ class HydraulicDesigner:
             invert, drops = self._lay(net, G, order)
             changed = 0
             for r in net.reaches:
+                if r.is_rising_main:
+                    continue
                 pick = None
                 for dn_c in C.DN_SERIES:
                     S_c = max(r.s_rec, H.smin_for(dn_c, r.qpeak_m3s, C),
@@ -137,6 +201,10 @@ class HydraulicDesigner:
             invert, drops = self._lay(net, G, order)   # leave a consistent state
 
         for r in net.reaches:
+            if r.is_rising_main:
+                r.dod, r.vel = None, None            # pumped: sized as a force main later
+                r.material = C.material(r.dn_mm)
+                continue
             r.dod, r.vel = H.pipe_state(r.dn_mm, r.slope, r.qpeak_m3s, C)
             r.material = C.material(r.dn_mm)
 
@@ -146,9 +214,28 @@ class HydraulicDesigner:
             ch.drops = drops.get(k, [])
             ch.sls_pocket = False
 
+        self._size_rising_mains(net)
         pockets = self._pockets(net)
+        stations = [c for c in net.chambers.values() if c.is_station]
+        # how much a station has to handle = what its rising main carries
+        served = {r.up: r for r in net.reaches if r.is_rising_main}
         self.report = {"iterations": it + 1, "converged": converged,
                        "pockets": pockets,
+                       "station_list": sorted(
+                           [{"label": c.label, "x": round(c.x, 2), "y": round(c.y, 2),
+                             "ground": round(c.z, 2), "depth": round(c.depth or 0, 2),
+                             "lift_m": round(c.lift_m, 2),
+                             "rising_main_m": round(served[c.key].length, 1)
+                             if c.key in served else 0.0,
+                             "rising_main_dn": served[c.key].dn_mm if c.key in served else 0,
+                             "q_peak_ls": round(served[c.key].qpeak_ls, 2)
+                             if c.key in served else 0.0,
+                             "n_props": round(served[c.key].n_props, 1)
+                             if c.key in served else 0.0} for c in stations],
+                           key=lambda s: -s["n_props"]),
+                       "stations": len(stations),
+                       "rising_mains": sum(1 for r in net.reaches if r.is_rising_main),
+                       "total_lift_m": round(sum(c.lift_m for c in stations), 1),
                        "n_failed_depth": sum(1 for c in net.chambers.values()
                                              if c.depth is not None and c.depth > C.MAX_DEPTH)}
         return self.report

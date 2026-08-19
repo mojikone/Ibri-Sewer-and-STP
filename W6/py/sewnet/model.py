@@ -37,6 +37,9 @@ class Chamber:
     depth: Optional[float] = None   # ground - invert (construction depth)
     drops: List[dict] = field(default_factory=list)
     sls_pocket: bool = False
+    is_station: bool = False        # a pumping station sits here
+    swept_entry: bool = False       # needs a special swept channel (no room to sweep the pipe)
+    lift_m: float = 0.0             # how far the pump must raise the sewage
     min_depth_req: float = 0.0      # raised by the connectability stage
 
     @property
@@ -76,6 +79,8 @@ class Reach:
     vel: Optional[float] = None
     profile: List[tuple] = field(default_factory=list)   # (chainage, x, y, ground)
     dn_hist: set = field(default_factory=set)            # oscillation guard
+    is_rising_main: bool = False    # pumped, not gravity
+    q_duty_m3s: float = 0.0         # pump duty flow (rising mains only)
 
     @property
     def fall(self) -> float:
