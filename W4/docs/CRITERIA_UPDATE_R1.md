@@ -160,6 +160,25 @@ employees, which subscriber counts do not provide — so this reaches **Tier B f
 identifies non-domestic properly, but non-domestic still needs its own driver** before it is fully
 Tier B compliant. [G] [R]
 
+### B11. Closing Tier B with derivable drivers (decided 2026-08-19 [U])
+
+Tab 12 needs floor area, pupils, beds and employees. None are supplied, so they are **derived now
+and replaced when better data arrives** — the design must not stall waiting for them. [U]
+
+    floor area = plot area x plot ratio x storeys
+      plot ratio  <- MoH_Plots `BT_AREA` (values like '30%', '40%') where present
+      storeys     <- MoH_Plots `BLDG_HT` where present
+      headcounts  <- floor area / a density assumption per Tab 12 category
+                     (pupils, beds, employees)
+
+**Coverage is thin and must be stated in every deliverable:** `BT_AREA` 17 %, `BLDG_HT` 18 %,
+`LANDUSE` 35 % of 61,272 plots. So category defaults carry most plots, and every derived driver is
+a tagged assumption, not a measurement. [R]
+
+Design consequence: the code takes these as a **replaceable table** — when the colleague's treated
+land-use data lands (missing plots, properties per plot), it drops in without touching the solver.
+[U]
+
 ### Two findings that need your ruling
 
 1. **Only 54.9 % of "built" plots carry an electricity account** (9,859 of 17,961). Either the W3
@@ -206,7 +225,14 @@ apartment block).
 2. **Main-road handling moves from derived to data-driven.** The betweenness-derived classification
    in `RoadTreatment.classify_main_roads` is replaced by the hierarchy field, and the flag stops
    being advisory — it will actually exclude corridors. [U] [R]
-3. **Corridor source layer changes.** Every figure in the current report (98.7 km of roads, chamber
+3. **Doctrine 2.1 narrowed (D4).** "Farms (CLASS=A) carry no sewage load" becomes "the
+   agricultural **use** carries no sewage load; **dwellings on a farm plot do**". Evidence: 1,947
+   CLASS=A plots carry 3,366 domestic electricity accounts. `_BRAIN/07_PROJECT_STATE.md` §2.1 and
+   `02_DESIGN_CRITERIA` need the same wording change when this is implemented. [U] [R]
+4. **Load basis moves from ratios to land use** (B10/B11): domestic counted from accounts, non-
+   domestic identified by tariff and driven by derived floor area rather than the 22 %/14 %
+   fallback ratios. [U] [G]
+5. **Corridor source layer changes.** Every figure in the current report (98.7 km of roads, chamber
    counts, network length) is re-based by this.
 
 ---
@@ -234,8 +260,8 @@ drops and the τ assumption are unchanged.
 | ~~Hazard nodata meaning~~ | — | **RESOLVED 2026-08-19 [U]: nodata = dry** |
 | ~~Which side to keep for `dual = 2`~~ | — | **RESOLVED 2026-08-19 [U]: side with more fronting plots, tie-broken by lower ground, held for the whole corridor** |
 | ~~Wadi layer~~ | — | **RESOLVED 2026-08-19** — 50-year hazard grid supplied, see B8 |
-| **Built-plot classification disagrees with accounts** — 45 % of built plots have no electricity | user | B10 finding 1 |
-| **Farms with dwellings** — do they carry sewage load after all? | user | B10 finding 2 |
+| ~~Built-plot classification vs accounts~~ | colleague | **In hand 2026-08-19 [U]** — colleague is treating the land-use data (missing plots, properties per plot). Pipeline to be sharpened meanwhile and accept it on arrival |
+| ~~Farms with dwellings~~ | — | **RESOLVED 2026-08-19 [U]** — doctrine narrowed: the agricultural *use* carries no sewage load, the **dwellings on a farm plot do**. See D4 |
 | Bend chamber counts if another standard applies | user | Umesh not to be consulted [U] |
 | ~~Multiple connections for large plots~~ | — | **RESOLVED 2026-08-19 — driven by counted accounts (B10)** |
 | τ design value [GAP-9] | NWS | 1,124 pipes exposed if τ = 2 Pa |
