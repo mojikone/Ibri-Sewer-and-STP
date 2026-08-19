@@ -89,6 +89,12 @@ Umesh is **not** to be consulted; these numbers stand until you supply others. [
 | Sweeping curve, total turn > 45° (**wide bend**) | **two or three** chambers, breaking the curve into chords | [U] |
 | Any case | inlet must meet the outlet at **≥ 90°** | [G] G203-p30, verbatim "shall" |
 
+**Small-radius bends — one chamber at the corner point (2026-08-19) [U].** Rather than following
+a tight curve, run straight to the intersection of the two tangents and turn there, **provided that
+corner point lies outside every plot boundary by at least 2 m** (it must sit in the road reserve).
+If the corner falls inside a plot or within 2 m of one, the curve must be followed instead with
+2 chambers (3 only when the bend is wide and long). Cap is **3 chambers per bend**. [U]
+
 What decides two versus three: insert chambers so each chord's **offset from the road centreline
 ≤ 0.30 m** and each chamber's deflection ≤ 22.5°. `ROAD_CHORD_DEV_M` already exists in
 `criteria.py` but is currently dead — this activates it. [R] [C]
@@ -121,6 +127,51 @@ overstated the problem badly — the hazard grid is the defensible basis.
 
 ---
 
+## B10. Load basis — electricity subscriber accounts (new input, 2026-08-19)
+
+**Source:** `Data/Received/09-RECEIVED/NAMA/IBRI ELE ACCOUNTS.kmz` — **33,970 accounts**, each
+carrying a TARIFF and X/Y already in EPSG:32640. Parsed by `W4/py/analysis_ele_accounts.py` to
+`W4/shp/ELE_accounts.shp`; full tables in `W4/analysis/ele_accounts.md`. [U] [R]
+
+**Each account is a property.** A plot with 3 accounts has 3 properties, so `PROPS_PER_PLOT`
+becomes **counted, not assumed** — this is the first real evidence against GAP-5. [U]
+
+| Category | Accounts | Load treatment |
+|---|---|---|
+| domestic (Primary +/- subsidy) | 16,244 | per-capita x OR |
+| domestic additional | 6,344 | counts as a property — see the validation below |
+| commercial | 9,392 | non-domestic, Tier B driver still needed |
+| government | 967 | non-domestic, Tier B driver still needed |
+| agricultural (tariff) | 523 | TE customer, no sewage load |
+| CRT / industrial | 500 | large consumers, case by case |
+
+**Occupancy: OR = 5 (decided 2026-08-19 [U])**, replacing the 6.0 fallback.
+
+**Validation that settles the "additional account" question [R]:** counting primary accounts only
+gives 1.18 properties/plot -> **5.90 persons per plot at OR 5**; counting primary + additional
+gives 1.46 -> **7.28 persons per plot**. The independent NCSI-derived figure from W3/A8 is
+**~7.0 persons per built plot**. So additional accounts are separate dwellings and **must** be
+counted; primary-only would under-predict the load by about 19 %.
+
+**Load model becomes land-use based, not blanket per-capita [U].** Domestic load = counted
+domestic properties x OR x per-capita rate; non-domestic identified by tariff instead of by the
+22 %/14 % ratios. Honest limit: GUD-201 Tab 12 unit rates are keyed to floor area, pupils, beds and
+employees, which subscriber counts do not provide — so this reaches **Tier B for domestic and
+identifies non-domestic properly, but non-domestic still needs its own driver** before it is fully
+Tier B compliant. [G] [R]
+
+### Two findings that need your ruling
+
+1. **Only 54.9 % of "built" plots carry an electricity account** (9,859 of 17,961). Either the W3
+   imagery classifier over-called built, or the account layer is incomplete. This is the first
+   independent check on that classification and it disagrees materially. [R]
+2. **1,947 CLASS=A farm plots carry domestic accounts** (3,366 accounts). Doctrine 2.1 says farms
+   carry no sewage load because they are TE customers — but a farm with houses on it produces
+   sewage. The doctrine may need narrowing to "the agricultural *use* carries no load, the
+   dwellings on it do". [R]
+
+---
+
 ## C. House connections — the tertiary layer (stage: `ConnectabilityStage`)
 
 **The flaw being fixed:** connection points sit at plot centroids *inside* plots, and lines run
@@ -139,8 +190,10 @@ that. [U]
 | C8 | **Gravity viability is the only hydraulic test at concept** — plot outlet level versus pipe invert. No tertiary sizing. | [U] |
 | C9 | **Separate layers in every output** (SHP and DXF): house connections and riders must not sit in the mains layer, so SewerGEMS never imports tertiary as conduits and CAD can switch them off. | [U] |
 
-**Open question:** large plots (up to 45,000 m² in the test area) currently get one connection each.
-Institutional and industrial plots realistically need more. Your call. [C]
+**Resolved by B10 [U]:** connection count follows the counted accounts. In the test boundary
+**352 of 1,331 plots with accounts (26.4 %) carry 2 or more**, so roughly a quarter of plots need
+more than one connection; the maximum observed on a single plot is 51 accounts (a compound or
+apartment block).
 
 ---
 
@@ -181,10 +234,12 @@ drops and the τ assumption are unchanged.
 | ~~Hazard nodata meaning~~ | — | **RESOLVED 2026-08-19 [U]: nodata = dry** |
 | ~~Which side to keep for `dual = 2`~~ | — | **RESOLVED 2026-08-19 [U]: side with more fronting plots, tie-broken by lower ground, held for the whole corridor** |
 | ~~Wadi layer~~ | — | **RESOLVED 2026-08-19** — 50-year hazard grid supplied, see B8 |
+| **Built-plot classification disagrees with accounts** — 45 % of built plots have no electricity | user | B10 finding 1 |
+| **Farms with dwellings** — do they carry sewage load after all? | user | B10 finding 2 |
 | Bend chamber counts if another standard applies | user | Umesh not to be consulted [U] |
-| Multiple connections for large plots | user | section C open question |
+| ~~Multiple connections for large plots~~ | — | **RESOLVED 2026-08-19 — driven by counted accounts (B10)** |
 | τ design value [GAP-9] | NWS | 1,124 pipes exposed if τ = 2 Pa |
-| Occupancy / properties per plot [GAP-5] | NWS | load basis |
+| Occupancy [GAP-5] | — | **OR = 5 decided [U]**; properties per plot now COUNTED from accounts (B10) |
 | PVC-U wall class (SDR) per PAM-SPC-207 | NWS | true bore for capacity |
 
 ---
