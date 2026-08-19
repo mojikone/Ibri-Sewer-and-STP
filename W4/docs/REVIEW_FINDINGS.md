@@ -1,5 +1,7 @@
 # W4 Adversarial Hydraulic Review — confirmed findings and fixes (2026-08-18)
 
+> **SUPERSEDED — kept as the record of W4.** The live design is **W5**; see `_BRAIN/00_CURRENT.md` for what is current. Numbers here use one property per plot and 6.0 people per property, both replaced on 2026-08-19.
+
 21-agent skeptic panel (4 attack lenses + independent verification per finding) on `sewnet` after the first audit-clean run. **17 raw findings, 11 confirmed, 11 fixed** — all fixes verified by the 43-test suite plus a full re-run ending at 0 violations. Full evidence: workflow `wf_c3b61e4b-01d` transcripts.
 
 | ID | Sev | What was wrong | Fix |

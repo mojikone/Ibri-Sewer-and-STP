@@ -1,5 +1,7 @@
 # W4 Implementation Plan (condensed — executed in-session)
 
+> **SUPERSEDED — kept as the record of W4.** The live design is **W5**; see `_BRAIN/00_CURRENT.md` for what is current. Numbers here use one property per plot and 6.0 people per property, both replaced on 2026-08-19.
+
 > Spec: `W4/docs/PLAN.md` (incl. §3b hydraulics-first regime and §7 decisions). This file tracks the build order and test gates; PLAN.md holds the reasoning. Executed by the session directly (user: "go ahead and do not stop until finish"), with the adversarial hydraulic review workflow as the independent check.
 
 **Stack:** python 3.12 · geopandas/pyogrio/shapely 2 · rasterio (windowed VRT reads) · networkx · ezdxf · pytest. Package `W4/py/sewnet/`, tests `W4/py/tests/`, one runner `W4/py/run_test_boundary.py` + `config_test.py`.

@@ -1,5 +1,7 @@
 # W4 Sewer Network Design Pipeline — Methodology & Test-Boundary Results
 
+> **SUPERSEDED — kept as the record of W4.** The live design is **W5**; see `_BRAIN/00_CURRENT.md` for what is current. Numbers here use one property per plot and 6.0 people per property, both replaced on 2026-08-19.
+
 Internal working document · 2026-08-18 · code: `W4/py/sewnet/` · run: `W4/run/` · outputs: `W4/{shp,sewergems,dxf,img}` · QGIS group: **Claude W4**
 
 ---

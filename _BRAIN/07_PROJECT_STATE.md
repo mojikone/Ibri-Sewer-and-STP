@@ -1,5 +1,5 @@
 # PROJECT-STATE — single-file orientation for any new session
-**LIVE DOCUMENT (user-mandated): update with every substantive commit, alongside README.md — see CLAUDE.md rule 12. Last updated 2026-08-15. Read this FIRST, then 02_DESIGN_CRITERIA before writing any number.**
+**Companion page: `_BRAIN/00_CURRENT.md` lists which files are live and which are superseded. LIVE DOCUMENT (user-mandated): update with every substantive commit, alongside README.md — see CLAUDE.md rule 12. Last updated 2026-08-15. Read this FIRST, then 02_DESIGN_CRITERIA before writing any number.**
 
 ## 1. Project in three lines
 Concept→detailed design + supervision of sewer network, TE network and STP capacity for Ibri Wilayat, Oman (Client NWS, Tender T/2719110/2025, Renardet job 2621). Horizons: start / 2030 / 2055 / ultimate-saturated; ≥3 options each for sewer, TE, STP. Existing STP at E444387 N2563352 (ground ≈327.5 m); ultimate flows ≫ 20,000 m³/d ⇒ STP phasing is the pivotal decision.
@@ -10,7 +10,7 @@ Concept→detailed design + supervision of sewer network, TE network and STP cap
    - Dated years: zone totals only — R0 projection capped at zone ceiling (plots × OR); surplus spills to adjacent zones proportional to vacancy (A2 model). Never per-plot-per-year.
    - Phased elements: STP trains, pumps, force-main duty equipment (M&E ~20 yr life). Buried civil = saturation.
    - Early-years check: self-cleansing (0.75 m/s / tractive force, G203-p26-27) verified at start-year flows.
-   - Farms (CLASS=A) carry no sewage load; they are TE customers.
+   - Farms: **the agricultural USE carries no sewage load (they are TE customers), but DWELLINGS on a farm plot do** (narrowed 2026-08-19 — 1,947 CLASS=A plots carry 3,366 domestic electricity accounts, so there are houses on them).
 2. **Saturation** = no more developable plots. Zone-level ceilings bite inside the design horizon (IBRI ≈2038); whole boundary saturates ≈2062–2070 at OR 6.0; beyond that R0 projections are physically unhousable (407k surplus by 2100) — pending NCSI/MoHUP resolution.
 3. **Stub-outs**: capped connections at future-plot frontage, sized for that area's saturation flow; usually DN200 minimum governs.
 4. Flow chain per **TUTORIALS/T01** (Rev 2, 47 pp, docx/pdf) — the teaching reference with every value page-cited; reconciliation register vs Inception R0 inside.
@@ -40,7 +40,7 @@ Concept→detailed design + supervision of sewer network, TE network and STP cap
 | **W4 (DELIVERED 2026-08-18, restructured same day)** | **Code is now an object model**: `sewnet/model.py` (Chamber/Reach/Network owning the no-loops + one-outlet invariants), frozen `Criteria` object (tau sensitivity = config, not code), one class per stage in `sewnet/stages/`, audit as a check REGISTRY generating the compliance table. Refactor verified by an equality gate. **RoadTreatment stage** (new): raw centrelines → reviewable `W4_corridors.shp`; 27% of chambers were artefacts of road-data breaks → **1,655 chambers (−23%)**, 89.5 km. Two adversarial reviews (21 + 33 agents): 28 confirmed findings, all fixed — see `W4/docs/REVIEW_FINDINGS.md`. Audit: 2 failures left (inlet angle 263/1654; 152 house connections >50 m). |
 | _W4 original delivery_ | **Test-boundary sewer design pipeline — end to end, audit-clean, adversarially reviewed.** `W4/py/sewnet/`: criteria (all values page-cited + tagged assumptions) · CW hydraulics on TRUE bore (Table-11 gate ±5%, tractive floored at Mara 1.5 L/s) · prep (boundary repair, dual collapse) · climb-weighted tree + cross-street summit-split augmentation · manholes (≤100 m, bends, <2 m contraction) · saturation loads per doctrine §2 · sizing⇄inverts solver (drops to outgoing-invert datum, 12 m→SLS pockets) · house-connectability check with MH deepening (user mandate: elevated roads) · independent audit. Test area: 2,359 MH / 95.3 km / 83 L/s peak / 0 violations / 12 residual low plots / 1 absorb pocket. Review: 11 confirmed findings fixed (`docs/REVIEW_FINDINGS.md`). **Self-cleansing rests on τ=1 Pa [GAP-9]: 1,626 pipes exposed if τ=2 — top kickoff item.** Outfall auto-pick (450614, 2567397) is 733 m from user's expected west-edge point — config swap + 13 s re-run if user relocates. SewerGEMS package + referee CSV await user's ModelBuilder run. T01 Rev 3 (CW §14). **Next (W5): user-finalized trunk + multi-connection subnetworks; then three concept options, F2 georeferencing, capacity rerun with A6 farm correction** |
 
-## 5. Key numbers (screening grade, scale with OR 6.0 `[GAP-5]`)
+## 5. Key numbers (screening grade; **W1–W3 numbers below were built at OR 6.0 — the design basis is now OR 5.0 with properties COUNTED from electricity accounts, so they need rescaling before reuse**)
 | Quantity | Value |
 |---|---|
 | Ultimate Qadf / +10 % | ≈49,700 / 54,700 m³/d (W2 chain) — R0 model 2055 WWG 46.5k (÷1.2 weekly peak ≈ 38.7k avg) |
@@ -48,6 +48,8 @@ Concept→detailed design + supervision of sewer network, TE network and STP cap
 | IBRI settlement | 57 % built; ceiling 94k pop, crossed ≈2038; 2055 spillover −43k |
 | AT TAYYIB | 87 % vacant, ceiling 47k — primary growth sink (+27k by 2055) |
 | Boundary saturation | ≈326k pop ≈ 2062–2070 |
+| **Properties per plot (measured 2026-08-19)** | **1.4 average** from 33,970 electricity accounts; 1.46 domestic → 7.28 people/plot at OR 5, matching A7's independent 6.96 |
+| **W5 test area (551 ha)** | 1,744 chambers · 78.4 km · 4,226 properties on 3,017 plots · Qadf 3,620 m³/d · peak 96 L/s · 5 pumping spots |
 
 ## 6. Open gaps (detail: 05_GAPS)
 GAP-5 occupancy (NCSI housing units — NOT in R0 package) · GAP-6 as-builts/F2 GIS · GAP-7 existing STP capacity/invert · NEW: MoHUP cadastre completion (unparceled buildings, empty LANDUSE) · settlement boundary fixes (BAT etc.) · NWS confirmations: infiltration basis (720 L/d/km vs R0 10 %), peaking formula per element, tanker catchment (25 km vs observed 150 km), model start year.

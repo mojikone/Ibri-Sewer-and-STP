@@ -103,7 +103,7 @@ def build():
         ["Check everything", "21 rules re-checked independently of the design code"],
         ["Write the outputs", "GIS files, CAD drawing, SewerGEMS package, maps"],
     ], [1.5, 4.6]))
-    B.append(("img", os.path.join(IMG_DOCS, "pipeline_architecture.png"), 6.2,
+    B.append(("img", os.path.join(IMG_DOCS, "pipeline_steps.png"), 6.2,
               "The steps in order. Blue is what comes in, yellow is the checking step, red is "
               "where a pumping station is needed, dashed lines are repeats."))
 

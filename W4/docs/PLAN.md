@@ -1,5 +1,7 @@
 # W4 — Sewer Network Design Pipeline: Design Plan (for review)
 
+> **SUPERSEDED — kept as the record of W4.** The live design is **W5**; see `_BRAIN/00_CURRENT.md` for what is current. Numbers here use one property per plot and 6.0 people per property, both replaced on 2026-08-19.
+
 **Date:** 2026-08-18 · **Status:** awaiting user review — no pipeline code written yet
 **Goal:** a re-runnable Python pipeline that turns roads + plots + terrain + an outfall into a guideline-compliant gravity sewer network (manholes, sized pipes, inverts, loads), proven on the 551 ha test boundary first, then applied study-wide. Outputs: SHP (SewerGEMS-ready), DXF, PNG maps, methodology report.
 

@@ -1,8 +1,8 @@
 # Tutorial T01 — Sewage Flow & Pollution Load Calculation
-**Project 2621 Ibri Sewer, TE & STP · Renardet / NWS · Rev 3, 2026-08-18**
+**Project 2621 Ibri Sewer, TE & STP · Renardet / NWS · Rev 4, 2026-08-19**
 
 > **This markdown is the quick-reference digest.** The full tutorial (Rev 3, 53 pp — teaching-level explanations, native equations, route flowcharts, charts, references, appendices) is `T01_Sewage_Flow_and_Load_Calculation.docx/.pdf` in this folder.
-> Changelog: Rev 3 (2026-08-18) added the Colebrook-White pipe-hydraulics chapter (tutorial §14); Rev 2 addressed all Rev 0/Rev 1 review comments.
+> Changelog: Rev 4 (2026-08-19) properties per plot are now COUNTED from electricity accounts and occupancy is set to 5 people per property; Rev 3 (2026-08-18) added the Colebrook-White pipe-hydraulics chapter (tutorial §14); Rev 2 addressed all Rev 0/Rev 1 review comments.
 
 How to go from *population* to *design flows* and *organic loads*, step by step, using only the values the NWS manuals permit. Every number is cited: `p##` = PAM-GUD-203, `G1-p##` = PAM-GUD-201, `G2-p##` = PAM-GUD-202, `R0` = Ibri Inception Report R0 demand workbook (Aug 2026).
 
@@ -33,7 +33,7 @@ Two routes, used together:
 | Route | Formula | When | Ref |
 |---|---|---|---|
 | **Census (top-down)** | NCSI wilayat population → disaggregate to settlements by ratio | Model years 2030 / 2055 (growth projection) | G1-p58, R0 |
-| **Plots (bottom-up)** | Population = plots × properties/plot × occupancy rate | Ultimate / saturation horizon | G1-p58 |
+| **Plots (bottom-up)** | Population = plots × properties/plot × occupancy rate. **Both measured since Rev 4**: properties per plot counted from electricity accounts (1.4 average), occupancy = 5 people per property | Ultimate / saturation horizon | G1-p58 |
 
 - Ibri wilayat (NCSI, in R0 workbook): **183,564 (2024)**, growth ≈ 2.4–3.0 %/yr.
 - Scope horizons: start year, **2030, 2055, ultimate (saturated)**, 5-yr intervals (scope p3, p14–15).
@@ -204,4 +204,4 @@ Sanity checks that should always hold: BOD concentration 300–400 mg/l ✓ · P
 | STP margin / TSE | +10 % / 95 % (G1-p73) | same | ✓ |
 | Sludge rate | — | 0.25 kg/m³ | R0-only planning value |
 
-**Open inputs:** occupancy rate per settlement (GAP-5, partly closed by R0 NCSI data) · existing STP capacity & spare (GAP-7) · model start year.
+**Open inputs:** ~~occupancy rate~~ **GAP-5 now largely closed (Rev 4)**: occupancy set to 5 by the client team, properties per plot counted from 33,970 electricity accounts (1.4 average; 7.28 people per plot on the domestic count, against 6.96 from NCSI ÷ built plots) · existing STP capacity & spare (GAP-7) · model start year.

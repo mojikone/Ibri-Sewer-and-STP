@@ -1,5 +1,7 @@
 # W4 — Criteria & Constraints Update R1 (pending implementation)
 
+> **SUPERSEDED — kept as the record of W4.** The live design is **W5**; see `_BRAIN/00_CURRENT.md` for what is current. Numbers here use one property per plot and 6.0 people per property, both replaced on 2026-08-19.
+
 **Status: SPECIFICATION ONLY — nothing here is implemented yet.** It consolidates every change
 agreed or discovered between 2026-08-18 and 2026-08-19, so the pipeline can be updated in one pass
 instead of piecemeal. Each item carries its source and the stage it lands in.
