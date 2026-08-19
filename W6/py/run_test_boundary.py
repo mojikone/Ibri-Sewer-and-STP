@@ -35,7 +35,7 @@ def main(argv):
         dual_merge_m=cfg.DUAL_MERGE_M,
         treat_roads="--raw-roads" not in argv,
         round_spacing="--equal-spacing" not in argv,
-        corridors_out=os.path.join(cfg.OUT_SHP, "W5_corridors.shp"),
+        corridors_out=os.path.join(cfg.OUT_SHP, "W6_corridors.shp"),
         hazard=getattr(cfg, "HAZARD", None), accounts=getattr(cfg, "ACCOUNTS", None),
     )
     res = SewerDesignPipeline(rc, DEFAULT, log).run()
@@ -52,6 +52,8 @@ def main(argv):
         "loads": reports["loads"], "solver": reports["solver"],
         "structures": reports["structures"], "lowplots": reports["lowplots"],
         "road_treatment": reports.get("road_treatment"),
+        "stations": reports.get("stations"), "sweep": reports.get("sweep"),
+        "trunk": reports.get("trunk"),
         "tertiary": reports.get("tertiary"),
         "augmentation": reports["tree"]["augmentation"],
         # the outfall may receive several reaches; each PIPE is sized for its own peak,
@@ -78,6 +80,9 @@ def main(argv):
     log("SUMMARY " + json.dumps({k: summary[k] for k in
                                  ("n_nodes", "n_pipes", "net_km", "qpeak_outfall_ls",
                                   "violations", "max_depth_m", "drops")}, default=str))
+    st = summary.get("stations") or {}
+    log(f"PUMPING STATIONS {st.get('count', 0)} | {st.get('properties_pumped', 0)} properties "
+        f"| lift {st.get('total_lift_m', 0)} m | rising mains {st.get('rising_main_m', 0)} m")
 
     with open(os.path.join(cfg.OUT_RUN, "summary.json"), "w") as f:
         json.dump(summary, f, indent=2, default=str)
@@ -93,7 +98,7 @@ def main(argv):
                      "pockets": res["pockets"], "of_rep": res["of_rep"],
                      "boundary_wkt": res["boundary"].wkt, "sy_flags": res["sy_flags"],
                      "summary": summary}, f)
-    log("state saved to W5/run/")
+    log(f"state saved to {cfg.OUT_RUN}")
     return 0 if not auditor.failures else 1
 
 

@@ -70,7 +70,7 @@ def network_map(path, net, pockets, of_rep, boundary, summary):
                       label=f"DN{k} — {v:.1f} km") for k, v in dn_km.items() if int(k) in DN_COLOR]
     handles.append(Line2D([], [], color="#d35400", ls="--", label="test boundary"))
     ax.legend(handles=handles, loc="upper left", fontsize=8)
-    box = (f"W5 TEST-BOUNDARY SEWER DESIGN\n"
+    box = (f"W6 TEST-BOUNDARY SEWER DESIGN\n"
            f"area {summary['s1']['boundary_ha']:.0f} ha | net {summary['net_km']:.1f} km | "
            f"{summary['n_nodes']} MH\n"
            f"{summary['loads']['loaded_points']} plots, "
@@ -78,7 +78,7 @@ def network_map(path, net, pockets, of_rep, boundary, summary):
            f"Qadf {summary['qadf_outfall_m3d']:.0f} m3/d | "
            f"Qpeak {summary['qpeak_outfall_ls']:.0f} L/s ({summary['pf_formula']})\n"
            f"audit violations: {summary['violations']}")
-    _frame(ax, boundary, "W5 — Test-Boundary Gravity Sewer Network (by pipe size)", box)
+    _frame(ax, boundary, "W6 — Test-Boundary Gravity Sewer Network (by pipe size)", box)
     fig.savefig(path, bbox_inches="tight")
     plt.close(fig)
 
@@ -98,12 +98,30 @@ def depth_map(path, net, boundary, summary):
     sm = cm.ScalarMappable(norm=norm, cmap=cmap)
     cbar = fig.colorbar(sm, ax=ax, shrink=0.5, pad=0.01)
     cbar.set_label("downstream manhole depth (m)", fontsize=9)
+    for p in pipes:                                  # pumped pipes stand out
+        if p.is_rising_main:
+            xs, ys = zip(*p.geom.coords)
+            ax.plot(xs, ys, color="#e74c3c", lw=2.6, ls="--", zorder=5)
+    st = [n for n in nodes.values() if n.is_station]
+    if st:
+        ax.scatter([n.x for n in st], [n.y for n in st], s=150, marker="v",
+                   facecolor="#e74c3c", edgecolor="k", lw=0.8, zorder=6,
+                   label=f"pumping station ({len(st)})")
+        for n in st:
+            ax.annotate(f"{n.label} lift {n.lift_m:.1f} m", (n.x, n.y),
+                        xytext=(9, 6), textcoords="offset points", fontsize=7,
+                        color="#c0392b", zorder=7)
+        ax.legend(loc="lower left", fontsize=8, framealpha=0.9)
     deep = [n for n in nodes.values() if (n.depth or 0) > 8.0]
-    box = (f"DEPTH PROFILE\nmax depth {summary['max_depth_m']:.1f} m\n"
-           f"manholes > 8 m: {len(deep)}\n"
+    stt = summary.get("stations") or {}
+    box = ("DEPTH PROFILE\n"
+           f"max depth {summary['max_depth_m']:.1f} m (limit 12.0)\n"
+           f"manholes over 8 m: {len(deep)}\n"
            f"drops/backdrops: {summary['drops']}\n"
-           f"SLS pockets: {summary['solver']['pockets']}")
-    _frame(ax, boundary, "W5 — How deep the pipes sit below ground", box)
+           f"pumping stations: {stt.get('count', 0)}\n"
+           f"properties pumped: {stt.get('properties_pumped', 0)}\n"
+           f"total lift: {stt.get('total_lift_m', 0)} m")
+    _frame(ax, boundary, "W6 — How deep the pipes sit below ground", box)
     fig.savefig(path, bbox_inches="tight")
     plt.close(fig)
 
@@ -128,6 +146,6 @@ def lowplot_map(path, net, conn, still_low, boundary, summary):
            f"checked {summary['lowplots']['checked']} units\n"
            f"low plots {summary['lowplots']['flagged']} | deepened MH "
            f"{summary['lowplots']['deepened_mh']}\nresidual {summary['lowplots']['residual']}")
-    _frame(ax, boundary, "W5 — Can every house drain into the sewer?", box)
+    _frame(ax, boundary, "W6 — Can every house drain into the sewer?", box)
     fig.savefig(path, bbox_inches="tight")
     plt.close(fig)

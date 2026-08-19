@@ -28,14 +28,15 @@ Concept→detailed design + supervision of wastewater network, treated-effluent 
 | `_CLIENT/` | Inception R0 package (report + demand workbook) pushed for remote access |
 | `TUTORIALS/` | T01 sewage flow & load calculation (docx/pdf + md digest + generator) |
 | `W1/`, `W2/`, `W3/` | Iteration outputs (py scripts are the pipeline; re-runnable). W3 = capacity/spillover/built-status analyses + plot classification layers |
-| `W4/` | First sewer design pipeline: hydraulics, chambers, loads, audit + two adversarial reviews. **Superseded by W5** — kept as the record, plus `W4/shp/ELE_accounts.shp` which W5 still reads |
-| **`W5/`** | **CURRENT design.** `py/sewnet/` (one class per step), `docs/` (what changed + criteria register), `shp/ dxf/ img/ sewergems/ report/ run/` |
+| `W4/` | First sewer design pipeline: hydraulics, chambers, loads, audit + two adversarial reviews. **Superseded** — kept as the record, plus `W4/shp/ELE_accounts.shp` which the current pipeline still reads |
+| `W5/` | The run before the trunk was placed and before the 12 m limit was enforced. **Superseded by W6** — its depth and pumping numbers are wrong; `docs/CRITERIA_UPDATE_R1.md` is still the live rule register |
+| **`W6/`** | **CURRENT design.** `py/sewnet/` (one class per step, incl. `stages/trunk.py` and `stages/sweep.py`), `report/` (Word + PDF, numbers read live from the run), `docs/WHAT_CHANGED.md`, `shp/ dxf/ img/ sewergems/ run/` |
 | `../QGIS/QGIS 2621 ibri sewer stp.qgz` | Live QGIS project (layers + saved layouts W2 M1–M6) |
 | `../../Data/` | Client documents (scope.pdf, PAM-GUD-203, PAM-GUD-201, sample report, figures) — NOT in repo |
 
-## Current state (2026-08-19) — full detail in `_BRAIN/07_PROJECT_STATE.md`
-**W5 is the live design.** The test-boundary sewer runs end to end: 1,744 chambers, 78.4 km, 4,226 properties on 3,017 plots, Qadf 3,620 m³/d, peak 96 L/s, 5 pumping-station spots, 3 of 21 checks failing (junction inlet angles, 2 branch starts, 240 long house connections). Roads are cleaned before use (dual carriageways excluded outright, roundabouts and turning links dropped); house connections run from the plot frontage to the pipe it faces, in their own output layers; properties are COUNTED from 33,970 electricity accounts; OR = 5.
+## Current state (2026-08-19 evening) — read `_BRAIN/00_CURRENT.md` first, then `_BRAIN/07_PROJECT_STATE.md`
+**W6 is the live design.** Main pipe placed on the western edge + southern side as the user asked, with every street draining to its nearest joining point on it. **12 m maximum depth is a hard limit with no exemptions** — the audit used to skip chambers flagged as an "SLS pocket", which hid 71 chambers up to 21.3 m; that exemption is deleted and depth is checked at every chamber and along the trench between them. Where the pipe would pass 12 m a **pumping station** lifts it and the sewer restarts at normal cover; rising mains are sized on pump duty (0.75-3.0 m/s), not on the arriving flow. Test area: **1,925 chambers / 78.7 km / Qadf 3,619 m3/d / peak 96 L/s / deepest 11.88 m / 3 pumping stations (855 properties)** / 3 checks failing (143 sharp inlets needing a special chamber, 240 house connections over 50 m whose only frontage is a dual carriageway, 2 branch starts to merge). W5 and earlier are superseded.
 
 Settled since 2026-08-18 (all in `W5/docs/CRITERIA_UPDATE_R1.md`): terrain = 0.5 m VRT (rule 6) · dual carriageways excluded, not collapsed (rule 7) · farms narrowed — the farming carries no load, the houses on it do · load basis land-use driven, not blanket per-capita · Tab 12 drivers derived until the treated land-use data arrives.
 
-**Next: W6** — user-finalised trunk with side networks growing into it, junction inlet angles, then three concept options and the SewerGEMS referee run. User works remotely: deliverables must be committed AND pushed.
+**Next:** run the pipeline over the full study area, then three concept options, the SewerGEMS referee run, and F2 georeferencing. The user works remotely — deliverables must be committed AND pushed.

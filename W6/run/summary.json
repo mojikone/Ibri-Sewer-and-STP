@@ -16,9 +16,9 @@
     ],
     "dist_to_expected_m": 1014.725230913465
   },
-  "n_nodes": 1756,
-  "n_pipes": 1755,
-  "net_km": 78.4915750871547,
+  "n_nodes": 1925,
+  "n_pipes": 1924,
+  "net_km": 78.70249562730856,
   "loads": {
     "plots_inside": 2825,
     "built": 2217,
@@ -35,20 +35,20 @@
   },
   "solver": {
     "converged": true,
-    "iterations": 2,
-    "pockets": 4
+    "iterations": 4,
+    "pockets": 0
   },
   "structures": {
-    "merged": 56,
+    "merged": 60,
     "fanouts": 5,
-    "offset_branches": 100,
-    "dropped_branches": 7
+    "offset_branches": 94,
+    "dropped_branches": 6
   },
   "lowplots": {
     "checked": 3017,
-    "flagged": 129,
-    "deepened_mh": 48,
-    "residual": 0
+    "flagged": 108,
+    "deepened_mh": 51,
+    "residual": 2
   },
   "road_treatment": {
     "segments_in": 1725,
@@ -70,9 +70,90 @@
       "straight_sides": 2
     }
   },
+  "stations": {
+    "count": 3,
+    "list": [
+      {
+        "label": "MH-1024",
+        "x": 450259.02,
+        "y": 2569069.19,
+        "ground": 364.38,
+        "depth": 11.47,
+        "lift_m": 10.21,
+        "rising_main_m": 48.9,
+        "rising_main_dn": 200,
+        "q_peak_ls": 10.43,
+        "n_props": 340.0
+      },
+      {
+        "label": "MH-1488",
+        "x": 450268.33,
+        "y": 2568295.18,
+        "ground": 355.61,
+        "depth": 11.8,
+        "lift_m": 10.7,
+        "rising_main_m": 80.6,
+        "rising_main_dn": 200,
+        "q_peak_ls": 9.03,
+        "n_props": 289.0
+      },
+      {
+        "label": "MH-0687",
+        "x": 450282.87,
+        "y": 2569365.69,
+        "ground": 364.15,
+        "depth": 10.81,
+        "lift_m": 10.46,
+        "rising_main_m": 32.5,
+        "rising_main_dn": 200,
+        "q_peak_ls": 7.28,
+        "n_props": 226.0
+      }
+    ],
+    "properties_pumped": 855,
+    "total_lift_m": 31.4,
+    "rising_main_m": 162.0,
+    "small_enough_to_absorb": [],
+    "close_enough_to_cascade": [
+      {
+        "a": "MH-1024",
+        "b": "MH-1488",
+        "apart_m": 774
+      },
+      {
+        "a": "MH-1024",
+        "b": "MH-0687",
+        "apart_m": 297
+      },
+      {
+        "a": "MH-1488",
+        "b": "MH-0687",
+        "apart_m": 1071
+      }
+    ]
+  },
+  "sweep": {
+    "sharp_inlets": 131,
+    "bend_chambers_added": 172,
+    "needs_special_chamber": 131
+  },
+  "trunk": {
+    "trunk_nodes": 44,
+    "trunk_km": 2.1,
+    "sides": [
+      "west",
+      "south"
+    ],
+    "hug_m": 120.0,
+    "offset_from_wanted_line_m": {
+      "median": 76.7,
+      "max": 113.5
+    },
+    "outfall_z": 353.0
+  },
   "tertiary": {
     "spurs": 2495,
-    "riders": 972,
+    "riders": 964,
     "stub_outs": 522,
     "longest_spur_m": 355.6
   },
@@ -87,25 +168,25 @@
   "qpeak_sum_of_arrivals_ls": 95.65,
   "n_outfall_reaches": 1,
   "dn_km": {
-    "200": 73.994,
-    "250": 0.767,
-    "315": 1.89,
-    "400": 0.338,
-    "500": 0.124,
-    "600": 1.379
+    "200": 74.297,
+    "250": 1.426,
+    "315": 0.776,
+    "400": 0.141,
+    "500": 1.004,
+    "600": 1.059
   },
-  "violations": 4,
+  "violations": 3,
   "selfclean": {
-    "pipes": 1755,
-    "below_075_at_peak": 1702,
-    "share_below": 0.97,
-    "would_fail_at_tau2": 1177,
+    "pipes": 1924,
+    "below_075_at_peak": 1851,
+    "share_below": 0.962,
+    "would_fail_at_tau2": 1246,
     "note": "0.75 m/s unattainable on small branches; compliance rests on the tractive methodology at tau=1 Pa [GAP-9]"
   },
-  "startyear_flags": 1717,
-  "max_depth_m": 21.33071148178584,
-  "drops": 385,
-  "vortex_sites": 251,
+  "startyear_flags": 1877,
+  "max_depth_m": 11.882189493234705,
+  "drops": 381,
+  "vortex_sites": 215,
   "pf_formula": "merrimack",
   "features": {
     "road_treatment": true,

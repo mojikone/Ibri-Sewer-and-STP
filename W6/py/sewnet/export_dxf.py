@@ -12,12 +12,22 @@ def write(path, net, riders, pockets, of_rep):
     doc = ezdxf.new("R2010")
     msp = doc.modelspace()
     for name, color in [("SEW-PIPE", 3), ("SEW-MH", 7), ("SEW-LABEL", 2), ("SEW-MH-LABEL", 8),
-                        ("SEW-OUTFALL", 1), ("SEW-SLS", 1), ("SEW-RIDER", 8), ("SEW-DROP", 6)]:
+                        ("SEW-OUTFALL", 1), ("SEW-SLS", 1), ("SEW-RIDER", 8), ("SEW-DROP", 6),
+                        ("SEW-PUMP", 1), ("SEW-RISING-MAIN", 1), ("SEW-SWEPT-CH", 6)]:
         doc.layers.add(name, color=color)
     for dn, col in DN_COLOR.items():
         doc.layers.add(f"SEW-PIPE-DN{dn}", color=col)
 
     for p in pipes:
+        if p.is_rising_main:                      # pumped: its own layer, dashed by eye
+            msp.add_lwpolyline(list(p.geom.coords),
+                               dxfattribs={"layer": "SEW-RISING-MAIN"})
+            mid = p.geom.interpolate(0.5, normalized=True)
+            t = msp.add_text(f"RISING MAIN DN{p.dn_mm} {p.q_duty_m3s*1000:.1f} L/s",
+                             dxfattribs={"layer": "SEW-RISING-MAIN", "height": 2.5})
+            t.set_placement((mid.x + 2, mid.y + 2),
+                            align=ezdxf.enums.TextEntityAlignment.LEFT)
+            continue
         layer = f"SEW-PIPE-DN{p.dn_mm}" if p.dn_mm in DN_COLOR else "SEW-PIPE"
         msp.add_lwpolyline(list(p.geom.coords), dxfattribs={"layer": layer})
         # mid-pipe annotation: DN + slope, rotated along the pipe; flow chevron
@@ -55,6 +65,16 @@ def write(path, net, riders, pockets, of_rep):
             t = msp.add_text(s, dxfattribs={"layer": "SEW-MH-LABEL", "height": 1.2})
             t.set_placement((n.x + 2.0, n.y - 1.6 * i),
                             align=ezdxf.enums.TextEntityAlignment.LEFT)
+
+    for n in nodes.values():
+        if n.is_station:
+            msp.add_circle((n.x, n.y), 6.0, dxfattribs={"layer": "SEW-PUMP"})
+            msp.add_circle((n.x, n.y), 8.0, dxfattribs={"layer": "SEW-PUMP"})
+            t = msp.add_text(f"PUMPING STATION {n.label}  lift {n.lift_m:.1f} m",
+                             dxfattribs={"layer": "SEW-PUMP", "height": 3.0})
+            t.set_placement((n.x + 9, n.y + 3), align=ezdxf.enums.TextEntityAlignment.LEFT)
+        if n.swept_entry:
+            msp.add_circle((n.x, n.y), 3.0, dxfattribs={"layer": "SEW-SWEPT-CH"})
 
     for r in riders:
         msp.add_lwpolyline(list(r["geom"].coords), dxfattribs={"layer": "SEW-RIDER"})

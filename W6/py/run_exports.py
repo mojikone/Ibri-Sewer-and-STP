@@ -33,14 +33,14 @@ def main():
     log(f"  {n_loads} load rows")
     log("DXF ...")
     os.makedirs(cfg.OUT_DXF, exist_ok=True)
-    export_dxf.write(os.path.join(cfg.OUT_DXF, "W5_test_boundary_design.dxf"),
+    export_dxf.write(os.path.join(cfg.OUT_DXF, "W6_test_boundary_design.dxf"),
                      net, st["riders"], st["pockets"], st["of_rep"])
     log("maps ...")
     os.makedirs(cfg.OUT_IMG, exist_ok=True)
-    maps.network_map(os.path.join(cfg.OUT_IMG, "W5_M1_network_by_dn.png"),
+    maps.network_map(os.path.join(cfg.OUT_IMG, "W6_M1_network_by_dn.png"),
                      net, st["pockets"], st["of_rep"], boundary, summary)
-    maps.depth_map(os.path.join(cfg.OUT_IMG, "W5_M2_depth.png"), net, boundary, summary)
-    maps.lowplot_map(os.path.join(cfg.OUT_IMG, "W5_M3_connectability.png"),
+    maps.depth_map(os.path.join(cfg.OUT_IMG, "W6_M2_depth.png"), net, boundary, summary)
+    maps.lowplot_map(os.path.join(cfg.OUT_IMG, "W6_M3_connectability.png"),
                      net, st["conn"], st["still_low"], boundary, summary)
     log("done")
 
