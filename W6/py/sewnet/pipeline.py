@@ -14,6 +14,7 @@ so "where do I change X" is answered by the stage name:
     Auditor       audit               independent re-check of every rule
 """
 
+import networkx as nx
 import math
 from dataclasses import dataclass, field
 from typing import Optional
@@ -28,6 +29,7 @@ from .stages.hydraulic import HydraulicDesigner
 from .stages.loads import LoadAllocator
 from .stages.road_treatment import RoadTreatment
 from .stages.structures import StructureResolver
+from .stages.sweep import SweepEntry
 from .stages.tree import TreeBuilder
 from .stages.trunk import TrunkBuilder, tree_to_trunk
 
@@ -47,7 +49,7 @@ class RunConfig:
     # feature switches — off reproduces the pre-refactor design exactly (equality gate)
     trunk_sides: tuple = ("west", "south")   # where the main pipe runs (user 2026-08-19)
     use_trunk: bool = True
-    reroute_passes: int = 3      # try again round deep spots before accepting a pump
+    reroute_passes: int = 6      # try again round deep spots before accepting a pump
     treat_roads: bool = True
     round_spacing: bool = True
     corridors_out: Optional[str] = None      # where RoadTreatment writes its review layer
@@ -130,7 +132,12 @@ class SewerDesignPipeline:
         avoid = []
         for attempt in range(cfg.reroute_passes + 1):
             if attempt:
-                Gd, unreachable = tree_to_trunk(Gu, trunk_path, outfall, C, avoid=avoid)                     if cfg.use_trunk else tb.build_tree(Gu, outfall)
+                # alternate the two ways of pricing a route — "uphill is expensive" and
+                # "gaining trench depth is expensive". They pick different ways round the
+                # ridge, and which one wins is not predictable, so try both.
+                cost = "depth" if attempt % 2 else "climb"
+                Gd, unreachable = tree_to_trunk(Gu, trunk_path, outfall, C, avoid=avoid,
+                                                cost=cost)                     if cfg.use_trunk else tb.build_tree(Gu, outfall)
                 tb.augment_cross_streets(Gu, Gd, units)
             self.log("S3 chambers ...")
             plot_shapes = [u.geom for u in units if getattr(u, "geom", None) is not None]
@@ -161,6 +168,15 @@ class SewerDesignPipeline:
             self.log(f"   {len(net.chambers)} chambers, {len(net.reaches)} reaches, "
                      f"{net.summary()['length_km']:.1f} km")
 
+            sweeper = SweepEntry(sampler, C)
+            sw = sweeper.run(net, clear_fn=placer._corner_is_clear)
+            net.refresh_kinds()
+            Labeller.run(net)
+            self.reports["sweep"] = sw
+            self.log(f"   inlet angles: {sw['sharp_inlets']} sharp, "
+                     f"{sw['bend_chambers_added']} fixed with a bend chamber, "
+                     f"{sw['needs_special_chamber']} need a special chamber")
+
             self.log("S4 join each plot to the pipe it faces ...")
             conn_stage = ConnectabilityStage(sampler, C)
             per_chamber, worst_spur = conn_stage.attach(net, units)
@@ -177,21 +193,52 @@ class SewerDesignPipeline:
             self.log(f"   {self.reports['solver']}")
 
 
-            pumped = sum(p["n_props"] for p in hyd["pockets"] if not p["absorb"])
-            stations = sum(1 for p in hyd["pockets"] if not p["absorb"])
-            self.log(f"   pass {attempt}: {len(hyd['pockets'])} deep pockets, {stations} would "
-                     f"need a pump, {pumped:.0f} properties on them")
-            if best is None or (pumped, stations) < best[0]:
-                best = ((pumped, stations), net, per_chamber, hyd, placer, resolver)
-            if not any(not p["absorb"] for p in hyd["pockets"]):
+            # a pumping station is now a REAL thing in the design: the point where the
+            # pipe would have passed 12 m deep, so it is lifted and restarts shallow.
+            stations = hyd["stations"]
+            pumped = sum(s["n_props"] for s in hyd["station_list"])
+            deepest = max((c.depth or 0) for c in net.chambers.values())
+            self.log(f"   pass {attempt}: {stations} pumping stations, {pumped:.0f} properties "
+                     f"pumped, deepest chamber {deepest:.1f} m")
+            if best is None or (stations, pumped) < best[0]:
+                best = ((stations, pumped), net, per_chamber, hyd, placer, resolver,
+                        designer, conn_stage)
+            if stations == 0:
                 break
             # remember where it dug too deep, so the next pass routes around it
-            avoid = [(c.x, c.y) for c in net.chambers.values() if (c.depth or 0) > 10.0]
+            # try again round the streets that forced a pump, and round the deep runs.
+            # The spots come from the BEST design so far, not the last one, so the search
+            # keeps working on the problem that is actually left.
+            ref = best[1]
+            avoid = [(c.x, c.y) for c in ref.chambers.values()
+                     if c.is_station or (c.depth or 0) > 9.0]
             if not avoid:
                 break
-        (_, net, per_chamber, hyd, placer, resolver) = best
-        self.log(f"   kept the pass with {best[0][1]} pumping stations "
-                 f"({best[0][0]:.0f} properties pumped)")
+        (_, net, per_chamber, hyd, placer, resolver, designer, conn_stage) = best
+        # Every pass writes which pipe a plot joins onto the plot object itself, so after the
+        # search those notes describe the LAST pass, not the one we kept. Re-do the joining
+        # on the design we kept, or the house-connection checks would be looking at pipes
+        # that no longer exist. (Found 19 Aug: the connection check silently saw nothing.)
+        per_chamber, _ = conn_stage.attach(net, units)
+        # Rule 9 read-out: which stations sit close enough to feed one another, and which
+        # are small enough that detail design may absorb them
+        sl = hyd["station_list"]
+        pairs = []
+        for i, a in enumerate(sl):
+            for b in sl[i + 1:]:
+                d = math.hypot(a["x"] - b["x"], a["y"] - b["y"])
+                if d <= C.SLS_CASCADE_M:
+                    pairs.append({"a": a["label"], "b": b["label"], "apart_m": round(d)})
+        self.reports["stations"] = {
+            "count": len(sl), "list": sl,
+            "properties_pumped": round(sum(s["n_props"] for s in sl)),
+            "total_lift_m": round(sum(s["lift_m"] for s in sl), 1),
+            "rising_main_m": round(sum(s["rising_main_m"] for s in sl), 1),
+            "small_enough_to_absorb": [s["label"] for s in sl
+                                       if s["n_props"] < C.SLS_MIN_PLOTS],
+            "close_enough_to_cascade": pairs}
+        self.log(f"   kept the pass with {best[0][0]} pumping stations "
+                 f"({best[0][1]:.0f} properties pumped)")
 
         self.log("S6b can every house drain into it? ...")
         conn, deepen = conn_stage.check(net, per_chamber)

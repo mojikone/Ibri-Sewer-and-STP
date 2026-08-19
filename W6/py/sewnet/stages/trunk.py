@@ -96,7 +96,8 @@ class TrunkBuilder:
 
 
 def tree_to_trunk(Gu, trunk_path, outfall, crit=DEFAULT, climb_penalty=300.0,
-                  arterial_factor=0.70, avoid=None, avoid_radius=60.0, avoid_factor=8.0):
+                  arterial_factor=0.70, avoid=None, avoid_radius=60.0, avoid_factor=8.0,
+                  depth_weight=500.0, smin_proxy=0.004, cost="climb"):
     """Every street drains to its NEAREST point on the main pipe, not to one far outfall.
 
     The main pipe itself runs downhill along its own path to the outfall. Everything else
@@ -123,8 +124,19 @@ def tree_to_trunk(Gu, trunk_path, outfall, crit=DEFAULT, climb_penalty=300.0,
                 if abs(mid.x - ax) < avoid_radius and abs(mid.y - ay) < avoid_radius:
                     base *= avoid_factor
                     break
-        S.add_edge(u, v, w=base + climb_penalty * max(0.0, zu - zv))
-        S.add_edge(v, u, w=base + climb_penalty * max(0.0, zv - zu))
+        # What really matters is how much DEPTH a route adds. A pipe must fall at least
+        # smin_proxy along its length; whatever the ground does not give, the trench has to.
+        # Charging for that directly beats charging for "uphill", because a gentle downhill
+        # that is flatter than the pipe needs still buries the pipe deeper.
+        if cost == "depth":
+            need = d["length"] * smin_proxy
+            wuv = depth_weight * max(0.0, need - (zu - zv))
+            wvu = depth_weight * max(0.0, need - (zv - zu))
+        else:                                   # plain uphill cost
+            wuv = climb_penalty * max(0.0, zu - zv)
+            wvu = climb_penalty * max(0.0, zv - zu)
+        S.add_edge(u, v, w=base + wuv)
+        S.add_edge(v, u, w=base + wvu)
 
     sources = [n for n in trunk if n in S]
     dist, paths = nx.multi_source_dijkstra(S, set(sources), weight="w") if sources else ({}, {})
@@ -146,8 +158,15 @@ def tree_to_trunk(Gu, trunk_path, outfall, crit=DEFAULT, climb_penalty=300.0,
     for u, v, d in Gu.subgraph(trunk_set).edges(data=True):
         zu, zv = Gu.nodes[u]["z"], Gu.nodes[v]["z"]
         base = d["length"]
-        TS.add_edge(u, v, w=base + climb_penalty * max(0.0, zu - zv))
-        TS.add_edge(v, u, w=base + climb_penalty * max(0.0, zv - zu))
+        if cost == "depth":
+            need = base * smin_proxy
+            wuv = depth_weight * max(0.0, need - (zu - zv))
+            wvu = depth_weight * max(0.0, need - (zv - zu))
+        else:
+            wuv = climb_penalty * max(0.0, zu - zv)
+            wvu = climb_penalty * max(0.0, zv - zu)
+        TS.add_edge(u, v, w=base + wuv)
+        TS.add_edge(v, u, w=base + wvu)
     _, tpaths = nx.single_source_dijkstra(TS, outfall, weight="w")
     for n, pth in tpaths.items():
         if len(pth) >= 2:
