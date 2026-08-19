@@ -20,6 +20,7 @@ Source tags: **[U]** user instruction · **[G]** PAM-GUD clause · **[R]** revie
 | `TYPE` | 48 % | 1 → 340 · 2 → 84 · 3 → 42 · 4 → 3,972 | superseded by `StrCls`; keep as a cross-check only |
 | `Category` | 43 % | 1 → 2,172 · 2 → 1,197 · 3 → 604 | Category 1 includes dual carriageways but is **not** a safe exclusion proxy [U] |
 | `STATUS` | 100 % | New 4,359 · Existing 2,839 · Modified 2,044 | **IGNORED — decided 2026-08-19 [U]** |
+| `dual` **(new, added by user 2026-08-19)** | 100 % | 0 → 8,909 · **1 → 289** (146.9 km) · **2 → 44** (4.9 km) | **THE exclusion field.** 1 = dual carriageway, 2 = two-lane, one side only [U] |
 | `Name_Engli` | 12 % | 34 named routes | reporting only |
 
 **Caveats to handle at load:**
@@ -31,8 +32,16 @@ Source tags: **[U]** user instruction · **[G]** PAM-GUD clause · **[R]** revie
 - 4,804 features have no `TYPE`; a rule keyed on `TYPE` alone silently ignores half the layer — so
   `StrCls` leads and `TYPE` refines. [R]
 
-**Resolved 2026-08-19 [U]:** `StrCls` is the authoritative field, the CRS is EPSG:32640, and
-`STATUS` is ignored. One question remains — see F.
+**Resolved 2026-08-19 [U]:** CRS is EPSG:32640, `STATUS` ignored, `StrCls` is the authoritative
+*hierarchy* field — but the **`dual` field, not `StrCls`, drives exclusion.** That distinction
+matters: cross-tabulating the two shows **95 National and 55 Arterial roads carry `dual = 0`**, so
+excluding by class (my earlier option A) would have wrongly removed 150 single-carriageway roads,
+while `dual = 1` also catches 6 Distributors that no class rule would have found. `StrCls` stays
+useful for corridor preference/weighting, not for exclusion. [R]
+
+Geometry check on the new field: **79 % of `dual = 1` and 77 % of `dual = 2` features have a
+parallel twin within 3–45 m** (the remainder are end stubs shorter than the test window), which
+confirms both are digitised as line pairs and makes the one-side rule implementable. [R]
 
 ---
 
@@ -41,7 +50,8 @@ Source tags: **[U]** user instruction · **[G]** PAM-GUD clause · **[R]** revie
 | # | Rule | Source |
 |---|---|---|
 | B1 | **Roundabouts carry no sewer.** A roundabout needs no collection; the ring is excluded and its approach legs terminate at it. | [U] |
-| B2 | **No pipe of any kind runs along a dual carriageway — including the trunk** (hardened 2026-08-19). They cannot be opened. Their links and ramps go too. Identify by `StrCls` plus the parallel-pair geometry test; remove the pair *and* the connectors feeding it. | [U] |
+| B2 | **`dual = 1` → no pipe of any kind, trunk included** (289 features, 146.9 km). Both lines of the pair are removed, along with their links and ramps. | [U] |
+| B2b | **`dual = 2` → usable, but ONE side only** (44 features, 4.9 km, all Distributor). The pair is reduced to a single line and the sewer stays on that side for the whole corridor — never both, never alternating between sides. Plots on the far side connect by a direct link at the road end. | [U] |
 | B3 | **Crossing is allowed only as a short perpendicular pipe**, where necessary (trenchless, G1-p85). No longitudinal run, no diagonal crossing, no chamber on the carriageway. | [U] |
 | B4 | **Elevated intersections must not generate SLS.** Grade-separated points sit high and currently drive false deep-pocket flags; B2 should remove them — verify after implementation. | [U] |
 | B5 | **A straight street between two intersections is ONE polyline.** Dissolve only at degree-2 nodes; intersections always break. (Already implemented; keep.) | [U] |
@@ -65,6 +75,28 @@ What decides two versus three: insert chambers so each chord's **offset from the
 Worth recording: the governing constraint is **maintenance access (rodding, jetting, CCTV) and
 staying inside the trench**, not pipe flexibility. Corrugated HDPE bends further than the cleaning
 equipment can negotiate.
+
+---
+
+## B8. Wadi / flood hazard (new input, 2026-08-19)
+
+**Source:** `Data/04 Lekhuwair/Hazard_T50y.tif` — the **50-year** hazard grid. EPSG:32640, 3 m
+cells, 68,000 x 58,097, float32, nodata -9999. Covers the test boundary in full. [U] [R]
+
+| Classes | Treatment |
+|---|---|
+| **4, 5, 6** | **wadi crossing** — G203-p30-31 forbids pipelines and chambers here; crossings only, with DI over the crossing +15 m each side, anti-flotation check and 2.0 m cover (G1-p85-86) |
+| 1, 2, 3 | safe, unless revised later [U] |
+| nodata (-9999) | **see F — meaning to confirm** |
+
+**Exposure of the current (R1) design, measured 2026-08-19:** [R]
+
+- **101 of 1,655 chambers (6.1 %)** sit in hazard 4–6 — 33 in class 4, 54 in class 5, 14 in class 6.
+- **5.65 km of 89.5 km (6.3 %)** of network crosses hazard 4–6.
+- 1,142 chambers (69 %) fall on nodata cells.
+
+This replaces the earlier stream-line proxy (420 pipes crossing mapped drainage lines), which
+overstated the problem badly — the hazard grid is the defensible basis.
 
 ---
 
@@ -125,8 +157,9 @@ drops and the τ assumption are unchanged.
 
 | Item | Owner | Note |
 |---|---|---|
-| **Which `StrCls` values are excluded**: 01 National + 02 Arterial only (433 features), or 04 Distributor too (329)? And is 05 Access (8,480) the whole usable corridor set? | user | last blocker on B2 |
-| Wadi layer for the no-chamber-in-wadi rule | user | parked 2026-08-19; 420 pipes currently cross mapped streams |
+| **Hazard nodata (-9999) meaning** — 69 % of chambers fall on it. Treat as dry/outside the modelled floodplain (my assumption), or as unmodelled and therefore unknown? | user | affects B8 |
+| **Which side to keep for `dual = 2`** — my proposal: the side with more fronting plots, tie-broken by the lower ground level, held for the whole corridor | user | [C] |
+| ~~Wadi layer~~ | — | **RESOLVED 2026-08-19** — 50-year hazard grid supplied, see B8 |
 | Bend chamber counts if another standard applies | user | Umesh not to be consulted [U] |
 | Multiple connections for large plots | user | section C open question |
 | τ design value [GAP-9] | NWS | 1,124 pipes exposed if τ = 2 Pa |
