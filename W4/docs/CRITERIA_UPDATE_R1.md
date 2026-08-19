@@ -16,24 +16,23 @@ Source tags: **[U]** user instruction · **[G]** PAM-GUD clause · **[R]** revie
 
 | Field | Coverage | Values | Use |
 |---|---|---|---|
-| `StrCls` | 100 % | 01 National 270 · 02 Arterial 163 · 04 Distributor 329 · 05 Access 8,480 (no 03) | primary hierarchy — fully populated, so the reliable one |
-| `TYPE` | 48 % | 1 → 340 · 2 → 84 · 3 → 42 · 4 → 3,972 | "the important rows" [U] — mapping to be confirmed |
+| `StrCls` | 100 % | 01 National 270 · 02 Arterial 163 · 04 Distributor 329 · 05 Access 8,480 (no 03) | **AUTHORITATIVE hierarchy field — decided 2026-08-19 [U]** |
+| `TYPE` | 48 % | 1 → 340 · 2 → 84 · 3 → 42 · 4 → 3,972 | superseded by `StrCls`; keep as a cross-check only |
 | `Category` | 43 % | 1 → 2,172 · 2 → 1,197 · 3 → 604 | Category 1 includes dual carriageways but is **not** a safe exclusion proxy [U] |
-| `STATUS` | 100 % | New 4,359 · Existing 2,839 · Modified 2,044 | affects whether a corridor can be built on today |
+| `STATUS` | 100 % | New 4,359 · Existing 2,839 · Modified 2,044 | **IGNORED — decided 2026-08-19 [U]** |
 | `Name_Engli` | 12 % | 34 named routes | reporting only |
 
 **Caveats to handle at load:**
 
-- The `.prj` carries a **custom UTM 40N WKT (WGS84 datum), not an EPSG:32640 tag** — assign and
-  verify the CRS explicitly rather than trusting the file. [R]
+- The `.prj` carries a custom UTM 40N WKT rather than an EPSG code. **The CRS is EPSG:32640
+  (WGS 84 / UTM 40N) — confirmed 2026-08-19 [U];** assign it explicitly on load. [R]
 - `SHAPE_Leng` exists, but lengths still come from geometry (the previous layer's `Lenght` was all
   zeros). [R]
 - 4,804 features have no `TYPE`; a rule keyed on `TYPE` alone silently ignores half the layer — so
   `StrCls` leads and `TYPE` refines. [R]
 
-**Confirmation needed (blocks B2):** which of `StrCls 01/02` (433 features) or `TYPE 1/2/3` (466
-features) is the authoritative "cannot open" set. They are similar in size and are probably the
-same roads coded twice.
+**Resolved 2026-08-19 [U]:** `StrCls` is the authoritative field, the CRS is EPSG:32640, and
+`STATUS` is ignored. One question remains — see F.
 
 ---
 
@@ -42,8 +41,8 @@ same roads coded twice.
 | # | Rule | Source |
 |---|---|---|
 | B1 | **Roundabouts carry no sewer.** A roundabout needs no collection; the ring is excluded and its approach legs terminate at it. | [U] |
-| B2 | **Dual carriageways and their links/ramps are excluded as pipe corridors** — they cannot be opened. Detect as two parallel lines (geometric) **and** by hierarchy field; remove the pair *and* the connectors feeding it. | [U] |
-| B3 | **Crossings remain allowed.** Excluded roads may still be crossed (trenchless, G1-p85). Exclusion is longitudinal only — otherwise districts disconnect. | [U] |
+| B2 | **No pipe of any kind runs along a dual carriageway — including the trunk** (hardened 2026-08-19). They cannot be opened. Their links and ramps go too. Identify by `StrCls` plus the parallel-pair geometry test; remove the pair *and* the connectors feeding it. | [U] |
+| B3 | **Crossing is allowed only as a short perpendicular pipe**, where necessary (trenchless, G1-p85). No longitudinal run, no diagonal crossing, no chamber on the carriageway. | [U] |
 | B4 | **Elevated intersections must not generate SLS.** Grade-separated points sit high and currently drive false deep-pocket flags; B2 should remove them — verify after implementation. | [U] |
 | B5 | **A straight street between two intersections is ONE polyline.** Dissolve only at degree-2 nodes; intersections always break. (Already implemented; keep.) | [U] |
 | B6 | **Head chambers start at the house gate, not the street end.** A street runs its full length, but the network starts where the first served property fronts it — trim each branch head to that gate. | [U] |
@@ -126,7 +125,7 @@ drops and the τ assumption are unchanged.
 
 | Item | Owner | Note |
 |---|---|---|
-| `StrCls` vs `TYPE` as the authoritative exclusion field | user | blocks B2 |
+| **Which `StrCls` values are excluded**: 01 National + 02 Arterial only (433 features), or 04 Distributor too (329)? And is 05 Access (8,480) the whole usable corridor set? | user | last blocker on B2 |
 | Wadi layer for the no-chamber-in-wadi rule | user | parked 2026-08-19; 420 pipes currently cross mapped streams |
 | Bend chamber counts if another standard applies | user | Umesh not to be consulted [U] |
 | Multiple connections for large plots | user | section C open question |
