@@ -54,8 +54,29 @@ confirms both are digitised as line pairs and makes the one-side rule implementa
 | B2b | **`dual = 2` → usable, but ONE side only** (44 features, 4.9 km, all Distributor). The pair is reduced to a single line and the sewer stays on that side for the whole corridor — never both, never alternating between sides. Plots on the far side connect by a direct link at the road end. | [U] |
 | B3 | **Crossing is allowed only as a short perpendicular pipe**, where necessary (trenchless, G1-p85). No longitudinal run, no diagonal crossing, no chamber on the carriageway. | [U] |
 | B4 | **Elevated intersections must not generate SLS.** Grade-separated points sit high and currently drive false deep-pocket flags; B2 should remove them — verify after implementation. | [U] |
+| B4b | **Traffic-geometry links are not sewer corridors** (2026-08-19). Turning fillets, corner splays, slip roads and the diagonal/curved links between two parallel carriageways exist for vehicle movement; the sewer joins at a **point**. Following them adds chambers at every curve break, serves no frontage, and produces the acute inlet angles behind audit C4. See B9 for the test. | [U] |
 | B5 | **A straight street between two intersections is ONE polyline.** Dissolve only at degree-2 nodes; intersections always break. (Already implemented; keep.) | [U] |
 | B6 | **Head chambers start at the house gate, not the street end.** A street runs its full length, but the network starts where the first served property fronts it — trim each branch head to that gate. | [U] |
+
+### B9 — identifying a traffic link (so it can be dropped)
+
+Deliberately **not** based on road class — a link can be any class. A corridor segment is a link,
+and is removed, when **all four** hold: [C]
+
+1. **no frontage** — no loaded plot within the frontage distance (40 m) of it;
+2. **both ends are attached** — degree >= 3 at each end, so it is not a cul-de-sac or a street head;
+3. **redundant** — after removing it, its two endpoints remain connected through the corridor
+   network with a detour no greater than **3x its own length**;
+4. **it looks like a link** — either short (<= 120 m) or strongly curved (total turn >= 45 deg).
+
+Test 3 is what makes this safe: a link that is the *only* connection between two areas fails it and
+is kept, so nothing can be stranded. Everything removed is written to the corridor layer with
+`EXCL_RSN = 'traffic-link'` so it is reviewable in QGIS rather than silently gone. [C]
+
+Consequence to expect: where a side road meets a main road through a splay, the sewer will connect
+by a straight run to the junction node instead of sweeping around the fillet — fewer chambers, and
+the inlet arrives closer to the 90 deg the guideline requires. Corridors must be re-dissolved (B5)
+after link removal so the street returns to one polyline. [C]
 
 ### B7 — chambers at bends
 
@@ -142,9 +163,9 @@ Institutional and industrial plots realistically need more. Your call. [C]
 | Current result | Why it changes |
 |---|---|
 | **152 house connections over 50 m, longest 182 m** (audit D1) | largely an artefact of centroid-to-chamber measurement; frontage projection should collapse most to 5–25 m |
-| **263 inlets under 90°** (audit C4) | ≥90° becomes a placement constraint at bends (B7), not just an after-the-fact check |
+| **263 inlets under 90°** (audit C4) | two causes removed at once: ≥90° becomes a placement constraint at bends (B7), and the diagonal traffic links that produce acute arrivals are dropped (B4b/B9) |
 | **SLS pockets** | B4 removes elevated-intersection false positives |
-| **Chamber count 1,655** | B6 removes chambers on unserved street ends; B2 removes dual-carriageway corridors entirely |
+| **Chamber count 1,655** | B6 removes chambers on unserved street ends; B2 removes dual carriageways; **B9 removes chambers on turning fillets and slip roads** — the stated goal is chambers only where necessary |
 | **Network length 89.5 km** | drops by the dual-carriageway length plus untrimmed street heads |
 | **Load per chamber** | C3 re-assigns plots by frontage, so flows redistribute between reaches |
 
@@ -157,8 +178,8 @@ drops and the τ assumption are unchanged.
 
 | Item | Owner | Note |
 |---|---|---|
-| **Hazard nodata (-9999) meaning** — 69 % of chambers fall on it. Treat as dry/outside the modelled floodplain (my assumption), or as unmodelled and therefore unknown? | user | affects B8 |
-| **Which side to keep for `dual = 2`** — my proposal: the side with more fronting plots, tie-broken by the lower ground level, held for the whole corridor | user | [C] |
+| ~~Hazard nodata meaning~~ | — | **RESOLVED 2026-08-19 [U]: nodata = dry** |
+| ~~Which side to keep for `dual = 2`~~ | — | **RESOLVED 2026-08-19 [U]: side with more fronting plots, tie-broken by lower ground, held for the whole corridor** |
 | ~~Wadi layer~~ | — | **RESOLVED 2026-08-19** — 50-year hazard grid supplied, see B8 |
 | Bend chamber counts if another standard applies | user | Umesh not to be consulted [U] |
 | Multiple connections for large plots | user | section C open question |
