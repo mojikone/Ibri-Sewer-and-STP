@@ -149,3 +149,51 @@ def lowplot_map(path, net, conn, still_low, boundary, summary):
     _frame(ax, boundary, "W6 — Can every house drain into the sewer?", box)
     fig.savefig(path, bbox_inches="tight")
     plt.close(fig)
+
+
+def catchment_map(path, net, cats, boundary, summary):
+    """One polygon per subnetwork: the ground it collects from, and where it joins the
+    main pipe. Colours only separate neighbours — they carry no other meaning."""
+    import itertools
+    from matplotlib.patches import Polygon as MplPoly
+    fig, ax = plt.subplots(figsize=(11, 15), dpi=140)
+    _background(ax, boundary.bounds)
+    palette = ["#8dd3c7", "#ffffb3", "#bebada", "#fb8072", "#80b1d3", "#fdb462",
+               "#b3de69", "#fccde5", "#d9d9d9", "#bc80bd", "#ccebc5", "#ffed6f"]
+    cyc = itertools.cycle(palette)
+    for c in sorted(cats, key=lambda c: -c["area_ha"]):
+        col = next(cyc)
+        for poly in list(getattr(c["geom"], "geoms", [c["geom"]])):
+            ax.add_patch(MplPoly(list(poly.exterior.coords), closed=True,
+                                 facecolor=col, edgecolor="#2c3e50", lw=0.7,
+                                 alpha=0.55, zorder=2))
+    for p in net.reaches:                       # the sewer, faint, for orientation
+        xs, ys = zip(*p.geom.coords)
+        ax.plot(xs, ys, color="#34495e", lw=0.35, alpha=0.8, zorder=3)
+    jx = [c["join_x"] for c in cats]
+    jy = [c["join_y"] for c in cats]
+    ax.scatter(jx, jy, s=26, marker="o", facecolor="#ffffff", edgecolor="#c0392b",
+               lw=1.1, zorder=5, label=f"joins the main pipe ({len(cats)})")
+    big = sorted(cats, key=lambda c: -c["n_props"])[:12]
+    for c in big:
+        p = c["geom"].representative_point()
+        ax.annotate(f"C{c['cid']}\n{c['n_props']:.0f}", (p.x, p.y), ha="center",
+                    fontsize=7, color="#1a1a1a", zorder=7)
+    st = [n for n in net.chambers.values() if n.is_station]
+    if st:
+        ax.scatter([n.x for n in st], [n.y for n in st], s=120, marker="v",
+                   facecolor="#e74c3c", edgecolor="k", lw=0.8, zorder=6,
+                   label=f"pumping station ({len(st)})")
+    ax.legend(loc="lower left", fontsize=8, framealpha=0.9)
+    tot_p = sum(c["n_props"] for c in cats)
+    pumped = [c for c in cats if c["pumped"]]
+    box = ("CATCHMENTS\n"
+           f"subnetworks: {len(cats)}\n"
+           f"properties covered: {tot_p:,.0f}\n"
+           f"largest: {max(c['n_props'] for c in cats):,.0f} props "
+           f"({max(cats, key=lambda c: c['n_props'])['join_mh']})\n"
+           f"smallest: {min(c['n_props'] for c in cats):,.0f} props\n"
+           f"needing a pump on the way: {len(pumped)}")
+    _frame(ax, boundary, "W6 — what each subnetwork collects", box)
+    fig.savefig(path, bbox_inches="tight")
+    plt.close(fig)

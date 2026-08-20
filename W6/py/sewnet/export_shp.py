@@ -21,7 +21,7 @@ def _snap_ends(net: Network):
 
 
 def write_all(out_dir, net: Network, riders, still_low, pockets, boundary, of_rep,
-              crit=DEFAULT, spurs=None, stubs=None, hazard=None):
+              crit=DEFAULT, spurs=None, stubs=None, hazard=None, catchments=None):
     os.makedirs(out_dir, exist_ok=True)
     _snap_ends(net)
     ch = list(net.chambers.values())
@@ -101,6 +101,29 @@ def write_all(out_dir, net: Network, riders, still_low, pockets, boundary, of_re
             "MARGIN_M": [round(r["margin"], 2) for r in still_low],
         }, geometry=[Point(r["x"], r["y"]) for r in still_low], crs=CRS).to_file(
             os.path.join(out_dir, "W6_lowplots.shp"), encoding="utf-8")
+
+    if catchments:
+        # the ground each subnetwork collects from, one clean polygon per connection
+        # into the main pipe (user 2026-08-20)
+        gpd.GeoDataFrame({
+            "CATCH_ID": [c["cid"] for c in catchments],
+            "JOIN_MH": [c["join_mh"] for c in catchments],
+            "INLET": [c["inlet_pipe"] for c in catchments],
+            "INLET_DN": [c["inlet_dn"] for c in catchments],
+            "AREA_HA": [c["area_ha"] for c in catchments],
+            "N_PLOTS": [c["n_plots"] for c in catchments],
+            "N_PROPS": [c["n_props"] for c in catchments],
+            "TRUNK_PR": [c["trunk_props"] for c in catchments],
+            "N_STUBS": [c["n_stubs"] for c in catchments],
+            "QADF_M3D": [c["qadf_m3d"] for c in catchments],
+            "QPEAK_LS": [c["qpeak_ls"] for c in catchments],
+            "N_MH": [c["n_chambers"] for c in catchments],
+            "PIPE_M": [c["pipe_m"] for c in catchments],
+            "DEEPEST_M": [c["deepest_m"] for c in catchments],
+            "PUMPED": [c["pumped"] for c in catchments],
+            "STATIONS": [c["stations"] for c in catchments],
+        }, geometry=[c["geom"] for c in catchments], crs=CRS).to_file(
+            os.path.join(out_dir, "W6_catchments.shp"), encoding="utf-8")
 
     stations = [c for c in ch if c.is_station]
     if stations:

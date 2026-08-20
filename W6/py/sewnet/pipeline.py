@@ -280,7 +280,8 @@ class SewerDesignPipeline:
         for r in auditor.failures:
             self.log(f"     FAIL {r.id} {r.title}: {r.summary}")
 
-        return {"network": net, "units": units, "per_chamber": per_chamber, "conn": conn,
+        return {"network": net, "units": units,
+                "trunk_keys": sorted(getattr(self, "trunk_nodes", set())), "per_chamber": per_chamber, "conn": conn,
                 "still_low": still, "riders": riders, "spurs": spurs, "stubs": stubs,
                 "hazard": self.hazard, "pockets": hyd["pockets"],
                 "boundary": boundary, "of_rep": of_rep, "sampler": sampler,

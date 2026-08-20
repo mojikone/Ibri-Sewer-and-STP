@@ -96,6 +96,7 @@ def main(argv):
                      "still_low": res["still_low"], "riders": res["riders"],
                      "spurs": res["spurs"], "stubs": res["stubs"],
                      "pockets": res["pockets"], "of_rep": res["of_rep"],
+                     "trunk_keys": res.get("trunk_keys", []),
                      "boundary_wkt": res["boundary"].wkt, "sy_flags": res["sy_flags"],
                      "summary": summary}, f)
     log(f"state saved to {cfg.OUT_RUN}")

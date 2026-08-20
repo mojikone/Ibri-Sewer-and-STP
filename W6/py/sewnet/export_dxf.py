@@ -7,13 +7,14 @@ import ezdxf
 DN_COLOR = {200: 3, 250: 4, 315: 5, 400: 6, 500: 1, 600: 2, 700: 30, 800: 40, 900: 210}
 
 
-def write(path, net, riders, pockets, of_rep):
+def write(path, net, riders, pockets, of_rep, catchments=None):
     nodes, pipes = net.chambers, net.reaches
     doc = ezdxf.new("R2010")
     msp = doc.modelspace()
     for name, color in [("SEW-PIPE", 3), ("SEW-MH", 7), ("SEW-LABEL", 2), ("SEW-MH-LABEL", 8),
                         ("SEW-OUTFALL", 1), ("SEW-SLS", 1), ("SEW-RIDER", 8), ("SEW-DROP", 6),
-                        ("SEW-PUMP", 1), ("SEW-RISING-MAIN", 1), ("SEW-SWEPT-CH", 6)]:
+                        ("SEW-PUMP", 1), ("SEW-RISING-MAIN", 1), ("SEW-SWEPT-CH", 6),
+                        ("SEW-CATCHMENT", 4), ("SEW-CATCHMENT-LABEL", 4)]:
         doc.layers.add(name, color=color)
     for dn, col in DN_COLOR.items():
         doc.layers.add(f"SEW-PIPE-DN{dn}", color=col)
@@ -85,5 +86,15 @@ def write(path, net, riders, pockets, of_rep):
         t = msp.add_text(f"SLS candidate ({pk['n_props']} props)",
                          dxfattribs={"layer": "SEW-SLS", "height": 3.0})
         t.set_placement((s.x + 10, s.y), align=ezdxf.enums.TextEntityAlignment.LEFT)
+
+    for c in (catchments or []):
+        polys = list(getattr(c["geom"], "geoms", [c["geom"]]))
+        for poly in polys:
+            msp.add_lwpolyline(list(poly.exterior.coords),
+                               dxfattribs={"layer": "SEW-CATCHMENT", "closed": True})
+        p = c["geom"].representative_point()
+        t_ = msp.add_text(f"C{c['cid']} -> {c['join_mh']}  {c['n_props']:.0f} props",
+                          dxfattribs={"layer": "SEW-CATCHMENT-LABEL", "height": 6.0})
+        t_.set_placement((p.x, p.y), align=ezdxf.enums.TextEntityAlignment.CENTER)
 
     doc.saveas(path)
