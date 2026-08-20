@@ -39,6 +39,7 @@ def write_all(out_dir, net: Network, riders, still_low, pockets, boundary, of_re
         "IS_PUMP": [int(c.is_station) for c in ch],
         "LIFT_M": [round(c.lift_m, 2) for c in ch],
         "ON_TRUNK": [int(c.on_trunk) for c in ch],      # sits on the main pipe
+        "SUBNET": [c.subnet for c in ch],               # which subnetwork it drains through
         "HAZ_CLASS": [hazard.klass(c.x, c.y) if hazard else 0 for c in ch],
         "IN_WADI": [int(hazard.is_wadi(c.x, c.y)) if hazard else 0 for c in ch],
     }, geometry=[Point(c.xy) for c in ch], crs=CRS).to_file(
@@ -63,6 +64,7 @@ def write_all(out_dir, net: Network, riders, still_low, pockets, boundary, of_re
         "VEL_MS": [round(r.vel, 2) if r.vel else None for r in R],
         "DOD": [round(r.dod, 3) if r.dod else None for r in R],
         "ON_TRUNK": [int(r.on_trunk) for r in R],       # this pipe IS the main pipe
+        "SUBNET": [r.subnet for r in R],                # which subnetwork it belongs to
         "IS_JOIN": [int((not net.chambers[r.up].on_trunk)
                         and net.chambers[r.dn].on_trunk) for r in R],
         "IS_XING": [int(r.is_crossing) for r in R],     # crosses a dual carriageway

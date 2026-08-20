@@ -121,6 +121,20 @@ def build(net, per_chamber, units, trunk_keys, boundary, stubs=None, crit=DEFAUL
         c = net.chambers[k]
         owner[k] = min(joins, key=lambda j: (c.x - j[1].x) ** 2 + (c.y - j[1].y) ** 2)[0]
 
+    # Write the subnetwork number onto the design itself, so a map can colour by it.
+    # The main pipe is NOT a subnetwork — it is what they all drain into — so it keeps 0
+    # and gets its own symbol on the map.
+    for k, cid in owner.items():
+        net.chambers[k].subnet = 0 if net.chambers[k].on_trunk else cid + 1
+    for r in net.reaches:
+        if r.on_trunk:
+            r.subnet = 0
+            continue
+        cid = owner.get(r.up)
+        if cid is None:
+            cid = owner.get(r.dn)
+        r.subnet = 0 if cid is None else cid + 1
+
     # ---- seeds: one point per plot, tagged with the subnetwork that collects it
     seeds, seed_cid, plots_of = [], [], collections.defaultdict(list)
     n_plots = collections.Counter()

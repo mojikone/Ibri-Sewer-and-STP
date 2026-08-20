@@ -39,6 +39,7 @@ class Chamber:
     sls_pocket: bool = False
     is_station: bool = False        # a pumping station sits here
     on_trunk: bool = False          # this chamber sits on the main pipe
+    subnet: int = 0                 # which subnetwork it drains through
     lift_m: float = 0.0             # how far the pump must raise the sewage
     min_depth_req: float = 0.0      # raised by the connectability stage
 
@@ -82,6 +83,7 @@ class Reach:
     is_rising_main: bool = False    # pumped, not gravity
     q_duty_m3s: float = 0.0         # pump duty flow (rising mains only)
     on_trunk: bool = False          # this pipe IS the main pipe
+    subnet: int = 0                 # which subnetwork it belongs to
     is_connector: bool = False      # joins a side network onto the main pipe
     is_crossing: bool = False       # crosses a dual carriageway
 
