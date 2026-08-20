@@ -64,6 +64,27 @@ class SewerDesignPipeline:
         self.log = log
         self.reports = {}
 
+    def _station_report(self, hyd):
+        """Rule 9 read-out: the stations as designed, which sit close enough to feed one
+        another, and which are small enough that detail design may absorb them."""
+        C = self.crit
+        sl = hyd["station_list"]
+        pairs = []
+        for i, a in enumerate(sl):
+            for b in sl[i + 1:]:
+                d = math.hypot(a["x"] - b["x"], a["y"] - b["y"])
+                if d <= C.SLS_CASCADE_M:
+                    pairs.append({"a": a["label"], "b": b["label"], "apart_m": round(d)})
+        self.reports["stations"] = {
+            "count": len(sl), "list": sl,
+            "properties_pumped": round(sum(s["n_props"] for s in sl)),
+            "total_lift_m": round(sum(s["lift_m"] for s in sl), 1),
+            "rising_main_m": round(sum(s["rising_main_m"] for s in sl), 1),
+            "small_enough_to_absorb": [s["label"] for s in sl
+                                       if s["n_props"] < C.SLS_MIN_PLOTS],
+            "close_enough_to_cascade": pairs}
+        return self.reports["stations"]
+
     def run(self):
         cfg, C = self.cfg, self.crit
 
@@ -220,23 +241,7 @@ class SewerDesignPipeline:
         # on the design we kept, or the house-connection checks would be looking at pipes
         # that no longer exist. (Found 19 Aug: the connection check silently saw nothing.)
         per_chamber, _ = conn_stage.attach(net, units)
-        # Rule 9 read-out: which stations sit close enough to feed one another, and which
-        # are small enough that detail design may absorb them
-        sl = hyd["station_list"]
-        pairs = []
-        for i, a in enumerate(sl):
-            for b in sl[i + 1:]:
-                d = math.hypot(a["x"] - b["x"], a["y"] - b["y"])
-                if d <= C.SLS_CASCADE_M:
-                    pairs.append({"a": a["label"], "b": b["label"], "apart_m": round(d)})
-        self.reports["stations"] = {
-            "count": len(sl), "list": sl,
-            "properties_pumped": round(sum(s["n_props"] for s in sl)),
-            "total_lift_m": round(sum(s["lift_m"] for s in sl), 1),
-            "rising_main_m": round(sum(s["rising_main_m"] for s in sl), 1),
-            "small_enough_to_absorb": [s["label"] for s in sl
-                                       if s["n_props"] < C.SLS_MIN_PLOTS],
-            "close_enough_to_cascade": pairs}
+        self._station_report(hyd)
         self.log(f"   kept the pass with {best[0][0]} pumping stations "
                  f"({best[0][1]:.0f} properties pumped)")
 
@@ -246,6 +251,13 @@ class SewerDesignPipeline:
         if deepen:
             conn_stage.apply_deepening(net, deepen)
             hyd = designer.run(net)
+            # deepening chambers for low houses re-solves the whole network, and a deeper
+            # network can need another pump — so the station schedule has to be rebuilt
+            # here or the report would describe the design before the deepening.
+            self._station_report(hyd)
+            if self.reports["stations"]["count"] != best[0][0]:
+                self.log(f"   deepening {len(deepen)} chambers for low houses changed the "
+                         f"pumping stations to {self.reports['stations']['count']}")
             still = conn_stage.recheck(conn, net, C)
         else:
             still = []

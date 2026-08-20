@@ -71,8 +71,20 @@
     }
   },
   "stations": {
-    "count": 3,
+    "count": 4,
     "list": [
+      {
+        "label": "MH-1613",
+        "x": 450396.31,
+        "y": 2568410.9,
+        "ground": 357.46,
+        "depth": 11.02,
+        "lift_m": 11.21,
+        "rising_main_m": 74.1,
+        "rising_main_dn": 200,
+        "q_peak_ls": 30.26,
+        "n_props": 1142.0
+      },
       {
         "label": "MH-1024",
         "x": 450259.02,
@@ -86,16 +98,16 @@
         "n_props": 340.0
       },
       {
-        "label": "MH-1488",
-        "x": 450268.33,
-        "y": 2568295.18,
-        "ground": 355.61,
-        "depth": 11.8,
-        "lift_m": 10.7,
-        "rising_main_m": 80.6,
+        "label": "MH-1436",
+        "x": 450271.5,
+        "y": 2568216.96,
+        "ground": 355.01,
+        "depth": 11.73,
+        "lift_m": 10.55,
+        "rising_main_m": 53.8,
         "rising_main_dn": 200,
-        "q_peak_ls": 9.03,
-        "n_props": 289.0
+        "q_peak_ls": 7.47,
+        "n_props": 233.0
       },
       {
         "label": "MH-0687",
@@ -110,15 +122,30 @@
         "n_props": 226.0
       }
     ],
-    "properties_pumped": 855,
-    "total_lift_m": 31.4,
-    "rising_main_m": 162.0,
+    "properties_pumped": 1941,
+    "total_lift_m": 42.4,
+    "rising_main_m": 209.3,
     "small_enough_to_absorb": [],
     "close_enough_to_cascade": [
       {
+        "a": "MH-1613",
+        "b": "MH-1024",
+        "apart_m": 672
+      },
+      {
+        "a": "MH-1613",
+        "b": "MH-1436",
+        "apart_m": 231
+      },
+      {
+        "a": "MH-1613",
+        "b": "MH-0687",
+        "apart_m": 962
+      },
+      {
         "a": "MH-1024",
-        "b": "MH-1488",
-        "apart_m": 774
+        "b": "MH-1436",
+        "apart_m": 852
       },
       {
         "a": "MH-1024",
@@ -126,9 +153,9 @@
         "apart_m": 297
       },
       {
-        "a": "MH-1488",
+        "a": "MH-1436",
         "b": "MH-0687",
-        "apart_m": 1071
+        "apart_m": 1149
       }
     ]
   },

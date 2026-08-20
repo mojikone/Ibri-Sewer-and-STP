@@ -37,7 +37,7 @@ plainly which document is live and which is a record of past work.
 | Dual carriageways | merged into one corridor | **excluded entirely**, trunk included |
 | Sewage per plot | 1.03 m³/day | **0.86 m³/day per property**, several properties per plot |
 | Deepest chamber | 21.3 m (W6 first pass — the check was skipping them) | **11.88 m**, 12.00 m is a hard limit with no exemption |
-| Pumping stations | "5 SLS spots" (W5, counted from deep pockets) | **3 real stations** with lift, rising main and duty flow for each |
+| Pumping stations | "5 SLS spots" (W5, counted from deep pockets) | **4 real stations** with lift, rising main and duty flow for each |
 | Road source | `W1/shp/roads_study.shp` | `SHP/Road centerline 2` with the `dual` column |
 
 ## Still open

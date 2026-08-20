@@ -40,12 +40,13 @@ The route is searched several times over. Each attempt makes the streets that fo
 digging last time expensive, so the design gets a chance to find a way round instead of a pump.
 Two ways of pricing a route are tried - one that treats uphill as expensive, one that treats
 gaining trench depth as expensive - because they find different ways round the same hill. That
-search took the count from 6 down to **3**.
+search took the count from 6 down to **4**.
 
 | Station | Ground | Depth | Lift | Rising main | Peak flow | Properties |
 |---|---|---|---|---|---|---|
+| MH-1613 | 357.5 m | 11.0 m | 11.2 m | 74 m DN200 | 30.3 L/s | 1,142 |
 | MH-1024 | 364.4 m | 11.5 m | 10.2 m | 49 m DN200 | 10.4 L/s | 340 |
-| MH-1488 | 355.6 m | 11.8 m | 10.7 m | 81 m DN200 | 9.0 L/s | 289 |
+| MH-1436 | 355.0 m | 11.7 m | 10.6 m | 54 m DN200 | 7.5 L/s | 233 |
 | MH-0687 | 364.1 m | 10.8 m | 10.5 m | 32 m DN200 | 7.3 L/s | 226 |
 
 Why any pumping is needed at all: the main spine to the outfall is about 4.6 km long, and along
@@ -54,7 +55,7 @@ outfall. A sewer cannot climb, so it goes deep under that ridge. It is not a sho
 overall - there is about 14 m from the top of the spine down to the outfall, and the minimum
 gradients need less than that. It is the shape of the ground in between.
 
-All 3 stations sit within 1.5 km of one another, so detail design can look at whether
+All 4 stations sit within 1.5 km of one another, so detail design can look at whether
 the upper ones should feed the lower one rather than each having its own discharge.
 
 ## Junctions
@@ -83,8 +84,8 @@ keep, and the check works again - which is why the long-connection failure has r
 | Sewer length | 78.7 km |
 | Flow at the outfall | 3,619 m3/day average, 96 L/s peak |
 | Deepest chamber | **11.88 m** against a 12.00 m limit |
-| Pumping stations | 3, lifting 855 properties a total of 31.4 m |
-| Rising mains | 162 m |
+| Pumping stations | 4, lifting 1,941 properties a total of 42.4 m |
+| Rising mains | 209 m |
 | Checks failing | 3 of 22 |
 
 ### The failing checks
