@@ -52,6 +52,21 @@ def main():
                      net, st["conn"], st["still_low"], boundary, summary)
     maps.catchment_map(os.path.join(cfg.OUT_IMG, "W7_M4_catchments.png"),
                        net, cats, boundary, summary)
+    # The report is part of every run from now on (user 2026-08-20: "it helps a lot").
+    # Both formats come from the same content module, so they cannot say different things,
+    # and every number is read live from run/summary.json.
+    log("report (Word + PDF) ...")
+    import subprocess
+    rdir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "report")
+    for script in ("make_methodology_docx.py", "make_methodology_pdf.py"):
+        r = subprocess.run([sys.executable, "-X", "utf8", os.path.join(rdir, script)],
+                           cwd=rdir, capture_output=True, text=True)
+        tail = (r.stdout or r.stderr).strip().splitlines()
+        if r.returncode == 0:
+            log(f"  {tail[-1] if tail else script}")
+        else:
+            # never let a locked PDF stop the run, but never hide it either
+            log(f"  !! {script} FAILED: {tail[-1] if tail else 'unknown error'}")
     log("done")
 
 

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-"""W6 methodology report -> Word (.docx), rendered from the shared content blocks.
+"""W7 methodology report -> Word (.docx), rendered from the shared content blocks.
 
 INTERNAL working document: clean professional styling, NOT the client Sample.docx
 letterhead (rule 5 applies to client-facing reports; this one is for the design team).
 Content and every number come from report_content.build() — the same source the PDF
 renderer uses — so the two formats cannot drift.
 
-Re-run: python W6/report/make_methodology_docx.py
+Re-run: python W7/report/make_methodology_docx.py
 (PDF: make_methodology_pdf.py — reportlab, no Word dependency.)
 """
 import os
@@ -20,8 +20,8 @@ from docx.shared import Inches, Pt, RGBColor
 
 import report_content as RC
 
-OUT = os.environ.get("W6_DOCX_OUT") or os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "W6_Sewer_Network_Design.docx")
+OUT = os.environ.get("W7_DOCX_OUT") or os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "W7_Sewer_Network_Design.docx")
 
 doc = Document()
 

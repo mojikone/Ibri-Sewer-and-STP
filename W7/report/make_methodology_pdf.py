@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""W6 methodology report -> PDF, rendered directly with reportlab (NO Word needed).
+"""W7 methodology report -> PDF, rendered directly with reportlab (NO Word needed).
 
 Word COM proved unreliable here (a stray instance blocks the export), so the PDF is
 now produced independently from the same content blocks as the docx
-(report_content.build()). Re-run: python W6/report/make_methodology_pdf.py
+(report_content.build()). Re-run: python W7/report/make_methodology_pdf.py
 """
 import os
 
@@ -19,7 +19,7 @@ from reportlab.platypus.tableofcontents import TableOfContents
 import report_content as RC
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                   "W6_Sewer_Network_Design.pdf")
+                   "W7_Sewer_Network_Design.pdf")
 
 NAVY = colors.HexColor("#1F3864")
 BLUE = colors.HexColor("#2E5A88")
@@ -55,7 +55,7 @@ class Doc(BaseDocTemplate):
         canvas.setFont("Helvetica", 7.5)
         canvas.setFillColor(GREY)
         canvas.drawString(2.1 * cm, 1.2 * cm,
-                          "Ibri 2621 — W6 Sewer Network Design Pipeline (internal)")
+                          "Ibri 2621 — W7 Sewer Network Design Pipeline (internal)")
         canvas.drawRightString(A4[0] - 2.1 * cm, 1.2 * cm, f"{doc.page}")
         canvas.restoreState()
 
@@ -75,7 +75,7 @@ def build():
     blocks = RC.build()
     doc = Doc(OUT, pagesize=A4, leftMargin=2.2 * cm, rightMargin=2.2 * cm,
               topMargin=2.0 * cm, bottomMargin=1.9 * cm,
-              title="W6 Sewer Network Design Pipeline — Methodology",
+              title="W7 Sewer Network Design Pipeline — Methodology",
               author="Ibri 2621 design team")
     frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id="f")
     doc.addPageTemplates([PageTemplate(id="all", frames=[frame], onPage=doc.footer)])

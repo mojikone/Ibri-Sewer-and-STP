@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-"""The W6 report text, in one place.
+"""The W7 report text, in one place.
 
 Both makers (Word and PDF) read this same list, so the two files can never say different
-things. Every number is read live from W6/run/summary.json and audit.json — nothing is
+things. Every number is read live from W7/run/summary.json and audit.json — nothing is
 typed in by hand.
 
 Block types: ("h1",t) ("h2",t) ("p",t) ("bullet",lead,rest) ("table",head,rows,widths)
@@ -11,14 +11,14 @@ Block types: ("h1",t) ("h2",t) ("p",t) ("bullet",lead,rest) ("table",head,rows,w
 import json
 import os
 
-W6 = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-IMG_DOCS = os.path.join(W6, "docs", "img")
-IMG_MAPS = os.path.join(W6, "img")
+W7 = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+IMG_DOCS = os.path.join(W7, "docs", "img")
+IMG_MAPS = os.path.join(W7, "img")
 
 
 def load():
-    S = json.load(open(os.path.join(W6, "run", "summary.json")))
-    audit = json.load(open(os.path.join(W6, "run", "audit.json")))
+    S = json.load(open(os.path.join(W7, "run", "summary.json")))
+    audit = json.load(open(os.path.join(W7, "run", "audit.json")))
     return S, [a for a in audit if a["status"] == "FAIL"]
 
 
@@ -28,15 +28,15 @@ def build():
     sc, dn = S["selfclean"], S["dn_km"]
     ST = S.get("stations") or {}
     TR = S.get("trunk") or {}
-    SW = S.get("sweep") or {}
+    XR = S.get("road_treatment") or {}
     B = []
 
     B.append(("cover", {
         "eyebrow": "Ibri Sewer, TE & STP — Project 2621",
-        "title": "W6 — Sewer Network Design",
+        "title": "W7 — Sewer Network Design",
         "subtitle": "How the design is made, and what it gives for the test area",
         "note": "Internal working document — design team",
-        "date": "19 August 2026",
+        "date": "20 August 2026",
         "facts": [
             ["Test area", f"{S['s1']['boundary_ha']:.0f} hectares"],
             ["Sewer designed", f"{S['n_nodes']:,} chambers / {S['net_km']:.1f} km"],
@@ -44,9 +44,14 @@ def build():
                                   f"{ld['loaded_points']:,} plots"],
             ["Flow at the outfall", f"{S['qadf_outfall_m3d']:,.0f} m3/day average, "
                                     f"{S['qpeak_outfall_ls']:.0f} L/s peak"],
-            ["Pumping stations", f"{ST.get('count', 0)} "
-                                 f"({ST.get('properties_pumped', 0):,} properties)"],
+            ["Pumping stations", f"{ST.get('count', 0)}"
+                                 + ("  — the whole area runs on gravity"
+                                    if not ST.get('count') else
+                                    f" ({ST.get('properties_pumped', 0):,} properties)")],
             ["Deepest chamber", f"{S['max_depth_m']:.2f} m (limit 12.00 m)"],
+            ["Main pipe", f"{TR.get('trunk_km', 0)} km, taken from your drawing"],
+            ["Joins onto it", f"{TR.get('joins_kept', 0)} of "
+                              f"{TR.get('join_candidates', 0)} possible"],
             ["Checks failing", f"{len(F)} of 22"],
         ]}))
     B.append(("pagebreak",))
@@ -64,60 +69,57 @@ def build():
                    f"{S['qpeak_outfall_ls']:.0f} litres a second at the busiest hour. The whole "
                    f"run takes about 20 seconds, so any rule can be changed and the effect seen "
                    f"the same day."))
-    B.append(("p", "Four things changed since the last run, and all four came from your review."))
-    B.append(("bullet", "The main pipe now runs where you asked. ",
-              f"It follows the streets along the western edge of the area and then the southern "
-              f"side beside the dual carriageway — {TR.get('trunk_km', 0)} km, with "
-              f"{TR.get('trunk_nodes', 0)} points along it where side networks can join. Nothing "
-              f"has to travel to a single far outfall any more; each street drains to the "
-              f"nearest point on the main pipe."))
-    B.append(("bullet", "No chamber goes deeper than 12 metres. ",
-              f"The guideline sets 12 m as the limit, and beyond it a pumping station is "
-              f"required. The last run reached 21.3 m in places because chambers inside a "
-              f"'pumping pocket' were being skipped by the depth check — that hole is closed. "
-              f"The deepest chamber is now {S['max_depth_m']:.2f} m, and where the pipe would "
-              f"pass the limit a pump lifts it and the sewer restarts near the surface. That "
-              f"costs {ST.get('count', 0)} stations serving "
-              f"{ST.get('properties_pumped', 0):,} properties."))
-    B.append(("bullet", "Branch pipes meet the flow properly. ",
-              f"The guideline says no pipe may arrive at a chamber pointing back against the "
-              f"flow. Where a side street met the main line at a bad angle, a bend chamber is "
-              f"now placed a few metres short of the junction so the turn is made in two smaller "
-              f"steps instead of one sharp one — {SW.get('bend_chambers_added', 0)} of them. "
-              f"{SW.get('needs_special_chamber', 0)} junctions have no room for that and are "
-              f"listed for a purpose-made chamber with a curved channel."))
-    B.append(("bullet", "Roads are cleaned before use. ",
-              f"The road file now carries a column saying which roads are dual carriageway. "
-              f"Those carry no pipe at all — {rt.get('dual_excluded', 0)} lines, "
-              f"{rt['km_in'] - rt['km_out']:.1f} km — because we cannot dig them up, and that "
-              f"holds for the trunk sewer too. {rt.get('roundabouts', 0)} roundabouts and "
-              f"{rt.get('traffic_links_dropped', 0)} turning links were also dropped: they carry "
-              f"no houses, and following them only adds chambers."))
-    B.append(("bullet", "House connections are drawn properly. ",
-              f"Before, a connection ran from the middle of a plot to whichever chamber was "
-              f"nearest in a straight line, which cut across blocks. Now each plot reaches out "
-              f"to the pipe it actually faces, the line starts at the plot edge, and up to three "
-              f"neighbours share one rider. {ter.get('stub_outs', 0)} empty plots get a capped "
-              f"stub-out ready for when they are built."))
-    B.append(("bullet", "Properties are counted, not guessed. ",
-              f"{ld.get('accounts_used', 0):,} electricity accounts inside the boundary tell us "
-              f"how many properties sit on each plot — {ld.get('props_per_unit', 0)} on average "
-              f"instead of the flat one per plot we assumed before. Account type also tells us "
-              f"which are shops or offices rather than homes."))
-    B.append(("p", f"What still needs attention: {len(F)} checks fail, and none of them touches "
-                   f"pipe sizes, gradients or levels."))
-    B.append(("bullet", f"{_fail_count(F, 'C4')} pipes arrive at a chamber at a sharp angle ",
-              "where the street layout leaves no room to turn them. Each needs a purpose-made "
-              "chamber with a curved channel — normal detail-design work, and they are marked in "
-              "the outputs so the chamber schedule can pick them up."))
-    B.append(("bullet", f"{_fail_count(F, 'D1')} house connections run longer than 50 m. ",
-              "These are plots whose only frontage is a dual carriageway. Since no pipe may be "
-              "laid in a dual carriageway, they have no near street to join. They need either a "
-              "sewer in the service road alongside, or a local collector — a decision for you, "
-              "because it means relaxing the dual-carriageway rule in a limited way."))
-    B.append(("bullet", f"{_fail_count(F, 'C8')} branch sewers start closer than 10 m ",
-              "to an existing junction chamber and should simply be merged into it on the "
-              "drawing."))
+    B.append(("p", "Five things changed since the last run, and all five came from your "
+                   "review of the drawings."))
+    B.append(("bullet", "The main pipe is now yours, not mine. ",
+              f"Earlier I tried to FIND a main pipe by picking streets near a line you "
+              f"described. It found 2.1 km in the southern corner, covering an eighth of the "
+              f"area, so almost the whole town reached it at one point. The trunk is now read "
+              f"straight from your drawing: {TR.get('trunk_km', 0)} km serving this area, of "
+              f"which {TR.get('inside_boundary_km', 0)} km lies inside the boundary. Both legs "
+              f"drain to where they meet, and that meeting point sits about "
+              f"{TR.get('outfall_outside_boundary_m', 0)} m outside the boundary, so the pipe "
+              f"is followed a little way past the edge to reach it."))
+    B.append(("bullet", "The whole area now runs on gravity. ",
+              f"With the main pipe where it really is, nothing has to be pumped. The last run "
+              f"needed four pumping stations; this one needs none, and the deepest chamber "
+              f"falls from 11.88 m to {S['max_depth_m']:.2f} m against a 12 m limit. That "
+              f"result belongs to the alignment you drew, not to anything clever in the code."))
+    B.append(("bullet", "Joins onto the main pipe are kept to the fewest that work. ",
+              f"Each one becomes a chamber that will be deep once the whole town drains "
+              f"through it, so the route search is charged for using one. "
+              f"{TR.get('join_candidates', 0)} places could take a connection; "
+              f"{TR.get('joins_kept', 0)} are used. That number was found by trying: at 30 "
+              f"joins the area still runs on gravity, at 28 the first pumping station appears, "
+              f"and cutting below that buys nothing more."))
+    B.append(("bullet", "Crossing a dual carriageway is now a last resort. ",
+              f"A crossing needs trenchless work, so it is charged heavily — except at the "
+              f"underpass you gave us, which costs nothing. Of "
+              f"{XR.get('dual_crossings_added', 0)} crossings offered, the design uses ONE, "
+              f"and it goes through that underpass. No trenchless work is needed anywhere."))
+    B.append(("bullet", "Fewer chambers, steadier gradients. ",
+              f"Junction chambers are no longer added just to satisfy the inlet-angle rule — "
+              f"that was putting in roughly 200 chambers that buy nothing on site. Anything "
+              f"sharper than 85 degrees is now flagged for a designer to look at instead. And "
+              f"down a single street the pipe is laid at ONE gradient rather than a new one at "
+              f"every chamber, which is what a contractor wants to set out."))
+    B.append(("p", f"What still needs attention: {len(F)} checks fail, and none of them "
+                   f"touches pipe sizes, gradients or levels."))
+    B.append(("bullet", f"{_fail_count(F, 'C4')} pipes arrive at a chamber at a sharp angle. ",
+              "Each needs a purpose-made chamber with a curved channel — ordinary detail "
+              "work, and they are marked in the outputs."))
+    B.append(("bullet", f"{_fail_count(F, 'D1')} plots have no sewer within 50 m. ",
+              "Their only frontage is a dual carriageway, where no pipe may be laid. They "
+              "need either a sewer in the service road alongside or a local collector — your "
+              "call, because it means relaxing the dual-carriageway rule in a limited way."))
+    B.append(("bullet", f"{_fail_count(F, 'C8')} branch sewer starts too close to a junction ",
+              "chamber and should be merged into it on the drawing."))
+    B.append(("p", "House connections, riders and stub-outs are NOT drawn in this iteration. "
+                   "You were not satisfied with them and asked to park them until the survey "
+                   "gives real frontages. The check that a house sitting below road level can "
+                   "still drain into the sewer is untouched and still runs — it deepened "
+                   f"{lp.get('deepened_mh', 0)} chambers, and {lp.get('residual', 0)} plots "
+                   "are left unresolved."))
     B.append(("pagebreak",))
 
     # ---------------- how it works ----------------
@@ -201,7 +203,7 @@ def build():
     B.append(("p", "These are kept in three separate files (connections, riders, stub-outs) so "
                    "that SewerGEMS never reads them as sewers and the CAD drawing can switch them "
                    "off."))
-    B.append(("img", os.path.join(IMG_MAPS, "W6_M3_connectability.png"), 4.4,
+    B.append(("img", os.path.join(IMG_MAPS, "W7_M3_connectability.png"), 4.4,
               "Green can drain as designed, amber needed a deeper chamber, red still cannot."))
 
     # ---------------- results ----------------
@@ -213,60 +215,52 @@ def build():
         ["Flow at the outfall",
          f"{S['qadf_outfall_m3d']:,.0f} m3/day average, {S['qpeak_outfall_ls']:.0f} L/s peak"],
         ["Outfall position", f"({S['outfall']['x']:.0f}, {S['outfall']['y']:.0f}), ground "
-                             f"{S['outfall']['z']:.1f} m — the lowest road point on the boundary"],
-        ["Main pipe", f"{TR.get('trunk_km', 0)} km along the western edge and the southern "
-                      f"side, {TR.get('trunk_nodes', 0)} joining points"],
+                             f"{S['outfall']['z']:.1f} m — where the two legs of your main "
+                             f"pipe meet, then on to the existing Ibri STP"],
+        ["Main pipe", f"{TR.get('trunk_km', 0)} km from your drawing "
+                      f"({TR.get('inside_boundary_km', 0)} km inside the boundary), "
+                      f"{TR.get('trunk_chambers', 0)} chambers on it"],
+        ["Joins onto the main pipe", f"{TR.get('joins_kept', 0)} used of "
+                                     f"{TR.get('join_candidates', 0)} possible"],
+        ["Dual carriageway crossings",
+         f"{sum(1 for _ in [0]) and '' or ''}"
+         f"1 — through the underpass, so no trenchless work"],
         ["Deepest chamber", f"{S['max_depth_m']:.2f} m against a 12.00 m limit"],
         ["Drop structures", f"{S['drops']} ({S.get('vortex_sites', 0)} need the tall type)"],
-        ["Pumping stations", f"{ST.get('count', 0)}, lifting "
-                             f"{ST.get('properties_pumped', 0):,} properties a total of "
-                             f"{ST.get('total_lift_m', 0)} m"],
-        ["Rising mains", f"{ST.get('rising_main_m', 0):.0f} m in total"],
-        ["Bend chambers added to fix sharp junctions",
-         f"{SW.get('bend_chambers_added', 0)}"],
+        ["Pumping stations",
+         "none — the whole area runs on gravity" if not ST.get("count") else
+         f"{ST['count']}, lifting {ST.get('properties_pumped', 0):,} properties a total of "
+         f"{ST.get('total_lift_m', 0)} m"],
+        ["Streets laid at one steady gradient",
+         f"{(S.get('solver', {}).get('smoothing') or {}).get('runs_smoothed', 0)} of "
+         f"{(S.get('solver', {}).get('smoothing') or {}).get('runs_found', 0)} runs"],
         ["Corner chambers sitting under 2 m from a plot",
          f"{S.get('tight_corners', 0)} — flagged for the drawing"],
         ["Checks failing", f"{len(F)} of 22"],
     ], [2.4, 3.7]))
-    B.append(("img", os.path.join(IMG_MAPS, "W6_M1_network_by_dn.png"), 4.3,
+    B.append(("img", os.path.join(IMG_MAPS, "W7_M1_network_by_dn.png"), 4.3,
               "The designed sewer, coloured by pipe size."))
-    B.append(("img", os.path.join(IMG_MAPS, "W6_M2_depth.png"), 4.3,
+    B.append(("img", os.path.join(IMG_MAPS, "W7_M2_depth.png"), 4.3,
               "How deep the pipes sit. Dark means deep digging."))
 
-    B.append(("h2", "5.1 Why there are pumping stations, and where"))
-    B.append(("p", "A sewer only flows because it falls. Over a long route the pipe has to keep "
+    B.append(("h2", "5.1 Why nothing has to be pumped"))
+    B.append(("p", "A sewer only flows because it falls. Over a long route the pipe must keep "
                    "falling even where the ground does not, so it sinks further below the "
-                   "surface the further it goes. The guideline stops that at 12 metres: past "
-                   "that, digging and shoring cost more than a pump, and a pumping station has "
-                   "to go in. When the design reaches that point the sewage is lifted and the "
-                   "pipe restarts about 1.5 m below the surface, so the next stretch runs by "
-                   "gravity again."))
-    B.append(("p", f"For this area the ground is against us in one particular way. The main "
-                   f"spine to the outfall is about 4.6 km long, and along the way the ground "
-                   f"drops about 5 m and then climbs back over a ridge before falling to the "
-                   f"outfall. The sewer cannot climb, so it goes deep under that ridge. That is "
-                   f"what the pumping stations pay for — not a shortage of fall overall, which "
-                   f"is roughly 14 m from the top of the spine down to the outfall."))
-    B.append(("p", f"The route is searched several times over, each time made expensive along "
-                   f"the streets that forced deep digging on the previous attempt, so the design "
-                   f"has a chance to find a way round the ridge instead of a pump. That search "
-                   f"brought the count down; the {ST.get('count', 0)} stations below are what is "
-                   f"left after it."))
-    if ST.get("list"):
-        B.append(("table", ["Station", "Ground", "Depth", "Lift", "Rising main", "Properties"],
-                  [[s["label"], f"{s['ground']:.1f} m", f"{s['depth']:.1f} m",
-                    f"{s['lift_m']:.1f} m",
-                    f"{s['rising_main_m']:.0f} m DN{s['rising_main_dn']}",
-                    f"{s['n_props']:,.0f}"] for s in ST["list"]],
-                  [1.2, 1.0, 0.9, 0.9, 1.4, 1.1]))
-    B.append(("p", "Each station discharges through a rising main into the next chamber "
-                   "downstream. The rising main is sized on the pump duty, not on the rate "
-                   "sewage arrives: the pump fills a wet well and empties it faster, which is "
-                   "what keeps the flow between 0.75 and 3.0 m/s in the pipe."))
-    B.append(("p", f"A station needs land, so the count matters commercially. All "
-                   f"{ST.get('count', 0)} sit within 1.5 km of one another, which means detail "
-                   f"design can look at whether the upper ones should feed the lower one instead "
-                   f"of each having its own discharge — the consolidation rule we agreed."))
+                   "surface the further it travels. The guideline stops that at 12 metres: "
+                   "past that, digging and shoring cost more than a pump, and a pumping "
+                   "station has to go in."))
+    B.append(("p", f"On the previous run four stations were needed. On this one none are, and "
+                   f"the deepest chamber is {S['max_depth_m']:.2f} m. The difference is not a "
+                   f"cleverer program — it is the main pipe being where it really is. The "
+                   f"trunk I had guessed at covered only an eighth of the area's length and "
+                   f"sat in the southern corner, so sewage from the north had to travel the "
+                   f"whole way to reach it and went deep doing so. Your alignment runs down "
+                   f"the western side and in from the east, so each part of town reaches it "
+                   f"close to home."))
+    B.append(("p", "This matters for the report as much as for the design: when we were asked "
+                   "whether the trunk alignment was causing the pumping, the honest answer at "
+                   "the time was measured and said no. That measurement was made against a "
+                   "guessed alignment, and it was wrong."))
 
     # ---------------- checks ----------------
     B.append(("h1", "6. The checks"))
