@@ -360,6 +360,49 @@ class RoadTreatment:
             out.append(g)
         return out, dropped
 
+    # ---------------- 3b. the carriageway nobody tagged ----------------
+    def _drop_dual_twins(self, segs):
+        """Catch the second carriageway when the road file only tagged the first.
+
+        A dual carriageway is two parallel lines and both should carry dual=1. Where only
+        one does, the twin sails through the exclusion and a sewer gets laid down the other
+        carriageway — which is exactly what the user saw: head chambers sitting on a dual
+        (2026-08-20). Anything running within a few metres of an excluded carriageway, and
+        roughly parallel to it, is that twin.
+
+        A service road at a normal offset is nowhere near this test, so it is untouched."""
+        C = self.crit
+        duals = [g for g, why in self.removed if why == "dual-carriageway"]
+        if not duals:
+            return segs, 0
+        tree = STRtree(duals)
+
+        def bearing(g):
+            c = list(g.coords)
+            return math.degrees(math.atan2(c[-1][1] - c[0][1],
+                                           c[-1][0] - c[0][0])) % 180.0
+
+        out, dropped = [], 0
+        for g in segs:
+            mid = g.interpolate(0.5, normalized=True)
+            hit = tree.query(mid.buffer(C.DUAL_TWIN_M))
+            twin = False
+            for i in hit:
+                d = duals[i]
+                if d.distance(mid) > C.DUAL_TWIN_M:
+                    continue
+                a = abs(bearing(g) - bearing(d))
+                a = min(a, 180.0 - a)
+                if a <= C.DUAL_TWIN_DEG:
+                    twin = True
+                    break
+            if twin:
+                self._drop(g, "dual-carriageway (twin, dual flag missing in the road file)")
+                dropped += 1
+                continue
+            out.append(g)
+        return out, dropped
+
     # ---------------- 6b. what the removals left behind ----------------
     def _drop_orphan_links(self, segs, units):
         """Take out what is left dangling once the duals and roundabouts have gone.
@@ -464,6 +507,7 @@ class RoadTreatment:
 
         segs, dedup = self._clean(segs)
         segs, dual_rep = self._handle_duals(segs, units)
+        segs, twins = self._drop_dual_twins(segs)
         segs, ring_rep = self._collapse_roundabouts(segs, units)
         segs, links = self._drop_traffic_links(segs, units)
         segs, orphans = self._drop_orphan_links(segs, units)
@@ -478,7 +522,8 @@ class RoadTreatment:
                        "points_tidied": dedup, "collinear_joins": joined,
                        "traffic_links_dropped": links, "empty_stubs_dropped": stubs,
                        "orphan_links_dropped": orphans, "dual_crossings_added": crossings,
-                       "free_crossings_at_underpass": getattr(self, "_free_crossings", 0)}
+                       "free_crossings_at_underpass": getattr(self, "_free_crossings", 0),
+                       "dual_twins_dropped": twins}
         self.report.update(dual_rep)
         self.report.update(ring_rep)
         if out_path:

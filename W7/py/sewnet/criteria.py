@@ -88,10 +88,12 @@ class Criteria:
                                       #  node has an approach arm, and the arcs are curved.)
     STUB_MIN_M: float = 8.0           # dangling stub shorter than this, no plots -> drop
     ORPHAN_LINK_M: float = 80.0       # dead-end serving no plot -> drop, repeatedly
+    DUAL_TWIN_M: float = 6.0          # a line this close and parallel IS the other carriageway
+    DUAL_TWIN_DEG: float = 25.0       # how far off parallel it may be
     DUAL_CROSS_MAX_M: float = 70.0    # longest perpendicular crossing of a dual carriageway
     CROSS_PENALTY_M: float = 2500.0   # a crossing needs trenchless work: price it heavily
     CONNECT_PENALTY_M: float = 400.0  # every join onto the main pipe is a deep chamber
-    DUAL_CROSS_SQUARE_DEG: float = 35.0   # how far off square a crossing may be
+    DUAL_CROSS_SQUARE_DEG: float = 25.0   # how far off square a crossing may be
 
     # traffic links: turning fillets, slip roads, diagonal links between two carriageways.
     # These exist so cars can turn; sewage joins at a point, so they are dropped (B9).
@@ -278,6 +280,14 @@ class Criteria:
                              "roads and approach arms are left dangling. Anything that dead-"
                              "ends and serves no plot is removed, and the removal repeats "
                              "because taking one away exposes the next (user 2026-08-20)."),
+            "DUAL_TWIN": ((self.DUAL_TWIN_M, self.DUAL_TWIN_DEG),
+                          "A dual carriageway is drawn as two parallel lines and BOTH should "
+                          "carry dual=1. Where only one does, the twin survives the exclusion "
+                          "and gets a sewer laid down the other carriageway — the user spotted "
+                          "head chambers sitting on one (2026-08-20). Any line running within "
+                          "6 m and 25 degrees of an excluded carriageway is therefore treated "
+                          "as its twin and excluded too, and counted so the road file can be "
+                          "corrected. A service road at a normal offset is far outside this."),
             "CROSSING_COST": ((self.CROSS_PENALTY_M, self.CONNECT_PENALTY_M),
                               "Crossing a dual carriageway means trenchless work, and every "
                               "join onto the main pipe becomes a chamber that will be deep "
