@@ -40,6 +40,7 @@ class Chamber:
     is_station: bool = False        # a pumping station sits here
     on_trunk: bool = False          # this chamber sits on the main pipe
     subnet: int = 0                 # which subnetwork it drains through
+    sharp_inlet: bool = False       # a pipe arrives under the inlet-angle rule
     lift_m: float = 0.0             # how far the pump must raise the sewage
     min_depth_req: float = 0.0      # raised by the connectability stage
 

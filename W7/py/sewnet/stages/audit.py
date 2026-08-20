@@ -269,6 +269,7 @@ def _inlet_angle(ctx):
             turn = abs(math.degrees(bo - bi)) % 360.0
             turn = min(turn, 360.0 - turn)
             if turn > 180.0 - ctx.crit.INLET_MIN_DEG + 1.0:
+                ctx.net.chambers[k].sharp_inlet = True
                 bad.append(Finding(ctx.net.chambers[k].label,
                                    f"inlet {r.label} meets the outlet at {180-turn:.0f} deg"))
     n_in = sum(1 for _ in ctx.net.reaches)

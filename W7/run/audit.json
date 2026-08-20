@@ -36,7 +36,7 @@
     "reference": "G203-p27",
     "requirement": "v <= 3.0 m/s at design depth",
     "status": "PASS",
-    "found": "highest v 1.08 m/s",
+    "found": "highest v 1.09 m/s",
     "findings": []
   },
   {
@@ -46,7 +46,7 @@
     "reference": "G203-p26-27",
     "requirement": "v >= 0.75 m/s or the tractive-force minimum gradient",
     "status": "PASS",
-    "found": "1821/1869 reaches below 0.75 m/s, all tractive-compliant at tau=1.0 Pa [GAP-9]",
+    "found": "1372/1423 reaches below 0.75 m/s, all tractive-compliant at tau=1.0 Pa [GAP-9]",
     "findings": []
   },
   {
@@ -56,7 +56,7 @@
     "reference": "G203-p27 Tab 10",
     "requirement": "<=0.65 (DN<=350), <=0.50 (DN>350)",
     "status": "PASS",
-    "found": "deepest flow d/D 0.650",
+    "found": "deepest flow d/D 0.649",
     "findings": []
   },
   {
@@ -86,7 +86,7 @@
     "reference": "G203-p33 4.6.3",
     "requirement": ">= 1.30 m along the whole profile",
     "status": "PASS",
-    "found": "worst cover 1.31 m (P-0008)",
+    "found": "worst cover 1.31 m (P-1324)",
     "findings": []
   },
   {
@@ -96,7 +96,7 @@
     "reference": "G203-p33 + rule 9",
     "requirement": "<= 12 m, deeper becomes an SLS pocket",
     "status": "PASS",
-    "found": "deepest chamber 10.02 m",
+    "found": "deepest chamber 9.96 m",
     "findings": []
   },
   {
@@ -126,7 +126,7 @@
     "reference": "G203-p30 4.4",
     "requirement": "inlet drop > 600 mm recorded as backdrop; > 2 m as vortex shaft",
     "status": "PASS",
-    "found": "345 drops (149 vortex-class)",
+    "found": "178 drops (79 vortex-class)",
     "findings": []
   },
   {
@@ -136,207 +136,207 @@
     "reference": "G203-p30 (deviation: 75 deg)",
     "requirement": "no inlet at less than 90 deg to the direction of flow",
     "status": "FAIL",
-    "found": "122 of 1869 inlets under 85 deg (project value; guideline is 90 - see criteria register)",
+    "found": "78 of 1423 inlets under 85 deg (project value; guideline is 90 - see criteria register)",
     "findings": [
       {
-        "element": "MH-1139",
-        "detail": "inlet P-1323 meets the outlet at 42 deg"
+        "element": "MH-0539",
+        "detail": "inlet P-1196 meets the outlet at 72 deg"
       },
       {
-        "element": "MH-1333",
-        "detail": "inlet P-1325 meets the outlet at 78 deg"
+        "element": "MH-1365",
+        "detail": "inlet P-0261 meets the outlet at 46 deg"
       },
       {
-        "element": "MH-0120",
-        "detail": "inlet P-1328 meets the outlet at 78 deg"
+        "element": "MH-1391",
+        "detail": "inlet P-0232 meets the outlet at 83 deg"
       },
       {
-        "element": "MH-0670",
-        "detail": "inlet P-1340 meets the outlet at 72 deg"
+        "element": "MH-1231",
+        "detail": "inlet P-1216 meets the outlet at 37 deg"
       },
       {
-        "element": "MH-1811",
-        "detail": "inlet P-0274 meets the outlet at 46 deg"
+        "element": "MH-1121",
+        "detail": "inlet P-1223 meets the outlet at 81 deg"
       },
       {
-        "element": "MH-1811",
-        "detail": "inlet P-1354 meets the outlet at 10 deg"
+        "element": "MH-1292",
+        "detail": "inlet P-0547 meets the outlet at 84 deg"
       },
       {
-        "element": "MH-1837",
-        "detail": "inlet P-0244 meets the outlet at 83 deg"
+        "element": "MH-1229",
+        "detail": "inlet P-0552 meets the outlet at 4 deg"
       },
       {
-        "element": "MH-1631",
-        "detail": "inlet P-1362 meets the outlet at 37 deg"
+        "element": "MH-1096",
+        "detail": "inlet P-0089 meets the outlet at 83 deg"
       },
       {
-        "element": "MH-1417",
-        "detail": "inlet P-1370 meets the outlet at 81 deg"
+        "element": "MH-0289",
+        "detail": "inlet P-1036 meets the outlet at 69 deg"
       },
       {
-        "element": "MH-1488",
-        "detail": "inlet P-1379 meets the outlet at 81 deg"
+        "element": "MH-0712",
+        "detail": "inlet P-0112 meets the outlet at 22 deg"
       },
       {
-        "element": "MH-0933",
-        "detail": "inlet P-1381 meets the outlet at 18 deg"
+        "element": "MH-0385",
+        "detail": "inlet P-0748 meets the outlet at 75 deg"
       },
       {
-        "element": "MH-1717",
-        "detail": "inlet P-0609 meets the outlet at 84 deg"
+        "element": "MH-0915",
+        "detail": "inlet P-0792 meets the outlet at 73 deg"
       },
       {
-        "element": "MH-1636",
-        "detail": "inlet P-0582 meets the outlet at 83 deg"
+        "element": "MH-1338",
+        "detail": "inlet P-0050 meets the outlet at 70 deg"
       },
       {
-        "element": "MH-1629",
-        "detail": "inlet P-0615 meets the outlet at 4 deg"
+        "element": "MH-1045",
+        "detail": "inlet P-0871 meets the outlet at 75 deg"
       },
       {
-        "element": "MH-1456",
-        "detail": "inlet P-0097 meets the outlet at 83 deg"
+        "element": "MH-0745",
+        "detail": "inlet P-0903 meets the outlet at 83 deg"
       },
       {
-        "element": "MH-0325",
-        "detail": "inlet P-1422 meets the outlet at 53 deg"
+        "element": "MH-0719",
+        "detail": "inlet P-0411 meets the outlet at 75 deg"
       },
       {
-        "element": "MH-0375",
-        "detail": "inlet P-1165 meets the outlet at 69 deg"
+        "element": "MH-0316",
+        "detail": "inlet P-0958 meets the outlet at 36 deg"
       },
       {
-        "element": "MH-0929",
-        "detail": "inlet P-0122 meets the outlet at 22 deg"
+        "element": "MH-0330",
+        "detail": "inlet P-0206 meets the outlet at 20 deg"
       },
       {
-        "element": "MH-0500",
-        "detail": "inlet P-0844 meets the outlet at 75 deg"
+        "element": "MH-0276",
+        "detail": "inlet P-0758 meets the outlet at 59 deg"
       },
       {
-        "element": "MH-1195",
-        "detail": "inlet P-0896 meets the outlet at 73 deg"
+        "element": "MH-1383",
+        "detail": "inlet P-0234 meets the outlet at 62 deg"
       },
       {
-        "element": "MH-1505",
-        "detail": "inlet P-1435 meets the outlet at 39 deg"
+        "element": "MH-1386",
+        "detail": "inlet P-0245 meets the outlet at 22 deg"
       },
       {
-        "element": "MH-1780",
-        "detail": "inlet P-0051 meets the outlet at 70 deg"
+        "element": "MH-1071",
+        "detail": "inlet P-1280 meets the outlet at 81 deg"
       },
       {
-        "element": "MH-1379",
-        "detail": "inlet P-0985 meets the outlet at 75 deg"
+        "element": "MH-1351",
+        "detail": "inlet P-0054 meets the outlet at 21 deg"
       },
       {
-        "element": "MH-0981",
-        "detail": "inlet P-1018 meets the outlet at 83 deg"
+        "element": "MH-1336",
+        "detail": "inlet P-0258 meets the outlet at 84 deg"
       },
       {
-        "element": "MH-0937",
-        "detail": "inlet P-0444 meets the outlet at 75 deg"
-      },
-      {
-        "element": "MH-0414",
-        "detail": "inlet P-1078 meets the outlet at 36 deg"
-      },
-      {
-        "element": "MH-0270",
-        "detail": "inlet P-1465 meets the outlet at 74 deg"
-      },
-      {
-        "element": "MH-0432",
-        "detail": "inlet P-0218 meets the outlet at 20 deg"
-      },
-      {
-        "element": "MH-0358",
-        "detail": "inlet P-0858 meets the outlet at 59 deg"
-      },
-      {
-        "element": "MH-1829",
-        "detail": "inlet P-0246 meets the outlet at 62 deg"
-      },
-      {
-        "element": "MH-1832",
-        "detail": "inlet P-0257 meets the outlet at 22 deg"
-      },
-      {
-        "element": "MH-1414",
-        "detail": "inlet P-1490 meets the outlet at 81 deg"
-      },
-      {
-        "element": "MH-1794",
-        "detail": "inlet P-0055 meets the outlet at 21 deg"
-      },
-      {
-        "element": "MH-1778",
-        "detail": "inlet P-0271 meets the outlet at 84 deg"
-      },
-      {
-        "element": "MH-1643",
-        "detail": "inlet P-1493 meets the outlet at 72 deg"
-      },
-      {
-        "element": "MH-1648",
-        "detail": "inlet P-1495 meets the outlet at 68 deg"
-      },
-      {
-        "element": "MH-1341",
-        "detail": "inlet P-1505 meets the outlet at 72 deg"
-      },
-      {
-        "element": "MH-1519",
-        "detail": "inlet P-1500 meets the outlet at 79 deg"
-      },
-      {
-        "element": "MH-1436",
-        "detail": "inlet P-0331 meets the outlet at 84 deg"
-      },
-      {
-        "element": "MH-1321",
-        "detail": "inlet P-1506 meets the outlet at 80 deg"
-      },
-      {
-        "element": "MH-1716",
-        "detail": "inlet P-1526 meets the outlet at 80 deg"
-      },
-      {
-        "element": "MH-1445",
-        "detail": "inlet P-0361 meets the outlet at 84 deg"
-      },
-      {
-        "element": "MH-1434",
-        "detail": "inlet P-0363 meets the outlet at 84 deg"
-      },
-      {
-        "element": "MH-1210",
-        "detail": "inlet P-1517 meets the outlet at 70 deg"
+        "element": "MH-1144",
+        "detail": "inlet P-1285 meets the outlet at 79 deg"
       },
       {
         "element": "MH-1086",
-        "detail": "inlet P-0371 meets the outlet at 81 deg"
+        "detail": "inlet P-0313 meets the outlet at 84 deg"
       },
       {
-        "element": "MH-1269",
-        "detail": "inlet P-1372 meets the outlet at 82 deg"
+        "element": "MH-1002",
+        "detail": "inlet P-1287 meets the outlet at 80 deg"
+      },
+      {
+        "element": "MH-1089",
+        "detail": "inlet P-0341 meets the outlet at 84 deg"
+      },
+      {
+        "element": "MH-1084",
+        "detail": "inlet P-0342 meets the outlet at 84 deg"
+      },
+      {
+        "element": "MH-0828",
+        "detail": "inlet P-0349 meets the outlet at 81 deg"
+      },
+      {
+        "element": "MH-0849",
+        "detail": "inlet P-0380 meets the outlet at 80 deg"
+      },
+      {
+        "element": "MH-0768",
+        "detail": "inlet P-0408 meets the outlet at 65 deg"
+      },
+      {
+        "element": "MH-0747",
+        "detail": "inlet P-0428 meets the outlet at 80 deg"
+      },
+      {
+        "element": "MH-1342",
+        "detail": "inlet P-0546 meets the outlet at 44 deg"
+      },
+      {
+        "element": "MH-0606",
+        "detail": "inlet P-0518 meets the outlet at 84 deg"
+      },
+      {
+        "element": "MH-0634",
+        "detail": "inlet P-0511 meets the outlet at 75 deg"
+      },
+      {
+        "element": "MH-0050",
+        "detail": "inlet P-1326 meets the outlet at 73 deg"
+      },
+      {
+        "element": "MH-0073",
+        "detail": "inlet P-0571 meets the outlet at 81 deg"
+      },
+      {
+        "element": "MH-0114",
+        "detail": "inlet P-0572 meets the outlet at 84 deg"
+      },
+      {
+        "element": "MH-0144",
+        "detail": "inlet P-0578 meets the outlet at 82 deg"
+      },
+      {
+        "element": "MH-0157",
+        "detail": "inlet P-0580 meets the outlet at 80 deg"
+      },
+      {
+        "element": "MH-0165",
+        "detail": "inlet P-0590 meets the outlet at 73 deg"
+      },
+      {
+        "element": "MH-0176",
+        "detail": "inlet P-0615 meets the outlet at 73 deg"
       },
       {
         "element": "MH-1109",
-        "detail": "inlet P-0410 meets the outlet at 80 deg"
+        "detail": "inlet P-0604 meets the outlet at 10 deg"
       },
       {
-        "element": "MH-1021",
-        "detail": "inlet P-1554 meets the outlet at 80 deg"
+        "element": "MH-0200",
+        "detail": "inlet P-1334 meets the outlet at 56 deg"
       },
       {
-        "element": "MH-1018",
-        "detail": "inlet P-1557 meets the outlet at 77 deg"
+        "element": "MH-0921",
+        "detail": "inlet P-1336 meets the outlet at 81 deg"
       },
       {
-        "element": "MH-1013",
-        "detail": "inlet P-1864 meets the outlet at 65 deg"
+        "element": "MH-0962",
+        "detail": "inlet P-0658 meets the outlet at 0 deg"
+      },
+      {
+        "element": "MH-0301",
+        "detail": "inlet P-1031 meets the outlet at 80 deg"
+      },
+      {
+        "element": "MH-0304",
+        "detail": "inlet P-0720 meets the outlet at 71 deg"
+      },
+      {
+        "element": "MH-0600",
+        "detail": "inlet P-1342 meets the outlet at 84 deg"
       }
     ]
   },
@@ -357,7 +357,7 @@
     "reference": "user rule",
     "requirement": "tree draining to a single outfall",
     "status": "PASS",
-    "found": "1870 chambers / 1869 reaches, 1 component, acyclic=True",
+    "found": "1424 chambers / 1423 reaches, 1 component, acyclic=True",
     "findings": []
   },
   {
@@ -376,14 +376,9 @@
     "check": "Branch start offset",
     "reference": "user rule / SWNETWROK 10 m",
     "requirement": "branch starts at the next house connection or 10 m clear",
-    "status": "FAIL",
-    "found": "615/616 branch heads clear",
-    "findings": [
-      {
-        "element": "MH-0106",
-        "detail": "starts 9.4 m from MH-0112"
-      }
-    ]
+    "status": "PASS",
+    "found": "283/283 branch heads clear",
+    "findings": []
   },
   {
     "id": "A9",
@@ -402,207 +397,207 @@
     "reference": "G203-p18 Tab 4 (A9)",
     "requirement": "<= 50 m, else an intermediate chamber",
     "status": "FAIL",
-    "found": "230/3017 connections over 50.0 m; longest 356 m",
+    "found": "236/3017 connections over 50.0 m; longest 356 m",
     "findings": [
       {
         "element": "1134034",
-        "detail": "87 m to MH-0632"
+        "detail": "87 m to MH-0502"
       },
       {
         "element": "1134035",
-        "detail": "92 m to MH-0632"
+        "detail": "92 m to MH-0502"
       },
       {
         "element": "1135031",
-        "detail": "67 m to MH-0632"
+        "detail": "67 m to MH-0502"
       },
       {
         "element": "1135175",
-        "detail": "57 m to MH-0632"
+        "detail": "57 m to MH-0502"
       },
       {
         "element": "U247",
-        "detail": "52 m to MH-0632"
+        "detail": "52 m to MH-0502"
       },
       {
         "element": "1134473",
-        "detail": "61 m to MH-0023"
+        "detail": "61 m to MH-0021"
       },
       {
         "element": "1137942",
-        "detail": "59 m to MH-0563"
+        "detail": "60 m to MH-0456"
       },
       {
         "element": "1137398",
-        "detail": "65 m to MH-0500"
+        "detail": "65 m to MH-0385"
       },
       {
         "element": "1135026",
-        "detail": "77 m to MH-0604"
+        "detail": "77 m to MH-0475"
       },
       {
         "element": "1135027",
-        "detail": "55 m to MH-0604"
+        "detail": "55 m to MH-0475"
       },
       {
         "element": "1135034",
-        "detail": "51 m to MH-0604"
+        "detail": "51 m to MH-0475"
       },
       {
         "element": "1135035",
-        "detail": "70 m to MH-0604"
+        "detail": "70 m to MH-0475"
       },
       {
         "element": "1137945",
-        "detail": "112 m to MH-0604"
+        "detail": "112 m to MH-0475"
       },
       {
         "element": "1135040",
-        "detail": "50 m to MH-0586"
+        "detail": "50 m to MH-0457"
       },
       {
         "element": "U49",
-        "detail": "70 m to MH-0602"
+        "detail": "70 m to MH-0473"
       },
       {
         "element": "U195",
-        "detail": "69 m to MH-0602"
+        "detail": "69 m to MH-0473"
       },
       {
         "element": "1135091",
-        "detail": "54 m to MH-0044"
+        "detail": "54 m to MH-0040"
       },
       {
         "element": "U226",
-        "detail": "78 m to MH-0044"
-      },
-      {
-        "element": "1135079",
-        "detail": "99 m to MH-0146"
-      },
-      {
-        "element": "1135082",
-        "detail": "119 m to MH-0146"
+        "detail": "78 m to MH-0040"
       },
       {
         "element": "1135083",
-        "detail": "99 m to MH-0146"
+        "detail": "143 m to MH-0109"
       },
       {
         "element": "1135343",
-        "detail": "57 m to MH-0146"
-      },
-      {
-        "element": "U230",
-        "detail": "59 m to MH-0146"
+        "detail": "57 m to MH-0109"
       },
       {
         "element": "1135090",
-        "detail": "78 m to MH-0053"
+        "detail": "78 m to MH-0046"
       },
       {
         "element": "1135092",
-        "detail": "58 m to MH-0053"
+        "detail": "58 m to MH-0046"
       },
       {
         "element": "1135077",
-        "detail": "51 m to MH-0093"
+        "detail": "51 m to MH-0071"
       },
       {
         "element": "1135078",
-        "detail": "71 m to MH-0093"
+        "detail": "71 m to MH-0071"
       },
       {
         "element": "1135080",
-        "detail": "91 m to MH-0093"
+        "detail": "91 m to MH-0071"
       },
       {
         "element": "1135081",
-        "detail": "111 m to MH-0093"
+        "detail": "111 m to MH-0071"
+      },
+      {
+        "element": "1135082",
+        "detail": "131 m to MH-0071"
+      },
+      {
+        "element": "1136954",
+        "detail": "57 m to MH-0071"
+      },
+      {
+        "element": "1136955",
+        "detail": "86 m to MH-0071"
+      },
+      {
+        "element": "1136956",
+        "detail": "102 m to MH-0071"
+      },
+      {
+        "element": "1135079",
+        "detail": "103 m to MH-0085"
       },
       {
         "element": "1135084",
-        "detail": "108 m to MH-0071"
+        "detail": "108 m to MH-0057"
       },
       {
         "element": "1135085",
-        "detail": "112 m to MH-0071"
+        "detail": "112 m to MH-0057"
       },
       {
         "element": "1135086",
-        "detail": "78 m to MH-0071"
+        "detail": "78 m to MH-0057"
       },
       {
         "element": "1135087",
-        "detail": "56 m to MH-0071"
+        "detail": "56 m to MH-0057"
       },
       {
         "element": "1135088",
-        "detail": "77 m to MH-0087"
+        "detail": "77 m to MH-0067"
       },
       {
         "element": "1136473",
-        "detail": "55 m to MH-0087"
+        "detail": "55 m to MH-0067"
+      },
+      {
+        "element": "U230",
+        "detail": "96 m to MH-0140"
       },
       {
         "element": "1138275",
-        "detail": "93 m to MH-0024"
+        "detail": "93 m to MH-0022"
       },
       {
-        "element": "1138270",
-        "detail": "62 m to MH-0218"
+        "element": "1135378",
+        "detail": "79 m to MH-0215"
       },
       {
-        "element": "1138269",
-        "detail": "56 m to MH-0012"
-      },
-      {
-        "element": "1138281",
-        "detail": "65 m to MH-0012"
-      },
-      {
-        "element": "1135361",
-        "detail": "52 m to MH-0026"
-      },
-      {
-        "element": "1135539",
-        "detail": "62 m to MH-0026"
-      },
-      {
-        "element": "1138266",
-        "detail": "88 m to MH-0026"
-      },
-      {
-        "element": "1138267",
-        "detail": "88 m to MH-0026"
-      },
-      {
-        "element": "1138268",
-        "detail": "88 m to MH-0026"
-      },
-      {
-        "element": "1135379",
-        "detail": "58 m to MH-0299"
+        "element": "1140668",
+        "detail": "62 m to MH-0215"
       },
       {
         "element": "U46",
-        "detail": "80 m to MH-0299"
+        "detail": "89 m to MH-0215"
       },
       {
-        "element": "U78",
-        "detail": "53 m to MH-0477"
+        "element": "1138270",
+        "detail": "62 m to MH-0169"
       },
       {
-        "element": "1138007",
-        "detail": "93 m to MH-0070"
+        "element": "1138269",
+        "detail": "56 m to MH-0011"
       },
       {
-        "element": "1138008",
-        "detail": "52 m to MH-0070"
+        "element": "1138281",
+        "detail": "65 m to MH-0011"
       },
       {
-        "element": "1138010",
-        "detail": "52 m to MH-0070"
+        "element": "1135361",
+        "detail": "52 m to MH-0024"
+      },
+      {
+        "element": "1135539",
+        "detail": "62 m to MH-0024"
+      },
+      {
+        "element": "1138266",
+        "detail": "88 m to MH-0024"
+      },
+      {
+        "element": "1138267",
+        "detail": "88 m to MH-0024"
+      },
+      {
+        "element": "1138268",
+        "detail": "88 m to MH-0024"
       }
     ]
   },

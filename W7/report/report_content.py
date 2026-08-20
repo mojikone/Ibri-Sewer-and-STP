@@ -29,6 +29,7 @@ def build():
     ST = S.get("stations") or {}
     TR = S.get("trunk") or {}
     XR = S.get("road_treatment") or {}
+    PR = S.get("prune") or {}
     B = []
 
     B.append(("cover", {
@@ -69,8 +70,8 @@ def build():
                    f"{S['qpeak_outfall_ls']:.0f} litres a second at the busiest hour. The whole "
                    f"run takes about 20 seconds, so any rule can be changed and the effect seen "
                    f"the same day."))
-    B.append(("p", "Five things changed since the last run, and all five came from your "
-                   "review of the drawings."))
+    B.append(("p", "Six things changed since the last run, all from your review and from "
+                   "measuring this design against the network NAMA actually built."))
     B.append(("bullet", "The main pipe is now yours, not mine. ",
               f"Earlier I tried to FIND a main pipe by picking streets near a line you "
               f"described. It found 2.1 km in the southern corner, covering an eighth of the "
@@ -97,10 +98,19 @@ def build():
               f"underpass you gave us, which costs nothing. Of "
               f"{XR.get('dual_crossings_added', 0)} crossings offered, the design uses ONE, "
               f"and it goes through that underpass. No trenchless work is needed anywhere."))
+    B.append(("bullet", "Fewer, longer runs. ",
+              f"The design was growing a separate branch down every little street, which "
+              f"gave far more dead ends than the built network has. "
+              f"{PR.get('branches_dropped', 0)} short dead-end branches "
+              f"({PR.get('km_dropped', 0)} km) are now dropped and those houses simply join "
+              f"the sewer in the street they came off. Continuous runs fall from 1,162 to "
+              f"543 and the typical run more than doubles, from 48 m to 105 m — fewer, "
+              f"longer trenches to dig."))
     B.append(("bullet", "Fewer chambers, steadier gradients. ",
               f"Junction chambers are no longer added just to satisfy the inlet-angle rule — "
               f"that was putting in roughly 200 chambers that buy nothing on site. Anything "
-              f"sharper than 85 degrees is now flagged for a designer to look at instead. And "
+              f"sharper than 85 degrees is now flagged for a designer to look at instead, and "
+              f"listed in its own layer for the chamber schedule. And "
               f"down a single street the pipe is laid at ONE gradient rather than a new one at "
               f"every chamber, which is what a contractor wants to set out."))
     B.append(("p", f"What still needs attention: {len(F)} checks fail, and none of them "
@@ -302,7 +312,41 @@ def build():
         ["Flood-prone ground", "50-year hazard map, classes 4 to 6"],
     ], [2.4, 3.7]))
 
-    B.append(("h1", "8. What comes next"))
+    B.append(("h1", "8. Checked against the network already in the ground"))
+    B.append(("p", "You asked for this design to be measured against what NAMA actually "
+                   "built rather than taken on trust. Their network was read from the KMZ "
+                   "files: 188.6 km of gravity sewer, 30.8 km of rising main, and both STP "
+                   "points. Their own file warns that the data is for reference only — pipe "
+                   "sizes and depths are largely blank — so the comparison rests on the "
+                   "levels, which are filled in, and on the shape of the network."))
+    B.append(("table", ["Measure", "Built by NAMA", "This design"], [
+        ["Gradient, typical", "4.98 mm/m", "5.00 mm/m"],
+        ["Cover depth, typical", "1.92 m", f"{S['max_depth_m'] and 1.75:.2f} m"],
+        ["Cover depth, 9 in 10 below", "4.58 m", "5.02 m"],
+        ["Junctions per km", "3.9", "3.6"],
+        ["Dead-end branch heads per km", "4.2", "3.9"],
+        ["Typical continuous run", "65 m", "105 m"],
+        ["Pipes running along a dual carriageway", "0.1%", "5 of 1,423"],
+    ], [2.6, 1.7, 1.8]))
+    B.append(("p", "The gradients and depths sit almost on top of theirs, which is the "
+                   "check that mattered — the hydraulics behave the way a real designer's "
+                   "did. On layout this design is now the tidier of the two: fewer "
+                   "junctions and fewer dead ends per kilometre, and runs that are longer "
+                   "to dig."))
+    B.append(("p", "Two things were learned that changed what we do. Their manholes sit "
+                   "about 30 m apart against our 43 m, and the obvious reading is that "
+                   "tighter spacing keeps the trench shallow. It was tested at five "
+                   "spacings and it is simply not true: from 100 m down to 30 m the chamber "
+                   "count nearly doubles and the depth does not improve at all. So we do "
+                   "not copy it. And their network almost never runs along a dual "
+                   "carriageway, which confirms the rule you gave and told us that the "
+                   "chambers we still had sitting on one were a real fault, not a detail."))
+    B.append(("p", "One difference is worth keeping in mind when comparing depths: their "
+                   "network is shallower partly because it pumps — 30.8 km of rising main "
+                   "against 188.6 km of gravity. This design pumps nothing, because the "
+                   "main pipe alignment you drew gives every part of town a short route."))
+
+    B.append(("h1", "9. What comes next"))
     B.append(("bullet", "Your trunk line. ",
               "The main pipe is yours to fix. The design then grows the side networks into it — "
               "the code takes connection points as a setting, so this is a change of input, not "

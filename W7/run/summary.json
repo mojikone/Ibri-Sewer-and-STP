@@ -16,9 +16,9 @@
     ],
     "dist_to_expected_m": 48.22558179418014
   },
-  "n_nodes": 1870,
-  "n_pipes": 1869,
-  "net_km": 83.87060370358253,
+  "n_nodes": 1424,
+  "n_pipes": 1423,
+  "net_km": 71.7918947454128,
   "loads": {
     "plots_inside": 2825,
     "built": 2217,
@@ -37,22 +37,22 @@
     "converged": true,
     "iterations": 3,
     "smoothing": {
-      "runs_found": 396,
-      "runs_smoothed": 242,
-      "runs_left_as_solved": 154
+      "runs_found": 363,
+      "runs_smoothed": 206,
+      "runs_left_as_solved": 157
     },
     "pockets": 0
   },
   "structures": {
-    "merged": 78,
-    "fanouts": 6,
-    "offset_branches": 115,
-    "dropped_branches": 11
+    "merged": 6,
+    "fanouts": 0,
+    "offset_branches": 26,
+    "dropped_branches": 0
   },
   "lowplots": {
     "checked": 3017,
-    "flagged": 151,
-    "deepened_mh": 57,
+    "flagged": 162,
+    "deepened_mh": 65,
     "residual": 0
   },
   "road_treatment": {
@@ -127,28 +127,28 @@
     "skipped_km": 0.0
   },
   "qadf_outfall_m3d": 3619.5690000000004,
-  "qpeak_outfall_ls": 95.71,
-  "qpeak_sum_of_arrivals_ls": 104.02,
+  "qpeak_outfall_ls": 95.61,
+  "qpeak_sum_of_arrivals_ls": 103.92,
   "n_outfall_reaches": 2,
   "dn_km": {
-    "200": 77.433,
-    "250": 1.619,
-    "315": 1.086,
+    "200": 65.354,
+    "250": 1.719,
+    "315": 0.986,
     "400": 1.215,
     "500": 2.518
   },
-  "violations": 3,
+  "violations": 2,
   "selfclean": {
-    "pipes": 1869,
-    "below_075_at_peak": 1821,
-    "share_below": 0.974,
-    "would_fail_at_tau2": 1215,
+    "pipes": 1423,
+    "below_075_at_peak": 1372,
+    "share_below": 0.964,
+    "would_fail_at_tau2": 970,
     "note": "0.75 m/s unattainable on small branches; compliance rests on the tractive methodology at tau=1 Pa [GAP-9]"
   },
-  "startyear_flags": 1842,
-  "max_depth_m": 10.022071504835196,
-  "drops": 345,
-  "vortex_sites": 149,
+  "startyear_flags": 1394,
+  "max_depth_m": 9.95713896983466,
+  "drops": 178,
+  "vortex_sites": 79,
   "pf_formula": "merrimack",
   "features": {
     "road_treatment": true,

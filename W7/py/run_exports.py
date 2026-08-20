@@ -8,7 +8,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import config_test as cfg
 from shapely import wkt
-from sewnet import catchments, export_shp, export_gems, export_dxf, maps
+from sewnet import catchments, export_shp, export_gems, export_dxf, export_kmz, maps
 
 T0 = time.time()
 
@@ -43,6 +43,11 @@ def main():
     os.makedirs(cfg.OUT_DXF, exist_ok=True)
     export_dxf.write(os.path.join(cfg.OUT_DXF, "W7_test_boundary_design.dxf"),
                      net, st["riders"], st["pockets"], st["of_rep"], catchments=cats)
+    log("KMZ for Google Earth ...")
+    kz = export_kmz.write(os.path.join(cfg.OUT, "W7_sewer_design.kmz"), net,
+                          catchments=cats, of_rep=st["of_rep"])
+    log(f"  {kz}")
+
     log("maps ...")
     os.makedirs(cfg.OUT_IMG, exist_ok=True)
     maps.network_map(os.path.join(cfg.OUT_IMG, "W7_M1_network_by_dn.png"),

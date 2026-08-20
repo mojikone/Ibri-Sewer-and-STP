@@ -177,3 +177,89 @@ class TreeBuilder:
                        "nodes": Gd.number_of_nodes(), "edges": Gd.number_of_edges(),
                        "augmentation": aug}
         return Gd, outfall, of_rep
+
+
+def prune_short_branches(Gd, units, crit=DEFAULT, max_branch_m=60.0, reconnect_m=50.0,
+                         passes=6):
+    """Stop laying a sewer down every little cul-de-sac.
+
+    The design was growing a separate branch for every street that had a plot on it, which
+    gave 616 branch heads over 84 km where the network NAMA actually built has 334 over 79
+    km. On site that is the difference between a few long trenches and a hundred little
+    ones, and it is what makes a design look unbuildable (user 2026-08-20).
+
+    A short dead-end branch is dropped when every plot it was serving can still reach a
+    remaining sewer within the house-connection limit. Those houses simply connect back to
+    the sewer in the street they came off, which is what a designer would draw.
+
+    Nothing is dropped if it would strand a plot: the check is done before the removal, and
+    the removal repeats because taking one branch away can expose the next.
+    """
+    from shapely.geometry import Point
+    from shapely.strtree import STRtree
+
+    pts = [Point(u.x, u.y) for u in (units or [])]
+    utree = STRtree(pts) if pts else None
+    dropped, km = 0, 0.0
+
+    for _ in range(passes):
+        indeg = {n: 0 for n in Gd.nodes}
+        for u, v in Gd.edges:
+            indeg[v] += 1
+        heads = [n for n in Gd.nodes if indeg[n] == 0 and Gd.out_degree(n) > 0]
+        # every branch: from a head down to where something else joins
+        cands = []
+        for h in heads:
+            chain, n, L = [], h, 0.0
+            while Gd.out_degree(n) == 1:
+                v = next(iter(Gd.successors(n)))
+                chain.append((n, v))
+                L += Gd[n][v]["length"]
+                n = v
+                if indeg.get(v, 0) > 1 or Gd.out_degree(v) != 1:
+                    break
+            if chain and L <= max_branch_m:
+                cands.append((L, chain))
+        if not cands:
+            break
+
+        cands.sort()                        # shortest first: cheapest to lose
+        keep_geom = [Gd[u][v]["geom"] for u, v in Gd.edges]
+        hit = 0
+        for L, chain in cands:
+            edges = set(chain)
+            mine = [Gd[u][v]["geom"] for u, v in chain]
+            rest = [g for g in keep_geom if g not in mine]
+            if not rest:
+                continue
+            rtree = STRtree(rest)
+            stranded = False
+            if utree is not None:
+                for m in mine:
+                    for i in utree.query(m.buffer(crit.CROSS_STREET_FRONTAGE)):
+                        p = pts[i]
+                        if m.distance(p) > crit.CROSS_STREET_FRONTAGE:
+                            continue
+                        near = rtree.query(p.buffer(reconnect_m))
+                        if not any(rest[j].distance(p) <= reconnect_m for j in near):
+                            stranded = True   # this house would have nothing to join
+                            break
+                    if stranded:
+                        break
+            if stranded:
+                continue
+            for u, v in chain:
+                if Gd.has_edge(u, v):
+                    Gd.remove_edge(u, v)
+            for u, v in chain:
+                for n in (u,):
+                    if n in Gd and Gd.degree(n) == 0:
+                        Gd.remove_node(n)
+            keep_geom = [g for g in keep_geom if g not in mine]
+            dropped += 1
+            km += L / 1000.0
+            hit += 1
+        if hit == 0:
+            break
+    return {"branches_dropped": dropped, "km_dropped": round(km, 2),
+            "max_branch_m": max_branch_m}

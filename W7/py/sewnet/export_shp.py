@@ -40,6 +40,7 @@ def write_all(out_dir, net: Network, riders, still_low, pockets, boundary, of_re
         "LIFT_M": [round(c.lift_m, 2) for c in ch],
         "ON_TRUNK": [int(c.on_trunk) for c in ch],      # sits on the main pipe
         "SUBNET": [c.subnet for c in ch],               # which subnetwork it drains through
+        "SHARP_IN": [int(c.sharp_inlet) for c in ch],   # needs a curved-channel chamber
         "HAZ_CLASS": [hazard.klass(c.x, c.y) if hazard else 0 for c in ch],
         "IN_WADI": [int(hazard.is_wadi(c.x, c.y)) if hazard else 0 for c in ch],
     }, geometry=[Point(c.xy) for c in ch], crs=CRS).to_file(
@@ -140,6 +141,21 @@ def write_all(out_dir, net: Network, riders, still_low, pockets, boundary, of_re
                           "LEN_M": [round(g.length, 1) for g in gs]},
                          geometry=gs, crs=CRS).to_file(
             os.path.join(out_dir, "W7_main_pipe.shp"), encoding="utf-8")
+
+    sharp = [c for c in ch if c.sharp_inlet]
+    if sharp:
+        # every chamber where a pipe arrives at less than the inlet-angle rule allows.
+        # These are NOT fixed by adding chambers (user 2026-08-20) — they go on the
+        # chamber schedule for a purpose-made unit with a curved channel.
+        gpd.GeoDataFrame({
+            "LABEL": [c.label for c in sharp],
+            "SUBNET": [c.subnet for c in sharp],
+            "GND": [round(c.z, 2) for c in sharp],
+            "DEPTH_M": [round(c.depth or 0, 2) for c in sharp],
+            "NOTE": ["curved-channel chamber: inlet under "
+                     f"{crit.INLET_MIN_DEG:.0f} deg" for _ in sharp],
+        }, geometry=[Point(c.xy) for c in sharp], crs=CRS).to_file(
+            os.path.join(out_dir, "W7_sharp_inlets.shp"), encoding="utf-8")
 
     stations = [c for c in ch if c.is_station]
     if stations:

@@ -1,4 +1,4 @@
-# What is current, and what is not — checked 2026-08-19 (evening: W6)
+# What is current, and what is not — checked 2026-08-20 (W7)
 
 Read this before trusting any file in the repo. The job has grown, so this page says
 plainly which document is live and which is a record of past work.
@@ -11,15 +11,18 @@ plainly which document is live and which is a record of past work.
 | `_BRAIN/07_PROJECT_STATE.md` | the one-page orientation: data, doctrine, progress | 2026-08-19 |
 | `_BRAIN/02_DESIGN_CRITERIA.md` | every design number with its guideline page | 2026-08-19 |
 | `W5/docs/CRITERIA_UPDATE_R1.md` | the register of rules agreed 18–19 Aug and what is built | 2026-08-19 |
-| `W6/report/W6_Sewer_Network_Design.docx / .pdf` | **the current report**, numbers read live from the run | 2026-08-19 |
-| `W6/py/` | **the design code** that produced the current outputs | 2026-08-19 |
-| `W6/shp/ dxf/ img/ sewergems/ run/` | **the current design outputs** | 2026-08-19 |
+| `W7/report/W7_Sewer_Network_Design.docx / .pdf` | **the current report**, built on every run | 2026-08-20 |
+| `W7/py/` | **the design code** that produced the current outputs | 2026-08-20 |
+| `W7/shp/ dxf/ img/ sewergems/ run/` + `W7_sewer_design.kmz` | **the current design outputs** | 2026-08-20 |
+| `W7/docs/CALIBRATION_vs_EXISTING.md` | the engine measured against NAMA's as-built network | 2026-08-20 |
+| `SHP/Main Pipe/Main Pipe.shp` | **the trunk is an INPUT now** — the user's drawing, not derived | 2026-08-20 |
 | `TUTORIALS/T01…docx` | how the flow and load are worked out — **Rev 4** | 2026-08-19 |
 
 ## Superseded — keep for the record, do not quote as current
 
 | File | Why it is out of date |
 |---|---|
+| `W6/**` | W6 guessed the trunk by picking streets near a described line. It found 2.1 km in the southern corner and needed 4 pumping stations. Superseded entirely — do not quote its pumping or depth numbers |
 | `W5/**` | W5 was the run before the trunk was placed and before the 12 m depth limit was enforced. Its design has chambers past 12 m that the audit did not report. Do not quote its chamber, depth or pumping numbers |
 | `W4/**` (all of it) | W4 was the first design pipeline. W5 replaces it. The one live file is `W4/shp/ELE_accounts.shp`, which W5 still reads |
 | `W4/report/*`, `W4/docs/METHODOLOGY.md`, `W4/docs/PLAN.md` | describe the W4 design: 1,655 chambers, 89.5 km, one property per plot, OR 6.0 |

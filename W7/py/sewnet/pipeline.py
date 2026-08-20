@@ -29,7 +29,7 @@ from .stages.hydraulic import HydraulicDesigner
 from .stages.loads import LoadAllocator
 from .stages.road_treatment import RoadTreatment
 from .stages.structures import StructureResolver
-from .stages.tree import TreeBuilder
+from .stages.tree import TreeBuilder, prune_short_branches
 from .stages.trunk import MainPipe, attach_to_roads, tree_to_trunk
 
 
@@ -52,6 +52,7 @@ class RunConfig:
     trunk_dn_seed: int = 400                 # first guess at trunk size, refined by the solver
     underpasses: tuple = ()                  # crossings here need no trenchless work
     max_trunk_joins: Optional[int] = None    # cap on joins onto the main pipe (None = all)
+    prune_branch_m: float = 60.0             # drop dead-end branches shorter than this
     trunk_sides: tuple = ("west", "south")   # superseded, kept so old configs still load
     use_trunk: bool = True
     reroute_passes: int = 6      # try again round deep spots before accepting a pump
@@ -179,6 +180,11 @@ class SewerDesignPipeline:
         self.log(f"   outfall ({of_rep['x']:.1f}, {of_rep['y']:.1f}) z={of_rep['z']:.2f}; "
                  f"{Gd.number_of_nodes()} nodes, unreachable {len(unreachable)}")
         self.log(f"   cross-street additions: {aug}")
+        if cfg.prune_branch_m:
+            pr = prune_short_branches(Gd, units, C, cfg.prune_branch_m)
+            self.reports["prune"] = pr
+            self.log(f"   short dead-end branches dropped: {pr['branches_dropped']} "
+                     f"({pr['km_dropped']} km) — those houses join the street they came off")
 
         best = None
         avoid = []
@@ -191,6 +197,8 @@ class SewerDesignPipeline:
                 Gd, unreachable = tree_to_trunk(Gu, trunk_path, outfall, C, avoid=avoid,
                                                 cost=cost)                     if cfg.use_trunk else tb.build_tree(Gu, outfall)
                 tb.augment_cross_streets(Gu, Gd, units)
+                if cfg.prune_branch_m:
+                    prune_short_branches(Gd, units, C, cfg.prune_branch_m)
             self.log("S3 chambers ...")
             plot_shapes = [u.geom for u in units if getattr(u, "geom", None) is not None]
             placer = ChamberPlacer(sampler, C, round_spacing=cfg.round_spacing, plots=plot_shapes)

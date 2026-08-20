@@ -156,4 +156,13 @@ def build():
 
 
 if __name__ == "__main__":
-    build()
+    # If a viewer has the PDF open, Windows locks it. Write a timestamped copy rather than
+    # losing the deliverable, and say so loudly (user 2026-08-20: outputs must be complete).
+    try:
+        build()
+    except PermissionError:
+        import datetime
+        alt = OUT.replace(".pdf", "_" + datetime.datetime.now().strftime("%H%M") + ".pdf")
+        globals()["OUT"] = alt
+        build()
+        print(f"  NOTE: the usual PDF was open in a viewer, so this run wrote {alt}")
