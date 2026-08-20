@@ -38,7 +38,7 @@ def write_all(out_dir, net: Network, riders, still_low, pockets, boundary, of_re
         "SLS_POCKET": [int(c.sls_pocket) for c in ch],
         "IS_PUMP": [int(c.is_station) for c in ch],
         "LIFT_M": [round(c.lift_m, 2) for c in ch],
-        "SWEPT_CH": [int(c.swept_entry) for c in ch],   # needs a curved-channel chamber
+        "ON_TRUNK": [int(c.on_trunk) for c in ch],      # sits on the main pipe
         "HAZ_CLASS": [hazard.klass(c.x, c.y) if hazard else 0 for c in ch],
         "IN_WADI": [int(hazard.is_wadi(c.x, c.y)) if hazard else 0 for c in ch],
     }, geometry=[Point(c.xy) for c in ch], crs=CRS).to_file(
@@ -62,8 +62,10 @@ def write_all(out_dir, net: Network, riders, still_low, pockets, boundary, of_re
         "QPEAK_LS": [round(r.qpeak_ls, 2) for r in R],
         "VEL_MS": [round(r.vel, 2) if r.vel else None for r in R],
         "DOD": [round(r.dod, 3) if r.dod else None for r in R],
-        "ON_TRUNK": [int(r.up in (trunk_keys or ()) and r.dn in (trunk_keys or ()))
-                     for r in R],
+        "ON_TRUNK": [int(r.on_trunk) for r in R],       # this pipe IS the main pipe
+        "IS_JOIN": [int((not net.chambers[r.up].on_trunk)
+                        and net.chambers[r.dn].on_trunk) for r in R],
+        "IS_XING": [int(r.is_crossing) for r in R],     # crosses a dual carriageway
         "RISE_MAIN": [int(r.is_rising_main) for r in R],
         "QDUTY_LS": [round(r.q_duty_m3s * 1000.0, 2) for r in R],
         "DROP_UP": [round(r.drop_up, 2) for r in R],

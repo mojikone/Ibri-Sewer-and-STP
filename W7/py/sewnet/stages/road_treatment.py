@@ -51,13 +51,15 @@ def _bearing(g):
 
 
 class RoadTreatment:
-    def __init__(self, sampler=None, crit=DEFAULT, attrs=None):
+    def __init__(self, sampler=None, crit=DEFAULT, attrs=None, underpasses=()):
         self.sampler = sampler
         self.crit = crit
         self.attrs = attrs or {}          # id(geometry) -> {'dual':int, 'strcls':str}
         self.report = {}
         self.corridors = []
         self.removed = []                 # (geometry, reason) for the review layer
+        self.underpasses = list(underpasses)
+        self.crossings = []
 
     # ---------------- helpers ----------------
     def _attr(self, g, key, default=0):
@@ -397,6 +399,8 @@ class RoadTreatment:
 
     # ---------------- 6c. crossing a dual carriageway ----------------
     def _dual_crossings(self, segs, units):
+        # NOTE: self.crossings collects (geom, free) so the router can price them
+
         """Let the two sides of a dual carriageway talk to each other.
 
         No pipe may run ALONG a dual carriageway, but a short one may cross it square-on.
@@ -411,7 +415,7 @@ class RoadTreatment:
         for g in segs:
             for c in (g.coords[0], g.coords[-1]):
                 ends.setdefault(key_of(*c), (c[0], c[1]))
-        made, used = 0, set()
+        made, used, free_made = 0, set(), 0
         dtree = STRtree(duals)
         pts = list(ends.items())
         ptree = STRtree([Point(xy) for _, xy in pts])
@@ -422,6 +426,7 @@ class RoadTreatment:
             near_d = dtree.query(p.buffer(C.DUAL_CROSS_MAX_M / 2.0))
             if not len(near_d):
                 continue
+            at_underpass = any(math.dist((x, y), u) < 120.0 for u in self.underpasses)
             dual = duals[near_d[0]]
             for j in ptree.query(p.buffer(C.DUAL_CROSS_MAX_M)):
                 k2, (x2, y2) = pts[j]
@@ -440,14 +445,17 @@ class RoadTreatment:
                 bl = math.degrees(math.atan2(y2 - y, x2 - x))
                 off = abs(bd - bl) % 180.0
                 off = min(off, 180.0 - off)
-                if abs(90.0 - off) > C.DUAL_CROSS_SQUARE_DEG:
+                if abs(90.0 - off) > C.DUAL_CROSS_SQUARE_DEG and not at_underpass:
                     continue
                 segs = segs + [line]
                 self.attrs[id(line)] = {"dual": 0, "StrCls": "crossing"}
+                self.crossings.append((line, at_underpass))
+                free_made += int(at_underpass)
                 used.add(k)
                 used.add(k2)
                 made += 1
                 break
+        self._free_crossings = free_made
         return segs, made
 
     # ---------------- run ----------------
@@ -469,7 +477,8 @@ class RoadTreatment:
                        "km_out": round(sum(g.length for g in segs) / 1000.0, 2),
                        "points_tidied": dedup, "collinear_joins": joined,
                        "traffic_links_dropped": links, "empty_stubs_dropped": stubs,
-                       "orphan_links_dropped": orphans, "dual_crossings_added": crossings}
+                       "orphan_links_dropped": orphans, "dual_crossings_added": crossings,
+                       "free_crossings_at_underpass": getattr(self, "_free_crossings", 0)}
         self.report.update(dual_rep)
         self.report.update(ring_rep)
         if out_path:

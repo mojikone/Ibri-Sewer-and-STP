@@ -38,7 +38,7 @@ class Chamber:
     drops: List[dict] = field(default_factory=list)
     sls_pocket: bool = False
     is_station: bool = False        # a pumping station sits here
-    swept_entry: bool = False       # needs a special swept channel (no room to sweep the pipe)
+    on_trunk: bool = False          # this chamber sits on the main pipe
     lift_m: float = 0.0             # how far the pump must raise the sewage
     min_depth_req: float = 0.0      # raised by the connectability stage
 
@@ -81,6 +81,9 @@ class Reach:
     dn_hist: set = field(default_factory=set)            # oscillation guard
     is_rising_main: bool = False    # pumped, not gravity
     q_duty_m3s: float = 0.0         # pump duty flow (rising mains only)
+    on_trunk: bool = False          # this pipe IS the main pipe
+    is_connector: bool = False      # joins a side network onto the main pipe
+    is_crossing: bool = False       # crosses a dual carriageway
 
     @property
     def fall(self) -> float:

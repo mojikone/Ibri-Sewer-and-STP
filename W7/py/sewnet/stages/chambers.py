@@ -165,10 +165,13 @@ class ChamberPlacer:
         for n, d in Gd.nodes(data=True):
             kind = "outfall" if n == outfall else ("head" if Gd.in_degree(n) == 0
                                                   else "junction")
-            net.add_chamber(d["x"], d["y"], d["z"], kind)
+            k = net.add_chamber(d["x"], d["y"], d["z"], kind)
+            if d.get("trunk"):
+                net.chambers[k].on_trunk = True
 
         for u, v, d in Gd.edges(data=True):
             geom = d["geom"]
+            on_trunk = bool(d.get("trunk"))
             cuts = self._split_points(geom)
             pieces = self._cut(geom, cuts) if cuts else [geom]
             prev = u
@@ -178,7 +181,13 @@ class ChamberPlacer:
                 else:
                     p = piece.coords[-1]
                     nxt = net.add_chamber(p[0], p[1], self.sampler.z(p[0], p[1]), "spacing")
-                net.add_reach(prev, nxt, piece)
+                    # a chamber cut into the main pipe is still ON the main pipe — without
+                    # this the run looks like dozens of separate connections into it
+                    net.chambers[nxt].on_trunk = on_trunk
+                r = net.add_reach(prev, nxt, piece)
+                r.on_trunk = on_trunk
+                r.is_connector = bool(d.get("connector"))
+                r.is_crossing = bool(d.get("crossing"))
                 prev = nxt
 
         self._contract(net)
@@ -234,10 +243,16 @@ class ChamberPlacer:
             prev = r.up
             pcs = self._cut(r.geom, cuts)
             for i, piece in enumerate(pcs):
-                nxt = r.dn if i == len(pcs) - 1 else \
-                    net.add_chamber(piece.coords[-1][0], piece.coords[-1][1],
-                                    self.sampler.z(*piece.coords[-1][:2]), "spacing")
-                net.add_reach(prev, nxt, piece)
+                if i == len(pcs) - 1:
+                    nxt = r.dn
+                else:
+                    nxt = net.add_chamber(piece.coords[-1][0], piece.coords[-1][1],
+                                          self.sampler.z(*piece.coords[-1][:2]),
+                                          "spacing")
+                    net.chambers[nxt].on_trunk = r.on_trunk
+                nr = net.add_reach(prev, nxt, piece)
+                nr.on_trunk, nr.is_connector, nr.is_crossing = (
+                    r.on_trunk, r.is_connector, r.is_crossing)
                 prev = nxt
             n_split += 1
         return n_split
@@ -277,7 +292,10 @@ class ChamberPlacer:
                 else:
                     q = piece.coords[-1]
                     nxt = net.add_chamber(q[0], q[1], self.sampler.z(q[0], q[1]), "spacing")
-                net.add_reach(prev, nxt, piece)
+                    net.chambers[nxt].on_trunk = r.on_trunk
+                nr = net.add_reach(prev, nxt, piece)
+                nr.on_trunk, nr.is_connector, nr.is_crossing = (
+                    r.on_trunk, r.is_connector, r.is_crossing)
                 prev = nxt
 
 

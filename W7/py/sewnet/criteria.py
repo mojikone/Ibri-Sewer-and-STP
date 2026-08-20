@@ -74,7 +74,7 @@ class Criteria:
     ROAD_SIMPLIFY_M: float = 0.50     # smoothing tolerance (removes survey wobble)
     ROAD_COLLINEAR_DEG: float = 10.0  # a break this straight is dissolved away
     GATE_SEARCH_M: float = 45.0       # how far off a street a house gate may sit
-    INLET_MIN_DEG: float = 75.0       # smallest angle an inlet may make with the flow
+    INLET_MIN_DEG: float = 85.0       # smallest angle an inlet may make with the flow
     ROAD_BEND_DEG: float = 30.0       # a turn sharper than this needs a chamber
     ROAD_CHORD_DEV_M: float = 0.50    # how far the pipe may sit off the road line on a curve
     BEND_MAX_CHAMBERS: int = 3        # never more than 3 chambers on one bend (user 2026-08-19)
@@ -89,6 +89,8 @@ class Criteria:
     STUB_MIN_M: float = 8.0           # dangling stub shorter than this, no plots -> drop
     ORPHAN_LINK_M: float = 80.0       # dead-end serving no plot -> drop, repeatedly
     DUAL_CROSS_MAX_M: float = 70.0    # longest perpendicular crossing of a dual carriageway
+    CROSS_PENALTY_M: float = 2500.0   # a crossing needs trenchless work: price it heavily
+    CONNECT_PENALTY_M: float = 400.0  # every join onto the main pipe is a deep chamber
     DUAL_CROSS_SQUARE_DEG: float = 35.0   # how far off square a crossing may be
 
     # traffic links: turning fillets, slip roads, diagonal links between two carriageways.
@@ -232,7 +234,7 @@ class Criteria:
                              "FANOUT_OFFSET_M is only the fallback when no plot faces it."),
             "INLET_ANGLE": (self.INLET_MIN_DEG,
                             "G203-p30 says no inlet shall meet the flow at less than 90 deg. "
-                            "The user set 75 deg on 2026-08-20 to stop the design inserting "
+                            "The user set 85 deg on 2026-08-20 to stop the design inserting "
                             "bend chambers purely to satisfy the rule, which added roughly 200 "
                             "chambers for no construction benefit. STATED DEVIATION from the "
                             "guideline: anything sharper than 75 deg is flagged for a look, "
@@ -276,6 +278,13 @@ class Criteria:
                              "roads and approach arms are left dangling. Anything that dead-"
                              "ends and serves no plot is removed, and the removal repeats "
                              "because taking one away exposes the next (user 2026-08-20)."),
+            "CROSSING_COST": ((self.CROSS_PENALTY_M, self.CONNECT_PENALTY_M),
+                              "Crossing a dual carriageway means trenchless work, and every "
+                              "join onto the main pipe becomes a chamber that will be deep "
+                              "once the whole town drains through it. Both are allowed but "
+                              "only where needed, so the route search is charged for them "
+                              "and uses one only when it pays (user 2026-08-20). A crossing "
+                              "at a known underpass is charged nothing."),
             "DUAL_CROSSING": ((self.DUAL_CROSS_MAX_M, self.DUAL_CROSS_SQUARE_DEG),
                               "No pipe runs ALONG a dual carriageway, but a short pipe may "
                               "cross one at right angles. Joining the two sides is allowed "

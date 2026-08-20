@@ -156,7 +156,8 @@ def chamber_chainages(length, dn_mm, crit=DEFAULT, fixed=()):
 
 
 def attach_to_roads(Gu, segs, outfall_xy, sampler, crit=DEFAULT, dn_mm=400,
-                    max_conn_m=60.0, cluster_m=30.0, square_deg=45.0):
+                    max_conn_m=60.0, cluster_m=30.0, square_deg=45.0,
+                    units=None, keep_k=None):
     """Put manholes on the main pipe and give the streets a way onto it.
 
     The main pipe is not a street — it runs 8 to 13 m to one side — so a side network
@@ -212,6 +213,23 @@ def attach_to_roads(Gu, segs, outfall_xy, sampler, crit=DEFAULT, dn_mm=400,
             continue
         wanted.append((chn, n, foot, dist, sq))
 
+    # --- keep only the joins worth having.
+    # Every join onto the main pipe becomes a chamber that will be deep once the whole town
+    # drains through it, so they cost real money (user 2026-08-20). Rank the candidates by
+    # how much land actually looks to each one, and keep the biggest `keep_k`. The rest of
+    # the town still reaches the main pipe — through a neighbour's join.
+    ranked = list(wanted)
+    if keep_k is not None and units and len(wanted) > keep_k:
+        import numpy as _np
+        pts = _np.array([[u.x, u.y] for u in units])
+        cx = _np.array([[w[2].x, w[2].y] for w in wanted])
+        d2 = ((pts[:, None, :] - cx[None, :, :]) ** 2).sum(axis=2)
+        nearest = d2.argmin(axis=1)
+        load = _np.bincount(nearest, minlength=len(wanted))
+        order = sorted(range(len(wanted)), key=lambda i: -load[i])[:keep_k]
+        ranked = [wanted[i] for i in sorted(order)]
+    wanted = ranked
+
     # --- chambers along the main pipe: spacing rule, honouring those meeting points
     chns = chamber_chainages(L, dn_mm, crit, fixed=[w[0] for w in wanted])
     tkeys, prev = [], None
@@ -220,7 +238,7 @@ def attach_to_roads(Gu, segs, outfall_xy, sampler, crit=DEFAULT, dn_mm=400,
         k = key_of(p.x, p.y)
         if k in Gu and prev == k:
             continue
-        Gu.add_node(k, x=p.x, y=p.y, z=float(sampler.z(p.x, p.y)))
+        Gu.add_node(k, x=p.x, y=p.y, z=float(sampler.z(p.x, p.y)), trunk=True)
         if prev is not None and prev != k:
             seg = LineString([(Gu.nodes[prev]["x"], Gu.nodes[prev]["y"]), (p.x, p.y)])
             Gu.add_edge(prev, k, length=seg.length, geom=seg, trunk=True)
@@ -238,9 +256,11 @@ def attach_to_roads(Gu, segs, outfall_xy, sampler, crit=DEFAULT, dn_mm=400,
             skipped += 1
             continue
         Gu.add_edge(n, k, length=seg.length, geom=seg, connector=True)
+        Gu.nodes[k]["trunk"] = True
         made += 1
 
     rep = {"trunk_chambers": len(tkeys), "trunk_km": round(L / 1000.0, 2),
+           "join_candidates": len(cand), "joins_kept": len(wanted),
            "assumed_dn": dn_mm, "spacing_limit_m": crit.mh_max_spacing(dn_mm),
            "streets_facing_the_main_pipe": len(cand),
            "connection_points": made, "too_far_to_connect": skipped,
@@ -268,6 +288,13 @@ def tree_to_trunk(Gu, trunk_path, outfall, crit=DEFAULT, climb_penalty=300.0,
         both = u in trunk_set and v in trunk_set
         zu, zv = Gu.nodes[u]["z"], Gu.nodes[v]["z"]
         base = d["length"] * (arterial_factor if d.get("arterial") else 1.0)
+        # A crossing needs trenchless work and a join onto the main pipe becomes a deep
+        # chamber. Both are allowed, but the search has to pay for them so it only takes
+        # one where it genuinely helps (user 2026-08-20). An underpass is free.
+        if d.get("crossing") and not d.get("free_crossing"):
+            base += crit.CROSS_PENALTY_M
+        if d.get("connector"):
+            base += crit.CONNECT_PENALTY_M
         if both:
             base *= 50.0
         # streets that led to deep digging last time are made expensive, so the search
@@ -305,7 +332,13 @@ def tree_to_trunk(Gu, trunk_path, outfall, crit=DEFAULT, climb_penalty=300.0,
         geom = Gu[child][parent]["geom"]
         if key_of(*geom.coords[0]) != child:
             geom = LineString(list(geom.coords)[::-1])
-        Gd.add_edge(child, parent, length=Gu[child][parent]["length"], geom=geom)
+        # carry the labels across, or the main pipe arrives at the design as if it were
+        # ordinary street sewer and every one of its own pipes counts as a fresh join
+        e = Gu[child][parent]
+        Gd.add_edge(child, parent, length=e["length"], geom=geom,
+                    trunk=bool(e.get("trunk")), connector=bool(e.get("connector")),
+                    crossing=bool(e.get("crossing")),
+                    free_crossing=bool(e.get("free_crossing")))
 
     # the main pipe drains along itself to its lowest point
     TS = nx.DiGraph()

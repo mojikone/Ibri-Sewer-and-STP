@@ -25,7 +25,8 @@ def log(msg):
     print(f"[{time.time()-T0:7.1f}s] {msg}", flush=True)
 
 
-def main(argv):
+def main(argv, max_joins=None):
+    max_joins = max_joins if max_joins is not None else getattr(cfg, "MAX_TRUNK_JOINS", None)
     os.makedirs(cfg.OUT_RUN, exist_ok=True)
     rc = RunConfig(
         roads=cfg.ROADS, plots=cfg.PLOTS_CLASS, unparceled=cfg.UNPARCELED,
@@ -33,6 +34,8 @@ def main(argv):
         outfall_expected=cfg.OUTFALL_EXPECTED, outfall_override=cfg.OUTFALL_OVERRIDE,
         main_pipe=cfg.MAIN_PIPE, confluence=cfg.CONFLUENCE,
         main_pipe_lead_m=cfg.MAIN_PIPE_LEAD_M,
+        underpasses=tuple(getattr(cfg, "UNDERPASSES", ())),
+        max_trunk_joins=max_joins,
         pf_formula=cfg.PF_FORMULA, clip_sliver_m=cfg.CLIP_SLIVER_M,
         dual_merge_m=cfg.DUAL_MERGE_M,
         treat_roads="--raw-roads" not in argv,

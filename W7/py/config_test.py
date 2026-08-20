@@ -32,6 +32,16 @@ CONFLUENCE = (449124.6, 2567769.4)     # where the west and east legs meet = the
 STP = (444387.0185, 2563352.4576)      # existing Ibri STP, 7.6 km further on
 MAIN_PIPE_LEAD_M = 1200.0              # how far outside the boundary to follow the trunk
 
+# Crossing a dual carriageway normally needs trenchless work, which is expensive. At this
+# underpass the pipe can go through in the open, so a crossing there costs nothing extra
+# (user 2026-08-20).
+UNDERPASSES = [(450375.24, 2568397.64)]
+
+# Every join onto the main pipe becomes a chamber that will be deep once the whole town
+# drains through it, so they are kept to the fewest that still works. Measured 2026-08-20:
+# 30 joins is the floor for an all-gravity design; 28 or fewer costs a pumping station.
+MAX_TRUNK_JOINS = 30
+
 OUTFALL_EXPECTED = CONFLUENCE
 OUTFALL_OVERRIDE = None
 

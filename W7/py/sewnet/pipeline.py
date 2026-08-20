@@ -50,6 +50,8 @@ class RunConfig:
     confluence: tuple = ()                   # where its legs meet = the outfall
     main_pipe_lead_m: float = 1200.0
     trunk_dn_seed: int = 400                 # first guess at trunk size, refined by the solver
+    underpasses: tuple = ()                  # crossings here need no trenchless work
+    max_trunk_joins: Optional[int] = None    # cap on joins onto the main pipe (None = all)
     trunk_sides: tuple = ("west", "south")   # superseded, kept so old configs still load
     use_trunk: bool = True
     reroute_passes: int = 6      # try again round deep spots before accepting a pump
@@ -116,7 +118,7 @@ class SewerDesignPipeline:
             # point and move the outfall uphill (review RT-7)
             probe = TreeBuilder(sampler, C, cfg.outfall_expected, cfg.outfall_override)
             raw_of, raw_rep = probe.pick_outfall(probe.build_undirected(segs), boundary)
-            rt = RoadTreatment(sampler, C, attrs=attrs)
+            rt = RoadTreatment(sampler, C, attrs=attrs, underpasses=cfg.underpasses)
             segs = rt.run(segs, units, out_path=cfg.corridors_out, protect={raw_of})
             self.reports["road_treatment"] = rt.report
             self.log(f"   {rt.report}")
@@ -127,6 +129,16 @@ class SewerDesignPipeline:
         tb = TreeBuilder(sampler, C, cfg.outfall_expected, cfg.outfall_override)
         Gu = tb.build_undirected(segs)
         tb.mark_arterials(Gu)
+        if cfg.treat_roads and getattr(rt, "crossings", None):
+            from .model import key_of as _kf
+            marked = 0
+            for g, free in rt.crossings:
+                a, b = _kf(*g.coords[0][:2]), _kf(*g.coords[-1][:2])
+                if Gu.has_edge(a, b):
+                    Gu[a][b]["crossing"] = True
+                    Gu[a][b]["free_crossing"] = bool(free)
+                    marked += 1
+            self.reports["road_treatment"]["crossings_on_graph"] = marked
         if cfg.use_trunk:
             # The main pipe is GIVEN (user 2026-08-20): read the drawing, keep the part
             # this area needs, and hang the streets off it at right angles.
@@ -138,7 +150,8 @@ class SewerDesignPipeline:
                      f"({trep['inside_boundary_km']} km inside the boundary, "
                      f"{trep['lead_to_outfall_km']} km of lead to the outfall)")
             trunk_path, arep = attach_to_roads(Gu, segs_mp, of_xy, sampler, C,
-                                               dn_mm=cfg.trunk_dn_seed)
+                                               dn_mm=cfg.trunk_dn_seed,
+                                               units=units, keep_k=cfg.max_trunk_joins)
             trep.update(arep)
             self.reports["trunk"] = trep
             self.log(f"   {arep['trunk_chambers']} chambers on it; "

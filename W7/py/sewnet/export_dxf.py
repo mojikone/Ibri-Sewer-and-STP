@@ -13,13 +13,25 @@ def write(path, net, riders, pockets, of_rep, catchments=None):
     msp = doc.modelspace()
     for name, color in [("SEW-PIPE", 3), ("SEW-MH", 7), ("SEW-LABEL", 2), ("SEW-MH-LABEL", 8),
                         ("SEW-OUTFALL", 1), ("SEW-SLS", 1), ("SEW-RIDER", 8), ("SEW-DROP", 6),
-                        ("SEW-PUMP", 1), ("SEW-RISING-MAIN", 1), ("SEW-SWEPT-CH", 6),
+                        ("SEW-PUMP", 1), ("SEW-RISING-MAIN", 1), ("SEW-TRUNK-MH", 7), ("SEW-MAIN-PIPE", 5), ("SEW-JOIN", 6),
                         ("SEW-CATCHMENT", 4), ("SEW-CATCHMENT-LABEL", 4)]:
         doc.layers.add(name, color=color)
     for dn, col in DN_COLOR.items():
         doc.layers.add(f"SEW-PIPE-DN{dn}", color=col)
 
     for p in pipes:
+        if p.on_trunk:                            # the main pipe, heavy and on its own layer
+            msp.add_lwpolyline(list(p.geom.coords),
+                               dxfattribs={"layer": "SEW-MAIN-PIPE"})
+            continue
+        if p.is_crossing:
+            msp.add_lwpolyline(list(p.geom.coords), dxfattribs={"layer": "SEW-JOIN"})
+            mid = p.geom.interpolate(0.5, normalized=True)
+            tx = msp.add_text("DUAL CARRIAGEWAY CROSSING (underpass)",
+                              dxfattribs={"layer": "SEW-JOIN", "height": 2.5})
+            tx.set_placement((mid.x + 2, mid.y + 2),
+                             align=ezdxf.enums.TextEntityAlignment.LEFT)
+            continue
         if p.is_rising_main:                      # pumped: its own layer, dashed by eye
             msp.add_lwpolyline(list(p.geom.coords),
                                dxfattribs={"layer": "SEW-RISING-MAIN"})
@@ -74,8 +86,8 @@ def write(path, net, riders, pockets, of_rep, catchments=None):
             t = msp.add_text(f"PUMPING STATION {n.label}  lift {n.lift_m:.1f} m",
                              dxfattribs={"layer": "SEW-PUMP", "height": 3.0})
             t.set_placement((n.x + 9, n.y + 3), align=ezdxf.enums.TextEntityAlignment.LEFT)
-        if n.swept_entry:
-            msp.add_circle((n.x, n.y), 3.0, dxfattribs={"layer": "SEW-SWEPT-CH"})
+        if n.on_trunk:
+            msp.add_circle((n.x, n.y), 2.2, dxfattribs={"layer": "SEW-TRUNK-MH"})
 
     for r in riders:
         msp.add_lwpolyline(list(r["geom"].coords), dxfattribs={"layer": "SEW-RIDER"})
