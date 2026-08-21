@@ -1,0 +1,79 @@
+"""W8 exports: SHP + SewerGEMS package + DXF + PNG maps, from run/state.pkl."""
+
+import os
+import pickle
+import sys
+import time
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import config_test as cfg
+from shapely import wkt
+from sewnet import catchments, export_shp, export_gems, export_dxf, export_kmz, maps
+
+T0 = time.time()
+
+
+def log(m):
+    print(f"[{time.time()-T0:6.1f}s] {m}", flush=True)
+
+
+def main():
+    st = pickle.load(open(os.path.join(cfg.OUT_RUN, "state.pkl"), "rb"))
+    net = st["network"]
+    boundary = wkt.loads(st["boundary_wkt"])
+    summary = st["summary"]
+    per_mh_units = st["per_chamber"]
+
+    log("catchment boundaries ...")
+    cats = catchments.build(net, per_mh_units, st["units"], st.get("trunk_keys", []),
+                            boundary, stubs=st.get("stubs"))
+    rep = catchments.check(cats, units_total=len(st["units"]))
+    log(f"  {rep}")
+
+    log("SHP ...")
+    export_shp.write_all(cfg.OUT_SHP, net, st["riders"], st["still_low"],
+                         st["pockets"], boundary, st["of_rep"],
+                         spurs=st.get("spurs"), stubs=st.get("stubs"), catchments=cats,
+                         trunk_keys=set(st.get("trunk_keys", [])),
+                         trunk_wkt=st.get("trunk_wkt"))
+    log("SewerGEMS package ...")
+    n_loads = export_gems.write_all(cfg.OUT_GEMS, net, per_mh_units, st["of_rep"])
+    log(f"  {n_loads} load rows")
+    log("DXF ...")
+    os.makedirs(cfg.OUT_DXF, exist_ok=True)
+    export_dxf.write(os.path.join(cfg.OUT_DXF, "W8_test_boundary_design.dxf"),
+                     net, st["riders"], st["pockets"], st["of_rep"], catchments=cats)
+    log("KMZ for Google Earth ...")
+    kz = export_kmz.write(os.path.join(cfg.OUT, "W8_sewer_design.kmz"), net,
+                          catchments=cats, of_rep=st["of_rep"])
+    log(f"  {kz}")
+
+    log("maps ...")
+    os.makedirs(cfg.OUT_IMG, exist_ok=True)
+    maps.network_map(os.path.join(cfg.OUT_IMG, "W8_M1_network_by_dn.png"),
+                     net, st["pockets"], st["of_rep"], boundary, summary)
+    maps.depth_map(os.path.join(cfg.OUT_IMG, "W8_M2_depth.png"), net, boundary, summary)
+    maps.lowplot_map(os.path.join(cfg.OUT_IMG, "W8_M3_connectability.png"),
+                     net, st["conn"], st["still_low"], boundary, summary)
+    maps.catchment_map(os.path.join(cfg.OUT_IMG, "W8_M4_catchments.png"),
+                       net, cats, boundary, summary)
+    # The report is part of every run from now on (user 2026-08-20: "it helps a lot").
+    # Both formats come from the same content module, so they cannot say different things,
+    # and every number is read live from run/summary.json.
+    log("report (Word + PDF) ...")
+    import subprocess
+    rdir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "report")
+    for script in ("make_methodology_docx.py", "make_methodology_pdf.py"):
+        r = subprocess.run([sys.executable, "-X", "utf8", os.path.join(rdir, script)],
+                           cwd=rdir, capture_output=True, text=True)
+        tail = (r.stdout or r.stderr).strip().splitlines()
+        if r.returncode == 0:
+            log(f"  {tail[-1] if tail else script}")
+        else:
+            # never let a locked PDF stop the run, but never hide it either
+            log(f"  !! {script} FAILED: {tail[-1] if tail else 'unknown error'}")
+    log("done")
+
+
+if __name__ == "__main__":
+    main()
