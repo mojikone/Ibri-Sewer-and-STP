@@ -26,7 +26,7 @@
     "reference": "G203-p29 Tab 11 + p27",
     "requirement": "steeper of Table 11 and the tractive minimum",
     "status": "PASS",
-    "found": "flattest laid 1.55 mm/m",
+    "found": "flattest laid 2.00 mm/m",
     "findings": []
   },
   {
@@ -46,7 +46,7 @@
     "reference": "G203-p26-27",
     "requirement": "v >= 0.75 m/s or the tractive-force minimum gradient",
     "status": "PASS",
-    "found": "1370/1414 reaches below 0.75 m/s, all tractive-compliant at tau=1.0 Pa [GAP-9]",
+    "found": "1299/1414 reaches below 0.75 m/s, all tractive-compliant at tau=1.0 Pa [GAP-9]",
     "findings": []
   },
   {
@@ -56,7 +56,7 @@
     "reference": "G203-p27 Tab 10",
     "requirement": "<=0.65 (DN<=350), <=0.50 (DN>350)",
     "status": "PASS",
-    "found": "deepest flow d/D 0.648",
+    "found": "deepest flow d/D 0.634",
     "findings": []
   },
   {
@@ -86,7 +86,7 @@
     "reference": "G203-p33 4.6.3",
     "requirement": ">= 1.30 m along the whole profile",
     "status": "PASS",
-    "found": "worst cover 1.32 m (P-0828)",
+    "found": "worst cover 1.31 m (P-0103)",
     "findings": []
   },
   {
@@ -96,7 +96,7 @@
     "reference": "G203-p33 + rule 9",
     "requirement": "<= 12 m, deeper becomes an SLS pocket",
     "status": "PASS",
-    "found": "deepest chamber 10.33 m",
+    "found": "deepest chamber 10.45 m",
     "findings": []
   },
   {
@@ -126,7 +126,7 @@
     "reference": "G203-p30 4.4",
     "requirement": "inlet drop > 600 mm recorded as backdrop; > 2 m as vortex shaft",
     "status": "PASS",
-    "found": "177 drops (77 vortex-class)",
+    "found": "177 drops (78 vortex-class)",
     "findings": []
   },
   {

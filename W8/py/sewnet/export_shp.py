@@ -55,6 +55,7 @@ def write_all(out_dir, net: Network, riders, still_low, pockets, boundary, of_re
         "MAT": [r.material for r in R],
         "LEN_M": [round(r.length, 2) for r in R],
         "SLOPE_PMIL": [round(r.slope * 1000, 3) for r in R],
+        "SLOPE_PCT": [round(r.slope * 100, 3) for r in R],   # same number, in percent
         "INV_UP": [round(r.inv_up, 3) for r in R],
         "INV_DN": [round(r.inv_dn, 3) for r in R],
         "N_PROPS": [int(r.n_props) for r in R],

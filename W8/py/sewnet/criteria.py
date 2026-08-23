@@ -74,6 +74,7 @@ class Criteria:
     ROAD_SIMPLIFY_M: float = 0.50     # smoothing tolerance (removes survey wobble)
     ROAD_COLLINEAR_DEG: float = 10.0  # a break this straight is dissolved away
     GATE_SEARCH_M: float = 45.0       # how far off a street a house gate may sit
+    SLOPE_STEP: float = 0.0005        # lay pipes at a round gradient: 0.05 % steps
     INLET_MIN_DEG: float = 85.0       # smallest angle an inlet may make with the flow
     ROAD_BEND_DEG: float = 30.0       # a turn sharper than this needs a chamber
     ROAD_CHORD_DEV_M: float = 0.50    # how far the pipe may sit off the road line on a curve
@@ -235,6 +236,17 @@ class Criteria:
                              "fixed offset from the junction (user 2026-08-20). The gate is "
                              "taken as the plot centroid dropped square onto the street; "
                              "FANOUT_OFFSET_M is only the fallback when no plot faces it."),
+            "SLOPE_STEP": (self.SLOPE_STEP,
+                           "Pipes are laid at a ROUND gradient, in steps of 0.05 %, so the "
+                           "number on the drawing is the number the invert levels came from "
+                           "(user 2026-08-23). A gradient of 6.911 mm/m is not something "
+                           "anyone sets out. On a single pipe the value is rounded UP, since "
+                           "rounding down would breach the minimum; along a whole run it is "
+                           "eased DOWN to the next round value, which leaves the far end "
+                           "slightly shallower and never deeper. Measured cost: 1.0 % more "
+                           "excavation, 0.12 m on the deepest chamber, no extra pumping "
+                           "station, and the number of distinct gradients falls from 448 "
+                           "to 103."),
             "INLET_ANGLE": (self.INLET_MIN_DEG,
                             "G203-p30 says no inlet shall meet the flow at less than 90 deg. "
                             "The user set 85 deg on 2026-08-20 to stop the design inserting "

@@ -68,6 +68,13 @@ class HydraulicDesigner:
                 smax = H.smax_for(r.dn_mm, r.qpeak_m3s, C)
                 s_rec = (inv - target) / r.length if r.length > 0 else smin
                 S = max(s_rec, smin)
+                # Lay at a ROUND gradient so the number on the drawing is the number the
+                # inverts came from — 6.911 mm/m is not something anyone sets out (user
+                # 2026-08-23). Always round UP: rounding down would break the minimum.
+                if C.SLOPE_STEP > 0:
+                    snapped = math.ceil(S / C.SLOPE_STEP - 1e-9) * C.SLOPE_STEP
+                    if smax is None or smax == H.INFEASIBLE or snapped <= smax:
+                        S = snapped
                 drop_up = 0.0
                 if smax is not None and smax != H.INFEASIBLE and S > smax:
                     drop_up += (S - smax) * r.length     # velocity cap -> drop in the chamber
@@ -181,6 +188,13 @@ class HydraulicDesigner:
             if L <= 0:
                 continue
             S = (i0 - i1) / L
+            # Same idea along a whole run, but rounded DOWN here: the run already has the
+            # fall it needs, so easing back to the next round value keeps every pipe above
+            # its minimum and leaves the far end very slightly shallower, never deeper.
+            if C.SLOPE_STEP > 0:
+                eased = math.floor(S / C.SLOPE_STEP + 1e-9) * C.SLOPE_STEP
+                if eased > 0:
+                    S = eased
             ok = True
             for r in chain:
                 if S < H.smin_for(r.dn_mm, r.qpeak_m3s, C) * 0.999:

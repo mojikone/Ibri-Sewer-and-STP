@@ -84,7 +84,7 @@ def write(path, net, catchments=None, of_rep=None):
         cat = props.get(r.subnet)
         rows = [("Pipe", r.label), ("Size", f"DN{r.dn_mm}"),
                 ("Length", f"{r.length:.1f} m"),
-                ("Gradient", f"{r.slope*1000:.2f} mm/m"),
+                ("Gradient", f"{r.slope*100:.2f} %  ({r.slope*1000:.2f} mm/m)"),
                 ("Invert up / down", f"{r.inv_up:.2f} / {r.inv_dn:.2f} m"
                  if r.inv_up is not None else "-"),
                 ("Peak flow", f"{r.qpeak_ls:.2f} L/s"),

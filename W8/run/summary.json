@@ -38,8 +38,8 @@
     "iterations": 3,
     "smoothing": {
       "runs_found": 358,
-      "runs_smoothed": 205,
-      "runs_left_as_solved": 153
+      "runs_smoothed": 194,
+      "runs_left_as_solved": 164
     },
     "pockets": 0
   },
@@ -51,8 +51,8 @@
   },
   "lowplots": {
     "checked": 3017,
-    "flagged": 162,
-    "deepened_mh": 65,
+    "flagged": 160,
+    "deepened_mh": 64,
     "residual": 0
   },
   "road_treatment": {
@@ -141,15 +141,15 @@
   "violations": 3,
   "selfclean": {
     "pipes": 1414,
-    "below_075_at_peak": 1370,
-    "share_below": 0.969,
-    "would_fail_at_tau2": 974,
+    "below_075_at_peak": 1299,
+    "share_below": 0.919,
+    "would_fail_at_tau2": 915,
     "note": "0.75 m/s unattainable on small branches; compliance rests on the tractive methodology at tau=1 Pa [GAP-9]"
   },
-  "startyear_flags": 1395,
-  "max_depth_m": 10.334804986874701,
+  "startyear_flags": 1370,
+  "max_depth_m": 10.45013123436081,
   "drops": 177,
-  "vortex_sites": 77,
+  "vortex_sites": 78,
   "pf_formula": "merrimack",
   "features": {
     "road_treatment": true,

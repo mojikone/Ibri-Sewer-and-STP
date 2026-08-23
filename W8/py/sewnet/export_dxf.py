@@ -49,7 +49,7 @@ def write(path, net, riders, pockets, of_rep, catchments=None):
         b = p.geom.interpolate(min(p.geom.length, 0.5 * p.geom.length + 2.0))
         ang = math.degrees(math.atan2(b.y - a.y, b.x - a.x))
         if p.length > 25:
-            txt = f"DN{p.dn_mm} {p.slope*1000:.1f}‰"
+            txt = f"DN{p.dn_mm} {p.slope*100:.2f}%"
             t = msp.add_text(txt, dxfattribs={"layer": "SEW-LABEL", "height": 1.8,
                                               "rotation": ang if -90 <= ang <= 90 else ang + 180})
             t.set_placement((mid.x, mid.y + 1.2), align=ezdxf.enums.TextEntityAlignment.CENTER)
