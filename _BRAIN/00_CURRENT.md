@@ -1,4 +1,4 @@
-# What is current, and what is not — checked 2026-08-20 (W7)
+# What is current, and what is not — checked 2026-08-23 (W8)
 
 Read this before trusting any file in the repo. The job has grown, so this page says
 plainly which document is live and which is a record of past work.
@@ -11,10 +11,12 @@ plainly which document is live and which is a record of past work.
 | `_BRAIN/07_PROJECT_STATE.md` | the one-page orientation: data, doctrine, progress | 2026-08-19 |
 | `_BRAIN/02_DESIGN_CRITERIA.md` | every design number with its guideline page | 2026-08-19 |
 | `W5/docs/CRITERIA_UPDATE_R1.md` | the register of rules agreed 18–19 Aug and what is built | 2026-08-19 |
-| `W7/report/W7_Sewer_Network_Design.docx / .pdf` | **the current report**, built on every run | 2026-08-20 |
-| `W7/py/` | **the design code** that produced the current outputs | 2026-08-20 |
-| `W7/shp/ dxf/ img/ sewergems/ run/` + `W7_sewer_design.kmz` | **the current design outputs** | 2026-08-20 |
-| `W7/docs/CALIBRATION_vs_EXISTING.md` | the engine measured against NAMA's as-built network | 2026-08-20 |
+| `W8/report/W8_Sewer_Network_Design.docx / .pdf` | **the current report**, built on every run | 2026-08-23 |
+| `W8/py/` | **the design code** that produced the current outputs | 2026-08-23 |
+| `W8/shp/ dxf/ img/ sewergems/ run/` + `W8_sewer_design.kmz` | **the current design outputs** | 2026-08-23 |
+| `W8/docs/LEARNING_FROM_ASBUILT.md` | the three-tier structure learned from NAMA's manhole IDs | 2026-08-23 |
+| `W7/docs/CALIBRATION_vs_EXISTING.md` | the first calibration — gradients and depths match; still valid, but it MISSED the hierarchy | 2026-08-20 |
+| `TUTORIALS/T02/` | **T02 — Hydraulic Design of a Gravity Sewer**: every design constraint, each value read back from the source PDF with its page | 2026-08-23 |
 | `SHP/Main Pipe/Main Pipe.shp` | **the trunk is an INPUT now** — the user's drawing, not derived | 2026-08-20 |
 | `TUTORIALS/T01…docx` | how the flow and load are worked out — **Rev 4** | 2026-08-19 |
 
@@ -22,6 +24,7 @@ plainly which document is live and which is a record of past work.
 
 | File | Why it is out of date |
 |---|---|
+| `W7/**` | W7 placed the main pipe correctly and got to zero pumping stations, but had NO sub-main tier: 30 things touched the main pipe, 14 of them carrying under 100 properties. Superseded by W8 |
 | `W6/**` | W6 guessed the trunk by picking streets near a described line. It found 2.1 km in the southern corner and needed 4 pumping stations. Superseded entirely — do not quote its pumping or depth numbers |
 | `W5/**` | W5 was the run before the trunk was placed and before the 12 m depth limit was enforced. Its design has chambers past 12 m that the audit did not report. Do not quote its chamber, depth or pumping numbers |
 | `W4/**` (all of it) | W4 was the first design pipeline. W5 replaces it. The one live file is `W4/shp/ELE_accounts.shp`, which W5 still reads |

@@ -70,6 +70,33 @@ def build():
                    f"{S['qpeak_outfall_ls']:.0f} litres a second at the busiest hour. The whole "
                    f"run takes about 20 seconds, so any rule can be changed and the effect seen "
                    f"the same day."))
+    B.append(("bullet", "The network is now built as a HIERARCHY. ",
+              f"Your built network told us how: its manhole IDs carry the designer's own "
+              f"decomposition — 5A-2-TM-MH185 is a trunk main, 5A-2-SM.2-MH391 a sub main. "
+              f"Read that way it is 1 trunk main, 6 sub mains and 419 laterals, and 381 of "
+              f"those 419 laterals (91 per cent) drain into ANOTHER lateral rather than "
+              f"reaching for the trunk. Only about 16 things touch their trunk. The previous "
+              f"run had no sub-main tier at all, so 30 things touched the main pipe and 14 of "
+              f"them carried fewer than 100 properties. This design has "
+              f"{TR.get('joins_kept', 0)}, of which 7 carry 100 properties or more, and every "
+              f"pipe now says which tier it belongs to."))
+    B.append(("bullet", "Gradients are laid at round values. ",
+              "A gradient of 6.911 mm/m is not something anyone sets out on site. Pipes are "
+              "now designed at 0.05 per cent steps, so the number on the drawing is the "
+              "number the invert levels came from — the rounding is in the design, not in "
+              "the printing. It brought the number of distinct gradients down from 448 to "
+              "103 and cost 1 per cent more excavation and 0.12 m of depth, with no extra "
+              "pumping station. Every output now carries the gradient in per cent as well as "
+              "per mille."))
+    B.append(("bullet", "Two faults you spotted, both worse than they looked. ",
+              "Eight pipes were crossing a dual carriageway while only one was being charged "
+              "for it, because the charge applied only to crossings this design created — "
+              "any ordinary pipe that happened to cross paid nothing. And the one crossing "
+              "that was labelled sat 97 m from the underpass, because the 'free at an "
+              "underpass' test used a 120 m radius. Every physical crossing is charged now "
+              "and the radius is 30 m. Separately, 49 chambers were sitting inside people's "
+              "plots — one 4.8 m inside a house plot — because the clearance rule only ever "
+              "guarded bend chambers. Every chamber is checked now, against every plot."))
     B.append(("p", "Six things changed since the last run, all from your review and from "
                    "measuring this design against the network NAMA actually built."))
     B.append(("bullet", "The main pipe is now yours, not mine. ",
