@@ -1,0 +1,55 @@
+"""Build the Concept Design Report.
+
+    python build.py          build the .docx
+    python build.py --pdf    build and render to PDF through Word
+"""
+import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import doc as D
+import notes as N
+
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                   "Ibri_Concept_Design_Report_R0.docx")
+
+
+def main(render_pdf=False):
+    d = D.new_document()
+    N.reset()
+    N.ensure_style(d)
+
+    import rpt_front
+    rpt_front.cover(d)
+    rpt_front.contents(d)
+    rpt_front.abbreviations(d)
+    rpt_front.executive_summary(d)
+
+    import rpt_ab
+    rpt_ab.part_a(d)
+    rpt_ab.part_b(d)
+
+    for mod, fns in (("rpt_cd", ("part_c", "part_d")),
+                     ("rpt_ef", ("part_e", "part_f")),
+                     ("rpt_gh", ("part_g", "part_h"))):
+        try:
+            m = __import__(mod)
+        except ImportError:
+            continue
+        for fn in fns:
+            getattr(m, fn)(d)
+
+    D.footer_pagenum(d, "Ibri Concept Design Report  ·  Revision 0  ·  "
+                        "Renardet Project 2621")
+    N.save(d, OUT)
+    print(f"wrote {OUT}")
+
+    if render_pdf:
+        import to_pdf
+        pdf, pages = to_pdf.convert(OUT)
+        print(f"wrote {pdf}  ({pages} pages)")
+
+
+if __name__ == "__main__":
+    main(render_pdf="--pdf" in sys.argv)
