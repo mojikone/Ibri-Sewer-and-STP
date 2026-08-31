@@ -31,72 +31,74 @@ The report must therefore be a self-contained, formally approvable document whos
 
 ## Proposed structure
 
-### Front matter
-- **F1** Document control — revision, ruling language English, 2 hard + 2 soft copies, digital deliverable form (tender p147, p152, p177)
-- **F2** Authorship and discipline signature page — the eight named Design Key Positions, Muscat-stationed and NWS-approved (tender p122–123)
-- **F3** Abbreviations and definitions — **including the TE / TSE resolution above**
-- **F4** Executive summary
+The third column names the section of **Tutorial T03 Revision 01** that carries the method, the equations and their source pages for that part of the work. A dash marks a section for which the methodology document does not yet carry a method.
 
-### Part A — Project, scope and process
-1. Introduction, project background and RG Master Plan context
-2. Scope and boundaries — reconciliation of Figures 1, 2 and 3, and of the two boundary files issued with R0 (439 km² vs 520 km²)
-3. Programme, design stage gates and next-stage trigger — P6 / MS Project (tender p112)
-4. Meetings, consultation and decisions record
-5. Quality plan, third-party QA review, and HSE plan (G201-p127; tender p116, p118)
+| | Section | Method in T03 Rev 01 |
+|---|---|---|
+| **Front matter** | | |
+| F1 | Document control |  |
+| F2 | Authorship and discipline signatures |  |
+| F3 | Abbreviations and definitions | Front matter |
+| F4 | Executive summary |  |
+| **Part A** | **Project, scope and process** | |
+| 1 | Introduction, background and RG Master Plan context |  |
+| 2 | Scope and boundaries |  |
+| 3 | Programme and design stage gates |  |
+| 4 | Meetings, consultation and decisions record |  |
+| 5 | Quality plan and HSE plan |  |
+| **Part B** | **Data** | |
+| 6 | Data collection register | 3 |
+| 7 | Data validation and adequacy assessment | 3 |
+| 8 | Survey, geotechnical investigation and trial pits | 13 |
+| 9 | Existing systems — as-built and GIS | 15 |
+| **Part C** | **Basis of design** | |
+| 10 | Codes, standards and the deviations register | 22 |
+| 11 | Level of service, resilience and contingency | — |
+| 12 | Design criteria — networks | 9, 11 |
+| 13 | Design criteria — STP and process | 16 |
+| **Part D** | **Demand and flows** | |
+| 14 | Population and land use | 3, 4 |
+| 15 | Wastewater generation and design flows | 5, 6, 7, 8 |
+| 16 | Trade effluent and industrial contributions | 16.4 |
+| 17 | Treated effluent demand and customers | 17 |
+| **Part E** | **Existing system** | |
+| 18 | Hydraulic assessment of existing networks | 14, 15 |
+| 19 | Rehabilitation and upgrading | 15 |
+| 20 | RG Master Plan verification | 4, 7 |
+| **Part F** | **Options** | |
+| 21 | Options methodology | 21 |
+| 22 | Sewer network options | 9, 10 |
+| 23 | Pumping and lifting stations, force mains, surge | 11, 12 |
+| 24 | Treated effluent network options | 17 |
+| 25 | STP options — technology, siting, phasing | 16 |
+| 26 | Excess effluent, emergency provisions, tankers | 16.8 |
+| 27 | Sludge management strategy | 18 |
+| **Part G** | **Assessment and appraisal** | |
+| 28 | Ground model and geotechnical report | 13 |
+| 29 | Flood protection assessment | 16.9 |
+| 30 | Odour assessment and buffer derivation | 12, 16.9 |
+| 31 | Climate resilience | — |
+| 32 | Environmental and social assessment, EIA scoping | — |
+| 33 | Utility interfaces and the NOC register | 13 |
+| 34 | Sustainability — carbon, circular economy, ICV | 20.5 |
+| 35 | Cost — CAPEX, OPEX, life cycle cost | 19, 20 |
+| 36 | Risk register | 20.6 |
+| 37 | Value engineering study | 21.5 |
+| 38 | Multi-criteria results and recommendation | 21.4 |
+| **Part H** | **Delivery** | |
+| 39 | Implementation roadmap | — |
+| 40 | Contracting strategy and packaging | — |
+| 41 | Project Integration Plan | — |
+| 42 | Conclusions and recommendations |  |
+| 43 | Appendices |  |
 
-### Part B — Data
-6. Data collection register — requested, received, outstanding, by authority
-7. Data validation and adequacy assessment — carries the inference register (TOR deliverable 9; tender p201 declares NWS's own network data inaccurate)
-8. Topographic survey, geotechnical investigation, geophysics and trial pits — status, accuracy class and programme (G201-p36, p39–40; 50 trial pits, TOR p55)
-9. Existing systems — as-built and GIS, including upload to the NWS GIS system and NWS acceptance (tender p156) **[A1]**
+### Sections without a documented method
 
-### Part C — Basis of design
-10. Codes and standards register, edition rule, and the **deviations register** with NWS approval status (tender p113, p200; G203-p9)
-11. Level of service, resilience, contingency planning, FMEA/CPA, N+1 modularity (G201-p31–33)
-12. Design criteria — networks
-13. Design criteria — STP and process, effluent standards, Class A TSE
+Six sections have no corresponding method in the current revision of the methodology document, listed so the gap is visible rather than discovered during drafting: level of service and resilience (11), climate resilience (31), environmental and social assessment (32), the implementation roadmap (39), contracting strategy (40), and the Project Integration Plan (41). None blocks the structure; each will be added to T03 before the corresponding report section is drafted.
 
-### Part D — Demand and flows
-14. Population and land use — two-method reconciliation, occupancy rate, **Krookie** as the legal plot boundary term
-15. Wastewater generation and design flows — 5-year intervals, saturation, connection ramp
-16. Trade effluent and industrial contributions — documented sources, pre-treatment strategies, evidence industries are aware of limits, **user charges** (G203-p73)
-17. TSE demand and customers — public and private consumer categories (G201-p74), consumers above 500 m³/d studied individually
+### Word version
 
-### Part E — Existing system
-18. Hydraulic assessment of the existing sewer and TSE networks
-19. Rehabilitation and upgrading requirements **[A2, priced]** (tender p156, p201)
-20. RG Master Plan verification, and the data handover to NWS Asset Management Planning (TOR p54)
-
-### Part F — Options
-21. **Options methodology** — the three prescribed archetypes (nature-based / international best-in-class / standard Omani practice), equivalent functional requirements, MCDA criteria and NWS-set weights, 25-year horizon, 5 % discount rate, sensitivity tests, and the 10 % total-lifetime-cost sustainability tie-break (G201-p95, p104–106)
-22. Sewer network options — including riders, house connections, backdrops, end caps for future connections (tender glossary p202)
-23. Pumping and lifting stations, force mains, **surge analysis**
-24. TSE network options, storage, filling stations
-25. STP options — technology, land area by process, siting against the fifteen criteria, phasing, **phase-I capacity stated explicitly against the 20,000 m³/d contractual trigger** (tender p155) **[A3]**
-26. Excess TSE, wadi discharge, emergency lagoons (48–72 h), raw sewage diversion on STP failure, tanker reception **[A3]**
-27. **Sludge management strategy** — Ibri STP is named in NWS's own plan as the Adh Dhahirah composting centre (G203-p136, Table 67); reuse by default under MD 145/93; Be'ah acceptance criteria
-
-### Part G — Assessment and appraisal
-28. Ground model v1 and concept geotechnical report (G201-p39)
-29. **Flood protection assessment** — 25- and 100-year levels; STPs fully operational during floods (G201-p19; G203-p63)
-30. **Odour dispersion modelling** and the derived buffer — for a large STP the buffer is 300–1000 m from the 5 OU contour, not a fixed number (G203-p170; G201-p43–44)
-31. **Climate resilience** — 50-year horizon at +2 °C and +4 °C, feeding site selection (G201-p33)
-32. Environmental and social assessment, EIA scoping, NOCs and approvals **[A3]**
-33. Utility interfaces, clearances, crossings and the **NOC / stakeholder register**
-34. **Sustainability** — carbon footprint in tCO₂e/yr and per m³, circular economy, In-Country Value, nature-based solutions (G201-p95, p98–104)
-35. Cost — CAPEX, OPEX, life cycle cost, NPV, **stated accuracy class**, CESMM3 basis
-36. Risk register
-37. **Value Engineering study** — formal VE required at concept for an STP above OMR 2 M (G201-p93)
-38. MCDA results and recommended options, with justification
-
-### Part H — Delivery
-39. **Implementation roadmap** — subsequent design scope, Designer-versus-EPC decision, phasing, performance monitoring framework (G201-p106)
-40. Contracting strategy and packaging
-41. **Project Integration Plan** (G201-p107)
-42. Conclusions and recommendations
-43. Appendices — data register, calculations, drawings, process flow diagram, general STP layout, flow chart, deliverables and model-file handover inventory
-
----
+`Concept_Design_Report_Structure.docx` in this folder is the submission copy, built by `W9/py/make_structure_docx.py`. It is the version to send to NWS; this file is the working source.
 
 ## Compliance mapping
 
