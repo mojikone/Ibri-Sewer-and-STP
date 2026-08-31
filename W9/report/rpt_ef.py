@@ -1,6 +1,10 @@
 """Part E - the existing system.   Part F - options."""
+import os
+
 import doc as D
 import notes as N
+
+IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "img")
 
 
 def _pending(d, text):
@@ -9,7 +13,7 @@ def _pending(d, text):
 
 # ===================================================== PART E
 def part_e(d):
-    D.h(d, 1, "Part E   The existing system", page_break=True)
+    D.part(d, "E", "The existing system")
 
     # --------------------------------------------------------------- 18
     D.h(d, 1, "18   Hydraulic assessment of the existing networks")
@@ -85,10 +89,13 @@ def part_e(d):
 
 # ===================================================== PART F
 def part_f(d):
-    D.h(d, 1, "Part F   Options", page_break=True)
+    D.part(d, "F", "Options")
 
     # --------------------------------------------------------------- 21
     D.h(d, 1, "21   Options methodology")
+
+    D.picture(d, os.path.join(IMG, "D5_options.png"), 15.5)
+    D.fig_caption(d, "Development of the options and the basis on which they are compared.")
 
     D.h(d, 2, "21.1   Number and character of the options")
     p = D.p(d, "Not fewer than three options are developed for each of the "
@@ -125,6 +132,9 @@ def part_f(d):
 
     # --------------------------------------------------------------- 22
     D.h(d, 1, "22   Sewer network options", page_break=True)
+
+    D.picture(d, os.path.join(IMG, "D4_network.png"), 15.5)
+    D.fig_caption(d, "The network design approach, and the point at which a lifting station becomes necessary.")
 
     D.h(d, 2, "22.1   Principles")
     D.p(d, "The network is laid out to convey the flow by gravity wherever "

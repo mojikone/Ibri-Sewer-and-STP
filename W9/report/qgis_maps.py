@@ -12,6 +12,7 @@ from qgis.core import (QgsLayoutExporter, QgsLayoutItemLabel, QgsLayoutItemMap,
                        QgsCoordinateTransform, QgsCoordinateReferenceSystem,
                        QgsLayoutItemPicture, QgsReadWriteContext)
 from qgis.core import QgsLayoutSize, QgsLayoutPoint, QgsUnitTypes
+from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtXml import QDomDocument
 
 UNIT_MM = QgsUnitTypes.LayoutMillimeters
@@ -181,21 +182,49 @@ if __name__ == "__console__":
     build()
 
 
+# the template carries an empty white label behind the data table; the table
+# is hinged to that label's lower-right corner and the label itself removed
+BOX_ANCHOR = (286.3, 201.9)     # mm from the top-left of the page
+BOX_WIDTH = 58.0                # mm
+ROW_MM = 5.60                   # generous: the frame must not clip a row
+
+
 def _fill_box(lay, rows):
-    """Write the figure's own data table into the layout's manual table."""
+    """Write the figure's data table and hinge it to the lower-right corner."""
     from qgis.core import (QgsLayoutFrame, QgsLayoutItemManualTable,
-                           QgsTableCell)
+                           QgsLayoutItemLabel, QgsTableCell, QgsLayoutSize,
+                           QgsLayoutPoint)
+
+    # drop the empty backing label
+    for it in list(lay.items()):
+        if isinstance(it, QgsLayoutItemLabel) and not it.text().strip():
+            lay.removeLayoutItem(it)
+
     for it in lay.items():
         if not isinstance(it, QgsLayoutFrame):
             continue
         mf = it.multiFrame()
         if not isinstance(mf, QgsLayoutItemManualTable):
             continue
-        contents = []
-        for k, v in rows:
-            contents.append([QgsTableCell(str(k)), QgsTableCell(str(v))])
-        mf.setTableContents(contents)
+        mf.setTableContents(
+            [[QgsTableCell(str(k)), QgsTableCell(str(v))] for k, v in rows])
         mf.setIncludeTableHeader(False)
         mf.refresh()
+
+        # height follows the row count: querying the multiframe for its own
+        # size reports the frame rather than the table, which leaves a blank
+        # strip under the last row
+        w = BOX_WIDTH
+        h = ROW_MM * len(rows)
+        it.attemptResize(QgsLayoutSize(w, h, UNIT_MM))
+        mf.recalculateFrameSizes()
+        it.attemptMove(QgsLayoutPoint(BOX_ANCHOR[0] - w,
+                                      BOX_ANCHOR[1] - h, UNIT_MM))
+        # the frame is sized generously so no row is clipped; its background
+        # is therefore switched off and the table paints its own, otherwise a
+        # blank strip shows beneath the last row
+        it.setBackgroundEnabled(False)
+        it.setFrameEnabled(False)
+        mf.setBackgroundColor(QColor(255, 255, 255, 235))
         return True
     return False

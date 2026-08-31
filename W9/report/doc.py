@@ -34,6 +34,12 @@ def new_document():
     n.paragraph_format.space_after = Pt(6)
     n.paragraph_format.line_spacing = 1.12
 
+    sect = s._sectPr
+    sect.append(parse_xml(
+        '<w:footnotePr xmlns:w="http://schemas.openxmlformats.org/'
+        'wordprocessingml/2006/main">'
+        '<w:numRestart w:val="eachPage"/></w:footnotePr>'))
+
     for name, size, colour, before in (
         ("Heading 1", 17, BLUE, 18),
         ("Heading 2", 13.5, MID, 14),
@@ -61,11 +67,62 @@ def _flow(d, element):
 
 
 # -------------------------------------------------------------------- blocks
+def _outline(par, lvl):
+    """Set the contents level without changing how the heading looks."""
+    ppr = par._p.get_or_add_pPr()
+    for old in ppr.findall(qn("w:outlineLvl")):
+        ppr.remove(old)
+    e = OxmlElement("w:outlineLvl")
+    e.set(qn("w:val"), str(lvl))
+    ppr.append(e)
+    return par
+
+
 def h(d, level, text, page_break=False):
+    """A numbered section heading. Sections sit one level below Parts."""
     if page_break:
         pagebreak(d)
     _step["n"] = 0          # every heading starts a fresh list context
-    return d.add_heading(text, level)
+    par = d.add_heading(text, level)
+    _outline(par, level)    # Heading 1 -> contents level 2, and so on
+    return par
+
+
+def part(d, letter, title):
+    """A part divider: its own page, and the top level of the contents."""
+    pagebreak(d)
+    for _ in range(6):
+        p(d, "", space_after=0)
+    rule = p(d, "", align=WD_ALIGN_PARAGRAPH.CENTER, space_after=2)
+    _rule(rule)
+    lab = p(d, "PART " + letter, align=WD_ALIGN_PARAGRAPH.CENTER,
+            bold=True, size=15, colour=MID, space_after=10)
+    ttl = d.add_paragraph()
+    ttl.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    ttl.paragraph_format.space_after = Pt(6)
+    r = ttl.add_run(title)
+    r.bold = True
+    r.font.size = Pt(26)
+    r.font.color.rgb = BLUE
+    rule2 = p(d, "", align=WD_ALIGN_PARAGRAPH.CENTER, space_after=0)
+    _rule(rule2)
+    _outline(ttl, 0)        # the part is the top level of the contents
+    _step["n"] = 0
+    pagebreak(d)            # the divider takes a page of its own
+    return ttl
+
+
+def _rule(par):
+    ppr = par._p.get_or_add_pPr()
+    pbdr = OxmlElement("w:pBdr")
+    e = OxmlElement("w:bottom")
+    e.set(qn("w:val"), "single")
+    e.set(qn("w:sz"), "8")
+    e.set(qn("w:space"), "4")
+    e.set(qn("w:color"), "2E629E")
+    pbdr.append(e)
+    ppr.append(pbdr)
+    return par
 
 
 def p(d, text="", bold=False, italic=False, size=None, colour=None,

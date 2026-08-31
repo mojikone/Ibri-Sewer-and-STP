@@ -89,6 +89,9 @@ def executive_summary(d):
            "design basis adopted, and the state of the work at the date of "
            "issue.")
 
+    D.picture(d, os.path.join(IMG, "D1_process.png"), 15.5)
+    D.fig_caption(d, "The concept design process, from the data collected to the recommended option.")
+
     D.h(d, 2, "The project area")
     p = D.p(d, "The study area covers 531.4 square kilometres within the "
                "Wilayat of Ibri, Governorate of Adh Dhahirah, and contains "

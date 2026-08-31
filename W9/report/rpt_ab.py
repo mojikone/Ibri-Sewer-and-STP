@@ -15,7 +15,7 @@ def _fig(d, name, caption, w=16.0):
 
 # ===================================================== PART A
 def part_a(d):
-    D.h(d, 1, "Part A   Project, scope and process", page_break=True)
+    D.part(d, "A", "Project, scope and process")
 
     # ---------------------------------------------------------------- 1
     D.h(d, 1, "1   Introduction and background")
@@ -173,7 +173,7 @@ def part_a(d):
 
 # ===================================================== PART B
 def part_b(d):
-    D.h(d, 1, "Part B   Data", page_break=True)
+    D.part(d, "B", "Data")
 
     # ---------------------------------------------------------------- 6
     D.h(d, 1, "6   Data collection")
@@ -201,6 +201,9 @@ def part_b(d):
            "against the project boundary. This section records the quantity of "
            "each dataset, the proportion falling within the study area, and "
            "the limitations identified.")
+
+    D.picture(d, os.path.join(IMG, "D2_data.png"), 15.5)
+    D.fig_caption(d, "The assessment applied to each dataset supplied.")
 
     D.h(d, 2, "7.1   Existing wastewater assets")
     D.tab_caption(d, "Wastewater assets supplied by Nama Water Services")

@@ -16,7 +16,7 @@ def _params(d, rows):
 
 # ===================================================== PART C
 def part_c(d):
-    D.h(d, 1, "Part C   Basis of design", page_break=True)
+    D.part(d, "C", "Basis of design")
 
     # --------------------------------------------------------------- 10
     D.h(d, 1, "10   Codes, standards and departures")
@@ -207,7 +207,7 @@ def part_c(d):
 
 # ===================================================== PART D
 def part_d(d):
-    D.h(d, 1, "Part D   Demand and flows", page_break=True)
+    D.part(d, "D", "Demand and flows")
 
     # --------------------------------------------------------------- 14
     D.h(d, 1, "14   Population and land use")
@@ -301,6 +301,9 @@ def part_d(d):
 
     # --------------------------------------------------------------- 15
     D.h(d, 1, "15   Wastewater generation and design flows", page_break=True)
+
+    D.picture(d, os.path.join(IMG, "D3_flow.png"), 15.5)
+    D.fig_caption(d, "Derivation of the design flow, from counted properties to the flow the network is sized on.")
 
     D.h(d, 2, "15.1   Water demand")
     D.p(d, "Wastewater generation is derived from water demand. Demand "

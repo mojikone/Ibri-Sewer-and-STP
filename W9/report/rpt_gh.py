@@ -12,7 +12,7 @@ def _pending(d, text):
 
 # ===================================================== PART G
 def part_g(d):
-    D.h(d, 1, "Part G   Assessment and appraisal", page_break=True)
+    D.part(d, "G", "Assessment and appraisal")
 
     # --------------------------------------------------------------- 28
     D.h(d, 1, "28   Ground conditions")
@@ -262,7 +262,7 @@ def part_g(d):
 
 # ===================================================== PART H
 def part_h(d):
-    D.h(d, 1, "Part H   Delivery", page_break=True)
+    D.part(d, "H", "Delivery")
 
     # --------------------------------------------------------------- 39
     D.h(d, 1, "39   Implementation roadmap")
