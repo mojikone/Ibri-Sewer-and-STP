@@ -5,7 +5,11 @@ should be able to carry out the concept report correctly and know which section
 to open when they need the detail.
 """
 from docx.enum.text import WD_ALIGN_PARAGRAPH as AL
+import os
+
 from docx.shared import Pt
+
+IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "img")
 
 import doc as D
 import omml as M
@@ -160,6 +164,8 @@ def executive_summary(d):
             widths=[1.0, 4.2, 8.3, 2.0], font=9)
 
     D.p(d, "")
+    D.picture(d, os.path.join(IMG, "F1_chain.png"), 15.5)
+    D.fig_caption(d, "The concept design calculation chain. The left column establishes the flow; the right sizes the works.")
     D.p(d, "Steps 1 to 6 are one continuous calculation: each is the input to "
            "the next, and an error early on propagates the whole way. Steps 7 to "
            "11 consume that flow independently of one another. Step 12 sits "

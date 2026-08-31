@@ -1,6 +1,10 @@
 """Sections 3 to 9 - the flow chain, from raw data to a sized gravity sewer."""
 from docx.enum.text import WD_ALIGN_PARAGRAPH as AL
 
+import os
+
+IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "img")
+
 import doc as D
 import omml as M
 
@@ -48,6 +52,9 @@ def s3_data(d):
               "is adopted on the day real quantities are supplied. See "
               "Section 5.4.",
               fill="EAF1F8", colour=D.MID)
+
+    D.picture(d, os.path.join(IMG, "F2_data.png"), 15.5)
+    D.fig_caption(d, "Building the plot layer. Points matching no plot wait for the corrected cadastre rather than being moved first.")
 
     D.h(d, 2, "3.3   Method")
     D.numbered(d, "Points sharing an identical coordinate are stacked "
@@ -133,6 +140,9 @@ def s4_population(d):
            "the ceiling. The plant, which is built in phases, is sized on the "
            "dated years.")
 
+    D.picture(d, os.path.join(IMG, "F3_population.png"), 15.5)
+    D.fig_caption(d, "Two routes to population. The census route dates the plant; the plot route sizes the pipe.")
+
     D.h(d, 2, "4.3   Population from plots")
     eq = D.next_eq()
     M.display(d, M.seq(UP("Population"), M.EQ, UP("N"), M.sub(R(""), UP("plots")),
@@ -214,6 +224,9 @@ def s5_demand(d):
            "not covered by population forecasts, and that the uplift ratios do "
            "not apply to identified projects such as economic zones, which are "
            "determined case by case.")
+
+    D.picture(d, os.path.join(IMG, "F4_demand.png"), 15.5)
+    D.fig_caption(d, "Assembling demand, and the point at which the tier is decided.")
 
     D.h(d, 2, "5.3   Domestic demand")
     eq = D.next_eq()
@@ -490,6 +503,9 @@ def s8_peak(d):
            "vacuum collection carries no infiltration allowance at all.")
     _source(d, "G201 §7.4.2 p71-72 and §7.4.3 p72.")
 
+    D.picture(d, os.path.join(IMG, "F5_flow.png"), 15.5)
+    D.fig_caption(d, "From demand to the flow the pipe is sized on.")
+
     D.h(d, 2, "8.6   Assembling the design flow")
     eq = D.next_eq()
     M.display(d, M.seq(M.sub(R("Q"), UP("design")), M.EQ,
@@ -550,6 +566,9 @@ def s9_gravity(d):
               "multiplied by area. Use the correct form and note the defect if "
               "the calculation is ever audited against the page.")
     _source(d, "G203 §4.2.1 p24 and §4.2.4 p25.")
+
+    D.picture(d, os.path.join(IMG, "F6_gravity.png"), 15.5)
+    D.fig_caption(d, "Sizing a gravity run. Both self-cleansing checks apply, and the steeper gradient governs.")
 
     D.h(d, 2, "9.3   Velocity and depth of flow")
     D.tab_caption(d, "Velocity and flow-depth criteria")

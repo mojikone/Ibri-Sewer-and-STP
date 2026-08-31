@@ -1,5 +1,9 @@
 """Sections 10 to 15 - pumping, plant, effluent, sludge, appraisal, and the
 places where the guidelines cannot be relied upon."""
+import os
+
+IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "img")
+
 import doc as D
 import omml as M
 
@@ -41,6 +45,9 @@ def s10_pumping(d):
            "to that obligation. The ten to twelve metre figure discussed in "
            "Section 9.6 is a separate recommendation about cover, and exceeding "
            "it obliges consultation with pipe manufacturers rather than a pump.")
+
+    D.picture(d, os.path.join(IMG, "F7_pumping.png"), 15.5)
+    D.fig_caption(d, "When a lifting station is required. The trigger is excavation cost, not depth.")
 
     D.h(d, 2, "10.3   Station classification")
     D.table(d, ["Type", "Design flow", "Minimum duty pumps", "Standby"],
@@ -202,6 +209,9 @@ def s11_stp(d):
               "function. And the organic peak factors fall to 1.2 for BOD and "
               "COD and 1.5 for nitrogen.",
               fill="EAF1F8", colour=D.MID)
+
+    D.picture(d, os.path.join(IMG, "F8_stp.png"), 15.5)
+    D.fig_caption(d, "Sizing and phasing the plant. Total nitrogen, not BOD, drives the process choice.")
 
     D.h(d, 2, "11.3   Design horizon and margin")
     D.p(d, "A plant is designed for a horizon of at least fifteen years and must "
@@ -476,6 +486,9 @@ def s14_appraisal(d):
            "guidance. Each option must present equivalent functional "
            "requirements and comparable reliability and redundancy, so that the "
            "comparison is unbiased.")
+
+    D.picture(d, os.path.join(IMG, "F9_options.png"), 15.5)
+    D.fig_caption(d, "Options appraisal. Where costs sit within ten per cent, the greener option is adopted.")
 
     D.h(d, 2, "14.2   The appraisal parameters")
     D.p(d, "Capital and operating cost; life cycle cost; carbon footprint over "
