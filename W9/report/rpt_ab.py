@@ -92,6 +92,54 @@ def part_a(d):
            "kick-off presentation and in the Inception Report. Confirmation of "
            "the governing programme is requested.")
 
+    D.h(d, 2, "3.1   Deliverables at the concept stage")
+    p = D.p(d, "The Terms of Reference set out forty numbered deliverables for "
+               "the concept stage. They are grouped below by subject. Those "
+               "marked as issued form part of this report or accompany it; the "
+               "remainder follow in the next revision as the survey and the "
+               "options are completed.")
+    N.add(p, "Scope of Work, pages 63 and 64 of the tender document.")
+
+    D.tab_caption(d, "Concept stage deliverables")
+    D.table(d, ["Deliverable", "Position"], [
+        ["Executive summary and project schedule", "Issued"],
+        ["Data collection report and assessment of the data", "Issued"],
+        ["Design criteria and design basis", "Issued"],
+        ["Population forecasting and flow projection at five-year intervals",
+         "Basis issued; series follows confirmation of the design horizon"],
+        ["Topographic survey and geotechnical investigation",
+         "Survey in progress"],
+        ["As-built records and GIS for the existing systems",
+         "Follows the survey"],
+        ["Hydraulic assessment of the existing systems", "Follows the survey"],
+        ["Wastewater network options, not fewer than three", "Next revision"],
+        ["Treated effluent network options, not fewer than three",
+         "Next revision"],
+        ["Treatment plant options, not fewer than three, with siting and phasing",
+         "Next revision"],
+        ["Pumping and lifting station concept design", "Next revision"],
+        ["Treated effluent and sludge management strategy",
+         "Framework issued; strategy in the next revision"],
+        ["Excess effluent and emergency overflow provisions", "Next revision"],
+        ["Environmental impact assessment for the plant location",
+         "Follows confirmation of scope"],
+        ["Cost estimates and life cycle cost", "Next revision"],
+        ["Risk analysis and value engineering", "Next revision"],
+        ["Multi-criteria comparison and recommended option", "Next revision"],
+        ["Hydraulic models in SewerGEMS and WaterGEMS",
+         "Follows confirmation of the software"],
+        ["Contracting strategy and implementation plan", "Next revision"],
+        ["Register of approvals and no objection certificates", "Maintained"],
+    ], widths=[10.5, 6.0], font=9)
+
+    D.h(d, 2, "3.2   Deliverables of the following stages")
+    D.p(d, "The preliminary design develops the approved concept to an "
+           "estimate within ten per cent, with full survey, hazard and "
+           "operability study, and preliminary bills of quantities. The "
+           "detailed design completes the engineering, the drawings and the "
+           "priced bills. Tender documentation follows the approved detailed "
+           "design.")
+
     # ---------------------------------------------------------------- 4
     D.h(d, 1, "4   Consultation record")
     D.p(d, "The following meetings have been held with Nama Water Services to "

@@ -43,7 +43,7 @@ The third column names the section of **Tutorial T03 Revision 01** that carries 
 | **Part A** | **Project, scope and process** | |
 | 1 | Introduction, background and RG Master Plan context |  |
 | 2 | Scope and boundaries |  |
-| 3 | Programme and design stage gates |  |
+| 3 | Programme, design stage gates and deliverables |  |
 | 4 | Meetings, consultation and decisions record |  |
 | 5 | Quality plan and HSE plan |  |
 | **Part B** | **Data** | |
@@ -66,7 +66,7 @@ The third column names the section of **Tutorial T03 Revision 01** that carries 
 | 19 | Rehabilitation and upgrading | 15 |
 | 20 | RG Master Plan verification | 4, 7 |
 | **Part F** | **Options** | |
-| 21 | Options methodology | 21 |
+| 21 | Options methodology, including the proposed approach per option | 21 |
 | 22 | Sewer network options | 9, 10 |
 | 23 | Pumping and lifting stations, force mains, surge | 11, 12 |
 | 24 | Treated effluent network options | 17 |

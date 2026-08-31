@@ -111,7 +111,58 @@ def part_f(d):
            "with comparable reliability and redundancy, so that the comparison "
            "between them is not influenced by differences in scope.")
 
-    D.h(d, 2, "21.2   Basis of comparison")
+    D.h(d, 2, "21.2   The approach proposed for each option")
+    D.p(d, "The guidelines describe the character of the three options but do "
+           "not prescribe what distinguishes them in design terms. The "
+           "following approach is proposed, and is offered for comment before "
+           "the options are developed.")
+
+    D.tab_caption(d, "Proposed approach for each option")
+    D.table(d,
+            ["", "Sustainability-led", "International best practice",
+             "Established local practice"],
+            [["Network",
+              "Gravity maximised, accepting deeper excavation in order to "
+              "avoid pumping",
+              "Layout optimised by model, with pumping where it reduces whole "
+              "life cost",
+              "Conventional layout, with pumping where the topography requires"],
+             ["Treatment process",
+              "Lower-energy process, with nature-based polishing where the "
+              "scale permits",
+              "Highest-performing process, smallest footprint",
+              "Process already established in Oman, simple to operate and "
+              "maintain"],
+             ["Energy",
+              "Generation on site, with a self-sufficiency target",
+              "High-efficiency plant and advanced process control",
+              "Grid supply with standby generation"],
+             ["Reuse",
+              "Reuse maximised, discharge to wadi minimised",
+              "High reuse at high effluent quality",
+              "Reuse to the demand identified, surplus discharged"],
+             ["Materials",
+              "Low-carbon and locally sourced where performance permits",
+              "Specified for performance and durability",
+              "Standard specification"],
+             ["Consequence",
+              "Higher capital cost, lowest carbon and operating cost",
+              "Highest capital cost, least land, best effluent quality",
+              "Lowest capital cost, most land, highest operating cost"]],
+            widths=[2.6, 4.7, 4.7, 4.5], font=8.5)
+
+    D.p(d, "")
+    p = D.p(d, "Two constraints apply across all three. Nature-based treatment "
+               "is limited by the guidelines to small works, so it is "
+               "available for outlying settlements or for polishing rather "
+               "than for the main plant. And every option is developed to the "
+               "same functional requirement and the same effluent standard, so "
+               "that the difference between them lies in how the result is "
+               "achieved and not in what is achieved.")
+    N.add(p, "PAM-GUD-203, Section 10.5, page 101, limits constructed wetlands "
+             "to works of approximately 500 cubic metres per day.")
+
+    D.h(d, 2, "21.3   Basis of comparison")
     D.p(d, "The options are compared on capital and operating cost, life cycle "
            "cost, carbon footprint over the project lifetime, resource "
            "efficiency, in-country value and the degree to which they employ "
@@ -119,7 +170,7 @@ def part_f(d):
            "years. The weighting applied to each parameter is set by Nama "
            "Water Services.")
 
-    D.h(d, 2, "21.3   Selection")
+    D.h(d, 2, "21.4   Selection")
     p = D.p(d, "A weighted multi-criteria analysis compares the options "
                "against total lifetime cost, sustainability, social "
                "development and in-country value, adaptability and resilience, "

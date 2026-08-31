@@ -157,6 +157,41 @@ def executive_summary(d):
            "network and the treatment plant are presented as a framework in "
            "Part F and will be completed in the next revision.")
 
+    D.h(d, 2, "How the options are developed and compared")
+    D.p(d, "Three options are developed for each of the sewer network, the "
+           "treated effluent network and the treatment plant. Each set follows "
+           "the character the guidelines describe: one advancing "
+           "sustainability, one representing international best practice, and "
+           "one based on practice already established in Oman. Every option "
+           "meets the same functional requirement and the same effluent "
+           "standard, so that the difference between them lies in how the "
+           "result is achieved. Section 21 sets out what distinguishes them in "
+           "design terms.")
+
+    D.p(d, "The options are compared over a twenty-five year period against "
+           "seven criteria: total lifetime cost; sustainability, comprising "
+           "carbon, circular economy and nature-based solutions; social "
+           "development and in-country value; adaptability and resilience; "
+           "operability; constructability; and environmental impact. Costs are "
+           "discounted at five per cent. Nama Water Services sets the weight "
+           "given to each criterion.")
+
+    p = D.p(d, "Where two options fall within ten per cent of one another on "
+               "total lifetime cost they are treated as equivalent in cost, "
+               "and the more sustainable of the two is adopted. Sensitivity is "
+               "tested by varying the weighting between criteria, the discount "
+               "rate, and the input design criteria.")
+    N.add(p, "PAM-GUD-201, Sections 12.6 to 12.9, pages 104 to 106.")
+
+    D.h(d, 2, "Deliverables")
+    D.p(d, "The Terms of Reference set out forty numbered deliverables for the "
+           "concept stage. This report issues the design basis, the assessment "
+           "of the data, the design criteria and the framework for the options "
+           "and their appraisal. The flow series, the options themselves, the "
+           "cost estimate and the comparison follow in the next revision, once "
+           "the design horizon is confirmed and the survey is complete. "
+           "Section 3.1 lists each deliverable and its position.")
+
     D.h(d, 2, "Matters requiring confirmation")
     D.p(d, "Six matters require confirmation from Nama Water Services. They "
            "are set out in Section 5 with the relevant references, and are "

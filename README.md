@@ -2,7 +2,75 @@
 
 Working repository of the Claude-assisted concept engineering for **Renardet Project 2621** — Consultancy Services for Design and Supervision for STP, Sewer & TE Networks Systems in Ibri, Oman (Client: Nama Water Services, Tender T/2719110/2025).
 
-> **AI agents:** start at [`CLAUDE.md`](CLAUDE.md) → `_BRAIN/` → `_SETUP/`. Humans: this README is the summary; the report under `W2/report/` is the deliverable.
+> **AI agents:** start at [`CLAUDE.md`](CLAUDE.md) → `_BRAIN/` → `_SETUP/`. Humans: this README is the summary; the deliverable is the **Concept Design Report** under `W9/report/`.
+
+## The job, end to end
+
+Design the wastewater collection network, the treated effluent network and the sewage treatment plant for Ibri, through concept, preliminary and detailed design to tender.
+
+### The chain
+
+| # | Step | Produces |
+|---|---|---|
+| 1 | Collect and validate data | What is usable, what needs correcting, what is missing |
+| 2 | Survey and investigation | Levels, diameters, condition, topography, cadastre |
+| 3 | Design basis and criteria | Every value cited to its guideline page |
+| 4 | Population and land use | Properties per plot, occupancy rate, land use per plot |
+| 5 | Demand and wastewater flow | Flow at five-year intervals to saturation |
+| 6 | **Design flow** | What the network and the plant are sized on |
+| 7 | Options | Three each for sewer, treated effluent, plant |
+| 8 | Appraisal | Cost, carbon, and the seven criteria over 25 years |
+| 9 | Recommendation | One option per system, justified |
+
+Steps 1 to 6 are one continuous calculation — an error early propagates the whole way. Steps 7 to 9 consume the design flow.
+
+### Three systems, three options each
+
+Not three options overall. **Three for the sewer network, three for the treated effluent network, three for the STP** — and the guideline says "each STP", so three per plant if more than one is proposed. Lifting stations are not a separate set: they fall out of each network option, because the number of stations is a consequence of the layout.
+
+Each set follows three archetypes. The guideline names them and stops there; the table below is **our proposed interpretation** of what they mean in design terms, not a guideline requirement.
+
+| | Sustainability-led | International best practice | Established local practice |
+|---|---|---|---|
+| **Network** | Gravity maximised, accepting deeper excavation to avoid pumping | Layout optimised by model, pumping where it lowers whole-life cost | Conventional layout, pumping where topography requires |
+| **Process** | Lower-energy, nature-based polishing where scale permits | Highest-performing, smallest footprint | Established in Oman, simple to operate |
+| **Energy** | On-site generation, self-sufficiency target | High-efficiency plant, advanced control | Grid supply with standby generation |
+| **Reuse** | Reuse maximised, wadi discharge minimised | High reuse at high quality | Reuse to demand, surplus discharged |
+| **Materials** | Low-carbon, locally sourced where performance allows | Specified for performance and durability | Standard specification |
+| **Consequence** | Higher capital, lowest carbon and running cost | Highest capital, least land, best effluent | Lowest capital, most land, highest running cost |
+
+Constraint: constructed wetlands are limited by the guideline to works of about 500 m3/d, so nature-based treatment serves outlying settlements or polishing, never the main plant. All three options meet the same effluent standard — they differ in how, not in what.
+
+### How they are compared
+
+Seven criteria, over 25 years, discounted at 5 %:
+
+- Total lifetime cost
+- Sustainability — carbon, circular economy, nature-based solutions
+- Social development and in-country value
+- Adaptability and resilience
+- Operability
+- Constructability
+- Environmental impact
+
+**NWS sets the weights, not us.** Sensitivity is tested on exactly three things: the weighting, the discount rate, and the input design criteria.
+
+**The tie-break decides more often than people expect.** Where two options fall within 10 % on total lifetime cost they are treated as equal on cost and the greener one is adopted. Three options for one catchment over 25 years frequently land inside 10 % of each other, so the carbon and circular-economy work has to be good enough to carry that weight.
+
+### Deliverables
+
+| Stage | Deliverable |
+|---|---|
+| Concept | Report with the 40 TOR items, three options per system, cost estimate to ±20 %, life cycle cost, risk register, formal Value Engineering by an independent certified consultant, EIA scoping, as-built and GIS for existing systems, SewerGEMS and WaterGEMS models |
+| Preliminary | Estimate to ±10 %, full survey, HAZOP, P&IDs, priced BoQ to 80 % |
+| Detailed | Complete engineering, drawings, priced BoQ |
+| Tender | Documents and packages, evaluation support to award |
+
+### Where it stands
+
+Design basis, data assessment and the appraisal framework are complete and issued. **Two things block the rest: NWS confirming the design horizon, and the survey landing.** The flow series, the options, the cost estimate and the comparison follow in the next revision.
+
+---
 
 ## Current state — latest first
 

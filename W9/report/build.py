@@ -42,12 +42,20 @@ def main(render_pdf=False):
 
     D.footer_pagenum(d, "Ibri Concept Design Report  ·  Revision 0  ·  "
                         "Renardet Project 2621")
-    N.save(d, OUT)
-    print(f"wrote {OUT}")
+
+    out = OUT
+    try:
+        N.save(d, out)
+    except PermissionError:
+        # the document is open in Word; write beside it rather than fail
+        out = OUT.replace(".docx", "_new.docx")
+        N.save(d, out)
+        print("NOTE: the target file is open in Word; wrote a copy instead.")
+    print(f"wrote {out}")
 
     if render_pdf:
         import to_pdf
-        pdf, pages = to_pdf.convert(OUT)
+        pdf, pages = to_pdf.convert(out)
         print(f"wrote {pdf}  ({pages} pages)")
 
 
