@@ -320,6 +320,17 @@ def next_eq():
     return str(_counters["eq"])
 
 
+def chart(d, name, width_cm=13.0):
+    """Place a chart from img/ by name. Missing charts are skipped rather than
+    breaking the build, so the report can be produced while charts are added."""
+    import os
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                        "img", name + ".png")
+    if not os.path.exists(path):
+        return None
+    return picture(d, path, width_cm)
+
+
 def picture(d, path, width_cm=16.0):
     par = d.add_paragraph()
     par.alignment = WD_ALIGN_PARAGRAPH.CENTER
