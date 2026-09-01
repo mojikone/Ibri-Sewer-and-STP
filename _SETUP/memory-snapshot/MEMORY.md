@@ -1,4 +1,4 @@
-﻿- [File transfer via public repo](file-transfer-via-public-repo.md) — user accepts public-repo exposure for remote file transfer; warn once, push on confirmation
+- [File transfer via public repo](file-transfer-via-public-repo.md) — user accepts public-repo exposure for remote file transfer; warn once, push on confirmation
 - [Plain wording, not literary](plain-wording-not-literary.md) — write like a colleague, not a standards document; dense prose tires them out
 - [Figma flowcharts for docs](figma-flowcharts-for-docs.md) — diagrams via Figma MCP, legible/no overflow, export PNG into repo docs
 - [Hydraulics first, verify everything](hydraulics-first-verification.md) — never port SWNETWROK logic on trust; Table-11 ±5% solver gate, SewerGEMS as referee
@@ -6,3 +6,4 @@
 - [No exemptions in compliance checks](no-exemptions-in-compliance-checks.md) — a skipped row reads as a PASS; check every element, whatever flag it carries
 - [Load basis locked: Tier A volume](load-basis-locked-tier-a-volume.md) — ratios set the volume, land use sets the placement, Table 12 unused
 - [Asset GIS holds proposals too](asset-gis-holds-proposals.md) — filter on the status field before quoting any length from a client dataset
+- [Response depth: AUTO by default](response-depth-auto-default.md) — no ceiling unless the user invokes L1-L5; always lead with a headline line
