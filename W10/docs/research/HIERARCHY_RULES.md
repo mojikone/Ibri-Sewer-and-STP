@@ -311,7 +311,24 @@ saw nothing. Second, **the sub main is where the depth is bought**: it sits 2.6 
 the laterals feeding it and is laid 33 % flatter, which is the price of collecting a cluster
 of streets and getting under them all.
 
-**R19 — Gradients are not laid to round steps.** [Certain] Only 44.8 % of pipes sit on a
+**R19a — The as-built does use drop connections, and 37 of them are past our limit.**
+[Certain] Measured as the downstream invert of an incoming pipe minus the upstream invert of
+the pipe that continues it, over the 2,140 connections that carry both levels:
+
+| Receiving tier | connections | ≥ 0.60 m (G203-p30 backdrop trigger) | ≥ 2.00 m (needs a vortex drop shaft) | deepest |
+|---|---:|---:|---:|---:|
+| lateral | 1,602 | 81 (5.1 %) | 18 | 4.19 m |
+| sub main | 373 | 29 (7.8 %) | 15 | 4.05 m |
+| trunk main | 165 | 12 (7.3 %) | 4 | 3.29 m |
+| **all** | **2,140** | **122 (5.7 %)** | **37** | **4.19 m** |
+
+`research_hierarchy_drop_connections.csv`. So roughly **one connection in eighteen is a
+backdrop**, and 37 exceed our `BACKDROP_MAX = 2.0 m`, which under our own criteria (G203-p30)
+would require a vortex drop shaft rather than a backdrop. Four trunk connections are adverse —
+the continuing invert is above the arriving one. [Likely] those four are survey or transcription
+errors rather than built adversities; they are the only ones in 2,140.
+
+**R19b — Gradients are not laid to round steps.** [Certain] Only 44.8 % of pipes sit on a
 1 mm/m step and 34.3 % on a 0.05 % step. `research_hierarchy_gradient_rounding.csv`. Our
 `SLOPE_STEP = 0.0005` rule is a drawing-office convenience of ours, not a copy of practice.
 
@@ -361,8 +378,9 @@ sampled every ~10 m along every pipe:
 Three readings. **(a)** Sub mains avoid wadis almost completely — 0.6 %, versus 6.2 % for
 laterals. **(b)** The trunk crosses at **double the gradient and 1.2 m shallower** than it
 runs elsewhere: it takes the short steep route across rather than a deep crossing.
-**(c)** No inverted siphon, no drop shaft and no distinctive deep section appears anywhere in
-the crossings — nothing in the levels suggests special structures.
+**(c)** Nothing in the levels marks a crossing out as a special structure — no depression, no
+long flat reach that would read as an inverted siphon. The levels cannot rule out a concrete
+surround or a bridged crossing, because no construction-method field is populated.
 
 **This is a habit to question, not to copy.** A 1.1 m lateral and a 2.1 m trunk inside a
 50-year flood channel is a scour and washout exposure, and there is no condition data
@@ -442,7 +460,7 @@ project's own hydraulics and load basis (`hydra.pipe_state`, Merrimack peak fact
    well as a velocity route. It does mean **the as-built cannot be used as evidence that
    self-cleansing was achieved**, and the CCTV survey should expect siltation in the laterals.
 
-**Three places the as-built is right and our design is not:**
+**Four places the as-built is right, or at least ahead of us:**
 
 6. **Depth.** The built network's deepest is 8.85 m and 95th percentile 4.93 m. W8's design
    reaches 10.45 m and W10's reaches the 12.0 m cap. They bought that with pumping — 30.8 km
@@ -457,6 +475,13 @@ project's own hydraulics and load basis (`hydra.pipe_state`, Merrimack peak fact
 
 8. **Round gradients.** Only 44.8 % of built pipes sit on a 1 mm/m step. Our 0.05 % stepping
    rule is ours, and it should be defended as a drawing-office convenience, not as practice.
+
+9. **Drop connections are real and they are frequent.** 5.7 % of as-built connections are
+   backdrops and 37 exceed 2 m (R19a). W8's `stages/hydraulic.py` and `stages/audit.py` do
+   build and check them against `DROP_TRIGGER` / `BACKDROP_MAX`; **the W10 pipeline scripts
+   reference neither constant.** Whatever W11a inherits, the backdrop and vortex-shaft count
+   has to come back out with the design — a scheme that quietly accumulates 4 m drops has
+   moved cost into a structure nobody has priced.
 
 ---
 
@@ -503,8 +528,12 @@ four reaches of one continuous outfall route (R8), and 100 % of them sit within 
 mapped road and about 1.0 m below the local median ground (R9, R22). Where the alignment is
 ambiguous, prefer the route that minimises `ground level − local median over 300 m`.
 
-*Guard:* the trunk should end up at 10–15 % of total length (R11). If it lands below 8 % or
-above 20 %, the outfall route is probably wrong, not the rule.
+*Guard, and a warning:* the as-built trunk is 14.8 % of its network length (R11). **The user's
+Main Pipe is 85.5 km against W10's 1,882.9 km of drafted network — 4.5 %.** Either the drafted
+network is far denser relative to its spine than the 2006 scheme was, or W10 is missing most of
+a middle tier. On the as-built proportions a 1,883 km network wants of the order of **270 km of
+sub main**; W10 currently has none identified at all. That gap, not the trunk, is the real work
+in W11a.
 
 ### Step 2 — Lateral zones, bottom-up, one street at a time
 Cut the remaining network into zones at every junction. A **lateral zone** is a maximal
@@ -518,7 +547,7 @@ unbranched chain of pipes that:
 
 Target the p50 shape, not the cap: **5 chambers, 132 m, 4–6 properties, 6 plots fronting.**
 
-### Step 3 — Chain laterals, but only twice
+### Step 3 — Chain laterals, but only two or three deep
 Let a lateral zone drain into another lateral zone. Enforce two limits, both measured:
 - **at most 3 lateral zones** between any zone and a sub main or the trunk (as-built p95 = 3,
   max 5 — use 3 as the design limit and 5 as the hard fail);
@@ -556,7 +585,7 @@ connections onto an 85.5 km trunk — check it against that band rather than aga
 absolute number of 19, which belonged to a 71.6 km test area.
 
 ### Step 6 — Verify, do not assume
-Run these six checks and fail the build on any of them:
+Run these checks and fail the build on any of the first six:
 
 | Check | Pass band (as-built basis) |
 |---|---|
@@ -566,6 +595,8 @@ Run these six checks and fail the build on any of them:
 | lateral zones that are a simple unbranched path | ≥ 95 % (R1) |
 | lateral chain depth, p95 | ≤ 3 (R12) |
 | flow path through laterals to a main, p95 | ≤ 750 m (R12) |
+| backdrops ≥ 0.60 m, as a share of connections | report it; as-built 5.7 % (R19a) |
+| drops ≥ 2.00 m needing a vortex shaft | report and price every one; as-built 37 |
 
 And two the as-built fails, which W11a must not inherit:
 - **no main sewer below DN200** (G203-p22 Tab 6) — the as-built runs 58.7 km of recorded
@@ -592,7 +623,7 @@ All in `W10/run/`, prefix `research_hierarchy_`.
 | Promotion | `accumulation_by_tier`, `tier_heads`, `tier_separation`, `threshold_classifier`, `fan_in`, `trunk_joiners`, `submain_joiners`, `submain_catchments`, `submain_spacing` |
 | Rule tests | `rule_sweep_length`, `rule_sweep_two_level`, `rule_applied_to_5A1`, `pkg5A1_prefixes`, `pkg5A1_prefix_flow` |
 | Diameters | `diameter_by_tier`, `diameter_by_load_band`, `diameter_steps`, `sizing_context` |
-| Gradients and depths | `gradient_depth_by_tier`, `table11_compliance`, `gradient_rounding`, `tier_ground_level`, `tier_relative_elevation` |
+| Gradients and depths | `gradient_depth_by_tier`, `table11_compliance`, `gradient_rounding`, `drop_connections`, `tier_ground_level`, `tier_relative_elevation` |
 | Our rules vs theirs | `asbuilt_vs_rules`, `asbuilt_vs_rules_summary`, `asbuilt_worst_loaded` |
 | Packages | `packages`, `package_overlap`, `package_crossings` |
 | Wadis | `wadi_hazard`, `wadi_hazard_classes`, `wadi_crossings`, `wadi_behaviour` |

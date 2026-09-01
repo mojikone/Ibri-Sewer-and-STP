@@ -231,11 +231,11 @@ measured.
 | 9 | Drops recorded, backdrop above 600 mm, external | Concept (bookkeeping) / Detailed (detail) | G203-p30 §4.4 | **no** | a drop changes the depth, so it belongs at concept as a number |
 | 10 | Vortex drop shaft above 2 m backdrop | Concept (flag) | G203-p30 | **no** | |
 | 11 | Inlet angle ≥ 90° to the direction of flow | Concept (flag) | G203-p30; G203-p19 §3.6 | **no** | W8 checked and flagged this |
-| 12 | One outlet per structure | Concept | user rule / SWNETWROK; a two-outlet junction is not buildable | **no** | 5,394 of 20,937 nodes carry more than one outgoing pipe when snapped |
+| 12 | One outlet per structure | Concept | user rule / SWNETWROK; a two-outlet junction is not buildable | **no** | cannot even be tested — the layer is not connected (B.2 item 1) |
 | 13 | Property / house connections **as a list** | Concept | scope-p12 "List of Customer / house connection Excel list" | **no** | plot loads exist; the connection point does not |
 | 14 | Riders and property connections **shown on the layout** | Concept | scope-p12 | **no** | |
 | 15 | House connection **design sheets** | **Preliminary** | scope-p22 items 4 and 6; scope-p23 item 40.7 | n/a | **do not attempt now** |
-| 16 | Pipe material by diameter and construction method | Concept (indicative) / Detailed (final) | G203-p22 Table 6; scope-p10 §I; scope-p25 "Final recommendations on pipe materials" | **no** | Table 6 is mechanical: PVC-U ≤ DN250, HDPE/GRP above, GRP or lined RCC ≥ 350 mm, GRP / lined RCC / profile-wall HDPE for trunk mains > 600 mm (G203-p35 Table 14) |
+| 16 | Pipe material by diameter and construction method | Concept (indicative) / Detailed (final) | G203-p22 Table 6; scope-p10 §I; scope-p25 "Final recommendations on pipe materials" | **no** | Table 6 is mechanical: on a main sewer PVC-U only to 250 mm, HDPE or GRP to 300 mm, and GRP / HDPE / GRP-PVC / lined RCC at 350 mm and above; trunk mains > 600 mm are GRP, lined RCC or profile-wall HDPE (G203-p35 Table 14) |
 | 17 | Bedding and cover classes | **Detailed** | not in G203 at all; PAM-SPC-4xx (G201-p136) | n/a | **cannot be specified — the standard is not held** |
 | 18 | Rising main: DN, material, length, duty, velocity, static and friction head, air valves, washouts | Concept (sizing) / Preliminary (detail) | G203-pp50–55; scope-p13, scope-p22 item 14 | partial | `W10_rising_mains.shp` has DN, length, static head, velocity — **no material, no friction head, no TDH, no valves** |
 | 19 | Rising main velocity within limits | Concept | G203-p50 §8.1: ≥ 0.75 m/s at design minimum flow, 1.0 m/s intermittent, 1.2 m/s vertical, **≤ 2.5 m/s** | **fails** | 17 of 25 below 0.75 m/s, 3 of the 11 "real" stations among them |
@@ -261,31 +261,55 @@ measured.
 | 39 | H₂S / septicity and WATS model | **Preliminary / Detailed** | scope-p17, scope-p24 | n/a | do not attempt now |
 | 40 | Surge analysis | **Preliminary / Detailed** | scope-p17, scope-p25 | n/a | do not attempt now |
 
-## B.2 Four defects in the W10 outputs themselves
+## B.2 Five defects in the W10 outputs themselves
 
-[Certain] All four measured.
+[Certain] All five measured. These are **deliverable-consistency** defects — the layers
+disagree with each other or with themselves. They are a different list from the
+**guideline-compliance** failures in the sibling note `W8_W10_POSTMORTEM.md`, which runs
+W8's 22-check registry against the same layers and reports surcharged trunk and
+insufficient cover. The two lists do not overlap and neither supersedes the other. That
+note's diagnosis — the engineering was carried across from W8 and the auditor was not —
+is the cause; this list is part of the symptom.
 
-1. **The node layer and the pipe layer are from different solves.**
+1. **`W10_pipes.shp` is not a connected network.** The pipes carry the corridor line
+   geometry (`p2_sizing.py`: `lines[G[n][m]["line"]]`), and adjacent corridor lines do not
+   share endpoints. Clustering all 41,872 pipe endpoints:
+
+   | Snap tolerance | Distinct nodes | Connected components | Pipes in the largest |
+   |---|--:|--:|--:|
+   | 0.01 m | 28,855 | **7,919** | 1,703 (8.1 %) |
+   | 0.50 m | 28,792 | 7,856 | 3,375 (16.1 %) |
+   | 1.0 m | 24,837 | 3,922 | 5,613 (26.8 %) |
+   | 2.0 m | 20,912 | 129 | 18,798 (89.8 %) |
+   | 2.5 m | 20,594 | 37 | 20,299 (97.0 %) |
+
+   19,779 of the 28,855 endpoints have degree 1. The flow tree exists only in memory
+   inside `p2_sizing.py`; it was never written to the geometry. SewerGEMS ModelBuilder is
+   run at a 0.05 m connectivity tolerance in W8's own procedure — at that tolerance this
+   layer imports as roughly 7,900 disconnected fragments. Getting to 97 % in one piece
+   needs a **2.5 m** snap, which is a chamber-sized error, not a rounding one.
+
+2. **The node layer and the pipe layer are from different solves.**
    `W10_nodes_depth.shp` is written by `p2_depths.py` at one assumed uniform gradient;
    `W10_pipes.shp` is written by `p2_sizing.py` after the pipes are sized and the depths
    re-solved on the real gradients. Snapping pipe ends to the node layer, the two
    disagree by **up to 10.39 m of depth**. There is currently **no node layer consistent
    with the published pipes**, so no invert can be quoted for any chamber.
 
-2. **`SLOPE_PCT` is the minimum required gradient, not the laid gradient.**
+3. **`SLOPE_PCT` is the minimum required gradient, not the laid gradient.**
    `p2_sizing.py` line ~206 writes `SLOPE_PCT = 100 × p["SMIN"]`. The median value is
    0.500 % because DN200 governs, which is Table 11's DN200 minimum (G203-p29). The laid
    gradient — the one that reconciles the two end depths with the ground — is not
    published, and cannot be reconstructed because the ground level is not on the pipe
    either.
 
-3. **The lifting-station count is reported three ways.** `W10_SUMMARY.md` says 19 in the
+4. **Seven different lifting-station counts are in circulation.** `W10_SUMMARY.md` says 19 in the
    headline table and 21 in answer 3; `W10_stations_final.shp` and
    `W10_rising_mains.shp` hold 25; `W10_lift_consolidated.shp` holds 37;
    `W10_lift_opt.shp` 184; `W10_lift_stations.shp` 140; `W10_lift_sized.shp` 239. A
    deliverable can carry exactly one station count.
 
-4. **Rising main velocities breach G203-p50 in both directions of the rule.** 17 of 25
+5. **Rising main velocities breach G203-p50 in both directions of the rule.** 17 of 25
    are below the 0.75 m/s self-cleansing minimum, three of them at stations flagged
    `REAL`. Separately, W8's audit check A9 states the limit as "between 0.75 and 3.0 m/s"
    citing G203-p50 §8.1 — **the source says 2.5 m/s** ("The maximum allowable velocity
@@ -395,8 +419,8 @@ simply not in the dataset. That is an inference, not a record.
 ```
 
 **Can a package be commissioned before its downstream neighbour exists? Measured answer:
-no — unless a pumping station stands in the way of that dependency.** 5A-3 is 3.5 km and
-238 properties of sewer that is inert until 5A-2 exists. The construction order is forced:
+no — unless a pumping station stands in the way of that dependency.** 5A-3 is 3.5 km of
+sewer serving 180 plots and 303 properties, and it is inert until 5A-2 exists. The order is forced:
 downstream first, 5A-1 before 5A-4 before 5A-2 before 5A-3.
 
 **The one exception is the important one.** 5A-1 terminates at a pumping station, not at a
@@ -496,7 +520,7 @@ respects that. CRS EPSG:32640 throughout.
 | `PIPE_ID` | text | unique | |
 | `US_MH`, `DS_MH` | text | chamber IDs — **the field whose absence is the gap** | scope-p25; SewerGEMS `START_ND`/`STOP_ND` |
 | `DN_MM` | int | nominal diameter, 200 minimum | G203-p22 Table 6 |
-| `MAT` | text | `PVC-U` ≤ DN250; `HDPE`/`GRP` DN300–315; `GRP` or lined RCC ≥ DN350; trunk mains > DN600 `GRP` / lined RCC / profile-wall HDPE | G203-p22 Table 6, G203-p35 Table 14 |
+| `MAT` | text | main sewer DN200–300 open trench: `PVC-U` **only up to 250 mm**, else `HDPE` or `GRP`; DN350 and above: `GRP`, `HDPE`, `GRP/PVC` or lined RCC; trunk mains > DN600: `GRP`, lined RCC or profile-wall HDPE; riders and property connections OD160: `PVC-U` or `HDPE` | G203-p22 Table 6; G203-p35 Table 14 |
 | `CONSTR` | text | `open_trench` / `trenchless` | G203-p21 §4.1, G203-p35 |
 | `LEN_M` | float | | |
 | `SLOPE_PCT` | float | **the laid gradient**, reconciling `INV_UP`, `INV_DN` and `LEN_M` | G203-p29 (uniform slope between manholes) |
@@ -646,6 +670,7 @@ carry over with two corrections and eight additions.
 |---|---|
 | A9 rising mains | upper limit **2.5 m/s**, not 3.0 (G203-p50 §8.1). Lower limit 0.75 m/s at *design minimum* flow, 1.0 m/s intermittent, 1.2 m/s vertical |
 | C1 spacing | must run on the **as-built reach set after chamber placement**, not on corridor segments — this is the check W10 would have failed on 4,763 reaches |
+| A2 material | W8 states the rule as "PVC-U to DN315, GRP above". **G203-p22 Table 6 says PVC-U is permitted only up to 250 mm on a main sewer, and HDPE is permitted at DN350 and above alongside GRP, GRP/PVC and lined RCC.** Both halves of the W8 wording are wrong |
 
 **Additions**
 
