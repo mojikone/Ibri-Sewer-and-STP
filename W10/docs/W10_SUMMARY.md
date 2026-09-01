@@ -29,9 +29,11 @@ corridors and trunk as one graph, every edge charged for the height it gains in 
 direction of flow, one Dijkstra from the works settling every node. The largest is 266 km
 and 6,331 plots.
 
-**2. Is the proposed main pipe workable?** **Yes, entirely by gravity.** Deepest 7.72 m at
-DN1000 and 0.10 %, median cover 2.5 m, nothing near 12 m at any of nine diameter-and-gradient
-combinations. The worst single rise above the running low point is 4.5 m over 73 km. The
+**2. Is the proposed main pipe workable?** **Yes, entirely by gravity.** Across all three
+components the deepest point is **10.80 m** at DN1000 and 0.10 %, and on the 73.19 km main
+body it is **7.72 m**; median cover 2.5 m, and nothing reaches 12 m at any of nine
+diameter-and-gradient combinations. The 10.80 m is on the small eastern component, which is
+the drafting break — snapped into the main body it is levelled with it. The worst single rise above the running low point is 4.5 m over 73 km. The
 54-piece drawing is three components: the main body, the western leg, and a 2 m drafting
 break in the east that closes with a snap. Detail: `MAIN_PIPE_AUDIT.md`.
 
