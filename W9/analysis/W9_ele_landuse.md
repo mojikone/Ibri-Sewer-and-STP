@@ -58,5 +58,5 @@ Source `ELE_accounts.shp` joined to `Towns.shp`. **33,970 accounts**, EPSG:32640
 ## Coverage consistency check
 
 - Settlements hold 116,456 of the wilayat's 183,564 people = **63.4 %**.
-- At OR 5.32 the whole wilayat implies 34,503 domestic properties; the file holds 22,588 = **65.5 %**.
+- At OR 5.32 the whole wilayat implies 34,504 domestic properties; the file holds 22,588 = **65.5 %**.
 - The two coverages agree to 2.0 pp, so OR 5.32 is internally consistent rather than a coverage artefact.

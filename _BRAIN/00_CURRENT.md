@@ -1,4 +1,4 @@
-# What is current, and what is not — checked 2026-08-23 (W8)
+# What is current, and what is not — checked 2026-08-31 (W9)
 
 Read this before trusting any file in the repo. The job has grown, so this page says
 plainly which document is live and which is a record of past work.
@@ -19,6 +19,12 @@ plainly which document is live and which is a record of past work.
 | `TUTORIALS/T02/` | **T02 — Hydraulic Design of a Gravity Sewer**: every design constraint, each value read back from the source PDF with its page | 2026-08-23 |
 | `SHP/Main Pipe/Main Pipe.shp` | **the trunk is an INPUT now** — the user's drawing, not derived | 2026-08-20 |
 | `TUTORIALS/T01…docx` | how the flow and load are worked out — **Rev 4** | 2026-08-19 |
+| `TUTORIALS/T03_R01/` | **the concept-design method**: every equation, parameter and pipeline, with the economic and financial section built out | 2026-08-29 |
+| `W9/report/R1/` | **the current client deliverable** — Concept Design Report Revision 1. R0 is frozen in `R1/`'s sibling folder as issued | 2026-08-31 |
+| `W9/report/*.py` | the report build: `data_facts` (every measured figure), `charts`, `qgis_maps`, `flow`, `omml`, `notes` | 2026-08-31 |
+| `W9/docs/CONCEPT_REPORT_STRUCTURE.md` | the 43-section structure, each section mapped to its T03_R01 method section | 2026-08-29 |
+| `W9/analysis/W9_ele_landuse.md` | the tariff-to-category crosswalk, OR 5.32 and its coverage check | 2026-08-30 |
+| `_SETUP/skills/report-writing/SKILL.md` | how a deliverable report is built here — install it with `bootstrap.ps1` | 2026-08-31 |
 
 ## Superseded — keep for the record, do not quote as current
 
@@ -45,6 +51,10 @@ plainly which document is live and which is a record of past work.
 | Deepest chamber | 21.3 m (W6 first pass — the check was skipping them) | **11.88 m**, 12.00 m is a hard limit with no exemption |
 | Pumping stations | "5 SLS spots" (W5, counted from deep pockets) | **4 real stations** with lift, rising main and duty flow for each |
 | Road source | `W1/shp/roads_study.shp` | `SHP/Road centerline 2` with the `dual` column |
+| People per property | 5.0 set by the client team (W5) | **5.32 DERIVED** 2026-08-30 from settlement population ÷ counted domestic properties |
+| Existing sewer in the study area | "310.9 km of gravity sewer" | **111.6 km built, 199.3 km proposed** — the dataset holds two networks (2026-08-30) |
+| Existing force main | "33.2 km" | **10.0 km built, 23.2 km proposed** |
+| Existing treated effluent main | "45.7 km" | **none built** — all 45.7 km is proposed |
 
 ## Still open
 
@@ -58,3 +68,5 @@ plainly which document is live and which is a record of past work.
 | The trunk line | placed on the western + southern edge as you asked; confirm the alignment against `W6_pipes.shp` |
 | Cascading the 3 pumping stations | all sit within 1.5 km, so detail design can look at feeding one into another |
 | SewerGEMS comparison | your model run against the package in `W5/sewergems/` |
+| Capacity of the built 2006 network | the survey — no diameter or invert level is recorded on any built gravity segment, and NAMA's own remark says the data is for reference only |
+| Whether the SUREKHA proposed alignments are a client commitment | NWS. They carry project code SUREKHA, the same code as the 29,038 m³/d plant record marked "Design" |
