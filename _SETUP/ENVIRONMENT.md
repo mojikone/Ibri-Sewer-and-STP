@@ -29,6 +29,9 @@ Pipelines: `W1/py/s1_roads_graph.py` (road graph + dual detection) → `W2/py/s3
 - `anthropic-skills:pdf` / pymupdf scripts — reading client PDFs (scope, guidelines).
 - Standard tools: Bash (Git Bash), PowerShell (Word COM), qgis MCP.
 
+## 4b. Housekeeping check
+`python _SETUP/check_live_docs.py` — fails if `_BRAIN/07_PROJECT_STATE.md` or `README.md` is older than the newest commit touching `W1..W9/` or `TUTORIALS/`. They are the files a new session reads for current truth, and they go stale silently: nothing breaks and the build still passes. Run it before ending a session. `--warn` reports without failing.
+
 ## 5. Reference repo
 `https://github.com/mojikone/SWNETWROK.git` — user's stormwater network pipeline; architecture reference for gravity routing (territory assignment, invert routing, fan-out). Assessment in `_BRAIN/04_TOOLS.md`.
 
