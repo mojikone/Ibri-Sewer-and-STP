@@ -56,7 +56,12 @@ ASSIGN_M = 160.0
 
 def assign_loads(xy, nodes):
     """Each plot's average flow onto the corridor node it fronts."""
-    pl = gpd.read_file(os.path.join(C.OUT_SHP, "W10_plot_loads.shp"))
+    # The GeoPackage is canonical. The same layer as a shapefile is 67.8 MB against
+    # 22.9 MB, because GDAL pads every string field to 80 characters and there are seven
+    # of them over 64,071 records - and the layer is regenerated whenever the load basis
+    # moves, so it would land in the history each time.
+    gpkg = os.path.join(C.OUT_SHP, "W10_plot_loads.gpkg")
+    pl = gpd.read_file(gpkg, layer="plot_loads") if os.path.exists(gpkg) else         gpd.read_file(os.path.join(C.OUT_SHP, "W10_plot_loads.shp"))
     qcol = "Q_AVG_M3D" if "Q_AVG_M3D" in pl.columns else "Q_AVG_M3"
     pts = gpd.GeoDataFrame(geometry=[Point(xy[n]) for n in nodes],
                            data={"NODE": list(nodes)}, crs=C.EPSG)

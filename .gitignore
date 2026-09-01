@@ -15,3 +15,10 @@ __pycache__/
 
 # stray Explorer duplicates
 *- Copy.*
+
+# the plot-load layer is carried as a GeoPackage (22.9 MB) not a shapefile (67.8 MB)
+W10/shp/W10_plot_loads.shp
+W10/shp/W10_plot_loads.dbf
+W10/shp/W10_plot_loads.shx
+W10/shp/W10_plot_loads.prj
+W10/shp/W10_plot_loads.cpg
