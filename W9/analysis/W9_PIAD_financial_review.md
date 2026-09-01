@@ -36,12 +36,14 @@ And **CAPEX is not a net present value** — it is a single build cost in today'
 rials. NPV is a separate result that discounts CAPEX, OPEX and revenue across
 all 25 years back to today. The PIAD produces no NPV at all.
 
+The Step 4 box carries the formula as one line. FigJam nodes are plain text, so a stacked fraction is not possible there and the box clips silently if the text runs long — the equation had to be shortened to fit. In the report the typeset version goes in the body as native Word OMML, as every other equation does.
+
 **Still to do before this goes in the report:** the figure is 1.75:1, so it
 needs a landscape page or a redraw on the grid drawer to fit a portrait column,
 and the red gaps box comes out — that is our critique, not the client's.
 
 Editable source: FigJam board
-`https://www.figma.com/board/eTdr9ID9ASFLeJATXQdwGl`
+`https://www.figma.com/board/gZLeYPXMCqiI2n25w8YHmF`
 
 ---
 
