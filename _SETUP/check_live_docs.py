@@ -17,7 +17,8 @@ a live-document row on account of it.
 import subprocess
 import sys
 
-WORK = ["W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "TUTORIALS"]
+WORK = ["W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10", "W11",
+        "TUTORIALS"]
 LIVE = ["_BRAIN/07_PROJECT_STATE.md", "README.md"]
 
 
