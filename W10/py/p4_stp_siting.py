@@ -629,10 +629,11 @@ def make_map(score, m_bnd, tr50, extent, bnd, recept, agri, m_wadi, trF,
         mk = "s" if r["SITE"] == "EXISTING" else "^"
         cc = "#111111" if r["SITE"] == "EXISTING" else "#c0208a"
         lb = "Existing works" if r["SITE"] == "EXISTING" else "Proposed south site"
-        dy = 17 if r["SITE"] == "EXISTING" else -22
+        # the south site sits ~1.5 km from S9, so its label goes left, not right
+        off = (13, 17) if r["SITE"] == "EXISTING" else (-142, -4)
         ax.scatter([r.geometry.x], [r.geometry.y], s=210, marker=mk, c=cc,
                    edgecolors="white", linewidths=1.6, zorder=11)
-        ax.annotate(lb, (r.geometry.x, r.geometry.y), xytext=(12, dy),
+        ax.annotate(lb, (r.geometry.x, r.geometry.y), xytext=off,
                     textcoords="offset points", fontsize=10, fontweight="bold",
                     color=cc, zorder=12,
                     bbox=dict(boxstyle="round,pad=0.18", fc="white", ec=cc, lw=0.9, alpha=0.95))
@@ -643,18 +644,19 @@ def make_map(score, m_bnd, tr50, extent, bnd, recept, agri, m_wadi, trF,
     ax.set_ylabel("Northing (m)", fontsize=9)
     ax.tick_params(labelsize=8)
 
-    # scale bar, bottom left inside the frame
+    # scale bar and north arrow go bottom RIGHT - the bottom left is where the
+    # proposed south site and S9 sit, and the labels collide with the bar there
     sb = 5000.0
-    x0 = minx + 0.030 * (maxx - minx); y0 = miny + 0.060 * (maxy - miny)
-    for k in range(5):
-        ax.add_patch(Rectangle((x0 + k * sb, y0), sb, 330,
+    x0 = maxx - 0.395 * (maxx - minx); y0 = miny + 0.075 * (maxy - miny)
+    for k in range(3):
+        ax.add_patch(Rectangle((x0 + k * sb, y0), sb, 340,
                                facecolor="#111111" if k % 2 == 0 else "#ffffff",
                                edgecolor="#111111", lw=0.8, zorder=13))
-    for k in range(6):
+    for k in range(4):
         ax.text(x0 + k * sb, y0 - 950, f"{int(k*5)}", ha="center", fontsize=8, zorder=13)
-    ax.text(x0 + 5 * sb + 800, y0 + 40, "km", fontsize=8.5, zorder=13)
+    ax.text(x0 + 3 * sb + 700, y0 + 40, "km", fontsize=8.5, zorder=13)
 
-    nx_, ny_ = maxx - 0.030 * (maxx - minx), miny + 0.075 * (maxy - miny)
+    nx_, ny_ = maxx - 0.035 * (maxx - minx), miny + 0.055 * (maxy - miny)
     ax.annotate("", xy=(nx_, ny_ + 2400), xytext=(nx_, ny_),
                 arrowprops=dict(facecolor="#111111", width=3.2, headwidth=11), zorder=13)
     ax.text(nx_, ny_ + 2750, "N", ha="center", fontsize=12, fontweight="bold", zorder=13)
@@ -664,15 +666,16 @@ def make_map(score, m_bnd, tr50, extent, bnd, recept, agri, m_wadi, trF,
              fontsize=16, fontweight="bold", ha="left")
     fig.text(0.030, 0.939,
              "Weighted multi-criteria surface on a 50 m grid with the hard exclusions of PAM-GUD-201 "
-             "Table 8 (p43) and PAM-GUD-203 Tables 27-28 (p63-64) applied.   Grey = excluded;  colour "
-             "= score among the 180 km$^2$ that passes all four.",
+             "Table 8 (p43) and PAM-GUD-203 Tables 27-28 (p63-64) applied.   Grey = excluded;  "
+             f"colour = score among the {expc['pass_km2']:.0f} km$^2$ ({expc['pass_pct']:.0f} %) that passes all four.",
              fontsize=10, ha="left", color="#333333")
 
-    cax = fig.add_axes([0.540, 0.900, 0.175, 0.013])
-    cb = fig.colorbar(im, cax=cax, orientation="horizontal")
-    cb.set_label("suitability score (weighted, 0-1)", fontsize=8.5, labelpad=3)
+    cax = fig.add_axes([0.7385, 0.450, 0.0105, 0.290])
+    cb = fig.colorbar(im, cax=cax, orientation="vertical")
+    cb.set_label("suitability score", fontsize=8.5, labelpad=4)
+    cb.ax.yaxis.set_label_position("left")     # right side is the table, label clips
+    cb.ax.yaxis.set_ticks_position("left")
     cb.ax.tick_params(labelsize=7.5)
-    cax.xaxis.set_ticks_position("top"); cax.xaxis.set_label_position("top")
 
     leg = [Patch(fc="#d9d9d1", ec="#999", label="excluded (buffer / flood / plot / land)"),
            Patch(fc="#8fbfe0", ec="none", label="50-yr flood hazard class 4-6 (wadi)"),
@@ -682,13 +685,14 @@ def make_map(score, m_bnd, tr50, extent, bnd, recept, agri, m_wadi, trF,
            Line2D([], [], marker="*", ls="none", mfc="#fff", mec="#111", ms=14, label="candidate site"),
            Line2D([], [], marker="s", ls="none", mfc="#111", mec="#fff", ms=9, label="existing works"),
            Line2D([], [], marker="^", ls="none", mfc="#c0208a", mec="#fff", ms=10, label="proposed south site")]
-    ax.legend(handles=leg, loc="lower right", fontsize=8.8, framealpha=0.94, ncols=2,
+    ax.legend(handles=leg, loc="upper right", fontsize=8.8, framealpha=0.94, ncols=2,
               facecolor="white", edgecolor="#666").set_zorder(14)
 
     # ---------------------------------------------------- shortlist table, right
     axt = fig.add_axes([0.762, 0.335, 0.226, 0.585]); axt.axis("off")
     cols = ["SITE", "SCORE", "GRAV\n%", "DWELL\nm", "FREE\nha", "TRUNK\nm", "GL\nm", "CONV\nkm"]
-    body = [[r["SITE"], f"{r['SCORE']:.3f}", f"{r['GRAV_PCT']:.0f}", f"{r['D_DWELL_M']:.0f}",
+    body = [[("EXIST." if r["SITE"] == "EXISTING" else r["SITE"]),
+             f"{r['SCORE']:.3f}", f"{r['GRAV_PCT']:.0f}", f"{r['D_DWELL_M']:.0f}",
              f"{r['FREE600_HA']:.0f}", f"{r['D_TRUNK_M']:.0f}",
              f"{r['Z_VRT_M']:.1f}" if r["Z_VRT_M"] is not None else "-",
              f"{r['CONVEY_KM']:.1f}"]
@@ -699,7 +703,7 @@ def make_map(score, m_bnd, tr50, extent, bnd, recept, agri, m_wadi, trF,
         cell.set_linewidth(0.5)
         if r == 0:
             cell.set_facecolor("#26415e"); cell.set_text_props(color="white", fontweight="bold")
-        elif body[r - 1][0] in ("EXISTING", "SOUTH"):
+        elif body[r - 1][0] in ("EXIST.", "SOUTH"):
             cell.set_facecolor("#f7dcef"); cell.set_text_props(fontweight="bold")
         elif r % 2 == 0:
             cell.set_facecolor("#f2f2ee")
@@ -769,15 +773,16 @@ def make_map(score, m_bnd, tr50, extent, bnd, recept, agri, m_wadi, trF,
              fontweight="bold", va="top", ha="left", color="#26415e")
     axg.text(0.0, 0.86,
              "load centre k reaches a works at c when\n"
-             "   (zk - 2.0) - 0.0013 d  >=  zc - 6.0\n"
-             "0.0010 laid gradient (the trunk's own DN1000\n"
-             "grade), 1.30 sinuosity, 2.0 m collector invert,\n"
-             "6.0 m deepest acceptable inlet at the works.\n"
-             f"{expc['n_load']:,} load centres on a 500 m grid carry\n"
-             f"the {expc['n_plots']:,} built + planned plots; C2 is the share\n"
-             "of that load for which the test holds. It is a\n"
-             "screen, not a design - it does not check the\n"
-             "12 m cover limit at intermediate chambers.",
+             "  (zk - 2.0) - 0.0013 d >= zc - 6.0\n"
+             "0.0010 laid gradient (the trunk's own\n"
+             "DN1000 grade), 1.30 sinuosity, 2.0 m\n"
+             "collector invert, 6.0 m deepest inlet.\n"
+             f"{expc['n_load']:,} load centres on a 500 m grid\n"
+             f"carry the {expc['n_plots']:,} built + planned plots.\n"
+             "C2 is the share of that load for which\n"
+             "the test holds. A screen, not a design:\n"
+             "it does not check the 12 m cover limit\n"
+             "at intermediate chambers.",
              transform=axg.transAxes, fontsize=7.5, family="monospace", va="top", ha="left")
 
     fig.text(0.030, 0.014,
