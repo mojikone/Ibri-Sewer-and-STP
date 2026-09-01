@@ -1,10 +1,12 @@
 """The options appraisal method for this project, drawn on a stated grid.
 
-The FigJam version got the substance right and the layout wrong: the options
-entered after the costing rather than before it, and the half that actually
-decides — criteria, weights, sensitivity, tie-break — came out as a thin queue
-of small boxes beside twelve cost inputs. Here the options enter at the top and
-the two halves carry equal weight.
+The portrait alternative, for when the figure has to fit a report column.
+
+The left-to-right version reads more easily — the three streams visibly
+converge and the eye holds one direction — so that one is the reference copy.
+This one folds the same content into an aspect near 1.0 by turning the flow
+downwards, which costs some of that legibility. Use it only where the page
+shape demands it.
 
 Re-runnable; writes into W9/docs/img/.
 """
@@ -78,7 +80,7 @@ def appraisal():
         c.edge(a, b)
     c.edge("s8", "rec")
 
-    return render(c, "appraisal_method", OUT)
+    return render(c, "appraisal_method_portrait", OUT)
 
 
 if __name__ == "__main__":
