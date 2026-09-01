@@ -1,0 +1,8 @@
+layer,status,n,km
+gravity,built (incl. 8F-1 duplicate),3267,111.567
+gravity,"built, true gravity",3266,101.098
+gravity,proposed SUREKHA,127,199.3
+force main,built,1,9.994
+force main,proposed,8,23.209
+treated effluent,built,0,0.0
+treated effluent,proposed,8,45.654

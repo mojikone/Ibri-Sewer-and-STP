@@ -1,0 +1,88 @@
+# W10 Phase 1.3 - saturation load summary
+# basis: Tier A ratios set the volume, land use sets the placement (PROJECT-STATE 2.1b, locked 2026-08-30)
+# OR 5.32 | LPCD 164.0 | return dom 0.85 / nondom 0.54 | ND 22% | GOV 14%
+
+## TOTALS BY CLASS AND CATEGORY
+group,key,records,n_dom,n_nd,n_gov,pop,q_m3d,q_ls,zero_load
+class,A,6351,3358.0,858.0,244.0,17864.56,3786.5926415975505,43.82630372219387,4242
+class,B,17960,27128.847999999998,7510.128,412.2800000000001,144325.47136,25724.51869252287,297.73748486716283,1054
+class,P,36927,48668.687999999995,6710.168,967.0699999999999,258917.42015999998,43095.81347850754,498.7941374827261,2343
+class,U,2789,2789.0,0.0,0.0,14837.480000000001,2068.3447120000005,23.939174907407406,0
+category,agricultural,4240,0.0,0.0,0.0,0.0,0.0,0.0,4240
+category,commercial,837,0.0,3555.8379999999997,0.0,0.0,2003.8568689207564,23.19278783473097,0
+category,commercial+government,170,0.0,684.212,231.9,0.0,1158.0318046427055,13.403145887068352,0
+category,domestic,52214,76231.22399999999,0.0,0.0,405550.11168,56533.68556819199,654.3250644466666,0
+category,government,675,0.0,0.0,1024.32,0.0,3411.9749769257187,39.49045112182543,0
+category,industrial,55,0.0,0.0,0.0,0.0,0.0,0.0,55
+category,mixed,2492,5713.312,10838.246,367.13000000000005,30394.819840000004,11567.72030594679,133.88565168919897,0
+category,none,3344,0.0,0.0,0.0,0.0,0.0,0.0,3344
+flow_stream,domestic,,,,,,60770.72345388799,703.3648547903703,
+flow_stream,non_domestic,,,,,,8497.222598785536,98.34748378224,
+flow_stream,governmental,,,,,,5407.3234719544325,62.58476240688,
+total,study area,64027,81944.536,15078.296,1623.35,435944.93152,74675.26952462796,864.2971009794903,7639
+
+## RECONCILIATION AGAINST THE 49,700 m3/d CARRIED SINCE W2
+item,value,unit
+"W10 saturation Qadf, plots only (no infiltration)",74675.3,m3/d
+W10 saturation population,435945.0,people
+W10 domestic properties,81945.0,properties
+W10 implied area-average rate,171.3,l/c/d
+W2 screening Qadf carried since W2 (incl. infiltration),49714.8,m3/d
+"W2 infiltration inside that figure (720 L/d/km x 2,497 km)",1797.8,m3/d
+W2 plot load only,47917.0,m3/d
+W2 population,279756.0,people
+"difference W10 - W2, plot load",26758.2,m3/d
+ratio W10 / W2 plot load,1.558,-
+W2 people per residential plot (1.0 property x OR 6.0),6.0,people/plot
+W10 people per residential plot (1.456 properties x OR 5.32),7.746,people/plot
+factor A - property and occupancy basis,1.291,x
+W2 residential plots,46626.0,plots
+W10 plots carrying dwellings,51917.0,plots
+"factor B - wider plot base (whole cadastre inside the boundary, not 36 zones)",1.207,x
+factor A x factor B (should equal the population ratio),1.558,x
+population ratio W10 / W2,1.558,x
+"R0/NCSI population 2024, 25 settlements",116456.0,people
+"R0/NCSI population 2055, 25 settlements",237885.0,people
+"R0/NCSI population 2100, 25 settlements",691264.0,people
+W3 A1 land ceiling at OR 6.0 x 1 property/plot,269796.0,people
+W10 saturation pop / R0 2055,1.833,-
+W10 saturation pop / R0 2100,0.631,-
+electricity accounts read,33970.0,accounts
+
+## CHECKS
+check,item,value
+properties,total premises at saturation,98646.0
+properties,domestic properties (dwellings),81945.0
+properties,non-domestic premises,15078.0
+properties,government premises,1623.0
+population,at OR 5.32,435945.0
+population,vs R0/NCSI 2055 (settlements),1.83
+population,vs R0/NCSI 2100 (settlements),0.63
+zero load,records with zero load,7639.0
+zero load,class A,4242.0
+zero load,class B,1054.0
+zero load,class P,2343.0
+zero load reason,"agricultural plot, no household meter (I-5)",4235.0
+zero load reason,"industrial - outside the ratios (G1-p59), quantities not supplied",55.0
+zero load reason,parcel under 100 m2 with no meter - service parcel,3349.0
+sanity,loaded records,56388.0
+sanity,load > 25 L/m2/d (high),554.0
+sanity,load > 100 L/m2/d (very high),12.0
+sanity,load < 0.05 L/m2/d (mega parcel),543.0
+sanity,micro parcels (<100 m2) still loaded,187.0
+sanity,median L/m2/d,1.67
+sanity,95th percentile L/m2/d,8.83
+sanity,share of flow on records flagged high/very_high %,2.48
+share of flow,domestic %,81.38
+share of flow,non-domestic %,11.38
+share of flow,governmental %,7.24
+outside boundary,records dropped from totals,44.0
+
+## SENSITIVITY - the levers that move the total
+variant,dom_props,pop,qadf_m3d,vs_49700_pct
+"design basis (DOM_PER_PLOT 1.456, OR 5.32)",81945,435945,74675.3,50.2
+built-plot rate 1.413,79867,424894,72782.4,46.4
+one dwelling per plot (W8 fallback),59917,318758,54602.4,9.8
+OR 5.00 (superseded placeholder),81945,409723,70183.5,41.2
+OR 6.00 (W1-W3 basis),81945,491667,84220.2,69.4
+no micro-parcel filter,84493,449500,76998.3,54.9

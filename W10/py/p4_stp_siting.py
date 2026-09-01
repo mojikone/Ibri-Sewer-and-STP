@@ -57,7 +57,7 @@ FOOTPRINT_M2_PER_M3D = {
 }
 LAND_MIN_HA = 20.0   # CAS/EA upper bound 3.6 m2/(m3/d) x 54,670 = 19.7 ha -> 20 ha
 LAND_GOOD_HA = 30.0  # +50% for phasing, sludge, TSE storage and the solar farm G203 p64
-LAND_WINDOW_M = 600.0  # the moving window the free area is measured in (36 ha)
+LAND_WINDOW_M = 650.0  # the moving window free area is measured in: 13 cells = 42.25 ha
 
 # odour / amenity buffer, G201 p43 Table 8 "Minimum buffer zone requirements"
 #   STP (small/medium)  500 m to residential / sensitive uses
@@ -66,6 +66,23 @@ LAND_WINDOW_M = 600.0  # the moving window the free area is measured in (36 ha)
 DWELL_HARD_M = 300.0     # below this the site is out
 DWELL_FULL_M = 1000.0    # at or beyond this the criterion is fully satisfied
 DWELL_GENERIC_M = 500.0  # the small/medium generic default, reported as a flag
+
+# Which plots count as odour receptors. W3 CLASS='B' means "there are structures on
+# it", not "people live on it". Eleven built plots are 5 ha or larger with no land
+# use attribute - the largest is 899 ha, 14,000x the median built plot (0.064 ha) -
+# and two of them ARE the existing works compound (6.6 ha + 29.0 ha). Left in, the
+# 899 ha parcel alone throws a 300 m exclusion and a 1 km buffer ring across 20 km2
+# of the west, and it put three sites in the first shortlist. Left in, the existing
+# works is also its own odour receptor and scores 0 m to a dwelling. So a built plot
+# of 5 ha or more counts as a receptor only if its land use says people are on it.
+RECEPTOR_BIG_HA = 5.0
+RECEPTOR_LANDUSE = {           # Arabic values in MoH_Plots.LANDUSE
+    "سكني",                          # residential
+    "سكني/تجاري",   # residential / commercial
+    "سكنى/زراعى",   # residential / agricultural
+    "مسجد",                          # mosque
+    "حكومي",                    # government (schools, clinics - kept)
+}
 
 # flood. G203 p63 Table 27 (i) requires 25 and 100 year flood compliance and that
 # the STP stay fully operational during floods. NO numeric wadi setback exists in
@@ -203,6 +220,18 @@ def main():
     agri = plots[plots["CLASS"] == "A"]
     log(f"  built {len(built):,}  planned {len(planned):,}  agricultural {len(agri):,}")
 
+    # odour receptors: built plots, minus the oversized unattributed parcels that
+    # hold no dwellings (see RECEPTOR_BIG_HA above)
+    lu = plots_raw.set_index("OBJECTID")["LANDUSE"]
+    b_lu = built["OBJECTID"].map(lu)
+    b_ha = built.geometry.area / 1e4
+    is_big_nonres = (b_ha >= RECEPTOR_BIG_HA) & (~b_lu.isin(RECEPTOR_LANDUSE))
+    recept = built[~is_big_nonres.values]
+    log(f"  odour receptors {len(recept):,} plots / {recept.geometry.area.sum()/1e4:,.0f} ha "
+        f"(dropped {int(is_big_nonres.sum())} built parcels >= {RECEPTOR_BIG_HA:.0f} ha with no "
+        f"residential land use, {b_ha[is_big_nonres.values].sum():,.0f} ha, largest "
+        f"{b_ha[is_big_nonres.values].max():,.0f} ha)")
+
     # ------------------------------------------------------------- fine masks
     log("rasterising masks at 10 m")
 
@@ -217,7 +246,8 @@ def main():
     m_bnd_F = rasterize([(bpoly, 1)], out_shape=(fy, fx), transform=trF,
                         fill=0, dtype="uint8", all_touched=False).astype(bool)
     m_plot_F = burn(plots_raw)            # every registered plot, whatever its class
-    m_built_F = burn(built)
+    m_built_F = burn(built)          # for the map only
+    m_recept_F = burn(recept)        # what the odour buffer is measured from
     m_agri_F = burn(agri)
     m_road_F = burn(roads, buf=FINE)
     m_major_F = burn(roads[roads["dual"].isin([1, 2])], buf=FINE)
@@ -244,7 +274,8 @@ def main():
             return np.full(mask.shape, 1e6, np.float32)
         return (ndi.distance_transform_edt(~mask) * FINE).astype(np.float32)
 
-    d_built_F = edt_to(m_built_F)
+    d_built_F = edt_to(m_recept_F)          # governs C1 and the hard exclusion
+    d_allbuilt_F = edt_to(m_built_F)        # reported alongside, uncorrected
     d_wadi_F = edt_to(m_wadi_F)
     d_road_F = edt_to(m_road_F)
     d_major_F = edt_to(m_major_F)
@@ -473,6 +504,7 @@ def main():
                 ALLOWED=int(bool(at50(allowed, x, y))),
                 **{k: round(v, 4) for k, v in sc_i.items()},
                 D_DWELL_M=round(float(at(d_built_F, x, y)), 0),
+                D_BUILT_M=round(float(at(d_allbuilt_F, x, y)), 0),
                 CLR_500=int(at(d_built_F, x, y) >= DWELL_GENERIC_M),
                 D_WADI_M=round(float(at(d_wadi_F, x, y)), 0),
                 IN_WADI=int(bool(at(m_wadi_F, x, y))),
@@ -493,6 +525,7 @@ def main():
             geoms.append(pt)
 
     cand = gpd.GeoDataFrame(rows, geometry=geoms, crs=f"EPSG:{C.EPSG}")
+    cand.insert(1, "RANK", cand["SCORE"].rank(ascending=False, method="min").astype(int))
     p_cand = os.path.join(C.OUT_SHP, "W10_stp_candidates.shp")
     cand.to_file(p_cand, encoding="utf-8")
     cand.drop(columns="geometry").to_csv(
@@ -505,8 +538,8 @@ def main():
 
     # ------------------------------------------------------------------- map
     log("drawing the map")
-    make_map(score, m_bnd, tr50, (minx, miny, maxx, maxy), bnd, built, agri,
-             m_wadi_F, trF, trunk, cand, allowed)
+    make_map(score, m_bnd, tr50, (minx, miny, maxx, maxy), bnd, recept, agri,
+             m_wadi_F & m_bnd_F, trF, trunk, cand, allowed)
 
     log(f"DONE in {time.time()-t0:.0f} s")
     return cand
