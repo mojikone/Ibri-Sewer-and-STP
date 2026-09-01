@@ -1,0 +1,11 @@
+scheme,works,breaches,clusters,stations,lift_m
+existing works only,1,219,33,21,2815
+southern site only,1,206,36,23,2664
+S1 only,1,231,33,20,2975
+existing + west satellite,2,216,34,21,2797
+existing + S6 (east),2,228,32,21,2939
+existing + west + S6,3,222,33,21,2875
+south + west + S6,3,221,33,20,2867
+S1 + west + S6,3,232,32,20,2993
+existing + west + S6 + S10,4,222,33,21,2864
+five works,5,214,35,24,2758

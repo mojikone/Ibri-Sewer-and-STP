@@ -1,0 +1,9 @@
+strategy,breaches,clusters,stations,lift_m,pipe_km,km_over_DN200
+depth-cost @0.50%,222,34,21,2849,1874.3,183.8
+depth-cost @0.50% + flatten,191,38,25,2408,1874.3,485.4
+depth-cost @0.30%,209,37,24,2718,1872.1,190.9
+depth-cost @0.30% + flatten,188,39,26,2371,1872.1,477.5
+depth-cost @0.20%,217,38,26,2801,1882.3,198.6
+depth-cost @0.20% + flatten,193,40,27,2422,1882.3,484.7
+depth-cost @0.10%,220,34,23,2832,1884.8,203.5
+depth-cost @0.10% + flatten,188,38,26,2367,1884.8,495.9

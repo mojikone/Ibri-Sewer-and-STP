@@ -12,7 +12,7 @@ not there. W11 is the brownfield run that includes it.
 | Plots served | **60,085 of 61,272 (98.1 %)** |
 | Flow arriving at the works | **73,442 m³/d** + 1,356 m³/d infiltration |
 | Subnetworks | **206**, defined as everything reaching the trunk at one point |
-| Lifting stations | **11** with a real catchment; 17 further depth breaches absorbed |
+| Lifting stations | **21** (corrected from 11 - see `OPTIMISATION.md`) |
 | Deepest chamber | **11.99 m** against a 12.00 m limit |
 | Median cover | 2.07 m |
 
@@ -37,10 +37,11 @@ the drafting break — snapped into the main body it is levelled with it. The wo
 54-piece drawing is three components: the main body, the western leg, and a 2 m drafting
 break in the east that closes with a snap. Detail: `MAIN_PIPE_AUDIT.md`.
 
-**3. Where are the lifting stations?** **11.** The route there matters: 220 depth breaches
-at the real gradients, 33 after consolidating within 1.5 km (rule 9), 11 once the
-50-property threshold is applied to the **catchment that actually drains through each one**
-rather than the plots near it. The other 17 carry 249 m³/d between them. Total duty through
+**3. Where are the lifting stations?** **21.** 219 depth breaches at the real gradients, 33
+after consolidating within 1.5 km (rule 9), 21 once the 50-property threshold is applied to
+the catchment that actually drains through each one. *(An earlier figure of 11 was wrong -
+it double-filtered, applying a proximity test and then a catchment test to the survivors.
+See `OPTIMISATION.md`.)* Ten strategies were tested to reduce this and none beat it. Total duty through
 all stations is 199 L/s against a network peak near 1,700 — about an eighth of the flow is
 pumped. Detail: `PUMPING_AND_DEPTH.md`.
 

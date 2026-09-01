@@ -1,0 +1,5 @@
+rule,breaches,clusters,stations,total_lift_m
+12.0 m to INVERT  (as coded),219,33,21,2815
+12.0 m COVER      (as G203 p33 states),204,35,24,2706
+10.0 m COVER      (lower end of the range),275,25,16,3095
+14.0 m COVER      (information only),144,35,23,2247
