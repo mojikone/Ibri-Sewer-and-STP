@@ -14,7 +14,7 @@ up? Two destinations are worth pricing at concept stage, and both are computed h
   * to the works, which is what a station does when it is the last one in a chain
 
 The rising main is sized on PUMP DUTY, not on the arriving gravity flow - the wet well is
-emptied faster than it fills - and held to 0.75 to 3.0 m/s (G203-p50 8.1). Duty is taken
+emptied faster than it fills - and held to 0.75 to 2.5 m/s (G203-p50). Duty is taken
 as the peak arriving flow, which is the concept-stage convention; the real duty comes from
 the wet-well cycle at detail design.
 
@@ -43,12 +43,16 @@ from sewnet.criteria import DEFAULT as CRIT
 
 warnings.filterwarnings("ignore")
 
-V_MIN, V_MAX = 0.75, 3.0        # m/s in a rising main (G203-p50 8.1)
+V_MIN, V_MAX = 0.75, 2.5        # m/s in a rising main. G203-p50 verbatim: "The maximum
+                                # allowable velocity (worst case scenario) in the pipe shall be
+                                # not greater than 2.5 m/s." W8 check A9 cites 3.0, which is the
+                                # GRAVITY maximum from p27 - the two were conflated and W10
+                                # inherited it.
 DN_SERIES = (100, 150, 200, 250, 300, 400, 500, 600, 700, 800, 900, 1000, 1200)
 
 
 def size_rising(q_ls):
-    """Smallest diameter that keeps the duty flow between 0.75 and 3.0 m/s."""
+    """Smallest diameter that keeps the duty flow between 0.75 and 2.5 m/s."""
     q = q_ls / 1000.0
     for dn in DN_SERIES:
         d = dn / 1000.0
