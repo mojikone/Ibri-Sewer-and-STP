@@ -11,11 +11,14 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import doc as D
 import notes as N
 
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                   "Ibri_Concept_Design_Report_R0.docx")
+REV = "R1"
+HERE = os.path.dirname(os.path.abspath(__file__))
+OUT = os.path.join(HERE, REV,
+                   f"Ibri_Concept_Design_Report_{REV}.docx")
 
 
 def main(render_pdf=False):
+    os.makedirs(os.path.join(HERE, REV), exist_ok=True)
     d = D.new_document()
     N.reset()
     N.ensure_style(d)
@@ -40,8 +43,8 @@ def main(render_pdf=False):
         for fn in fns:
             getattr(m, fn)(d)
 
-    D.footer_pagenum(d, "Ibri Concept Design Report  ·  Revision 0  ·  "
-                        "Renardet Project 2621")
+    D.footer_pagenum(d, f"Ibri Concept Design Report  ·  Revision "
+                        f"{REV[1:]}  ·  Renardet Project 2621")
 
     out = OUT
     try:
