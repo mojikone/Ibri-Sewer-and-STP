@@ -140,9 +140,9 @@ class Chart:
         na, nb = self.nodes[a], self.nodes[b]
         if side:
             sa, sb = side
-        elif nb["row"] > na["row"]:
+        elif nb["row"] > na["row"] + na["height"] - 1:
             sa, sb = "b", "t"
-        elif nb["row"] < na["row"]:
+        elif nb["row"] + nb["height"] - 1 < na["row"]:
             sa, sb = "t", "b"
         elif nb["col"] > na["col"]:
             sa, sb = "r", "l"
@@ -152,11 +152,28 @@ class Chart:
         x1, y1 = self._anchor(a, sa)
         x2, y2 = self._anchor(b, sb)
 
+        # a tall box connecting sideways to shorter ones: leave at the height
+        # of the box it is joining, so the line is straight instead of
+        # doglegging out of the tall box's midpoint
+        if sa in "lr" and sb in "lr":
+            ax, ay, aw, ah = self._box(a)
+            bx, by, bw, bh = self._box(b)
+            if ay <= y2 <= ay + ah:
+                y1 = y2
+            elif by <= y1 <= by + bh:
+                y2 = y1
+
         if sa in "tb" and sb in "tb" and abs(x1 - x2) > 2:
             my = (y1 + y2) / 2
             pts = [(x1, y1), (x1, my), (x2, my), (x2, y2)]
         elif sa in "lr" and sb in "lr" and abs(y1 - y2) > 2:
-            mx = (x1 + x2) / 2
+            if sa == sb:
+                # both leave and enter on the same side, so run the line as a
+                # bus outside the column; the midpoint would draw it down the
+                # box borders
+                mx = max(x1, x2) + 30 if sa == "r" else min(x1, x2) - 30
+            else:
+                mx = (x1 + x2) / 2
             pts = [(x1, y1), (mx, y1), (mx, y2), (x2, y2)]
         else:
             pts = [(x1, y1), (x2, y2)]

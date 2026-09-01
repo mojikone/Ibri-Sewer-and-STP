@@ -23,7 +23,7 @@ REPORT = os.path.join(HERE, "..", "report", "img")
 
 
 def appraisal():
-    c = Chart(5, 5, cw=252, rh=118, gx=40, gy=40,
+    c = Chart(5, 5, cw=252, rh=118, gx=40, gy=40, pad=72,
               title="How each option is costed and compared")
 
     # the options govern the costing, so they sit to the left of it
@@ -69,10 +69,16 @@ def appraisal():
                  ("a1", "a2"), ("a2", "a3"), ("a3", "A"),
                  ("b1", "b2"), ("b2", "b3"), ("b3", "B"),
                  ("c1", "c2"), ("c2", "c3"), ("c3", "C"),
-                 ("A", "npv"), ("B", "npv"), ("C", "npv"),
-                 ("npv", "s5"),
                  ("s5", "s6"), ("s6", "s7"), ("s7", "s8"), ("s8", "s9")):
         c.edge(a, b)
+
+    # the three streams collect on a bus down the right edge and enter step 4
+    # from its right end; step 4 leaves from its left and drops into step 5.
+    # The page then reads as one continuous line that turns at each edge,
+    # instead of three arrows cutting back through the middle of the figure.
+    for k in ("A", "B", "C"):
+        c.edge(k, "npv", side=("r", "r"))
+    c.edge("npv", "s5", side=("l", "l"))
 
     render(c, "appraisal_method", DOCS)
     png = os.path.join(DOCS, "appraisal_method.png")
