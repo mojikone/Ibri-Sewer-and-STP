@@ -123,6 +123,8 @@ class Chart:
             fill, stroke = TINT, MID
         elif kind == "start":
             stroke, weight, colour = MID, "600", INK
+        elif kind == "warn":
+            fill, stroke, colour = WARN, WARN_LINE, "#7A5416"
 
         rx = h / 2 if kind == "pill" else 9
         if kind == "pill":

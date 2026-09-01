@@ -468,7 +468,12 @@ the report:
 
 ![The Ibri options appraisal method](../docs/img/appraisal_method.png)
 
-`https://www.figma.com/board/WfH0LRWfSHhpkYPrdnMNeR`
+Drawn on our own grid (`W9/py/make_appraisal_figure.py`) rather than in FigJam.
+The FigJam draft had the substance right and the layout wrong twice over: the
+options entered *after* the costing instead of governing it, and the half that
+decides — criteria, weights, sensitivity, tie-break — came out as a thin queue
+of small boxes beside twelve cost inputs. The FigJam version is kept at
+`https://www.figma.com/board/WfH0LRWfSHhpkYPrdnMNeR` for reference only.
 
 Three differences from the PIAD chart. Step 4 is **NPV and life-cycle cost at
 5 per cent over 25 years**, with payback reported but not deciding. Steps 6 to 8
