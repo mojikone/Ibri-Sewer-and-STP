@@ -171,6 +171,15 @@ LU_NAME = {"سكني": "res", "سكني/تجاري": "res+com", "سكنى/زرا
            "زراعى": "agri"}
 
 
+# ---- why a record ends with no load. Short codes: the DBF stores one per record --------
+ZERO_WHY_LEGEND = {
+    "INDUSTRIAL": "industrial - outside the ratios (G1-p59), quantities not supplied",
+    "AGRI_NO_HSE": "agricultural plot, no household meter (I-5)",
+    "SERVICE_PCL": "parcel under MIN_PREMISES_AREA_M2 carrying no meter - service parcel",
+    "NO_LOAD_LU": "no meter and no residential land use",
+}
+
+
 def demojibake(s):
     """MoH_Plots stores Arabic land use as utf-8 bytes read back as latin-1."""
     try:
@@ -265,11 +274,11 @@ def premises(plots: pd.DataFrame, basis: LoadBasis):
 
     why = np.full(len(plots), "", dtype=object)
     zero = (n_dom + n_nd + n_gov) <= 0
-    why[zero & industrial] = "industrial - outside the ratios (G1-p59), quantities not supplied"
-    why[zero & (cls == "A").values & ~industrial] = "agricultural plot, no household meter (I-5)"
-    why[zero & too_small & ~industrial & (cls != "A").values] = \
-        "parcel under 100 m2 with no meter - service parcel"
-    why[zero & (why == "")] = "no meter and no residential land use"
+    # short codes keep the DBF small; the legend is ZERO_WHY_LEGEND below and docs 9
+    why[zero & industrial] = "INDUSTRIAL"
+    why[zero & (cls == "A").values & ~industrial] = "AGRI_NO_HSE"
+    why[zero & too_small & ~industrial & (cls != "A").values] = "SERVICE_PCL"
+    why[zero & (why == "")] = "NO_LOAD_LU"
     return n_dom, n_nd, n_gov, basis_tag, why, too_small, industrial
 
 
@@ -344,7 +353,7 @@ def build(basis: LoadBasis = B):
     cat = np.full(len(out), "none", dtype=object)
     cat[out.N_GOV.values > 0] = "government"
     cat[out.N_ND.values > 0] = "commercial"
-    cat[(out.N_ND.values > 0) & (out.N_GOV.values > 0)] = "commercial+government"
+    cat[(out.N_ND.values > 0) & (out.N_GOV.values > 0)] = "com+gov"
     cat[out.N_DOM.values > 0] = "domestic"
     cat[(out.N_DOM.values > 0) & ((out.N_ND.values > 0) | (out.N_GOV.values > 0))] = "mixed"
     agri = np.concatenate([((p["C_AGRI"].values > 0) | (p["CLASS"].values == "A")),
@@ -467,7 +476,7 @@ def checks(g: gpd.GeoDataFrame, basis: LoadBasis):
     for cls, s in zero.groupby("CLASS"):
         rows.append(("zero load", f"class {cls}", len(s)))
     for w, s in zero.groupby("ZERO_WHY"):
-        rows.append(("zero load reason", w, len(s)))
+        rows.append(("zero load reason", f"{w} = {ZERO_WHY_LEGEND.get(w, w)}", len(s)))
     rows += [
         ("sanity", "loaded records", len(loaded)),
         ("sanity", "load > 25 L/m2/d (high)", int((loaded.Q_L_M2D > 25).sum())),

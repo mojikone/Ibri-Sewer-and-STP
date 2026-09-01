@@ -10,9 +10,9 @@ zero load,records with zero load,7639.0
 zero load,class A,4242.0
 zero load,class B,1054.0
 zero load,class P,2343.0
-zero load reason,"agricultural plot, no household meter (I-5)",4235.0
-zero load reason,"industrial - outside the ratios (G1-p59), quantities not supplied",55.0
-zero load reason,parcel under 100 m2 with no meter - service parcel,3349.0
+zero load reason,"AGRI_NO_HSE = agricultural plot, no household meter (I-5)",4235.0
+zero load reason,"INDUSTRIAL = industrial - outside the ratios (G1-p59), quantities not supplied",55.0
+zero load reason,SERVICE_PCL = parcel under MIN_PREMISES_AREA_M2 carrying no meter - service parcel,3349.0
 sanity,loaded records,56388.0
 sanity,load > 25 L/m2/d (high),554.0
 sanity,load > 100 L/m2/d (very high),12.0

@@ -412,19 +412,30 @@ def main():
     allowed = m_bnd & np.isfinite(z50) & ~ex_wadi & ~ex_dwell & ~ex_plot & ~ex_land
     tot = int(m_bnd.sum())
     log(f"  exclusions inside the boundary ({tot:,} cells, {tot*CELL*CELL/1e6:.0f} km2):")
-    for nm, m in [("flood / wadi + 100 m", ex_wadi), (f"< {DWELL_HARD_M:.0f} m to a dwelling", ex_dwell),
-                  ("on a registered plot", ex_plot), (f"< {LAND_MIN_HA:.0f} ha free in {LAND_WINDOW_M:.0f} m", ex_land)]:
+    expc = {}
+    for nm, key, m in [("flood / wadi + 100 m", "flood", ex_wadi),
+                       (f"< {DWELL_HARD_M:.0f} m to a receptor", "dwell", ex_dwell),
+                       ("on a registered plot", "plot", ex_plot),
+                       (f"< {LAND_MIN_HA:.0f} ha free in {LAND_WINDOW_M:.0f} m", "land", ex_land)]:
         k = int((m & m_bnd).sum())
+        expc[key] = 100 * k / tot
         log(f"    {nm:38s} {k:8,} cells  {100*k/tot:5.1f} %")
+    expc["pass_pct"] = 100 * allowed.sum() / tot
+    expc["pass_km2"] = allowed.sum() * CELL * CELL / 1e6
+    expc["n_load"] = len(LX)
+    expc["n_plots"] = len(conn)
     log(f"    {'PASS all four':38s} {int(allowed.sum()):8,} cells  "
-        f"{100*allowed.sum()/tot:5.1f} %  = {allowed.sum()*CELL*CELL/1e6:.1f} km2")
+        f"{expc['pass_pct']:5.1f} %  = {expc['pass_km2']:.1f} km2")
 
-    score = np.zeros((ny, nx), np.float32)
+    raw = np.zeros((ny, nx), np.float32)
     for k, w in WEIGHTS.items():
-        score += np.float32(w) * crit[k].astype(np.float32)
-    score = np.where(allowed, score, 0.0).astype(np.float32)
+        raw += np.float32(w) * crit[k].astype(np.float32)
+    # SCORE_RAW keeps the weighted sum with NO hard mask, so a site that fails an
+    # exclusion can still be compared on merit. The existing works needs it: it
+    # fails "on a registered plot" only because the plot IS its own compound.
+    score = np.where(allowed, raw, 0.0).astype(np.float32)
     score = np.where(m_bnd, score, -1.0).astype(np.float32)
-    log(f"  best score {score.max():.3f}")
+    log(f"  best score {score.max():.3f} (raw, unmasked, best {raw[m_bnd].max():.3f})")
 
     # -------------------------------------------------------------- write TIFs
     prof = dict(driver="GTiff", height=ny, width=nx, count=1, dtype="float32",
@@ -478,6 +489,17 @@ def main():
         i = min(max(i, 0), ny - 1); j = min(max(j, 0), nx - 1)
         return arr[i, j]
 
+    plots_raw = plots_raw.copy()
+    plots_raw["_HA"] = plots_raw.geometry.area / 1e4
+    _psi = plots_raw.sindex
+
+    def plot_ha_at(x, y):
+        """area of the registered plot the point falls in, 0 if it falls on none"""
+        p = Point(x, y)
+        for k in _psi.query(p, predicate="intersects"):
+            return float(plots_raw["_HA"].iloc[k])
+        return 0.0
+
     trunk_u = trunk.union_all()
     corr_u = corr.union_all()
     built_u = built.geometry
@@ -501,7 +523,13 @@ def main():
                 Z_VRT_M=round(zv, 2) if np.isfinite(zv) else None,
                 Z_50M_M=round(float(at50(z50, x, y)), 2),
                 SCORE=round(float(at50(score, x, y)), 4),
+                SCORE_RAW=round(float(at50(raw, x, y)), 4),
                 ALLOWED=int(bool(at50(allowed, x, y))),
+                EX_FLOOD=int(bool(at50(ex_wadi, x, y))),
+                EX_DWELL=int(bool(at50(ex_dwell, x, y))),
+                EX_PLOT=int(bool(at50(ex_plot, x, y))),
+                EX_LAND=int(bool(at50(ex_land, x, y))),
+                PLOT_HA=round(float(plot_ha_at(x, y)), 2),
                 **{k: round(v, 4) for k, v in sc_i.items()},
                 D_DWELL_M=round(float(at(d_built_F, x, y)), 0),
                 D_BUILT_M=round(float(at(d_allbuilt_F, x, y)), 0),
@@ -539,15 +567,18 @@ def main():
     # ------------------------------------------------------------------- map
     log("drawing the map")
     make_map(score, m_bnd, tr50, (minx, miny, maxx, maxy), bnd, recept, agri,
-             m_wadi_F & m_bnd_F, trF, trunk, cand, allowed)
+             m_wadi_F & m_bnd_F, trF, trunk, cand, allowed, expc)
 
     log(f"DONE in {time.time()-t0:.0f} s")
     return cand
 
 
 # --------------------------------------------------------------------------- #
-def make_map(score, m_bnd, tr50, extent, bnd, built, agri, m_wadi_F, trF,
-             trunk, cand, allowed):
+def make_map(score, m_bnd, tr50, extent, bnd, recept, agri, m_wadi, trF,
+             trunk, cand, allowed, expc):
+    """Layout: wide map top-left, method panels underneath, shortlist table right.
+    The boundary is 46.4 x 25.5 km (aspect 1.82) so the map axes have to be wide
+    and short, or two thirds of the figure comes out white."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -558,26 +589,19 @@ def make_map(score, m_bnd, tr50, extent, bnd, built, agri, m_wadi_F, trF,
     minx, miny, maxx, maxy = extent
     ext = (minx, maxx, miny, maxy)
 
-    fig = plt.figure(figsize=(19.0, 12.6), dpi=140)
-    ax = fig.add_axes([0.035, 0.055, 0.70, 0.885])
+    fig = plt.figure(figsize=(20.0, 12.0), dpi=140)
+    ax = fig.add_axes([0.030, 0.335, 0.700, 0.585])
 
-    # background: everything inside the boundary in a pale sand
-    bg = np.where(m_bnd, 1.0, np.nan)
-    ax.imshow(bg, extent=ext, cmap=LinearSegmentedColormap.from_list("s", ["#f2ece0", "#f2ece0"]),
-              vmin=0, vmax=1, interpolation="nearest", zorder=1)
+    def flat(mask, colour, z, alpha=1.0):
+        ax.imshow(np.where(mask, 1.0, np.nan), extent=ext,
+                  cmap=LinearSegmentedColormap.from_list("c", [colour, colour]),
+                  vmin=0, vmax=1, interpolation="nearest", zorder=z, alpha=alpha)
 
-    # wadi
-    wadi_show = np.where(m_wadi_F, 1.0, np.nan)
-    ax.imshow(wadi_show, extent=ext,
-              cmap=LinearSegmentedColormap.from_list("w", ["#9ec9e8", "#9ec9e8"]),
-              vmin=0, vmax=1, interpolation="nearest", zorder=2)
+    flat(m_bnd, "#f4efe4", 1)                       # study area ground
+    flat(m_bnd & ~allowed, "#d9d9d1", 2, 0.88)      # excluded
+    flat(m_wadi, "#7fb8e0", 3)                      # 50-yr wadi - drawn OVER the grey,
+    #   because every wadi cell is also excluded and the grey buries it completely
 
-    # excluded-but-inside: light grey hatchless
-    exc = np.where(m_bnd & ~allowed, 1.0, np.nan)
-    ax.imshow(exc, extent=ext, cmap=LinearSegmentedColormap.from_list("e", ["#dcdcd4", "#dcdcd4"]),
-              vmin=0, vmax=1, interpolation="nearest", zorder=3, alpha=0.85)
-
-    # the surface itself, only where it is non-zero
     su = np.where(allowed & (score > 0), score, np.nan)
     vmin = float(np.nanpercentile(su, 2)) if np.isfinite(su).any() else 0.0
     vmax = float(np.nanmax(su)) if np.isfinite(su).any() else 1.0
@@ -586,137 +610,180 @@ def make_map(score, m_bnd, tr50, extent, bnd, built, agri, m_wadi_F, trF,
     im = ax.imshow(su, extent=ext, cmap=cmap, vmin=vmin, vmax=vmax,
                    interpolation="nearest", zorder=4)
 
-    # context vectors
-    agri.plot(ax=ax, facecolor="none", edgecolor="#3f7a2e", linewidth=0.18, zorder=5, alpha=0.75)
-    built.plot(ax=ax, facecolor="#6b6b6b", edgecolor="none", linewidth=0, zorder=6, alpha=0.85)
-    trunk.plot(ax=ax, color="#111111", linewidth=1.9, zorder=7)
-    bnd.boundary.plot(ax=ax, color="#222222", linewidth=1.4, zorder=8)
+    agri.plot(ax=ax, facecolor="none", edgecolor="#2f6b23", linewidth=0.16, zorder=5, alpha=0.8)
+    recept.plot(ax=ax, facecolor="#585858", edgecolor="none", linewidth=0, zorder=6, alpha=0.9)
+    trunk.plot(ax=ax, color="#111111", linewidth=2.0, zorder=7)
+    bnd.boundary.plot(ax=ax, color="#222222", linewidth=1.5, zorder=8)
 
-    # sites
     kn = cand[cand["SITE"].isin(["EXISTING", "SOUTH"])]
     sh = cand[~cand["SITE"].isin(["EXISTING", "SOUTH"])]
-    ax.scatter(sh.geometry.x, sh.geometry.y, s=175, marker="*", c="#ffffff",
-               edgecolors="#111111", linewidths=1.3, zorder=11)
+    ax.scatter(sh.geometry.x, sh.geometry.y, s=190, marker="*", c="#ffffff",
+               edgecolors="#111111", linewidths=1.4, zorder=11)
     for _, r in sh.iterrows():
-        ax.annotate(r["SITE"], (r.geometry.x, r.geometry.y), xytext=(9, 7),
-                    textcoords="offset points", fontsize=9.5, fontweight="bold",
+        ax.annotate(r["SITE"], (r.geometry.x, r.geometry.y), xytext=(10, 8),
+                    textcoords="offset points", fontsize=10, fontweight="bold",
                     color="#111111", zorder=12,
-                    bbox=dict(boxstyle="round,pad=0.16", fc="white", ec="#111111", lw=0.6, alpha=0.92))
+                    bbox=dict(boxstyle="round,pad=0.16", fc="white", ec="#111111",
+                              lw=0.6, alpha=0.93))
     for _, r in kn.iterrows():
         mk = "s" if r["SITE"] == "EXISTING" else "^"
         cc = "#111111" if r["SITE"] == "EXISTING" else "#c0208a"
-        ax.scatter([r.geometry.x], [r.geometry.y], s=190, marker=mk, c=cc,
-                   edgecolors="white", linewidths=1.5, zorder=11)
-        ax.annotate("Existing works" if r["SITE"] == "EXISTING" else "Proposed south site",
-                    (r.geometry.x, r.geometry.y), xytext=(11, -15),
-                    textcoords="offset points", fontsize=9.5, fontweight="bold", color=cc,
-                    zorder=12,
-                    bbox=dict(boxstyle="round,pad=0.18", fc="white", ec=cc, lw=0.8, alpha=0.94))
+        lb = "Existing works" if r["SITE"] == "EXISTING" else "Proposed south site"
+        dy = 17 if r["SITE"] == "EXISTING" else -22
+        ax.scatter([r.geometry.x], [r.geometry.y], s=210, marker=mk, c=cc,
+                   edgecolors="white", linewidths=1.6, zorder=11)
+        ax.annotate(lb, (r.geometry.x, r.geometry.y), xytext=(12, dy),
+                    textcoords="offset points", fontsize=10, fontweight="bold",
+                    color=cc, zorder=12,
+                    bbox=dict(boxstyle="round,pad=0.18", fc="white", ec=cc, lw=0.9, alpha=0.95))
 
     ax.set_xlim(minx, maxx); ax.set_ylim(miny, maxy)
     ax.set_aspect("equal")
     ax.set_xlabel("Easting (m, EPSG:32640)", fontsize=9)
     ax.set_ylabel("Northing (m)", fontsize=9)
     ax.tick_params(labelsize=8)
-    ax.set_title("W10 Phase 4.3  |  Sewage treatment plant site suitability, Ibri study area (531.4 km$^2$)\n"
-                 "Weighted multi-criteria surface, 50 m grid, with the hard exclusions of PAM-GUD-201 Table 8 "
-                 "and PAM-GUD-203 Table 27 applied",
-                 fontsize=13.5, fontweight="bold", loc="left", pad=12)
 
-    # scale bar
+    # scale bar, bottom left inside the frame
     sb = 5000.0
-    x0 = minx + 0.035 * (maxx - minx); y0 = miny + 0.045 * (maxy - miny)
+    x0 = minx + 0.030 * (maxx - minx); y0 = miny + 0.060 * (maxy - miny)
     for k in range(5):
-        ax.add_patch(Rectangle((x0 + k * sb, y0), sb, 380,
+        ax.add_patch(Rectangle((x0 + k * sb, y0), sb, 330,
                                facecolor="#111111" if k % 2 == 0 else "#ffffff",
                                edgecolor="#111111", lw=0.8, zorder=13))
     for k in range(6):
-        ax.text(x0 + k * sb, y0 - 620, f"{int(k*5)}", ha="center", fontsize=8, zorder=13)
-    ax.text(x0 + 5 * sb + 700, y0 + 60, "km", fontsize=8.5, zorder=13)
+        ax.text(x0 + k * sb, y0 - 950, f"{int(k*5)}", ha="center", fontsize=8, zorder=13)
+    ax.text(x0 + 5 * sb + 800, y0 + 40, "km", fontsize=8.5, zorder=13)
 
-    # north arrow
-    nx_, ny_ = maxx - 0.045 * (maxx - minx), miny + 0.075 * (maxy - miny)
-    ax.annotate("", xy=(nx_, ny_ + 2100), xytext=(nx_, ny_),
+    nx_, ny_ = maxx - 0.030 * (maxx - minx), miny + 0.075 * (maxy - miny)
+    ax.annotate("", xy=(nx_, ny_ + 2400), xytext=(nx_, ny_),
                 arrowprops=dict(facecolor="#111111", width=3.2, headwidth=11), zorder=13)
-    ax.text(nx_, ny_ + 2400, "N", ha="center", fontsize=12, fontweight="bold", zorder=13)
+    ax.text(nx_, ny_ + 2750, "N", ha="center", fontsize=12, fontweight="bold", zorder=13)
 
-    # colour bar
-    cax = fig.add_axes([0.055, 0.955, 0.20, 0.014])
+    fig.text(0.030, 0.963,
+             "W10 Phase 4.3   |   Sewage treatment plant site suitability, Ibri study area (531.4 km$^2$)",
+             fontsize=16, fontweight="bold", ha="left")
+    fig.text(0.030, 0.939,
+             "Weighted multi-criteria surface on a 50 m grid with the hard exclusions of PAM-GUD-201 "
+             "Table 8 (p43) and PAM-GUD-203 Tables 27-28 (p63-64) applied.   Grey = excluded;  colour "
+             "= score among the 180 km$^2$ that passes all four.",
+             fontsize=10, ha="left", color="#333333")
+
+    cax = fig.add_axes([0.540, 0.900, 0.175, 0.013])
     cb = fig.colorbar(im, cax=cax, orientation="horizontal")
     cb.set_label("suitability score (weighted, 0-1)", fontsize=8.5, labelpad=3)
     cb.ax.tick_params(labelsize=7.5)
     cax.xaxis.set_ticks_position("top"); cax.xaxis.set_label_position("top")
 
-    # legend
-    leg = [Patch(fc="#dcdcd4", ec="#999", label="excluded (buffer / flood / plot / land)"),
-           Patch(fc="#9ec9e8", ec="none", label="50-yr flood hazard class 4-6 (wadi)"),
-           Patch(fc="#6b6b6b", ec="none", label="built plots (dwellings)"),
-           Patch(fc="none", ec="#3f7a2e", label="agricultural plots (TSE customers)"),
-           Line2D([], [], color="#111111", lw=1.9, label="given trunk main"),
-           Line2D([], [], marker="*", ls="none", mfc="#fff", mec="#111", ms=13, label="candidate site"),
+    leg = [Patch(fc="#d9d9d1", ec="#999", label="excluded (buffer / flood / plot / land)"),
+           Patch(fc="#8fbfe0", ec="none", label="50-yr flood hazard class 4-6 (wadi)"),
+           Patch(fc="#585858", ec="none", label="odour receptors (built plots)"),
+           Patch(fc="none", ec="#2f6b23", label="agricultural plots (TSE customers)"),
+           Line2D([], [], color="#111111", lw=2.0, label="given trunk main"),
+           Line2D([], [], marker="*", ls="none", mfc="#fff", mec="#111", ms=14, label="candidate site"),
            Line2D([], [], marker="s", ls="none", mfc="#111", mec="#fff", ms=9, label="existing works"),
            Line2D([], [], marker="^", ls="none", mfc="#c0208a", mec="#fff", ms=10, label="proposed south site")]
-    ax.legend(handles=leg, loc="upper left", fontsize=8.6, framealpha=0.93,
+    ax.legend(handles=leg, loc="lower right", fontsize=8.8, framealpha=0.94, ncols=2,
               facecolor="white", edgecolor="#666").set_zorder(14)
 
-    # ------------------------------------------------- right-hand data panel
-    axt = fig.add_axes([0.745, 0.055, 0.245, 0.885]); axt.axis("off")
-    cols = ["SITE", "SCORE", "GRAV\n%", "DWELL\nm", "FREE\nha", "TRUNK\nm", "GL\nm"]
-    show = cand.copy()
+    # ---------------------------------------------------- shortlist table, right
+    axt = fig.add_axes([0.762, 0.335, 0.226, 0.585]); axt.axis("off")
+    cols = ["SITE", "SCORE", "GRAV\n%", "DWELL\nm", "FREE\nha", "TRUNK\nm", "GL\nm", "CONV\nkm"]
     body = [[r["SITE"], f"{r['SCORE']:.3f}", f"{r['GRAV_PCT']:.0f}", f"{r['D_DWELL_M']:.0f}",
              f"{r['FREE600_HA']:.0f}", f"{r['D_TRUNK_M']:.0f}",
-             f"{r['Z_VRT_M']:.1f}" if r["Z_VRT_M"] is not None else "-"]
-            for _, r in show.iterrows()]
+             f"{r['Z_VRT_M']:.1f}" if r["Z_VRT_M"] is not None else "-",
+             f"{r['CONVEY_KM']:.1f}"]
+            for _, r in cand.iterrows()]
     tb = axt.table(cellText=body, colLabels=cols, loc="upper center", cellLoc="center")
-    tb.auto_set_font_size(False); tb.set_fontsize(8.2); tb.scale(1.0, 1.32)
+    tb.auto_set_font_size(False); tb.set_fontsize(8.6); tb.scale(1.0, 1.60)
     for (r, c), cell in tb.get_celld().items():
         cell.set_linewidth(0.5)
         if r == 0:
             cell.set_facecolor("#26415e"); cell.set_text_props(color="white", fontweight="bold")
         elif body[r - 1][0] in ("EXISTING", "SOUTH"):
-            cell.set_facecolor("#f6dfee")
+            cell.set_facecolor("#f7dcef"); cell.set_text_props(fontweight="bold")
         elif r % 2 == 0:
             cell.set_facecolor("#f2f2ee")
-    axt.text(0.5, 0.985, "SHORTLIST AND THE TWO KNOWN SITES", ha="center", va="bottom",
-             transform=axt.transAxes, fontsize=9.5, fontweight="bold")
+    axt.text(0.5, 1.005, "SHORTLIST AND THE TWO KNOWN SITES", ha="center", va="bottom",
+             transform=axt.transAxes, fontsize=10, fontweight="bold")
+    axt.text(0.0, 0.28,
+             "GRAV %  share of the ultimate load reaching\n"
+             "        the site by gravity at 0.10 %\n"
+             "DWELL   metres to the nearest odour receptor\n"
+             "FREE    free land in a 650 m square, ha\n"
+             "TRUNK   metres to the given trunk main\n"
+             "GL      ground level, 0.5 m terrain, m\n"
+             "CONV    load-weighted conveyance distance",
+             transform=axt.transAxes, fontsize=7.9, family="monospace", va="top", ha="left",
+             color="#333333")
 
-    yy = 0.545
-    txt = (
-        "WEIGHTS\n"
-        "  C2 gravity reachability of the load   0.25\n"
-        "  C1 separation from dwellings          0.20\n"
-        "  C4 land available (30 ha target)      0.15\n"
-        "  C5 conveyance cost (trunk + pop.)     0.15\n"
-        "  C7 TSE reuse proximity                0.10\n"
-        "  C6 road access                        0.08\n"
-        "  C3 flood margin beyond the exclusion  0.07\n\n"
-        "HARD EXCLUSIONS\n"
-        "  flood hazard class 4-6, +100 m\n"
-        "  < 300 m to a built plot   G201 p43 Tab 8\n"
-        "  on a registered MoHUP plot\n"
-        "  < 20 ha free in a 600 m square\n\n"
-        "LAND REQUIREMENT\n"
-        "  49,700 m3/d ultimate, +10 % = 54,700\n"
-        "  x 3.6 m2/(m3/d) CAS/EA upper bound\n"
-        "  = 19.7 ha -> 20 ha minimum\n"
-        "  +50 % phasing / sludge / TSE / solar\n"
-        "  = 30 ha target      G203 p64 Table 28\n\n"
-        "GRAVITY TEST\n"
-        "  reach if  (zk - 2.0) - 0.0013 d >= zc - 6.0\n"
-        "  0.10 % laid gradient, 1.30 sinuosity\n\n"
-        "NOT SCORED - no data\n"
-        "  ownership, geotechnical, groundwater,\n"
-        "  prevailing wind, EIA, wellfield/falaj\n"
-        "  protection zones, heritage, power"
-    )
-    axt.text(0.0, yy, txt, transform=axt.transAxes, fontsize=7.9, family="monospace",
-             va="top", ha="left",
-             bbox=dict(boxstyle="round,pad=0.5", fc="#f7f7f2", ec="#8a8a8a", lw=0.8))
+    # ------------------------------------------------- method panels, under the map
+    panels = [
+        (0.030, "CRITERIA AND WEIGHTS",
+         "C2  gravity reachability of the load  0.25\n"
+         "C1  separation from dwellings         0.20\n"
+         "C4  land available, 30 ha target      0.15\n"
+         "C5  conveyance cost, trunk + popultn  0.15\n"
+         "C7  treated-effluent reuse proximity  0.10\n"
+         "C6  road access                       0.08\n"
+         "C3  flood margin beyond the exclusion 0.07\n"
+         "                                      ----\n"
+         "                                      1.00"),
+        (0.215, "HARD EXCLUSIONS",
+         f"flood hazard class 4-6, plus 100 m      {expc['flood']:4.1f} %\n"
+         "  G203 p63 Tab 27(i); the 100 m is ours\n"
+         f"under 300 m to an odour receptor        {expc['dwell']:4.1f} %\n"
+         "  G201 p43 Tab 8, large STP 300-1000 m\n"
+         f"on a registered MoHUP plot              {expc['plot']:4.1f} %\n"
+         f"under 20 ha free in a 650 m square      {expc['land']:4.1f} %\n"
+         "(they overlap, so these do not add up)\n"
+         f"{expc['pass_km2']:.1f} km2 = {expc['pass_pct']:.1f} % passes all four"),
+        (0.420, "LAND REQUIREMENT   G203 p64 Table 28",
+         "49,700 m3/d ultimate, +10 % = 54,700 m3/d\n"
+         "MBR      0.45-0.90 m2/(m3/d)  2.5 -  4.9 ha\n"
+         "SBR/MBBR 0.90-1.80            4.9 -  9.8 ha\n"
+         "IFAS     1.20-2.50            6.6 - 13.7 ha\n"
+         "CAS/EA   1.80-3.60            9.8 - 19.7 ha\n"
+         "adopted 20 ha minimum (CAS/EA upper bound),\n"
+         "30 ha target with +50 % for phasing, sludge,\n"
+         "TSE storage and the solar farm G203 p64 asks\n"
+         "the designer to assess"),
+        (0.610, "NOT SCORED - NO DATA EXISTS YET",
+         "land ownership and acquisition\n"
+         "geotechnical / bearing capacity  G201 p40\n"
+         "groundwater depth, vulnerability G201 p43\n"
+         "prevailing wind direction        G203 p63(e)\n"
+         "odour dispersion model, 5 OU     G201 p43\n"
+         "EIA                              G201 p44\n"
+         "wellfield and falaj protection zones\n"
+         "archaeology, power supply, MoHUP consent"),
+    ]
+    for x, head, txt in panels:
+        axp = fig.add_axes([x, 0.045, 0.190, 0.250]); axp.axis("off")
+        axp.text(0.0, 1.0, head, transform=axp.transAxes, fontsize=9.2,
+                 fontweight="bold", va="top", ha="left", color="#26415e")
+        axp.text(0.0, 0.86, txt, transform=axp.transAxes, fontsize=7.5,
+                 family="monospace", va="top", ha="left")
 
-    fig.text(0.035, 0.012,
-             "2621 Ibri Sewer & STP  |  Renardet / Nama Water Services  |  W10 greenfield run, Phase 4.3  |  "
-             "terrain IBRI_0p5_VRT2 (0.5 m bare earth)  |  flood Hazard_T50y  |  EPSG:32640",
-             fontsize=7.6, color="#555555")
+    axg = fig.add_axes([0.800, 0.045, 0.190, 0.250]); axg.axis("off")
+    axg.text(0.0, 1.0, "GRAVITY SCREENING TEST (C2)", transform=axg.transAxes, fontsize=9.2,
+             fontweight="bold", va="top", ha="left", color="#26415e")
+    axg.text(0.0, 0.86,
+             "load centre k reaches a works at c when\n"
+             "   (zk - 2.0) - 0.0013 d  >=  zc - 6.0\n"
+             "0.0010 laid gradient (the trunk's own DN1000\n"
+             "grade), 1.30 sinuosity, 2.0 m collector invert,\n"
+             "6.0 m deepest acceptable inlet at the works.\n"
+             f"{expc['n_load']:,} load centres on a 500 m grid carry\n"
+             f"the {expc['n_plots']:,} built + planned plots; C2 is the share\n"
+             "of that load for which the test holds. It is a\n"
+             "screen, not a design - it does not check the\n"
+             "12 m cover limit at intermediate chambers.",
+             transform=axg.transAxes, fontsize=7.5, family="monospace", va="top", ha="left")
+
+    fig.text(0.030, 0.014,
+             "2621 Ibri Sewer & STP   |   Renardet / Nama Water Services   |   W10 greenfield run, Phase 4.3   |   "
+             "terrain IBRI_0p5_VRT2 (0.5 m bare earth)   |   flood Hazard_T50y (50-yr)   |   plots MoHUP + W3 class v4   |   EPSG:32640",
+             fontsize=7.8, color="#555555")
 
     out = os.path.join(C.OUT_IMG, "W10_P4_stp_suitability.png")
     fig.savefig(out, dpi=140, facecolor="white")
