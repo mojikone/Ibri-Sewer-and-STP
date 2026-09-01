@@ -57,7 +57,10 @@ CACHE = os.path.join(
     r"\fdf9ca49-7b6f-48de-894a-607476504f95\scratchpad", "r5_tree.pkl")
 OUT_RUN = os.path.join(C.OUT, "run")
 ASSIGN_M = 160.0        # identical to p2_sizing.assign_loads
-SETTLE_M = 120.0        # plots this close are one settlement
+SETTLE_M = 60.0         # plots this close are one settlement. Swept: at 120 m the Ibri
+                        # conurbation swallows 95.9 % of the plots and every outlying
+                        # village disappears into it; at 60 m it holds 80.4 % and the
+                        # 12,584 plots outside it separate into settlements you can name.
 THRESHOLDS = (0.5, 1.0, 2.0, 3.0, 5.0, 10.0, 20.0)
 HEADLINE_T = 1.0        # the threshold the branch layer is written at
 
@@ -149,6 +152,20 @@ def main():
     print(f"\nflow tree: {len(edges):,} laid reaches, {total_km:,.1f} km; "
           f"{qacc[sink]:,.0f} m3/d at the works")
 
+    # lifting stations, matched to the nearest node - needed by the sweep as well as the
+    # branch table, because the pumping is the reason the marginal network is expensive
+    lifts = gpd.read_file(os.path.join(C.OUT_SHP, "W10_lift_sized.shp"))
+    narr = np.array([xy[n] for n in nodes])
+    lift_node = {}
+    for _, r in lifts.iterrows():
+        d = np.hypot(narr[:, 0] - r.geometry.x, narr[:, 1] - r.geometry.y)
+        i_ = int(np.argmin(d))
+        if d[i_] < 30:
+            lift_node.setdefault(nodes[i_], []).append(float(r.LIFT_M))
+    lift_total = sum(sum(v) for v in lift_node.values())
+    print(f"lifting: {len(lifts):,} breaches placed on nodes, "
+          f"{lift_total:,.0f} m of lift in total")
+
     # ------------------------------------------------------------ sweep
     print(f"\nthe marginal network as the threshold moves\n")
     rows = []
@@ -162,17 +179,22 @@ def main():
         prs = sum(npr.get(n, 0.0) for n in heads)
         pp = sum(pop.get(n, 0.0) for n in heads)
         qq = sum(q.get(n, 0.0) for n in heads)
+        lm = sum(sum(v) for k, v in lift_node.items() if k in heads)
+        ln_ = sum(len(v) for k, v in lift_node.items() if k in heads)
         rows.append({"threshold_m3d": T, "marginal_km": round(km, 1),
                      "pct_of_pipe": round(100 * km / total_km, 1),
                      "plots": int(pls), "properties": round(prs),
                      "people": round(pp), "flow_m3d": round(qq, 1),
                      "pct_of_flow": round(100 * qq / qacc[sink], 2),
+                     "breaches_inside": ln_, "lift_m_inside": round(lm),
+                     "pct_of_lift": round(100 * lm / lift_total, 1),
                      "m_per_property": round(km * 1000 / max(prs, 1), 1),
                      "m_per_m3d": round(km * 1000 / max(qq, 1e-9))})
         print(f"   under {T:5.1f} m3/d: {km:7.1f} km ({100*km/total_km:4.1f} %)  "
               f"{int(pls):6,d} plots  {prs:7,.0f} properties  {pp:8,.0f} people  "
               f"{qq:8.1f} m3/d ({100*qq/qacc[sink]:5.2f} %)  "
-              f"{km*1000/max(prs,1):7.1f} m/property")
+              f"lift {lm:6,.0f} m ({100*lm/lift_total:4.1f} %)  "
+              f"{km*1000/max(prs,1):8.1f} m/property")
     sweep = pd.DataFrame(rows)
     sweep.to_csv(os.path.join(OUT_RUN, "r5_marginal_sweep.csv"), index=False)
     print(f"\n   whole network: {total_km:,.1f} km, "
@@ -182,53 +204,72 @@ def main():
           f"{total_km*1000/qacc[sink]:.1f} m per m3/d")
 
     # ------------------------------------------------------------ branches at HEADLINE_T
+    # A branch is a connected group of MARGINAL NODES - nodes whose accumulating flow is
+    # below the threshold - plus the one reach that carries them out into the retained
+    # network. Building the components on the EDGES instead pulls the retained outlet node
+    # into the branch, which both double-counts the town behind it and welds two unrelated
+    # branches together wherever they happen to join the network at the same chamber.
     T = HEADLINE_T
-    marg = [(n, m) for n, m in edges if qacc[n] < T]
+    M = {n for n in G.nodes if qacc[n] < T}
     H = nx.Graph()
-    H.add_edges_from(marg)
+    H.add_nodes_from(M)
+    for n in M:
+        m = nxt.get(n)
+        if m in M and G.has_edge(n, m):
+            H.add_edge(n, m)
     comps = list(nx.connected_components(H))
     print(f"\nat {T:.1f} m3/d the marginal network is {len(comps):,} separate branches")
 
-    # lifting stations and breaches, matched to the nearest node
+    # lifting stations, matched to the nearest node
     lifts = gpd.read_file(os.path.join(C.OUT_SHP, "W10_lift_sized.shp"))
     narr = np.array([xy[n] for n in nodes])
     lift_node = {}
     for _, r in lifts.iterrows():
         d = np.hypot(narr[:, 0] - r.geometry.x, narr[:, 1] - r.geometry.y)
-        i = int(np.argmin(d))
-        if d[i] < 30:
-            lift_node.setdefault(nodes[i], []).append(float(r.LIFT_M))
+        i_ = int(np.argmin(d))
+        if d[i_] < 30:
+            lift_node.setdefault(nodes[i_], []).append(float(r.LIFT_M))
 
-    out, brid = [], 0
+    # which corridor source each marginal reach was laid in - Part A and Part B joined up
+    cq = gpd.read_file(os.path.join(C.OUT_SHP, "W10_corridor_quality.shp"))
+    from shapely.strtree import STRtree
+    ctree = STRtree(list(cq.geometry))
+
+    out, brid, src_km = [], 0, defaultdict(float)
     for comp in comps:
-        e = [(n, m) for n, m in marg if n in comp and m in comp]
+        e = [(n, nxt[n]) for n in comp
+             if nxt.get(n) is not None and G.has_edge(n, nxt[n])]
         if not e:
             continue
         brid += 1
         km = sum(elen[x] for x in e) / 1000
-        heads = {n for n, _ in e} | {m for _, m in e}
-        pls = sum(npl.get(n, 0) for n in heads)
-        prs = sum(npr.get(n, 0.0) for n in heads)
-        pp = sum(pop.get(n, 0.0) for n in heads)
-        qq = sum(q.get(n, 0.0) for n in heads)
-        # the outlet: the node in the branch whose downstream node is NOT in it
-        outn = [n for n in heads if nxt.get(n) is not None and nxt[n] not in heads]
+        pls = sum(npl.get(n, 0) for n in comp)
+        prs = sum(npr.get(n, 0.0) for n in comp)
+        pp = sum(pop.get(n, 0.0) for n in comp)
+        qq = sum(q.get(n, 0.0) for n in comp)
+        outn = [n for n in comp if nxt.get(n) is not None and nxt[n] not in comp]
         outn = outn[0] if outn else None
-        lift_m = sum(sum(v) for k, v in lift_node.items() if k in heads)
-        n_lift = sum(len(v) for k, v in lift_node.items() if k in heads)
+        lift_m = sum(sum(v) for k, v in lift_node.items() if k in comp)
+        n_lift = sum(len(v) for k, v in lift_node.items() if k in comp)
         geoms = [LineString([xy[a], xy[b]]) for a, b in e]
-        pidx = [i for n in heads for i in node_plots.get(n, ())]
+        for g in geoms:
+            mid = g.interpolate(0.5, normalized=True)
+            k = ctree.query_nearest(mid)
+            k = int(k[0]) if hasattr(k, "__len__") else int(k)
+            src_km[cq.SRC.iloc[k]] += g.length / 1000
+        pidx = [i2 for n in comp for i2 in node_plots.get(n, ())]
         vil = "-"
         if pidx:
-            vv = village.iloc[pidx]
-            vv = vv[vv != ""]
-            if len(vv):
-                vil = str(vv.value_counts().index[0])[:48]
+            vv = [v for v in village.iloc[pidx].tolist() if v]
+            if vv:
+                vil = max(set(vv), key=vv.count)[:48]
         out.append({
             "BR_ID": brid, "KM": round(km, 3), "PLOTS": int(pls),
             "PROPS": round(prs, 1), "POP": round(pp), "Q_M3D": round(qq, 3),
-            "M_PER_PRP": round(km * 1000 / max(prs, 1e-9), 1),
-            "M_PER_M3D": round(km * 1000 / max(qq, 1e-9), 1),
+            "M_PER_PRP": round(km * 1000 / prs, 1) if prs > 0.01 else -1.0,
+            "M_PER_M3D": round(km * 1000 / qq, 1) if qq > 0.001 else -1.0,
+            "SERVES": ("nothing" if prs <= 0.01 else
+                       ("under_1_prop" if prs < 1 else "houses")),
             "N_LIFT": n_lift, "LIFT_M": round(lift_m, 1),
             "OUT_X": round(xy[outn][0], 1) if outn else None,
             "OUT_Y": round(xy[outn][1], 1) if outn else None,
@@ -244,7 +285,25 @@ def main():
           f"{br.KM.sum():,.1f} km, {br.PLOTS.sum():,} plots, "
           f"{br.PROPS.sum():,.0f} properties, {br.Q_M3D.sum():,.1f} m3/d, "
           f"{br.LIFT_M.sum():,.0f} m of lift in {int(br.N_LIFT.sum())} stations")
-    print(f"\n   largest 15 branches:")
+    print("\n   what the marginal network SERVES:")
+    print(br.groupby("SERVES").agg(
+        branches=("KM", "size"), km=("KM", lambda s_: round(s_.sum(), 1)),
+        plots=("PLOTS", "sum"), props=("PROPS", lambda s_: round(s_.sum())),
+        people=("POP", "sum"), q=("Q_M3D", lambda s_: round(s_.sum(), 1)),
+        lift_m=("LIFT_M", lambda s_: round(s_.sum())),
+        n_lift=("N_LIFT", "sum")).to_string())
+
+    print("\n   corridor source of the marginal pipe:")
+    tot_src = sum(src_km.values())
+    for k in sorted(src_km, key=lambda a: -src_km[a]):
+        print(f"      {k:<12s} {src_km[k]:7.1f} km  "
+              f"({100*src_km[k]/tot_src:4.1f} % of the marginal network)")
+
+    print("\n   the branches with a lifting station in them, ranked by lift:")
+    lb = br[br.N_LIFT > 0].sort_values("LIFT_M", ascending=False)
+    print(lb.drop(columns="geometry").head(15).to_string(index=False))
+
+    print("\n   largest 15 branches by length:")
     print(br.drop(columns="geometry").head(15).to_string(index=False))
 
     # ------------------------------------------------------------ settlements
@@ -288,10 +347,63 @@ def main():
     inside = jm.groupby("SID").LEN_M.sum() / 1000
     st["pipe_km_inside"] = st.SID.map(inside).fillna(0).round(2)
     outside_km = jm.loc[jm.SID.isna(), "LEN_M"].sum() / 1000
-    st["m_per_property"] = (st.pipe_km_inside * 1000 / st.props.clip(lower=1e-9)).round(1)
+    # ---- the honest cost of serving each settlement: the pipe that exists ONLY for it
+    # A reach belongs exclusively to a settlement when every drop of load upstream of it
+    # comes from that one settlement. That is its internal streets PLUS its spur out, all
+    # the way to the chamber where its flow first mixes with somebody else's - which is
+    # exactly the pipe that disappears if the settlement is not sewered. Reaches with NO
+    # load upstream at all belong to nobody and are the network's dead weight.
+    sid_arr = allp["SID"].to_numpy()
+    prop_arr = allp["N_PROP"].to_numpy()
+    node_sid = {}
+    for n, pidx in node_plots.items():
+        sids = {int(sid_arr[i]) for i in pidx
+                if prop_arr[i] > 0 and sid_arr[i] == sid_arr[i]}
+        if sids:
+            node_sid[n] = sids
+
+    ups_of = defaultdict(list)
+    for n, m in nxt.items():
+        ups_of[m].append(n)
+    upstream_sids = {}
+    for n in order:                                          # topological, heads first
+        s = set(node_sid.get(n, ()))
+        for u in ups_of.get(n, ()):
+            s |= upstream_sids.get(u, set())
+        upstream_sids[n] = s
+
+    excl_km = defaultdict(float)
+    empty_km = shared_km = 0.0
+    empty_edges = []
+    for n, m in edges:
+        s = upstream_sids.get(n, set())
+        L = elen[(n, m)] / 1000
+        if not s:
+            empty_km += L
+            empty_edges.append((n, m))
+        elif len(s) == 1:
+            excl_km[next(iter(s))] += L
+        else:
+            shared_km += L
+    st["pipe_km_exclusive"] = st.SID.map(excl_km).fillna(0).round(2)
+    st["m_per_property"] = (st.pipe_km_exclusive * 1000 /
+                            st.props.clip(lower=1e-9)).round(1)
+    st["m_per_m3d"] = (st.pipe_km_exclusive * 1000 / st.q.clip(lower=1e-9)).round(1)
     st["remote_G201"] = ((st.people < G201_MAX_POP) | (st.plots < G201_MAX_PLOTS))
     st = st.sort_values("props", ascending=False)
     st.round(3).to_csv(os.path.join(OUT_RUN, "r5_settlements.csv"), index=False)
+
+    gpd.GeoDataFrame(
+        geometry=[LineString([xy[a], xy[b]]) for a, b in empty_edges],
+        data={"LEN_M": [round(elen[e], 2) for e in empty_edges]},
+        crs=C.EPSG).to_file(os.path.join(C.OUT_SHP, "W10_pipe_no_load.shp"))
+    print(f"\n   pipe attribution, whole network {total_km:,.1f} km:")
+    print(f"      NO LOAD anywhere upstream : {empty_km:7.1f} km "
+          f"({100*empty_km/total_km:4.1f} %)  -> W10_pipe_no_load.shp")
+    print(f"      exclusive to ONE settlement: {sum(excl_km.values()):7.1f} km "
+          f"({100*sum(excl_km.values())/total_km:4.1f} %)")
+    print(f"      shared between settlements : {shared_km:7.1f} km "
+          f"({100*shared_km/total_km:4.1f} %)")
 
     print(f"   {len(st):,} settlements; {outside_km:,.1f} km of pipe runs OUTSIDE every "
           f"settlement envelope (the links between them)")
