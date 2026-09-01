@@ -1,0 +1,6 @@
+package,pipes_with_ids,cross_package_pipes,outlets,outlets_to_other_pkg,receives_from,discharges_to,ds_node_absent_from_own_pkg
+5A-1,1123,0,1,0,5A-5,-,1
+5A-2,679,1,1,1,5A-3,5A-4,0
+5A-3,126,1,1,1,-,5A-2,0
+5A-4,183,0,2,0,5A-2,-,2
+5A-5,1155,1,1,1,-,5A-1,1

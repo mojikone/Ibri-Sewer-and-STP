@@ -1,0 +1,6 @@
+set,n,median_abs,p90_abs,pct_above_threshold
+draft,21899,17.33,61.5,54.0
+auto_road,20248,22.33,60.67,64.0
+auto_block,4465,10.33,40.17,37.1
+auto_link,4813,11.5,46.5,41.5
+open_ground,872,6.33,28.17,25.0

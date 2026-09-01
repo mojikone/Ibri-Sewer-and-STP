@@ -1,0 +1,4 @@
+tier,dia_out_mm,pipes,km,props_up_p50,props_up_p95,props_up_max,len_up_p50_m,len_up_max_m
+lateral,160.0,1675,48.752,6.0,53.0,136.0,157.5,2466.6
+sub_main,160.0,322,9.923,99.0,471.7,686.0,3256.1,15994.4
+trunk_main,200.0,145,4.53,421.0,781.0,796.0,11894.3,24146.2

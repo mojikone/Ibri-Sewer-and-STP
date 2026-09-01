@@ -1,0 +1,10 @@
+scope,drains_into,zones,share_pct
+all packages,lateral,508,87.3
+all packages,sub_main,60,10.3
+all packages,trunk_main,13,2.2
+all packages,force_line,1,0.2
+5A-2..5A-5,lateral,197,73.0
+5A-2..5A-5,sub_main,60,22.2
+5A-2..5A-5,trunk_main,13,4.8
+5A-1 only,lateral,311,99.7
+5A-1 only,force_line,1,0.3

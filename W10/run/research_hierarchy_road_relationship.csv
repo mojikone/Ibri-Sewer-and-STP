@@ -1,0 +1,4 @@
+tier,pipes,median_dist_to_road_m,within_5m_pct,within_15m_pct,beyond_20m_pct,nearest_is_dual_pct,on_dual_within_6m_pct
+lateral,2798,4.2,51.2,63.0,32.0,0.2,0.18
+sub_main,322,6.2,44.7,90.1,7.1,0.6,0.0
+trunk_main,146,2.7,61.6,100.0,0.0,0.0,0.0

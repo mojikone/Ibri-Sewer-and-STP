@@ -32,10 +32,17 @@ CLIMB_PENALTY = 400.0    # metres of route charged per metre of height gained
 
 # The 50-year flood grid: classes 4, 5 and 6 are wadi, where no pipe and no chamber may go
 # (criteria HAZARD_WADI_CLASSES, user 2026-08-19). W8 applied this; W10 did not, and laid
-# 156.0 km - 8.3 % of the network - on wadi ground. The grid is continuous float, so the
-# test is floor(v) >= 4, not membership of {4,5,6}. Charged rather than forbidden, because
-# a sewer must sometimes cross a wadi; the charge makes the router take the crossing
-# perpendicular and short instead of running along the bed.
+# 156.0 km - 8.3 % of the network - on wadi ground.
+#
+# CORRECTION to what this comment said before: the grid is NOT continuous float. All
+# 709,183,851 valid cells are exact integers 1 to 6, so W8's int(v) in (4,5,6) was never
+# wrong and floor(v) >= 4 is identical to it here. W10's failure was that the rule was
+# never called at all, not that it was called incorrectly. The floor() form is kept only
+# because it survives a resampled grid; it fixed nothing.
+#
+# Charged rather than forbidden, because a sewer must sometimes cross a wadi. STILL
+# INCOMPLETE: sewer_cost has NO dual-carriageway term, and the shipped design runs 1.67 km
+# ALONG a dual carriageway with 47 crossings unscheduled (project rule 7). W11a.
 WADI_MIN_CLASS = 4.0
 WADI_PENALTY_M = 5000.0
 

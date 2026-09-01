@@ -1,0 +1,7 @@
+package,sm_threshold_m,tm_threshold_m,tier,pipes,km,share_pct,labelled_zones_touched,actual_km,actual_share_pct
+5A-1,1500.0,16000.0,trunk_main,22,0.74,2.3,3,,
+5A-1,1500.0,16000.0,sub_main,240,7.59,23.5,62,,
+5A-1,1500.0,16000.0,lateral,861,23.91,74.1,257,,
+5A-2..5A-5,1500.0,16000.0,trunk_main,70,7.94,11.5,3,10.18,14.8
+5A-2..5A-5,1500.0,16000.0,sub_main,324,10.11,14.7,17,9.92,14.4
+5A-2..5A-5,1500.0,16000.0,lateral,1749,50.81,73.8,279,48.75,70.8

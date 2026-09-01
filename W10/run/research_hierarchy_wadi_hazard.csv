@@ -1,0 +1,4 @@
+tier,pipes,touching_wadi,touching_wadi_pct,wholly_in_wadi,wholly_in_wadi_pct,km_in_wadi,median_depth_in_wadi,median_depth_outside,median_grad_in_wadi_mm_m,median_grad_outside_mm_m,median_run_in_wadi_m,median_run_outside_m
+lateral,2798,173,6.2,93,3.32,5.35,1.11,1.56,6.18,6.03,31.7,29.2
+sub_main,322,2,0.6,0,0.0,0.05,4.14,4.17,4.43,4.03,24.7,30.0
+trunk_main,146,6,4.1,4,2.74,0.21,2.09,3.27,10.94,5.18,34.5,30.0

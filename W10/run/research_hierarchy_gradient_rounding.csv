@@ -1,0 +1,4 @@
+test,pct_of_pipes
+on a 0.05 % step (+/-0.005 %),34.3
+on a 0.10 % step,44.8
+on a 1 mm/m step,44.8

@@ -1,0 +1,9 @@
+measure,value
+largest load any LATERAL pipe carries (props),2704.0
+"largest load any lateral carries, 5A-2..5A-5",136.0
+p95 load on a lateral pipe (5A-2..5A-5),53.0
+smallest load at a SUB MAIN head (props),0.0
+largest laid LENGTH any lateral carries (m),32245.0
+"largest laid length any lateral carries, 5A-2..5A-5 (m)",2467.0
+longest single lateral ZONE (m),1018.0
+most chambers in a lateral zone,33.0

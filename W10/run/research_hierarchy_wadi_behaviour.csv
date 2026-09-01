@@ -1,0 +1,4 @@
+tier,crossing_pipes,median_depth_crossing,median_depth_elsewhere,median_grad_crossing_mm_m,median_grad_elsewhere_mm_m
+trunk_main,33,3.05,3.2,6.03,5.19
+sub_main,46,3.9,4.17,3.85,4.04
+lateral,229,1.44,1.56,6.01,6.03

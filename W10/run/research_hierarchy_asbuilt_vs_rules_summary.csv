@@ -1,0 +1,4 @@
+tier,pipes,od_built,dn_our_rules_p50,dn_our_rules_max,our_DN_bigger_pct,slope_ratio_p50,flatter_than_required_pct,surcharged_pct,over_dod_limit_pct,below_0p75_ms_pct,over_3ms_pct,dod_p50,dod_p95,v_p50_ms
+lateral,1670,160,200,200,100.0,1.21,14.9,0.0,0.0,99.7,0.0,0.092,0.286,0.27
+sub_main,322,160,200,250,100.0,0.82,65.5,17.7,12.4,78.6,0.0,0.321,0.838,0.5
+trunk_main,145,200,200,250,45.5,1.21,22.8,36.6,9.0,43.4,0.0,0.43,0.738,0.74

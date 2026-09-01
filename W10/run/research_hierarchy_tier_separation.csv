@@ -1,0 +1,5 @@
+scope,metric,lateral_p50,lateral_p95,lateral_p99,lateral_max,submain_min,submain_p50,trunk_min,trunk_p50,pct_laterals_above_submain_min
+all packages,UP_PROPS,9.0,416.5,1127.0,2704.0,0.0,99.0,35.0,421.0,88.4
+all packages,UP_LEN,157.5,6611.2,11949.3,32245.5,19.1,3256.1,231.9,11923.1,98.1
+5A-2..5A-5,UP_PROPS,6.0,53.0,81.0,136.0,0.0,99.0,35.0,421.0,82.9
+5A-2..5A-5,UP_LEN,157.5,1073.9,1895.6,2466.6,19.1,3256.1,231.9,11923.1,98.4

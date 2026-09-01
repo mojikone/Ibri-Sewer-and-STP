@@ -1,0 +1,5 @@
+scope,zones,simple_path,simple_path_pct,zero_internal_junctions,one_outlet,one_outlet_pct,one_head,mh_numbers_contiguous_pct
+all zones,596,538,90.3,545,585,98.2,538,31.9
+lateral zones,582,524,90.0,531,571,98.1,524,32.5
+sub mains,10,10,100.0,10,10,100.0,10,10.0
+trunk zones,4,4,100.0,4,4,100.0,4,0.0

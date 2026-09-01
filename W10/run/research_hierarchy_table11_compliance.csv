@@ -1,0 +1,4 @@
+tier,pipes,flatter_than_T11_DN200,pct_flatter,median_ratio,p5_ratio,p95_ratio,steeper_than_2x_pct,dead_flat,adverse,follows_ground_pct
+lateral,1675,289,17.3,1.21,0.63,5.14,23.2,5,0,16.7
+sub_main,322,217,67.4,0.81,0.43,5.32,14.3,0,0,24.2
+trunk_main,145,42,29.0,1.04,0.42,1.65,4.1,0,0,17.2

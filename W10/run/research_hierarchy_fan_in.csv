@@ -1,0 +1,3 @@
+tier,joining_zones,joining_laterals,median_props_of_joiner,min_props_of_joiner,max_props_of_joiner,joiners_under_25_props,joiners_over_100_props
+sub_main,63,60,24.0,0.0,796.0,32,6
+trunk_main,22,13,26.0,1.0,686.0,11,4

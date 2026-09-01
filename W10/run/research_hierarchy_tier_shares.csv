@@ -1,0 +1,10 @@
+scope,tier,pipes,km,share_pct,zones,median_pipe_m,props_direct
+all packages,trunk_main,146,10.178,10.1,4,30.0,141
+all packages,sub_main,322,9.923,9.8,10,30.0,205
+all packages,lateral,2798,80.997,80.1,582,29.5,4791
+5A-2..5A-5 (labelled),trunk_main,146,10.178,14.8,4,30.0,141
+5A-2..5A-5 (labelled),sub_main,322,9.923,14.4,10,30.0,205
+5A-2..5A-5 (labelled),lateral,1675,48.752,70.8,270,29.6,2087
+5A-1 only (unlabelled),trunk_main,0,0.0,0.0,0,,0
+5A-1 only (unlabelled),sub_main,0,0.0,0.0,0,,0
+5A-1 only (unlabelled),lateral,1123,32.245,100.0,312,29.2,2704

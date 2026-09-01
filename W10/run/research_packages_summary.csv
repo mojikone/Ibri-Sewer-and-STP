@@ -1,0 +1,6 @@
+package,pipes,length_km,zones,tiers,trunk_km,submain_km,lateral_km,hull_area_km2,footprint_km2,km_per_km2,plots_in_footprint,plots_within_50m,properties_within_50m,qadf_within_50m_m3d,pct_with_levels,dia_min_mm,dia_max_mm,median_pipe_m
+5A-1,1123,32.25,312,lateral,0.0,0.0,32.25,2.36,2.7,12.0,1835,1917,3589.0,2762.0,0.0,,,29.2
+5A-2,679,20.01,72,lateral+sub_main+trunk_main,2.26,3.43,14.32,1.96,1.94,10.3,989,1015,1504.0,1182.0,100.0,160.0,200.0,30.0
+5A-3,126,3.45,21,lateral+trunk_main,1.08,0.0,2.38,0.3,0.47,7.3,173,180,303.0,220.0,100.0,160.0,200.0,29.4
+5A-4,183,5.04,23,lateral+sub_main+trunk_main,0.68,0.55,3.81,0.35,0.58,8.7,296,299,567.0,416.0,100.0,160.0,200.0,26.8
+5A-5,1155,40.35,168,lateral+sub_main+trunk_main,6.16,5.95,28.23,8.66,4.22,9.6,2178,2172,3421.0,2602.0,100.0,160.0,200.0,30.3

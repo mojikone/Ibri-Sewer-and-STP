@@ -29,6 +29,30 @@ plainly which document is live and which is a record of past work.
 | `_SETUP/skills/report-writing/SKILL.md` | how a deliverable report is built here — install it with `bootstrap.ps1` | 2026-09-01 |
 | `W9/py/make_appraisal_figure.py` | the appraisal method figure — A3 landscape, used by the report and by T03_R01 | 2026-09-01 |
 
+## W10 status — NOT COMPLIANT, do not issue (2026-09-01)
+
+The full-area design in `W10/` is complete and its **findings stand**, but audited against
+W8's own check registry it fails four ways:
+
+| Failure | Extent | Rule |
+|---|---|---|
+| Trunk **surcharged** — DN1200 at 1,361 L/s and 0.075 % passes the flow at no depth | 5 reaches, **2.80 km** | G203-p27 Tab 10 |
+| Over the d/D limit but passing | 66 reaches, 10.68 km | G203-p27 Tab 10 |
+| Below the **1.30 m minimum cover**, worst 0.30 m | 169 reaches, **45.92 km** | G203-p33 4.6.3 |
+| Pipe **along a dual carriageway**, plus 47 unscheduled crossings | 21 reaches, 1.67 km | project rule 7 |
+
+Also: 1,233 m³/d (1.7 %) of load never enters the network (assignment radius drops it
+silently, against the zero-silent-drops doctrine); `RoadTreatment` was called with
+`units=None, sampler=None`, so its traffic-link, orphan-link and roundabout-guard steps
+became no-ops — 34 collapsed rings intersect a registered plot; and every analysis output
+except the pipe layer predates the wadi fix, so the optimisation study's baseline is 219
+breaches where the shipped design has 239.
+
+**Cause, in one line: W8's engineering was carried into W10 and W8's auditor was not.**
+Detail: `W10/docs/research/W8_W10_POSTMORTEM.md`, which also specifies a 59-check contract
+for W11a. **W11a builds the auditor FIRST and runs it against these layers on day one; the
+failing table is the specification.**
+
 ## Superseded — keep for the record, do not quote as current
 
 | File | Why it is out of date |

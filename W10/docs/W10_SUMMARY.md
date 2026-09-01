@@ -3,6 +3,26 @@
 The whole 531.4 km² laid out as a greenfield gravity network, as if the existing system were
 not there. W11 is the brownfield run that includes it.
 
+> ## STATUS: NOT COMPLIANT - do not issue
+>
+> Audited against W8's own check registry on 2026-09-01, after publication, this design
+> fails on four counts. They are recorded rather than patched, because patching one at a
+> time is what produced them. **W11a builds the auditor first and this table is its brief.**
+>
+> | Failure | Extent | Rule |
+> |---|---|---|
+> | Trunk **surcharged** - DN1200 at 1,361 L/s and 0.075 % passes the flow at no depth | 5 reaches, **2.80 km** | G203-p27 Tab 10 |
+> | Over the d/D limit but passing | 66 reaches, 10.68 km | G203-p27 Tab 10 |
+> | Below the **1.30 m minimum cover** to crown, worst 0.30 m | 169 reaches, **45.92 km** | G203-p33 4.6.3 |
+> | Pipe running **along a dual carriageway**, plus 47 unscheduled crossings | 21 reaches, 1.67 km | project rule 7 |
+>
+> In one line: **W8's engineering was carried into W10 and W8's auditor was not.** The
+> surcharged trunk is mine - I corrected an over-steep gradient without re-checking
+> capacity. The cover failure comes from a hardcoded 0.30 m outside diameter standing in
+> for the real one. Also 1,233 m3/d (1.7 %) of load never enters the network, and every
+> analysis output except the pipe layer predates the wadi fix, so the optimisation study's
+> baseline is 219 breaches where the shipped design has 239.
+
 ## The design
 
 | | |
@@ -37,8 +57,8 @@ the drafting break — snapped into the main body it is levelled with it. The wo
 54-piece drawing is three components: the main body, the western leg, and a 2 m drafting
 break in the east that closes with a snap. Detail: `MAIN_PIPE_AUDIT.md`.
 
-**3. Where are the lifting stations?** **21.** 219 depth breaches at the real gradients, 33
-after consolidating within 1.5 km (rule 9), 21 once the 50-property threshold is applied to
+**3. Where are the lifting stations?** **19.** 219 depth breaches at the real gradients, 33
+after consolidating within 1.5 km (rule 9), 19 once the 50-property threshold is applied to
 the catchment that actually drains through each one. *(An earlier figure of 11 was wrong -
 it double-filtered, applying a proximity test and then a catchment test to the survivors.
 See `OPTIMISATION.md`.)* Ten strategies were tested to reduce this and none beat it. Total duty through

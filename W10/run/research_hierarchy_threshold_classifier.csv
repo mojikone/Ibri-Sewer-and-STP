@@ -1,0 +1,4 @@
+metric,best_threshold,balanced_accuracy,recall_on_SM_TM,precision_on_SM_TM,n_lateral,n_main
+UP_PROPS,33.0,0.868,0.84,0.694,1675,468
+UP_LEN,821.3,0.9,0.88,0.752,1675,468
+UP_PIPES,26.0,0.9,0.897,0.72,1675,468

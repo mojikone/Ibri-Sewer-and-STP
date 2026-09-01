@@ -1,0 +1,5 @@
+source,km,km_no_plot_within_60m,plots_fronted,built_pct_of_fronted,km_0pct_built,km_under25pct,km_25to75pct,km_over75pct
+auto_block,319.8,0.0,106963,19.2,143.1,76.6,85.5,14.7
+auto_link,92.3,0.0,21644,23.0,40.1,17.8,28.8,5.6
+auto_road,604.3,60.9,47854,57.0,69.3,85.8,255.6,132.7
+draft,1195.4,74.0,152206,47.0,152.8,299.2,454.4,215.0

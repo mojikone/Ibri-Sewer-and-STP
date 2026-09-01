@@ -1,0 +1,10 @@
+stream_set,stream_km,pipes_crossing,pct_of_network,trunk,sub_main,lateral
+all NSA 2 m streams,5574.5,441,13.5,33,46,362
+STRM_VAL 1.0,2735.06,242,7.41,13,23,206
+STRM_VAL 2.0,1460.52,106,3.25,8,9,89
+STRM_VAL 3.0,734.15,62,1.9,4,7,51
+STRM_VAL 4.0,335.1,36,1.1,11,6,19
+STRM_VAL 5.0,179.29,10,0.31,1,1,8
+STRM_VAL 6.0,89.98,1,0.03,0,1,0
+STRM_VAL 7.0,30.94,0,0.0,0,0,0
+STRM_VAL 8.0,9.49,0,0.0,0,0,0

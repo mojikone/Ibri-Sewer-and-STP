@@ -1,0 +1,5 @@
+package,inside_hull_of,pipes,pct_of_package
+5A-1,5A-2,116,10.3
+5A-1,5A-3,1,0.1
+5A-2,5A-1,49,7.2
+5A-4,5A-1,13,7.1
