@@ -35,3 +35,13 @@ Rule: items here are the ONLY permitted uses of assumptions — and each assumpt
 3. F3 boundaries: which areas are redesign vs new design; existing-network As-built availability.
 4. Status of MoHUP land bank for new STP / PS sites.
 5. Model start year + confirmation of 2030/2055/ultimate horizons.
+
+## Added 2026-09-01 — cost and revenue
+
+| Gap | Waiting on | Consequence while open |
+|---|---|---|
+| **Renardet cost estimates and priced BoQs** from completed projects | a colleague | The estimate rests on 2019-vintage NWS pre-investment rates escalated to the base date. A priced BoQ from a built Omani scheme carries ground conditions, depth, dewatering, traffic management and reinstatement that no guideline rate does. When it lands it becomes the primary basis and the PIAD rates drop to a cross-check |
+| **Treated effluent price and offtaker** | NWS | It is the only genuine volumetric revenue in the whole scheme, and its volume is capped by irrigation demand rather than by plant output. Without it the revenue side of the appraisal is avoided cost only |
+| **Whether NWS levies any sewerage or connection charge**, and at what rate | NWS | Unlike water supply there is no volumetric wastewater tariff, so this is the only customer-facing income line |
+| **Written confirmation that SUREKHA is not a commitment** | NWS | The dataset's own field says *"RG Master Plan (Concept Design) not approved yet"*, so we proceed on that basis, but a 29,038 m³/d plant already coded in asset planning would constrain our STP options if it were committed |
+| **Energy tariff for the plant and the lifting stations** | NWS or the electricity supplier | Pumping and aeration dominate wastewater OPEX; the PIADs assumed 0.02 OMR/kWh and then entered zero energy anyway |
