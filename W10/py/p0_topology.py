@@ -34,6 +34,7 @@ from shapely.strtree import STRtree
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import config as C
+import netlib
 
 warnings.filterwarnings("ignore")
 
@@ -50,40 +51,15 @@ def node_network(lines):
 
 
 def build_graph(lines, snap_m=SNAP_M):
-    """Graph over the noded lines, with endpoints within `snap_m` treated as one node."""
-    ends = []
-    for ln in lines:
-        ends.append(ln.coords[0])
-        ends.append(ln.coords[-1])
-    pts = np.array([(p[0], p[1]) for p in ends])
+    """Delegates to netlib.build so this phase and every later one snap identically.
 
-    # cluster endpoints: each point takes the id of the lowest-numbered point it touches
-    tree = cKDTree(pts)
-    pairs = tree.query_pairs(snap_m, output_type="ndarray")
-    uf = np.arange(len(pts))
-
-    def find(i):
-        while uf[i] != i:
-            uf[i] = uf[uf[i]]
-            i = uf[i]
-        return i
-
-    for a, b in pairs:
-        ra, rb = find(a), find(b)
-        if ra != rb:
-            uf[max(ra, rb)] = min(ra, rb)
-    labels = np.array([find(i) for i in range(len(pts))])
-
-    G = nx.Graph()
-    for i, ln in enumerate(lines):
-        u, v = int(labels[2 * i]), int(labels[2 * i + 1])
-        if u == v:
-            continue                      # a loop closing on itself carries nothing
-        if G.has_edge(u, v) and G[u][v]["w"] <= ln.length:
-            continue                      # keep the shorter of two parallel corridors
-        G.add_edge(u, v, w=ln.length, line=i)
-    for n in G:
-        G.nodes[n]["xy"] = tuple(pts[n])
+    The bounded-radius clustering lives there; see the note in netlib.build for why
+    transitive union-find snapping had to go.
+    """
+    G, xy = netlib.build(lines, snap_m)
+    for u, v, d in G.edges(data=True):
+        d["w"] = d["len"]
+    labels = netlib.last_labels
     return G, labels
 
 
@@ -162,13 +138,26 @@ def main():
     km = np.array([sum(d["w"] for *_, d in G.subgraph(c).edges(data=True)) / 1000
                    for c in comps])
 
-    out = []
+    # EVERY noded line is written, not just the ones that became graph edges.
+    # `build_graph` drops two kinds: a line whose ends land in the same snapped cluster,
+    # and the longer of two lines between the same pair. Both are real corridor, and
+    # leaving them out made the shapefile disagree with the graph that produced it - the
+    # graph reported 8 pieces and reloading its own output gave 460, because a 3 m line
+    # can become a "self-loop" through a chain of 2 m snaps and then vanish.
+    part = {}
     for ci, comp in enumerate(comps):
-        for u, v, d in G.subgraph(comp).edges(data=True):
-            out.append({"PART": ci, "LEN_M": round(d["w"], 2),
-                        "geometry": lines[d["line"]]})
+        for n in comp:
+            part[n] = ci
+    out = []
+    for i, ln in enumerate(lines):
+        u = int(labels[2 * i])
+        out.append({"PART": part.get(u, -1), "LEN_M": round(ln.length, 2),
+                    "geometry": ln})
     g = gpd.GeoDataFrame(out, crs=C.EPSG)
     g.to_file(os.path.join(C.OUT_SHP, "W10_corridors_noded.shp"))
+    print(f"   wrote {len(g):,} lines, {g.length.sum()/1000:,.1f} km "
+          f"({len(g) - G.number_of_edges():,} of them dropped by the graph as "
+          f"self-loops or parallels, kept here because they are real corridor)")
 
     print(f"\nFINAL at {SNAP_M:.1f} m: {G.number_of_nodes():,} nodes, "
           f"{G.number_of_edges():,} edges, {km.sum():,.1f} km in {len(comps):,} pieces")
