@@ -461,6 +461,47 @@ Two things the PIAD has that our seven criteria do not:
 
 ---
 
+## 6b. Our own method, drawn
+
+The diagram in §0 is **theirs**. Ours is separate and is the one that goes in
+the report:
+
+![The Ibri options appraisal method](../docs/img/appraisal_method.png)
+
+`https://www.figma.com/board/WfH0LRWfSHhpkYPrdnMNeR`
+
+Three differences from the PIAD chart. Step 4 is **NPV and life-cycle cost at
+5 per cent over 25 years**, with payback reported but not deciding. Steps 6 to 8
+add the seven criteria, the weights NWS sets, the sensitivity tests and the
+10 per cent tie-break, none of which the PIAD has. And the input lists are
+wastewater: gravity sewers priced by diameter **and depth band**, manholes,
+house connections, force mains, lifting stations, the plant at OMR per cubic
+metre per day, and the treated effluent network — with revenue as effluent
+sales plus avoided cost rather than a volumetric tariff.
+
+The amber boxes mark what we inherit from NWS pre-investment practice, which is
+the unit-rate build-up and the preliminaries and contingency uplift. That is
+deliberate: it shows continuity with how NWS costs a scheme without importing
+the eleven defects above.
+
+**The PIAD chart is not going in the report.** It documents a method we found
+eleven defects in, and putting it in a client deliverable would mean either
+appearing to endorse it or explaining in writing why we will not use NWS's own
+internal method. Provenance is handled by a line of text in the cost section
+instead.
+
+### Awaiting: real project cost data
+
+The unit rates in the amber box are PIAD-derived and 2019 vintage. Renardet's
+own financial submissions, cost estimates and priced bills of quantities from
+completed projects have been requested from a colleague. **When they arrive they
+replace the PIAD rates as the primary cost basis**, and the PIAD set drops to a
+cross-check. A priced BoQ from a built scheme gives what neither guideline nor
+PIAD can: rates that already carry Omani ground conditions, depth, dewatering,
+traffic management and reinstatement.
+
+---
+
 ## 7. Recommendations
 
 1. **Build the Ibri cost model with a discounted cash flow from the start**,
