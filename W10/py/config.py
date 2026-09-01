@@ -70,4 +70,9 @@ EPSG = 32640
 CLIP_SLIVER_M = 0.5      # anything shorter than this after clipping is a clip artefact
 NODE_SNAP_M = 0.5        # endpoints within this distance are the same node
 CORRIDOR_MATCH_M = 25.0  # a drafted line this close to a road counts as covering it
+# ...but the covered part is cut out with a MUCH tighter buffer. Cutting at the match
+# distance punches a 25 m hole wherever a treated road meets a drafted corridor, and those
+# holes were the single largest cause of fragmentation: 1,074 pieces, and the gap from
+# almost every big piece to the main body measured exactly 25 m.
+CORRIDOR_CUT_M = 4.0
 PLOT_SERVED_M = 60.0     # a plot with no corridor within this distance is unserved

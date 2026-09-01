@@ -1,10 +1,10 @@
 item,value
 draft km,1195.4
-auto_road km,579.7
+auto_road km,604.3
 auto_block km,319.9
 auto_link km,92.31
-total km,2187.2
-plots served,60085.0
-plots unserved,1187.0
-m of corridor per served plot,36.4
+total km,2211.8
+plots served,60086.0
+plots unserved,1186.0
+m of corridor per served plot,36.8
 pockets too far to stitch,0.0

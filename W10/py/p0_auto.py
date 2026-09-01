@@ -204,9 +204,15 @@ def main():
         if k in rep:
             print(f"      {k:<26s} {rep[k]}")
 
-    draft_buf = unary_union(draft.geometry.buffer(C.CORRIDOR_MATCH_M))
+    # Coverage is DECIDED at the match distance and CUT at the tighter one, so a treated
+    # road that runs beside a drafted corridor is dropped, while one that merely ends on it
+    # keeps its length right up to the junction instead of stopping 25 m short.
+    draft_cover = unary_union(draft.geometry.buffer(C.CORRIDOR_MATCH_M))
+    draft_buf = unary_union(draft.geometry.buffer(C.CORRIDOR_CUT_M))
     keep = []
     for g in treated:
+        if g.intersection(draft_cover).length > 0.75 * g.length:
+            continue
         rest = g.difference(draft_buf)
         if rest.is_empty:
             continue
