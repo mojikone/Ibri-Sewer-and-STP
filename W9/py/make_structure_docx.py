@@ -182,7 +182,57 @@ def build():
             widths=[1.6, 11.0, 3.9], font=9)
 
     # ------------------------------------------------------- gaps
-    D.h(d, 1, "4   Sections without a documented method", page_break=True)
+    D.h(d, 1, "4   Presentation conventions", page_break=True)
+    D.p(d, "These conventions apply throughout the report and are stated here "
+           "so that they form part of what is approved.")
+    D.table(d, ["Element", "Convention"],
+            [["Equations",
+              "Native Word objects, editable in the equation editor. Each is "
+              "numbered and followed by a table giving every symbol, its "
+              "meaning and its unit"],
+             ["Footnotes",
+              "Footnotes restart at 1 on each page. They carry the guideline "
+              "reference and page, the caveat and the derivation; matter "
+              "belonging to the argument is in the body text"],
+             ["Figures",
+              "Maps, process flowcharts and data charts share one numbering "
+              "sequence. The caption carries the number"],
+             ["Tables",
+              "A separate sequence, caption above the table. Header rows "
+              "repeat across a page break and a row is not split"],
+             ["Maps",
+              "Produced from the project geographic information system, with "
+              "a satellite background, a legend limited to the layers that "
+              "map draws, and a box giving the quantities behind the figure"],
+             ["Charts",
+              "Drawn from the same measured values as the text. Where an "
+              "asset is recorded as proposed rather than constructed it is "
+              "shown distinctly and identified in the legend"],
+             ["Revisions",
+              "Each issued revision is retained unaltered; a revision is "
+              "never overwritten"]],
+            widths=[3.2, 13.3], font=9.5)
+
+    D.h(d, 1, "5   The existing network comprises two networks",
+        page_break=True)
+    D.p(d, "This is recorded here because it determines what several sections "
+           "of the report are able to state. The wastewater dataset supplied "
+           "holds a constructed network and a proposed network, distinguished "
+           "by the operational status field and confirmed by four further "
+           "fields that agree with it on every record.")
+    D.table(d, ["Asset", "Constructed", "Proposed"],
+            [["Gravity sewer", "111.6 km, installed 2006", "199.3 km"],
+             ["Force or pumping main", "10.0 km, installed 2006", "23.2 km"],
+             ["Treated effluent main", "none", "45.7 km"]],
+            widths=[5.0, 6.0, 5.5], font=9.5)
+    D.p(d, "")
+    D.p(d, "Neither diameter nor invert level is recorded on the constructed "
+           "network, and the records carry a remark that the data is to be "
+           "used for reference only. Section 18, the hydraulic assessment of "
+           "the existing networks, therefore cannot be completed from the "
+           "data supplied and waits on the survey now in progress.")
+
+    D.h(d, 1, "6   Sections without a documented method", page_break=True)
     D.p(d, "Six sections of the report have no corresponding method in the "
            "current revision of the methodology document. They are listed here "
            "so that the gap is visible rather than discovered during drafting.")
@@ -194,7 +244,7 @@ def build():
               "The guideline sets a 50-year horizon at +2 °C and +4 °C; the "
               "method for applying it to site selection is not yet written"],
              ["32  Environmental and social assessment",
-              "Depends on the ruling sought on EIA timing — see Section 5"],
+              "Depends on the ruling sought on EIA timing — see Section 7"],
              ["39  Implementation roadmap",
               "Follows from the recommended option, so it is written last"],
              ["40  Contracting strategy",
@@ -208,7 +258,7 @@ def build():
            "section is drafted.")
 
     # ------------------------------------------------------- decisions
-    D.h(d, 1, "5   Decisions required from Nama Water Services")
+    D.h(d, 1, "7   Decisions required from Nama Water Services")
     D.p(d, "The following items either block the report or would make it wrong "
            "if left unresolved. They are set out in full, with the supporting "
            "references, in the accompanying register of decisions and "

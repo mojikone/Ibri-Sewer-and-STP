@@ -359,9 +359,10 @@ def s15_existing(d):
          "deliverable in its own right.")
 
     D.h(d, 2, "15.2   The data problem, stated plainly")
-    D.p(d, "NWS's asset GIS carries the existing sewer, force main and treated "
-           "effluent networks as geometry. Most of the sewer segments carry no "
-           "recorded diameter. The tender itself states that the existing "
+    D.p(d, "NWS's asset GIS carries the sewer, force main and treated "
+           "effluent networks as geometry, constructed and proposed together. "
+           "No diameter and no invert level is recorded on the constructed "
+           "gravity network at all. The tender itself states that the existing "
            "network layout is based on available information and is inaccurate, "
            "and makes preparing complete as-built records and GIS part of the "
            "consultant's scope.")
@@ -373,7 +374,24 @@ def s15_existing(d):
               "to rest on records the client has already disowned.",
               fill="EAF1F8", colour=D.MID)
 
+    D.p(d, "")
+    D.callout(d, "Establish what is built before measuring anything.",
+              "An asset GIS commonly holds proposed alignments alongside "
+              "constructed ones, and a length taken from it without filtering "
+              "overstates the asset base. In the Ibri dataset the operational "
+              "status field separates the two, and four further fields agree "
+              "with it on every record: installation date, source, project "
+              "code and a remark. Constructed assets carry a date and a "
+              "drawing or survey source; proposed ones carry an asset-planning "
+              "source and a planning project code. Filter first, then measure, "
+              "and state the two figures separately wherever either is quoted.",
+              fill="FBF0E4", colour=D.RED)
+
     D.h(d, 2, "15.3   Method")
+    D.numbered(d, "Separate constructed assets from proposed alignments on the "
+                  "status field, and confirm the split against the "
+                  "installation date, the source and the project code before "
+                  "any quantity is taken from the dataset.", restart=True)
     D.numbered(d, "Survey: cover and invert levels, diameters, materials, "
                   "gradients, house connections, riders, lifting stations and "
                   "rising mains.")

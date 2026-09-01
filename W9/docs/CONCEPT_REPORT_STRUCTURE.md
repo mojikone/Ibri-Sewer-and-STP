@@ -96,6 +96,24 @@ The third column names the section of **Tutorial T03 Revision 01** that carries 
 
 Six sections have no corresponding method in the current revision of the methodology document, listed so the gap is visible rather than discovered during drafting: level of service and resilience (11), climate resilience (31), environmental and social assessment (32), the implementation roadmap (39), contracting strategy (40), and the Project Integration Plan (41). None blocks the structure; each will be added to T03 before the corresponding report section is drafted.
 
+### Presentation conventions
+
+These apply throughout the report and are stated here so they form part of what is approved.
+
+| Convention | Rule |
+|---|---|
+| Equations | Native Word objects, editable in the equation editor. Numbered, each followed by a table giving every symbol, its meaning and its unit. |
+| Footnotes | Real Word footnotes, restarting at 1 on each page. They carry the guideline reference and page, the caveat and the derivation — never part of the argument. |
+| Figures | One sequence for everything visual: maps, process flowcharts and data charts alike. The caption carries the number; nothing numbers itself inside the image. |
+| Tables | A separate sequence, caption above the table. Header rows repeat across a page break and a row is never split. |
+| Maps | Produced from the saved QGIS project layout, satellite background, legend limited to the layers that map draws, and a data box giving the quantities behind that figure. |
+| Charts | Drawn from the same measured facts as the text, so the two cannot diverge. Status is shown, never averaged away: an asset recorded as proposed is drawn differently from one that is built. |
+| Revisions | Each issued revision is frozen in its own folder and never overwritten. |
+
+### The existing network is two networks
+
+Recorded here because it changes what several sections can say. The wastewater dataset supplied by NWS holds a **constructed** network and a **proposed** one, distinguished by `OP_STATUE` and confirmed by four further fields. Constructed: 111.6 km of gravity sewer and 10.0 km of force main, installed 2006, no treated effluent asset. Proposed: 199.3 km of gravity sewer, 23.2 km of pumping main and 45.7 km of treated effluent main, under project code SUREKHA. **Section 18, hydraulic assessment of existing networks, cannot be completed from the data supplied** — no diameter or invert level is recorded on the constructed network, and NWS's own remark on those records is that the data is for reference only. It waits on the survey.
+
 ### Word version
 
 `Concept_Design_Report_Structure.docx` in this folder is the submission copy, built by `W9/py/make_structure_docx.py`. It is the version to send to NWS; this file is the working source.
