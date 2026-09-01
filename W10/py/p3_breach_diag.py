@@ -24,20 +24,32 @@ classes:
     E ARTEFACT        the corridor should not be there - an auto_link across open ground,
                       a skeleton fragment, or a route down a wadi
 
-THE RELIEF CALCULATION, which is the point of the exercise. Rearranging the same identity,
-the run does not breach if at EVERY node k on it
+THE RELIEF CALCULATION. Rearranging the same identity, the run does not breach if at EVERY
+node k on it
 
     s  <=  (allowance + ground fall to k) / (length to k),    allowance = 12.00 - cover - OD
 
-so the relieving gradient is the minimum of that over the run. Table 11 then says which
-diameter delivers it (DN200 0.500 % ... DN900 0.075 %). What blocks it is NOT the diameter
-but the tractive-force minimum, which depends on FLOW and not on size: at the 1.5 L/s design
-floor it is 0.467 %, so a branch carrying nothing cannot be laid flat however big the pipe.
-Every breach is therefore tested against the gradient it can ACTUALLY be laid at,
+so the relieving gradient is the minimum of that over the run, and Table 11 says which
+diameter would deliver it (DN200 0.500 % ... DN900 0.075 %). Every breach is tested against
+the gradient it could ACTUALLY be laid at,
 
     s_floor(reach) = max(0.075 %, tractive minimum at that reach's peak flow)
 
-and a breach that still passes 12 m at those gradients is IRREDUCIBLE - it is a station.
+because the tractive-force minimum (G203-p27 4.2.2.1) depends on FLOW and not on size: at
+the 1.5 L/s design floor it is 0.467 %, so a branch carrying nothing cannot be laid flat
+however big the pipe.
+
+*** THIS IS A MEASUREMENT, NOT A RECOMMENDATION. ***
+
+Upsizing a sewer in order to lay it flatter is PROHIBITED - G203-p29 4.3.1, one unqualified
+sentence with no exception in 201 pages: "Sewers shall not be oversized to facilitate flatter
+slopes. Uniform slopes must be maintained between successive manholes." p167 lists oversized
+mains as a cause of hydrogen sulphide and p185 says the lowest-gradient gravity sewers carry
+the greatest H2S risk. TUTORIALS/T02 6.3 already carries the clause.
+
+RED_SEQ therefore reads "would have cleared had it been allowed" and sizes what the
+prohibition costs. Under the guideline as written every breach stands. See
+docs/BREACH_DIAGNOSIS.md and docs/OPTIMISATION.md.
 
 Nothing is designed here and no output of p2_sizing is modified. This reads the network,
 re-solves it exactly as p2_sizing does (recording which upstream node governed each invert,
@@ -449,6 +461,19 @@ def main():
             float(np.max(fcum11 - fgf))
         red_t11 = int(slack_t11 >= 0.0)
 
+        # ---- is the run carrying a gradient it should not be? ---------------
+        # p2_sizing's size_all iterates diameter and gradient together, and when size_pipe
+        # returns None it forces DN to the top of the series and BREAKS - leaving `s` at
+        # the value from the previous iteration, which is DN200's 0.500 %. The reach is then
+        # written as a large pipe laid at a small pipe's minimum. Detected exactly: the laid
+        # gradient is not smin_for(its own DN, its own peak flow).
+        seg_true = np.array([hydra.smin_for(int(dn_of.get((u, v), 200)),
+                                            qpk_of.get((u, v), 0.0), CRIT)
+                             for u, v, *_ in seg])
+        art = np.abs(seg_s - seg_true) > 1e-9
+        art_fall = float(((seg_s - seg_true) * seg_L)[art].sum())
+        empty_km = float(seg_L[seg_q < 0.001].sum() / 1000.0)     # reaches under 1 L/s peak
+
         # ---- provenance and hazard along the run ---------------------------
         src_l = defaultdict(float)
         for (u, v, ln_, _s) in seg:
@@ -496,14 +521,18 @@ def main():
         head = run[0]
         chained = head in lifts
         local = ridge >= RIDGE_RISE_M and dsfall >= RIDGE_GIVEBACK * ridge
-        if link_pct >= ARTEFACT_LINK_PCT or wadi_pct >= ARTEFACT_WADI_PCT:
-            phys = "E"
+        if art_fall >= margin:
+            phys, ereason = "E", "SIZING"      # the excess gradient alone explains it
+        elif link_pct >= ARTEFACT_LINK_PCT:
+            phys, ereason = "E", "LINK"
+        elif wadi_pct >= ARTEFACT_WADI_PCT:
+            phys, ereason = "E", "WADI"
         elif local:
-            phys = "C"
+            phys, ereason = "C", "-"
         elif gfall < 0:
-            phys = "B"
+            phys, ereason = "B", "-"
         else:
-            phys = "A"
+            phys, ereason = "A", "-"
         cause = "E" if phys == "E" else ("D" if chained else phys)
 
         # BLOCKER and FIX are NOT decided here. Whether a breach can be upsized away depends
@@ -547,6 +576,8 @@ def main():
             "UPSIZE_KM": round(upsize_km, 3), "DN_UP": dn_up,
             "LINK_PCT": round(link_pct, 1), "AUTO_PCT": round(auto_pct, 1),
             "WADI_PCT": round(wadi_pct, 1), "HAZ_COV": round(haz_cov, 1),
+            "E_REASON": ereason, "ARTFALL_M": round(art_fall, 2),
+            "EMPTY_KM": round(empty_km, 3),
             "ALT_N": alt_n, "ALT_DZ_M": round(alt_dz, 2),
             "LOWFLOW": int(float(gpipe.get("QPK_LS", 0.0)) < LOW_FLOW_LS),
             "HEAD": int(head),
@@ -670,6 +701,65 @@ def main():
           f"{int(((df.LOWFLOW==1)&(df.RED_SEQ==0)).sum())}")
     print(f"total upsize length if every reducible run is relieved: "
           f"{df[df.RED_SEQ==1].UPSIZE_KM.sum():,.1f} km")
+
+    # ---- breaches are not stations: consolidate the survivors the same way ---
+    # Rule 9 exactly as the published run applies it - p2_sizing merges anything within
+    # 1.5 km, and p6_force then keeps a station only where the flow ARRIVING at it reaches
+    # 50 properties on the locked load basis. The proximity count p2_sizing writes into
+    # W10_stations_final.shp is not the catchment: it put 10,523 plots against a station
+    # carrying 5.4 m3/d. Same threshold here, so 220 -> 33 -> 11 reproduces.
+    from shapely.ops import unary_union
+    Q50 = 50 * 1.456 * 5.32 * 164.0 * 0.85 / 1000.0     # m3/d, per p6_force.py
+
+    def stations(sub, radius=1500.0):
+        if not len(sub):
+            return 0, 0
+        blobs = gpd.GeoDataFrame(
+            geometry=[unary_union(sub.geometry.buffer(radius / 2))],
+            crs=C.EPSG).explode(index_parts=False).reset_index(drop=True)
+        keep = 0
+        for g in blobs.geometry:
+            m = sub.intersects(g)
+            if m.any() and sub.loc[m, "QADF_M3D"].max() >= Q50:
+                keep += 1
+        return len(blobs), keep
+
+    # How many of the clusters AS SOLVED disappear entirely? Consolidating the survivors and
+    # comparing counts is not the right question: 1.5 km chaining is transitive, so taking
+    # away the breaches in the middle of a cluster SPLITS it and the count can rise even as
+    # the problem shrinks. The monotone question is which of today's clusters is left with
+    # no breach at all.
+    cl = gpd.GeoDataFrame(geometry=[unary_union(df.geometry.buffer(750.0))],
+                          crs=C.EPSG).explode(index_parts=False).reset_index(drop=True)
+    gone = surv = 0
+    for g in cl.geometry:
+        m = df.intersects(g)
+        if not m.any():
+            continue
+        if df.loc[m, "QADF_M3D"].max() < Q50:
+            continue
+        surv += 1
+        if df.loc[m, "RED_SEQ"].all():
+            gone += 1
+    print(f"\nof the {surv} stations as solved, {gone} lose every breach to upsizing "
+          f"and {surv - gone} keep at least one")
+
+    n_all, k_all = stations(df)
+    n_irr, k_irr = stations(df[df.RED_SEQ == 0])
+    n_gnd, k_gnd = stations(df[df.RED_T11 == 0])
+    print(f"\nSTATIONS after rule 9 (1.5 km, 50 properties draining through):")
+    print(f"   all 220 breaches as solved      : {n_all:3d} consolidated -> {k_all:3d} stations")
+    print(f"   the {int((1-df.RED_SEQ).sum()):3d} left after upsizing     : "
+          f"{n_irr:3d} consolidated -> {k_irr:3d} stations")
+    print(f"   the {int((1-df.RED_T11).sum()):3d} the GROUND alone forbids: "
+          f"{n_gnd:3d} consolidated -> {k_gnd:3d} stations")
+    pd.DataFrame([
+        {"set": "as solved", "breaches": len(df), "consolidated": n_all, "stations": k_all},
+        {"set": "after upsizing", "breaches": int((1 - df.RED_SEQ).sum()),
+         "consolidated": n_irr, "stations": k_irr},
+        {"set": "ground-limited floor", "breaches": int((1 - df.RED_T11).sum()),
+         "consolidated": n_gnd, "stations": k_gnd},
+    ]).to_csv(os.path.join(C.OUT_RUN, "W10_breach_stations.csv"), index=False)
     print(f"\ntotal {time.time()-t0:.0f} s")
     return df
 

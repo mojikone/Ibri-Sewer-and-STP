@@ -129,6 +129,14 @@ def size_all(G, nxt, qacc, lacc):
             if dn2 == dn:
                 break
             dn = dn2
+        # Recompute the gradient for the diameter we ACTUALLY settled on. The loop above
+        # can leave `s` holding the value computed for a previous, smaller diameter: when
+        # size_pipe returns None it jumps dn to the top of the series and breaks without
+        # recomputing. That stored five reaches of the trunk as DN1200 laid at DN200's
+        # 0.500 % instead of 0.075 % - 11.90 m of fall over 2.80 km, entering the works
+        # with all 62,615 plots behind it, and it was the deepest breach in the network.
+        s = max(CRIT.TABLE11.get(dn, CRIT.TABLE11_FLOOR),
+                hydra.smin_tractive(qpk, CRIT))
         out[(n, m)] = {"DN": dn, "SMIN": s, "QADF": qadf, "PF": pf, "QPK_LS": qpk * 1000}
     return out
 

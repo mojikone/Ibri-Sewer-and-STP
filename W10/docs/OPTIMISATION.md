@@ -158,6 +158,73 @@ have:
 3. **Correct the depth measurement to cover rather than invert.** Free, and it is what the
    guideline says.
 
+## Postscript — two defects found by the breach diagnosis, and the design corrected
+
+The breach-by-breach diagnosis found two defects in the W10 pipeline. Both are fixed and the
+design is re-run.
+
+**1. `p2_sizing.size_all` stored the wrong gradient.** When `hydra.size_pipe` cannot fit the
+flow it jumps the diameter to the top of the series and breaks *without recomputing the
+gradient*, so the reach is stored at the previous, smaller diameter's minimum. Five reaches
+of the trunk — 2.80 km entering the works with all 62,615 plots behind them — were held as
+DN1200 laid at DN200's **0.500 %** where the floor is **0.075 %**. That is 11.90 m of fall
+that should have been 1.6 m, and it was the deepest breach in the network. The gradient is
+now recomputed after the diameter settles.
+
+**2. The wadi rule was never applied to the corridors.** `HAZARD_WADI_CLASSES` — classes 4,
+5 and 6, where no pipe and no chamber may go — appeared only in the STP siting script. W8
+applied it; W10 did not, and laid **156.0 km of pipe, 8.3 % of the network, on wadi ground**.
+The grid is continuous float, so the test is `floor(v) >= 4`, not membership of {4,5,6}. It is
+now charged in the routing cost the way a dual carriageway is, so the router crosses a wadi
+rather than running along it. **131.7 km still sits on wadi ground** because the corridors
+themselves are there; that is a corridor problem for the next iteration, not a routing one.
+
+### The corrected design
+
+| | Before | After |
+|---|---|---|
+| Stations (one funnel) | 21 | **19** |
+| Breaches | 219 | 239 |
+| Total lift | 2,815 m | 3,070 m |
+| Pipe on wadi ground | 156.0 km | 131.7 km |
+| Reaches with a wrong gradient | 5 (2.80 km) | 0 |
+
+Pumping went **up**, because the previous figure was bought by routing along wadi beds and
+by one reach of trunk laid six times too steep. That is the correct direction: the earlier
+number was cheaper because it was wrong.
+
+### And the sharpest finding of the whole study
+
+The five tallest lifts in the design serve almost nothing:
+
+| Lift | Catchment | Upstream run |
+|---|---|---|
+| **55.49 m** | 9.8 m³/d | 6.65 km |
+| 39.64 m | **0.0 m³/d** | 5.09 km |
+| 35.78 m | **0.0 m³/d** | 1.09 km |
+| 31.35 m | 169.0 m³/d | 60.25 km |
+| 29.46 m | **0.0 m³/d** | 10.88 km |
+
+Eleven lifts exceed 20 m, which is past what a single wet-well stage does. Four of the five
+tallest pump **nothing at all**. This is the same finding as the branch-pruning table
+arriving from the other direction, and it is now the clearest recommendation in the study:
+**the most expensive pumping in this design exists to serve empty desert corridors, and the
+decision to sewer them at all should be taken before any of it is designed.**
+
+### How many breaches are irreducible
+
+| | Irreducible |
+|---|---|
+| Under the guideline as written | **219 of 220** |
+| If the oversizing prohibition did not exist | 108 of 220 |
+| On topography alone, self-cleansing waived | 49 of 220 |
+
+Of the 108 that would resist even without the prohibition, 42 are blocked by the ground and
+66 by the tractive-force minimum — which depends on flow, not diameter, so an empty branch
+cannot be laid flat however large the pipe. Reducibility tracks flow almost exactly: 89 %
+blocked below 1 L/s, none above 100 L/s. The one genuinely removable breach was the gradient
+defect above. Detail: `BREACH_DIAGNOSIS.md`.
+
 ## Where it is
 
 `W10/py/p3_variants.py` (the harness) · `p3_optimise.py` (withdrawn, kept with its warning) ·

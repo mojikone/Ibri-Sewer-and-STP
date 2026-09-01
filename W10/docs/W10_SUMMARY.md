@@ -12,7 +12,7 @@ not there. W11 is the brownfield run that includes it.
 | Plots served | **60,085 of 61,272 (98.1 %)** |
 | Flow arriving at the works | **73,442 m³/d** + 1,356 m³/d infiltration |
 | Subnetworks | **206**, defined as everything reaching the trunk at one point |
-| Lifting stations | **21** (corrected from 11 - see `OPTIMISATION.md`) |
+| Lifting stations | **19** (was 11, then 21; see `OPTIMISATION.md` for both corrections) |
 | Deepest chamber | **11.99 m** against a 12.00 m limit |
 | Median cover | 2.07 m |
 

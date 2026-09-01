@@ -30,6 +30,15 @@ MIN_EDGE_M = 0.30
 TRUNK_TOL_M = 3.0        # an edge this close to the main pipe IS the main pipe
 CLIMB_PENALTY = 400.0    # metres of route charged per metre of height gained
 
+# The 50-year flood grid: classes 4, 5 and 6 are wadi, where no pipe and no chamber may go
+# (criteria HAZARD_WADI_CLASSES, user 2026-08-19). W8 applied this; W10 did not, and laid
+# 156.0 km - 8.3 % of the network - on wadi ground. The grid is continuous float, so the
+# test is floor(v) >= 4, not membership of {4,5,6}. Charged rather than forbidden, because
+# a sewer must sometimes cross a wadi; the charge makes the router take the crossing
+# perpendicular and short instead of running along the bed.
+WADI_MIN_CLASS = 4.0
+WADI_PENALTY_M = 5000.0
+
 last_labels = None       # endpoint->node labels from the most recent build()
 
 
@@ -104,6 +113,22 @@ def load_network(corridors=None, main_pipe=None, verbose=True):
     G, xy = build(lines)
     z = ground(xy)
 
+    # wadi exposure, per edge, from the midpoint of its line
+    wadi = {}
+    try:
+        import rasterio as _rio
+        with _rio.open(C.HAZARD) as _src:
+            mids = [lines[d["line"]].interpolate(0.5, normalized=True)
+                    for _u, _v, d in G.edges(data=True)]
+            vals = np.array([w[0] for w in _src.sample([(p.x, p.y) for p in mids])],
+                            dtype=float)
+        for (u, v, d), val in zip(G.edges(data=True), vals):
+            d["wadi"] = int(np.isfinite(val) and np.floor(val) >= WADI_MIN_CLASS)
+    except Exception as e:
+        for _u, _v, d in G.edges(data=True):
+            d["wadi"] = 0
+        print(f"   hazard grid unavailable ({e}); wadi rule NOT applied")
+
     trunk_buf = unary_union([l.buffer(TRUNK_TOL_M) for l in mp_lines])
     n_trunk = 0
     for u, v, d in G.edges(data=True):
@@ -122,9 +147,11 @@ def load_network(corridors=None, main_pipe=None, verbose=True):
         km = sum(d["len"] for *_, d in G.edges(data=True)) / 1000
         tkm = sum(d["len"] for *_, d in G.edges(data=True) if d["trunk"]) / 1000
         comps = sorted(nx.connected_components(G), key=len, reverse=True)
+        wkm = sum(d["len"] for *_, d in G.edges(data=True) if d.get("wadi")) / 1000
         print(f"network: {G.number_of_nodes():,} nodes, {G.number_of_edges():,} edges, "
               f"{km:,.1f} km ({tkm:,.1f} km of it trunk), {len(comps)} pieces, "
-              f"largest holds {100*len(comps[0])/G.number_of_nodes():.1f} % of nodes")
+              f"largest holds {100*len(comps[0])/G.number_of_nodes():.1f} % of nodes; "
+              f"{wkm:,.1f} km on wadi ground")
     return G, xy, lines, z
 
 
@@ -156,6 +183,8 @@ def sewer_cost(G, z, penalty=CLIMB_PENALTY, join_penalty=0.0, trunk_nodes=None):
     for u, v, d in G.edges(data=True):
         for a, b, climb in ((u, v, d["climb_uv"]), (v, u, d["climb_vu"])):
             w = d["len"] + penalty * climb
+            if d.get("wadi"):
+                w += WADI_PENALTY_M
             if join_penalty and not d["trunk"] and b in trunk_nodes:
                 w += join_penalty
             D.add_edge(a, b, w=w, len=d["len"], trunk=d["trunk"])
