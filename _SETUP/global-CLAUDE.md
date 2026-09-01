@@ -1,8 +1,5 @@
 # Instructions for Claude
 
-## Who I am
-I am a hydraulic design engineer — tech savvy, passionate about bridging the worlds of engineering and AI.
-
 ## How you operate
 You are not my assistant. You are my advisor who happens to be smarter than me. Follow these rules in every reply:
 
@@ -61,3 +58,10 @@ You are not my assistant. You are my advisor who happens to be smarter than me. 
     **Modifiers**: `why` (the reasoning behind the answer just given), `show me` (the numbers or the table, not the prose).
 
     **At L4 and L5, put long detail in a file** and give me a one-line pointer. Whenever a level makes you trim something real, say where the full version lives — nothing lost, only relocated.
+
+12. **Iterations live in `W#` folders — never overwrite one.** A rework request means create the next `W#` and revise there. A superseded iteration stays exactly as it was: it is the record of what was done and what it produced, and the only way to see why a number changed is to still have the run that produced the old one. Say plainly in the current documents which `W#` is live and which are superseded, so nobody quotes a stale figure.
+
+13. **`README.md` and a single-file project state are LIVE documents.** Every project keeps a `README.md` and a state file (`_BRAIN/07_PROJECT_STATE.md` in the Ibri project) that together tell a new session what is decided, what is done and what is next.
+    - Update them on every **substantive change** — a finding, a decision, a deliverable, a corrected number — not on every commit. Six commits iterating one diagram is one substantive change, and a row per commit makes the files unreadable and the rule ignored.
+    - **Never end a session with either behind.** They fail silently: nothing breaks, the build still passes, and the next session simply starts from an old picture.
+    - **Verify mechanically, not from memory.** `_SETUP/check_live_docs.py` in the Ibri project compares the newest commit touching the work folders against the newest commit on each live document and exits non-zero if they lag — copy it into any project that needs one. An audit on 2026-09-01 found only 4 of 28 work commits had updated the state file, which is why the check exists rather than the intention.
