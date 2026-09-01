@@ -222,6 +222,23 @@ def part_d(d):
            "at a stated year, the plot route the ceiling that the land can "
            "hold.")
 
+    p = D.p(d, "The distribution of population across the study area is shown "
+               "below, from the Global Human Settlement population grid. The "
+               "grid is a third-party product and is used here to show where "
+               "population lies, not to establish how much of it there is: "
+               "the population figures adopted in this report are those "
+               "published by the National Centre for Statistics and "
+               "Information.")
+    N.add(p, "GHS-POP, European Commission Joint Research Centre, 2025 epoch "
+             "at 100 m resolution, licensed under Creative Commons Attribution "
+             "4.0. The grid distributes census counts across built-up surface "
+             "and is therefore modelled rather than observed.")
+
+    D.picture(d, os.path.join(IMG, "M06_population.png"), 16.0)
+    D.fig_caption(d, "Where the population of the study area lies. Density is "
+                     "concentrated in Ibri town and along the wadi corridors, "
+                     "and falls away sharply beyond them.")
+
     D.chart(d, "C04_population", 14.5)
     D.fig_caption(d, "Population of the twenty-five settlements in 2024. The "
                      "town of Ibri holds 58 per cent of the total, and the "

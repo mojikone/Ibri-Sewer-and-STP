@@ -12,6 +12,7 @@ from qgis.core import (QgsLayoutExporter, QgsLayoutItemLabel, QgsLayoutItemMap,
                        QgsCoordinateTransform, QgsCoordinateReferenceSystem,
                        QgsLayoutItemPicture, QgsReadWriteContext)
 from qgis.core import QgsLayoutSize, QgsLayoutPoint, QgsUnitTypes
+from qgis.core import QgsRasterLayer, QgsMapLayerLegendUtils
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtXml import QDomDocument
 
@@ -60,7 +61,56 @@ FIGURES = {
         ["Project Boundary updated", "Towns", "MoH_Plots"], True,
         [("Settlements", "25"), ("Population 2024", "116,456"),
          ("Occupancy rate", "5.32 persons"), ("Source", "NCSI, MoHUP")]),
+    "M06_population": (
+        "Where the population is concentrated",
+        ["Project Boundary updated", "GHS POP 2025 IBRI"], True,
+        [("Source", "GHS-POP 2025"), ("Grid cell", "100 m"),
+         ("Densest cell", "237 persons"),
+         ("Total in study area", "127,210"),
+         ("In named settlements", "122,817")]),
 }
+
+
+# a population grid is mostly empty, and the ramp paints zero a solid pale
+# colour that would hide the satellite background across the whole sheet.
+# The copy used for the figure renders zero transparent; the project layer
+# and its style are left exactly as the user set them.
+TRANSPARENT_ZERO = ("GHS POP 2025 IBRI",)
+_copies = {}
+
+
+def _zero_transparent(layer):
+    from qgis.core import QgsRasterLayer, QgsRasterTransparency
+    if layer.name() in _copies:
+        return _copies[layer.name()]
+    # a 100 m cell is one hectare, so the value is persons per hectare
+    copy = QgsRasterLayer(layer.source(), "Population, persons per hectare",
+                          layer.providerType())
+    if not copy.isValid():
+        return layer
+    copy.setRenderer(layer.renderer().clone())
+
+    # the ramp legend defaults to six decimal places and an unlabelled strip
+    from qgis.core import QgsBasicNumericFormat, QgsColorRampLegendNodeSettings
+    shader = copy.renderer().shader().rasterShaderFunction()
+    st = QgsColorRampLegendNodeSettings()
+    fmt = QgsBasicNumericFormat()
+    fmt.setNumberDecimalPlaces(0)
+    fmt.setShowTrailingZeros(False)
+    st.setNumericFormat(fmt)
+    st.setMinimumLabel("0   none")
+    st.setMaximumLabel("130   densest")
+    shader.setLegendSettings(st)
+    shader.setLabelPrecision(0)
+
+    tr = QgsRasterTransparency()
+    px = QgsRasterTransparency.TransparentSingleValuePixel()
+    px.min, px.max, px.percentTransparent = -0.0001, 0.0001, 100.0
+    tr.setTransparentSingleValuePixelList([px])
+    copy.renderer().setRasterTransparency(tr)
+    QgsProject.instance().addMapLayer(copy, False)   # not in the layer tree
+    _copies[layer.name()] = copy
+    return copy
 
 
 def _layers(names):
@@ -69,7 +119,8 @@ def _layers(names):
     for n in names:
         hit = [l for l in proj.mapLayers().values() if l.name() == n]
         if hit:
-            found.append(hit[0])
+            found.append(_zero_transparent(hit[0])
+                         if n in TRANSPARENT_ZERO else hit[0])
         else:
             missing.append(n)
     if missing:
@@ -170,6 +221,16 @@ def build(keys=None, dpi=200):
                 r = getattr(l, "renderer", lambda: None)()
                 if r is not None and r.type() == "categorizedSymbol":
                     node.setCustomProperty("legend/title-style", "hidden")
+                # a raster legend leads with "Band 1 (Gray)", which says
+                # nothing; keep the colour ramp and drop the band node
+                if isinstance(l, QgsRasterLayer):
+                    lg.model().refreshLayerLegend(node)
+                    kids = lg.model().layerLegendNodes(node)
+                    keep = [i for i, n in enumerate(kids)
+                            if type(n).__name__ != "QgsSimpleLegendNode"]
+                    if keep and len(keep) < len(kids):
+                        QgsMapLayerLegendUtils.setLegendNodeOrder(node, keep)
+                        lg.model().refreshLayerLegend(node)
             lg.setTitle("")
             lg.setResizeToContents(True)
             lg.adjustBoxSize()
