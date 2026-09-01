@@ -19,27 +19,7 @@ Concept→detailed design + supervision of wastewater network, treated-effluent 
 11. Git: commit one logical change per commit; **never push without explicit instruction**. Remote: https://github.com/mojikone/Ibri-Sewer-and-STP.git (PUBLIC — user accepted on record 2026-07-20).
 12. **README.md and `_BRAIN/07_PROJECT_STATE.md` are LIVE documents.** Update them on every **substantive change** — a finding, a decision, a deliverable, a corrected number — not on every commit: six commits iterating one diagram is one substantive change, and a row per commit makes the file unreadable. **Never end a session with either behind.** Add a dated row on top of README's "Current state" table, correct its key-numbers table if results changed, and update PROJECT-STATE (doctrine, progress, key numbers, next tasks) so a new session always reads current truth. Verify mechanically rather than by memory — `python _SETUP/check_live_docs.py` compares the newest work commit against the newest commit on each live document and exits non-zero if they lag. This rule was audited on 2026-09-01: of 28 commits touching the work folders, only 4 had updated PROJECT-STATE, so run the check. Since the user works remotely, push after committing (warn-once policy applies only to sensitive/client/imagery content).
 
-13. **RESPONSE DEPTH — `AUTO` is the default; the L-levels bind only when invoked.**
-
-    **AUTO** (also `L0`): no ceiling. Judge the length by what the content needs, exactly as normal — the user does not want a level they set casually to cost them a substantive answer. The one standing requirement in AUTO: **open with a bold headline line** that stands alone, so the reply can be read in one line or in full without losing anything.
-
-    **The levels nest — each ADDS to the one below, so a wrong guess is cheap and asking for more appends rather than rewrites.** Every level opens with the L1 line.
-
-    | | Adds |
-    |---|---|
-    | **L1** | the answer: what happened, what is recommended. 1–2 lines |
-    | **L2** | + the numbers that matter, and what to do next |
-    | **L3** | + why, and any caveat that would change a decision |
-    | **L4** | + how it was derived, the sources, what was actually checked |
-    | **L5** | + the working: every step, alternatives rejected, dead ends |
-
-    **Sticky within a chat.** `L2` holds until changed; `auto` or `L0` releases it. **Not sticky across chats** — a level set in conversation dies with it, because a level chosen for one quick check must not silently cap every future session.
-
-    **Standing default**: `default L2` means write it into this rule, and every new session starts there. Only a written default survives a new chat.
-
-    **Modifiers**: `why` (the reasoning behind the answer just given), `show me` (the numbers or the table, not the prose).
-
-    **At L4 and L5, put the detail in a file** — `W9/analysis/` or the report — and give a one-line pointer. Whenever a level trims something real, say where the full version lives, so nothing is lost, only relocated.
+13. **RESPONSE DEPTH — see global rule 11.** `AUTO` is the default (no ceiling, always lead with a bold standalone headline); `L1`–`L5` bind only when invoked and they nest; sticky within a chat, released by `auto`/`L0`, never sticky across chats unless written as a standing default. Modifiers `why` and `show me`. At L4/L5 put long detail in a file — here that means `W9/analysis/` or the report — and give a one-line pointer. The full rule lives in `~/.claude/CLAUDE.md`, mirrored at `_SETUP/global-CLAUDE.md`; it is a working preference, not a project rule, so it is not duplicated here.
 
 ## Folder map
 | Path (relative to this repo root `Hydraulic/Claude/`) | Content |
