@@ -108,6 +108,7 @@ These apply throughout the report and are stated here so they form part of what 
 | Tables | A separate sequence, caption above the table. Header rows repeat across a page break and a row is never split. |
 | Maps | Produced from the saved QGIS project layout, satellite background, legend limited to the layers that map draws, and a data box giving the quantities behind that figure. |
 | Charts | Drawn from the same measured facts as the text, so the two cannot diverge. Status is shown, never averaged away: an asset recorded as proposed is drawn differently from one that is built. |
+| Page size | The body is A4 portrait. A figure that cannot be read at 16 cm — the maps, and the appraisal flowchart — is placed on its own **A3 landscape** page. Legibility governs the page, not the other way round. |
 | Revisions | Each issued revision is frozen in its own folder and never overwritten. |
 
 ### The existing network is two networks

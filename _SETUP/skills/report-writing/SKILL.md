@@ -79,12 +79,51 @@ Footnotes carry the reference, the page, the caveat and the derivation — the
 things a reviewer needs and a reader does not. If it belongs in the argument,
 it belongs in the body text.
 
+## Page size
+
+The body is A4 portrait, and a figure that cannot be read at that width does
+not belong in it. Maps and dense flowcharts go on their own **A3 landscape**
+page. Legibility governs the page size, not the other way round.
+
+In python-docx that means a new section, and orientation is two settings, not
+one — `section.orientation` **and** the page dimensions, which must be swapped
+by hand:
+
+```python
+s = d.add_section(WD_SECTION.NEW_PAGE)
+s.orientation = WD_ORIENT.LANDSCAPE
+s.page_width, s.page_height = Cm(42.0), Cm(29.7)   # A3 landscape
+```
+
+Setting the orientation alone does nothing to the page. Then open a portrait
+section again after the figure, or the rest of the report follows it sideways.
+Per-page footnote numbering and the footer are section properties too, so each
+new section needs them.
+
+Fit the image to whichever of width or height binds first, leaving room for the
+caption. A figure that fits the width but overruns the height silently pushes
+the caption onto a second page.
+
 ## Flowcharts
 
 Draw process flowcharts on a stated grid, sized to the text column. Figma can
 produce them, and for a diagram that is genuinely a diagram — a system sketch,
 an org chart, a spatial arrangement — it is the right tool: use the Figma MCP,
 lay the nodes out explicitly, and export PNG into `img/`.
+
+Two further traps, learned on a real figure. **A renderer that drops subgraph
+titles** leaves the grouping boxes drawn and unlabelled, so put step numbers on
+the nodes themselves rather than on the group. And **a node clips its text
+silently** once the label runs long — the box simply ends in an ellipsis with no
+error — so read the exported image every time.
+
+**Parallel streams are ordered by the sequence of edges entering the merge
+node**, not by the order the nodes are declared. Reverse those edges to move a
+stream to the top.
+
+**Wrap a long tail.** A process whose final steps run off to one side leaves a
+third of the page empty and shrinks every box on it. Fold those steps onto a
+second band; the figure then fills the page and every label grows with it.
 
 For a **page-shaped process chart**, auto-layout will not give you a usable
 aspect ratio. Left-to-right runs about 6:1, top-down about 0.3:1, and neither

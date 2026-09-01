@@ -1,16 +1,16 @@
 """The options appraisal method for this project, drawn on a stated grid.
 
-The portrait alternative, for when the figure has to fit a report column.
+Left to right, because that is what reads: the three cost streams visibly
+converge and the eye holds one direction. The FigJam draft had the same shape
+but two faults — the options entered after the costing instead of governing it,
+and steps 5 to 9 trailed off in a long horizontal tail that left a third of the
+page empty. Here the options sit on the left and the tail wraps onto a second
+band, so the figure fills an A3 landscape page at a legible box size.
 
-The left-to-right version reads more easily — the three streams visibly
-converge and the eye holds one direction — so that one is the reference copy.
-This one folds the same content into an aspect near 1.0 by turning the flow
-downwards, which costs some of that legibility. Use it only where the page
-shape demands it.
-
-Re-runnable; writes into W9/docs/img/.
+Re-runnable; writes into W9/docs/img/ and W9/report/img/.
 """
 import os
+import shutil
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -18,71 +18,68 @@ sys.path.insert(0, os.path.join(HERE, "..", "report"))
 
 from flow import Chart, render                       # noqa: E402
 
-OUT = os.path.join(HERE, "..", "docs", "img")
+DOCS = os.path.join(HERE, "..", "docs", "img")
+REPORT = os.path.join(HERE, "..", "report", "img")
 
 
 def appraisal():
-    c = Chart(4, 7, cw=252, rh=112, gx=40, gy=38,
-              title="How the options are compared")
+    c = Chart(5, 5, cw=252, rh=118, gx=40, gy=40,
+              title="How each option is costed and compared")
 
-    # ---- the options come first, not after the costing --------------
+    # the options govern the costing, so they sit to the left of it
     c.node("opt", 0, 0,
-           "THREE OPTIONS for each system, plus OPTION 0, do nothing.|"
-           "Every one is costed separately, on the same basis.",
-           "start", span=4)
+           "THREE OPTIONS|for each system,|plus OPTION 0,|do nothing.||"
+           "Each is costed|separately, on|the same basis.",
+           "start", height=3)
 
     # ---- stream 1, what it costs to build ---------------------------
-    # two lines per box: three overflows the frame at this wrap width
-    c.node("a1", 0, 1, "Gravity sewers by|diameter AND depth band")
-    c.node("a2", 1, 1, "Manholes, house connections,|force mains, lifting stations")
-    c.node("a3", 2, 1, "STP per m3/day, TE network,|land, NOCs, diversions")
-    c.node("A", 3, 1, "STEP 1  CAPEX|phased over the build", "tint")
+    c.node("a1", 1, 0, "Gravity sewers by|diameter AND depth band")
+    c.node("a2", 2, 0, "Manholes, house connections,|force mains, lifting stations")
+    c.node("a3", 3, 0, "STP per m3/day, TE network,|land, NOCs, diversions")
+    c.node("A", 4, 0, "STEP 1  CAPEX|phased over the build", "tint")
 
     # ---- stream 2, what it costs to run -----------------------------
-    c.node("b1", 0, 2, "Energy: pumping, and|aeration at the plant")
-    c.node("b2", 1, 2, "Sludge, chemicals, labour,|jetting and CCTV")
-    c.node("b3", 2, 2, "Replacing M and E plant|inside the 25 years")
-    c.node("B", 3, 2, "STEP 2  OPEX|built bottom-up", "tint")
+    c.node("b1", 1, 1, "Energy: pumping, and|aeration at the plant")
+    c.node("b2", 2, 1, "Sludge, chemicals, labour,|jetting and CCTV")
+    c.node("b3", 3, 1, "Replacing M and E plant|inside the 25 years")
+    c.node("B", 4, 1, "STEP 2  OPEX|built bottom-up", "tint")
 
     # ---- stream 3, what comes in ------------------------------------
-    c.node("c1", 0, 3, "Treated effluent sold,|capped by irrigation demand")
-    c.node("c2", 1, 3, "Sewerage and connection|charges, if NWS levies them")
-    c.node("c3", 2, 3, "Avoided cost: tankers, septic|emptying, deferring a plant")
-    c.node("C", 3, 3, "STEP 3  Revenue and|avoided cost", "tint")
+    c.node("c1", 1, 2, "Treated effluent sold,|capped by irrigation demand")
+    c.node("c2", 2, 2, "Sewerage and connection|charges, if NWS levies them")
+    c.node("c3", 3, 2, "Avoided cost: tankers, septic|emptying, deferring a plant")
+    c.node("C", 4, 2, "STEP 3  Revenue and|avoided cost", "tint")
 
-    # ---- the money question -----------------------------------------
-    c.node("npv", 0, 4,
-           "STEP 4   Discount every flow back to today at 5 % over 25 years:|"
-           "NET PRESENT VALUE and LIFE-CYCLE COST.|"
-           "Payback is reported, but it does not decide.",
-           "tint", span=4)
+    # ---- the money question, across the full width ------------------
+    c.node("npv", 0, 3,
+           "STEP 4   Discount every flow back to today at 5 % over 25 years:  "
+           "NET PRESENT VALUE and LIFE-CYCLE COST|"
+           "Payback is reported alongside them, but it does not decide.",
+           "tint", span=5)
 
-    # ---- the judgement half, given equal weight ---------------------
-    c.node("s5", 0, 5, "STEP 5|Score the seven criteria")
-    c.node("s6", 1, 5, "STEP 6|Apply the weights NWS sets")
-    c.node("s7", 2, 5, "STEP 7|Sensitivity: weights,|discount rate, criteria")
-    c.node("s8", 3, 5, "STEP 8|Within 10 % on cost,|the greener option wins")
+    # ---- the judgement, wrapped onto its own band -------------------
+    c.node("s5", 0, 4, "STEP 5|Score the|seven criteria")
+    c.node("s6", 1, 4, "STEP 6|Apply the weights|NWS sets")
+    c.node("s7", 2, 4, "STEP 7|Sensitivity: weights,|discount rate, criteria")
+    c.node("s8", 3, 4, "STEP 8|Within 10 % on cost,|the greener option wins")
+    c.node("s9", 4, 4, "STEP 9|RECOMMENDED OPTION,|one for each system",
+           "accent")
 
-    c.node("rec", 0, 6,
-           "STEP 9   RECOMMENDED OPTION, one for each system:|"
-           "the sewer network, the treated effluent network and the plant",
-           "accent", span=4)
-
-    # ---- edges -------------------------------------------------------
-    for a, b in (("a1", "a2"), ("a2", "a3"), ("a3", "A"),
+    for a, b in (("opt", "a1"), ("opt", "b1"), ("opt", "c1"),
+                 ("a1", "a2"), ("a2", "a3"), ("a3", "A"),
                  ("b1", "b2"), ("b2", "b3"), ("b3", "B"),
-                 ("c1", "c2"), ("c2", "c3"), ("c3", "C")):
+                 ("c1", "c2"), ("c2", "c3"), ("c3", "C"),
+                 ("A", "npv"), ("B", "npv"), ("C", "npv"),
+                 ("npv", "s5"),
+                 ("s5", "s6"), ("s6", "s7"), ("s7", "s8"), ("s8", "s9")):
         c.edge(a, b)
-    for k in ("A", "B", "C"):
-        c.edge(k, "npv")
-    c.edge("npv", "s5")
-    for a, b in (("s5", "s6"), ("s6", "s7"), ("s7", "s8")):
-        c.edge(a, b)
-    c.edge("s8", "rec")
 
-    return render(c, "appraisal_method_portrait", OUT)
+    render(c, "appraisal_method", DOCS)
+    png = os.path.join(DOCS, "appraisal_method.png")
+    shutil.copy(png, os.path.join(REPORT, "appraisal_method.png"))
+    return png
 
 
 if __name__ == "__main__":
-    os.makedirs(OUT, exist_ok=True)
+    os.makedirs(DOCS, exist_ok=True)
     appraisal()

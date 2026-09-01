@@ -9,8 +9,9 @@ IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "img")
 
 
 def _fig(d, name, caption, w=16.0):
-    D.picture(d, os.path.join(IMG, name + ".png"), w)
-    D.fig_caption(d, caption)
+    """A map goes on its own A3 landscape page. At 16 cm in a portrait
+    column the legend and the data box are not readable."""
+    D.wide_figure(d, os.path.join(IMG, name + ".png"), caption, size="A3")
 
 
 # ===================================================== PART A

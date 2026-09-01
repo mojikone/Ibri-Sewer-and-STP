@@ -12,3 +12,6 @@ _REFERENCE/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# stray Explorer duplicates
+*- Copy.*

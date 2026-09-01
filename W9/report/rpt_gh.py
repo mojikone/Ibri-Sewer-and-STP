@@ -10,6 +10,11 @@ def _pending(d, text):
     D.p(d, text, italic=True, colour=D.GREY)
 
 
+def _params(d, rows):
+    D.table(d, ["Symbol", "Meaning", "Unit"], rows,
+            widths=[2.6, 10.4, 3.5], font=9)
+
+
 # ===================================================== PART G
 def part_g(d):
     D.part(d, "G", "Assessment and appraisal")
@@ -185,8 +190,9 @@ def part_g(d):
     D.table(d, ["Item", "Basis"], [
         ["Accuracy", "plus or minus twenty per cent at concept stage"],
         ["Measurement", "CESMM3"],
-        ["Rates", "current market rates, from recent tender and contract "
-                  "documents"],
+        ["Rates", "recent tender and contract rates, and rates from Nama "
+                  "Water Services pre-investment appraisals, escalated to the "
+                  "base date of the estimate"],
         ["Price basis", "current prices at the date of the estimate"],
         ["Presentation", "by system element"],
     ], widths=[4.4, 12.1], font=9.5)
@@ -213,7 +219,75 @@ def part_g(d):
                 "environmental assessment, consents and land, and physical and "
                 "price contingency.", lead="Associated costs — ")
 
-    _pending(d, "The estimate will be presented with the options in the next "
+    D.h(d, 2, "35.3   Operating cost")
+    D.p(d, "Operating cost is built from the duty of each asset rather than "
+           "taken as a proportion of its capital cost. For a wastewater system "
+           "the two largest items are energy and sludge, and neither follows "
+           "capital value.")
+    D.bullet(d, "pumping at each lifting station from its duty flow and head, "
+                "and aeration at the treatment plant from the oxygen demand.",
+             lead="Energy — ")
+    D.bullet(d, "thickening, dewatering, transport and disposal, at the "
+                "quantity the process produces.", lead="Sludge — ")
+    D.bullet(d, "coagulant, polymer and disinfectant at the dose rate and the "
+                "flow treated.", lead="Chemicals — ")
+    D.bullet(d, "the establishment required to operate and maintain the plant, "
+                "the stations and the network.", lead="Labour — ")
+    D.bullet(d, "jetting and closed-circuit television survey of the network, "
+                "desludging, odour and corrosion control, and planned "
+                "replacement of mechanical and electrical plant falling within "
+                "the evaluation period.", lead="Maintenance — ")
+
+    p = D.p(d, "Mechanical and electrical plant has a shorter service life "
+               "than the civil works, so its replacement falls inside the "
+               "twenty-five year period and is carried as a cost in the year "
+               "it occurs.")
+    N.add(p, "PAM-GUD-201 sets a design life of 25 years for assets generally; "
+             "rotating plant and instrumentation are replaced at least once "
+             "within that period.")
+
+    D.h(d, 2, "35.4   Life cycle cost and net present value")
+    p = D.p(d, "Capital cost, operating cost, replacement cost and revenue "
+               "arise in different years, so they are not comparable until "
+               "they are brought to a common date. Each is discounted to "
+               "present value at the rate the guideline sets, and the options "
+               "are compared on the resulting totals.")
+    N.add(p, "PAM-GUD-201, page 57, states that the twenty-five year planning "
+             "life is also the period over which net present value is "
+             "calculated for the comparison of schemes; the discount rate of "
+             "five per cent is given at pages 95 to 96.")
+
+    eq = D.next_eq()
+    M.display(d, M.seq(
+        UP("NPV"), M.EQ,
+        M.nary("∑", M.seq(R("t"), M.EQ, R("0")), R("n"),
+               M.frac(M.sub(R("C"), R("t")),
+                      M.sup(M.delim(M.seq(R("1"), M.PLUS, R("r"))), R("t"))))),
+        number=eq)
+    _params(d, [
+        ["NPV", "net present value of the option", "OMR"],
+        ["C t", "net cash flow in year t: revenue and avoided cost less "
+                "capital, replacement and operating cost", "OMR"],
+        ["r", "discount rate, 0.05", "-"],
+        ["t", "year, counted from the base date", "-"],
+        ["n", "evaluation period, 25 years", "-"]])
+
+    D.p(d, "")
+    p = D.p(d, "Total life cycle cost is the present value of capital, "
+               "replacement and operating cost over the same period, and is "
+               "the quantity against which the ten per cent band in Section "
+               "21.4 is applied. Payback is reported alongside it as an "
+               "indicator, but it does not determine the recommendation: for a "
+               "wastewater scheme a large part of the benefit is cost avoided "
+               "rather than revenue earned, and a payback period computed on "
+               "revenue alone would misstate the case.")
+    N.add(p, "Net present value and life cycle cost are not defined by "
+             "equation in the Nama Water Services guidelines. The formulation "
+             "above follows ISO 15686-5, with the period and discount rate "
+             "taken from PAM-GUD-201.")
+
+    _pending(d, "The estimate, the discounted comparison and the payback "
+                "figures will be presented with the options in the next "
                 "revision.")
 
     # --------------------------------------------------------------- 36

@@ -233,6 +233,11 @@ def s20_financial(d):
            "that is the reverse, and the appraisal is where that becomes "
            "visible.")
 
+    D.picture(d, os.path.join(IMG, "appraisal_method.png"), 16.2)
+    D.fig_caption(d, "The appraisal, end to end. Each option is costed on "
+                     "three streams, the streams are discounted together, and "
+                     "only then are the options scored.")
+
     D.callout(d, "None of the formulae in this section comes from NWS.",
               "Net present value, life cycle cost and carbon accounting are all "
               "specified in scope by the guideline and none is written as an "
@@ -331,7 +336,50 @@ def s20_financial(d):
            "that fall on one option and not another are the ones that change "
            "the ranking.")
 
-    D.h(d, 2, "20.7   What the appraisal must produce")
+    D.h(d, 2, "20.7   How appraisals of this kind go wrong")
+    D.p(d, "Two Nama Water Services pre-investment appraisals were reviewed "
+           "line by line against their own calculation workbooks. The faults "
+           "found there are not unusual, and each is worth checking for "
+           "deliberately.")
+    D.table(d, ["Fault", "What to do instead"], [
+        ["Revenue billed on a peak-day volume, and on volume that includes "
+         "losses",
+         "Bill on the average day, and on billable volume only. Losses are "
+         "non-revenue by definition"],
+        ["The split between customer categories taken from the wrong place, so "
+         "the high tariff is applied to most of the volume",
+         "Derive the split from the land-use allocation that sized the network, "
+         "and check it against the demand table"],
+        ["Alternatives that differ from the preferred option in one quantity, "
+         "sharing its structures and omitting their own pumping",
+         "Cost each option as it is designed, including its own plant, its own "
+         "storage and the energy that follows from them"],
+        ["Operating cost taken as a percentage of capital, with energy and "
+         "labour entered as zero",
+         "Build operating cost from duty. For a wastewater system energy and "
+         "sludge dominate, and neither follows capital value"],
+        ["Annual operating cost multiplied by the horizon and called a "
+         "lifetime cost",
+         "Discount it. An undiscounted multiplication overstates the present "
+         "value of a 25-year stream by about a factor of two at 5 per cent"],
+        ["A tariff margin, or an avoided cost, described as revenue",
+         "Name each stream for what it is, and state the baseline it is "
+         "incremental to"],
+        ["Unit rates carried forward unchanged from an earlier study",
+         "Escalate to a stated base date, and say which date"],
+        ["The recommended option left out of the risk assessment",
+         "Score every option, including the one you intend to recommend"],
+    ], widths=[7.4, 9.1], font=9)
+
+    D.p(d, "")
+    p = D.p(d, "None of these changed the ranking in the appraisals reviewed, "
+               "because the options were far apart on cost. They would change "
+               "it in a close case, and they change every absolute figure that "
+               "a budget, a tariff submission or a board paper depends on.")
+    _source(d, "Review of two NWS pre-investment appraisal documents, "
+               "Seeb Package 3 Phase 2 and Al Amerat Package 3.")
+
+    D.h(d, 2, "20.8   What the appraisal must produce")
     D.bullet(d, "capital cost by option and by phase")
     D.bullet(d, "operating cost by option and by year")
     D.bullet(d, "net present value of each option at 5 % over 25 years")

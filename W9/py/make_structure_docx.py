@@ -208,6 +208,10 @@ def build():
               "Drawn from the same measured values as the text. Where an "
               "asset is recorded as proposed rather than constructed it is "
               "shown distinctly and identified in the legend"],
+             ["Page size",
+              "The body is A4 portrait. A figure that cannot be read at 16 cm "
+              "wide, which is the maps and the appraisal flowchart, is placed "
+              "on its own A3 landscape page. Legibility governs the page size"],
              ["Revisions",
               "Each issued revision is retained unaltered; a revision is "
               "never overwritten"]],

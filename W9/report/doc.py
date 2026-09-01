@@ -56,6 +56,60 @@ def new_document():
     return d
 
 
+# A wide figure squeezed into a portrait column is unreadable, so the report
+# changes page for one. A4 landscape suits a chart of about 1.5:1; A3
+# landscape is for the maps and for anything wider or denser.
+PAGE_MM = {"A4": (21.0, 29.7), "A3": (29.7, 42.0)}
+
+
+def page_section(d, size="A4", orient="portrait", margin=2.2):
+    """Start a new section on a page of the given size and orientation."""
+    from docx.enum.section import WD_SECTION, WD_ORIENT
+    s = d.add_section(WD_SECTION.NEW_PAGE)
+    w, h = PAGE_MM[size]
+    if orient == "landscape":
+        w, h = h, w
+        s.orientation = WD_ORIENT.LANDSCAPE
+    else:
+        s.orientation = WD_ORIENT.PORTRAIT
+    s.page_width, s.page_height = Cm(w), Cm(h)
+    s.left_margin = s.right_margin = Cm(margin)
+    s.top_margin = Cm(margin)
+    s.bottom_margin = Cm(2.0)
+    s._sectPr.append(parse_xml(
+        '<w:footnotePr xmlns:w="http://schemas.openxmlformats.org/'
+        'wordprocessingml/2006/main">'
+        '<w:numRestart w:val="eachPage"/></w:footnotePr>'))
+    return s
+
+
+def text_width_cm(size="A4", orient="portrait", margin=2.2):
+    w, h = PAGE_MM[size]
+    if orient == "landscape":
+        w = h
+    return w - 2 * margin
+
+
+def wide_figure(d, path, caption, size="A3", margin=2.2, height_cap=None):
+    """Place a figure on its own landscape page, then return to portrait.
+
+    The image is set to the full text width unless that would run it off the
+    page, in which case it is fitted to the height instead."""
+    from PIL import Image
+    page_section(d, size, "landscape", margin)
+    tw = text_width_cm(size, "landscape", margin)
+    th = height_cap or (PAGE_MM[size][0] - 2 * margin - 2.4)   # leave the caption room
+    try:
+        iw, ih = Image.open(path).size
+        w = min(tw, th * iw / ih)
+    except Exception:
+        w = tw
+    picture(d, path, w)
+    n = fig_caption(d, caption)
+    page_section(d, "A4", "portrait", margin)
+    return n
+
+
 def _flow(d, element):
     body = d.element.body
     sect = body.find(qn("w:sectPr"))

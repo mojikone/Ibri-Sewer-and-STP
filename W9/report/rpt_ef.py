@@ -163,6 +163,13 @@ def part_f(d):
              "to works of approximately 500 cubic metres per day.")
 
     D.h(d, 2, "21.3   Basis of comparison")
+
+    D.wide_figure(d, os.path.join(IMG, "appraisal_method.png"),
+                  "How each option is costed and compared. The three cost "
+                  "streams are established separately for every option, "
+                  "discounted to present value together, and only then scored "
+                  "against the seven criteria.", size="A3")
+
     D.p(d, "The options are compared on capital and operating cost, life cycle "
            "cost, carbon footprint over the project lifetime, resource "
            "efficiency, in-country value and the degree to which they employ "
