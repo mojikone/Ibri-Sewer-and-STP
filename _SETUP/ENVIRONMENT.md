@@ -24,6 +24,7 @@ Pipelines: `W1/py/s1_roads_graph.py` (road graph + dual detection) → `W2/py/s3
 - PDF export + TOC refresh via Word COM (PowerShell): see the one-liner in `make_report_r1.py` history — LibreOffice is NOT installed on the original machine.
 
 ## 4. Skills used (Claude Code built-ins/plugins)
+- **`report-writing`** — the project's own skill, in `_SETUP/skills/report-writing/SKILL.md`. Copy it to `~/.claude/skills/report-writing/SKILL.md` on a fresh machine (`bootstrap.ps1` does this). It carries the whole deliverable-report method: OMML equations, real footnotes, versioned revisions, flowcharts, data charts, QGIS map figures, and the writing rules that keep the prose human.
 - `anthropic-skills:docx` — Word document work (read its guidance before editing Sample-derived files).
 - `anthropic-skills:pdf` / pymupdf scripts — reading client PDFs (scope, guidelines).
 - Standard tools: Bash (Git Bash), PowerShell (Word COM), qgis MCP.

@@ -37,6 +37,18 @@ if ($have.Count -eq 0) {
   Write-Host "FIXED  auto-memory restored from snapshot"
 } else { Write-Host ("PASS   auto-memory present (" + $have.Count + " files)") }
 
+# 2b. Project skills: install into ~/.claude/skills so they load every session
+$skillSrc = Join-Path $setup "skills"
+if (Test-Path $skillSrc) {
+  $skillDst = Join-Path $env:USERPROFILE ".claude\skills"
+  foreach ($s in Get-ChildItem $skillSrc -Directory) {
+    $dst = Join-Path $skillDst $s.Name
+    if (-not (Test-Path $dst)) { New-Item -ItemType Directory -Force $dst | Out-Null }
+    Copy-Item (Join-Path $s.FullName "*") $dst -Recurse -Force
+    Write-Host ("PASS   skill installed: " + $s.Name)
+  }
+}
+
 # 3. Python deps
 $pyMods = "networkx","shapely","shapefile","rasterio","numpy","scipy","matplotlib","fitz","docx"
 $missing = @()
