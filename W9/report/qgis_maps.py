@@ -20,8 +20,6 @@ UNIT_MM = QgsUnitTypes.LayoutMillimeters
 OUT = (r"D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\Claude"
        r"\W9\report\img")
 TEMPLATE = "W2 M1 Study Area"
-FIGNO = {"M01_location": 1, "M02_wastewater": 2, "M03_water": 3,
-         "M04_electricity": 4, "M05_settlements": 5}
 SUBTITLE = "Ibri Sewer, TE Networks and STP — Concept Design Report | Renardet 2621"
 
 # figure key: (layout title, [layer names, drawn bottom to top], basemap,
@@ -33,12 +31,16 @@ FIGURES = {
         [("Study area", "531.4 km2"), ("Settlements", "25"),
          ("Wilayat", "Ibri, Adh Dhahirah"), ("Projection", "UTM 40N, WGS 84")]),
     "M02_wastewater": (
-        "Existing wastewater assets",
+        "Wastewater assets: constructed and proposed",
         ["Project Boundary updated", "Existing gravity sewer",
          "Existing treated effluent main", "Existing force mains",
          "Existing pumping station", "STP location"], True,
-        [("Gravity sewer", "310.9 km"), ("Force mains", "33.2 km"),
-         ("Treated effluent", "45.7 km"), ("Pumping stations", "1"),
+        [("Gravity sewer, built 2006", "111.6 km"),
+         ("Gravity sewer, proposed", "199.3 km"),
+         ("Force main, built 2006", "10.0 km"),
+         ("Pumping main, proposed", "23.2 km"),
+         ("Treated effluent, proposed", "45.7 km"),
+         ("Pumping stations", "1"),
          ("Treatment plant", "1,800 m3/d")]),
     "M03_water": (
         "Potable water network within the study area",
@@ -144,7 +146,9 @@ def build(keys=None, dpi=200):
                     it.attemptResize(QgsLayoutSize(200, 4.5, UNIT_MM))
                     it.attemptMove(QgsLayoutPoint(8, 9.6, UNIT_MM))
                 elif t and not t.startswith("N"):
-                    it.setText(f"Figure {FIGNO[key]}   {title}")
+                    # the number belongs to the report caption alone; a map
+                    # that numbers itself drifts as soon as a figure is added
+                    it.setText(title)
                     it.attemptResize(QgsLayoutSize(200, 6.5, UNIT_MM))
                     it.attemptMove(QgsLayoutPoint(8, 2.8, UNIT_MM))
 
@@ -157,9 +161,15 @@ def build(keys=None, dpi=200):
             for ch in list(grp.children()):
                 grp.removeChildNode(ch)
             for l in stack:
-                if l.name() not in ("Google Satellite", "ESRI Satellite",
-                                    "Google satellite hydbrid"):
-                    grp.addLayer(l)
+                if l.name() in ("Google Satellite", "ESRI Satellite",
+                                "Google satellite hydbrid"):
+                    continue
+                node = grp.addLayer(l)
+                # a categorised layer already names itself in each class
+                # label, so the layer title above them would repeat it
+                r = getattr(l, "renderer", lambda: None)()
+                if r is not None and r.type() == "categorizedSymbol":
+                    node.setCustomProperty("legend/title-style", "hidden")
             lg.setTitle("")
             lg.setResizeToContents(True)
             lg.adjustBoxSize()

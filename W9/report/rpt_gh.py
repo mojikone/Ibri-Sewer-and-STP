@@ -300,8 +300,10 @@ def part_h(d):
            "require correction and those that relate to areas outside the "
            "project have been identified in Part B.")
     D.p(d, "The existing wastewater assets within the study area comprise "
-           "310.9 kilometres of gravity sewer, 33.2 kilometres of force main "
-           "and 45.7 kilometres of treated effluent main. The potable water "
+           "111.6 kilometres of constructed gravity sewer and 10.0 "
+           "kilometres of constructed force main, together with a further "
+           "268.2 kilometres of gravity sewer, pumping main and treated "
+           "effluent main recorded as proposed. The potable water "
            "network within the area comprises 647.8 kilometres of mains. The "
            "number of properties on each plot and the category of use have "
            "been established from 33,970 electricity accounts, and an "

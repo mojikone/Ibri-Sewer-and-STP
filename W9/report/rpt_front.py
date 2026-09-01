@@ -13,7 +13,7 @@ PROJECT = ("Consultancy Services for Design and Supervision for STP, Sewer "
            "and TE Networks Systems in Ibri")
 TENDER = "Tender No. T/2719110/2025"
 TITLE = "Concept Design Report"
-REV = "Revision 0"
+REV = "Revision 1"
 DATE = "August 2026"
 
 
@@ -112,9 +112,13 @@ def executive_summary(d):
 
     D.p(d, "Four points arise from that assessment and are carried through the "
            "report.")
-    D.bullet(d, "310.9 kilometres of gravity sewer, 33.2 kilometres of force "
-                "main and 45.7 kilometres of treated effluent main lie within "
-                "the study area.", lead="Existing assets — ")
+    D.bullet(d, "the wastewater dataset holds two networks. The constructed "
+                "network, dated 2006, comprises 111.6 kilometres of gravity "
+                "sewer and 10.0 kilometres of force main. A further 199.3 "
+                "kilometres of gravity sewer, 23.2 kilometres of pumping main "
+                "and the whole of the 45.7 kilometre treated effluent main are "
+                "recorded as proposed. No treated effluent asset has been "
+                "built.", lead="Existing assets — ")
     D.bullet(d, "the PAEW dataset provides 647.8 kilometres of water mains "
                 "within the study area, and is adopted as the source for "
                 "utility interfaces.", lead="Potable water — ")

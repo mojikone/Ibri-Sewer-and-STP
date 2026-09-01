@@ -230,6 +230,9 @@ def part_b(d):
            "records what has been requested and the position at the date of "
            "this report.")
 
+    D.chart(d, "C06_register", 14.0)
+    D.fig_caption(d, "Position of the data register at the date of issue.")
+
     D.tab_caption(d, "Data register")
     D.table(d, ["Dataset", "Received", "Position"], F.REGISTER,
             widths=[5.2, 2.2, 9.1], font=9)
@@ -253,29 +256,73 @@ def part_b(d):
     D.picture(d, os.path.join(IMG, "D2_data.png"), 15.5)
     D.fig_caption(d, "The assessment applied to each dataset supplied.")
 
-    D.h(d, 2, "7.1   Existing wastewater assets")
-    D.tab_caption(d, "Wastewater assets supplied by Nama Water Services")
-    D.table(d, ["Dataset", "Features", "Quantity", "Within the study area",
-                "Observation"], F.WASTEWATER,
-            widths=[3.2, 1.6, 2.0, 2.8, 6.9], font=8.5)
+    D.h(d, 2, "7.1   Wastewater assets")
+    p = D.p(d, "The wastewater dataset supplied by Nama Water Services holds "
+               "two networks, not one. They are distinguished by the "
+               "operational status field, and the distinction is confirmed by "
+               "four further fields that agree with it on every record.")
+    N.add(p, "Field OP_STATUE on SEWERLINE_IBRI, FORCEMAIN_IBRI and "
+             "TE_LINE_IBRI. Value 1 denotes the constructed network and value "
+             "0 the proposed network.")
+
+    D.tab_caption(d, "The two networks and how they are distinguished")
+    D.table(d, ["", "Constructed network", "Proposed network"], [
+        ["Operational status", "1", "0"],
+        ["Installation date", "1 January 2006", "not recorded"],
+        ["Source", "drawings, and closed-circuit television",
+         "asset planning"],
+        ["Project code", "5A-1 to 5A-5", "SUREKHA"],
+        ["Remark", "reference data",
+         "large urban area gravity, pumping main and treated effluent "
+         "networks"],
+    ], widths=[3.4, 6.6, 6.5], font=8.5)
 
     D.p(d, "")
-    p = D.p(d, "The wastewater datasets are substantially complete in extent, "
-               "with 99 per cent of the gravity sewer and force main lying "
-               "within the study area. The principal limitation is attribute "
-               "completeness: of 314.3 kilometres of gravity sewer, 202.7 "
-               "kilometres carry a recorded diameter and 111.6 kilometres do "
-               "not. Levels are not recorded. The survey now in progress will "
-               "establish both.")
-    N.add(p, "Measured from SEWERLINE_IBRI.shp as supplied. The tender records "
+    D.p(d, "On that basis the assets within the study area are as follows.")
+    D.tab_caption(d, "Wastewater assets within the study area, by status")
+    D.table(d, ["Asset", "Constructed features", "Constructed length",
+                "Proposed features", "Proposed length"], F.WASTEWATER,
+            widths=[3.4, 2.6, 2.6, 2.4, 5.5], font=8.5)
+
+    D.p(d, "")
+    p = D.p(d, "The distinction is material to the design. The constructed "
+               "network extends to 111.6 kilometres of gravity sewer and 10.0 "
+               "kilometres of force main, serving the central part of the "
+               "town, and discharges through a single lifting station to the "
+               "existing treatment plant. It is twenty years old and its "
+               "condition is not recorded. The remaining 199.3 kilometres of "
+               "gravity sewer, 23.2 kilometres of pumping main and the whole "
+               "of the 45.7 kilometre treated effluent main shown in the "
+               "dataset are proposed, not built. No treated effluent asset has "
+               "been constructed.")
+    N.add(p, "Lengths measured within the approved project boundary in "
+             "EPSG:32640. The proposed alignments are recorded in the dataset "
+             "as an earlier planning proposal and are not adopted as design "
+             "input; they are shown for reference and to identify any "
+             "commitment already made by the client.")
+
+    p = D.p(d, "Two limitations apply to the constructed network. Neither "
+               "diameter nor invert level is recorded on any constructed "
+               "gravity segment, so the hydraulic capacity of the existing "
+               "system cannot be established from the data supplied. The "
+               "client's own records carry a remark that the data is not "
+               "reliable and is to be used for reference only. The survey now "
+               "in progress will establish diameters, levels and condition, "
+               "and until it reports, the capacity of the existing network to "
+               "accept additional flow is treated as unknown.")
+    N.add(p, "Field REMARKS on the constructed records. The tender records "
              "that the existing network layout is based on available "
-             "information; the preparation of complete as-built records and "
-             "GIS is part of the consultant's scope.")
+             "information, and that the preparation of complete as-built "
+             "records and GIS forms part of the consultant's scope.")
 
     _fig(d, "M02_wastewater",
-         "Existing wastewater assets within the study area: gravity sewer, "
-         "force mains, treated effluent main, pumping station and treatment "
-         "plant.")
+         "Wastewater assets within the study area. The constructed network, "
+         "dated 2006, is shown distinctly from the alignments recorded in the "
+         "dataset as proposed.")
+
+    D.chart(d, "C05_assets", 13.0)
+    D.fig_caption(d, "Length of wastewater asset within the study area, "
+                     "separated into constructed and proposed.")
 
     D.h(d, 2, "7.2   Potable water network")
     D.p(d, "Two datasets describing potable water assets were supplied. They "
@@ -333,6 +380,12 @@ def part_b(d):
                "resolved against the plot layer and by inspection.")
     N.add(p, "The tariff comprises three variants in the dataset: fixed rate "
              "(9 accounts), seasonal (298) and time of use (192).")
+
+    D.chart(d, "C01_accounts", 14.5)
+    D.fig_caption(d, "Electricity accounts by the category adopted for each "
+                     "tariff. Domestic connections, including additional "
+                     "dwellings on the same plot, account for two thirds of "
+                     "the total.")
 
     _fig(d, "M04_electricity",
          "Electricity accounts by consumption category. The pattern of "

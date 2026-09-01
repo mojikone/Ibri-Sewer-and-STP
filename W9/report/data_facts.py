@@ -10,22 +10,36 @@ project boundary (531.4 km2), all lengths computed in EPSG:32640.
 
 BOUNDARY_KM2 = 531.4
 
-# name, features, quantity, inside the boundary, note
+# The wastewater dataset holds two networks distinguished by OP_STATUE.
+# Constructed assets carry an installation date of 1 January 2006, a source of
+# drawings or CCTV, and project codes 5A-1 to 5A-5. Proposed assets carry no
+# installation date, a source of Asset Planning, project code SUREKHA and a
+# remark identifying them as the large urban area networks.
+
+# asset, constructed features, constructed length, proposed features,
+# proposed length  (all lengths within the study area)
 WASTEWATER = [
-    ("Gravity sewer", "3,396", "314.3 km", "310.9 km (99 %)",
-     "diameter recorded on 129 segments carrying 202.7 km; "
-     "the remaining 111.6 km carries no diameter"),
-    ("Force mains", "9", "33.6 km", "33.2 km (99 %)", "diameters 80 to 250 mm"),
-    ("Treated effluent main", "8", "49.4 km", "45.7 km (92 %)", "—"),
-    ("Pumping station", "1", "1 point", "1", "—"),
-    ("Treatment plant", "2", "2 points", "2",
-     "one existing at 1,800 m3/d, one shown as design at 29,038 m3/d"),
-    ("Plant structures", "15", "15 polygons", "15", "—"),
+    ("Gravity sewer", "3,267", "**111.6 km**", "129", "199.3 km"),
+    ("Force main", "1", "**10.0 km**", "8", "23.2 km"),
+    ("Treated effluent main", "none", "**none**", "8", "45.7 km"),
+    ("Pumping station", "1", "**1**", "—", "—"),
+    ("Treatment plant", "1", "**1,800 m3/d**", "1", "29,038 m3/d, shown as design"),
+]
+
+# constructed network only: what the attributes carry
+CONSTRUCTED = [
+    ("Installation date", "1 January 2006 on every constructed record"),
+    ("Source", "drawings, and closed-circuit television on one length"),
+    ("Project codes", "5A-1 to 5A-5"),
+    ("Diameters", "not recorded on the constructed gravity network"),
+    ("Levels", "not recorded"),
+    ("Client remark on the records",
+     "“Data is not reliable and must be used only for reference purpose”"),
 ]
 
 WATER = [
     ("PAEW water mains", "6,156", "1,315.9 km", "647.8 km (49 %)",
-     "the usable source for utility interfaces"),
+     "adopted as the source for utility interfaces"),
     ("PAEW water laterals", "1,954", "12.7 km", "8.1 km (64 %)", "—"),
     ("PAEW system valves", "2,866", "2,866 points", "1,586", "—"),
     ("PAEW hydrants", "965", "965 points", "568", "—"),
@@ -63,10 +77,12 @@ NOT_APPLICABLE = [
 
 # requested, received, status
 REGISTER = [
-    ("Existing sewer network, as-built", "Yes",
-     "GIS geometry received. Levels and diameters incomplete; being surveyed"),
-    ("Existing force mains", "Yes", "Received"),
-    ("Existing treated effluent network", "Yes", "Received"),
+    ("Constructed sewer network, as-built", "Yes",
+     "Geometry received, dated 2006. Levels and diameters not recorded; "
+     "being surveyed"),
+    ("Constructed force main", "Yes", "Received, dated 2006"),
+    ("Treated effluent network", "Proposed only",
+     "The dataset contains no constructed treated effluent asset"),
     ("Lifting station details", "Partial",
      "One station located; equipment and duty details being surveyed"),
     ("Treatment plant records", "Partial",

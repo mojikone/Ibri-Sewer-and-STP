@@ -222,6 +222,11 @@ def part_d(d):
            "at a stated year, the plot route the ceiling that the land can "
            "hold.")
 
+    D.chart(d, "C04_population", 14.5)
+    D.fig_caption(d, "Population of the twenty-five settlements in 2024. The "
+                     "town of Ibri holds 58 per cent of the total, and the "
+                     "three largest settlements together hold 77 per cent.")
+
     D.h(d, 2, "14.2   Properties per plot")
     D.p(d, "The number of properties on each plot has been counted from the "
            "electricity accounts rather than assumed. Accounts falling within "
@@ -271,15 +276,39 @@ def part_d(d):
                "wilayat population. At the derived occupancy rate the wilayat "
                "as a whole would contain 34,504 domestic properties, of which "
                "the dataset holds 65.5 per cent. The two proportions agree "
-               "within 2.1 percentage points, which confirms that the rate is "
+               "within 2.0 percentage points, which confirms that the rate is "
                "a property of the data rather than an artefact of partial "
                "coverage.")
     N.add(p, "Wilayat population 183,564 in 2024, from the National Centre for "
              "Statistics and Information as reported in the Inception Report.")
 
-    D.p(d, "Four settlements return values that are not consistent with the "
-           "remainder and have been excluded from the derivation pending "
-           "review of their boundaries against the account positions.")
+    D.chart(d, "C03_coverage", 13.0)
+    D.fig_caption(d, "The coverage check applied to the occupancy rate. The "
+                     "share of the wilayat population that lies within the "
+                     "named settlements and the share of the implied domestic "
+                     "properties that the dataset holds agree within two "
+                     "percentage points.")
+
+    p = D.p(d, "Four settlements return a rate that is not consistent with "
+               "the remainder: Sayh al Masarrat at 1.07, Al Jahli at 1.30, Al "
+               "Akheedar at 1.64 and Satwah at 10.12 persons per property. In "
+               "each case the settlement boundary and the account positions "
+               "are being reviewed against one another, since a boundary drawn "
+               "wide or narrow of the built area moves the rate for a small "
+               "settlement sharply. The rate adopted is taken over all "
+               "twenty-five settlements together rather than as an average of "
+               "the individual rates, so a boundary error in one settlement "
+               "carries only its own weight in the total.")
+    N.add(p, "The four settlements hold 901 domestic properties between them, "
+             "being 4.1 per cent of the 21,889 counted. Setting all four aside "
+             "entirely would move the rate from 5.32 to 5.49 persons per "
+             "property, which is the limit of their influence on it.")
+
+    D.chart(d, "C02_occupancy", 15.0)
+    D.fig_caption(d, "Occupancy by settlement against the adopted rate, "
+                     "settlements ordered by the number of domestic properties "
+                     "they contain. The four settlements whose boundaries are "
+                     "under review are shown in amber.")
 
     D.h(d, 2, "14.4   Land use")
     D.p(d, "Land use for each plot is established from the tariff carried by "
