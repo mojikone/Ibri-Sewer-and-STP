@@ -19,6 +19,21 @@ Files: `Data/Financial/Seeb_P3Ph2_PIAD/`, `Data/Financial/AlAmerat_PIAD2/`.
 
 ---
 
+## 0. The method at a glance
+
+![The PIAD appraisal method](../docs/img/PIAD_method.png)
+
+Three streams are costed separately — what it costs to build, what it costs to
+run each year, and what comes in each year — and the three meet in a single
+division that gives payback in months. That is repeated per option, and the
+shortest payback wins. Everything the guideline asks for beyond cost happens in
+prose, if at all.
+
+Editable source: FigJam board
+`https://www.figma.com/board/HvxtrHPo5IdmJAnfzTwbCS`
+
+---
+
 ## 1. What a PIAD is
 
 A PIAD is NWS's **investment approval instrument**, not an engineering design
