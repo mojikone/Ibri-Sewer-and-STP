@@ -1,0 +1,11 @@
+REVIEW LAYER, NOT A DESIGN LAYER, and deliberately outside the contract.
+Every piece of corridor H1 removed, with the reason. Two of them matter to a
+later stage:
+  'wadi (crossing candidate)' - an on-wadi run short enough to be crossed
+     rather than avoided. H1 permits a scheduled perpendicular crossing;
+     audit.r4 tests every reach midpoint against the grid with no exemption
+     for one, so a crossing has to be a named, justified exception rather
+     than a corridor. Take them from here when one is genuinely needed.
+  'along a dual carriageway' - where a route was severed. If a plot loses its
+     only access this way, that is a scope answer (philosophy sec 3), not a
+     reason to relax the rule.

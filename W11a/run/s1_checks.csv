@@ -1,0 +1,9 @@
+check,requirement,result,detail,source
+S1-1,no settlement is left unserved,PASS,0 rows carry SYSTEM='unserved',"TOR scope p4 item 3, p6 item 2, p8 item 17"
+S1-2,every plot record reaches exactly one settlement,PASS,"64,071 plot records in, 64,071 out, 0 unaccounted, -0.018 m3/d unaccounted","philosophy invariant 1 - W10 dropped 1,233 m3/d silently"
+S1-3,settlement identity is unique,PASS,0 duplicate SET_ID,contract
+S1-4,every decision states its reason and its alternative,PASS,0 rows with a blank WHY,the task: 'the alternative it was compared against'
+S1-5,"CONFIDENCE on every row, from the contract enum",PASS,"0 rows outside ['surveyed', 'drafted', 'derived', 'provisional']","audit G5 (planned), P6"
+S1-6,"the both-options settlements are flagged, not decided",PASS,4 settlements carry BOTH=1,philosophy sec 8a - BAT
+S1-7,no row sits on the wrong side of its own rule,PASS,0 rows above the break are central without a named override,internal consistency
+S1-8,no row is decided by the cost test on a sentinel ratio,PASS,0 rows carry M_PER_PRP < 0 and a cost-test DEC_RULE,"philosophy sec 3 - a decision must trace to a measured value, not a placeholder"

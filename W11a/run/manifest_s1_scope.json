@@ -1,0 +1,96 @@
+{
+  "contract": "W11a-contract-1.1",
+  "written": "2026-09-02 10:15:04",
+  "stages": [
+    {
+      "stage": "S1",
+      "order": 1,
+      "seconds": 57.64,
+      "reads": [
+        {
+          "name": "plot_loads",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\shp\\W10_plot_loads.gpkg",
+          "n": 64071
+        },
+        {
+          "name": "r5_settlements",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\run\\r5_settlements.csv",
+          "n": 187
+        },
+        {
+          "name": "marginal_branches",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\shp\\W10_marginal_branches.shp",
+          "n": 1889
+        },
+        {
+          "name": "existing_built",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\shp\\W10_existing_built.shp",
+          "n": 3267
+        },
+        {
+          "name": "towns",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\SHP\\Towns\\Towns.shp",
+          "n": 25
+        }
+      ],
+      "writes": [
+        {
+          "name": "servicing (audited, GeoPackage)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 187
+        },
+        {
+          "name": "servicing (CAD mirror)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_servicing.shp",
+          "n": 187
+        },
+        {
+          "name": "s1_servicing.csv",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\s1_servicing.csv",
+          "n": 187
+        },
+        {
+          "name": "s1_plot_system.csv",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\s1_plot_system.csv",
+          "n": 64071
+        },
+        {
+          "name": "s1_break_sensitivity.csv",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\s1_break_sensitivity.csv",
+          "n": 9
+        },
+        {
+          "name": "s1_checks.csv",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\s1_checks.csv",
+          "n": 8
+        }
+      ],
+      "metrics": {
+        "marginal_km_outside_every_settlement": "132.4 km",
+        "marginal_lift_source_m": "242.3 m",
+        "marginal_lift_attributed_m": "189.5 m",
+        "settlements": 187,
+        "plots": 64071,
+        "load_m3d": 74701.2,
+        "central_load_m3d": 73871.3,
+        "decentral_load_m3d": 829.9,
+        "decentral_property_share_pct": 0.9,
+        "lift_avoided_m": 44.1
+      },
+      "notes": [
+        "BAT flagged BOTH on 4 settlements: 2,236 properties, 1,753 m3/d, 20.3-24.1 km from the built network (philosophy sec 8a says 22-25 km, measured from settlement CENTROIDS in r5; these are ENVELOPE distances, which is the distance the G201 p80 test asks for and is shorter for a 6.8 km2 settlement)",
+        "the west closed basin's low point (442092 E 2569064 N) lies in the CORE conurbation (SID 18). WHAT_TO_SEWER sec 6's 'AL DIREZ is the west leg' does not hold: the west is a sub-catchment of the central system, so pumped conveyance versus a west satellite works is a stage 3/5 question, not a stage 1 scope question"
+      ],
+      "no_change_reason": "",
+      "funnels": [
+        {
+          "name": "plot records -> settlement rows",
+          "n0": 64071,
+          "n": 64071,
+          "line": "plot records -> settlement rows: 64,071",
+          "steps": []
+        }
+      ]
+    }
+  ]
+}

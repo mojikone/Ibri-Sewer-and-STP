@@ -1,0 +1,96 @@
+========================================================================================
+W11a  STAGE 2 - CORRIDORS WITH PROVENANCE
+      exclusions at source (philosophy sec 2) - H1 is a boundary, not a price
+========================================================================================
+0  inputs
+   roads 9,245 lines, 1,351.4 km (dual=1 on 289)  (0.2 s)
+   plots 64,027 in boundary, 56,388 load-bearing, 74,675 m3/d  (0.5 s)
+   wadi mask 8,632 x 15,614 grid cells of 3.0 m, 10,361,443 on classes [4, 5, 6]; corridors sampled against it every 1.5 m (half a cell, so a cell cannot be stepped over)  (0.8 s)
+   draftsman 5,721 lines, 1,195.4 km (3,368 on existing road, 2,353 on future road)  (0.0 s)
+   main pipe 54 lines, 85.5 km  (0.0 s)
+
+A  the raw road layer, treated with units AND sampler
+      traffic_links_dropped      249
+      empty_stubs_dropped        0  <- ZERO, expected ~0: _drop_orphan_links (80 m) runs first and eats what _drop_stubs (8.0 m) would find
+      orphan_links_dropped       141
+      two_lane_side_dropped      17
+      rings rejected, plot inside  130   (W10 could not run this test at all)
+   6,760 treated corridors, 1,165.4 km  (234.6 s)
+      dual centrelines for the band: 358 (69 untagged twins the road file missed)
+   after removing what the draftsman covers: 2,834 lines, 589.8 km  (47.5 s)
+
+B  skeletonising the free space around 11,786 plots with no corridor within 60 m
+      600/799 pockets, 9,236 lines so far
+   12,501 lines, 331.7 km  (pockets used 217 of 799; 1,106 plots left to detail design)  (14.0 s)
+
+C  stitching the pockets on - links drawn on the geometry, not on a buffer
+   2,496 links, 103.61 km over 2,496 islands; 0 further than 400 m from anything, 0 already touching  (5.9 s)
+      worst endpoint gap over all 4,992 link endpoints: 0.0000 m   (W10: exactly 1.000 m on 91.4 % of them)
+
+D  merged 23,606 source lines, 2,306.0 km
+   noded to 27,984 pieces, 2,305.8 km (-0.1 km - noding merges collinear overlaps between sources and drops slivers under 0.5 m)  (1.3 s)
+   BEFORE the exclusion: 509 components on 20,596 nodes, largest holds 67.9 %  - the baseline H1 is measured against  (0.3 s)
+
+E  H1 applied at source: no pipe along a dual carriageway, none on wadi ground
+      removed along a dual carriageway           34 pieces      2.74 km
+      removed dual crossing off square           74 pieces      1.16 km
+      removed wadi                              580 pieces    121.34 km
+      removed wadi (crossing candidate)       2,688 pieces     48.67 km
+      by source grade: auto_road 67.86 km,  draft_existing 55.55 km,  draft_future 16.50 km,  auto_block 15.55 km,  main_pipe 11.84 km,  auto_link 6.61 km
+   28,125 pieces survive, 2,131.9 km  (1.7 s)
+
+F  minting node identity and moving the geometry onto it
+      audit sweep on the snapped geometry removed 16 pieces, 0.074 km (the sampled cut cannot see a cell corner, and snapping moves a midpoint)
+   21,912 nodes, 22,900 corridors, 2,130.2 km (5,209 pieces, 8.1 km, dropped inside the 3 m node merge radius - their two ends became ONE node, so their neighbours now meet there and nothing is disconnected)  (1.1 s)
+      corridor metres (noded -> published): 2,305,836 -> 2,303,095 -> 2,301,931 -> 2,180,593 -> 2,180,519 -> 2,131,849 -> 2,123,700 -> 2,130,245   (snap+rounding residual -6,545 m on 2,306 km = 0.284 %)
+
+G  attributes
+   N_PLOT assigned; 13,020 corridors front a load-bearing plot, 9,880 front none (656.7 km - P7's number, exposed not pruned)  (1.5 s)
+
+H  publishing
+   corridors -> D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\Claude\W11a\shp\W11a.gpkg (layer 'corridors'), nodes -> layer 'corridor_nodes', removals -> D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\Claude\W11a\shp\W11a_corridors_removed.gpkg  (0.9 s)
+
+I  reloading the published layers and proving they are the graph
+   audit.h1 on the PUBLISHED corridors: 0 over the 30 m threshold, worst 23.4 m in band, 0.892 km of scheduled crossing inside it
+   audit.r4 on the PUBLISHED corridors: 0 midpoints on wadi ground  (W10's design shipped 131.7 km)
+   round trip OK: 22,900 corridors on 21,912 nodes, 1,381 components, largest holds 10.8 % of the nodes  (W10 published 7,919 pieces, largest 5.9 %)  (22.5 s)
+
+      THE NUMBER STAGE 3 INHERITS: H1 took the corridor network from 509 components to 1,381.
+      3,268 severances are wadi crossings, 2,688 of them under 70 m. Each is a candidate for a DESIGNED crossing (H1 permits one)
+      but audit.r4 has no exemption for one, so the corridor set stays cut until a crossing is justified individually.
+      The alternative resolutions are the other three in philosophy sec 3: a station, a re-route, or a plot not served.
+
+                           n     km  plots
+SRC        CONFIDENCE                     
+auto_block provisional  7713  314.6   8700
+auto_link  provisional  2434   97.5   2329
+auto_road  derived      3246  519.1   9314
+draft      drafted      4673  532.9  11595
+           provisional  4321  590.2  22486
+main_pipe  drafted       513   75.8    516
+
+load-bearing plots with a corridor within 60 m: 54,940 of 56,388 (97.4 %); 1,448 unserved carrying 1,812 m3/d
+      written to D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\Claude\W11a\shp\W11a_plots_no_corridor.gpkg - TOR scope p4 item 3 requires every plot to be SERVED, so these are a scope answer for stage 1, not a rounding error
+
+----------------------------------------------------------------------------------------
+2. S2 corridors  (338.3 s)
+     read  roads                9,245   D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\SHP\Road centerline 2\Road_Centercline.shp
+     read  plot_loads          64,027   D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\Claude\W10\shp\W10_plot_loads.gpkg
+     read  drafted corridors     5,721   D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\Claude\W10\shp\W10_corridors_drafted.shp
+     read  main pipe               54   D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\SHP\Main Pipe\Main Pipe.shp
+     wrote corridors           22,900   D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\Claude\W11a\shp\W11a.gpkg
+     wrote corridor_nodes      21,912   D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\Claude\W11a\shp\W11a.gpkg
+     wrote removed (review)     3,392   D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\Claude\W11a\shp\W11a_corridors_removed.gpkg
+     plot records: 64,071 -> 64,027
+        -44  outside the study boundary
+     corridor metres (noded -> published): 2,305,836 -> 2,303,095 -> 2,301,931 -> 2,180,593 -> 2,180,519 -> 2,131,849 -> 2,123,700 -> 2,130,245
+        -2,741  H1: along a dual carriageway
+        -1,164  H1: dual crossing off square
+        -121,338  H1: wadi
+        -74  H1: wadi (audit.r4 midpoint sweep)
+        -48,670  H1: wadi (crossing candidate)
+        -8,149  under the 0.5 m floor or inside the 3 m node merge radius
+        --6,545  endpoint snapped onto its node coordinate, plus whole-metre rounding (NEGATIVE here means snapping LENGTHENED the network - an endpoint moves up to the 3 m merge radius to reach its node, and most of those moves are outward)
+
+manifest -> D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\Claude\W11a\run\manifest.json
+total 338 s

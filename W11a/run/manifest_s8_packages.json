@@ -1,0 +1,17 @@
+{
+  "contract": "W11a-contract-1.1",
+  "written": "2026-09-02 10:09:29",
+  "stages": [
+    {
+      "stage": "s8_packages",
+      "order": 8,
+      "seconds": 0.0,
+      "reads": [],
+      "writes": [],
+      "metrics": {},
+      "notes": [],
+      "no_change_reason": "upstream layers absent: reaches, connections. A package is a subtree of the design graph and cannot be computed before the graph exists.",
+      "funnels": []
+    }
+  ]
+}

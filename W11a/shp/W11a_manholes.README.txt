@@ -1,0 +1,4 @@
+CAD MIRROR - NOT THE AUDITED LAYER.
+The audited artefact is W11a/shp/W11a.gpkg, layer 'nodes'.
+contract.assert_audited_path() refuses to hand a .shp to the auditor: the DBF truncates field names at 10 characters.
+Levels and flows on this layer are stage 5 SEEDS (STAGE = 's5_chambers'): INV_M/DEPTH_M/COVER_M sit at the shallowest legal invert (1.30 m cover, G203-p33) and Q_ADF_M3D/Q_PK_LS/N_PROP are zero until stage 6.

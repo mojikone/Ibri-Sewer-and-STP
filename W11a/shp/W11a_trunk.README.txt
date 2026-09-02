@@ -1,0 +1,3 @@
+CAD MIRROR - NOT THE AUDITED LAYER.
+The DBF truncates these field names to 10 characters: GRADIENT_BY
+The audited layer is D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\Claude\W11a\shp\W11a_trunk.gpkg (layer 'reaches').

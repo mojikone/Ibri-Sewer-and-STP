@@ -1,0 +1,6 @@
+CAD / QGIS MIRRORS - NOT THE AUDITED LAYERS.
+The audited artefact is W11a_s4.gpkg (layers s4_reaches, s4_nodes,
+s4_submains). A shapefile DBF truncates field names at 10 characters
+and turns a null string into '', so a check that passes on the
+GeoPackage can fail on the mirror for reasons that have nothing to do
+with the design. Point every check at the GeoPackage.

@@ -1,0 +1,585 @@
+{
+  "contract": "W11a-contract-1.1",
+  "written": "2026-09-02 10:52:06",
+  "stages": [
+    {
+      "stage": "s3_trunk",
+      "order": 3,
+      "seconds": 32.13,
+      "reads": [
+        {
+          "name": "Main Pipe.shp",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\SHP\\Main Pipe\\Main Pipe.shp",
+          "n": 54
+        },
+        {
+          "name": "terrain VRT",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Data\\Terrain\\Sat_0p5m\\IBRI_0p5_VRT2.vrt",
+          "n": null
+        },
+        {
+          "name": "Hazard_T50y",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Data\\04 Lekhuwair\\Hazard_T50y.tif",
+          "n": null
+        },
+        {
+          "name": "W10_plot_loads (plot_loads)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\shp\\W10_plot_loads.gpkg",
+          "n": 64071
+        },
+        {
+          "name": "W10_corridors_drafted",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\shp\\W10_corridors_drafted.shp",
+          "n": 5721
+        },
+        {
+          "name": "W10_plot_loads (plot_loads)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\shp\\W10_plot_loads.gpkg",
+          "n": 64071
+        },
+        {
+          "name": "W10_corridors_drafted",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\shp\\W10_corridors_drafted.shp",
+          "n": 5721
+        },
+        {
+          "name": "W10_plot_loads (plot_loads)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\shp\\W10_plot_loads.gpkg",
+          "n": 64071
+        },
+        {
+          "name": "W10_corridors_drafted",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\shp\\W10_corridors_drafted.shp",
+          "n": 5721
+        },
+        {
+          "name": "W10_plot_loads (plot_loads)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\shp\\W10_plot_loads.gpkg",
+          "n": 64071
+        },
+        {
+          "name": "W10_corridors_drafted",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\shp\\W10_corridors_drafted.shp",
+          "n": 5721
+        },
+        {
+          "name": "W10_plot_loads (plot_loads)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\shp\\W10_plot_loads.gpkg",
+          "n": 64071
+        },
+        {
+          "name": "W10_corridors_drafted",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\shp\\W10_corridors_drafted.shp",
+          "n": 5721
+        },
+        {
+          "name": "W10_plot_loads (plot_loads)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\shp\\W10_plot_loads.gpkg",
+          "n": 64071
+        },
+        {
+          "name": "W10_corridors_drafted",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\shp\\W10_corridors_drafted.shp",
+          "n": 5721
+        },
+        {
+          "name": "W10_plot_loads (plot_loads)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\shp\\W10_plot_loads.gpkg",
+          "n": 64071
+        },
+        {
+          "name": "W10_corridors_drafted",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\shp\\W10_corridors_drafted.shp",
+          "n": 5721
+        },
+        {
+          "name": "Road centerline 2",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\SHP\\Road centerline 2\\Road_Centercline.shp",
+          "n": 9242
+        }
+      ],
+      "writes": [
+        {
+          "name": "reaches",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_trunk.gpkg",
+          "n": 754
+        },
+        {
+          "name": "nodes",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_trunk.gpkg",
+          "n": 758
+        },
+        {
+          "name": "crossings",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_trunk.gpkg",
+          "n": 10
+        },
+        {
+          "name": "W11a_trunk.shp (CAD mirror)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_trunk.shp",
+          "n": 754
+        },
+        {
+          "name": "stations hand-off (CSV, not a published layer)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\s3_trunk_stations.csv",
+          "n": 3
+        },
+        {
+          "name": "pumped sections (rising-main routes, stage 6)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_trunk_pumped.shp",
+          "n": 8
+        },
+        {
+          "name": "findings register",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\s3_trunk_findings.csv",
+          "n": 341
+        }
+      ],
+      "metrics": {
+        "vertices_removed": 4479,
+        "turning_deg_removed": 738.6,
+        "q_adf_total_m3d": 74675.3,
+        "properties_total": 98646.0,
+        "straighten_vertices_before": 5468.0,
+        "straighten_vertices_after": 989.0,
+        "straighten_turning_deg_before": 8320.86,
+        "straighten_turning_deg_after": 7582.23,
+        "straighten_max_offset_m": 0.5,
+        "straighten_sharpest_turn_deg_after": 92.18,
+        "straighten_sharpest_turn_deg_before": 93.43,
+        "trunk_km": 85.55,
+        "chambers": 758,
+        "stations": 3,
+        "on_dual_m": 534.7,
+        "on_wadi_km": 10.98
+      },
+      "notes": [
+        "western leg gap measured 879.82 m, not the 2 m the build note states; closed with a provisional straight connector",
+        "4 components (W10 published 7,919). Largest 565 nodes, smallest 20; systems present: ['central']. audit.h15 as written requires exactly ONE, which a compliant multi-system design cannot satisfy - OPEN-1. Either every component is a legitimate system with its own outfall (say so, and audit per system), or this is W10's defect returning."
+      ],
+      "no_change_reason": "",
+      "funnels": [
+        {
+          "name": "plot load -> trunk chamber",
+          "n0": 64071,
+          "n": 64027,
+          "line": "plot load -> trunk chamber: 64,071 -> 64,027",
+          "steps": [
+            {
+              "reason": "outside the project boundary (IN_BND = 0)",
+              "n": 44,
+              "qty": 25.902884223999997,
+              "ids": [
+                "1144020",
+                "1147958",
+                "1147959",
+                "1148329",
+                "1148330",
+                "1148332",
+                "1148379",
+                "1150362",
+                "1150363",
+                "1150364",
+                "1150365",
+                "1150366",
+                "1150367",
+                "1150368",
+                "1150371",
+                "1150783",
+                "1155654",
+                "1155655",
+                "1163159",
+                "1163160",
+                "1163161",
+                "1163162",
+                "1163521",
+                "1164057",
+                "1165059",
+                "1165136",
+                "1165162",
+                "1165163",
+                "1166033",
+                "1166034",
+                "1166264",
+                "1166316",
+                "1203587",
+                "1211709",
+                "-377",
+                "-673",
+                "-837",
+                "-1244",
+                "-1813",
+                "-1998",
+                "-2324",
+                "-2435",
+                "-2606",
+                "-2607"
+              ],
+              "ids_truncated": false
+            }
+          ]
+        },
+        {
+          "name": "plot load -> trunk chamber",
+          "n0": 64071,
+          "n": 64027,
+          "line": "plot load -> trunk chamber: 64,071 -> 64,027",
+          "steps": [
+            {
+              "reason": "outside the project boundary (IN_BND = 0)",
+              "n": 44,
+              "qty": 25.902884223999997,
+              "ids": [
+                "1144020",
+                "1147958",
+                "1147959",
+                "1148329",
+                "1148330",
+                "1148332",
+                "1148379",
+                "1150362",
+                "1150363",
+                "1150364",
+                "1150365",
+                "1150366",
+                "1150367",
+                "1150368",
+                "1150371",
+                "1150783",
+                "1155654",
+                "1155655",
+                "1163159",
+                "1163160",
+                "1163161",
+                "1163162",
+                "1163521",
+                "1164057",
+                "1165059",
+                "1165136",
+                "1165162",
+                "1165163",
+                "1166033",
+                "1166034",
+                "1166264",
+                "1166316",
+                "1203587",
+                "1211709",
+                "-377",
+                "-673",
+                "-837",
+                "-1244",
+                "-1813",
+                "-1998",
+                "-2324",
+                "-2435",
+                "-2606",
+                "-2607"
+              ],
+              "ids_truncated": false
+            }
+          ]
+        },
+        {
+          "name": "plot load -> trunk chamber",
+          "n0": 64071,
+          "n": 64027,
+          "line": "plot load -> trunk chamber: 64,071 -> 64,027",
+          "steps": [
+            {
+              "reason": "outside the project boundary (IN_BND = 0)",
+              "n": 44,
+              "qty": 25.902884223999997,
+              "ids": [
+                "1144020",
+                "1147958",
+                "1147959",
+                "1148329",
+                "1148330",
+                "1148332",
+                "1148379",
+                "1150362",
+                "1150363",
+                "1150364",
+                "1150365",
+                "1150366",
+                "1150367",
+                "1150368",
+                "1150371",
+                "1150783",
+                "1155654",
+                "1155655",
+                "1163159",
+                "1163160",
+                "1163161",
+                "1163162",
+                "1163521",
+                "1164057",
+                "1165059",
+                "1165136",
+                "1165162",
+                "1165163",
+                "1166033",
+                "1166034",
+                "1166264",
+                "1166316",
+                "1203587",
+                "1211709",
+                "-377",
+                "-673",
+                "-837",
+                "-1244",
+                "-1813",
+                "-1998",
+                "-2324",
+                "-2435",
+                "-2606",
+                "-2607"
+              ],
+              "ids_truncated": false
+            }
+          ]
+        },
+        {
+          "name": "plot load -> trunk chamber",
+          "n0": 64071,
+          "n": 64027,
+          "line": "plot load -> trunk chamber: 64,071 -> 64,027",
+          "steps": [
+            {
+              "reason": "outside the project boundary (IN_BND = 0)",
+              "n": 44,
+              "qty": 25.902884223999997,
+              "ids": [
+                "1144020",
+                "1147958",
+                "1147959",
+                "1148329",
+                "1148330",
+                "1148332",
+                "1148379",
+                "1150362",
+                "1150363",
+                "1150364",
+                "1150365",
+                "1150366",
+                "1150367",
+                "1150368",
+                "1150371",
+                "1150783",
+                "1155654",
+                "1155655",
+                "1163159",
+                "1163160",
+                "1163161",
+                "1163162",
+                "1163521",
+                "1164057",
+                "1165059",
+                "1165136",
+                "1165162",
+                "1165163",
+                "1166033",
+                "1166034",
+                "1166264",
+                "1166316",
+                "1203587",
+                "1211709",
+                "-377",
+                "-673",
+                "-837",
+                "-1244",
+                "-1813",
+                "-1998",
+                "-2324",
+                "-2435",
+                "-2606",
+                "-2607"
+              ],
+              "ids_truncated": false
+            }
+          ]
+        },
+        {
+          "name": "plot load -> trunk chamber",
+          "n0": 64071,
+          "n": 64027,
+          "line": "plot load -> trunk chamber: 64,071 -> 64,027",
+          "steps": [
+            {
+              "reason": "outside the project boundary (IN_BND = 0)",
+              "n": 44,
+              "qty": 25.902884223999997,
+              "ids": [
+                "1144020",
+                "1147958",
+                "1147959",
+                "1148329",
+                "1148330",
+                "1148332",
+                "1148379",
+                "1150362",
+                "1150363",
+                "1150364",
+                "1150365",
+                "1150366",
+                "1150367",
+                "1150368",
+                "1150371",
+                "1150783",
+                "1155654",
+                "1155655",
+                "1163159",
+                "1163160",
+                "1163161",
+                "1163162",
+                "1163521",
+                "1164057",
+                "1165059",
+                "1165136",
+                "1165162",
+                "1165163",
+                "1166033",
+                "1166034",
+                "1166264",
+                "1166316",
+                "1203587",
+                "1211709",
+                "-377",
+                "-673",
+                "-837",
+                "-1244",
+                "-1813",
+                "-1998",
+                "-2324",
+                "-2435",
+                "-2606",
+                "-2607"
+              ],
+              "ids_truncated": false
+            }
+          ]
+        },
+        {
+          "name": "plot load -> trunk chamber",
+          "n0": 64071,
+          "n": 64027,
+          "line": "plot load -> trunk chamber: 64,071 -> 64,027",
+          "steps": [
+            {
+              "reason": "outside the project boundary (IN_BND = 0)",
+              "n": 44,
+              "qty": 25.902884223999997,
+              "ids": [
+                "1144020",
+                "1147958",
+                "1147959",
+                "1148329",
+                "1148330",
+                "1148332",
+                "1148379",
+                "1150362",
+                "1150363",
+                "1150364",
+                "1150365",
+                "1150366",
+                "1150367",
+                "1150368",
+                "1150371",
+                "1150783",
+                "1155654",
+                "1155655",
+                "1163159",
+                "1163160",
+                "1163161",
+                "1163162",
+                "1163521",
+                "1164057",
+                "1165059",
+                "1165136",
+                "1165162",
+                "1165163",
+                "1166033",
+                "1166034",
+                "1166264",
+                "1166316",
+                "1203587",
+                "1211709",
+                "-377",
+                "-673",
+                "-837",
+                "-1244",
+                "-1813",
+                "-1998",
+                "-2324",
+                "-2435",
+                "-2606",
+                "-2607"
+              ],
+              "ids_truncated": false
+            }
+          ]
+        },
+        {
+          "name": "plot load -> trunk chamber",
+          "n0": 64071,
+          "n": 64027,
+          "line": "plot load -> trunk chamber: 64,071 -> 64,027",
+          "steps": [
+            {
+              "reason": "outside the project boundary (IN_BND = 0)",
+              "n": 44,
+              "qty": 25.902884223999997,
+              "ids": [
+                "1144020",
+                "1147958",
+                "1147959",
+                "1148329",
+                "1148330",
+                "1148332",
+                "1148379",
+                "1150362",
+                "1150363",
+                "1150364",
+                "1150365",
+                "1150366",
+                "1150367",
+                "1150368",
+                "1150371",
+                "1150783",
+                "1155654",
+                "1155655",
+                "1163159",
+                "1163160",
+                "1163161",
+                "1163162",
+                "1163521",
+                "1164057",
+                "1165059",
+                "1165136",
+                "1165162",
+                "1165163",
+                "1166033",
+                "1166034",
+                "1166264",
+                "1166316",
+                "1203587",
+                "1211709",
+                "-377",
+                "-673",
+                "-837",
+                "-1244",
+                "-1813",
+                "-1998",
+                "-2324",
+                "-2435",
+                "-2606",
+                "-2607"
+              ],
+              "ids_truncated": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

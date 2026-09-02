@@ -1,0 +1,145 @@
+{
+  "contract": "W11a-contract-1.1",
+  "written": "2026-09-02 10:21:13",
+  "stages": [
+    {
+      "stage": "s4_hierarchy",
+      "order": 4,
+      "seconds": 19.43,
+      "reads": [
+        {
+          "name": "corridors (stage 2)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 22900
+        },
+        {
+          "name": "trunk (stage 2 corridors, SRC=main_pipe)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 513
+        },
+        {
+          "name": "corridor_nodes (stage 2)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 21912
+        },
+        {
+          "name": "servicing (stage 1 scope decision)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 187
+        },
+        {
+          "name": "terrain 0.5 m VRT",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Data\\Terrain\\Sat_0p5m\\IBRI_0p5_VRT2.vrt",
+          "n": 21912
+        },
+        {
+          "name": "plot_loads (load-bearing only)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\shp\\W10_plot_loads.gpkg",
+          "n": 56414
+        }
+      ],
+      "writes": [
+        {
+          "name": "s4_reaches",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_s4.gpkg",
+          "n": 19901
+        },
+        {
+          "name": "s4_nodes",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_s4.gpkg",
+          "n": 21158
+        },
+        {
+          "name": "s4_submains",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_s4.gpkg",
+          "n": 1427
+        },
+        {
+          "name": "s4_hierarchy_report.txt",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\s4_hierarchy_report.txt",
+          "n": null
+        }
+      ],
+      "metrics": {
+        "trunk_km_lost_vs_drawing": 9.66,
+        "node_offset_max_m": 0.0,
+        "graph_nodes": 21912,
+        "trunk_pieces": 108,
+        "trunk_longest_piece_km": 7.65,
+        "corridor_components": 1381,
+        "tree_km": 1785.6,
+        "loop_closing_km_no_pipe": 332.2,
+        "outfalls": 1391,
+        "fingers_pruned": 620,
+        "fingers_pruned_km": 16.615,
+        "monotonicity_fixes": 2894,
+        "reaches_outside_a_servicing_polygon": 588,
+        "node_system_reconciled_to_reaches": 18819,
+        "reaches_on_wadi_measured": 0,
+        "km_on_wadi_measured": 0.0,
+        "chambers_on_wadi_measured": 0,
+        "reaches_on_wadi_inherited": 0,
+        "km_outside_hazard_grid_untestable": 968.3,
+        "km_no_loadbearing_plot_within_60m": 168.5,
+        "km_lateral": 1115.37,
+        "km_main": 336.86,
+        "km_sub_main": 243.63,
+        "km_trunk_main": 73.18,
+        "trunk_joins": 304,
+        "sub_main_routes": 182,
+        "F1_untiered": 0,
+        "F2_monotonicity_breaches": 0,
+        "round_trip": "PASS"
+      },
+      "notes": [
+        "754 nodes carried no reach after the 3.0 m merge and were dropped"
+      ],
+      "no_change_reason": "",
+      "funnels": [
+        {
+          "name": "corridor segments -> tiered edges",
+          "n0": 22900,
+          "n": 19901,
+          "line": "corridor segments -> tiered edges: 22,900 -> 22,900 -> 22,900 -> 22,760 -> 20,521 -> 19,901",
+          "steps": [
+            {
+              "reason": "corridor with an unresolvable node reference or multipart geometry",
+              "n": 0,
+              "qty": 0.0,
+              "ids": [],
+              "ids_truncated": false
+            },
+            {
+              "reason": "corridor whose two ends are the same node",
+              "n": 0,
+              "qty": 0.0,
+              "ids": [],
+              "ids_truncated": false
+            },
+            {
+              "reason": "parallel corridor between the same two nodes (12.45 km)",
+              "n": 140,
+              "qty": 0.0,
+              "ids": [],
+              "ids_truncated": false
+            },
+            {
+              "reason": "loop-closing street - a spanning tree cannot lay pipe on every edge of a grid without a cycle (H15). W8's augment_cross_streets is the fix and it belongs to stage 2/3 (332.2 km)",
+              "n": 2239,
+              "qty": 0.0,
+              "ids": [],
+              "ids_truncated": false
+            },
+            {
+              "reason": "dead-end reach under 60 m serving nothing - philosophy sec 4 finger rule (16.615 km)",
+              "n": 620,
+              "qty": 0.0,
+              "ids": [],
+              "ids_truncated": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

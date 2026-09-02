@@ -1,0 +1,33 @@
+{
+  "contract": "W11a-contract-1.1",
+  "written": "2026-09-02 10:16:05",
+  "stages": [
+    {
+      "stage": "s9_export",
+      "order": 9,
+      "seconds": 0.0,
+      "reads": [
+        {
+          "name": "nodes",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 48137
+        },
+        {
+          "name": "connections",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 30105
+        },
+        {
+          "name": "corridors",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 22900
+        }
+      ],
+      "writes": [],
+      "metrics": {},
+      "notes": [],
+      "no_change_reason": "upstream layers absent: reaches. Exited 0 rather than writing a partial deliverable set - a schedule printed from half a design is worse than no schedule.",
+      "funnels": []
+    }
+  ]
+}

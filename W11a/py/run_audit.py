@@ -34,10 +34,8 @@ def main(target="W10"):
         pipes=load(os.path.join(d, f"{target}_pipes.shp")),
         nodes=load(os.path.join(d, f"{target}_nodes_depth.shp")),
         crit=CRIT,
-        terrain=BASE + r"\Data\Terrain\Sat_0p5m\IBRI_0p5_VRT2.vrt",
         hazard=BASE + r"\Data\04 Lekhuwair\Hazard_T50y.tif",
         roads=roads,
-        plots=None,
         existing=load(os.path.join(ROOT, "W10", "shp", "W10_existing_built.shp")),
     )
     if ctx.pipes is None:

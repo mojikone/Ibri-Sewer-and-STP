@@ -39,6 +39,9 @@ from shapely.ops import unary_union
 
 PASS, FAIL, NOT_CHECKABLE = "PASS", "FAIL", "NOT_CHECKABLE"
 
+# Endpoints closer than this are the same node. Deliberately tight: see h15.
+SNAP_M = 0.01
+
 
 @dataclass
 class Result:
@@ -78,15 +81,15 @@ def check(id, group, requirement, source, blocking=True):
 class Ctx:
     """Everything a check may look at. Nothing is computed that a check does not ask for."""
 
-    def __init__(self, pipes=None, nodes=None, crit=None, terrain=None, hazard=None,
-                 roads=None, plots=None, existing=None):
+    def __init__(self, pipes=None, nodes=None, crit=None, hazard=None,
+                 roads=None, existing=None):
+        # `terrain` and `plots` were accepted and read by no check. A parameter nothing
+        # uses is a promise the auditor does not keep; removed rather than left dangling.
         self.pipes = pipes
         self.nodes = nodes
         self.crit = crit
-        self.terrain = terrain
         self.hazard = hazard
         self.roads = roads
-        self.plots = plots
         self.existing = existing
         self._cache = {}
 
@@ -104,7 +107,7 @@ class Ctx:
             raise KeyError("pipe layer has no " + ", ".join(missing))
         return True
 
-    def graph(self, snap=0.01):
+    def graph(self, snap=SNAP_M):
         """The network as published, snapped only at the tolerance a GIS would use.
 
         Deliberately tight. A layer that needs 2.5 m of snapping to become connected is not
@@ -114,10 +117,13 @@ class Ctx:
         if key in self._cache:
             return self._cache[key]
         ends = []
+        # A MultiLineString contributes ALL its parts. Taking geoms[0] silently dropped
+        # the rest, so a layer could look connected because half of it was invisible.
         for g in self.pipes.geometry:
-            ls = g.geoms[0] if g.geom_type == "MultiLineString" else g
-            ends.append(ls.coords[0][:2])
-            ends.append(ls.coords[-1][:2])
+            parts = g.geoms if g.geom_type == "MultiLineString" else [g]
+            for ls in parts:
+                ends.append(ls.coords[0][:2])
+                ends.append(ls.coords[-1][:2])
         arr = np.array(ends)
         tree = cKDTree(arr)
         lab = np.full(len(arr), -1, dtype=np.int64)
@@ -129,10 +135,26 @@ class Ctx:
                 if lab[j] == -1:
                     lab[j] = i
         G = nx.Graph()
-        for i in range(len(self.pipes)):
-            G.add_edge(int(lab[2 * i]), int(lab[2 * i + 1]), idx=i)
+        k = 0
+        for i, g in enumerate(self.pipes.geometry):
+            n_parts = len(g.geoms) if g.geom_type == "MultiLineString" else 1
+            for _ in range(n_parts):
+                G.add_edge(int(lab[2 * k]), int(lab[2 * k + 1]), idx=i)
+                k += 1
         self._cache[key] = G
         return G
+
+
+def od(ctx, dn):
+    """Outside diameter, from the SAME constant the design lays to.
+
+    This was hardcoded at 0.10 m and the criteria use WALL_ALLOW = 0.05. A design laid
+    correctly to criteria.invert_depth_min was 50 mm short of what H3 demanded, on every
+    reach, at every diameter - a blocking failure caused entirely by the auditor. Found by
+    an agent reading both files side by side, which is the only way this kind of defect
+    ever surfaces.
+    """
+    return dn / 1000.0 + ctx.crit.WALL_ALLOW
 
 
 def km(gdf_or_mask, ctx):
@@ -181,20 +203,20 @@ def h2(ctx):
        "G203-p33")
 def h3(ctx):
     ctx.need("DN", "US_DEPTH", "DS_DEPTH")
-    od = ctx.pipes.DN / 1000.0 + 0.10
-    bad = ((ctx.pipes.US_DEPTH - od) < 1.30 - 1e-6) | ((ctx.pipes.DS_DEPTH - od) < 1.30 - 1e-6)
+    odm = ctx.pipes.DN.map(lambda d: od(ctx, int(d)))
+    bad = ((ctx.pipes.US_DEPTH - odm) < 1.30 - 1e-6) | ((ctx.pipes.DS_DEPTH - odm) < 1.30 - 1e-6)
     n = int(bad.sum())
     if n == 0:
         return PASS, "every reach has at least 1.30 m of cover", 0, ""
-    worst = float((ctx.pipes.US_DEPTH - od).min())
+    worst = float((ctx.pipes.US_DEPTH - odm).min())
     return FAIL, f"{n} reaches below minimum cover, worst {worst:.2f} m", n, f"{km(bad, ctx):.2f} km"
 
 
 @check("H4", "cover", "Maximum cover 12 m, exits only via philosophy 5", "G203-p33")
 def h4(ctx):
     ctx.need("DN", "US_DEPTH", "DS_DEPTH")
-    od = ctx.pipes.DN / 1000.0 + 0.10
-    cov = np.maximum(ctx.pipes.US_DEPTH - od, ctx.pipes.DS_DEPTH - od)
+    odm = ctx.pipes.DN.map(lambda d: od(ctx, int(d)))
+    cov = np.maximum(ctx.pipes.US_DEPTH - odm, ctx.pipes.DS_DEPTH - odm)
     bad = cov > 12.0 + 1e-6
     n = int(bad.sum())
     flagged = "PAST_CAP" in ctx.pipes.columns
@@ -288,12 +310,21 @@ def h8(ctx):
 @check("H9", "sizing", "Minimum sizes and materials by tier", "G203-p22 T6")
 def h9(ctx):
     ctx.need("TIER", "DN")
-    floor = {"lateral": 200, "main": 200, "sub main": 200, "trunk main": 200, "rider": 160}
-    bad = 0
+    # Keys normalised: the layer may hold "sub main", "sub_main" or "SubMain", and a
+    # dict.get() miss returned None, which silently skipped the pipe. A check that quietly
+    # passes what it cannot classify is worse than one that fails.
+    floor = {"lateral": 200, "main": 200, "submain": 200, "trunkmain": 200, "rider": 160}
+    def norm(t):
+        return "".join(ch for ch in str(t).lower() if ch.isalpha())
+    bad, unknown = 0, 0
     for _, r in ctx.pipes.iterrows():
-        f = floor.get(str(r.TIER).lower())
-        if f and int(r.DN) < f:
+        f = floor.get(norm(r.TIER))
+        if f is None:
+            unknown += 1
+        elif int(r.DN) < f:
             bad += 1
+    if unknown:
+        return FAIL, f"{unknown} pipes carry a TIER this check cannot classify", unknown, ""
     if bad == 0:
         return PASS, "every pipe at or above its tier minimum", 0, ""
     return FAIL, f"{bad} pipes below the minimum size for their tier", bad, ""
@@ -360,15 +391,39 @@ def h14(ctx):
     return FAIL, f"{bad} tie-ins made invert to invert", bad, ""
 
 
-@check("H15", "topology", "The network is a forest - zero loops, on the PUBLISHED layer",
+@check("H15", "topology",
+       "The network is a FOREST - zero loops, and every component reaches exactly one outfall",
        "project rule")
 def h15(ctx):
+    """Zero loops, but NOT necessarily one component.
+
+    The first version of this check demanded a single connected component, which would have
+    failed any compliant design: philosophy 8a explicitly contemplates satellite works and
+    on-site systems for outlying settlements, and the TOR requires every plot served without
+    requiring one network. The forest property is what matters - no loops, and each tree
+    draining to exactly one outfall. An isolated piece with NO outfall is still a failure.
+    """
     G = ctx.graph()
-    cycles = G.number_of_edges() - G.number_of_nodes() + nx.number_connected_components(G)
     parts = nx.number_connected_components(G)
-    if cycles == 0 and parts == 1:
-        return PASS, "one connected tree", 0, ""
-    return FAIL, f"{cycles} independent cycles, {parts} disconnected pieces", cycles, ""
+    cycles = G.number_of_edges() - G.number_of_nodes() + parts
+
+    # Report the failure that matters first. A layer in thousands of disconnected pieces is
+    # loop-free BY ACCIDENT, and leading with "loop-free" reads like a pass. Measured on
+    # W10: 7,919 pieces and 0 cycles at 0.01 m, but 105 pieces and 311 cycles at 2.5 m -
+    # the same layer, squeezed harder. The loops were never in the design; they appear the
+    # moment you snap hard enough to hide the disconnection. Both are one root cause, and
+    # G3 names it: no US_NODE/DS_NODE, so connectivity is inferred from a tolerance.
+    if parts > 1 and "IS_OUTFALL" not in ctx.pipes.columns:
+        return FAIL, (f"{parts:,} disconnected pieces at {SNAP_M} m - loop-free only because "
+                      f"nothing is joined; no IS_OUTFALL to prove any piece drains"), parts, ""
+    if cycles:
+        return FAIL, f"{cycles} independent cycles across {parts} component(s)", cycles, ""
+    if "IS_OUTFALL" not in ctx.pipes.columns:
+        return FAIL, "single component, but no IS_OUTFALL field - cannot prove it drains", 0, ""
+    n_out = int(ctx.pipes.IS_OUTFALL.astype(bool).sum())
+    if n_out != parts:
+        return FAIL, f"{parts} component(s) but {n_out} outfall(s) - must be one each", abs(n_out - parts), ""
+    return PASS, f"loop-free forest, {parts} component(s), one outfall each", 0, ""
 
 
 # --------------------------------------------------------------------------- regression
@@ -420,7 +475,7 @@ def g1(ctx):
 @check("G2", "provenance", "Every reach records what set its diameter and its gradient",
        "philosophy 3")
 def g2(ctx):
-    missing = [c for c in ("SIZED_BY", "GRADIENT_BY") if c not in ctx.pipes.columns]
+    missing = [c for c in ("SIZED_BY", "GRAD_BY") if c not in ctx.pipes.columns]
     if not missing:
         return PASS, "constraint provenance present on every reach", 0, ""
     return FAIL, "missing " + ", ".join(missing), 0, ""
