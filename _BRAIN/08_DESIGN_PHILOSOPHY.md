@@ -183,6 +183,49 @@ belongs upstream where the flow is small**, and depth alone must never choose it
 Station placement has to be a decision variable inside the design search, not a trigger fired
 by a threshold.
 
+**5.1b THE CAP-AND-VETO LADDER — the economics is third, never first.** (User instruction,
+2026-09-02, and the data proves the need.)
+
+Left to the cost test alone the design runs away, because manning is 86 % of a station's
+life-cycle cost and a trench is paid once. Allowed to dig through every breach, W10 would
+reach **12–14 m at 132 breaches, 14–16 m at 63, 16–20 m at 27, 20–30 m at 11, and past 30 m
+at 6, the deepest chamber at 57.9 m** — while no published excavation rate table extends past
+about 5 m. Beyond the cap the economics is arithmetic on air.
+
+So the decision is a ladder of three layers, applied in order. **The first two are
+non-negotiable and only the third weighs anything:**
+
+| | Layer | Test | Overridable |
+|---|---|---|---|
+| 1 | **CAP** | Cover reaches 12 m → **station, mandatory** | **No.** Not by cost, not by anything |
+| 2 | **VETO** | A chamber here would be unmaintainable — no plant access, confined-space entry with no rescue route, under a live carriageway → **station** | **No.** A veto, not a term in a sum |
+| 3 | **ECONOMICS** | Only now: is a station cheaper over 25 years than carrying the trench on? (§8) | Yes — the only layer that weighs |
+
+**The property that makes it safe: layers 1 and 2 can only ever ADD a station.** The
+economics can only make you pump **earlier** than the cap, never later. The design therefore
+cannot drift past the cap whatever the rates say — which matters when every rate past 5 m is
+an extrapolation.
+
+Each layer catches what the others cannot see. The **cap** exists because the cost curve has
+no data past 5 m. The **veto** exists because maintainability appears in no published cost
+function — a 12 m chamber is a fifty-year operating liability and no exponent captures it.
+The **economics** exists because a bare threshold has no cost basis at all, which is how node
+2933 was given an 85 kW station for a **3 mm** breach.
+
+**5.1c The single bounded derogation — the only thing that can REMOVE a station.**
+An excursion may be dug through past the cap **only if all of these hold**:
+
+- it **demonstrably rejoins** downstream (here: 13 of 239 breaches, not a general case)
+- it peaks **within a stated band**, 12 → 14 m of cover
+- it is **short**, and the length is stated
+- it is **listed by name**, item by item, never as a class
+- it is **put to NWS** and accepted
+
+G203-p33 requires that depths past the range *"shall be investigated with pipe manufacturers
+to identify any special requirements"* — that is a procedure to follow, not permission to
+ignore the range. So the derogation is a named exception list NWS can accept or refuse line
+by line, and it is thirteen lines long, not a licence.
+
 **5.2 The rule is: look ahead, then price the excursion.**
 
 > At a breach, carry the pipe on until the depth recovers. Measure the excursion — how deep,
