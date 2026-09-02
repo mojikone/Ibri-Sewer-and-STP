@@ -299,6 +299,12 @@ def main():
     # passing 12.00 m again. Only for these is "no station" an option at all; everywhere
     # else the station is deferred downstream, not saved.
     df["ELIMINABLE"] = (df.STATUS == "CONVERGED").astype(int)
+    # The single most useful number per breach: the marginal excavation rate at which the
+    # decision flips. Rate-free, so it survives every rate assumption we do not yet have.
+    # Plausible range from the published depth-banded tables is 15-60 OMR/m/m; anything
+    # far outside it is a decision no cost data can change.
+    df["K_FLIP"] = (K_DEPTH_REF * df.PS_LCC / df.DIG_B15).round(1)
+    df["K_FLIP_NOSTAFF"] = (K_DEPTH_REF * df.PS_LCC_NOSTAFF / df.DIG_B15).round(1)
     for tag, lcc in (("STAFFED", "PS_LCC"), ("UNSTAFFED", "PS_LCC_NOSTAFF")):
         for bb, col in ((1.0, "DIG_B1"), (1.5, "DIG_B15"), (2.0, "DIG_B2")):
             df[f"WIN_{tag}_B{bb}"] = ((df[col] > df[lcc]) | (df.ELIMINABLE == 0)).astype(int)
@@ -351,6 +357,43 @@ def main():
     sd.to_csv(out2, index=False)
     print(f"\nwrote {out2}")
     print(sd[sd.B == 1.5].to_string(index=False))
+
+    # ------------------------------------------------------------------ clusters
+    # 239 breaches are NOT 239 stations. Project rule 9 consolidates anything within
+    # 1.5 km into one station, so the decision that matters is taken per cluster.
+    from scipy.sparse import coo_matrix
+    from scipy.sparse.csgraph import connected_components
+    from scipy.spatial import cKDTree
+    P = np.c_[df.X.values, df.Y.values]
+    pr = list(cKDTree(P).query_pairs(1500.0))
+    if pr:
+        r = [a for a, _ in pr]; c2 = [b for _, b in pr]
+        nc, lab = connected_components(
+            coo_matrix((np.ones(len(r)), (r, c2)), shape=(len(P), len(P))), directed=False)
+    else:
+        nc, lab = len(P), np.arange(len(P))
+    df["CLUSTER"] = lab
+    cl = []
+    for cid, g in df.groupby("CLUSTER"):
+        allel = int((g.ELIMINABLE == 1).all())
+        cl.append(dict(CLUSTER=cid, N_BREACH=len(g), ALL_ELIMINABLE=allel,
+                       PLOTS_UP=int(g.PLOTS_UP.max()), QADF_M3D=round(g.QADF_M3D.max(), 1),
+                       LIFT_M=round(g.LIFT_M.max(), 2),
+                       DIG_B15=round(g.DIG_B15.sum(), 0),
+                       PS_LCC=round(g.PS_LCC.max(), 0),
+                       PS_LCC_NOSTAFF=round(g.PS_LCC_NOSTAFF.max(), 0)))
+    cl = pd.DataFrame(cl)
+    cl["KEEP_STAFFED"] = ((cl.ALL_ELIMINABLE == 0) | (cl.DIG_B15 > cl.PS_LCC)).astype(int)
+    cl["KEEP_NOSTAFF"] = ((cl.ALL_ELIMINABLE == 0)
+                          | (cl.DIG_B15 > cl.PS_LCC_NOSTAFF)).astype(int)
+    out4 = os.path.join(C.OUT_RUN, "research_breakeven_clusters.csv")
+    cl.to_csv(out4, index=False)
+    df.to_csv(out, index=False)          # rewritten now CLUSTER is on it
+    print(f"\nwrote {out4}")
+    print(f"  {len(df)} breaches consolidate at 1.5 km into {len(cl)} clusters")
+    print(f"  clusters where EVERY breach could be eliminated: {int(cl.ALL_ELIMINABLE.sum())}")
+    print(f"  stations kept, NWS manning rule on : {int(cl.KEEP_STAFFED.sum())} of {len(cl)}")
+    print(f"  stations kept, NWS manning rule off: {int(cl.KEEP_NOSTAFF.sum())} of {len(cl)}")
 
     # ------------------------------------------------------------------ break-even curve
     # For a given station life-cycle cost, the excursion DM at which digging costs the same.

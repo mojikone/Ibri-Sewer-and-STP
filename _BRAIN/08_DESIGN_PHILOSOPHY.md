@@ -306,12 +306,23 @@ instead of upstream piping that would require much more excavation."* **This is 
 support for §4.4, and it is the feature W10 had no equivalent of** — which is why W10 let a
 pipe follow the ground to a laid gradient of 980 %.
 
-**9.3b The design engine will never propose a pumping station.** [Certain, by mechanism] Only
-gravity elements are designed — *"Any changes to the pressure elements would need to be done
-manually"* (KB0016750) — and maximum cover is the lowest priority, so the solver **keeps
-deepening rather than escalating to pumping**. It has no concept of the trade in §5. This is
-the strongest possible confirmation that **the pumping decision belongs to us, before the
-solver runs**, and cannot be delegated to a referee model.
+**9.3b The design engine will never propose a pumping station.** [Certain — now on a named
+Bentley staffer, not only on mechanism] Sushma Choure of Bentley, answering a user asking
+directly how to design a pumping station in SewerGEMS: *"SewerGEMS will only analyze pressure
+components like the pumping mains, pumps, wet wells etc. You need to enter the input data and
+based on the results you can later adjust the sizes to get the desired results."* The
+mechanism agrees — only gravity elements are designed (KB0016750) and maximum cover is the
+lowest priority, so the solver **keeps deepening rather than escalating to pumping**. It has
+no concept of the trade in §5.
+
+**The pumping decision belongs to us, taken before the solver runs, and cannot be delegated
+to a referee model.** This is the clearest single justification for the order in §2.
+
+**9.3d Design runs in steady state only.** Confirmed by three named Bentley staff: *"automated
+design can only be performed in steady state"* (Dringoli); *"for EPS runs automated design is
+not applicable"* (Choure); and it requires the GVF-Convex solver (Kampa). So the referee run
+sizes on a steady peak and never on a hydrograph. Anything we want checked dynamically is a
+separate analysis run, not a design run.
 
 **9.3c One sizing detail to watch when we use SewerGEMS as referee.** KB0057316: *"during the
 constraint based design calculations, pipes are sized based on the flow at the upstream end
@@ -328,10 +339,17 @@ error.
 | Iteration | one downstream sweep, **no reverse pass** | one-directional | unpublished | one pipe at a time | **forward + reverse** |
 | Chooses layout | no | no | no | no | **no** |
 
-Convergent across four vendors: the objective is **minimum excavation**, the method is a
-**greedy downstream sweep with local search over (slope, diameter)**, and layout is always
-the engineer's. **Nobody ships a global optimiser.** One InfoSewer behaviour to avoid: on
-failure it stops the entire downstream branch.
+Convergent across four vendors: the objective is **minimum excavation**, and layout is always
+the engineer's. **Nobody ships a global optimiser** — no vendor claims anywhere to minimise
+network cost.
+
+*Correction, made 2026-09-02 after a second sweep.* An earlier draft of this section called
+the method a "greedy downstream sweep". **That is wrong for Bentley and must not be written
+down**: KB0016752 states the solver checks **both** directions. The supportable description is
+**priority-ordered constraint satisfaction over a user-drawn layout, run in both directions,
+and sold by its own vendor as a starting point.** The one-directional sweep is real for
+InfoDrainage (no reverse pass documented) and InfoSewer (which additionally stops the whole
+downstream branch on failure) — not for SewerGEMS.
 
 **9.5 The literature, and where it disagrees with the manuals.** The standard objective
 (de Villiers et al. 2017, after Moeini & Afshar 2012) prices pipe as a function of **diameter
