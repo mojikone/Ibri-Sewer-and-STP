@@ -37,8 +37,48 @@ Concept→detailed design + supervision of wastewater network, treated-effluent 
 | `../QGIS/QGIS 2621 ibri sewer stp.qgz` | Live QGIS project (layers + saved layouts W2 M1–M6) |
 | `../../Data/` | Client documents (scope.pdf, PAM-GUD-203, PAM-GUD-201, sample report, figures) — NOT in repo |
 
-## Current state (2026-09-01) — read `_BRAIN/00_CURRENT.md` first, then `_BRAIN/07_PROJECT_STATE.md`
-**W9 is live, and the first client deliverable exists.** `W9/report/R1/` holds the **Concept Design Report Revision 1** — 59 pages, all 43 sections, 5 QGIS maps, 5 flowcharts, **6 data charts**, native Word footnotes, written in client register with no internal commentary. **Revisions live in their own sub-folder and an issued one is never overwritten**: `R0/` is frozen as issued, the build's `REV` constant selects the current one. **The existing wastewater dataset is TWO networks, split on `OP_STATUE`**: built 2006 (gravity 111.6 km, force main 10.0 km, no treated effluent) and proposed under project code SUREKHA (gravity 199.3 km, pumping main 23.2 km, treated effluent 45.7 km). No diameter or invert level is recorded on the built network and NAMA's own remark calls the data reference-only, so its spare capacity is unknown until the survey reports — never quote a combined asset length. `W9/docs/` holds the approved report structure (Word + markdown) and the register of decisions required from NWS. `TUTORIALS/T03_R01/` is the methodology manual every report section maps to. The load basis is **locked**: Tier A ratios set the volume, land use sets the placement, Table 12 unused until real quantities arrive. **Occupancy rate is 5.32**, measured. Received data is organised as a **RECEIVED DATA group in QGIS**; the potable water network is the PAEW dataset (647.8 km inside the boundary), not the NAMA extract, which is located near Al Buraymi. **Options doctrine is settled** (PROJECT-STATE §2 item 1e): three per system, three archetypes, seven criteria over 25 years at 5 %, NWS sets the weights, 10 % tie-break to the greener option. **Report figures must be checked by reading the exported image** — a layer with categories switched off renders almost nothing while its legend still looks complete. Report method is in the **`report-writing` skill** (`_SETUP/skills/`, installed by `bootstrap.ps1`): follow it for any deliverable report. Figure numbers belong to the document caption alone — a map that numbers itself drifts the moment a chart is added ahead of it. **The report is A4 portrait but changes page for a figure that cannot be read at 16 cm**: the five maps and the appraisal flowchart sit on their own A3 landscape pages (`D.wide_figure`). **Financial method is settled**: NPV and life-cycle cost at 5 % over 25 years decide, payback is reported but does not, and for a sewerage scheme most of the benefit is avoided cost rather than revenue — see `W9/analysis/W9_PIAD_financial_review.md` for the NWS cost rules worth reusing and the eleven defects not to inherit.
+## Current state (2026-09-02) — read `_BRAIN/00_CURRENT.md` first, then `07_PROJECT_STATE.md`, then `08_DESIGN_PHILOSOPHY.md`
+
+**A binding design philosophy now exists: `_BRAIN/08_DESIGN_PHILOSOPHY.md`, 232 lines, rules
+only.** `02` says whether a design is LEGAL, `08` says how to make it GOOD, and `02` wins where
+they conflict. **Do not lay out a network without reading it.**
+
+**W10 — the first full-area design — is COMPLETE but NOT ISSUABLE.** 1,883 km of pipe,
+73,442 m³/d, 19–21 lifting stations, 98.1 % of plots served. Audited against W8's own check
+registry it fails four ways: **2.80 km of surcharged trunk, 10.68 km over d/D, 45.92 km below
+minimum cover, 1.67 km along a dual carriageway** — plus 131.7 km on wadi ground and a
+published layer in 7,919 disconnected pieces. Cause in one line: *W8's engineering was carried
+into W10 and W8's auditor was not.* **Its findings stand; its design does not.**
+
+**W11a has started and only stage 0 exists** — the auditor at `W11a/py/w11a/audit.py`,
+22 checks, run with `python W11a/py/run_audit.py`. Against W10: **2 pass, 13 FAIL, 7 cannot
+run** (`W11a/run/audit_W10.csv`), and that table is the specification for everything after.
+Two architectural rules it enforces: audit the **published layers**, never an in-memory model;
+and **a check that cannot run is a failure**, not a blank.
+
+**THE TOR REQUIRES EVERY PLOT TO BE SERVED** — scope p4 item 3, p6 item 2, p8 item 17. An
+earlier assumption that 31 marginal settlements would be dropped is **withdrawn**. But
+*serviced* ≠ *connected to one network*: the question is which **system** serves each — central,
+satellite, or on-site — decided on life-cycle cost. Scope p12 also makes pumping minimisation a
+**client requirement**, not our preference.
+
+**The largest open assumption:** 97 % of the network self-cleanses by the **tractive-force
+route**, and the guideline gives **no numeric τ** (GAP-9, assumed 1.0 Pa; 2.35× harder at 2.0).
+
+**Settled and not to be re-litigated:** oversizing to lay flatter is **prohibited** (G203-p29
+and Ten States §33.43 independently) · **no solver chooses a layout**, and none will ever
+propose a pumping station · the **cap-and-veto ladder** — 12 m of cover with two
+distance-bounded exits (500 m recovery, 1,000 m to outfall), everything past it flagged · a
+lifting station is also a **commissioning device** · **BAT is deliberately undecided**, both
+options into the appraisal.
+
+**Waiting on:** the draftsman's final treated lines and the GIS expert's clean land-use data —
+the scripts are being purified so both drop straight in.
+
+**Nine research documents in `W10/docs/research/`** underpin all of it: `HIERARCHY_RULES`,
+`CORRIDOR_QUALITY`, `WHAT_TO_SEWER`, `DEPTH_VS_PUMPING`, `SEWERGEMS_DESIGN_METHOD`,
+`DESIGN_ENGINES_COMPARED`, `W8_W10_POSTMORTEM`, `DELIVERABLE_SPEC`, `PHILOSOPHY_REVIEW`,
+`W11a_BUILD_BRIEF`.
 
 ### Superseded state (2026-08-23)
 **W8 is the live design.** The main pipe is an INPUT (`SHP/Main Pipe/Main Pipe.shp`), both legs draining to their meeting point at (449125, 2567769) — 792 m outside the boundary — then on to the existing STP. **A sewer network is a hierarchy**, learned from NAMA's own manhole IDs (`5A-2-TM-MH185` = trunk main, `5A-2-SM.2-MH391` = sub main): in the built network 91% of laterals drain into another lateral and only ~16 things touch the trunk. W7 had no sub-main tier and 30 things touched the main pipe; W8 has **20 joins and ZERO pumping stations** (14 or fewer costs a pump, below 8 it starts crossing dual carriageways). Every pipe carries a `TIER` field. Gradients are laid at **round 0.05 % steps** so the drawing matches the levels, with `SLOPE_PCT` in every output. Test area: **1,415 chambers / 71.6 km / Qadf 3,620 m3/d / peak 96 L/s / deepest 10.45 m / ZERO pumping stations** / 3 checks failing. W7 and earlier are superseded.

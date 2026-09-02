@@ -1,7 +1,23 @@
-# What is current, and what is not — checked 2026-08-31 (W9)
+# What is current, and what is not — checked 2026-09-02
 
-Read this before trusting any file in the repo. The job has grown, so this page says
-plainly which document is live and which is a record of past work.
+**READ THIS FIRST, THEN `07_PROJECT_STATE.md`, THEN `08_DESIGN_PHILOSOPHY.md` BEFORE LAYING
+OUT ANY NETWORK.**
+
+## Where the project actually stands, in six lines
+
+1. **`_BRAIN/08_DESIGN_PHILOSOPHY.md` is new and binding** — 232 lines, rules only. `02` says
+   whether a design is legal; `08` says how to make it good. Read it before any layout work.
+2. **W10 is complete but NOT ISSUABLE** — four compliance failures, listed below. Its
+   *findings* stand and are worth reading; its *design* is not.
+3. **W11a has started.** Stage 0 — the auditor — is built and runs. Nothing else exists.
+4. **The TOR requires ALL plots to be served** (scope p4 item 3). An earlier working
+   assumption that 31 settlements would be dropped is **withdrawn**. The question is which
+   *system* serves each, not whether.
+5. **97 % of W10's self-cleansing rests on the tractive route**, whose τ the guideline never
+   gives (GAP-9, assumed 1.0 Pa; at 2.0 the required gradient rises 2.35×). This is the
+   largest open assumption in the hydraulic design.
+6. **Waiting on two deliveries**: the draftsman's final treated lines, and the GIS expert's
+   clean land-use data. The scripts are being purified so both drop straight in.
 
 ## Live — use these
 
@@ -100,3 +116,57 @@ failing table is the specification.**
 | Treated effluent price and offtaker | NWS. It is our one genuine volumetric revenue stream, and its volume is capped by irrigation demand rather than by what the plant treats |
 | Capacity of the built 2006 network | **PARTLY ANSWERABLE NOW (corrected 2026-09-01).** The claim that no diameter or invert is recorded was wrong: it read `N_DIAMETER`, which is 0 on every built record, while `OUT_DIAMET` carries the real value. Measured on the ESRI shapefile: `OUT_DIAMET`, `US_INVERT_`, `DS_INVERT_` and `MATERIAL` are populated on **2,142 of 3,267 built pipes (66 %)**, and the split is by package — 5A-2/3/4/5 are 100 % complete, 5A-1 is 0 %. A hydraulic assessment of ~68.8 km is possible today. The survey is still needed for 5A-1 and for condition. NAMA's reference-only remark stands |
 | Whether the SUREKHA proposed alignments are a client commitment | **Largely answered from the data itself (2026-09-01): NOT approved.** The 29,038 m³/d plant record carries `HYPERLINK` = *"RG Master Plan (Concept Design) not approved yet. Kindly consult Asset Planning for any NOC's"*, `STATUS` = Design, `SOURCE` = ASSET PLANNING, `REMARKS` = ZONING_Treatment_Solutions. It sits at 444376 E 2563217 N — about 120 m south of the existing 1,800 m³/d plant, effectively the same site. Still worth written confirmation from NWS, but treat it as an unapproved concept, not a commitment |
+
+---
+
+## W11a — the live iteration (started 2026-09-02)
+
+| | |
+|---|---|
+| **Built** | `W11a/py/w11a/audit.py` — the stage 0 auditor. 22 checks: H1–H15 from the philosophy, 4 regression tests, 3 provenance checks. `python W11a/py/run_audit.py` runs it against W10 |
+| **Result on W10** | **2 pass, 13 FAIL, 7 cannot run** (`W11a/run/audit_W10.csv`). That table is the specification for W11a |
+| **Not built** | Everything else. Stages 1–9 of the build order in `W10/docs/research/W11a_BUILD_BRIEF.md` |
+
+**Two architectural rules the auditor enforces, both learned from W10's failures:** it audits
+the **published layers**, never an in-memory model; and **a check that cannot run is a
+failure**, not a blank.
+
+## W10 — NOT ISSUABLE, but its findings stand
+
+| Failure | Extent | Rule |
+|---|---|---|
+| Trunk **surcharged** | 5 reaches, 2.80 km | G203-p27 T10 |
+| Over the d/D limit | 66 reaches, 10.68 km | G203-p27 T10 |
+| Below **1.30 m minimum cover** | 169 reaches, 45.92 km | G203-p33 |
+| Pipe **along a dual carriageway** | 21 reaches, 1.67 km | project rule 7 |
+
+Plus 131.7 km on wadi ground, a published layer in 7,919 disconnected pieces, and no `TIER`,
+no laid gradient, no inverts, no constraint provenance.
+
+**Cause, in one line: W8's engineering was carried into W10 and W8's auditor was not.**
+
+## The nine research documents — read these before redesigning anything
+
+`W10/docs/research/` — `HIERARCHY_RULES.md` (what generates the tiers, measured from the
+as-built) · `CORRIDOR_QUALITY.md` (how trustworthy each of the four corridor sources is) ·
+`WHAT_TO_SEWER.md` (the marginal settlements) · `DEPTH_VS_PUMPING.md` (the economics; manning
+is 86 % of a station's life-cycle cost) · `SEWERGEMS_DESIGN_METHOD.md` and
+`DESIGN_ENGINES_COMPARED.md` (no solver chooses a layout) · `W8_W10_POSTMORTEM.md` (the
+59-check contract) · `DELIVERABLE_SPEC.md` (concept vs preliminary vs detailed, page-cited) ·
+`PHILOSOPHY_REVIEW.md` (the adversarial review) · `W11a_BUILD_BRIEF.md` (the build order).
+
+## Settled during 2026-09-01/02, do not re-litigate
+
+- **Oversizing a pipe to lay it flatter is PROHIBITED** — G203-p29, and Ten States §33.43
+  independently. An optimiser built on it was withdrawn (`W10/py/p3_optimise.py`, kept with a
+  warning).
+- **No solver chooses a layout** — SewerGEMS, InfoDrainage, Civil 3D, InfoWorks all size and
+  level what you hand them, and none will ever propose a pumping station.
+- **The cap-and-veto ladder** — 12 m of **cover** is the cap, with two distance-bounded exits
+  (recovers within 500 m, or reaches the outfall within 1,000 m). Everything past 12 m is
+  flagged. This reversed "12 m with no exceptions" deliberately, on 2026-09-02.
+- **The station count** is 19–21 depending on the funnel; the number is far less meaningful
+  than **total lift**, because distance-clustering measures breach density.
+- **A lifting station is a commissioning device**, not only a depth device.
+- **BAT is deliberately undecided** — 2,231 properties, 1,752 m³/d, 22–25 km out. Both
+  conveyance and a satellite works go into the options appraisal.

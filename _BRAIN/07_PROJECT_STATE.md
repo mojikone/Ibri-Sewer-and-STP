@@ -4,6 +4,46 @@
 ## 1. Project in three lines
 Concept→detailed design + supervision of sewer network, TE network and STP capacity for Ibri Wilayat, Oman (Client NWS, Tender T/2719110/2025, Renardet job 2621). Horizons: start / 2030 / 2055 / ultimate-saturated; ≥3 options each for sewer, TE, STP. Existing STP at E444387 N2563352 (ground ≈327.5 m); ultimate flows ≫ 20,000 m³/d ⇒ STP phasing is the pivotal decision.
 
+## 1b. WHERE THE PROJECT STANDS — 2026-09-02 (read this before anything else)
+
+**A new source exists and it is binding: `_BRAIN/08_DESIGN_PHILOSOPHY.md`.** 232 lines, rules
+only. `02` says whether a design is LEGAL; `08` says how to make it GOOD. Read it before
+laying out any network. It carries: six objectives in priority order with **hydraulic
+minimality LAST**; the order of design with **the trunk designed end to end before anything
+drains to it**; fifteen hard constraints (H1–H15) and six preferences (P1–P6); the
+**cap-and-veto ladder** for pumping; and the **two-pass strict-then-review** method.
+
+**W10 is complete but NOT ISSUABLE.** Four compliance failures — 2.80 km of surcharged trunk,
+10.68 km over d/D, 45.92 km below minimum cover, 1.67 km along a dual carriageway — plus
+131.7 km on wadi ground and a published layer in 7,919 disconnected pieces. Its **findings
+stand and are valuable**; its **design does not**. Detail: `_BRAIN/00_CURRENT.md`.
+
+**W11a has started. Only stage 0 exists** — the auditor, `W11a/py/w11a/audit.py`, 22 checks,
+run with `python W11a/py/run_audit.py`. Against W10 it returns **2 pass, 13 FAIL, 7 cannot
+run**, and that table is the specification. It audits the **published layers**, never an
+in-memory model, and treats **a check that cannot run as a failure**.
+
+**THE TOR REQUIRES EVERY PLOT TO BE SERVED.** Scope p4 item 3: *"All plots open and build up
+shall be designed and serviced including these plots located in existing areas."* An earlier
+working assumption that 31 marginal settlements would be dropped is **WITHDRAWN**. But
+*serviced* is not *connected to one network* — the question is which **system** serves each
+(central, satellite, on-site), decided on life-cycle cost. Scope p12 also makes pumping
+minimisation a **client requirement**: *"avoid pumping and utilize gravity as much as
+practically possible."*
+
+**THE LARGEST OPEN ASSUMPTION IN THE HYDRAULIC DESIGN**: 97 % of W10's network self-cleanses
+by the **tractive-force route**, not by velocity — and the guideline gives **no numeric τ**
+(GAP-9, assumed 1.0 Pa; at 2.0 the required gradient rises 2.35×). The auditor reports this
+exposure on every run. Settle it with NWS.
+
+**Waiting on:** the draftsman's final treated lines, and the GIS expert's clean land-use data.
+The scripts are being purified so both drop straight in and the full run repeats immediately.
+
+**Nine research documents in `W10/docs/research/`** underpin all of the above — the hierarchy
+rules measured from the as-built, corridor quality per source, what to sewer, the
+depth-versus-pumping economics, the solver comparison, the W8/W10 post-mortem, the deliverable
+specification, the adversarial review of the philosophy, and the W11a build brief.
+
 ## 2. Settled engineering doctrine (user-agreed, binding for design work)
 1. **Load allocation** (agreed 2026-08-15): *plots at saturation size the pipes; capped-and-spilled zone totals at dated years size the STP phases; the two meet only at trunk nodes.*
    - Pipes/civil: EVERY plot (built + future + unparceled buildings) at full saturation load (properties × OR × 171 l/c/d), accumulated with PF. No timing.
