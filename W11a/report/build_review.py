@@ -117,12 +117,28 @@ def part_a(d):
         ["G201-p85 §9.3", "A wadi crossing requires bed profiles and cross-sections, "
                           "1:20 / 1:50 / 1:100 flood frequency, bed material and bed-level "
                           "change, from CAA and MoAFWR, with MoAFWR approval."],
-        ["G201-p86", "Isolation and air valves both sides of an active or major crossing; "
-                     "washout at the low point; NO chambers or markers in the wadi bed or "
-                     "embankments; all accessible during flood."],
-        ["G203-p52 §8.2.4", "Cover at a wadi crossing is 1.5 m to crown, against 1.3 m "
-                            "normally."],
+        ["G201-p86", "DI over the crossing plus 15 m each side; protection to PAM-STD-404; "
+                     "anti-flotation check; isolation and air valves both sides of an active "
+                     "or major crossing. Also: no VALVE CHAMBERS or MARKER POSTS in the bed "
+                     "or on the embankments - a force-main clause about those structures, "
+                     "and NOT the authority for a gravity manhole."],
+        ["G203-p52 §8.2.4", "1.5 m to crown at a wadi crossing - but this sits in the FORCE "
+                            "MAIN section. G203 gives no special cover for a GRAVITY sewer "
+                            "at a wadi; G201-p86 raises it to 2.0 m in soft soil."],
     ], widths=[4.2, 11.8], font=9)
+    D.p(d, "")
+    D.callout(
+        d, "Two citations in H1a were wrong, and I corrected them on 2 September.",
+        "H1a item 2 cited G201-p86 for the prohibition on chambers. That clause is about "
+        "valve chambers and marker posts on a force-main crossing. The authority for a "
+        "gravity manhole is G203-p30 §4.4.1 and p33, whose word is \"avoided\" - and reading "
+        "\"avoided\" as \"prohibited\" is our project decision, now recorded as one. H1a item 3 "
+        "applied the 1.5 m cover to gravity sewers; that figure is the force-main one. We "
+        "keep 1.5 m as a conservative PROJECT rule pending a scour-depth check, which is "
+        "what actually governs - so a gravity reach at 1.30 m over a crossing is short of "
+        "OUR rule, not of the guideline's, and stage 3's 35 such reaches must be reported "
+        "that way. This is exactly the failure the project already has a rule against: "
+        "quote from the source, never from memory.")
     D.p(d, "")
     D.p(d, "A guideline that prints a four-item procedure for building a wadi crossing is "
            "not a guideline that forbids one. We were reading a prohibition on PRESENCE as "
@@ -269,13 +285,14 @@ def part_b(d, flows):
 
     D.h(d, 1, "Defects that are real and still open")
     D.table(d, ["What", "Size", "Why it matters"], [
-        ["Chambers on wadi ground", "1,051",
-         "H1a item 2 admits no exemption for a chamber, on a crossing or anywhere else "
-         "(G201-p86). Each must be re-sited."],
-        ["Plots outside the 45 m tertiary limit", "24,554 plots, 22,513 m³/d",
-         "30 % of the load has no compliant connection. The limit is G203-p22 Table 6 and "
-         "is not negotiable, so the answer is more chambers or a different connection "
-         "strategy - see Part C."],
+        ["Chambers on wadi ground", "2,354 of 50,033",
+         "H1a item 2 admits no exemption for a chamber (G203-p30 §4.4.1, p33). Only 48.2 % "
+         "of chambers sit on a valid hazard cell, so this is the tested half. Sliding them "
+         "clear fixes only 319: the corridors run DOWN the wadis, 100.4 km of them, and "
+         "587 chambers have no non-wadi ground within 250 m."],
+        ["Plots not connected by stage 5b", "24,554 plots, 22,513 m³/d",
+         "30.1 % of the load - but the 45 m rule owns only 8.59 % of it. The largest single "
+         "group, 9.63 %, is a drainability test run against PLACEHOLDER levels. See Part C."],
         ["Inlets under 90°", "2,788",
          "H10 / G203-p30. Each needs a purpose-made chamber with a swept channel."],
         ["Network reaching no trunk", "729 km, 40 %",
@@ -350,10 +367,15 @@ def part_c(d):
          "plot rather than for the run, a shared connection where G203 allows it, or a "
          "recorded decision that a particular frontage is not served. Adding chambers "
          "uniformly would buy compliance with maintenance cost we do not need."),
-        ("Re-site the 1,051 chambers on wadi ground before anything downstream reads them.",
-         "This one has no argument on the other side. G201-p86 is explicit, and a chamber "
-         "in a wadi bed is the failure mode that takes the network out of service in the "
-         "event it was designed for."),
+        ("Do not try to re-site the 2,354 chambers on wadi ground - re-route the corridors.",
+         "I had this wrong. Sliding chambers clear fixes only 319 of them; 587 have no "
+         "non-wadi ground within 250 m in any direction, because the corridors run DOWN the "
+         "wadis rather than across them - 100.4 km of on-wadi corridor with contiguous runs "
+         "up to 789 m. That is a stage 2 routing problem wearing a chamber-placement "
+         "costume, and 1,272 of the chambers need the crossing redesigned rather than the "
+         "chamber moved. Separately, 72 sit on the TRUNK, which is the client's own drawn "
+         "alignment running about 500 m down a class-5/6 wadi - one decision for NWS, not "
+         "seventy-two for us."),
         ("Extend the diameter series, once, with NWS confirmation.",
          "criteria.DN_SERIES stops at DN1200 and the trunk needs more. The sizes above it "
          "used here - 1400 / 1700 / 1800 / 2000 / 2400 - are the ones G203-p32 Table 13, "

@@ -38,8 +38,10 @@ OUT ANY NETWORK.**
 |---|---|---|---|
 | OPEN-S4-1 | Stage 4 fragments a 4-piece trunk into 74 | 773 "drainage systems", 729 km (40 %) reaching no trunk | Those counts are an ARTEFACT of this, not a design result. The trunk's chamber coordinates do not coincide with the corridor node set |
 | — | Corridor treatment shreds the trunk 3 → 58 pieces and loses 5.0 km | 5.0 km | A stage 2 defect, separate from OPEN-S4-1 |
-| — | Chambers on wadi ground | 1,051 | H1a item 2 / G201-p86 admit NO exemption, on a crossing or anywhere |
-| — | Plots outside the 45 m tertiary limit (G203-p22 Tab 6) | 24,554 plots, 22,513 m³/d | Includes plots with no load at all — the real figure is smaller and is being decomposed |
+| — | Chambers on wadi ground | **2,354** of 50,033 | H1a item 2 admits NO exemption (G203-p30 §4.4.1, p33). Only **48.2 %** of chambers sit on a valid hazard cell, so this is the tested half. The 1,051 previously quoted was a stage-4 figure taken BEFORE stage 5 minted the chamber set |
+| — | Chambers that cannot simply be slid clear | 587 have no non-wadi ground within 250 m | The corridors run DOWN the wadis — 100.4 km of on-wadi corridor, contiguous runs to 789 m. 1,272 need crossing redesign and 291 need corridor re-routing; sliding fixes only 319 |
+| — | Trunk-main chambers on wadi ground | 72 | The trunk is the CLIENT's drawn alignment; ~500 m of it runs down a class-5/6 wadi near E450 050 / N2 569 400. **One decision for the client, not 72** |
+| — | Plots not connected by stage 5b | 24,554 plots, 22,513 m³/d (30.1 %) | **Decomposed — the 45 m rule owns only 8.59 %.** 9.63 % is a drainability test run against PLACEHOLDER levels (every chamber is seeded at DEPTH_M 1.600 and stage 5b treats a seed as a level); 8.99 % have no carrier within 47.5 m; 8.59 % genuinely exceed 45 m; 2.89 % are a geometry artefact. Removing no-load plots changes the load by **zero** — they carry 0.0 m³/d by construction |
 | — | Inlets under 90° | 2,788 | H10 / G203-p30, each needs a swept channel |
 | — | Trunk on a dual carriageway | 535 m, 10 reaches | A defect of the INPUT alignment — the client's decision, not ours |
 | S3-3 | Existing works inlet invert unknown | — | Trunk laid to its own level, 319.94 m aOD, 8.78 m below ground at the works, published for confirmation |

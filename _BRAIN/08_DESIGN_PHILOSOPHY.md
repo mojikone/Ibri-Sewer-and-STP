@@ -83,12 +83,32 @@ as 1,257 separate drainage systems, so the rule has to distinguish *along* from 
    and its length is within the stated skew tolerance of the shortest crossing available at
    that point. *H1 says "perpendicular"; the tolerance on that word is a **project rule**,
    declared in `criteria`, not a guideline number.*
-2. **No chamber on wadi ground or on the embankment**, and none in the bed (G201-p86).
-3. **Cover ≥ 1.5 m to crown at the crossing**, not the normal 1.3 m (G203-p52 §8.2.4).
-4. **It is in the crossings schedule** with an `XING_ID`, carrying the G201 §9.3 obligations:
-   bed profile and cross-sections, 1:20/1:50/1:100 flood levels, bed material and bed-level
-   change, and **MoAFWR approval** (G201-p85). Isolation and air valves both sides on an
-   active or major crossing, washout at the low point, all accessible during flood (G201-p86).
+2. **No chamber on wadi ground or on the embankment.** The governing clause is
+   **G203-p30 §4.4.1 and p33** — wadis and flood-prone/washout areas are prohibited to
+   *pipelines AND chambers*. *(This citation was wrong until 2026-09-02: it read G201-p86,
+   which is the §9.3 clause forbidding **valve chambers and marker posts** on a force-main
+   crossing — a different clause about different structures. G201-p86 still applies to a
+   force main; it is not the authority for a gravity manhole.)* The guideline word is
+   **"avoided"**; we read it as **prohibited**, and that is a **project decision** recorded
+   here rather than a quotation.
+3. **Cover at the crossing.** G203 gives **no special cover for a GRAVITY sewer at a wadi**.
+   The 1.5 m-to-crown figure is **G203-p52 §8.2.4, which sits in the FORCE MAIN section**,
+   and G201-p86 raises it to **2.0 m in soft soil**. We adopt 1.5 m for gravity crossings as
+   a **PROJECT DECISION** — conservative, and pending a scour-depth check, which is what
+   actually governs. **A gravity reach at 1.30 m over a crossing is therefore short of our
+   own rule, not of the guideline's**, and must be reported that way.
+4. **It is in the crossings schedule** with a `CROSS_ID` resolving to an `OBSTACLE='wadi'`
+   row — an id with no row behind it schedules nothing. The register carries the G201 §9.3
+   obligations: bed profile and cross-sections, 1:20/1:50/1:100 flood levels, bed material
+   and bed-level change, **MoAFWR approval** (G201-p85), DI over the crossing plus 15 m each
+   side, anti-flotation check, and protection to **PAM-STD-404** (G201-p86).
+
+**What "wadi ground" is measured by, and that it is a proxy.** The test is
+`criteria.HAZARD_WADI_CLASSES = (4, 5, 6)` of the 50-year grid. Those are **AR&R
+flood-hazard classes**, keyed on danger to people and vehicles — class 4 is about 1.2 m of
+water — and they are standing in for G203's *"areas subject to washout"*, which is a
+**scour** criterion. It is a defensible proxy and it is a **project assumption**, to be
+tagged in `02` beside GAP-9, not a guideline threshold.
 
 **Anything on wadi ground that fails any of the four is prohibited**, and the resolutions are
 the four in §3: re-route, a station, a designed crossing that *does* qualify, or not serving
