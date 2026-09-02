@@ -18,7 +18,24 @@ inlet, including its lifting stations and rising mains. The treated-effluent net
 treatment works are governed by their own criteria in `02` and need their own philosophy;
 neither is covered here, and that omission is deliberate rather than an oversight.
 
-**Status: 2026-09-02.** Complete. Sections 8 and 9 are sourced; §5.1 carries a retraction. Everything else rests on measurements made in W8, W10 and NAMA's as-built network,
+> ## ⛔ STATUS 2026-09-02: NOT READY TO DESIGN FROM
+>
+> An adversarial review (`W10/docs/research/PHILOSOPHY_REVIEW.md`, 727 lines) returned
+> **8 CRITICAL and 14 MAJOR findings**. The *judgement* in this document survives — the
+> objective ordering, the order of design, the cap-and-veto ladder, the two-pass method, and
+> "a solver can referee hydraulics and never routing" all check out. **What failed is the
+> layer beneath it: the numbers, the citations and the checks.**
+>
+> The worst of it, and it is this document convicting itself: **about a dozen headline
+> measurements cannot be traced to any saved file** — including four in the blockquote below,
+> which is the document's whole reason to exist. They were computed in throwaway scripts that
+> were never kept. That is a direct breach of **P2 — "every published number comes from
+> exactly one function"** — by the document that states it.
+>
+> Fixed so far: the 20 mm tolerance (was wrongly stated as 40 mm), the missing 0.75 m/s
+> minimum velocity and 0.90 m/s preferred, and the tier-vocabulary clash with G203.
+> **Outstanding: the traceability rebuild, the depth re-measurement in §5.1b, and the §9
+> citations.** Do not design from this until that banner is removed. Everything else rests on measurements made in W8, W10 and NAMA's as-built network,
 and every claim carries where it came from.
 
 ---
@@ -81,6 +98,24 @@ sub main, sub mains join the trunk. Measured on NAMA's properly labelled package
 11 is dominated by package 5A-1, which carries **zero TM and zero SM tokens** across its
 1,123 pipes — everything there parses as a lateral because no other label exists. In the
 labelled packages the chain is **median 2, max 5**.
+
+**3.1a A WARNING ON VOCABULARY — ours and the guideline's do not agree.** The tier names above
+come from NAMA's own manhole tokens. **G203 uses them differently**, and the clash must be
+resolved before any rule is applied to a named tier:
+
+| Term | G203 (p17, p21, p22) | NAMA's tokens / this document |
+|---|---|---|
+| **Lateral sewer** | **tertiary** — max **45 m**, 1–10 %, OD200 minimum | a street run, median 132 m, cap 920 m |
+| **Main sewer** | the street run | *no equivalent tier* |
+| **Sub main** | *not used* | a collector route, from NAMA's `SM` tokens |
+
+**The consequence is not cosmetic:** whether a street run takes Table 11's 0.5 % or Table 5's
+1 % turns on which name it carries, and `02_DESIGN_CRITERIA.md` calls the wrong choice a
+design trap by name. Until this is settled, **every tier rule in this document must state
+which vocabulary it is using**, and H8 (minimum sizes and materials by tier) cannot be applied
+at all. Proposed resolution, for the engineer's decision: adopt **G203's names** as the
+governing vocabulary — rider, lateral (tertiary), main, sub main, trunk main — and carry
+NAMA's tokens only as a cross-reference for reading their as-built.
 
 **3.2 Long runs beat short ones — but chamber spacing is capped by the jetting truck, not
 by hydraulics.** Every junction is a chamber, a cost and a place to block, so maximise the
@@ -334,14 +369,29 @@ That is why our hard set can hold both constraints where Bentley's cannot.
 | H2 | Capacity ≥ discharge within the d/D limit | G203-p27 Tab 10 |
 | H3 | Minimum cover 1.30 m to crown, on the reach's **own** outside diameter | G203-p33 4.6.3 |
 | H4 | **Maximum cover 12 m — the cap** | G203-p33 + project rule, no exemption |
-| H5 | Self-cleansing: the steeper of Table 11 and the tractive-force minimum | G203-p26–29 |
+| H5 | **Minimum velocity 0.75 m/s AT PEAK FLOW** — G203-p26, *"the minimum velocity in the pipe shall be above 0.75 m/s at peak flow, with preferred velocity at 0.90m/s"*. A "shall", and a **separate, stronger test** than H5a | G203-p26 |
+| H5a | Gradient at least the steeper of Table 11 and the tractive-force minimum | G203-p26–29 |
 | H6 | Maximum velocity — 3.0 m/s gravity, **2.5 m/s rising main** | G203-p27, p50 |
 | H7 | Diameter set by flow; **never** by the depth wanted | G203-p29, Ten States §33.43 |
 | H8 | Minimum sizes and materials by tier | G203-p22 Tab 6 |
 | H9 | Inlet angle ≥ 90° | G203-p30 |
-| H10 | No reverse gradient; 40 mm construction tolerance absorbed | G203-p29 4.3.1 |
+| H10 | No reverse gradient. **The guideline tolerance is 20 mm**: G203-p29, *"The lines and level of any pipeline shall not deviate from that described in the contract by more than 20mm and combination of such deviation shall not create a reverse gradient."* The 40 mm used in the solver is a **derived** two-end combination, and must be labelled as derived wherever it appears | G203-p29 4.3.1 |
 | H11 | Chamber spacing within Table 12 | G203-p30 |
 | H12 | The network is a forest — zero loops | project rule |
+
+**Why H5 and H5a are two rules and not one.** Table 11 is a **full-bore** derivation — it
+gives the gradient at which a *pipe running full* reaches 0.75 m/s. The p26 "shall" is
+0.75 m/s **at peak flow**, which is a partly-full condition. `GRADIENT_CRITERIA_VERIFIED.md`
+§2.1 establishes [Certain] that **Table 11 is the weaker of the two**. A design that meets
+every gradient in Table 11 can therefore still breach a "shall", which is exactly what H5
+exists to catch. The **0.90 m/s preferred** value is a target, not a constraint, and belongs
+in the review pass.
+
+**And the τ that H5a depends on is not in the guideline.** The tractive formula
+`Smin = 2.33e-4·τ^1.23·Q^-0.461` is given at G203-p27, but **no numeric τ appears anywhere in
+G203 or G201** — the project assumes 1.0 Pa and carries it as **GAP-9**. At τ = 2 the
+requirement rises by 2.35×. Any station count, depth or diameter that rests on H5a must be
+reported with that sensitivity, never as a settled number.
 
 ### Preferences — these DO yield, and in this order
 
