@@ -273,10 +273,51 @@ rotating it, which preserves a gradient decision, and for us preserves the round
 the drawing depends on; and the reverse pass is **four operations, not a re-solve** —
 precisely the class of cheap check that would have caught our minimum-cover failure.
 
-*Caveat kept deliberately:* the detailed step sequence sits under a heading reading
-"(StormCAD Only)", though it ships in all three products' help and Bentley's own article is
-titled for SewerCAD too. Rated [Likely]. **Never write "SewerGEMS performs 22 steps" into a
-client document without that footnote.**
+*The earlier caveat is withdrawn.* A follow-up sweep of Bentley's knowledge base settled it.
+KB0016752, scoped to **SewerCAD, SewerGEMS, CivilStorm and StormCAD**, states: *"The design
+solver runs a check in both directions, so it is designed both ways."* And KB0016766 — the
+article titled for SewerCAD — carries the reverse pass verbatim: *"After designing all pipes
+from upstream to downstream, we design all pipes from downstream to upstream."* [Certain,
+verified against Bentley's own API]
+
+**Bentley's staff confirm the ranking in plain words.** Jesse Dringoli, their Manager of
+Technical Support, answering a user whose design had violated maximum cover to satisfy
+minimum slope: *"minimum cover is higher priority than minimum slope, and maximum cover is
+below everything. So, automated design selected the smaller (cheaper) pipe size … since it
+met all the constraints that it deems as important."*
+
+**And they say plainly what it is for.** KB0016766: *"the constraint-based design feature is
+intended to help give you a starting point for your design based on the criteria that you
+enter, but the final choice of the design should be based on engineering judgment and
+experience."* Dringoli: *"Automated design is not meant to provide perfect results."* Read
+that as the vendor agreeing with §7 — one solver pass is not a design, and the review pass is
+not optional.
+
+**9.3a Drop structures — the steep-ground mechanism, and it is switchable.** Bentley inserts
+them automatically, on two separate triggers (KB0015543, KB0057310):
+
+- `Allow Drop Structure` — fires *"when manhole upstream pipe slope exceeds the conduit
+  maximum slope"*, i.e. exactly the cliff case in §4.4
+- `Use Drop Structure to Minimize Cover` + `Minimum Drop Depth` — added later, *"to minimize
+  the volume of excavation"*
+
+KB0016766 gives the reasoning: a drop is used *"instead of a pipe that is too steep, or
+instead of upstream piping that would require much more excavation."* **This is direct vendor
+support for §4.4, and it is the feature W10 had no equivalent of** — which is why W10 let a
+pipe follow the ground to a laid gradient of 980 %.
+
+**9.3b The design engine will never propose a pumping station.** [Certain, by mechanism] Only
+gravity elements are designed — *"Any changes to the pressure elements would need to be done
+manually"* (KB0016750) — and maximum cover is the lowest priority, so the solver **keeps
+deepening rather than escalating to pumping**. It has no concept of the trade in §5. This is
+the strongest possible confirmation that **the pumping decision belongs to us, before the
+solver runs**, and cannot be delegated to a referee model.
+
+**9.3c One sizing detail to watch when we use SewerGEMS as referee.** KB0057316: *"during the
+constraint based design calculations, pipes are sized based on the flow at the upstream end
+of the conduit, before such attenuation is accounted for."* A referee run will therefore size
+marginally conservatively against a dynamic solve; do not read small differences as our
+error.
 
 **9.4 What the other engines add.**
 

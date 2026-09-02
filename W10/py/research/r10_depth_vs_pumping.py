@@ -288,30 +288,41 @@ def main():
             QADF_M3D=round(qadf, 2), QPK_LS=round(qpk, 3), P_KW=round(pkw, 3),
             EXC_M=round(r["dist"], 1), EXC_REACHES=r["reaches"], STATUS=r["status"],
             MAXDEPTH_NOPS=round(r["maxdepth"], 2),
-            REBREACH=int(r["rebreach"]), REBREACH_M=round(r["rebreach_m"], 1),
+            GROUND_RECOV_M=round(r["g_recov"], 1), GROUND_FULL_M=round(r["g_full"], 1),
             DM_M2=round(r["dm"], 1),
             DIG_B1=round(r["c1"], 0), DIG_B15=round(r["c15"], 0), DIG_B2=round(r["c2"], 0),
             PS_CAPEX=round(cap_s, 0), PS_OPEX_YR=round(ope_s, 0), PS_KWH_YR=round(kwh, 0),
             PS_LCC=round(lcc_s, 0), PS_LCC_NOSTAFF=round(lcc_n, 0)))
     df = pd.DataFrame(rows).sort_values("DM_M2", ascending=False)
 
+    # ELIMINABLE means the no-station branch rejoins the shipped profile without ever
+    # passing 12.00 m again. Only for these is "no station" an option at all; everywhere
+    # else the station is deferred downstream, not saved.
+    df["ELIMINABLE"] = (df.STATUS == "CONVERGED").astype(int)
     for tag, lcc in (("STAFFED", "PS_LCC"), ("UNSTAFFED", "PS_LCC_NOSTAFF")):
         for bb, col in ((1.0, "DIG_B1"), (1.5, "DIG_B15"), (2.0, "DIG_B2")):
-            df[f"WIN_{tag}_B{bb}"] = (df[col] > df[lcc]).astype(int)
+            df[f"WIN_{tag}_B{bb}"] = ((df[col] > df[lcc]) | (df.ELIMINABLE == 0)).astype(int)
     out = os.path.join(C.OUT_RUN, "research_breakeven_breaches.csv")
     df.to_csv(out, index=False)
     print(f"wrote {out}  ({len(df)} rows)")
 
     # ------------------------------------------------------------------ headline
-    print("\n--- excursion geometry, measured ---")
+    print("\n--- what happens downstream when the station is deleted ---")
+    print(df.STATUS.value_counts().to_string())
+    el = df[df.ELIMINABLE == 1]
+    print(f"\n--- excursion geometry of the {len(el)} that could be eliminated ---")
     for q in (0.10, 0.25, 0.50, 0.75, 0.90, 1.00):
-        print(f"  p{int(q*100):>3}  length {df.EXC_M.quantile(q):8.0f} m   "
-              f"DM {df.DM_M2.quantile(q):9.0f} m2   "
-              f"max depth no-PS {df.MAXDEPTH_NOPS.quantile(q):6.2f} m")
-    print(f"  converged {int((df.STATUS=='CONVERGED').sum())}, "
-          f"reached outlet {int((df.STATUS=='OUTLET').sum())}, "
-          f"capped {int((df.STATUS=='CAPPED').sum())}")
-    print(f"  re-breach downstream (station deferred, not saved): {int(df.REBREACH.sum())}")
+        print(f"  p{int(q*100):>3}  length {el.EXC_M.quantile(q):7.0f} m   "
+              f"DM {el.DM_M2.quantile(q):8.0f} m2   "
+              f"max depth no-PS {el.MAXDEPTH_NOPS.quantile(q):6.2f} m   "
+              f"dig(b=1.5) {el.DIG_B15.quantile(q):9.0f} OMR   "
+              f"station {el.PS_LCC.quantile(q):9.0f} OMR")
+    print("\n--- the weaker 'ground alone recovers' measure, for comparison ---")
+    for lim in (100, 250, 500, 1000, 3000):
+        a = int((df.GROUND_RECOV_M <= lim).sum())
+        c = int(((df.EXC_M <= lim) & (df.STATUS == "CONVERGED")).sum())
+        print(f"  within {lim:5d} m:  ground fall alone clears (depth - 12.00 m) "
+              f"{a:3d} of {len(df)}   |   pipe truly rejoins the design profile {c:3d}")
 
     print("\n--- how many of the 239 justify a station ---")
     for tag in ("STAFFED", "UNSTAFFED"):
@@ -328,13 +339,13 @@ def main():
                 scale = k / K_DEPTH_REF
                 dig = df[col] * scale
                 lcc = df["PS_LCC"] if staff else df["PS_LCC_NOSTAFF"]
+                keep = (dig > lcc) | (df.ELIMINABLE == 0)
+                drop = ~keep
                 sens.append(dict(K_DEPTH=k, B=bb, STAFFED=int(staff),
-                                 STATIONS=int((dig > lcc).sum()),
-                                 PCT=round(100.0 * (dig > lcc).mean(), 1),
-                                 EXTRA_DIG_MOMR=round(
-                                     float(dig[dig <= lcc].sum()) / 1e6, 3),
-                                 SAVED_MOMR=round(
-                                     float(lcc[dig <= lcc].sum()) / 1e6, 3)))
+                                 STATIONS=int(keep.sum()),
+                                 PCT=round(100.0 * keep.mean(), 1),
+                                 EXTRA_DIG_MOMR=round(float(dig[drop].sum()) / 1e6, 3),
+                                 SAVED_MOMR=round(float(lcc[drop].sum()) / 1e6, 3)))
     sd = pd.DataFrame(sens)
     out2 = os.path.join(C.OUT_RUN, "research_breakeven_sensitivity.csv")
     sd.to_csv(out2, index=False)
