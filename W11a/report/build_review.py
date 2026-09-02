@@ -21,6 +21,58 @@ sys.path.insert(0, os.path.join(REPO, "W9", "report"))
 import doc as D                                                        # noqa: E402
 from docx.shared import Pt                                             # noqa: E402
 
+
+IMG = os.path.join(HERE, "img")
+
+# A4 portrait, 2.2 cm margins: the text column is 16.6 cm and about 22 cm of height is usable
+# once a caption is allowed for. doc.picture() sizes by WIDTH only, which puts a 0.42:1
+# flowchart 38 cm down the page and off the end of it.
+COL_CM = 16.6
+MAX_H_CM = 21.5
+
+
+def figure(d, name, caption, finding=None, width_cm=None):
+    """Place a figure so it FITS, then caption it with the finding rather than the layer.
+
+    Sized by height when the image is taller than the page allows, by width otherwise. A
+    missing figure is reported in the document, not skipped silently - the figure agents run
+    in parallel and a quietly absent figure is how a report ends up claiming to show
+    something it does not.
+    """
+    path = os.path.join(IMG, name if name.endswith(".png") else name + ".png")
+    if not os.path.exists(path):
+        D.callout(d, "FIGURE MISSING.",
+                  f"{name} was not produced. Caption would have read: {caption}")
+        return
+    from PIL import Image
+    with Image.open(path) as im:
+        w, h = im.size
+    ratio = w / max(h, 1)
+    if width_cm is None:
+        width_cm = min(COL_CM, MAX_H_CM * ratio)
+    D.picture(d, path, width_cm=width_cm)
+    D.fig_caption(d, caption)
+    if finding:
+        D.p(d, finding, italic=True, size=9.5, colour=D.GREY)
+
+
+def figure_appendix(d):
+    """Everything the figure agents produced that the body has not already placed."""
+    placed = {"FC01_pipeline", "FC02_ladder", "FC03_wadi_tree", "FC04_flow_chain",
+              "FC05_method", "FC06_scope", "FC07_appraisal", "FC08_two_pass"}
+    import glob
+    rest = sorted(f for f in glob.glob(os.path.join(IMG, "*.png"))
+                  if os.path.splitext(os.path.basename(f))[0] not in placed)
+    if not rest:
+        D.p(d, "No further figures were produced.", italic=True)
+        return
+    D.p(d, f"{len(rest)} further figures were produced by the figure programme. Each is "
+           f"named for what it shows and every value on it traces to a layer in "
+           f"W11a/shp/ or a run artefact in W11a/run/.")
+    for f in rest:
+        nm = os.path.splitext(os.path.basename(f))[0]
+        figure(d, nm, nm.replace("_", " "))
+
 OUT = os.path.join(HERE, "W11a_Design_Review_R1.docx")
 REV = "R1"
 DATE = "2 September 2026"
@@ -68,6 +120,12 @@ def summary(d):
     D.p(d, "")
 
     D.h(d, 2, "The five findings that matter")
+    figure(d, "FC05_method",
+           "How every defect in this report was found",
+           "Not one was found by reading the code. Each came from making two things that "
+           "should agree disagree in public - the auditor against the criteria, a stage "
+           "against the auditor, a number against its own derivation, a citation against "
+           "its source.")
     for lead, txt in [
         ("A wadi crossing is legal, and forbidding it cost us the network.",
          "PAM-GUD-203 p30 §4.4.1 and p33 forbid pipes and chambers IN a wadi because of "
@@ -169,6 +227,10 @@ def part_a(d):
            "are found. A pipe crossing square has a contact no longer than the band is "
            "wide across it; a pipe running down the band has a long contact and a narrow "
            "perpendicular extent. The ratio is the measurement.")
+    figure(d, "FC03_wadi_tree",
+           "H1a - is this wadi contact legal?",
+           "The along/across test is geometric, not a length threshold, so no metric is "
+           "invented. Only the skew tolerance is a number, and it is ours.")
     D.callout(
         d, "Declared as ours, not theirs.",
         "H1 says a crossing is \"perpendicular\". The tolerance on that word - 1/cos 30° - "
@@ -241,6 +303,10 @@ def part_a(d):
 def part_b(d, flows):
     D.part(d, "B", "Where the design stands")
 
+    figure(d, "FC01_pipeline",
+           "The W11a pipeline, and where the auditor sits",
+           "Green runs, amber is the stage that was missing, red is blocked. The auditor "
+           "reads the published layers, never the in-memory model.")
     D.h(d, 1, "What runs, and what it produces")
     D.table(d, ["Stage", "Status", "Result"], [
         ["1 scope", "runs", "187 settlements, every one on the central system. The G201-p80 "
@@ -252,8 +318,9 @@ def part_b(d, flows):
         ["3 trunk", "runs", "85.55 km gravity, 758 chambers, DN200-1700, 73,442 m³/d and "
                             "1,350 L/s at the works, 3 pumping stations, deepest cover "
                             "11.86 m with nothing past the 12 m cap."],
-        ["4 hierarchy", "runs", "773 drainage systems. Trunk arrives in 74 pieces - a "
-                                "defect, see below."],
+        ["4 hierarchy", "runs", "261 drainage systems, trunk in 4 pieces, H15 and H16 both "
+                                "PASS - 261 components, exactly one outfall each, and the "
+                                "declared topology matches the drawn one."],
         ["5 chambers", "runs", "50,033 chambers, 27.5 per km, 36 m mean spacing. 2,788 "
                                "inlets under 90°."],
         ["5b tertiary", "runs", "52,188 m³/d reaches a chamber (70 %); 22,513 m³/d over "
@@ -263,6 +330,11 @@ def part_b(d, flows):
         ["7 stations, 8 packages, 9 export", "blocked", "wait on stage 6."],
     ], widths=[3.4, 2.0, 10.6], font=8.5)
 
+    figure(d, "FC04_flow_chain",
+           "How a plot becomes a peak flow",
+           "Every step carries its guideline page. The peak factor below 100 properties is "
+           "HELD rather than derived, because G201 prescribes no formula there - that is an "
+           "assumption and the figure says so.")
     D.h(d, 1, "The trunk, measured rather than argued about")
     D.p(d, "Stage 4 had been reporting the trunk's fragmentation as one defect. Noding the "
            "same 85.5 km at 10 mm from each available source separates it into two:")
@@ -272,17 +344,41 @@ def part_b(d, flows):
         ["Stage 2 corridors, SRC = main_pipe", "667", "80.5 km", "58"],
     ], widths=[7.0, 3.0, 3.0, 3.0], font=9, align_right={1, 2, 3})
     D.p(d, "")
-    D.bullet(d, "the corridor treatment shreds the trunk from 3 pieces to 58 and loses "
-                "5.0 km of it, which is a stage 2 defect and not an alignment one;",
-             lead="First,")
-    D.bullet(d, "stage 4 then takes a 4-piece trunk to 74, because the trunk's chamber "
-                "coordinates do not coincide with the corridor node set it is matched "
-                "into. Raised as OPEN-S4-1.", lead="Second,")
+    D.bullet(d, "the corridor treatment shredded the trunk from 3 pieces to 58 and lost "
+                "5.2 km of it - a stage 2 defect. Still open as OPEN-S2-2: stage 2 publishes "
+                "its own displaced copy of the trunk, 669 corridors over 80.27 km in 58 "
+                "pieces, and that copy is the entire reason the weld has to strip 5.8 km of "
+                "shadow.", lead="First,")
+    D.bullet(d, "stage 4 then took a 4-piece trunk to 74, because it was using stage 3's "
+                "geometry only as a 0.5 m proximity MASK over stage 2's corridors - so "
+                "\"the trunk\" in stage 4 was a subset of the corridors and inherited their "
+                "fragmentation. CLOSED: the trunk now enters as edges and only the 819 "
+                "corridors it touches are re-noded with it, 3.1 % of stage 2's topology.",
+             lead="Second,")
     D.p(d, "")
-    D.p(d, "Until one of those is fixed, the drainage-system count is an artefact of the "
-           "mismatch and not a design result. The report says so rather than letting 773 "
-           "stand as a finding.", bold=True)
-
+    D.table(d, ["Measure", "Before the weld", "After"], [
+        ["Trunk pieces", "74", "4"],
+        ["Graph roots against components", "351 / 311 = 40 excess", "286 / 283 = 3 excess"],
+        ["Published drainage systems", "323", "261"],
+        ["Published trunk", "76.11 km, mask-selected", "86.33 km in 4 pieces"],
+        ["H15 - one outfall per component", "could not be shown", "PASS, 261 of 261"],
+    ], widths=[6.0, 5.3, 5.3], font=9, align_right={1, 2})
+    D.p(d, "")
+    D.callout(
+        d, "Nothing moved, and that was checked rather than asserted.",
+        "The main pipe is a client input. Maximum perpendicular deviation of any published "
+        "trunk reach from stage 3's alignment is 2.918 m, with ZERO reaches past the 3.0 m "
+        "node merge radius, and 100 % of stage 3's 85.547 km carries a published trunk-tier "
+        "reach within 3 m. Main Pipe.shp is untouched on disk.",
+        fill="EEF3FA", colour=D.MID)
+    D.p(d, "")
+    D.p(d, "One correction to how I first reported this. I wrote that OPEN-S4-1 caused the "
+           "729 km of network reaching no trunk. It did not - welding the trunk recovers "
+           "about 0.1 km of it. The corridor graph was already fragmented before the trunk "
+           "was looked at, and the fix that mattered was healing stage 2's 4 m cut hole. "
+           "The trunk weld matters for TOPOLOGY - 40 excess outfalls down to 3 - not for "
+           "length.", bold=True)
+    D.p(d, "")
     D.h(d, 1, "Defects that are real and still open")
     D.table(d, ["What", "Size", "Why it matters"], [
         ["Chambers on wadi ground", "2,354 of 50,033",
@@ -334,6 +430,14 @@ def part_c(d):
         "does not count an operator visiting a second site for twenty-five years. Price "
         "the visits, or the comparison is decided by whichever cost we forgot.")
 
+    figure(d, "FC02_ladder",
+           "The cap-and-veto ladder",
+           "Depth is capped before economics is consulted, and oversizing to lay flatter is "
+           "drawn as what it is: the tempting answer, and prohibited.")
+    figure(d, "FC06_scope",
+           "Which system serves each settlement",
+           "The TOR requires every plot to be SERVED. It does not require one network to "
+           "serve them, which is why BAT is two options rather than a decision.")
     D.h(d, 1, "The recommendations, ranked by what they change")
     for n, (lead, txt) in enumerate([
         ("Get full-coverage flood mapping.",
@@ -431,6 +535,11 @@ def part_d(d):
 
 def part_e(d):
     D.part(d, "E", "Next steps")
+    figure(d, "FC07_appraisal",
+           "The options appraisal, and where BAT enters it")
+    figure(d, "FC08_two_pass",
+           "The two-pass method, and the two gates in the audit",
+           "A check that cannot run is a failure. The failing table is the specification.")
     D.h(d, 1, "In order")
     for n, t in enumerate([
         "Finish stage 5c and let the chain reach stages 6 to 9, so there is a levelled, "
@@ -482,6 +591,10 @@ def main():
     part_c(d)
     part_d(d)
     part_e(d)
+    D.part(d, "F", "Figures")
+    D.h(d, 1, "The figure programme")
+    figure_appendix(d)
+
     D.footer_pagenum(d, f"2621 Ibri - W11a Design Review {REV} - internal")
     os.makedirs(HERE, exist_ok=True)
     d.save(OUT)
