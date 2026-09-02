@@ -1,33 +1,379 @@
 {
   "contract": "W11a-contract-1.1",
-  "written": "2026-09-02 10:16:05",
+  "written": "2026-09-02 15:01:26",
   "stages": [
     {
       "stage": "s9_export",
       "order": 9,
-      "seconds": 0.0,
+      "seconds": 366.49,
       "reads": [
         {
           "name": "nodes",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
-          "n": 48137
+          "n": 49624
+        },
+        {
+          "name": "reaches",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 49377
+        },
+        {
+          "name": "rising_mains",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 0
+        },
+        {
+          "name": "stations",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 98
         },
         {
           "name": "connections",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
-          "n": 30105
+          "n": 50428
         },
         {
           "name": "corridors",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
-          "n": 22900
+          "n": 26450
+        },
+        {
+          "name": "crossings",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 3290
+        },
+        {
+          "name": "packages",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 502
         }
       ],
-      "writes": [],
-      "metrics": {},
-      "notes": [],
-      "no_change_reason": "upstream layers absent: reaches. Exited 0 rather than writing a partial deliverable set - a schedule printed from half a design is worse than no schedule.",
-      "funnels": []
+      "writes": [
+        {
+          "name": "shp:nodes",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_nodes.shp",
+          "n": 49624
+        },
+        {
+          "name": "shp:reaches",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_reaches.shp",
+          "n": 49377
+        },
+        {
+          "name": "shp:rising_mains",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_rising_mains.shp",
+          "n": 0
+        },
+        {
+          "name": "shp:stations",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_stations.shp",
+          "n": 98
+        },
+        {
+          "name": "shp:connections",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_connections.shp",
+          "n": 50428
+        },
+        {
+          "name": "shp:corridors",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_corridors.shp",
+          "n": 26450
+        },
+        {
+          "name": "shp:crossings",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_crossings.shp",
+          "n": 3290
+        },
+        {
+          "name": "shp:packages",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_packages.shp",
+          "n": 502
+        },
+        {
+          "name": "dxf",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\dxf\\W11a_network.dxf",
+          "n": 49377
+        },
+        {
+          "name": "kmz",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_sewer_design.kmz",
+          "n": 49377
+        },
+        {
+          "name": "png",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_M1_tiers.png",
+          "n": null
+        },
+        {
+          "name": "png",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_M2_diameters.png",
+          "n": null
+        },
+        {
+          "name": "png",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_M3_cover.png",
+          "n": null
+        },
+        {
+          "name": "png",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_M4_packages.png",
+          "n": null
+        },
+        {
+          "name": "png:profile",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_P01_profile_trunk_1.png",
+          "n": 936
+        },
+        {
+          "name": "png:profile",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_P02_profile_trunk_2.png",
+          "n": 233
+        },
+        {
+          "name": "png:profile",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_P03_profile_trunk_3.png",
+          "n": 116
+        },
+        {
+          "name": "png:profile",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_P04_profile_trunk_4.png",
+          "n": 58
+        },
+        {
+          "name": "png:profile",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_P05_profile_trunk_5.png",
+          "n": 62
+        },
+        {
+          "name": "png:profile",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_P06_profile_trunk_6.png",
+          "n": 42
+        },
+        {
+          "name": "png:profile",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_P07_profile_trunk_7.png",
+          "n": 3
+        },
+        {
+          "name": "png:profile",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_P08_profile_submain_1.png",
+          "n": 400
+        },
+        {
+          "name": "png:profile",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_P09_profile_submain_2.png",
+          "n": 266
+        },
+        {
+          "name": "png:profile",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_P10_profile_submain_3.png",
+          "n": 233
+        },
+        {
+          "name": "png:profile",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_P11_profile_submain_4.png",
+          "n": 277
+        },
+        {
+          "name": "png:profile",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_P12_profile_submain_5.png",
+          "n": 188
+        },
+        {
+          "name": "png:profile",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_P13_profile_submain_6.png",
+          "n": 138
+        },
+        {
+          "name": "png:profile",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_P14_profile_submain_7.png",
+          "n": 152
+        },
+        {
+          "name": "png:profile",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_P15_profile_submain_8.png",
+          "n": 168
+        },
+        {
+          "name": "png:profile",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_P16_profile_submain_9.png",
+          "n": 150
+        },
+        {
+          "name": "png:profile",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_P17_profile_submain_10.png",
+          "n": 102
+        },
+        {
+          "name": "png:profile",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_P18_profile_submain_11.png",
+          "n": 209
+        },
+        {
+          "name": "png:profile",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\img\\W11a_P19_profile_submain_12.png",
+          "n": 217
+        },
+        {
+          "name": "schedule:chambers",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\W11a_schedule_chambers.csv",
+          "n": 49624
+        },
+        {
+          "name": "schedule:pipes",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\W11a_schedule_pipes.csv",
+          "n": 49377
+        },
+        {
+          "name": "schedule:stations",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\W11a_schedule_stations.csv",
+          "n": 98
+        },
+        {
+          "name": "schedule:rising_mains",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\W11a_schedule_rising_mains.csv",
+          "n": 0
+        },
+        {
+          "name": "schedule:connections",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\W11a_schedule_connections.csv",
+          "n": 50428
+        },
+        {
+          "name": "schedule:packages",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\W11a_schedule_packages.csv",
+          "n": 502
+        },
+        {
+          "name": "schedule:quantities",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\W11a_schedule_quantities.csv",
+          "n": 2889
+        },
+        {
+          "name": "schedule:audit",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\W11a_schedule_audit.csv",
+          "n": 22
+        },
+        {
+          "name": "schedule:audit_readiness",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\W11a_schedule_audit_readiness.csv",
+          "n": 23
+        },
+        {
+          "name": "schedule:data_requests",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\W11a_schedule_data_requests.csv",
+          "n": 11
+        },
+        {
+          "name": "schedule:data_dictionary",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\W11a_schedule_data_dictionary.csv",
+          "n": 165
+        },
+        {
+          "name": "sewergems",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\sewergems",
+          "n": 20331
+        }
+      ],
+      "metrics": {
+        "issuable": "no",
+        "blocking_failures": 6,
+        "network_km": 1731.71,
+        "chambers": 49151,
+        "stations": 98,
+        "total_lift_m": 993.4
+      },
+      "notes": [
+        "DXF: 34 CAD layers, 25,951 pipe labels, 49,624 chamber level stacks, 25,124 reaches also drawn on SEW-PROVISIONAL (corridor is a platted reserve, not a street - philosophy sec 4)",
+        "46 further submain routes exist and were not drawn (shortest drawn 5.78 km)",
+        "NOT ISSUABLE: H1, H2, H10, R1, R3, R4",
+        "WARNING 45 retained chambers computed a NEGATIVE incremental load - the accumulated flows on the reach layer do not add up along the primary network. Investigate before running the model."
+      ],
+      "no_change_reason": "",
+      "funnels": [
+        {
+          "name": "dxf pipe labels",
+          "n0": 49377,
+          "n": 25951,
+          "line": "dxf pipe labels: 49,377 -> 25,951 -> 25,951",
+          "steps": [
+            {
+              "reason": "reach shorter than 25 m - the text would sit on top of the pipe",
+              "n": 23426,
+              "qty": 0.0,
+              "ids": [],
+              "ids_truncated": false
+            },
+            {
+              "reason": "no label needed",
+              "n": 0,
+              "qty": 0.0,
+              "ids": [],
+              "ids_truncated": false
+            }
+          ]
+        },
+        {
+          "name": "profiles trunk",
+          "n0": 7,
+          "n": 7,
+          "line": "profiles trunk: 7 -> 7",
+          "steps": [
+            {
+              "reason": "beyond the 12 longest routes - listed in the run log, not silently dropped",
+              "n": 0,
+              "qty": 0.0,
+              "ids": [],
+              "ids_truncated": false
+            }
+          ]
+        },
+        {
+          "name": "profiles submain",
+          "n0": 58,
+          "n": 12,
+          "line": "profiles submain: 58 -> 12",
+          "steps": [
+            {
+              "reason": "beyond the 12 longest routes - listed in the run log, not silently dropped",
+              "n": 46,
+              "qty": 0.0,
+              "ids": [],
+              "ids_truncated": false
+            }
+          ]
+        },
+        {
+          "name": "sewergems conduits",
+          "n0": 49377,
+          "n": 20331,
+          "line": "sewergems conduits: 49,377 -> 20,331",
+          "steps": [
+            {
+              "reason": "tier below the primary network - carried as a LOAD at the junction chamber, not as a conduit (G203-p25, DELIVERABLE_SPEC D.4)",
+              "n": 29046,
+              "qty": 0.0,
+              "ids": [],
+              "ids_truncated": false
+            }
+          ]
+        },
+        {
+          "name": "sewergems load conservation (m3/d x1000)",
+          "n0": 0,
+          "n": 66049581,
+          "line": "sewergems load conservation (m3/d x1000): 0 -> 66,049,581",
+          "steps": [
+            {
+              "reason": "rounding of each node load to 5 decimals of L/s, plus any load on a chamber the primary network does not reach",
+              "n": -66049581,
+              "qty": -66049.580736,
+              "ids": [],
+              "ids_truncated": false
+            }
+          ]
+        }
+      ]
     }
   ]
 }

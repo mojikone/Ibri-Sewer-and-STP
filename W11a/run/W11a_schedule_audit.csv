@@ -1,4 +1,4 @@
-id,group,requirement,source,blocking,status,summary,n_bad,extent
+﻿id,group,requirement,source,blocking,status,summary,n_bad,extent
 H1,corridor,No pipe along a dual carriageway; no pipe or chamber in a wadi,"project rules 7, 8",True,FAIL,8 reaches run along a dual carriageway,8,0.36 km
 H2,hydraulics,"Capacity >= discharge, within the d/D limit",G203-p27 T10,True,FAIL,"0 surcharged, 170 over the d/D limit",170,
 H3,cover,"Minimum cover 1.30 m to crown, on the reach's OWN outside diameter",G203-p33,True,PASS,every reach has at least 1.30 m of cover,0,

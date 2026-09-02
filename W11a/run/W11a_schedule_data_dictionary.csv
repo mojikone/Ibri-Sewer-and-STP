@@ -1,0 +1,166 @@
+﻿field,type,units,required,blank_ok,audit,allowed,why,layer
+NODE_UID,str,-,True,False,G3,,"immutable identity, minted once by NodeIndex and never reassigned. Everything that references a chamber references THIS, so a pass-2 relabel cannot orphan a reference",nodes
+IS_OUTFALL,int,0/1,True,False,H15,,"1 where this chamber is where its system discharges. H15 requires EXACTLY ONE per connected component - not one network, because sec 8a allows satellite works, but never a piece that drains nowhere. It lives on the NODE because an outfall is a property of a chamber; audit.h15 looked for it on the PIPE layer and returned a blocking FALSE failure against a design that had one per component",nodes
+NODE_REF,str,-,True,False,,,"the human/NAMA-style label (5A-2-SM.2-MH391). Derived from tier+package+sequence, recomputed freely, referenced by NOTHING - objective 3 says it must read like their network, and that must not cost referential integrity",nodes
+NODE_KIND,str,-,True,False,,head|chamber|junction|drop|station|outfall|tie,what the structure is; drives the schedule and the drawing symbol. G203-p29 sec 4.4 lists the triggers a chamber may exist for,nodes
+X,float,m,True,False,,,"authoritative easting. The Point geometry is BUILT from X/Y, not the other way round - geometry is a view",nodes
+Y,float,m,True,False,,,authoritative northing,nodes
+GRD_M,float,m aOD,True,False,,,ground level sampled from the 0.5 m VRT (rule 6). Named separately from the terrain so the audit can resample and compare,nodes
+INV_M,float,m aOD,True,False,,,invert of the OUTGOING reach - the governing level at this structure,nodes
+DEPTH_M,float,m,True,False,,,GRD_M - INV_M. Published rather than derived so the chamber schedule and the pipe layer cannot disagree,nodes
+COVER_M,float,m,True,False,H3,,"cover to the crown of the shallowest connected pipe, on that pipe's OWN outside diameter, via cover(). W10 used a hardcoded 0.30 m and shipped 45.92 km below minimum (H3, G203-p33)",nodes
+TIER,str,-,True,False,H9,rider|lateral|main|sub main|trunk main,tier of the outgoing reach,nodes
+DS_NODE,str,-,True,True,H15,,"THE forest invariant, stored not computed: every node has exactly one downstream node, empty only at a terminal. H15 becomes true by construction instead of by audit",nodes
+N_IN,int,-,True,False,,,"incoming reaches; >1 makes it a junction, and junction count is how the hierarchy is measured (philosophy sec 4)",nodes
+N_OUT,int,-,True,False,H15,,"outgoing reaches - 0 at a terminal, 1 everywhere else, never more. Published so it can be cross-checked against the REACH layer's own out-degree: two independently computed numbers agreeing is what catches the W10 defect where the node and pipe layers came from different solves and disagreed by up to 10.39 m of depth",nodes
+INLET_DEG,float,deg,True,False,H10,,smallest angle any inlet makes with the outgoing flow; G203-p30 requires >= 90 deg,nodes
+INLET_FLAG,int,0/1,True,False,H10,,"1 where INLET_DEG is short of the minimum and a purpose-made swept channel is required. audit H10 reads this to distinguish a known, priced problem from an unnoticed one",nodes
+MH_DIA,float,m,False,False,,,"internal chamber diameter. 1.0 m default; G203-p30 requires >= 1.5 m wherever an internal backdrop is unavoidable. No table exists in G203 for size against depth (verified) - this is the contractor's number and the take-off's, so it is stored, not inferred at print time",nodes
+MH_MAT,str,-,False,True,,,"chamber material. G203 gives no table (it says only 'sufficient size'), so this is a stated assumption per PAM-SPC, not a criterion",nodes
+DROP_M,float,m,True,False,,,external backdrop height; G203-p30 requires one above 0.60 m and a vortex shaft above 2.0 m,nodes
+DROP_TYPE,str,-,True,False,,none|backdrop|vortex,none/backdrop/vortex - ramped and EXTERNAL to the manhole (philosophy sec 5). Never used to dodge a station,nodes
+VORTEX,int,0/1,True,False,,,"1 where DROP_M > 2.0 m and a vortex drop shaft is required (G203-p30). Its own flag because it is a different STRUCTURE with a different cost, not a deeper backdrop - the as-built has 37 that were built as backdrops anyway (P10)",nodes
+Q_ADF_M3D,float,m3/d,True,False,,,"accumulated sanitary average dry weather flow, infiltration EXCLUDED",nodes
+Q_PK_LS,float,L/s,True,False,,,accumulated peak flow including unpeaked infiltration; the number the outgoing reach is sized on,nodes
+N_PROP,float,-,True,False,,,properties served at or above this node; the unit the options appraisal costs per (m per property),nodes
+PAST_CAP,int,0/1,True,False,H4,,1 where cover exceeds the 12 m cap,nodes
+CAP_EXIT,str,-,True,True,H4b,|recovers_500m|outfall_1000m,"which philosophy sec 5 exit allowed it: recovers within 500 m, or reaches the outfall within 1,000 m. Empty when PAST_CAP = 0. Nothing past the cap is final until a manufacturer's rating and NWS's station cost arrive",nodes
+SRC,str,-,True,False,G5,draft|auto_road|auto_block|auto_link|main_pipe|existing,which corridor source this came from; trust levels differ by 20x and W10 merged them into one layer with the differences lost (P6),nodes
+CONFIDENCE,str,-,True,False,G5,surveyed|drafted|derived|provisional,how much the corridor under this feature can be trusted; a cadastral reserve on bare desert is a legal corridor at saturation but is never reported as existing (philosophy sec 4),nodes
+STAGE,str,-,True,False,G4,,the stage that last wrote this row; makes invariant 10 (no stage silently no-ops) checkable after the fact,nodes
+PACKAGE,str,-,False,False,,,"commissionable contract package; a station is a package seam (P8, objective 4)",nodes
+PHASE,int,-,False,False,,,"delivery phase, 0 = not yet assigned",nodes
+EDGE_UID,str,-,True,False,,,immutable reach identity,reaches
+US_NODE,str,-,True,False,G3,,"upstream chamber. Written FROM the graph. W10 had neither field, so connectivity could only be guessed by a tolerance - which is how it published 7,919 pieces",reaches
+DS_NODE,str,-,True,False,G3,,downstream chamber,reaches
+TIER,str,-,True,False,H9,rider|lateral|main|sub main|trunk main,"rider/lateral/main/sub main/trunk main. Target shares near the as-built: lateral 66 %, sub main 18 %, trunk 5 % (philosophy sec 4). NOTE the spelling is the auditor's: H9 skips an unrecognised tier SILENTLY",reaches
+DN,int,mm,True,False,"H2,H3,H4,H9,H12",,nominal diameter from the DN_SERIES; OD-designated to 315 (G203-p22 T6),reaches
+MATERIAL,str,-,True,False,,PVC-U|HDPE|GRP|GRP/PVC|lined RCC|DI,"G203-p22 Tab 6 by APPLICATION and p23 Tab 7 by PRODUCT. PVC-U on a main sewer only to 250 mm even though the product runs to OD315 - checked by material_conflict(), open item OPEN-2",reaches
+CONSTR,str,-,False,False,,open_trench|trenchless,"open trench or trenchless; the material set differs (G203-p22 T6) and a crossing is priced, not assumed",reaches
+LEN_M,float,m,True,False,H12,,"laid length; H12 tests it against the Table 12 spacing for the diameter. W10 had 4,763 reaches over the limit, longest 6,541 m. Checked against the geometry to 50 mm - every published length reads this field, not the line",reaches
+SLOPE_LAID,float,%,True,False,"G1,H2,H5,H6,H7,H13",,"THE LAID GRADIENT, on 0.05 % steps (P1). Publishing only the minimum, as W10 did, makes velocity, fall and drop all uncheckable (philosophy sec 5, audit G1)",reaches
+SLOPE_MIN,float,%,True,False,G1,,the governing minimum beside it - the steeper of Table 11 and the tractive minimum at this reach's own peak flow (hydra.smin_for). A layer carrying only the minimum cannot be checked; one carrying only the laid value cannot be justified,reaches
+GRAD_BY,str,-,True,False,G2,table11|tractive|ground|cover_min|cover_max|uniform|vmax|tie,what SET the laid gradient. 11 characters: this field is why the audited format is GeoPackage - a shapefile DBF truncates it to GRADIENT_B and audit G2 then fails on a correct design,reaches
+SIZED_BY,str,-,True,False,"H8,G2",capacity|dod|velocity|horizon|minimum,what set the diameter. 'depth' and 'cover' are PROHIBITED answers (G203-p29 and Ten States sec 33.43 independently); this enum is pinned to audit.py H8's own allowed set and cannot be widened from here,reaches
+CLEAN_BY,str,-,True,False,H5,velocity|tractive|neither,"which self-cleansing route this reach takes - velocity or tractive. H5 requires the route recorded, because the tractive share is a REPORTED number: it rests on tau = 1.0 Pa which G203 never gives (GAP-9), and at 2.0 Pa the requirement rises 2.35x. 97 % of W10 sat on it",reaches
+TAU_PA,float,Pa,True,False,,,"the tractive assumption this reach was checked at, carried on the row so a sensitivity run is visible in the layer and not only in a note",reaches
+INV_UP,float,m aOD,True,False,H11,,upstream invert; H11 tests INV_UP - INV_DN against the 20 mm laying tolerance for reverse gradient,reaches
+INV_DN,float,m aOD,True,False,H11,,downstream invert,reaches
+US_DEPTH,float,m,True,False,"H3,H4",,ground to INVERT at the upstream node. H3/H4 subtract the reach's OWN outside diameter from this to get cover - must equal the upstream node's DEPTH_M exactly,reaches
+DS_DEPTH,float,m,True,False,"H3,H4",,ground to invert at the downstream node,reaches
+COVER_US,float,m,True,False,H3,,"cover to crown upstream, from cover(), published so H3's independent recomputation has something to disagree with. G203-p33 minimum 1.30 m",reaches
+COVER_DN,float,m,True,False,H3,,cover to crown downstream,reaches
+QADF_M3D,float,m3/d,True,False,,,"sanitary average dry weather flow, infiltration EXCLUDED, at the ultimate horizon (philosophy sec 6: size on ultimate, check self-cleansing at start-year)",reaches
+QINF_LS,float,L/s,True,False,,,"infiltration, UNPEAKED (G201-p72-73, 720 L/d/km). Separate from QADF so QPK_LS is reproducible from the row",reaches
+PF,float,-,True,False,,,peak factor applied to the sanitary component only,reaches
+PF_METH,str,-,True,False,,merrimack|peltier|held,"which formula produced PF: merrimack (G201-p71, mandatory above 100 properties), peltier (comparison), or HELD - the honest token for a catchment below PF_HOLD_PROPERTIES where G201 prescribes no formula at all. W10 published PF with no method, so no peak factor could be reproduced",reaches
+QPK_LS,float,L/s,True,False,"H2,H5,H6,H7",,"peak design flow = QADF x PF + QINF. The flow H2, H5, H6 and H7 all solve against",reaches
+V_PK_MS,float,m/s,True,False,H7,,"velocity at peak, recomputed by H7 against the 3.0 m/s gravity maximum (G203-p27)",reaches
+DOD_PK,float,-,True,False,H2,,"d/D at peak; 0.65 to DN350, 0.50 above (G203-p27 T10). W10 shipped 5 surcharged reaches and 66 over the limit",reaches
+RET_MIN,float,min,True,False,,,"retention time in this reach. Philosophy sec 6: septicity is a design driver, and long flat lightly-loaded runs at Omani temperatures are the H2S combination",reaches
+PAST_CAP,int,0/1,True,False,H4,,1 where cover exceeds 12 m. audit H4 fails outright if any reach is past the cap and this field does not exist,reaches
+CAP_EXIT,str,-,True,True,"H4,H4b",|recovers_500m|outfall_1000m,which sec 5 exit allowed it; blank inside the cap,reaches
+CAP_LEN_M,float,m,True,False,H4b,,"length past the cap, and the distance to the recovery or the outfall - the exits are DISTANCE-bounded, so the distance is the evidence",reaches
+TIE_TYPE,str,-,True,False,H14,none|soffit|invert,none/soffit/invert. H14: an existing structure's invert is fixed and the design yields to it; tie SOFFIT to soffit. audit H14 cannot run at all without this field,reaches
+ON_DUAL_M,float,m,True,False,"H1,R3",,"metres of this reach inside the dual-carriageway band. Expected 0. H1 recomputes it independently - this is the design's own claim, so a disagreement is itself the finding",reaches
+ON_WADI_M,float,m,True,False,R4,,metres on wadi ground (Hazard_T50y classes 4/5/6). Expected 0 except on a scheduled perpendicular crossing,reaches
+CROSS_ID,str,-,True,True,,,links to the crossings schedule where this reach IS a crossing. H1 allows a crossing only if it is scheduled; without the link there is no schedule,reaches
+SRC,str,-,True,False,G5,draft|auto_road|auto_block|auto_link|main_pipe|existing,which corridor source this came from; trust levels differ by 20x and W10 merged them into one layer with the differences lost (P6),reaches
+CONFIDENCE,str,-,True,False,G5,surveyed|drafted|derived|provisional,how much the corridor under this feature can be trusted; a cadastral reserve on bare desert is a legal corridor at saturation but is never reported as existing (philosophy sec 4),reaches
+STAGE,str,-,True,False,G4,,the stage that last wrote this row; makes invariant 10 (no stage silently no-ops) checkable after the fact,reaches
+PACKAGE,str,-,False,False,,,"commissionable contract package; a station is a package seam (P8, objective 4)",reaches
+PHASE,int,-,False,False,,,"delivery phase, 0 = not yet assigned",reaches
+EDGE_UID,str,-,True,False,,,identity,rising_mains
+US_NODE,str,-,True,False,,,the station,rising_mains
+DS_NODE,str,-,True,False,,,the discharge chamber,rising_mains
+STATION,str,-,True,False,,,NODE_UID of the station whose duty sized this,rising_mains
+DN,int,mm,True,False,,,"sized on duty flow, never on arriving flow. Minimum 75 mm ID for non-clog pumps (G203-p50 sec 8.1)",rising_mains
+MATERIAL,str,-,True,False,,PVC-U|HDPE|GRP|GRP/PVC|lined RCC|DI,G203-p53 sec 8.3: 'the recommended pipe material for the pressure main is Ductile Iron and HDPE'; pressure class per PAM-SPC-207 (pending),rising_mains
+LEN_M,float,m,True,False,,,length,rising_mains
+Q_DUTY_LS,float,L/s,True,False,,,pump duty from the wet-well cycle,rising_mains
+V_DUTY_MS,float,m/s,True,False,,,0.75 to 2.5 m/s (G203-p50),rising_mains
+V_MIN_MS,float,m/s,False,False,,,"velocity at the DESIGN MINIMUM flow - G203-p50 sec 8.1 with the Tab 16 factors is explicit that the 0.75 m/s floor is held there, not at average flow. Sizing on duty alone silts the main in year one",rising_mains
+STAT_HD_M,float,m,True,False,,,static lift,rising_mains
+TOT_HD_M,float,m,True,False,,,total head at duty,rising_mains
+RETENT_M,float,min,False,False,,,"retention time; G203-p50 wants it under 30 min, and beyond that the discharge chamber is a septicity design, not a note",rising_mains
+N_AIRV,int,-,True,False,,,double-orifice air valves at summits (G203-p53-54 sec 8.4),rising_mains
+N_WASH,int,-,True,False,,,washouts at low points (G203-p53-54 sec 8.4),rising_mains
+SEPTIC_FL,int,0/1,True,False,,,"1 where the discharge chamber needs septicity treatment - always 1 in practice, and recorded so it is designed rather than assumed away (G203-p55 sec 8.5)",rising_mains
+SRC,str,-,True,False,G5,draft|auto_road|auto_block|auto_link|main_pipe|existing,which corridor source this came from; trust levels differ by 20x and W10 merged them into one layer with the differences lost (P6),rising_mains
+CONFIDENCE,str,-,True,False,G5,surveyed|drafted|derived|provisional,how much the corridor under this feature can be trusted; a cadastral reserve on bare desert is a legal corridor at saturation but is never reported as existing (philosophy sec 4),rising_mains
+STAGE,str,-,True,False,G4,,the stage that last wrote this row; makes invariant 10 (no stage silently no-ops) checkable after the fact,rising_mains
+PACKAGE,str,-,False,False,,,"commissionable contract package; a station is a package seam (P8, objective 4)",rising_mains
+PHASE,int,-,False,False,,,"delivery phase, 0 = not yet assigned",rising_mains
+NODE_UID,str,-,True,False,,,the same identity the node carries in `nodes`,stations
+NODE_REF,str,-,True,False,,,label,stations
+WHY,str,-,True,False,,cap|veto|economics|commissioning,"cap / veto / economics / commissioning. Layers 1 and 2 can only ADD a station; economics can only make you pump EARLIER, never later (philosophy sec 5)",stations
+ST_TYPE,str,-,True,False,,Type 1|Type 2|Type 3,"Type 1 <=100 L/s (1 duty + 1 standby), Type 2 100-300 (2+1), Type 3 >300 (3+1) - G203-p40-41 Tab 17. Stored because it is the key to the Tab 21 land band and the pump count, and re-deriving it at print time is how seven different station counts got into circulation",stations
+Q_DUTY_LS,float,L/s,True,False,,,duty flow,stations
+LIFT_M,float,m,True,False,,,"static lift - the number that matters more than the station count, because distance-clustering only measures breach density",stations
+N_PROP,float,-,True,False,,,properties upstream,stations
+Q_ADF_M3D,float,m3/d,True,False,,,average flow through it,stations
+WELL_M3,float,m3,True,False,,,"wet-well working volume. G203-p48 sec 7.8: V = 0.25 x Q x T, T = 3600 / starts-per-hour",stations
+WW_STARTS,float,1/h,True,False,,,"the assumed starts per hour, DECLARED. G203-p48 sets a minimum of 10/h for motors to 30 kW, and it is the only thing that turns WELL_M3 into a number - a wet-well volume with no start rate behind it cannot be checked or costed",stations
+GRD_M,float,m aOD,False,False,,,ground level at the station,stations
+FLOOD_LV,float,m aOD,True,False,,,"the 1:50-yr flood level here. G203-p38 sec 7.2: floors and every electrical item sit at least 300 mm above it. A station in a wadi margin is a siting failure that costs the whole asset, and it is invisible unless the level is on the row",stations
+LAND_M2,float,m2,True,False,,,"indicative land take. G203-p43 Tab 21 bands: Type 1 50-100, Type 2 200-400, Type 3 >=900 m2, plus a 6 m turning circle. This is a land RESERVATION the client has to make, so it belongs in the concept output",stations
+RM_EDGE,str,-,False,False,,,EDGE_UID of its rising main,stations
+COMM_PT,int,0/1,False,False,,,1 where this station makes its package commissionable on its own - the P8 case where objective 4 beats objective 5,stations
+SRC,str,-,True,False,G5,draft|auto_road|auto_block|auto_link|main_pipe|existing,which corridor source this came from; trust levels differ by 20x and W10 merged them into one layer with the differences lost (P6),stations
+CONFIDENCE,str,-,True,False,G5,surveyed|drafted|derived|provisional,how much the corridor under this feature can be trusted; a cadastral reserve on bare desert is a legal corridor at saturation but is never reported as existing (philosophy sec 4),stations
+STAGE,str,-,True,False,G4,,the stage that last wrote this row; makes invariant 10 (no stage silently no-ops) checkable after the fact,stations
+PACKAGE,str,-,False,False,,,"commissionable contract package; a station is a package seam (P8, objective 4)",stations
+PHASE,int,-,False,False,,,"delivery phase, 0 = not yet assigned",stations
+CONN_ID,str,-,True,False,,,identity,connections
+PLOT_ID,str,-,True,False,,,"the plot from W10_plot_loads.gpkg (64,071 records, 74,675 m3/d)",connections
+OUT_NODE,str,-,True,True,,,"the chamber this load enters the network at. Empty ONLY when WHY says why, and then the plot appears in the not-served schedule - the TOR (scope p4 item 3) requires every plot SERVED, though not necessarily by this network",connections
+WHY,str,-,True,False,,,"why it is unassigned, or 'assigned'. Never blank",connections
+SYSTEM,str,-,True,False,,central|satellite|onsite|unserved,"which system serves it: the central network, a satellite works, or on-site. Philosophy sec 8a - 'serviced' is not 'connected to one network', and that distinction is the whole design question",connections
+CONN_TYPE,str,-,False,False,,,"PCS / rider / lateral. G203-p17 sec 3.2 fixes the chain PCC -> PC sewer -> HCC -> rider -> lateral, and the limits differ per link",connections
+Q_ADF_M3D,float,m3/d,True,False,,,the load,connections
+N_PROP,float,-,True,False,,,"properties on the plot (electricity accounts, 1.456 average)",connections
+LEN_M,float,m,True,False,,,connection length; G203-p18 T4 note caps a property connection at 50 m,connections
+SLOPE_LAID,float,%,True,False,,,"3-10 % for a property connection, 1-10 % for a rider or lateral (G203-p18 T5). Named SLOPE_LAID, not SLOPE_PCT: the same name meant two different gradients in two W10 files and the layer could not say which",connections
+COVER_M,float,m,True,False,,,0.60 m minimum on a property connection (G203-p19 3.5),connections
+CAN_DRAIN,int,0/1,False,False,,,"does the plot outlet sit above the sewer invert where it joins. 0 is not a rounding error - it is a plot the gravity network does not actually serve, and it must reach the not-served schedule",connections
+SRC,str,-,True,False,G5,draft|auto_road|auto_block|auto_link|main_pipe|existing,which corridor source this came from; trust levels differ by 20x and W10 merged them into one layer with the differences lost (P6),connections
+CONFIDENCE,str,-,True,False,G5,surveyed|drafted|derived|provisional,how much the corridor under this feature can be trusted; a cadastral reserve on bare desert is a legal corridor at saturation but is never reported as existing (philosophy sec 4),connections
+STAGE,str,-,True,False,G4,,the stage that last wrote this row; makes invariant 10 (no stage silently no-ops) checkable after the fact,connections
+PACKAGE,str,-,False,False,,,"commissionable contract package; a station is a package seam (P8, objective 4)",connections
+PHASE,int,-,False,False,,,"delivery phase, 0 = not yet assigned",connections
+CORR_ID,str,-,True,False,,,identity,corridors
+LEN_M,float,m,True,False,,,length,corridors
+WIDTH_M,float,m,True,False,,,public reserve width; philosophy sec 4 requires a reserve of STATED width and 3 m clearance to other utilities (G203-p33). The corridor widths themselves are G203-p32 Tab 13 by diameter,corridors
+ON_DUAL_M,float,m,True,False,,,expected 0 after the exclusion,corridors
+ON_WADI_M,float,m,True,False,,,expected 0 after the exclusion,corridors
+IS_STREET,int,0/1,True,False,,,"1 = an observed built street; 0 = a platted reserve with nothing built on it, which is a legitimate corridor at a saturation horizon but is NEVER reported as existing (philosophy sec 4)",corridors
+N_PLOT,int,-,True,False,,,load-bearing plots fronting it. P7: 117.3 km of W10 had none within 60 m and carried under 1 m3/d - it neither collected nor conveyed,corridors
+USED,int,0/1,True,False,,,1 where a reach was laid on it; the conversion rate per SRC is the number that exposed the W10 inversion,corridors
+CROSS_ID,str,-,True,True,,,"links to the crossings schedule where this corridor CROSSES a wadi. H1a makes a crossing legal and an unscheduled one is not, so a corridor with ON_WADI_M > 0 and no CROSS_ID is a defect, not a rounding residue",corridors
+SRC,str,-,True,False,G5,draft|auto_road|auto_block|auto_link|main_pipe|existing,which corridor source this came from; trust levels differ by 20x and W10 merged them into one layer with the differences lost (P6),corridors
+CONFIDENCE,str,-,True,False,G5,surveyed|drafted|derived|provisional,how much the corridor under this feature can be trusted; a cadastral reserve on bare desert is a legal corridor at saturation but is never reported as existing (philosophy sec 4),corridors
+STAGE,str,-,True,False,G4,,the stage that last wrote this row; makes invariant 10 (no stage silently no-ops) checkable after the fact,corridors
+PACKAGE,str,-,False,False,,,"commissionable contract package; a station is a package seam (P8, objective 4)",corridors
+PHASE,int,-,False,False,,,"delivery phase, 0 = not yet assigned",corridors
+CROSS_ID,str,-,True,False,,,"identity, referenced by the reach",crossings
+EDGE_UID,str,-,True,False,,,the reach that crosses,crossings
+OBSTACLE,str,-,True,False,,dual|wadi|road|utility,dual / wadi / road / utility,crossings
+LEN_M,float,m,True,False,,,crossing length; criteria.DUAL_CROSS_MAX_M caps a dual crossing at 70 m,crossings
+ANGLE_DEG,float,deg,True,False,,,angle to the obstacle; must be near square (criteria.DUAL_CROSS_SQUARE_DEG = 25 deg off),crossings
+METHOD,str,-,True,False,,open_cut|thrust_bore|microtunnel|existing_underpass,"open cut / thrust bore / microtunnel - a crossing needs trenchless work and it is priced, not assumed",crossings
+COVER_M,float,m,False,False,,,cover at the crossing. G203-p52 sec 8.2.4 requires 1.5 m to crown at a wadi crossing against 1.30 m normal - the one place H3's number is not the governing one,crossings
+APPROVED,int,0/1,True,False,,,"1 once a third-party consent exists; 0 is an open item, not a silent one",crossings
+SRC,str,-,True,False,G5,draft|auto_road|auto_block|auto_link|main_pipe|existing,which corridor source this came from; trust levels differ by 20x and W10 merged them into one layer with the differences lost (P6),crossings
+CONFIDENCE,str,-,True,False,G5,surveyed|drafted|derived|provisional,how much the corridor under this feature can be trusted; a cadastral reserve on bare desert is a legal corridor at saturation but is never reported as existing (philosophy sec 4),crossings
+STAGE,str,-,True,False,G4,,the stage that last wrote this row; makes invariant 10 (no stage silently no-ops) checkable after the fact,crossings
+PACKAGE,str,-,False,False,,,"commissionable contract package; a station is a package seam (P8, objective 4)",crossings
+PHASE,int,-,False,False,,,"delivery phase, 0 = not yet assigned",crossings
+PACKAGE,str,-,True,False,,,identity,packages
+PHASE,int,-,True,False,,,delivery phase,packages
+LEN_KM,float,km,True,False,,,3.5-40 km,packages
+N_PLOT,int,-,True,False,,,"180-2,180 plots",packages
+OUTLET,str,-,True,False,,,the single NODE_UID it discharges at,packages
+DS_PKG,str,-,False,False,,,"the package downstream; NAMA's own chain is 5A-3 -> 5A-2 -> 5A-4 -> 5A-1 -> station -> force main -> STP, so no package commissions before its downstream neighbour exists",packages
+COMM_SEQ,int,-,False,False,,,commissioning order,packages
+INDEP,int,0/1,False,False,,,"1 where it can be commissioned WITHOUT its downstream neighbour - it ends at a station, at the works, or at the existing network. This is the P8 property a station buys",packages
+ONE_TREE,int,0/1,True,False,,,"1 = one connected tree with one outlet. 0 is a failed package, not a note",packages

@@ -54,7 +54,7 @@ import pandas as pd
 import geopandas as gpd
 import networkx as nx
 import shapely
-from shapely.ops import unary_union
+from shapely.ops import substring, unary_union
 
 warnings.filterwarnings("ignore")
 
@@ -154,9 +154,16 @@ def accumulate(reaches: gpd.GeoDataFrame, conns: gpd.GeoDataFrame
     return q, npr, km, n_cyc
 
 
-def ground(reaches: gpd.GeoDataFrame) -> Tuple[np.ndarray, np.ndarray, list]:
-    """ON_WADI_M, ON_DUAL_M and CROSS_ID, MEASURED on each reach's own geometry."""
+def ground(reaches: gpd.GeoDataFrame):
+    """ON_WADI_M, ON_DUAL_M, CROSS_ID and the crossing SUB-GEOMETRY.
+
+    The sub-geometry matters: contract.validate checks LEN_M against the row's own
+    geometry, and a register carrying the crossing LENGTH against the whole REACH's
+    geometry disagreed on 1,319 rows - so stage 9 refused to export, correctly. A
+    crossing row describes the crossing, so it carries the crossing.
+    """
     on_dual = np.zeros(len(reaches))
+    dual_geom = [None] * len(reaches)
     if os.path.exists(P_ROADS):
         roads = gpd.read_file(P_ROADS).set_crs(32640, allow_override=True)
         dual = roads[roads["dual"].astype(str) == "1"]
@@ -175,11 +182,20 @@ def ground(reaches: gpd.GeoDataFrame) -> Tuple[np.ndarray, np.ndarray, list]:
             hit = np.unique(shapely.STRtree(reaches.geometry.values)
                             .query(bufs, predicate="intersects")[1])
             if len(hit):
-                on_dual[hit] = shapely.length(
-                    shapely.intersection(reaches.geometry.values[hit], band))
+                # Keep the clipped geometry, not just its length. The crossings register
+                # needs the portion that is actually inside the band - a row describing a
+                # crossing must carry the crossing, or LEN_M and the geometry disagree and
+                # the contract refuses the export.
+                clipped = shapely.intersection(reaches.geometry.values[hit], band)
+                on_dual[hit] = shapely.length(clipped)
+                for k, i in enumerate(hit):
+                    dual_geom[int(i)] = clipped[k]
 
     on_wadi = np.zeros(len(reaches))
     cross = [""] * len(reaches)
+    xgeo = [None] * len(reaches)         # the portion actually on an obstacle
+    # NOT named `sub`: the strip-reading loop below already binds that to a
+    # rasterio Window, and the shadow only surfaced at the assignment.
     if os.path.exists(P_HAZARD):
         import rasterio
         from rasterio.windows import from_bounds
@@ -227,11 +243,44 @@ def ground(reaches: gpd.GeoDataFrame) -> Tuple[np.ndarray, np.ndarray, list]:
             on = at(xy[:, 0], xy[:, 1])
             if on.any():
                 on_wadi[i] = float(on.mean()) * L
+                # First and last sample on the obstacle bound the crossing. Sampled at
+                # WADI_SAMPLE_M, so the bound is that coarse - stated, not hidden.
+                idx = np.where(on)[0]
+                a0 = float(idx[0]) / (k - 1) * L
+                b0 = float(idx[-1] + 1) / (k - 1) * L
+                seg = substring(g, max(0.0, a0), min(L, b0))
+                if not seg.is_empty and seg.geom_type == "LineString" and seg.length > 0:
+                    xgeo[i] = seg
+                    on_wadi[i] = seg.length
         k = 0
         for i in np.where(on_wadi > 0)[0]:
             k += 1
             cross[i] = f"W11a-XG{k:05d}"
-    return on_wadi, on_dual, cross
+
+    # A DUAL-CARRIAGEWAY crossing is scheduled too. H1 forbids running ALONG one - no pipe of
+    # any kind, trunk included, because it cannot be dug up - but permits a short square
+    # crossing, and the contract refuses to publish a reach that touches one with no CROSS_ID
+    # (W10 shipped 47 unscheduled). Stage 5c measured ON_DUAL_M and scheduled nothing, so the
+    # publish failed on 51 reaches that are all genuine crossings: the longest single contact
+    # is 62.1 m against criteria.DUAL_CROSS_MAX_M of 70 m.
+    #
+    # Where a reach crosses BOTH, the wadi id wins: it carries the heavier obligations
+    # (G201 9.3 - bed profile, flood levels, MoAFWR approval). Nothing is lost, because
+    # ON_DUAL_M stays published on the reach and audit.h1 reads it independently of any id.
+    k = 0
+    for i in np.where((on_dual > 0) & np.array([c == "" for c in cross]))[0]:
+        k += 1
+        cross[i] = f"W11a-XD{k:05d}"
+    # A dual-only crossing carries the clipped band portion; take the longest part where the
+    # clip came back multi-part, because a register row is one crossing.
+    for i in range(len(reaches)):
+        if xgeo[i] is None and on_dual[i] > 0 and dual_geom[i] is not None:
+            gg = dual_geom[i]
+            if gg.geom_type == "MultiLineString":
+                gg = max(gg.geoms, key=lambda q: q.length)
+            if gg.geom_type == "LineString" and gg.length > 0:
+                xgeo[i] = gg
+    return on_wadi, on_dual, cross, xgeo
 
 
 def main() -> int:
@@ -265,7 +314,7 @@ def main() -> int:
     pf = np.where(big, [C.pf_merrimack(x / 1000.0) if x > 0 else 1.0 for x in qadf], PF_HELD)
     qpk = qadf * 1000.0 / 86400.0 * pf + qinf
 
-    on_wadi, on_dual, cross = ground(reaches)
+    on_wadi, on_dual, cross, xsub = ground(reaches)
 
     out = reaches.copy()
     out["QADF_M3D"] = np.round(qadf, 4)
@@ -330,6 +379,38 @@ def main() -> int:
         f"{on_dual.sum() / 1000:,.2f} km")
 
     out.to_file(GPKG, layer="reaches", driver="GPKG")
+
+    # The crossings REGISTER, at REACH level. Stage 2 publishes a corridor-level one, but
+    # audit.r4 reads `reaches` and joins CROSS_ID against this register - so a corridor-level
+    # register leaves every reach-level id pointing at nothing, and nothing counts as
+    # scheduled however many ids exist. The register is what carries the obligations forward.
+    _sch = out[out["CROSS_ID"].astype(str) != ""].copy()
+    if len(_sch):
+        _pos = {u: k for k, u in enumerate(out["EDGE_UID"])}
+        _geo = [xsub[_pos[u]] for u in _sch["EDGE_UID"]]
+        _keep = [g is not None and not g.is_empty for g in _geo]
+        _sch, _geo = _sch[_keep], [g for g, k in zip(_geo, _keep) if k]
+        _wadi = _sch["ON_WADI_M"] > 0
+        _reg = gpd.GeoDataFrame(dict(
+            CROSS_ID=_sch["CROSS_ID"].values,
+            EDGE_UID=_sch["EDGE_UID"].values,
+            OBSTACLE=np.where(_wadi, "wadi", "dual"),
+            LEN_M=np.round([g.length for g in _geo], 3),
+            # Square by construction: stage 2 deleted everything that was not, and H1's own
+            # band test re-checks it on the published layer. Published as 90 rather than
+            # measured per reach, and that is a DECLARATION - audit.h1 is the measurement.
+            ANGLE_DEG=[90.0] * len(_sch),
+            METHOD=["open_cut"] * len(_sch),
+            # APPROVED = 0 until a third-party consent exists. G201-p85 requires MoAFWR
+            # approval for a wadi crossing; an open item should never be a silent one.
+            APPROVED=[0] * len(_sch),
+            SRC=_sch["SRC"].values, CONFIDENCE=_sch["CONFIDENCE"].values,
+            STAGE=[STAGE] * len(_sch)),
+            geometry=_geo, crs=out.crs)
+        _reg.to_file(GPKG, layer="crossings", driver="GPKG")
+        say(f"    crossings registered            {int(_wadi.sum()):,} wadi and "
+            f"{int((~_wadi).sum()):,} dual, all APPROVED = 0 until consent exists")
+
     os.makedirs(RUN, exist_ok=True)
     cols = [c for c in out.columns if c != "geometry"]
     out[cols].to_csv(os.path.join(RUN, "s5c_reach_flows.csv"), index=False)

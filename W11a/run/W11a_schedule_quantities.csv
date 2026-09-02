@@ -1,0 +1,2890 @@
+﻿category,package,tier,dn_band,dn_mm,depth_band,quantity,unit,n
+chamber,P01,lateral,,,cover 1.30 - 10 m,317.0,no,317
+chamber,P01,main,,,cover 1.30 - 10 m,92.0,no,92
+chamber,P01,sub main,,,cover 1.30 - 10 m,34.0,no,34
+chamber,P01,sub main,,,cover 10 - 12 m,7.0,no,7
+chamber,P01,trunk main,,,cover 1.30 - 10 m,38.0,no,38
+chamber,P01,trunk main,,,cover 10 - 12 m,5.0,no,5
+chamber,P01,trunk main,,,cover PAST the 12 m cap,3.0,no,3
+chamber,P02,lateral,,,cover 1.30 - 10 m,163.0,no,163
+chamber,P02,lateral,,,cover 10 - 12 m,2.0,no,2
+chamber,P02,main,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P02,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P02,sub main,,,cover 1.30 - 10 m,142.0,no,142
+chamber,P02,sub main,,,cover 10 - 12 m,37.0,no,37
+chamber,P02,sub main,,,cover PAST the 12 m cap,8.0,no,8
+chamber,P03,lateral,,,cover 1.30 - 10 m,254.0,no,254
+chamber,P03,main,,,cover 1.30 - 10 m,155.0,no,155
+chamber,P03,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P03,sub main,,,cover 1.30 - 10 m,102.0,no,102
+chamber,P03,sub main,,,cover 10 - 12 m,9.0,no,9
+chamber,P04,lateral,,,cover 1.30 - 10 m,143.0,no,143
+chamber,P04,main,,,cover 1.30 - 10 m,23.0,no,23
+chamber,P04,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P04,sub main,,,cover 1.30 - 10 m,27.0,no,27
+chamber,P04,sub main,,,cover 10 - 12 m,11.0,no,11
+chamber,P04,trunk main,,,cover 1.30 - 10 m,80.0,no,80
+chamber,P04,trunk main,,,cover 10 - 12 m,1.0,no,1
+chamber,P04,trunk main,,,cover PAST the 12 m cap,7.0,no,7
+chamber,P05,lateral,,,cover 1.30 - 10 m,186.0,no,186
+chamber,P05,main,,,cover 1.30 - 10 m,52.0,no,52
+chamber,P05,sub main,,,cover 1.30 - 10 m,64.0,no,64
+chamber,P05,trunk main,,,cover 1.30 - 10 m,40.0,no,40
+chamber,P05,trunk main,,,cover 10 - 12 m,18.0,no,18
+chamber,P05,trunk main,,,cover PAST the 12 m cap,8.0,no,8
+chamber,P06,lateral,,,cover 1.30 - 10 m,153.0,no,153
+chamber,P06,lateral,,,cover 10 - 12 m,3.0,no,3
+chamber,P06,main,,,cover 1.30 - 10 m,8.0,no,8
+chamber,P06,sub main,,,cover 1.30 - 10 m,7.0,no,7
+chamber,P06,trunk main,,,cover 1.30 - 10 m,56.0,no,56
+chamber,P06,trunk main,,,cover 10 - 12 m,16.0,no,16
+chamber,P06,trunk main,,,cover PAST the 12 m cap,1.0,no,1
+chamber,P07,lateral,,,cover 1.30 - 10 m,142.0,no,142
+chamber,P07,lateral,,,cover 10 - 12 m,2.0,no,2
+chamber,P07,main,,,cover 1.30 - 10 m,77.0,no,77
+chamber,P07,main,,,cover 10 - 12 m,27.0,no,27
+chamber,P07,main,,,cover PAST the 12 m cap,16.0,no,16
+chamber,P07,sub main,,,cover 1.30 - 10 m,54.0,no,54
+chamber,P07,sub main,,,cover 10 - 12 m,9.0,no,9
+chamber,P08,lateral,,,cover 1.30 - 10 m,98.0,no,98
+chamber,P08,main,,,cover 1.30 - 10 m,53.0,no,53
+chamber,P08,sub main,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P09,lateral,,,cover 1.30 - 10 m,143.0,no,143
+chamber,P09,main,,,cover 1.30 - 10 m,21.0,no,21
+chamber,P09,sub main,,,cover 1.30 - 10 m,33.0,no,33
+chamber,P09,sub main,,,cover 10 - 12 m,3.0,no,3
+chamber,P10,lateral,,,cover 1.30 - 10 m,35.0,no,35
+chamber,P10,sub main,,,cover 1.30 - 10 m,83.0,no,83
+chamber,P10,sub main,,,cover 10 - 12 m,28.0,no,28
+chamber,P10,sub main,,,cover PAST the 12 m cap,1.0,no,1
+chamber,P100,lateral,,,cover 1.30 - 10 m,10.0,no,10
+chamber,P101,lateral,,,cover 1.30 - 10 m,15.0,no,15
+chamber,P102,lateral,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P103,lateral,,,cover 1.30 - 10 m,7.0,no,7
+chamber,P104,lateral,,,cover 1.30 - 10 m,7.0,no,7
+chamber,P105,lateral,,,cover 1.30 - 10 m,5.0,no,5
+chamber,P106,lateral,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P107,lateral,,,cover 1.30 - 10 m,9.0,no,9
+chamber,P108,lateral,,,cover 1.30 - 10 m,9.0,no,9
+chamber,P109,lateral,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P11,lateral,,,cover 1.30 - 10 m,111.0,no,111
+chamber,P11,main,,,cover 1.30 - 10 m,91.0,no,91
+chamber,P11,sub main,,,cover 1.30 - 10 m,16.0,no,16
+chamber,P110,lateral,,,cover 1.30 - 10 m,8.0,no,8
+chamber,P111,lateral,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P112,lateral,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P113,lateral,,,cover 1.30 - 10 m,8.0,no,8
+chamber,P114,lateral,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P115,lateral,,,cover 1.30 - 10 m,13.0,no,13
+chamber,P116,lateral,,,cover 1.30 - 10 m,5.0,no,5
+chamber,P117,lateral,,,cover 1.30 - 10 m,10.0,no,10
+chamber,P118,lateral,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P119,lateral,,,cover 1.30 - 10 m,8.0,no,8
+chamber,P12,lateral,,,cover 1.30 - 10 m,95.0,no,95
+chamber,P12,main,,,cover 1.30 - 10 m,30.0,no,30
+chamber,P12,sub main,,,cover 1.30 - 10 m,25.0,no,25
+chamber,P12,sub main,,,cover 10 - 12 m,13.0,no,13
+chamber,P120,lateral,,,cover 1.30 - 10 m,9.0,no,9
+chamber,P121,lateral,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P122,lateral,,,cover 1.30 - 10 m,9.0,no,9
+chamber,P123,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P124,lateral,,,cover 1.30 - 10 m,14.0,no,14
+chamber,P125,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P126,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P127,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P128,lateral,,,cover 1.30 - 10 m,9.0,no,9
+chamber,P129,lateral,,,cover 1.30 - 10 m,5.0,no,5
+chamber,P13,lateral,,,cover 1.30 - 10 m,24.0,no,24
+chamber,P13,main,,,cover 1.30 - 10 m,71.0,no,71
+chamber,P13,main,,,cover 10 - 12 m,8.0,no,8
+chamber,P13,main,,,cover PAST the 12 m cap,18.0,no,18
+chamber,P130,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P131,lateral,,,cover 1.30 - 10 m,14.0,no,14
+chamber,P132,lateral,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P133,lateral,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P134,lateral,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P135,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P136,lateral,,,cover 1.30 - 10 m,5.0,no,5
+chamber,P137,lateral,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P138,lateral,,,cover 1.30 - 10 m,5.0,no,5
+chamber,P139,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P14,lateral,,,cover 1.30 - 10 m,53.0,no,53
+chamber,P14,main,,,cover 1.30 - 10 m,36.0,no,36
+chamber,P140,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P141,lateral,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P142,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P143,lateral,,,cover 1.30 - 10 m,8.0,no,8
+chamber,P144,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P145,lateral,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P146,lateral,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P147,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P148,lateral,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P149,lateral,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P15,lateral,,,cover 1.30 - 10 m,41.0,no,41
+chamber,P15,main,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P150,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P151,lateral,,,cover 1.30 - 10 m,7.0,no,7
+chamber,P152,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P153,lateral,,,cover 1.30 - 10 m,9.0,no,9
+chamber,P154,lateral,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P155,lateral,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P156,lateral,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P157,lateral,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P158,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P159,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P16,lateral,,,cover 1.30 - 10 m,41.0,no,41
+chamber,P16,main,,,cover 1.30 - 10 m,52.0,no,52
+chamber,P160,lateral,,,cover 1.30 - 10 m,5.0,no,5
+chamber,P161,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P162,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P163,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P164,lateral,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P165,lateral,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P166,lateral,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P167,lateral,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P168,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P169,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P17,lateral,,,cover 1.30 - 10 m,7.0,no,7
+chamber,P17,sub main,,,cover 1.30 - 10 m,53.0,no,53
+chamber,P170,lateral,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P171,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P172,lateral,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P173,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P174,lateral,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P175,lateral,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P176,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P177,lateral,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P178,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P179,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P18,lateral,,,cover 1.30 - 10 m,45.0,no,45
+chamber,P18,main,,,cover 1.30 - 10 m,40.0,no,40
+chamber,P180,lateral,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P181,lateral,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P182,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P183,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P184,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P185,lateral,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P186,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P187,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P188,lateral,,,cover 1.30 - 10 m,5.0,no,5
+chamber,P189,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P19,lateral,,,cover 1.30 - 10 m,22.0,no,22
+chamber,P19,sub main,,,cover 1.30 - 10 m,42.0,no,42
+chamber,P190,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P191,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P192,lateral,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P193,lateral,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P194,lateral,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P195,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P196,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P197,lateral,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P198,lateral,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P199,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P20,lateral,,,cover 1.30 - 10 m,22.0,no,22
+chamber,P20,main,,,cover 1.30 - 10 m,85.0,no,85
+chamber,P200,lateral,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P201,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P202,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P203,lateral,,,cover 1.30 - 10 m,5.0,no,5
+chamber,P204,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P205,lateral,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P206,lateral,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P207,lateral,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P208,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P209,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P21,lateral,,,cover 1.30 - 10 m,68.0,no,68
+chamber,P210,lateral,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P211,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P212,lateral,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P213,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P214,lateral,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P215,lateral,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P216,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P217,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P218,lateral,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P219,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P22,lateral,,,cover 1.30 - 10 m,56.0,no,56
+chamber,P22,main,,,cover 1.30 - 10 m,45.0,no,45
+chamber,P220,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P221,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P222,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P223,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P224,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P225,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P226,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P227,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P228,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P229,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P23,lateral,,,cover 1.30 - 10 m,26.0,no,26
+chamber,P23,lateral,,,cover 10 - 12 m,3.0,no,3
+chamber,P23,lateral,,,cover PAST the 12 m cap,5.0,no,5
+chamber,P23,main,,,cover 1.30 - 10 m,26.0,no,26
+chamber,P230,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P231,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P232,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P233,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P234,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P235,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P236,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P237,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P238,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P239,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P24,lateral,,,cover 1.30 - 10 m,63.0,no,63
+chamber,P24,main,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P240,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P241,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P242,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P243,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P244,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P245,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P246,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P247,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P248,lateral,,,cover 1.30 - 10 m,662.0,no,662
+chamber,P248,lateral,,,cover 10 - 12 m,4.0,no,4
+chamber,P248,main,,,cover 1.30 - 10 m,228.0,no,228
+chamber,P248,main,,,cover 10 - 12 m,11.0,no,11
+chamber,P248,main,,,cover PAST the 12 m cap,8.0,no,8
+chamber,P248,sub main,,,cover 1.30 - 10 m,76.0,no,76
+chamber,P248,sub main,,,cover 10 - 12 m,13.0,no,13
+chamber,P248,sub main,,,cover PAST the 12 m cap,4.0,no,4
+chamber,P249,lateral,,,cover 1.30 - 10 m,408.0,no,408
+chamber,P249,main,,,cover 1.30 - 10 m,89.0,no,89
+chamber,P249,sub main,,,cover 1.30 - 10 m,100.0,no,100
+chamber,P249,sub main,,,cover 10 - 12 m,12.0,no,12
+chamber,P249,trunk main,,,cover 1.30 - 10 m,20.0,no,20
+chamber,P249,trunk main,,,cover 10 - 12 m,3.0,no,3
+chamber,P25,lateral,,,cover 1.30 - 10 m,36.0,no,36
+chamber,P25,main,,,cover 1.30 - 10 m,14.0,no,14
+chamber,P250,lateral,,,cover 1.30 - 10 m,92.0,no,92
+chamber,P250,main,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P250,trunk main,,,cover 1.30 - 10 m,130.0,no,130
+chamber,P250,trunk main,,,cover 10 - 12 m,34.0,no,34
+chamber,P250,trunk main,,,cover PAST the 12 m cap,6.0,no,6
+chamber,P251,lateral,,,cover 1.30 - 10 m,217.0,no,217
+chamber,P251,main,,,cover 1.30 - 10 m,94.0,no,94
+chamber,P251,main,,,cover 10 - 12 m,2.0,no,2
+chamber,P251,sub main,,,cover 1.30 - 10 m,31.0,no,31
+chamber,P251,sub main,,,cover 10 - 12 m,24.0,no,24
+chamber,P251,sub main,,,cover PAST the 12 m cap,4.0,no,4
+chamber,P252,lateral,,,cover 1.30 - 10 m,81.0,no,81
+chamber,P252,main,,,cover 1.30 - 10 m,49.0,no,49
+chamber,P252,main,,,cover 10 - 12 m,4.0,no,4
+chamber,P252,sub main,,,cover 1.30 - 10 m,66.0,no,66
+chamber,P252,sub main,,,cover 10 - 12 m,7.0,no,7
+chamber,P253,lateral,,,cover 1.30 - 10 m,102.0,no,102
+chamber,P253,main,,,cover 1.30 - 10 m,19.0,no,19
+chamber,P253,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P253,sub main,,,cover 1.30 - 10 m,9.0,no,9
+chamber,P253,trunk main,,,cover 1.30 - 10 m,31.0,no,31
+chamber,P254,lateral,,,cover 1.30 - 10 m,115.0,no,115
+chamber,P254,main,,,cover 1.30 - 10 m,73.0,no,73
+chamber,P254,sub main,,,cover 1.30 - 10 m,27.0,no,27
+chamber,P254,sub main,,,cover 10 - 12 m,7.0,no,7
+chamber,P255,lateral,,,cover 1.30 - 10 m,48.0,no,48
+chamber,P255,main,,,cover 1.30 - 10 m,23.0,no,23
+chamber,P255,sub main,,,cover 1.30 - 10 m,8.0,no,8
+chamber,P255,sub main,,,cover 10 - 12 m,1.0,no,1
+chamber,P256,lateral,,,cover 1.30 - 10 m,57.0,no,57
+chamber,P256,main,,,cover 1.30 - 10 m,23.0,no,23
+chamber,P256,main,,,cover 10 - 12 m,16.0,no,16
+chamber,P256,main,,,cover PAST the 12 m cap,1.0,no,1
+chamber,P257,lateral,,,cover 1.30 - 10 m,62.0,no,62
+chamber,P257,main,,,cover 1.30 - 10 m,38.0,no,38
+chamber,P257,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P257,sub main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P257,sub main,,,cover 10 - 12 m,1.0,no,1
+chamber,P258,lateral,,,cover 1.30 - 10 m,62.0,no,62
+chamber,P258,main,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P258,sub main,,,cover 1.30 - 10 m,19.0,no,19
+chamber,P258,sub main,,,cover 10 - 12 m,3.0,no,3
+chamber,P259,lateral,,,cover 1.30 - 10 m,23.0,no,23
+chamber,P259,main,,,cover 1.30 - 10 m,24.0,no,24
+chamber,P259,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P26,lateral,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P26,main,,,cover 1.30 - 10 m,60.0,no,60
+chamber,P26,main,,,cover 10 - 12 m,15.0,no,15
+chamber,P26,main,,,cover PAST the 12 m cap,30.0,no,30
+chamber,P260,sub main,,,cover 1.30 - 10 m,39.0,no,39
+chamber,P261,lateral,,,cover 1.30 - 10 m,21.0,no,21
+chamber,P261,main,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P261,main,,,cover 10 - 12 m,2.0,no,2
+chamber,P262,main,,,cover 1.30 - 10 m,10.0,no,10
+chamber,P262,sub main,,,cover 1.30 - 10 m,17.0,no,17
+chamber,P262,sub main,,,cover 10 - 12 m,1.0,no,1
+chamber,P263,sub main,,,cover 1.30 - 10 m,11.0,no,11
+chamber,P263,sub main,,,cover 10 - 12 m,1.0,no,1
+chamber,P264,sub main,,,cover 1.30 - 10 m,16.0,no,16
+chamber,P264,sub main,,,cover 10 - 12 m,3.0,no,3
+chamber,P265,lateral,,,cover 1.30 - 10 m,17.0,no,17
+chamber,P265,lateral,,,cover 10 - 12 m,8.0,no,8
+chamber,P265,lateral,,,cover PAST the 12 m cap,11.0,no,11
+chamber,P265,main,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P265,main,,,cover 10 - 12 m,4.0,no,4
+chamber,P266,lateral,,,cover 1.30 - 10 m,16.0,no,16
+chamber,P266,main,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P267,lateral,,,cover 1.30 - 10 m,5.0,no,5
+chamber,P267,lateral,,,cover 10 - 12 m,2.0,no,2
+chamber,P268,lateral,,,cover 1.30 - 10 m,352.0,no,352
+chamber,P268,main,,,cover 1.30 - 10 m,81.0,no,81
+chamber,P268,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P268,sub main,,,cover 1.30 - 10 m,31.0,no,31
+chamber,P268,sub main,,,cover 10 - 12 m,13.0,no,13
+chamber,P268,trunk main,,,cover 1.30 - 10 m,10.0,no,10
+chamber,P268,trunk main,,,cover 10 - 12 m,7.0,no,7
+chamber,P268,trunk main,,,cover PAST the 12 m cap,6.0,no,6
+chamber,P269,lateral,,,cover 1.30 - 10 m,113.0,no,113
+chamber,P269,main,,,cover 1.30 - 10 m,40.0,no,40
+chamber,P269,sub main,,,cover 1.30 - 10 m,5.0,no,5
+chamber,P269,sub main,,,cover 10 - 12 m,7.0,no,7
+chamber,P27,lateral,,,cover 1.30 - 10 m,51.0,no,51
+chamber,P27,main,,,cover 1.30 - 10 m,10.0,no,10
+chamber,P270,lateral,,,cover 1.30 - 10 m,69.0,no,69
+chamber,P270,main,,,cover 1.30 - 10 m,21.0,no,21
+chamber,P270,main,,,cover 10 - 12 m,5.0,no,5
+chamber,P270,sub main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P271,lateral,,,cover 1.30 - 10 m,64.0,no,64
+chamber,P271,main,,,cover 1.30 - 10 m,28.0,no,28
+chamber,P271,sub main,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P271,sub main,,,cover 10 - 12 m,6.0,no,6
+chamber,P272,lateral,,,cover 1.30 - 10 m,58.0,no,58
+chamber,P272,main,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P272,main,,,cover 10 - 12 m,5.0,no,5
+chamber,P272,main,,,cover PAST the 12 m cap,2.0,no,2
+chamber,P272,sub main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P273,sub main,,,cover 1.30 - 10 m,118.0,no,118
+chamber,P273,sub main,,,cover 10 - 12 m,6.0,no,6
+chamber,P274,lateral,,,cover 1.30 - 10 m,55.0,no,55
+chamber,P274,main,,,cover 1.30 - 10 m,18.0,no,18
+chamber,P274,sub main,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P274,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P275,lateral,,,cover 1.30 - 10 m,52.0,no,52
+chamber,P275,lateral,,,cover 10 - 12 m,2.0,no,2
+chamber,P275,main,,,cover 1.30 - 10 m,20.0,no,20
+chamber,P275,main,,,cover 10 - 12 m,4.0,no,4
+chamber,P276,lateral,,,cover 1.30 - 10 m,32.0,no,32
+chamber,P276,main,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P276,sub main,,,cover 1.30 - 10 m,66.0,no,66
+chamber,P277,lateral,,,cover 1.30 - 10 m,47.0,no,47
+chamber,P277,main,,,cover 1.30 - 10 m,11.0,no,11
+chamber,P277,main,,,cover 10 - 12 m,3.0,no,3
+chamber,P278,lateral,,,cover 1.30 - 10 m,40.0,no,40
+chamber,P278,main,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P278,main,,,cover 10 - 12 m,2.0,no,2
+chamber,P279,lateral,,,cover 1.30 - 10 m,30.0,no,30
+chamber,P279,main,,,cover 1.30 - 10 m,17.0,no,17
+chamber,P279,main,,,cover 10 - 12 m,6.0,no,6
+chamber,P28,lateral,,,cover 1.30 - 10 m,86.0,no,86
+chamber,P28,main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P280,lateral,,,cover 1.30 - 10 m,56.0,no,56
+chamber,P280,main,,,cover 1.30 - 10 m,19.0,no,19
+chamber,P281,lateral,,,cover 1.30 - 10 m,21.0,no,21
+chamber,P281,sub main,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P281,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P282,lateral,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P282,sub main,,,cover 1.30 - 10 m,24.0,no,24
+chamber,P282,sub main,,,cover 10 - 12 m,4.0,no,4
+chamber,P283,lateral,,,cover 1.30 - 10 m,27.0,no,27
+chamber,P283,lateral,,,cover PAST the 12 m cap,4.0,no,4
+chamber,P283,sub main,,,cover 1.30 - 10 m,7.0,no,7
+chamber,P283,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P284,lateral,,,cover 1.30 - 10 m,22.0,no,22
+chamber,P284,main,,,cover 1.30 - 10 m,13.0,no,13
+chamber,P284,main,,,cover 10 - 12 m,2.0,no,2
+chamber,P285,sub main,,,cover 1.30 - 10 m,19.0,no,19
+chamber,P285,sub main,,,cover 10 - 12 m,4.0,no,4
+chamber,P286,sub main,,,cover 1.30 - 10 m,16.0,no,16
+chamber,P286,sub main,,,cover 10 - 12 m,3.0,no,3
+chamber,P287,lateral,,,cover 1.30 - 10 m,7.0,no,7
+chamber,P287,sub main,,,cover 1.30 - 10 m,18.0,no,18
+chamber,P287,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P288,lateral,,,cover 1.30 - 10 m,22.0,no,22
+chamber,P288,lateral,,,cover 10 - 12 m,2.0,no,2
+chamber,P289,sub main,,,cover 1.30 - 10 m,13.0,no,13
+chamber,P289,sub main,,,cover 10 - 12 m,1.0,no,1
+chamber,P29,lateral,,,cover 1.30 - 10 m,48.0,no,48
+chamber,P29,main,,,cover 1.30 - 10 m,27.0,no,27
+chamber,P290,main,,,cover 1.30 - 10 m,11.0,no,11
+chamber,P290,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P291,lateral,,,cover 1.30 - 10 m,10.0,no,10
+chamber,P291,lateral,,,cover 10 - 12 m,1.0,no,1
+chamber,P292,sub main,,,cover 1.30 - 10 m,10.0,no,10
+chamber,P292,sub main,,,cover 10 - 12 m,1.0,no,1
+chamber,P293,lateral,,,cover 1.30 - 10 m,14.0,no,14
+chamber,P294,lateral,,,cover 1.30 - 10 m,127.0,no,127
+chamber,P294,main,,,cover 1.30 - 10 m,23.0,no,23
+chamber,P294,sub main,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P294,sub main,,,cover 10 - 12 m,5.0,no,5
+chamber,P295,lateral,,,cover 1.30 - 10 m,105.0,no,105
+chamber,P295,main,,,cover 1.30 - 10 m,8.0,no,8
+chamber,P295,sub main,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P295,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P296,lateral,,,cover 1.30 - 10 m,69.0,no,69
+chamber,P296,main,,,cover 1.30 - 10 m,28.0,no,28
+chamber,P296,sub main,,,cover 1.30 - 10 m,5.0,no,5
+chamber,P296,sub main,,,cover 10 - 12 m,9.0,no,9
+chamber,P297,lateral,,,cover 1.30 - 10 m,18.0,no,18
+chamber,P297,main,,,cover 1.30 - 10 m,16.0,no,16
+chamber,P297,sub main,,,cover 1.30 - 10 m,25.0,no,25
+chamber,P297,sub main,,,cover 10 - 12 m,18.0,no,18
+chamber,P297,sub main,,,cover PAST the 12 m cap,7.0,no,7
+chamber,P298,lateral,,,cover 1.30 - 10 m,58.0,no,58
+chamber,P298,main,,,cover 1.30 - 10 m,20.0,no,20
+chamber,P298,main,,,cover 10 - 12 m,5.0,no,5
+chamber,P298,main,,,cover PAST the 12 m cap,2.0,no,2
+chamber,P298,sub main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P299,lateral,,,cover 1.30 - 10 m,49.0,no,49
+chamber,P299,main,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P299,main,,,cover 10 - 12 m,2.0,no,2
+chamber,P30,lateral,,,cover 1.30 - 10 m,24.0,no,24
+chamber,P30,lateral,,,cover 10 - 12 m,4.0,no,4
+chamber,P30,lateral,,,cover PAST the 12 m cap,3.0,no,3
+chamber,P30,main,,,cover 1.30 - 10 m,27.0,no,27
+chamber,P300,lateral,,,cover 1.30 - 10 m,37.0,no,37
+chamber,P300,main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P300,sub main,,,cover 1.30 - 10 m,13.0,no,13
+chamber,P300,sub main,,,cover 10 - 12 m,1.0,no,1
+chamber,P301,lateral,,,cover 1.30 - 10 m,19.0,no,19
+chamber,P301,main,,,cover 1.30 - 10 m,10.0,no,10
+chamber,P301,sub main,,,cover 1.30 - 10 m,18.0,no,18
+chamber,P301,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P302,lateral,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P302,main,,,cover 1.30 - 10 m,20.0,no,20
+chamber,P302,main,,,cover 10 - 12 m,3.0,no,3
+chamber,P303,sub main,,,cover 1.30 - 10 m,14.0,no,14
+chamber,P303,sub main,,,cover 10 - 12 m,1.0,no,1
+chamber,P304,lateral,,,cover 1.30 - 10 m,46.0,no,46
+chamber,P304,main,,,cover 10 - 12 m,2.0,no,2
+chamber,P305,lateral,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P305,sub main,,,cover 1.30 - 10 m,13.0,no,13
+chamber,P305,sub main,,,cover 10 - 12 m,5.0,no,5
+chamber,P306,lateral,,,cover 1.30 - 10 m,16.0,no,16
+chamber,P306,main,,,cover 1.30 - 10 m,10.0,no,10
+chamber,P306,main,,,cover 10 - 12 m,2.0,no,2
+chamber,P307,sub main,,,cover 1.30 - 10 m,26.0,no,26
+chamber,P307,sub main,,,cover 10 - 12 m,6.0,no,6
+chamber,P308,sub main,,,cover 1.30 - 10 m,13.0,no,13
+chamber,P308,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P309,main,,,cover 1.30 - 10 m,14.0,no,14
+chamber,P31,lateral,,,cover 1.30 - 10 m,15.0,no,15
+chamber,P31,main,,,cover 1.30 - 10 m,22.0,no,22
+chamber,P310,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P310,trunk main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P310,trunk main,,,cover 10 - 12 m,1.0,no,1
+chamber,P311,lateral,,,cover 1.30 - 10 m,310.0,no,310
+chamber,P311,lateral,,,cover 10 - 12 m,2.0,no,2
+chamber,P311,main,,,cover 1.30 - 10 m,63.0,no,63
+chamber,P311,main,,,cover 10 - 12 m,7.0,no,7
+chamber,P311,sub main,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P311,sub main,,,cover 10 - 12 m,21.0,no,21
+chamber,P311,sub main,,,cover PAST the 12 m cap,2.0,no,2
+chamber,P311,trunk main,,,cover 1.30 - 10 m,30.0,no,30
+chamber,P311,trunk main,,,cover 10 - 12 m,1.0,no,1
+chamber,P312,lateral,,,cover 1.30 - 10 m,32.0,no,32
+chamber,P312,main,,,cover 1.30 - 10 m,51.0,no,51
+chamber,P312,main,,,cover 10 - 12 m,7.0,no,7
+chamber,P312,sub main,,,cover 10 - 12 m,1.0,no,1
+chamber,P313,lateral,,,cover 1.30 - 10 m,47.0,no,47
+chamber,P313,lateral,,,cover 10 - 12 m,3.0,no,3
+chamber,P313,main,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P313,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P313,sub main,,,cover 1.30 - 10 m,18.0,no,18
+chamber,P313,sub main,,,cover 10 - 12 m,5.0,no,5
+chamber,P314,lateral,,,cover 1.30 - 10 m,39.0,no,39
+chamber,P314,main,,,cover 1.30 - 10 m,17.0,no,17
+chamber,P314,sub main,,,cover 1.30 - 10 m,14.0,no,14
+chamber,P314,sub main,,,cover 10 - 12 m,3.0,no,3
+chamber,P315,lateral,,,cover 1.30 - 10 m,36.0,no,36
+chamber,P315,lateral,,,cover 10 - 12 m,3.0,no,3
+chamber,P316,lateral,,,cover 1.30 - 10 m,22.0,no,22
+chamber,P316,main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P316,sub main,,,cover 1.30 - 10 m,39.0,no,39
+chamber,P316,sub main,,,cover 10 - 12 m,6.0,no,6
+chamber,P317,sub main,,,cover 1.30 - 10 m,18.0,no,18
+chamber,P317,sub main,,,cover 10 - 12 m,5.0,no,5
+chamber,P318,sub main,,,cover 1.30 - 10 m,21.0,no,21
+chamber,P318,sub main,,,cover 10 - 12 m,11.0,no,11
+chamber,P318,sub main,,,cover PAST the 12 m cap,4.0,no,4
+chamber,P319,lateral,,,cover 1.30 - 10 m,9.0,no,9
+chamber,P319,main,,,cover 1.30 - 10 m,19.0,no,19
+chamber,P319,main,,,cover 10 - 12 m,2.0,no,2
+chamber,P32,lateral,,,cover 1.30 - 10 m,15.0,no,15
+chamber,P32,main,,,cover 1.30 - 10 m,24.0,no,24
+chamber,P320,sub main,,,cover 1.30 - 10 m,19.0,no,19
+chamber,P320,sub main,,,cover 10 - 12 m,4.0,no,4
+chamber,P320,sub main,,,cover PAST the 12 m cap,3.0,no,3
+chamber,P321,lateral,,,cover 1.30 - 10 m,337.0,no,337
+chamber,P321,main,,,cover 1.30 - 10 m,63.0,no,63
+chamber,P321,sub main,,,cover 1.30 - 10 m,7.0,no,7
+chamber,P321,trunk main,,,cover 1.30 - 10 m,99.0,no,99
+chamber,P322,lateral,,,cover 1.30 - 10 m,83.0,no,83
+chamber,P322,main,,,cover 1.30 - 10 m,26.0,no,26
+chamber,P322,main,,,cover 10 - 12 m,3.0,no,3
+chamber,P323,lateral,,,cover 1.30 - 10 m,123.0,no,123
+chamber,P323,main,,,cover 1.30 - 10 m,91.0,no,91
+chamber,P323,sub main,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P323,sub main,,,cover 10 - 12 m,7.0,no,7
+chamber,P324,lateral,,,cover 1.30 - 10 m,70.0,no,70
+chamber,P324,lateral,,,cover 10 - 12 m,2.0,no,2
+chamber,P324,main,,,cover 1.30 - 10 m,14.0,no,14
+chamber,P324,main,,,cover 10 - 12 m,5.0,no,5
+chamber,P325,lateral,,,cover 1.30 - 10 m,57.0,no,57
+chamber,P325,main,,,cover 1.30 - 10 m,9.0,no,9
+chamber,P325,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P326,lateral,,,cover 1.30 - 10 m,46.0,no,46
+chamber,P326,main,,,cover 1.30 - 10 m,38.0,no,38
+chamber,P326,main,,,cover 10 - 12 m,3.0,no,3
+chamber,P327,lateral,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P327,main,,,cover 1.30 - 10 m,19.0,no,19
+chamber,P327,main,,,cover 10 - 12 m,5.0,no,5
+chamber,P328,lateral,,,cover 1.30 - 10 m,11.0,no,11
+chamber,P328,main,,,cover 1.30 - 10 m,18.0,no,18
+chamber,P328,main,,,cover 10 - 12 m,4.0,no,4
+chamber,P329,lateral,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P329,sub main,,,cover 1.30 - 10 m,10.0,no,10
+chamber,P329,sub main,,,cover 10 - 12 m,3.0,no,3
+chamber,P33,lateral,,,cover 1.30 - 10 m,27.0,no,27
+chamber,P33,main,,,cover 1.30 - 10 m,10.0,no,10
+chamber,P330,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P330,main,,,cover 1.30 - 10 m,26.0,no,26
+chamber,P330,main,,,cover 10 - 12 m,6.0,no,6
+chamber,P331,lateral,,,cover 1.30 - 10 m,15.0,no,15
+chamber,P331,main,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P331,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P332,sub main,,,cover 1.30 - 10 m,21.0,no,21
+chamber,P332,sub main,,,cover 10 - 12 m,3.0,no,3
+chamber,P333,lateral,,,cover 1.30 - 10 m,22.0,no,22
+chamber,P333,lateral,,,cover 10 - 12 m,3.0,no,3
+chamber,P333,sub main,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P334,sub main,,,cover 1.30 - 10 m,17.0,no,17
+chamber,P334,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P335,lateral,,,cover 1.30 - 10 m,11.0,no,11
+chamber,P335,lateral,,,cover 10 - 12 m,2.0,no,2
+chamber,P336,lateral,,,cover 1.30 - 10 m,728.0,no,728
+chamber,P336,main,,,cover 1.30 - 10 m,166.0,no,166
+chamber,P336,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P336,sub main,,,cover 1.30 - 10 m,71.0,no,71
+chamber,P336,sub main,,,cover 10 - 12 m,11.0,no,11
+chamber,P336,trunk main,,,cover 1.30 - 10 m,39.0,no,39
+chamber,P336,trunk main,,,cover 10 - 12 m,11.0,no,11
+chamber,P337,lateral,,,cover 1.30 - 10 m,340.0,no,340
+chamber,P337,main,,,cover 1.30 - 10 m,111.0,no,111
+chamber,P337,sub main,,,cover 1.30 - 10 m,51.0,no,51
+chamber,P337,trunk main,,,cover 1.30 - 10 m,48.0,no,48
+chamber,P338,lateral,,,cover 1.30 - 10 m,33.0,no,33
+chamber,P338,main,,,cover 1.30 - 10 m,24.0,no,24
+chamber,P338,main,,,cover 10 - 12 m,5.0,no,5
+chamber,P338,main,,,cover PAST the 12 m cap,2.0,no,2
+chamber,P338,sub main,,,cover 1.30 - 10 m,25.0,no,25
+chamber,P338,sub main,,,cover 10 - 12 m,18.0,no,18
+chamber,P339,lateral,,,cover 1.30 - 10 m,38.0,no,38
+chamber,P339,main,,,cover 1.30 - 10 m,44.0,no,44
+chamber,P339,main,,,cover 10 - 12 m,13.0,no,13
+chamber,P339,main,,,cover PAST the 12 m cap,12.0,no,12
+chamber,P34,lateral,,,cover 1.30 - 10 m,68.0,no,68
+chamber,P340,lateral,,,cover 1.30 - 10 m,42.0,no,42
+chamber,P340,main,,,cover 1.30 - 10 m,13.0,no,13
+chamber,P340,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P340,sub main,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P341,lateral,,,cover 1.30 - 10 m,36.0,no,36
+chamber,P341,lateral,,,cover 10 - 12 m,1.0,no,1
+chamber,P341,main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P341,main,,,cover 10 - 12 m,2.0,no,2
+chamber,P342,sub main,,,cover 1.30 - 10 m,29.0,no,29
+chamber,P342,sub main,,,cover 10 - 12 m,3.0,no,3
+chamber,P343,lateral,,,cover 1.30 - 10 m,15.0,no,15
+chamber,P343,lateral,,,cover 10 - 12 m,5.0,no,5
+chamber,P343,main,,,cover 10 - 12 m,3.0,no,3
+chamber,P344,lateral,,,cover 1.30 - 10 m,354.0,no,354
+chamber,P344,main,,,cover 1.30 - 10 m,138.0,no,138
+chamber,P344,sub main,,,cover 1.30 - 10 m,29.0,no,29
+chamber,P344,sub main,,,cover 10 - 12 m,7.0,no,7
+chamber,P344,trunk main,,,cover 1.30 - 10 m,104.0,no,104
+chamber,P344,trunk main,,,cover 10 - 12 m,1.0,no,1
+chamber,P345,lateral,,,cover 1.30 - 10 m,220.0,no,220
+chamber,P345,main,,,cover 1.30 - 10 m,75.0,no,75
+chamber,P345,main,,,cover 10 - 12 m,4.0,no,4
+chamber,P345,main,,,cover PAST the 12 m cap,3.0,no,3
+chamber,P345,sub main,,,cover 1.30 - 10 m,38.0,no,38
+chamber,P345,sub main,,,cover 10 - 12 m,9.0,no,9
+chamber,P345,sub main,,,cover PAST the 12 m cap,4.0,no,4
+chamber,P346,lateral,,,cover 1.30 - 10 m,174.0,no,174
+chamber,P346,main,,,cover 1.30 - 10 m,90.0,no,90
+chamber,P346,main,,,cover 10 - 12 m,5.0,no,5
+chamber,P346,sub main,,,cover 1.30 - 10 m,26.0,no,26
+chamber,P346,sub main,,,cover 10 - 12 m,9.0,no,9
+chamber,P347,lateral,,,cover 1.30 - 10 m,45.0,no,45
+chamber,P347,lateral,,,cover 10 - 12 m,3.0,no,3
+chamber,P347,main,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P347,sub main,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P347,sub main,,,cover 10 - 12 m,3.0,no,3
+chamber,P348,lateral,,,cover 1.30 - 10 m,57.0,no,57
+chamber,P348,sub main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P348,sub main,,,cover 10 - 12 m,10.0,no,10
+chamber,P348,sub main,,,cover PAST the 12 m cap,10.0,no,10
+chamber,P349,lateral,,,cover 1.30 - 10 m,33.0,no,33
+chamber,P349,main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P349,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P35,lateral,,,cover 1.30 - 10 m,23.0,no,23
+chamber,P35,main,,,cover 1.30 - 10 m,23.0,no,23
+chamber,P350,lateral,,,cover 1.30 - 10 m,29.0,no,29
+chamber,P350,main,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P351,lateral,,,cover 1.30 - 10 m,7.0,no,7
+chamber,P351,trunk main,,,cover 1.30 - 10 m,17.0,no,17
+chamber,P352,sub main,,,cover 1.30 - 10 m,21.0,no,21
+chamber,P352,sub main,,,cover 10 - 12 m,1.0,no,1
+chamber,P353,lateral,,,cover 1.30 - 10 m,356.0,no,356
+chamber,P353,main,,,cover 1.30 - 10 m,116.0,no,116
+chamber,P353,sub main,,,cover 1.30 - 10 m,51.0,no,51
+chamber,P353,trunk main,,,cover 1.30 - 10 m,63.0,no,63
+chamber,P354,lateral,,,cover 1.30 - 10 m,268.0,no,268
+chamber,P354,main,,,cover 1.30 - 10 m,76.0,no,76
+chamber,P354,sub main,,,cover 1.30 - 10 m,59.0,no,59
+chamber,P354,sub main,,,cover 10 - 12 m,3.0,no,3
+chamber,P354,trunk main,,,cover 1.30 - 10 m,48.0,no,48
+chamber,P354,trunk main,,,cover 10 - 12 m,11.0,no,11
+chamber,P354,trunk main,,,cover PAST the 12 m cap,1.0,no,1
+chamber,P355,lateral,,,cover 1.30 - 10 m,104.0,no,104
+chamber,P355,main,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P355,sub main,,,cover 1.30 - 10 m,108.0,no,108
+chamber,P355,sub main,,,cover 10 - 12 m,18.0,no,18
+chamber,P356,lateral,,,cover 1.30 - 10 m,88.0,no,88
+chamber,P356,main,,,cover 1.30 - 10 m,38.0,no,38
+chamber,P356,sub main,,,cover 1.30 - 10 m,9.0,no,9
+chamber,P356,sub main,,,cover 10 - 12 m,5.0,no,5
+chamber,P357,lateral,,,cover 1.30 - 10 m,8.0,no,8
+chamber,P357,sub main,,,cover 1.30 - 10 m,43.0,no,43
+chamber,P357,sub main,,,cover 10 - 12 m,1.0,no,1
+chamber,P358,lateral,,,cover 1.30 - 10 m,9.0,no,9
+chamber,P358,sub main,,,cover 1.30 - 10 m,9.0,no,9
+chamber,P358,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P359,lateral,,,cover 1.30 - 10 m,16.0,no,16
+chamber,P359,main,,,cover 1.30 - 10 m,23.0,no,23
+chamber,P359,main,,,cover 10 - 12 m,2.0,no,2
+chamber,P36,lateral,,,cover 1.30 - 10 m,27.0,no,27
+chamber,P36,main,,,cover 1.30 - 10 m,8.0,no,8
+chamber,P360,lateral,,,cover 1.30 - 10 m,7.0,no,7
+chamber,P360,main,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P361,lateral,,,cover 1.30 - 10 m,10.0,no,10
+chamber,P362,lateral,,,cover 1.30 - 10 m,5.0,no,5
+chamber,P363,lateral,,,cover 1.30 - 10 m,582.0,no,582
+chamber,P363,main,,,cover 1.30 - 10 m,149.0,no,149
+chamber,P363,main,,,cover 10 - 12 m,3.0,no,3
+chamber,P363,sub main,,,cover 1.30 - 10 m,82.0,no,82
+chamber,P363,sub main,,,cover 10 - 12 m,9.0,no,9
+chamber,P363,sub main,,,cover PAST the 12 m cap,3.0,no,3
+chamber,P363,trunk main,,,cover 1.30 - 10 m,35.0,no,35
+chamber,P364,lateral,,,cover 1.30 - 10 m,467.0,no,467
+chamber,P364,main,,,cover 1.30 - 10 m,302.0,no,302
+chamber,P364,main,,,cover 10 - 12 m,8.0,no,8
+chamber,P364,main,,,cover PAST the 12 m cap,29.0,no,29
+chamber,P364,sub main,,,cover 1.30 - 10 m,87.0,no,87
+chamber,P364,sub main,,,cover 10 - 12 m,1.0,no,1
+chamber,P365,lateral,,,cover 1.30 - 10 m,267.0,no,267
+chamber,P365,lateral,,,cover 10 - 12 m,5.0,no,5
+chamber,P365,lateral,,,cover PAST the 12 m cap,12.0,no,12
+chamber,P365,main,,,cover 1.30 - 10 m,131.0,no,131
+chamber,P365,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P365,main,,,cover PAST the 12 m cap,9.0,no,9
+chamber,P365,sub main,,,cover 1.30 - 10 m,51.0,no,51
+chamber,P366,lateral,,,cover 1.30 - 10 m,367.0,no,367
+chamber,P366,main,,,cover 1.30 - 10 m,113.0,no,113
+chamber,P366,sub main,,,cover 1.30 - 10 m,86.0,no,86
+chamber,P366,sub main,,,cover 10 - 12 m,32.0,no,32
+chamber,P366,sub main,,,cover PAST the 12 m cap,6.0,no,6
+chamber,P367,lateral,,,cover 1.30 - 10 m,122.0,no,122
+chamber,P367,lateral,,,cover 10 - 12 m,3.0,no,3
+chamber,P367,main,,,cover 1.30 - 10 m,44.0,no,44
+chamber,P367,sub main,,,cover 1.30 - 10 m,22.0,no,22
+chamber,P367,sub main,,,cover 10 - 12 m,5.0,no,5
+chamber,P368,lateral,,,cover 1.30 - 10 m,180.0,no,180
+chamber,P368,main,,,cover 1.30 - 10 m,19.0,no,19
+chamber,P368,sub main,,,cover 1.30 - 10 m,29.0,no,29
+chamber,P368,sub main,,,cover 10 - 12 m,1.0,no,1
+chamber,P369,lateral,,,cover 1.30 - 10 m,59.0,no,59
+chamber,P369,main,,,cover 1.30 - 10 m,20.0,no,20
+chamber,P369,main,,,cover 10 - 12 m,2.0,no,2
+chamber,P369,sub main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P37,lateral,,,cover 1.30 - 10 m,57.0,no,57
+chamber,P370,lateral,,,cover 1.30 - 10 m,53.0,no,53
+chamber,P370,main,,,cover 1.30 - 10 m,18.0,no,18
+chamber,P370,main,,,cover 10 - 12 m,7.0,no,7
+chamber,P371,lateral,,,cover 1.30 - 10 m,33.0,no,33
+chamber,P371,main,,,cover 1.30 - 10 m,13.0,no,13
+chamber,P371,sub main,,,cover 1.30 - 10 m,19.0,no,19
+chamber,P371,sub main,,,cover 10 - 12 m,5.0,no,5
+chamber,P372,lateral,,,cover 1.30 - 10 m,36.0,no,36
+chamber,P372,main,,,cover 1.30 - 10 m,23.0,no,23
+chamber,P372,main,,,cover 10 - 12 m,6.0,no,6
+chamber,P373,lateral,,,cover 1.30 - 10 m,45.0,no,45
+chamber,P373,main,,,cover 1.30 - 10 m,11.0,no,11
+chamber,P373,sub main,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P373,sub main,,,cover 10 - 12 m,36.0,no,36
+chamber,P374,lateral,,,cover 1.30 - 10 m,39.0,no,39
+chamber,P374,main,,,cover 1.30 - 10 m,7.0,no,7
+chamber,P374,main,,,cover 10 - 12 m,3.0,no,3
+chamber,P375,lateral,,,cover 1.30 - 10 m,29.0,no,29
+chamber,P375,main,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P375,main,,,cover 10 - 12 m,2.0,no,2
+chamber,P376,lateral,,,cover 1.30 - 10 m,15.0,no,15
+chamber,P376,main,,,cover 1.30 - 10 m,14.0,no,14
+chamber,P376,sub main,,,cover 1.30 - 10 m,5.0,no,5
+chamber,P376,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P377,lateral,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P377,sub main,,,cover 1.30 - 10 m,16.0,no,16
+chamber,P377,sub main,,,cover 10 - 12 m,1.0,no,1
+chamber,P379,lateral,,,cover 1.30 - 10 m,455.0,no,455
+chamber,P379,main,,,cover 1.30 - 10 m,215.0,no,215
+chamber,P379,sub main,,,cover 1.30 - 10 m,99.0,no,99
+chamber,P38,lateral,,,cover 1.30 - 10 m,53.0,no,53
+chamber,P38,main,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P380,lateral,,,cover 1.30 - 10 m,448.0,no,448
+chamber,P380,main,,,cover 1.30 - 10 m,183.0,no,183
+chamber,P380,sub main,,,cover 1.30 - 10 m,88.0,no,88
+chamber,P380,sub main,,,cover 10 - 12 m,7.0,no,7
+chamber,P381,lateral,,,cover 1.30 - 10 m,406.0,no,406
+chamber,P381,main,,,cover 1.30 - 10 m,143.0,no,143
+chamber,P381,sub main,,,cover 1.30 - 10 m,87.0,no,87
+chamber,P381,sub main,,,cover 10 - 12 m,44.0,no,44
+chamber,P382,lateral,,,cover 1.30 - 10 m,251.0,no,251
+chamber,P382,main,,,cover 1.30 - 10 m,51.0,no,51
+chamber,P382,sub main,,,cover 1.30 - 10 m,65.0,no,65
+chamber,P382,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P382,trunk main,,,cover 1.30 - 10 m,74.0,no,74
+chamber,P382,trunk main,,,cover 10 - 12 m,21.0,no,21
+chamber,P382,trunk main,,,cover PAST the 12 m cap,2.0,no,2
+chamber,P383,lateral,,,cover 1.30 - 10 m,135.0,no,135
+chamber,P383,main,,,cover 1.30 - 10 m,41.0,no,41
+chamber,P383,sub main,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P383,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P383,trunk main,,,cover 1.30 - 10 m,35.0,no,35
+chamber,P383,trunk main,,,cover 10 - 12 m,23.0,no,23
+chamber,P383,trunk main,,,cover PAST the 12 m cap,3.0,no,3
+chamber,P384,lateral,,,cover 1.30 - 10 m,161.0,no,161
+chamber,P384,lateral,,,cover 10 - 12 m,2.0,no,2
+chamber,P384,lateral,,,cover PAST the 12 m cap,1.0,no,1
+chamber,P384,main,,,cover 1.30 - 10 m,28.0,no,28
+chamber,P384,sub main,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P384,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P385,lateral,,,cover 1.30 - 10 m,192.0,no,192
+chamber,P385,lateral,,,cover 10 - 12 m,3.0,no,3
+chamber,P385,main,,,cover 1.30 - 10 m,78.0,no,78
+chamber,P385,main,,,cover 10 - 12 m,11.0,no,11
+chamber,P385,main,,,cover PAST the 12 m cap,3.0,no,3
+chamber,P385,sub main,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P385,sub main,,,cover 10 - 12 m,22.0,no,22
+chamber,P386,lateral,,,cover 1.30 - 10 m,72.0,no,72
+chamber,P386,main,,,cover 1.30 - 10 m,18.0,no,18
+chamber,P386,sub main,,,cover 1.30 - 10 m,11.0,no,11
+chamber,P386,sub main,,,cover 10 - 12 m,6.0,no,6
+chamber,P387,lateral,,,cover 1.30 - 10 m,82.0,no,82
+chamber,P387,main,,,cover 1.30 - 10 m,58.0,no,58
+chamber,P387,sub main,,,cover 1.30 - 10 m,33.0,no,33
+chamber,P387,sub main,,,cover 10 - 12 m,13.0,no,13
+chamber,P387,sub main,,,cover PAST the 12 m cap,4.0,no,4
+chamber,P388,lateral,,,cover 1.30 - 10 m,63.0,no,63
+chamber,P388,main,,,cover 1.30 - 10 m,68.0,no,68
+chamber,P388,main,,,cover 10 - 12 m,9.0,no,9
+chamber,P389,lateral,,,cover 1.30 - 10 m,38.0,no,38
+chamber,P389,main,,,cover 1.30 - 10 m,8.0,no,8
+chamber,P389,sub main,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P389,sub main,,,cover 10 - 12 m,5.0,no,5
+chamber,P39,lateral,,,cover 1.30 - 10 m,54.0,no,54
+chamber,P390,lateral,,,cover 1.30 - 10 m,46.0,no,46
+chamber,P390,main,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P390,sub main,,,cover 1.30 - 10 m,13.0,no,13
+chamber,P390,sub main,,,cover 10 - 12 m,3.0,no,3
+chamber,P391,lateral,,,cover 1.30 - 10 m,31.0,no,31
+chamber,P391,main,,,cover 1.30 - 10 m,21.0,no,21
+chamber,P391,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P391,sub main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P392,lateral,,,cover 1.30 - 10 m,54.0,no,54
+chamber,P392,main,,,cover 1.30 - 10 m,38.0,no,38
+chamber,P392,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P393,lateral,,,cover 1.30 - 10 m,40.0,no,40
+chamber,P393,main,,,cover 1.30 - 10 m,8.0,no,8
+chamber,P393,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P394,lateral,,,cover 1.30 - 10 m,37.0,no,37
+chamber,P394,main,,,cover 1.30 - 10 m,14.0,no,14
+chamber,P394,main,,,cover 10 - 12 m,9.0,no,9
+chamber,P395,lateral,,,cover 1.30 - 10 m,25.0,no,25
+chamber,P396,lateral,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P396,main,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P397,lateral,,,cover 1.30 - 10 m,285.0,no,285
+chamber,P397,main,,,cover 1.30 - 10 m,82.0,no,82
+chamber,P397,sub main,,,cover 1.30 - 10 m,131.0,no,131
+chamber,P397,sub main,,,cover 10 - 12 m,3.0,no,3
+chamber,P397,trunk main,,,cover 1.30 - 10 m,34.0,no,34
+chamber,P397,trunk main,,,cover 10 - 12 m,3.0,no,3
+chamber,P398,lateral,,,cover 1.30 - 10 m,428.0,no,428
+chamber,P398,main,,,cover 1.30 - 10 m,180.0,no,180
+chamber,P398,sub main,,,cover 1.30 - 10 m,88.0,no,88
+chamber,P399,lateral,,,cover 1.30 - 10 m,263.0,no,263
+chamber,P399,main,,,cover 1.30 - 10 m,118.0,no,118
+chamber,P399,sub main,,,cover 1.30 - 10 m,61.0,no,61
+chamber,P399,sub main,,,cover 10 - 12 m,1.0,no,1
+chamber,P399,trunk main,,,cover 1.30 - 10 m,39.0,no,39
+chamber,P399,trunk main,,,cover 10 - 12 m,43.0,no,43
+chamber,P399,trunk main,,,cover PAST the 12 m cap,1.0,no,1
+chamber,P40,lateral,,,cover 1.30 - 10 m,19.0,no,19
+chamber,P40,main,,,cover 1.30 - 10 m,8.0,no,8
+chamber,P400,lateral,,,cover 1.30 - 10 m,122.0,no,122
+chamber,P400,main,,,cover 1.30 - 10 m,47.0,no,47
+chamber,P400,sub main,,,cover 1.30 - 10 m,78.0,no,78
+chamber,P400,sub main,,,cover 10 - 12 m,10.0,no,10
+chamber,P401,lateral,,,cover 1.30 - 10 m,225.0,no,225
+chamber,P401,main,,,cover 1.30 - 10 m,122.0,no,122
+chamber,P401,sub main,,,cover 1.30 - 10 m,30.0,no,30
+chamber,P401,sub main,,,cover 10 - 12 m,18.0,no,18
+chamber,P402,lateral,,,cover 1.30 - 10 m,163.0,no,163
+chamber,P402,main,,,cover 1.30 - 10 m,130.0,no,130
+chamber,P402,sub main,,,cover 1.30 - 10 m,23.0,no,23
+chamber,P402,sub main,,,cover 10 - 12 m,18.0,no,18
+chamber,P403,lateral,,,cover 1.30 - 10 m,209.0,no,209
+chamber,P403,main,,,cover 1.30 - 10 m,91.0,no,91
+chamber,P403,sub main,,,cover 1.30 - 10 m,24.0,no,24
+chamber,P403,sub main,,,cover 10 - 12 m,4.0,no,4
+chamber,P404,lateral,,,cover 1.30 - 10 m,89.0,no,89
+chamber,P404,main,,,cover 1.30 - 10 m,58.0,no,58
+chamber,P404,sub main,,,cover 1.30 - 10 m,15.0,no,15
+chamber,P404,sub main,,,cover 10 - 12 m,5.0,no,5
+chamber,P405,lateral,,,cover 1.30 - 10 m,50.0,no,50
+chamber,P405,sub main,,,cover 1.30 - 10 m,75.0,no,75
+chamber,P406,lateral,,,cover 1.30 - 10 m,42.0,no,42
+chamber,P406,main,,,cover 1.30 - 10 m,9.0,no,9
+chamber,P406,sub main,,,cover 1.30 - 10 m,20.0,no,20
+chamber,P406,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P407,lateral,,,cover 1.30 - 10 m,34.0,no,34
+chamber,P407,main,,,cover 1.30 - 10 m,11.0,no,11
+chamber,P407,main,,,cover 10 - 12 m,3.0,no,3
+chamber,P408,sub main,,,cover 1.30 - 10 m,37.0,no,37
+chamber,P408,sub main,,,cover 10 - 12 m,6.0,no,6
+chamber,P409,lateral,,,cover 1.30 - 10 m,32.0,no,32
+chamber,P409,main,,,cover 1.30 - 10 m,5.0,no,5
+chamber,P409,sub main,,,cover 1.30 - 10 m,5.0,no,5
+chamber,P409,sub main,,,cover 10 - 12 m,3.0,no,3
+chamber,P41,lateral,,,cover 1.30 - 10 m,40.0,no,40
+chamber,P41,main,,,cover 1.30 - 10 m,24.0,no,24
+chamber,P410,lateral,,,cover 1.30 - 10 m,17.0,no,17
+chamber,P410,lateral,,,cover 10 - 12 m,4.0,no,4
+chamber,P411,lateral,,,cover 1.30 - 10 m,490.0,no,490
+chamber,P411,main,,,cover 1.30 - 10 m,168.0,no,168
+chamber,P411,sub main,,,cover 1.30 - 10 m,50.0,no,50
+chamber,P411,sub main,,,cover 10 - 12 m,1.0,no,1
+chamber,P411,trunk main,,,cover 1.30 - 10 m,30.0,no,30
+chamber,P411,trunk main,,,cover 10 - 12 m,36.0,no,36
+chamber,P412,lateral,,,cover 1.30 - 10 m,233.0,no,233
+chamber,P412,main,,,cover 1.30 - 10 m,31.0,no,31
+chamber,P412,sub main,,,cover 1.30 - 10 m,86.0,no,86
+chamber,P413,lateral,,,cover 1.30 - 10 m,190.0,no,190
+chamber,P413,main,,,cover 1.30 - 10 m,53.0,no,53
+chamber,P413,sub main,,,cover 1.30 - 10 m,35.0,no,35
+chamber,P413,sub main,,,cover 10 - 12 m,35.0,no,35
+chamber,P413,sub main,,,cover PAST the 12 m cap,10.0,no,10
+chamber,P414,lateral,,,cover 1.30 - 10 m,209.0,no,209
+chamber,P414,main,,,cover 1.30 - 10 m,69.0,no,69
+chamber,P414,sub main,,,cover 1.30 - 10 m,60.0,no,60
+chamber,P414,sub main,,,cover 10 - 12 m,6.0,no,6
+chamber,P415,lateral,,,cover 1.30 - 10 m,79.0,no,79
+chamber,P415,main,,,cover 1.30 - 10 m,17.0,no,17
+chamber,P415,trunk main,,,cover 1.30 - 10 m,61.0,no,61
+chamber,P415,trunk main,,,cover 10 - 12 m,13.0,no,13
+chamber,P416,lateral,,,cover 1.30 - 10 m,124.0,no,124
+chamber,P416,lateral,,,cover 10 - 12 m,2.0,no,2
+chamber,P416,lateral,,,cover PAST the 12 m cap,6.0,no,6
+chamber,P416,main,,,cover 1.30 - 10 m,117.0,no,117
+chamber,P416,main,,,cover 10 - 12 m,4.0,no,4
+chamber,P416,sub main,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P416,sub main,,,cover 10 - 12 m,6.0,no,6
+chamber,P417,lateral,,,cover 1.30 - 10 m,99.0,no,99
+chamber,P417,main,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P417,sub main,,,cover 1.30 - 10 m,35.0,no,35
+chamber,P417,sub main,,,cover 10 - 12 m,4.0,no,4
+chamber,P418,lateral,,,cover 1.30 - 10 m,113.0,no,113
+chamber,P418,main,,,cover 1.30 - 10 m,59.0,no,59
+chamber,P418,main,,,cover 10 - 12 m,2.0,no,2
+chamber,P418,sub main,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P418,sub main,,,cover 10 - 12 m,5.0,no,5
+chamber,P419,lateral,,,cover 1.30 - 10 m,87.0,no,87
+chamber,P419,main,,,cover 1.30 - 10 m,26.0,no,26
+chamber,P419,sub main,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P419,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P42,lateral,,,cover 1.30 - 10 m,42.0,no,42
+chamber,P420,lateral,,,cover 1.30 - 10 m,91.0,no,91
+chamber,P420,main,,,cover 1.30 - 10 m,55.0,no,55
+chamber,P420,sub main,,,cover 1.30 - 10 m,9.0,no,9
+chamber,P420,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P421,lateral,,,cover 1.30 - 10 m,90.0,no,90
+chamber,P421,main,,,cover 1.30 - 10 m,112.0,no,112
+chamber,P421,main,,,cover 10 - 12 m,4.0,no,4
+chamber,P421,sub main,,,cover 1.30 - 10 m,11.0,no,11
+chamber,P421,sub main,,,cover 10 - 12 m,4.0,no,4
+chamber,P422,lateral,,,cover 1.30 - 10 m,102.0,no,102
+chamber,P422,main,,,cover 1.30 - 10 m,66.0,no,66
+chamber,P422,main,,,cover 10 - 12 m,3.0,no,3
+chamber,P422,sub main,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P422,sub main,,,cover 10 - 12 m,7.0,no,7
+chamber,P423,lateral,,,cover 1.30 - 10 m,38.0,no,38
+chamber,P423,main,,,cover 1.30 - 10 m,13.0,no,13
+chamber,P423,sub main,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P423,sub main,,,cover 10 - 12 m,5.0,no,5
+chamber,P424,lateral,,,cover 1.30 - 10 m,75.0,no,75
+chamber,P424,main,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P424,sub main,,,cover 1.30 - 10 m,17.0,no,17
+chamber,P425,lateral,,,cover 1.30 - 10 m,28.0,no,28
+chamber,P425,main,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P426,lateral,,,cover 1.30 - 10 m,15.0,no,15
+chamber,P426,main,,,cover 1.30 - 10 m,23.0,no,23
+chamber,P426,sub main,,,cover 1.30 - 10 m,11.0,no,11
+chamber,P426,sub main,,,cover 10 - 12 m,3.0,no,3
+chamber,P427,sub main,,,cover 1.30 - 10 m,19.0,no,19
+chamber,P428,lateral,,,cover 1.30 - 10 m,256.0,no,256
+chamber,P428,main,,,cover 1.30 - 10 m,87.0,no,87
+chamber,P428,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P428,sub main,,,cover 1.30 - 10 m,52.0,no,52
+chamber,P428,sub main,,,cover 10 - 12 m,3.0,no,3
+chamber,P429,lateral,,,cover 1.30 - 10 m,416.0,no,416
+chamber,P429,main,,,cover 1.30 - 10 m,197.0,no,197
+chamber,P429,sub main,,,cover 1.30 - 10 m,34.0,no,34
+chamber,P429,trunk main,,,cover 1.30 - 10 m,58.0,no,58
+chamber,P429,trunk main,,,cover 10 - 12 m,14.0,no,14
+chamber,P43,lateral,,,cover 1.30 - 10 m,26.0,no,26
+chamber,P43,main,,,cover 1.30 - 10 m,34.0,no,34
+chamber,P430,lateral,,,cover 1.30 - 10 m,159.0,no,159
+chamber,P430,main,,,cover 1.30 - 10 m,91.0,no,91
+chamber,P430,sub main,,,cover 1.30 - 10 m,23.0,no,23
+chamber,P430,sub main,,,cover 10 - 12 m,10.0,no,10
+chamber,P430,sub main,,,cover PAST the 12 m cap,1.0,no,1
+chamber,P431,lateral,,,cover 1.30 - 10 m,173.0,no,173
+chamber,P431,main,,,cover 1.30 - 10 m,43.0,no,43
+chamber,P431,sub main,,,cover 1.30 - 10 m,22.0,no,22
+chamber,P431,sub main,,,cover 10 - 12 m,11.0,no,11
+chamber,P431,sub main,,,cover PAST the 12 m cap,2.0,no,2
+chamber,P432,lateral,,,cover 1.30 - 10 m,86.0,no,86
+chamber,P432,main,,,cover 1.30 - 10 m,8.0,no,8
+chamber,P432,sub main,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P432,sub main,,,cover 10 - 12 m,14.0,no,14
+chamber,P433,lateral,,,cover 1.30 - 10 m,88.0,no,88
+chamber,P433,main,,,cover 1.30 - 10 m,43.0,no,43
+chamber,P433,sub main,,,cover 1.30 - 10 m,74.0,no,74
+chamber,P433,sub main,,,cover 10 - 12 m,7.0,no,7
+chamber,P434,lateral,,,cover 1.30 - 10 m,119.0,no,119
+chamber,P434,main,,,cover 1.30 - 10 m,57.0,no,57
+chamber,P434,sub main,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P434,sub main,,,cover 10 - 12 m,11.0,no,11
+chamber,P435,lateral,,,cover 1.30 - 10 m,52.0,no,52
+chamber,P435,main,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P435,sub main,,,cover 1.30 - 10 m,29.0,no,29
+chamber,P435,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P436,lateral,,,cover 1.30 - 10 m,50.0,no,50
+chamber,P436,main,,,cover 1.30 - 10 m,21.0,no,21
+chamber,P436,main,,,cover 10 - 12 m,3.0,no,3
+chamber,P437,lateral,,,cover 1.30 - 10 m,54.0,no,54
+chamber,P437,main,,,cover 1.30 - 10 m,62.0,no,62
+chamber,P438,lateral,,,cover 1.30 - 10 m,45.0,no,45
+chamber,P438,main,,,cover 1.30 - 10 m,8.0,no,8
+chamber,P438,sub main,,,cover 1.30 - 10 m,13.0,no,13
+chamber,P438,sub main,,,cover 10 - 12 m,5.0,no,5
+chamber,P438,sub main,,,cover PAST the 12 m cap,1.0,no,1
+chamber,P439,lateral,,,cover 1.30 - 10 m,53.0,no,53
+chamber,P439,main,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P439,sub main,,,cover 1.30 - 10 m,74.0,no,74
+chamber,P44,lateral,,,cover 1.30 - 10 m,32.0,no,32
+chamber,P44,main,,,cover 1.30 - 10 m,7.0,no,7
+chamber,P440,lateral,,,cover 1.30 - 10 m,25.0,no,25
+chamber,P440,main,,,cover 1.30 - 10 m,24.0,no,24
+chamber,P440,sub main,,,cover 1.30 - 10 m,18.0,no,18
+chamber,P441,lateral,,,cover 1.30 - 10 m,55.0,no,55
+chamber,P441,main,,,cover 1.30 - 10 m,43.0,no,43
+chamber,P441,main,,,cover 10 - 12 m,8.0,no,8
+chamber,P442,lateral,,,cover 1.30 - 10 m,60.0,no,60
+chamber,P442,main,,,cover 1.30 - 10 m,17.0,no,17
+chamber,P442,sub main,,,cover 1.30 - 10 m,35.0,no,35
+chamber,P442,sub main,,,cover 10 - 12 m,6.0,no,6
+chamber,P443,lateral,,,cover 1.30 - 10 m,39.0,no,39
+chamber,P443,main,,,cover 1.30 - 10 m,17.0,no,17
+chamber,P443,main,,,cover 10 - 12 m,4.0,no,4
+chamber,P444,lateral,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P444,sub main,,,cover 10 - 12 m,4.0,no,4
+chamber,P445,lateral,,,cover 1.30 - 10 m,8.0,no,8
+chamber,P445,lateral,,,cover 10 - 12 m,1.0,no,1
+chamber,P446,lateral,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P447,lateral,,,cover 1.30 - 10 m,463.0,no,463
+chamber,P447,lateral,,,cover PAST the 12 m cap,4.0,no,4
+chamber,P447,main,,,cover 1.30 - 10 m,283.0,no,283
+chamber,P447,main,,,cover 10 - 12 m,4.0,no,4
+chamber,P447,main,,,cover PAST the 12 m cap,6.0,no,6
+chamber,P447,sub main,,,cover 1.30 - 10 m,76.0,no,76
+chamber,P447,sub main,,,cover 10 - 12 m,9.0,no,9
+chamber,P447,trunk main,,,cover 1.30 - 10 m,61.0,no,61
+chamber,P447,trunk main,,,cover 10 - 12 m,12.0,no,12
+chamber,P448,lateral,,,cover 1.30 - 10 m,277.0,no,277
+chamber,P448,main,,,cover 1.30 - 10 m,77.0,no,77
+chamber,P448,sub main,,,cover 1.30 - 10 m,67.0,no,67
+chamber,P448,sub main,,,cover 10 - 12 m,9.0,no,9
+chamber,P449,lateral,,,cover 1.30 - 10 m,349.0,no,349
+chamber,P449,lateral,,,cover 10 - 12 m,12.0,no,12
+chamber,P449,lateral,,,cover PAST the 12 m cap,12.0,no,12
+chamber,P449,main,,,cover 1.30 - 10 m,201.0,no,201
+chamber,P449,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P449,main,,,cover PAST the 12 m cap,4.0,no,4
+chamber,P449,sub main,,,cover 1.30 - 10 m,54.0,no,54
+chamber,P449,sub main,,,cover 10 - 12 m,9.0,no,9
+chamber,P45,lateral,,,cover 1.30 - 10 m,11.0,no,11
+chamber,P45,main,,,cover 1.30 - 10 m,23.0,no,23
+chamber,P450,lateral,,,cover 1.30 - 10 m,191.0,no,191
+chamber,P450,main,,,cover 1.30 - 10 m,86.0,no,86
+chamber,P450,main,,,cover 10 - 12 m,4.0,no,4
+chamber,P450,sub main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P450,sub main,,,cover 10 - 12 m,1.0,no,1
+chamber,P451,lateral,,,cover 1.30 - 10 m,112.0,no,112
+chamber,P451,main,,,cover 1.30 - 10 m,56.0,no,56
+chamber,P451,sub main,,,cover 1.30 - 10 m,21.0,no,21
+chamber,P451,sub main,,,cover 10 - 12 m,10.0,no,10
+chamber,P452,lateral,,,cover 1.30 - 10 m,58.0,no,58
+chamber,P452,main,,,cover 1.30 - 10 m,43.0,no,43
+chamber,P452,sub main,,,cover 1.30 - 10 m,25.0,no,25
+chamber,P452,sub main,,,cover 10 - 12 m,6.0,no,6
+chamber,P453,lateral,,,cover 1.30 - 10 m,117.0,no,117
+chamber,P453,main,,,cover 1.30 - 10 m,40.0,no,40
+chamber,P453,main,,,cover 10 - 12 m,4.0,no,4
+chamber,P453,sub main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P454,lateral,,,cover 1.30 - 10 m,79.0,no,79
+chamber,P454,main,,,cover 1.30 - 10 m,37.0,no,37
+chamber,P454,main,,,cover 10 - 12 m,7.0,no,7
+chamber,P455,lateral,,,cover 1.30 - 10 m,73.0,no,73
+chamber,P455,main,,,cover 1.30 - 10 m,22.0,no,22
+chamber,P455,main,,,cover 10 - 12 m,2.0,no,2
+chamber,P456,lateral,,,cover 1.30 - 10 m,50.0,no,50
+chamber,P456,main,,,cover 1.30 - 10 m,62.0,no,62
+chamber,P456,main,,,cover 10 - 12 m,5.0,no,5
+chamber,P457,lateral,,,cover 1.30 - 10 m,71.0,no,71
+chamber,P457,main,,,cover 1.30 - 10 m,26.0,no,26
+chamber,P457,main,,,cover 10 - 12 m,4.0,no,4
+chamber,P458,lateral,,,cover 1.30 - 10 m,45.0,no,45
+chamber,P458,main,,,cover 1.30 - 10 m,18.0,no,18
+chamber,P458,main,,,cover 10 - 12 m,4.0,no,4
+chamber,P458,main,,,cover PAST the 12 m cap,4.0,no,4
+chamber,P459,lateral,,,cover 1.30 - 10 m,27.0,no,27
+chamber,P459,lateral,,,cover 10 - 12 m,3.0,no,3
+chamber,P459,main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P459,main,,,cover 10 - 12 m,2.0,no,2
+chamber,P46,lateral,,,cover 1.30 - 10 m,30.0,no,30
+chamber,P46,main,,,cover 1.30 - 10 m,26.0,no,26
+chamber,P460,lateral,,,cover 1.30 - 10 m,31.0,no,31
+chamber,P460,sub main,,,cover 1.30 - 10 m,25.0,no,25
+chamber,P460,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P461,lateral,,,cover 1.30 - 10 m,10.0,no,10
+chamber,P462,lateral,,,cover 1.30 - 10 m,420.0,no,420
+chamber,P462,main,,,cover 1.30 - 10 m,209.0,no,209
+chamber,P462,main,,,cover 10 - 12 m,10.0,no,10
+chamber,P462,trunk main,,,cover 1.30 - 10 m,80.0,no,80
+chamber,P462,trunk main,,,cover 10 - 12 m,5.0,no,5
+chamber,P462,trunk main,,,cover PAST the 12 m cap,3.0,no,3
+chamber,P463,lateral,,,cover 1.30 - 10 m,146.0,no,146
+chamber,P463,lateral,,,cover 10 - 12 m,2.0,no,2
+chamber,P463,main,,,cover 1.30 - 10 m,92.0,no,92
+chamber,P463,main,,,cover 10 - 12 m,6.0,no,6
+chamber,P463,sub main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P463,sub main,,,cover 10 - 12 m,14.0,no,14
+chamber,P464,lateral,,,cover 1.30 - 10 m,171.0,no,171
+chamber,P464,main,,,cover 1.30 - 10 m,89.0,no,89
+chamber,P464,sub main,,,cover 1.30 - 10 m,7.0,no,7
+chamber,P464,sub main,,,cover 10 - 12 m,7.0,no,7
+chamber,P465,lateral,,,cover 1.30 - 10 m,85.0,no,85
+chamber,P465,main,,,cover 1.30 - 10 m,175.0,no,175
+chamber,P465,main,,,cover 10 - 12 m,6.0,no,6
+chamber,P465,sub main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P465,sub main,,,cover 10 - 12 m,3.0,no,3
+chamber,P466,lateral,,,cover 1.30 - 10 m,141.0,no,141
+chamber,P466,main,,,cover 1.30 - 10 m,82.0,no,82
+chamber,P466,sub main,,,cover 1.30 - 10 m,8.0,no,8
+chamber,P466,sub main,,,cover 10 - 12 m,4.0,no,4
+chamber,P467,lateral,,,cover 1.30 - 10 m,101.0,no,101
+chamber,P467,lateral,,,cover PAST the 12 m cap,6.0,no,6
+chamber,P467,main,,,cover 1.30 - 10 m,61.0,no,61
+chamber,P467,main,,,cover 10 - 12 m,5.0,no,5
+chamber,P467,main,,,cover PAST the 12 m cap,1.0,no,1
+chamber,P467,sub main,,,cover 1.30 - 10 m,33.0,no,33
+chamber,P467,sub main,,,cover 10 - 12 m,7.0,no,7
+chamber,P468,lateral,,,cover 1.30 - 10 m,78.0,no,78
+chamber,P468,main,,,cover 1.30 - 10 m,42.0,no,42
+chamber,P468,sub main,,,cover 1.30 - 10 m,25.0,no,25
+chamber,P468,sub main,,,cover 10 - 12 m,17.0,no,17
+chamber,P469,lateral,,,cover 1.30 - 10 m,83.0,no,83
+chamber,P469,main,,,cover 1.30 - 10 m,41.0,no,41
+chamber,P469,sub main,,,cover 1.30 - 10 m,26.0,no,26
+chamber,P469,sub main,,,cover 10 - 12 m,5.0,no,5
+chamber,P47,lateral,,,cover 1.30 - 10 m,30.0,no,30
+chamber,P47,main,,,cover 1.30 - 10 m,13.0,no,13
+chamber,P470,lateral,,,cover 1.30 - 10 m,87.0,no,87
+chamber,P470,main,,,cover 1.30 - 10 m,44.0,no,44
+chamber,P470,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P471,lateral,,,cover 1.30 - 10 m,46.0,no,46
+chamber,P471,main,,,cover 1.30 - 10 m,13.0,no,13
+chamber,P471,sub main,,,cover 1.30 - 10 m,17.0,no,17
+chamber,P471,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P472,lateral,,,cover 1.30 - 10 m,53.0,no,53
+chamber,P472,main,,,cover 1.30 - 10 m,61.0,no,61
+chamber,P472,sub main,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P472,sub main,,,cover 10 - 12 m,11.0,no,11
+chamber,P473,lateral,,,cover 1.30 - 10 m,55.0,no,55
+chamber,P473,main,,,cover 1.30 - 10 m,29.0,no,29
+chamber,P473,main,,,cover 10 - 12 m,10.0,no,10
+chamber,P474,lateral,,,cover 1.30 - 10 m,375.0,no,375
+chamber,P474,main,,,cover 1.30 - 10 m,181.0,no,181
+chamber,P474,main,,,cover 10 - 12 m,19.0,no,19
+chamber,P474,main,,,cover PAST the 12 m cap,5.0,no,5
+chamber,P474,sub main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P474,sub main,,,cover 10 - 12 m,5.0,no,5
+chamber,P474,trunk main,,,cover 1.30 - 10 m,152.0,no,152
+chamber,P474,trunk main,,,cover 10 - 12 m,16.0,no,16
+chamber,P474,trunk main,,,cover PAST the 12 m cap,4.0,no,4
+chamber,P475,lateral,,,cover 1.30 - 10 m,89.0,no,89
+chamber,P475,main,,,cover 1.30 - 10 m,22.0,no,22
+chamber,P475,sub main,,,cover 1.30 - 10 m,23.0,no,23
+chamber,P475,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P476,lateral,,,cover 1.30 - 10 m,72.0,no,72
+chamber,P476,main,,,cover 1.30 - 10 m,47.0,no,47
+chamber,P476,main,,,cover 10 - 12 m,7.0,no,7
+chamber,P477,lateral,,,cover 1.30 - 10 m,40.0,no,40
+chamber,P477,main,,,cover 1.30 - 10 m,16.0,no,16
+chamber,P477,sub main,,,cover 1.30 - 10 m,42.0,no,42
+chamber,P477,sub main,,,cover 10 - 12 m,7.0,no,7
+chamber,P478,lateral,,,cover 1.30 - 10 m,90.0,no,90
+chamber,P478,main,,,cover 1.30 - 10 m,37.0,no,37
+chamber,P478,main,,,cover 10 - 12 m,5.0,no,5
+chamber,P479,lateral,,,cover 1.30 - 10 m,43.0,no,43
+chamber,P479,main,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P479,main,,,cover 10 - 12 m,3.0,no,3
+chamber,P48,lateral,,,cover 1.30 - 10 m,29.0,no,29
+chamber,P480,lateral,,,cover 1.30 - 10 m,16.0,no,16
+chamber,P480,main,,,cover 1.30 - 10 m,15.0,no,15
+chamber,P480,main,,,cover 10 - 12 m,3.0,no,3
+chamber,P481,lateral,,,cover 1.30 - 10 m,96.0,no,96
+chamber,P481,main,,,cover 1.30 - 10 m,9.0,no,9
+chamber,P481,sub main,,,cover 1.30 - 10 m,67.0,no,67
+chamber,P481,sub main,,,cover 10 - 12 m,66.0,no,66
+chamber,P481,sub main,,,cover PAST the 12 m cap,7.0,no,7
+chamber,P482,lateral,,,cover 1.30 - 10 m,195.0,no,195
+chamber,P482,main,,,cover 1.30 - 10 m,62.0,no,62
+chamber,P482,sub main,,,cover 1.30 - 10 m,8.0,no,8
+chamber,P482,trunk main,,,cover 1.30 - 10 m,7.0,no,7
+chamber,P482,trunk main,,,cover 10 - 12 m,28.0,no,28
+chamber,P483,lateral,,,cover 1.30 - 10 m,91.0,no,91
+chamber,P483,main,,,cover 1.30 - 10 m,41.0,no,41
+chamber,P483,main,,,cover 10 - 12 m,8.0,no,8
+chamber,P483,sub main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P483,sub main,,,cover 10 - 12 m,5.0,no,5
+chamber,P484,lateral,,,cover 1.30 - 10 m,84.0,no,84
+chamber,P484,main,,,cover 1.30 - 10 m,34.0,no,34
+chamber,P484,main,,,cover 10 - 12 m,14.0,no,14
+chamber,P485,lateral,,,cover 1.30 - 10 m,46.0,no,46
+chamber,P485,main,,,cover 1.30 - 10 m,18.0,no,18
+chamber,P485,main,,,cover 10 - 12 m,6.0,no,6
+chamber,P486,lateral,,,cover 1.30 - 10 m,24.0,no,24
+chamber,P486,main,,,cover 1.30 - 10 m,21.0,no,21
+chamber,P486,main,,,cover 10 - 12 m,3.0,no,3
+chamber,P487,lateral,,,cover 1.30 - 10 m,19.0,no,19
+chamber,P487,main,,,cover 1.30 - 10 m,19.0,no,19
+chamber,P487,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P487,main,,,cover PAST the 12 m cap,2.0,no,2
+chamber,P488,lateral,,,cover 1.30 - 10 m,11.0,no,11
+chamber,P489,lateral,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P489,lateral,,,cover 10 - 12 m,1.0,no,1
+chamber,P49,lateral,,,cover 1.30 - 10 m,44.0,no,44
+chamber,P490,trunk main,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P491,lateral,,,cover 1.30 - 10 m,352.0,no,352
+chamber,P491,main,,,cover 1.30 - 10 m,213.0,no,213
+chamber,P491,main,,,cover 10 - 12 m,8.0,no,8
+chamber,P491,main,,,cover PAST the 12 m cap,3.0,no,3
+chamber,P491,sub main,,,cover 1.30 - 10 m,41.0,no,41
+chamber,P491,sub main,,,cover 10 - 12 m,2.0,no,2
+chamber,P491,sub main,,,cover PAST the 12 m cap,1.0,no,1
+chamber,P491,trunk main,,,cover 1.30 - 10 m,79.0,no,79
+chamber,P491,trunk main,,,cover 10 - 12 m,11.0,no,11
+chamber,P492,lateral,,,cover 1.30 - 10 m,21.0,no,21
+chamber,P492,main,,,cover 1.30 - 10 m,11.0,no,11
+chamber,P492,sub main,,,cover 1.30 - 10 m,28.0,no,28
+chamber,P492,sub main,,,cover 10 - 12 m,7.0,no,7
+chamber,P493,lateral,,,cover 1.30 - 10 m,28.0,no,28
+chamber,P493,sub main,,,cover 1.30 - 10 m,5.0,no,5
+chamber,P493,sub main,,,cover 10 - 12 m,4.0,no,4
+chamber,P494,lateral,,,cover 1.30 - 10 m,30.0,no,30
+chamber,P494,main,,,cover 1.30 - 10 m,22.0,no,22
+chamber,P494,main,,,cover 10 - 12 m,2.0,no,2
+chamber,P495,lateral,,,cover 1.30 - 10 m,70.0,no,70
+chamber,P495,main,,,cover 1.30 - 10 m,10.0,no,10
+chamber,P495,sub main,,,cover 1.30 - 10 m,26.0,no,26
+chamber,P495,sub main,,,cover 10 - 12 m,13.0,no,13
+chamber,P495,sub main,,,cover PAST the 12 m cap,5.0,no,5
+chamber,P496,lateral,,,cover 1.30 - 10 m,89.0,no,89
+chamber,P496,main,,,cover 1.30 - 10 m,41.0,no,41
+chamber,P496,sub main,,,cover 1.30 - 10 m,2.0,no,2
+chamber,P496,sub main,,,cover 10 - 12 m,4.0,no,4
+chamber,P497,lateral,,,cover 1.30 - 10 m,52.0,no,52
+chamber,P497,main,,,cover 1.30 - 10 m,16.0,no,16
+chamber,P497,main,,,cover 10 - 12 m,2.0,no,2
+chamber,P498,lateral,,,cover 1.30 - 10 m,97.0,no,97
+chamber,P498,main,,,cover 1.30 - 10 m,33.0,no,33
+chamber,P498,main,,,cover 10 - 12 m,4.0,no,4
+chamber,P498,main,,,cover PAST the 12 m cap,2.0,no,2
+chamber,P498,sub main,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P498,sub main,,,cover 10 - 12 m,8.0,no,8
+chamber,P499,lateral,,,cover 1.30 - 10 m,21.0,no,21
+chamber,P499,lateral,,,cover 10 - 12 m,2.0,no,2
+chamber,P499,main,,,cover 1.30 - 10 m,4.0,no,4
+chamber,P499,sub main,,,cover 1.30 - 10 m,10.0,no,10
+chamber,P499,sub main,,,cover 10 - 12 m,1.0,no,1
+chamber,P50,lateral,,,cover 1.30 - 10 m,56.0,no,56
+chamber,P500,lateral,,,cover 1.30 - 10 m,69.0,no,69
+chamber,P500,main,,,cover 1.30 - 10 m,15.0,no,15
+chamber,P500,sub main,,,cover 1.30 - 10 m,32.0,no,32
+chamber,P500,sub main,,,cover 10 - 12 m,7.0,no,7
+chamber,P501,lateral,,,cover 1.30 - 10 m,62.0,no,62
+chamber,P501,main,,,cover 1.30 - 10 m,25.0,no,25
+chamber,P501,sub main,,,cover 1.30 - 10 m,9.0,no,9
+chamber,P501,sub main,,,cover 10 - 12 m,6.0,no,6
+chamber,P501,sub main,,,cover PAST the 12 m cap,1.0,no,1
+chamber,P502,lateral,,,cover 1.30 - 10 m,73.0,no,73
+chamber,P502,lateral,,,cover 10 - 12 m,2.0,no,2
+chamber,P502,main,,,cover 1.30 - 10 m,9.0,no,9
+chamber,P502,main,,,cover 10 - 12 m,1.0,no,1
+chamber,P51,lateral,,,cover 1.30 - 10 m,54.0,no,54
+chamber,P52,lateral,,,cover 1.30 - 10 m,17.0,no,17
+chamber,P52,main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P53,lateral,,,cover 1.30 - 10 m,27.0,no,27
+chamber,P54,lateral,,,cover 1.30 - 10 m,24.0,no,24
+chamber,P55,lateral,,,cover 1.30 - 10 m,30.0,no,30
+chamber,P56,lateral,,,cover 1.30 - 10 m,37.0,no,37
+chamber,P57,lateral,,,cover 1.30 - 10 m,34.0,no,34
+chamber,P58,lateral,,,cover 1.30 - 10 m,23.0,no,23
+chamber,P59,lateral,,,cover 1.30 - 10 m,22.0,no,22
+chamber,P59,main,,,cover 1.30 - 10 m,15.0,no,15
+chamber,P60,lateral,,,cover 1.30 - 10 m,14.0,no,14
+chamber,P61,lateral,,,cover 1.30 - 10 m,16.0,no,16
+chamber,P62,lateral,,,cover 1.30 - 10 m,20.0,no,20
+chamber,P62,main,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P63,lateral,,,cover 1.30 - 10 m,17.0,no,17
+chamber,P63,main,,,cover 1.30 - 10 m,3.0,no,3
+chamber,P64,lateral,,,cover 1.30 - 10 m,14.0,no,14
+chamber,P65,lateral,,,cover 1.30 - 10 m,21.0,no,21
+chamber,P65,main,,,cover 1.30 - 10 m,10.0,no,10
+chamber,P66,lateral,,,cover 1.30 - 10 m,18.0,no,18
+chamber,P67,lateral,,,cover 1.30 - 10 m,19.0,no,19
+chamber,P68,lateral,,,cover 1.30 - 10 m,14.0,no,14
+chamber,P69,lateral,,,cover 1.30 - 10 m,11.0,no,11
+chamber,P70,lateral,,,cover 1.30 - 10 m,19.0,no,19
+chamber,P71,lateral,,,cover 1.30 - 10 m,23.0,no,23
+chamber,P72,lateral,,,cover 1.30 - 10 m,16.0,no,16
+chamber,P73,lateral,,,cover 1.30 - 10 m,39.0,no,39
+chamber,P74,lateral,,,cover 1.30 - 10 m,21.0,no,21
+chamber,P75,lateral,,,cover 1.30 - 10 m,21.0,no,21
+chamber,P76,lateral,,,cover 1.30 - 10 m,19.0,no,19
+chamber,P76,main,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P77,lateral,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P78,lateral,,,cover 1.30 - 10 m,17.0,no,17
+chamber,P79,lateral,,,cover 1.30 - 10 m,17.0,no,17
+chamber,P80,lateral,,,cover 1.30 - 10 m,14.0,no,14
+chamber,P81,lateral,,,cover 1.30 - 10 m,16.0,no,16
+chamber,P82,lateral,,,cover 1.30 - 10 m,10.0,no,10
+chamber,P83,lateral,,,cover 1.30 - 10 m,20.0,no,20
+chamber,P83,main,,,cover 1.30 - 10 m,1.0,no,1
+chamber,P84,lateral,,,cover 1.30 - 10 m,19.0,no,19
+chamber,P84,main,,,cover 1.30 - 10 m,5.0,no,5
+chamber,P85,lateral,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P86,lateral,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P87,lateral,,,cover 1.30 - 10 m,8.0,no,8
+chamber,P88,lateral,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P89,lateral,,,cover 1.30 - 10 m,7.0,no,7
+chamber,P90,lateral,,,cover 1.30 - 10 m,27.0,no,27
+chamber,P91,lateral,,,cover 1.30 - 10 m,8.0,no,8
+chamber,P92,lateral,,,cover 1.30 - 10 m,7.0,no,7
+chamber,P93,lateral,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P94,lateral,,,cover 1.30 - 10 m,8.0,no,8
+chamber,P95,lateral,,,cover 1.30 - 10 m,12.0,no,12
+chamber,P96,lateral,,,cover 1.30 - 10 m,9.0,no,9
+chamber,P97,lateral,,,cover 1.30 - 10 m,6.0,no,6
+chamber,P98,lateral,,,cover 1.30 - 10 m,5.0,no,5
+chamber,P99,lateral,,,cover 1.30 - 10 m,5.0,no,5
+gravity pipe,P01,lateral,DN-250,200,cover 1.30 - 10 m,14001.279512,m,317
+gravity pipe,P01,main,DN-250,200,cover 1.30 - 10 m,3979.205241,m,92
+gravity pipe,P01,sub main,DN-250,200,cover 1.30 - 10 m,1097.970436,m,19
+gravity pipe,P01,sub main,DN-250,200,cover 10 - 12 m,212.257808,m,4
+gravity pipe,P01,sub main,DN-250,200,cover PAST the 12 m cap,20.412667,m,1
+gravity pipe,P01,sub main,DN251-350,315,cover 1.30 - 10 m,304.727493,m,7
+gravity pipe,P01,sub main,DN351-600,400,cover 1.30 - 10 m,445.253685,m,7
+gravity pipe,P01,sub main,DN351-600,400,cover 10 - 12 m,97.371106,m,3
+gravity pipe,P01,trunk main,DN-250,200,cover 1.30 - 10 m,1429.450744,m,30
+gravity pipe,P01,trunk main,DN-250,200,cover PAST the 12 m cap,120.0,m,3
+gravity pipe,P01,trunk main,DN-250,250,cover 1.30 - 10 m,194.158344,m,4
+gravity pipe,P01,trunk main,DN351-600,500,cover 1.30 - 10 m,177.774457,m,3
+gravity pipe,P01,trunk main,DN351-600,500,cover 10 - 12 m,368.621329,m,6
+gravity pipe,P02,lateral,DN-250,200,cover 1.30 - 10 m,8337.638331,m,163
+gravity pipe,P02,lateral,DN-250,200,cover 10 - 12 m,141.910077,m,2
+gravity pipe,P02,main,DN-250,200,cover 1.30 - 10 m,620.0,m,11
+gravity pipe,P02,main,DN-250,200,cover 10 - 12 m,120.855964,m,2
+gravity pipe,P02,sub main,DN-250,200,cover 10 - 12 m,32.180723,m,1
+gravity pipe,P02,sub main,DN351-600,400,cover 1.30 - 10 m,7687.127597,m,143
+gravity pipe,P02,sub main,DN351-600,400,cover 10 - 12 m,1848.094047,m,36
+gravity pipe,P02,sub main,DN351-600,400,cover PAST the 12 m cap,281.294485,m,7
+gravity pipe,P03,lateral,DN-250,200,cover 1.30 - 10 m,8218.930732,m,254
+gravity pipe,P03,main,DN-250,200,cover 1.30 - 10 m,6321.763605,m,155
+gravity pipe,P03,main,DN-250,200,cover 10 - 12 m,35.68622,m,1
+gravity pipe,P03,sub main,DN-250,200,cover 1.30 - 10 m,2877.405473,m,79
+gravity pipe,P03,sub main,DN-250,250,cover 10 - 12 m,295.362822,m,5
+gravity pipe,P03,sub main,DN251-350,315,cover 1.30 - 10 m,758.76607,m,20
+gravity pipe,P03,sub main,DN251-350,315,cover 10 - 12 m,412.881323,m,7
+gravity pipe,P04,lateral,DN-250,200,cover 1.30 - 10 m,5512.750955,m,143
+gravity pipe,P04,main,DN-250,200,cover 1.30 - 10 m,1047.745004,m,23
+gravity pipe,P04,main,DN-250,200,cover 10 - 12 m,12.634378,m,1
+gravity pipe,P04,sub main,DN-250,200,cover 1.30 - 10 m,1317.453755,m,24
+gravity pipe,P04,sub main,DN-250,200,cover 10 - 12 m,660.832991,m,14
+gravity pipe,P04,trunk main,DN-250,200,cover 1.30 - 10 m,2475.555025,m,53
+gravity pipe,P04,trunk main,DN-250,250,cover 1.30 - 10 m,1594.862333,m,26
+gravity pipe,P04,trunk main,DN251-350,315,cover 10 - 12 m,47.702402,m,2
+gravity pipe,P04,trunk main,DN251-350,315,cover PAST the 12 m cap,352.04321,m,7
+gravity pipe,P05,lateral,DN-250,200,cover 1.30 - 10 m,5919.982777,m,186
+gravity pipe,P05,main,DN-250,200,cover 1.30 - 10 m,1483.129609,m,52
+gravity pipe,P05,sub main,DN-250,200,cover 1.30 - 10 m,1848.301062,m,64
+gravity pipe,P05,trunk main,DN-250,200,cover 1.30 - 10 m,1518.629444,m,35
+gravity pipe,P05,trunk main,DN-250,200,cover 10 - 12 m,1040.839873,m,22
+gravity pipe,P05,trunk main,DN-250,200,cover PAST the 12 m cap,395.962622,m,9
+gravity pipe,P06,lateral,DN-250,200,cover 1.30 - 10 m,6083.128664,m,154
+gravity pipe,P06,lateral,DN-250,200,cover 10 - 12 m,15.0,m,2
+gravity pipe,P06,main,DN-250,200,cover 1.30 - 10 m,483.912937,m,8
+gravity pipe,P06,sub main,DN251-350,315,cover 1.30 - 10 m,323.093235,m,7
+gravity pipe,P06,trunk main,DN601UP,1200,cover 1.30 - 10 m,2925.677308,m,59
+gravity pipe,P06,trunk main,DN601UP,1200,cover 10 - 12 m,650.567619,m,14
+gravity pipe,P07,lateral,DN-250,200,cover 1.30 - 10 m,3129.694162,m,143
+gravity pipe,P07,lateral,DN-250,200,cover 10 - 12 m,6.76476,m,1
+gravity pipe,P07,main,DN-250,200,cover 1.30 - 10 m,1655.598668,m,74
+gravity pipe,P07,main,DN-250,200,cover 10 - 12 m,682.306707,m,33
+gravity pipe,P07,main,DN-250,200,cover PAST the 12 m cap,196.73236,m,13
+gravity pipe,P07,sub main,DN-250,250,cover 1.30 - 10 m,1032.41547,m,50
+gravity pipe,P07,sub main,DN-250,250,cover 10 - 12 m,104.536267,m,6
+gravity pipe,P07,sub main,DN251-350,315,cover 10 - 12 m,271.066535,m,7
+gravity pipe,P08,lateral,DN-250,200,cover 1.30 - 10 m,4752.350218,m,98
+gravity pipe,P08,main,DN-250,200,cover 1.30 - 10 m,1736.314306,m,53
+gravity pipe,P08,sub main,DN-250,200,cover 1.30 - 10 m,248.699802,m,6
+gravity pipe,P09,lateral,DN-250,200,cover 1.30 - 10 m,3935.523433,m,143
+gravity pipe,P09,main,DN-250,200,cover 1.30 - 10 m,715.074151,m,21
+gravity pipe,P09,sub main,DN-250,200,cover 1.30 - 10 m,1431.77662,m,35
+gravity pipe,P09,sub main,DN-250,200,cover 10 - 12 m,7.05092,m,1
+gravity pipe,P10,lateral,DN-250,200,cover 1.30 - 10 m,1178.725678,m,35
+gravity pipe,P10,sub main,DN-250,200,cover 1.30 - 10 m,3533.307372,m,88
+gravity pipe,P10,sub main,DN-250,200,cover 10 - 12 m,782.500102,m,23
+gravity pipe,P10,sub main,DN-250,200,cover PAST the 12 m cap,43.599687,m,1
+gravity pipe,P100,lateral,DN-250,200,cover 1.30 - 10 m,297.298597,m,10
+gravity pipe,P101,lateral,DN-250,200,cover 1.30 - 10 m,290.431055,m,15
+gravity pipe,P102,lateral,DN-250,200,cover 1.30 - 10 m,287.763182,m,6
+gravity pipe,P103,lateral,DN-250,200,cover 1.30 - 10 m,285.223739,m,7
+gravity pipe,P104,lateral,DN-250,200,cover 1.30 - 10 m,285.020749,m,7
+gravity pipe,P105,lateral,DN-250,200,cover 1.30 - 10 m,268.317209,m,5
+gravity pipe,P106,lateral,DN-250,200,cover 1.30 - 10 m,265.073705,m,6
+gravity pipe,P107,lateral,DN-250,200,cover 1.30 - 10 m,264.005536,m,9
+gravity pipe,P108,lateral,DN-250,200,cover 1.30 - 10 m,261.820681,m,9
+gravity pipe,P109,lateral,DN-250,200,cover 1.30 - 10 m,251.139004,m,4
+gravity pipe,P11,lateral,DN-250,200,cover 1.30 - 10 m,2610.271551,m,111
+gravity pipe,P11,main,DN-250,200,cover 1.30 - 10 m,2100.883336,m,91
+gravity pipe,P11,sub main,DN-250,200,cover 1.30 - 10 m,382.436386,m,16
+gravity pipe,P110,lateral,DN-250,200,cover 1.30 - 10 m,249.444238,m,8
+gravity pipe,P111,lateral,DN-250,200,cover 1.30 - 10 m,223.817242,m,6
+gravity pipe,P112,lateral,DN-250,200,cover 1.30 - 10 m,214.497098,m,12
+gravity pipe,P113,lateral,DN-250,200,cover 1.30 - 10 m,212.152566,m,8
+gravity pipe,P114,lateral,DN-250,200,cover 1.30 - 10 m,211.262066,m,6
+gravity pipe,P115,lateral,DN-250,200,cover 1.30 - 10 m,202.263481,m,13
+gravity pipe,P116,lateral,DN-250,200,cover 1.30 - 10 m,194.23721,m,5
+gravity pipe,P117,lateral,DN-250,200,cover 1.30 - 10 m,191.027746,m,10
+gravity pipe,P118,lateral,DN-250,200,cover 1.30 - 10 m,188.652187,m,4
+gravity pipe,P119,lateral,DN-250,200,cover 1.30 - 10 m,169.980458,m,8
+gravity pipe,P12,lateral,DN-250,200,cover 1.30 - 10 m,2588.964623,m,95
+gravity pipe,P12,main,DN-250,200,cover 1.30 - 10 m,1083.247707,m,30
+gravity pipe,P12,sub main,DN-250,200,cover 1.30 - 10 m,1026.57801,m,26
+gravity pipe,P12,sub main,DN-250,200,cover 10 - 12 m,349.246052,m,12
+gravity pipe,P120,lateral,DN-250,200,cover 1.30 - 10 m,168.818932,m,9
+gravity pipe,P121,lateral,DN-250,200,cover 1.30 - 10 m,168.553912,m,4
+gravity pipe,P122,lateral,DN-250,200,cover 1.30 - 10 m,161.999966,m,9
+gravity pipe,P123,lateral,DN-250,200,cover 1.30 - 10 m,153.592376,m,3
+gravity pipe,P124,lateral,DN-250,200,cover 1.30 - 10 m,147.631906,m,14
+gravity pipe,P125,lateral,DN-250,200,cover 1.30 - 10 m,146.971891,m,3
+gravity pipe,P126,lateral,DN-250,200,cover 1.30 - 10 m,146.924584,m,3
+gravity pipe,P127,lateral,DN-250,200,cover 1.30 - 10 m,146.895815,m,3
+gravity pipe,P128,lateral,DN-250,200,cover 1.30 - 10 m,145.452779,m,9
+gravity pipe,P129,lateral,DN-250,200,cover 1.30 - 10 m,144.307063,m,5
+gravity pipe,P13,lateral,DN-250,200,cover 1.30 - 10 m,629.100367,m,24
+gravity pipe,P13,main,DN-250,200,cover 1.30 - 10 m,1364.992255,m,64
+gravity pipe,P13,main,DN-250,200,cover 10 - 12 m,374.648717,m,9
+gravity pipe,P13,main,DN-250,200,cover PAST the 12 m cap,511.401879,m,24
+gravity pipe,P130,lateral,DN-250,200,cover 1.30 - 10 m,143.068859,m,3
+gravity pipe,P131,lateral,DN-250,200,cover 1.30 - 10 m,142.955554,m,14
+gravity pipe,P132,lateral,DN-250,200,cover 1.30 - 10 m,141.951341,m,6
+gravity pipe,P133,lateral,DN-250,200,cover 1.30 - 10 m,140.837789,m,2
+gravity pipe,P134,lateral,DN-250,200,cover 1.30 - 10 m,140.81346,m,6
+gravity pipe,P135,lateral,DN-250,200,cover 1.30 - 10 m,139.36295,m,3
+gravity pipe,P136,lateral,DN-250,200,cover 1.30 - 10 m,134.903877,m,5
+gravity pipe,P137,lateral,DN-250,200,cover 1.30 - 10 m,131.324807,m,2
+gravity pipe,P138,lateral,DN-250,200,cover 1.30 - 10 m,129.648975,m,5
+gravity pipe,P139,lateral,DN-250,200,cover 1.30 - 10 m,128.81175,m,3
+gravity pipe,P14,lateral,DN-250,200,cover 1.30 - 10 m,1580.199328,m,53
+gravity pipe,P14,main,DN-250,200,cover 1.30 - 10 m,1293.093395,m,36
+gravity pipe,P140,lateral,DN-250,200,cover 1.30 - 10 m,128.621132,m,3
+gravity pipe,P141,lateral,DN-250,200,cover 1.30 - 10 m,127.775586,m,4
+gravity pipe,P142,lateral,DN-250,200,cover 1.30 - 10 m,126.728096,m,3
+gravity pipe,P143,lateral,DN-250,200,cover 1.30 - 10 m,126.686541,m,8
+gravity pipe,P144,lateral,DN-250,200,cover 1.30 - 10 m,125.824255,m,3
+gravity pipe,P145,lateral,DN-250,200,cover 1.30 - 10 m,125.257267,m,4
+gravity pipe,P146,lateral,DN-250,200,cover 1.30 - 10 m,124.498316,m,4
+gravity pipe,P147,lateral,DN-250,200,cover 1.30 - 10 m,119.62867,m,3
+gravity pipe,P148,lateral,DN-250,200,cover 1.30 - 10 m,117.82058,m,6
+gravity pipe,P149,lateral,DN-250,200,cover 1.30 - 10 m,115.645822,m,6
+gravity pipe,P15,lateral,DN-250,200,cover 1.30 - 10 m,2180.827906,m,41
+gravity pipe,P15,main,DN-250,200,cover 1.30 - 10 m,611.569261,m,12
+gravity pipe,P150,lateral,DN-250,200,cover 1.30 - 10 m,114.037154,m,3
+gravity pipe,P151,lateral,DN-250,200,cover 1.30 - 10 m,113.421008,m,7
+gravity pipe,P152,lateral,DN-250,200,cover 1.30 - 10 m,110.999977,m,3
+gravity pipe,P153,lateral,DN-250,200,cover 1.30 - 10 m,110.645817,m,9
+gravity pipe,P154,lateral,DN-250,200,cover 1.30 - 10 m,109.377047,m,4
+gravity pipe,P155,lateral,DN-250,200,cover 1.30 - 10 m,107.773239,m,2
+gravity pipe,P156,lateral,DN-250,200,cover 1.30 - 10 m,104.654441,m,2
+gravity pipe,P157,lateral,DN-250,200,cover 1.30 - 10 m,103.718144,m,4
+gravity pipe,P158,lateral,DN-250,200,cover 1.30 - 10 m,103.151787,m,3
+gravity pipe,P159,lateral,DN-250,200,cover 1.30 - 10 m,99.339509,m,3
+gravity pipe,P16,lateral,DN-250,200,cover 1.30 - 10 m,1323.694788,m,41
+gravity pipe,P16,main,DN-250,200,cover 1.30 - 10 m,1366.531345,m,52
+gravity pipe,P160,lateral,DN-250,200,cover 1.30 - 10 m,99.115902,m,5
+gravity pipe,P161,lateral,DN-250,200,cover 1.30 - 10 m,95.976995,m,3
+gravity pipe,P162,lateral,DN-250,200,cover 1.30 - 10 m,94.24424,m,3
+gravity pipe,P163,lateral,DN-250,200,cover 1.30 - 10 m,93.285765,m,3
+gravity pipe,P164,lateral,DN-250,200,cover 1.30 - 10 m,92.509668,m,4
+gravity pipe,P165,lateral,DN-250,200,cover 1.30 - 10 m,89.983417,m,6
+gravity pipe,P166,lateral,DN-250,200,cover 1.30 - 10 m,89.384316,m,4
+gravity pipe,P167,lateral,DN-250,200,cover 1.30 - 10 m,89.250984,m,2
+gravity pipe,P168,lateral,DN-250,200,cover 1.30 - 10 m,88.506414,m,1
+gravity pipe,P169,lateral,DN-250,200,cover 1.30 - 10 m,88.489621,m,1
+gravity pipe,P17,lateral,DN-250,200,cover 1.30 - 10 m,148.812381,m,7
+gravity pipe,P17,sub main,DN-250,200,cover 1.30 - 10 m,2471.931577,m,53
+gravity pipe,P170,lateral,DN-250,200,cover 1.30 - 10 m,87.559775,m,4
+gravity pipe,P171,lateral,DN-250,200,cover 1.30 - 10 m,86.935104,m,1
+gravity pipe,P172,lateral,DN-250,200,cover 1.30 - 10 m,85.662231,m,4
+gravity pipe,P173,lateral,DN-250,200,cover 1.30 - 10 m,83.407151,m,1
+gravity pipe,P174,lateral,DN-250,200,cover 1.30 - 10 m,82.774992,m,4
+gravity pipe,P175,lateral,DN-250,200,cover 1.30 - 10 m,82.101287,m,4
+gravity pipe,P176,lateral,DN-250,200,cover 1.30 - 10 m,78.740342,m,1
+gravity pipe,P177,lateral,DN-250,200,cover 1.30 - 10 m,77.248928,m,6
+gravity pipe,P178,lateral,DN-250,200,cover 1.30 - 10 m,75.856903,m,1
+gravity pipe,P179,lateral,DN-250,200,cover 1.30 - 10 m,74.997417,m,3
+gravity pipe,P18,lateral,DN-250,200,cover 1.30 - 10 m,1268.677878,m,45
+gravity pipe,P18,main,DN-250,200,cover 1.30 - 10 m,1305.135264,m,40
+gravity pipe,P180,lateral,DN-250,200,cover 1.30 - 10 m,74.913547,m,2
+gravity pipe,P181,lateral,DN-250,200,cover 1.30 - 10 m,74.017724,m,2
+gravity pipe,P182,lateral,DN-250,200,cover 1.30 - 10 m,73.659564,m,1
+gravity pipe,P183,lateral,DN-250,200,cover 1.30 - 10 m,73.194273,m,1
+gravity pipe,P184,lateral,DN-250,200,cover 1.30 - 10 m,73.179455,m,1
+gravity pipe,P185,lateral,DN-250,200,cover 1.30 - 10 m,70.545672,m,4
+gravity pipe,P186,lateral,DN-250,200,cover 1.30 - 10 m,70.431195,m,3
+gravity pipe,P187,lateral,DN-250,200,cover 1.30 - 10 m,70.315214,m,3
+gravity pipe,P188,lateral,DN-250,200,cover 1.30 - 10 m,68.03451,m,5
+gravity pipe,P189,lateral,DN-250,200,cover 1.30 - 10 m,64.338677,m,3
+gravity pipe,P19,lateral,DN-250,200,cover 1.30 - 10 m,749.188808,m,22
+gravity pipe,P19,sub main,DN-250,200,cover 1.30 - 10 m,1818.792406,m,42
+gravity pipe,P190,lateral,DN-250,200,cover 1.30 - 10 m,63.605755,m,3
+gravity pipe,P191,lateral,DN-250,200,cover 1.30 - 10 m,62.901785,m,1
+gravity pipe,P192,lateral,DN-250,200,cover 1.30 - 10 m,61.499168,m,6
+gravity pipe,P193,lateral,DN-250,200,cover 1.30 - 10 m,59.745124,m,2
+gravity pipe,P194,lateral,DN-250,200,cover 1.30 - 10 m,59.218084,m,4
+gravity pipe,P195,lateral,DN-250,200,cover 1.30 - 10 m,59.184289,m,1
+gravity pipe,P196,lateral,DN-250,200,cover 1.30 - 10 m,56.859297,m,1
+gravity pipe,P197,lateral,DN-250,200,cover 1.30 - 10 m,55.152738,m,4
+gravity pipe,P198,lateral,DN-250,200,cover 1.30 - 10 m,53.387767,m,3
+gravity pipe,P199,lateral,DN-250,200,cover 1.30 - 10 m,52.487866,m,1
+gravity pipe,P20,lateral,DN-250,200,cover 1.30 - 10 m,967.110044,m,22
+gravity pipe,P20,main,DN-250,200,cover 1.30 - 10 m,1514.453249,m,85
+gravity pipe,P200,lateral,DN-250,200,cover 1.30 - 10 m,52.424574,m,2
+gravity pipe,P201,lateral,DN-250,200,cover 1.30 - 10 m,51.839674,m,1
+gravity pipe,P202,lateral,DN-250,200,cover 1.30 - 10 m,50.966813,m,1
+gravity pipe,P203,lateral,DN-250,200,cover 1.30 - 10 m,49.854716,m,5
+gravity pipe,P204,lateral,DN-250,200,cover 1.30 - 10 m,47.957343,m,1
+gravity pipe,P205,lateral,DN-250,200,cover 1.30 - 10 m,47.090703,m,2
+gravity pipe,P206,lateral,DN-250,200,cover 1.30 - 10 m,46.280899,m,2
+gravity pipe,P207,lateral,DN-250,200,cover 1.30 - 10 m,44.421801,m,2
+gravity pipe,P208,lateral,DN-250,200,cover 1.30 - 10 m,41.937595,m,1
+gravity pipe,P209,lateral,DN-250,200,cover 1.30 - 10 m,41.794849,m,1
+gravity pipe,P21,lateral,DN-250,200,cover 1.30 - 10 m,2438.967004,m,68
+gravity pipe,P210,lateral,DN-250,200,cover 1.30 - 10 m,39.410074,m,2
+gravity pipe,P211,lateral,DN-250,200,cover 1.30 - 10 m,38.239299,m,1
+gravity pipe,P212,lateral,DN-250,200,cover 1.30 - 10 m,34.528177,m,2
+gravity pipe,P213,lateral,DN-250,200,cover 1.30 - 10 m,32.459595,m,1
+gravity pipe,P214,lateral,DN-250,200,cover 1.30 - 10 m,32.423687,m,2
+gravity pipe,P215,lateral,DN-250,200,cover 1.30 - 10 m,31.144889,m,2
+gravity pipe,P216,lateral,DN-250,200,cover 1.30 - 10 m,28.40499,m,1
+gravity pipe,P217,lateral,DN-250,200,cover 1.30 - 10 m,28.374785,m,1
+gravity pipe,P218,lateral,DN-250,200,cover 1.30 - 10 m,26.564822,m,2
+gravity pipe,P219,lateral,DN-250,200,cover 1.30 - 10 m,23.940757,m,1
+gravity pipe,P22,lateral,DN-250,200,cover 1.30 - 10 m,1413.418995,m,56
+gravity pipe,P22,main,DN-250,200,cover 1.30 - 10 m,1019.353556,m,45
+gravity pipe,P220,lateral,DN-250,200,cover 1.30 - 10 m,23.882771,m,1
+gravity pipe,P221,lateral,DN-250,200,cover 1.30 - 10 m,20.846022,m,1
+gravity pipe,P222,lateral,DN-250,200,cover 1.30 - 10 m,20.770326,m,1
+gravity pipe,P223,lateral,DN-250,200,cover 1.30 - 10 m,19.283227,m,1
+gravity pipe,P224,lateral,DN-250,200,cover 1.30 - 10 m,19.203247,m,1
+gravity pipe,P225,lateral,DN-250,200,cover 1.30 - 10 m,17.99811,m,1
+gravity pipe,P226,lateral,DN-250,200,cover 1.30 - 10 m,17.904622,m,1
+gravity pipe,P227,lateral,DN-250,200,cover 1.30 - 10 m,17.825768,m,1
+gravity pipe,P228,lateral,DN-250,200,cover 1.30 - 10 m,16.48217,m,1
+gravity pipe,P229,lateral,DN-250,200,cover 1.30 - 10 m,16.091079,m,1
+gravity pipe,P23,lateral,DN-250,200,cover 1.30 - 10 m,962.281781,m,28
+gravity pipe,P23,lateral,DN-250,200,cover 10 - 12 m,40.0,m,3
+gravity pipe,P23,lateral,DN-250,200,cover PAST the 12 m cap,50.0,m,3
+gravity pipe,P23,main,DN-250,200,cover 1.30 - 10 m,1373.165804,m,26
+gravity pipe,P230,lateral,DN-250,200,cover 1.30 - 10 m,15.06245,m,1
+gravity pipe,P231,lateral,DN-250,200,cover 1.30 - 10 m,14.886087,m,1
+gravity pipe,P232,lateral,DN-250,200,cover 1.30 - 10 m,13.49658,m,1
+gravity pipe,P233,lateral,DN-250,200,cover 1.30 - 10 m,13.49385,m,1
+gravity pipe,P234,lateral,DN-250,200,cover 1.30 - 10 m,13.48944,m,1
+gravity pipe,P235,lateral,DN-250,200,cover 1.30 - 10 m,13.453429,m,1
+gravity pipe,P236,lateral,DN-250,200,cover 1.30 - 10 m,12.541351,m,1
+gravity pipe,P237,lateral,DN-250,200,cover 1.30 - 10 m,11.985147,m,1
+gravity pipe,P238,lateral,DN-250,200,cover 1.30 - 10 m,10.414662,m,1
+gravity pipe,P239,lateral,DN-250,200,cover 1.30 - 10 m,10.0,m,1
+gravity pipe,P24,lateral,DN-250,200,cover 1.30 - 10 m,1818.6276,m,63
+gravity pipe,P24,main,DN-250,200,cover 1.30 - 10 m,399.555606,m,12
+gravity pipe,P240,lateral,DN-250,200,cover 1.30 - 10 m,10.0,m,1
+gravity pipe,P241,lateral,DN-250,200,cover 1.30 - 10 m,10.0,m,1
+gravity pipe,P242,lateral,DN-250,200,cover 1.30 - 10 m,10.0,m,1
+gravity pipe,P243,lateral,DN-250,200,cover 1.30 - 10 m,10.0,m,1
+gravity pipe,P244,lateral,DN-250,200,cover 1.30 - 10 m,10.0,m,1
+gravity pipe,P245,lateral,DN-250,200,cover 1.30 - 10 m,9.965878,m,1
+gravity pipe,P246,lateral,DN-250,200,cover 1.30 - 10 m,9.550241,m,1
+gravity pipe,P247,lateral,DN-250,200,cover 1.30 - 10 m,9.465238,m,1
+gravity pipe,P248,lateral,DN-250,200,cover 1.30 - 10 m,20086.622161,m,665
+gravity pipe,P248,lateral,DN-250,200,cover 10 - 12 m,55.0,m,1
+gravity pipe,P248,main,DN-250,200,cover 1.30 - 10 m,8267.522428,m,228
+gravity pipe,P248,main,DN-250,200,cover 10 - 12 m,498.086178,m,12
+gravity pipe,P248,main,DN-250,200,cover PAST the 12 m cap,270.079995,m,7
+gravity pipe,P248,sub main,DN-250,200,cover 1.30 - 10 m,2927.334008,m,59
+gravity pipe,P248,sub main,DN-250,200,cover 10 - 12 m,109.959064,m,4
+gravity pipe,P248,sub main,DN-250,200,cover PAST the 12 m cap,49.756142,m,4
+gravity pipe,P248,sub main,DN-250,250,cover 1.30 - 10 m,280.970473,m,6
+gravity pipe,P248,sub main,DN251-350,315,cover 1.30 - 10 m,855.922769,m,14
+gravity pipe,P248,sub main,DN251-350,315,cover 10 - 12 m,317.078931,m,5
+gravity pipe,P248,sub main,DN351-600,400,cover 1.30 - 10 m,60.0,m,1
+gravity pipe,P249,lateral,DN-250,200,cover 1.30 - 10 m,17835.338293,m,408
+gravity pipe,P249,main,DN-250,200,cover 1.30 - 10 m,4361.410266,m,89
+gravity pipe,P249,sub main,DN-250,200,cover 1.30 - 10 m,2189.379413,m,46
+gravity pipe,P249,sub main,DN-250,250,cover 1.30 - 10 m,1146.699079,m,25
+gravity pipe,P249,sub main,DN251-350,315,cover 1.30 - 10 m,666.223596,m,16
+gravity pipe,P249,sub main,DN251-350,315,cover 10 - 12 m,618.915061,m,10
+gravity pipe,P249,sub main,DN351-600,400,cover 1.30 - 10 m,958.12445,m,15
+gravity pipe,P249,trunk main,DN601UP,1200,cover 1.30 - 10 m,1106.446295,m,20
+gravity pipe,P249,trunk main,DN601UP,1200,cover 10 - 12 m,180.305601,m,3
+gravity pipe,P25,lateral,DN-250,200,cover 1.30 - 10 m,1500.412636,m,36
+gravity pipe,P25,main,DN-250,200,cover 1.30 - 10 m,623.583964,m,14
+gravity pipe,P250,lateral,DN-250,200,cover 1.30 - 10 m,3224.410983,m,92
+gravity pipe,P250,main,DN-250,200,cover 1.30 - 10 m,148.891586,m,6
+gravity pipe,P250,trunk main,DN-250,200,cover 1.30 - 10 m,6449.568426,m,130
+gravity pipe,P250,trunk main,DN-250,200,cover 10 - 12 m,1977.31803,m,37
+gravity pipe,P250,trunk main,DN-250,200,cover PAST the 12 m cap,179.941396,m,4
+gravity pipe,P251,lateral,DN-250,200,cover 1.30 - 10 m,5918.886984,m,217
+gravity pipe,P251,main,DN-250,200,cover 1.30 - 10 m,2354.671753,m,94
+gravity pipe,P251,main,DN-250,200,cover 10 - 12 m,34.298622,m,2
+gravity pipe,P251,sub main,DN-250,200,cover 1.30 - 10 m,83.98818,m,3
+gravity pipe,P251,sub main,DN-250,200,cover 10 - 12 m,114.260283,m,4
+gravity pipe,P251,sub main,DN-250,250,cover 1.30 - 10 m,586.694361,m,21
+gravity pipe,P251,sub main,DN-250,250,cover 10 - 12 m,803.788743,m,26
+gravity pipe,P251,sub main,DN-250,250,cover PAST the 12 m cap,263.270533,m,6
+gravity pipe,P252,lateral,DN-250,200,cover 1.30 - 10 m,3074.409268,m,81
+gravity pipe,P252,main,DN-250,200,cover 1.30 - 10 m,2136.102537,m,48
+gravity pipe,P252,main,DN-250,200,cover 10 - 12 m,198.826346,m,5
+gravity pipe,P252,sub main,DN-250,200,cover 1.30 - 10 m,2857.767597,m,61
+gravity pipe,P252,sub main,DN-250,200,cover 10 - 12 m,209.280732,m,4
+gravity pipe,P252,sub main,DN-250,250,cover 1.30 - 10 m,122.815757,m,2
+gravity pipe,P252,sub main,DN-250,250,cover 10 - 12 m,306.846476,m,5
+gravity pipe,P252,sub main,DN251-350,315,cover 1.30 - 10 m,60.0,m,1
+gravity pipe,P252,sub main,DN251-350,315,cover 10 - 12 m,60.0,m,1
+gravity pipe,P253,lateral,DN-250,200,cover 1.30 - 10 m,3704.528509,m,102
+gravity pipe,P253,main,DN-250,200,cover 1.30 - 10 m,360.64098,m,8
+gravity pipe,P253,main,DN-250,200,cover 10 - 12 m,91.022154,m,1
+gravity pipe,P253,main,DN-250,250,cover 1.30 - 10 m,625.642443,m,11
+gravity pipe,P253,sub main,DN-250,250,cover 1.30 - 10 m,431.918221,m,8
+gravity pipe,P253,sub main,DN-250,250,cover 10 - 12 m,60.887131,m,1
+gravity pipe,P253,trunk main,DN-250,200,cover 1.30 - 10 m,1331.943447,m,30
+gravity pipe,P253,trunk main,DN-250,250,cover 1.30 - 10 m,60.0,m,1
+gravity pipe,P253,trunk main,DN-250,250,cover 10 - 12 m,9.155601,m,1
+gravity pipe,P254,lateral,DN-250,200,cover 1.30 - 10 m,2953.479479,m,115
+gravity pipe,P254,main,DN-250,200,cover 1.30 - 10 m,1768.129694,m,73
+gravity pipe,P254,sub main,DN-250,200,cover 1.30 - 10 m,613.482166,m,29
+gravity pipe,P254,sub main,DN-250,200,cover 10 - 12 m,102.430678,m,6
+gravity pipe,P255,lateral,DN-250,200,cover 1.30 - 10 m,2039.335417,m,48
+gravity pipe,P255,main,DN-250,200,cover 1.30 - 10 m,1271.188057,m,23
+gravity pipe,P255,sub main,DN-250,200,cover 1.30 - 10 m,316.072336,m,6
+gravity pipe,P255,sub main,DN-250,250,cover 1.30 - 10 m,41.61783,m,1
+gravity pipe,P255,sub main,DN251-350,315,cover 1.30 - 10 m,160.0,m,2
+gravity pipe,P255,sub main,DN251-350,315,cover 10 - 12 m,79.99997,m,1
+gravity pipe,P256,lateral,DN-250,200,cover 1.30 - 10 m,1539.869451,m,57
+gravity pipe,P256,main,DN-250,200,cover 1.30 - 10 m,687.135607,m,22
+gravity pipe,P256,main,DN-250,200,cover 10 - 12 m,830.636162,m,19
+gravity pipe,P257,lateral,DN-250,200,cover 1.30 - 10 m,1591.339675,m,62
+gravity pipe,P257,main,DN-250,200,cover 1.30 - 10 m,1155.651915,m,38
+gravity pipe,P257,main,DN-250,200,cover 10 - 12 m,15.319763,m,1
+gravity pipe,P257,sub main,DN-250,200,cover 1.30 - 10 m,80.0,m,1
+gravity pipe,P257,sub main,DN-250,200,cover 10 - 12 m,159.999999,m,2
+gravity pipe,P258,lateral,DN-250,200,cover 1.30 - 10 m,1641.928558,m,62
+gravity pipe,P258,main,DN-250,200,cover 1.30 - 10 m,287.245314,m,12
+gravity pipe,P258,sub main,DN-250,200,cover 1.30 - 10 m,687.957569,m,19
+gravity pipe,P258,sub main,DN-250,200,cover 10 - 12 m,216.282906,m,4
+gravity pipe,P259,lateral,DN-250,200,cover 1.30 - 10 m,776.094795,m,23
+gravity pipe,P259,main,DN-250,200,cover 1.30 - 10 m,997.724208,m,24
+gravity pipe,P259,main,DN-250,200,cover 10 - 12 m,46.912997,m,1
+gravity pipe,P259,sub main,DN-250,200,cover 1.30 - 10 m,70.0,m,1
+gravity pipe,P26,lateral,DN-250,200,cover 1.30 - 10 m,110.991992,m,4
+gravity pipe,P26,main,DN-250,200,cover 1.30 - 10 m,1259.986028,m,63
+gravity pipe,P26,main,DN-250,200,cover 10 - 12 m,243.928004,m,15
+gravity pipe,P26,main,DN-250,200,cover PAST the 12 m cap,484.31925,m,27
+gravity pipe,P260,sub main,DN-250,200,cover 1.30 - 10 m,1775.808641,m,40
+gravity pipe,P261,lateral,DN-250,200,cover 1.30 - 10 m,1274.789274,m,21
+gravity pipe,P261,main,DN-250,200,cover 1.30 - 10 m,394.900429,m,7
+gravity pipe,P261,main,DN-250,200,cover 10 - 12 m,97.669731,m,2
+gravity pipe,P262,main,DN-250,200,cover 1.30 - 10 m,626.603577,m,10
+gravity pipe,P262,sub main,DN-250,200,cover 1.30 - 10 m,985.989876,m,18
+gravity pipe,P262,sub main,DN-250,200,cover 10 - 12 m,20.736671,m,1
+gravity pipe,P263,sub main,DN-250,200,cover 1.30 - 10 m,880.10246,m,12
+gravity pipe,P263,sub main,DN-250,200,cover 10 - 12 m,90.0,m,1
+gravity pipe,P264,sub main,DN-250,200,cover 1.30 - 10 m,869.04377,m,17
+gravity pipe,P264,sub main,DN-250,200,cover 10 - 12 m,93.651386,m,3
+gravity pipe,P265,lateral,DN-250,200,cover 1.30 - 10 m,444.118273,m,18
+gravity pipe,P265,lateral,DN-250,200,cover 10 - 12 m,93.422217,m,8
+gravity pipe,P265,lateral,DN-250,200,cover PAST the 12 m cap,177.650861,m,10
+gravity pipe,P265,main,DN-250,200,cover 1.30 - 10 m,97.858398,m,4
+gravity pipe,P265,main,DN-250,200,cover 10 - 12 m,76.423773,m,4
+gravity pipe,P266,lateral,DN-250,200,cover 1.30 - 10 m,272.853232,m,16
+gravity pipe,P266,main,DN-250,200,cover 1.30 - 10 m,95.0,m,5
+gravity pipe,P267,lateral,DN-250,200,cover 1.30 - 10 m,303.051647,m,7
+gravity pipe,P267,lateral,DN-250,200,cover 10 - 12 m,25.0,m,1
+gravity pipe,P268,lateral,DN-250,200,cover 1.30 - 10 m,17105.987752,m,352
+gravity pipe,P268,main,DN-250,200,cover 1.30 - 10 m,3338.021052,m,78
+gravity pipe,P268,main,DN-250,200,cover 10 - 12 m,17.014667,m,1
+gravity pipe,P268,main,DN601UP,1200,cover 1.30 - 10 m,135.338023,m,3
+gravity pipe,P268,sub main,DN-250,200,cover 1.30 - 10 m,404.591593,m,10
+gravity pipe,P268,sub main,DN-250,200,cover 10 - 12 m,309.930318,m,8
+gravity pipe,P268,sub main,DN-250,250,cover 1.30 - 10 m,702.596519,m,16
+gravity pipe,P268,sub main,DN-250,250,cover 10 - 12 m,481.43609,m,10
+gravity pipe,P268,trunk main,DN-250,200,cover 1.30 - 10 m,120.006657,m,2
+gravity pipe,P268,trunk main,DN601UP,1200,cover 1.30 - 10 m,187.841504,m,5
+gravity pipe,P268,trunk main,DN601UP,1200,cover 10 - 12 m,446.429721,m,10
+gravity pipe,P268,trunk main,DN601UP,1200,cover PAST the 12 m cap,264.999359,m,6
+gravity pipe,P269,lateral,DN-250,200,cover 1.30 - 10 m,5093.384571,m,113
+gravity pipe,P269,main,DN-250,200,cover 1.30 - 10 m,1750.619805,m,40
+gravity pipe,P269,sub main,DN-250,250,cover 1.30 - 10 m,264.238983,m,6
+gravity pipe,P269,sub main,DN-250,250,cover 10 - 12 m,293.955597,m,7
+gravity pipe,P27,lateral,DN-250,200,cover 1.30 - 10 m,1744.731612,m,51
+gravity pipe,P27,main,DN-250,200,cover 1.30 - 10 m,227.601525,m,10
+gravity pipe,P270,lateral,DN-250,200,cover 1.30 - 10 m,3740.47959,m,69
+gravity pipe,P270,main,DN-250,200,cover 1.30 - 10 m,1223.864258,m,22
+gravity pipe,P270,main,DN-250,200,cover 10 - 12 m,188.547233,m,4
+gravity pipe,P270,sub main,DN-250,200,cover 1.30 - 10 m,70.0,m,1
+gravity pipe,P270,sub main,DN-250,200,cover 10 - 12 m,70.0,m,1
+gravity pipe,P271,lateral,DN-250,200,cover 1.30 - 10 m,2831.520081,m,64
+gravity pipe,P271,main,DN-250,200,cover 1.30 - 10 m,1337.584734,m,28
+gravity pipe,P271,sub main,DN-250,200,cover 1.30 - 10 m,70.0,m,1
+gravity pipe,P271,sub main,DN-250,200,cover 10 - 12 m,526.144001,m,10
+gravity pipe,P272,lateral,DN-250,200,cover 1.30 - 10 m,3110.231785,m,58
+gravity pipe,P272,main,DN-250,200,cover 1.30 - 10 m,640.698126,m,11
+gravity pipe,P272,main,DN-250,200,cover 10 - 12 m,389.821188,m,8
+gravity pipe,P272,sub main,DN-250,200,cover 1.30 - 10 m,25.0,m,1
+gravity pipe,P272,sub main,DN-250,200,cover 10 - 12 m,35.0,m,1
+gravity pipe,P273,sub main,DN-250,200,cover 1.30 - 10 m,3597.646025,m,119
+gravity pipe,P273,sub main,DN-250,200,cover 10 - 12 m,281.545334,m,6
+gravity pipe,P274,lateral,DN-250,200,cover 1.30 - 10 m,2604.855584,m,55
+gravity pipe,P274,main,DN-250,200,cover 1.30 - 10 m,863.915563,m,18
+gravity pipe,P274,sub main,DN-250,200,cover 1.30 - 10 m,125.405357,m,3
+gravity pipe,P274,sub main,DN-250,200,cover 10 - 12 m,204.240357,m,4
+gravity pipe,P275,lateral,DN-250,200,cover 1.30 - 10 m,2055.123387,m,53
+gravity pipe,P275,lateral,DN-250,200,cover 10 - 12 m,10.0,m,1
+gravity pipe,P275,main,DN-250,200,cover 1.30 - 10 m,1260.92715,m,21
+gravity pipe,P275,main,DN-250,200,cover 10 - 12 m,185.51154,m,4
+gravity pipe,P276,lateral,DN-250,200,cover 1.30 - 10 m,780.373517,m,32
+gravity pipe,P276,main,DN-250,200,cover 1.30 - 10 m,113.819196,m,3
+gravity pipe,P276,sub main,DN-250,200,cover 1.30 - 10 m,2400.483048,m,67
+gravity pipe,P277,lateral,DN-250,200,cover 1.30 - 10 m,2326.460702,m,47
+gravity pipe,P277,main,DN-250,200,cover 1.30 - 10 m,768.431368,m,12
+gravity pipe,P277,main,DN-250,200,cover 10 - 12 m,115.327422,m,3
+gravity pipe,P278,lateral,DN-250,200,cover 1.30 - 10 m,2048.149765,m,40
+gravity pipe,P278,main,DN-250,200,cover 1.30 - 10 m,533.51939,m,11
+gravity pipe,P278,main,DN-250,250,cover 1.30 - 10 m,140.0,m,2
+gravity pipe,P278,main,DN-250,250,cover 10 - 12 m,63.648685,m,2
+gravity pipe,P279,lateral,DN-250,200,cover 1.30 - 10 m,1132.440962,m,30
+gravity pipe,P279,main,DN-250,200,cover 1.30 - 10 m,971.831483,m,18
+gravity pipe,P279,main,DN-250,200,cover 10 - 12 m,191.184287,m,6
+gravity pipe,P28,lateral,DN-250,200,cover 1.30 - 10 m,1949.628267,m,86
+gravity pipe,P28,main,DN-250,200,cover 1.30 - 10 m,10.491054,m,1
+gravity pipe,P280,lateral,DN-250,200,cover 1.30 - 10 m,1406.905198,m,56
+gravity pipe,P280,main,DN-250,200,cover 1.30 - 10 m,670.012746,m,20
+gravity pipe,P281,lateral,DN-250,200,cover 1.30 - 10 m,1107.974724,m,21
+gravity pipe,P281,sub main,DN-250,200,cover 1.30 - 10 m,716.53046,m,13
+gravity pipe,P281,sub main,DN-250,200,cover 10 - 12 m,64.070659,m,2
+gravity pipe,P282,lateral,DN-250,200,cover 1.30 - 10 m,399.789143,m,6
+gravity pipe,P282,sub main,DN-250,200,cover 1.30 - 10 m,1311.096459,m,24
+gravity pipe,P282,sub main,DN-250,200,cover 10 - 12 m,149.852403,m,5
+gravity pipe,P283,lateral,DN-250,200,cover 1.30 - 10 m,1175.567077,m,28
+gravity pipe,P283,lateral,DN-250,200,cover PAST the 12 m cap,35.0,m,3
+gravity pipe,P283,sub main,DN-250,200,cover 1.30 - 10 m,345.843737,m,8
+gravity pipe,P283,sub main,DN-250,200,cover 10 - 12 m,116.459134,m,2
+gravity pipe,P284,lateral,DN-250,200,cover 1.30 - 10 m,860.178119,m,22
+gravity pipe,P284,main,DN-250,200,cover 1.30 - 10 m,709.675537,m,14
+gravity pipe,P284,main,DN-250,200,cover 10 - 12 m,73.056833,m,2
+gravity pipe,P285,sub main,DN-250,200,cover 1.30 - 10 m,1186.34118,m,20
+gravity pipe,P285,sub main,DN-250,200,cover 10 - 12 m,198.109648,m,4
+gravity pipe,P286,sub main,DN-250,200,cover 1.30 - 10 m,1032.349278,m,17
+gravity pipe,P286,sub main,DN-250,200,cover 10 - 12 m,240.0,m,3
+gravity pipe,P287,lateral,DN-250,200,cover 1.30 - 10 m,148.78966,m,7
+gravity pipe,P287,sub main,DN-250,200,cover 1.30 - 10 m,1018.205847,m,19
+gravity pipe,P287,sub main,DN-250,200,cover 10 - 12 m,105.0,m,2
+gravity pipe,P288,lateral,DN-250,200,cover 1.30 - 10 m,1164.544542,m,25
+gravity pipe,P289,sub main,DN-250,200,cover 1.30 - 10 m,859.89754,m,14
+gravity pipe,P289,sub main,DN-250,200,cover 10 - 12 m,90.0,m,1
+gravity pipe,P29,lateral,DN-250,200,cover 1.30 - 10 m,1288.941812,m,48
+gravity pipe,P29,main,DN-250,200,cover 1.30 - 10 m,637.565762,m,27
+gravity pipe,P290,main,DN-250,200,cover 1.30 - 10 m,619.765561,m,12
+gravity pipe,P290,main,DN-250,200,cover 10 - 12 m,70.0,m,1
+gravity pipe,P291,lateral,DN-250,200,cover 1.30 - 10 m,636.948353,m,11
+gravity pipe,P291,lateral,DN-250,200,cover 10 - 12 m,5.0,m,1
+gravity pipe,P292,sub main,DN-250,200,cover 1.30 - 10 m,552.286403,m,11
+gravity pipe,P292,sub main,DN-250,200,cover 10 - 12 m,70.0,m,1
+gravity pipe,P293,lateral,DN-250,200,cover 1.30 - 10 m,287.347019,m,15
+gravity pipe,P294,lateral,DN-250,200,cover 1.30 - 10 m,5961.534986,m,127
+gravity pipe,P294,main,DN-250,200,cover 1.30 - 10 m,1311.343961,m,23
+gravity pipe,P294,sub main,DN-250,200,cover 1.30 - 10 m,301.598466,m,4
+gravity pipe,P294,sub main,DN-250,200,cover 10 - 12 m,21.863246,m,1
+gravity pipe,P294,sub main,DN-250,250,cover 1.30 - 10 m,50.0,m,1
+gravity pipe,P294,sub main,DN-250,250,cover 10 - 12 m,250.475179,m,6
+gravity pipe,P295,lateral,DN-250,200,cover 1.30 - 10 m,5265.418993,m,105
+gravity pipe,P295,main,DN-250,200,cover 1.30 - 10 m,419.533411,m,8
+gravity pipe,P295,sub main,DN-250,200,cover 1.30 - 10 m,115.590129,m,3
+gravity pipe,P295,sub main,DN-250,200,cover 10 - 12 m,193.751647,m,4
+gravity pipe,P296,lateral,DN-250,200,cover 1.30 - 10 m,3708.699999,m,69
+gravity pipe,P296,main,DN-250,200,cover 1.30 - 10 m,1151.357886,m,28
+gravity pipe,P296,sub main,DN-250,200,cover 1.30 - 10 m,219.87969,m,6
+gravity pipe,P296,sub main,DN-250,200,cover 10 - 12 m,210.266699,m,9
+gravity pipe,P297,lateral,DN-250,200,cover 1.30 - 10 m,923.67952,m,18
+gravity pipe,P297,main,DN-250,200,cover 1.30 - 10 m,838.488954,m,16
+gravity pipe,P297,sub main,DN-250,200,cover 1.30 - 10 m,1279.015284,m,25
+gravity pipe,P297,sub main,DN-250,200,cover 10 - 12 m,964.938211,m,19
+gravity pipe,P297,sub main,DN-250,200,cover PAST the 12 m cap,333.933419,m,7
+gravity pipe,P298,lateral,DN-250,200,cover 1.30 - 10 m,2645.142833,m,58
+gravity pipe,P298,main,DN-250,200,cover 1.30 - 10 m,955.528843,m,20
+gravity pipe,P298,main,DN-250,200,cover 10 - 12 m,268.092617,m,6
+gravity pipe,P298,main,DN-250,200,cover PAST the 12 m cap,3.091307,m,1
+gravity pipe,P298,sub main,DN-250,200,cover 1.30 - 10 m,90.0,m,1
+gravity pipe,P298,sub main,DN-250,200,cover 10 - 12 m,90.0,m,1
+gravity pipe,P299,lateral,DN-250,200,cover 1.30 - 10 m,2239.058489,m,49
+gravity pipe,P299,main,DN-250,200,cover 1.30 - 10 m,879.40783,m,13
+gravity pipe,P299,main,DN-250,200,cover 10 - 12 m,139.999995,m,2
+gravity pipe,P30,lateral,DN-250,200,cover 1.30 - 10 m,1301.252107,m,26
+gravity pipe,P30,lateral,DN-250,200,cover 10 - 12 m,58.681334,m,3
+gravity pipe,P30,lateral,DN-250,200,cover PAST the 12 m cap,17.12686,m,2
+gravity pipe,P30,main,DN-250,200,cover 1.30 - 10 m,525.135175,m,27
+gravity pipe,P300,lateral,DN-250,200,cover 1.30 - 10 m,1959.474929,m,37
+gravity pipe,P300,main,DN-250,200,cover 1.30 - 10 m,34.851921,m,1
+gravity pipe,P300,sub main,DN-250,200,cover 1.30 - 10 m,844.264069,m,13
+gravity pipe,P300,sub main,DN-250,200,cover 10 - 12 m,140.0,m,2
+gravity pipe,P301,lateral,DN-250,200,cover 1.30 - 10 m,420.514144,m,19
+gravity pipe,P301,main,DN-250,200,cover 1.30 - 10 m,290.834387,m,10
+gravity pipe,P301,sub main,DN-250,200,cover 1.30 - 10 m,1045.310154,m,19
+gravity pipe,P301,sub main,DN-250,200,cover 10 - 12 m,180.0,m,2
+gravity pipe,P302,lateral,DN-250,200,cover 1.30 - 10 m,319.239031,m,6
+gravity pipe,P302,main,DN-250,200,cover 1.30 - 10 m,949.999889,m,20
+gravity pipe,P302,main,DN-250,200,cover 10 - 12 m,92.262244,m,3
+gravity pipe,P302,sub main,DN-250,200,cover 1.30 - 10 m,80.0,m,1
+gravity pipe,P303,sub main,DN-250,200,cover 1.30 - 10 m,1112.343697,m,15
+gravity pipe,P303,sub main,DN-250,200,cover 10 - 12 m,90.0,m,1
+gravity pipe,P304,lateral,DN-250,200,cover 1.30 - 10 m,857.003683,m,46
+gravity pipe,P304,main,DN-250,200,cover 1.30 - 10 m,49.999996,m,1
+gravity pipe,P304,main,DN-250,200,cover 10 - 12 m,110.0,m,2
+gravity pipe,P305,lateral,DN-250,200,cover 1.30 - 10 m,84.181265,m,4
+gravity pipe,P305,sub main,DN-250,200,cover 1.30 - 10 m,750.0,m,14
+gravity pipe,P305,sub main,DN-250,200,cover 10 - 12 m,135.0,m,5
+gravity pipe,P306,lateral,DN-250,200,cover 1.30 - 10 m,375.398751,m,16
+gravity pipe,P306,main,DN-250,200,cover 1.30 - 10 m,505.0,m,11
+gravity pipe,P306,main,DN-250,200,cover 10 - 12 m,50.0,m,2
+gravity pipe,P307,sub main,DN-250,200,cover 1.30 - 10 m,780.868603,m,27
+gravity pipe,P307,sub main,DN-250,200,cover 10 - 12 m,94.121733,m,6
+gravity pipe,P308,sub main,DN-250,200,cover 1.30 - 10 m,720.0,m,14
+gravity pipe,P308,sub main,DN-250,200,cover 10 - 12 m,80.0,m,2
+gravity pipe,P309,main,DN-250,200,cover 1.30 - 10 m,614.761286,m,15
+gravity pipe,P31,lateral,DN-250,200,cover 1.30 - 10 m,1062.804899,m,15
+gravity pipe,P31,main,DN-250,200,cover 1.30 - 10 m,711.945238,m,22
+gravity pipe,P310,lateral,DN-250,200,cover 1.30 - 10 m,47.32269,m,1
+gravity pipe,P310,trunk main,DN601UP,1200,cover 1.30 - 10 m,50.0,m,1
+gravity pipe,P310,trunk main,DN601UP,1200,cover 10 - 12 m,115.464118,m,2
+gravity pipe,P311,lateral,DN-250,200,cover 1.30 - 10 m,14463.60589,m,310
+gravity pipe,P311,lateral,DN-250,200,cover 10 - 12 m,70.500549,m,2
+gravity pipe,P311,main,DN-250,200,cover 1.30 - 10 m,3055.568466,m,62
+gravity pipe,P311,main,DN-250,200,cover 10 - 12 m,453.515657,m,8
+gravity pipe,P311,sub main,DN-250,200,cover 1.30 - 10 m,78.808513,m,1
+gravity pipe,P311,sub main,DN-250,200,cover 10 - 12 m,275.19433,m,5
+gravity pipe,P311,sub main,DN-250,250,cover 1.30 - 10 m,140.0,m,2
+gravity pipe,P311,sub main,DN-250,250,cover 10 - 12 m,603.803554,m,14
+gravity pipe,P311,sub main,DN251-350,315,cover 10 - 12 m,530.013663,m,11
+gravity pipe,P311,sub main,DN251-350,315,cover PAST the 12 m cap,100.790672,m,2
+gravity pipe,P311,trunk main,DN-250,200,cover 1.30 - 10 m,69.226752,m,1
+gravity pipe,P311,trunk main,DN601UP,1200,cover 1.30 - 10 m,1528.787868,m,26
+gravity pipe,P311,trunk main,DN601UP,1200,cover 10 - 12 m,156.452463,m,4
+gravity pipe,P312,lateral,DN-250,200,cover 1.30 - 10 m,996.936736,m,32
+gravity pipe,P312,main,DN-250,200,cover 1.30 - 10 m,2395.967372,m,51
+gravity pipe,P312,main,DN-250,200,cover 10 - 12 m,178.899765,m,7
+gravity pipe,P312,sub main,DN-250,200,cover 1.30 - 10 m,70.0,m,1
+gravity pipe,P312,sub main,DN-250,200,cover 10 - 12 m,58.455414,m,1
+gravity pipe,P313,lateral,DN-250,200,cover 1.30 - 10 m,1736.937001,m,48
+gravity pipe,P313,lateral,DN-250,200,cover 10 - 12 m,16.938229,m,2
+gravity pipe,P313,main,DN-250,200,cover 1.30 - 10 m,278.114034,m,5
+gravity pipe,P313,main,DN-250,200,cover 10 - 12 m,34.278735,m,2
+gravity pipe,P313,sub main,DN-250,200,cover 1.30 - 10 m,1043.063176,m,19
+gravity pipe,P313,sub main,DN-250,200,cover 10 - 12 m,217.79195,m,5
+gravity pipe,P314,lateral,DN-250,200,cover 1.30 - 10 m,798.972088,m,39
+gravity pipe,P314,main,DN-250,200,cover 1.30 - 10 m,591.741671,m,17
+gravity pipe,P314,sub main,DN-250,200,cover 1.30 - 10 m,801.411394,m,15
+gravity pipe,P314,sub main,DN-250,200,cover 10 - 12 m,149.165781,m,3
+gravity pipe,P315,lateral,DN-250,200,cover 1.30 - 10 m,2065.64286,m,37
+gravity pipe,P315,lateral,DN-250,200,cover 10 - 12 m,117.383423,m,3
+gravity pipe,P316,lateral,DN-250,200,cover 1.30 - 10 m,441.097208,m,22
+gravity pipe,P316,main,DN-250,200,cover 1.30 - 10 m,11.0,m,1
+gravity pipe,P316,sub main,DN-250,200,cover 1.30 - 10 m,1413.545223,m,41
+gravity pipe,P316,sub main,DN-250,200,cover 10 - 12 m,299.546233,m,5
+gravity pipe,P317,sub main,DN-250,200,cover 1.30 - 10 m,1120.0,m,19
+gravity pipe,P317,sub main,DN-250,200,cover 10 - 12 m,342.656303,m,5
+gravity pipe,P318,sub main,DN-250,200,cover 1.30 - 10 m,675.22493,m,22
+gravity pipe,P318,sub main,DN-250,200,cover 10 - 12 m,224.285876,m,12
+gravity pipe,P318,sub main,DN-250,200,cover PAST the 12 m cap,37.93598,m,3
+gravity pipe,P319,lateral,DN-250,200,cover 1.30 - 10 m,197.947256,m,9
+gravity pipe,P319,main,DN-250,200,cover 1.30 - 10 m,688.779764,m,20
+gravity pipe,P319,main,DN-250,200,cover 10 - 12 m,28.38039,m,2
+gravity pipe,P32,lateral,DN-250,200,cover 1.30 - 10 m,626.890737,m,15
+gravity pipe,P32,main,DN-250,200,cover 1.30 - 10 m,1106.832515,m,24
+gravity pipe,P320,sub main,DN-250,200,cover 1.30 - 10 m,710.627115,m,20
+gravity pipe,P320,sub main,DN-250,200,cover 10 - 12 m,143.727929,m,5
+gravity pipe,P320,sub main,DN-250,200,cover PAST the 12 m cap,59.588733,m,2
+gravity pipe,P321,lateral,DN-250,200,cover 1.30 - 10 m,15083.024863,m,337
+gravity pipe,P321,main,DN-250,200,cover 1.30 - 10 m,2900.573101,m,63
+gravity pipe,P321,sub main,DN-250,200,cover 1.30 - 10 m,326.588038,m,7
+gravity pipe,P321,trunk main,DN601UP,1000,cover 1.30 - 10 m,164.064457,m,7
+gravity pipe,P321,trunk main,DN601UP,1200,cover 1.30 - 10 m,3824.839952,m,92
+gravity pipe,P322,lateral,DN-250,200,cover 1.30 - 10 m,3613.224315,m,83
+gravity pipe,P322,main,DN-250,200,cover 1.30 - 10 m,1464.138201,m,26
+gravity pipe,P322,main,DN-250,200,cover 10 - 12 m,179.482442,m,3
+gravity pipe,P322,sub main,DN-250,200,cover 1.30 - 10 m,31.475998,m,1
+gravity pipe,P323,lateral,DN-250,200,cover 1.30 - 10 m,2588.580956,m,123
+gravity pipe,P323,main,DN-250,200,cover 1.30 - 10 m,2109.400826,m,91
+gravity pipe,P323,sub main,DN-250,200,cover 1.30 - 10 m,50.039984,m,1
+gravity pipe,P323,sub main,DN-250,200,cover 10 - 12 m,226.064161,m,10
+gravity pipe,P324,lateral,DN-250,200,cover 1.30 - 10 m,1552.11723,m,72
+gravity pipe,P324,main,DN-250,200,cover 1.30 - 10 m,532.68764,m,14
+gravity pipe,P324,main,DN-250,200,cover 10 - 12 m,190.810751,m,6
+gravity pipe,P325,lateral,DN-250,200,cover 1.30 - 10 m,1776.130396,m,57
+gravity pipe,P325,main,DN-250,200,cover 1.30 - 10 m,406.417268,m,10
+gravity pipe,P325,main,DN-250,200,cover 10 - 12 m,60.0,m,1
+gravity pipe,P326,lateral,DN-250,200,cover 1.30 - 10 m,1194.537517,m,46
+gravity pipe,P326,main,DN-250,200,cover 1.30 - 10 m,854.040909,m,38
+gravity pipe,P326,main,DN-250,200,cover 10 - 12 m,110.930875,m,3
+gravity pipe,P326,sub main,DN-250,200,cover 1.30 - 10 m,10.341727,m,1
+gravity pipe,P327,lateral,DN-250,200,cover 1.30 - 10 m,549.140311,m,12
+gravity pipe,P327,main,DN-250,200,cover 1.30 - 10 m,1176.435525,m,20
+gravity pipe,P327,main,DN-250,200,cover 10 - 12 m,273.88106,m,5
+gravity pipe,P328,lateral,DN-250,200,cover 1.30 - 10 m,365.905267,m,11
+gravity pipe,P328,main,DN-250,200,cover 1.30 - 10 m,925.779462,m,19
+gravity pipe,P328,main,DN-250,200,cover 10 - 12 m,164.569915,m,4
+gravity pipe,P329,lateral,DN-250,200,cover 1.30 - 10 m,472.482171,m,12
+gravity pipe,P329,sub main,DN-250,200,cover 1.30 - 10 m,765.0,m,11
+gravity pipe,P329,sub main,DN-250,200,cover 10 - 12 m,210.0,m,3
+gravity pipe,P33,lateral,DN-250,200,cover 1.30 - 10 m,1201.683757,m,27
+gravity pipe,P33,main,DN-250,200,cover 1.30 - 10 m,500.391798,m,10
+gravity pipe,P330,lateral,DN-250,200,cover 1.30 - 10 m,80.052686,m,1
+gravity pipe,P330,main,DN-250,200,cover 1.30 - 10 m,1008.037737,m,27
+gravity pipe,P330,main,DN-250,200,cover 10 - 12 m,206.962263,m,6
+gravity pipe,P331,lateral,DN-250,200,cover 1.30 - 10 m,960.224769,m,15
+gravity pipe,P331,main,DN-250,200,cover 1.30 - 10 m,240.0,m,3
+gravity pipe,P331,main,DN-250,200,cover 10 - 12 m,80.0,m,1
+gravity pipe,P332,sub main,DN-250,200,cover 1.30 - 10 m,1095.0,m,22
+gravity pipe,P332,sub main,DN-250,200,cover 10 - 12 m,145.0,m,3
+gravity pipe,P333,lateral,DN-250,200,cover 1.30 - 10 m,700.732234,m,22
+gravity pipe,P333,lateral,DN-250,200,cover 10 - 12 m,97.645669,m,3
+gravity pipe,P333,sub main,DN-250,200,cover 1.30 - 10 m,255.332801,m,4
+gravity pipe,P334,sub main,DN-250,200,cover 1.30 - 10 m,762.614628,m,18
+gravity pipe,P334,sub main,DN-250,200,cover 10 - 12 m,46.438934,m,2
+gravity pipe,P335,lateral,DN-250,200,cover 1.30 - 10 m,603.367713,m,12
+gravity pipe,P335,lateral,DN-250,200,cover 10 - 12 m,100.736897,m,2
+gravity pipe,P336,lateral,DN-250,200,cover 1.30 - 10 m,23831.857713,m,728
+gravity pipe,P336,main,DN-250,200,cover 1.30 - 10 m,5679.009994,m,167
+gravity pipe,P336,sub main,DN-250,200,cover 1.30 - 10 m,135.625186,m,4
+gravity pipe,P336,sub main,DN-250,250,cover 1.30 - 10 m,469.115825,m,9
+gravity pipe,P336,sub main,DN251-350,315,cover 1.30 - 10 m,867.314319,m,22
+gravity pipe,P336,sub main,DN351-600,400,cover 1.30 - 10 m,327.835717,m,12
+gravity pipe,P336,sub main,DN351-600,400,cover 10 - 12 m,319.983573,m,10
+gravity pipe,P336,sub main,DN351-600,500,cover 1.30 - 10 m,113.621479,m,3
+gravity pipe,P336,sub main,DN351-600,500,cover 10 - 12 m,172.514023,m,4
+gravity pipe,P336,sub main,DN601UP,700,cover 1.30 - 10 m,396.618135,m,7
+gravity pipe,P336,sub main,DN601UP,800,cover 1.30 - 10 m,417.350628,m,11
+gravity pipe,P336,trunk main,DN601UP,1200,cover 1.30 - 10 m,1467.227244,m,40
+gravity pipe,P336,trunk main,DN601UP,1200,cover 10 - 12 m,232.426704,m,10
+gravity pipe,P337,lateral,DN-250,200,cover 1.30 - 10 m,13760.275526,m,340
+gravity pipe,P337,main,DN-250,200,cover 1.30 - 10 m,4922.040317,m,111
+gravity pipe,P337,sub main,DN-250,200,cover 1.30 - 10 m,522.584334,m,11
+gravity pipe,P337,sub main,DN-250,250,cover 1.30 - 10 m,1635.456445,m,40
+gravity pipe,P337,trunk main,DN601UP,1000,cover 1.30 - 10 m,1805.138278,m,48
+gravity pipe,P338,lateral,DN-250,200,cover 1.30 - 10 m,1023.706364,m,33
+gravity pipe,P338,main,DN-250,200,cover 1.30 - 10 m,1120.692997,m,24
+gravity pipe,P338,main,DN-250,200,cover 10 - 12 m,280.009923,m,6
+gravity pipe,P338,main,DN-250,200,cover PAST the 12 m cap,80.0,m,1
+gravity pipe,P338,sub main,DN-250,200,cover 1.30 - 10 m,823.790339,m,24
+gravity pipe,P338,sub main,DN-250,200,cover 10 - 12 m,627.500138,m,20
+gravity pipe,P339,lateral,DN-250,200,cover 1.30 - 10 m,813.196187,m,38
+gravity pipe,P339,main,DN-250,200,cover 1.30 - 10 m,810.144326,m,44
+gravity pipe,P339,main,DN-250,200,cover 10 - 12 m,318.868599,m,15
+gravity pipe,P339,main,DN-250,200,cover PAST the 12 m cap,215.058049,m,11
+gravity pipe,P34,lateral,DN-250,200,cover 1.30 - 10 m,1655.849331,m,68
+gravity pipe,P340,lateral,DN-250,200,cover 1.30 - 10 m,1329.392436,m,42
+gravity pipe,P340,main,DN-250,200,cover 1.30 - 10 m,492.840979,m,12
+gravity pipe,P340,main,DN-250,200,cover 10 - 12 m,45.215043,m,2
+gravity pipe,P340,sub main,DN-250,200,cover 1.30 - 10 m,150.007795,m,2
+gravity pipe,P340,sub main,DN-250,200,cover 10 - 12 m,79.999594,m,1
+gravity pipe,P341,lateral,DN-250,200,cover 1.30 - 10 m,1572.977815,m,36
+gravity pipe,P341,lateral,DN-250,200,cover 10 - 12 m,4.280959,m,1
+gravity pipe,P341,main,DN-250,200,cover 1.30 - 10 m,70.0,m,1
+gravity pipe,P341,main,DN-250,200,cover 10 - 12 m,77.817274,m,3
+gravity pipe,P342,sub main,DN-250,200,cover 1.30 - 10 m,892.927539,m,30
+gravity pipe,P342,sub main,DN-250,200,cover 10 - 12 m,159.413824,m,3
+gravity pipe,P343,lateral,DN-250,200,cover 1.30 - 10 m,675.20498,m,15
+gravity pipe,P343,lateral,DN-250,200,cover 10 - 12 m,153.098573,m,5
+gravity pipe,P343,main,DN-250,200,cover 1.30 - 10 m,36.75965,m,1
+gravity pipe,P343,main,DN-250,200,cover 10 - 12 m,104.165309,m,3
+gravity pipe,P344,lateral,DN-250,200,cover 1.30 - 10 m,14925.788846,m,354
+gravity pipe,P344,main,DN-250,200,cover 1.30 - 10 m,6371.457001,m,138
+gravity pipe,P344,sub main,DN-250,200,cover 1.30 - 10 m,402.741366,m,9
+gravity pipe,P344,sub main,DN-250,250,cover 1.30 - 10 m,279.062091,m,6
+gravity pipe,P344,sub main,DN251-350,315,cover 1.30 - 10 m,312.006726,m,9
+gravity pipe,P344,sub main,DN251-350,315,cover 10 - 12 m,248.752993,m,7
+gravity pipe,P344,sub main,DN601UP,700,cover 1.30 - 10 m,259.071849,m,5
+gravity pipe,P344,trunk main,DN601UP,1000,cover 1.30 - 10 m,1841.309204,m,56
+gravity pipe,P344,trunk main,DN601UP,1000,cover 10 - 12 m,39.993234,m,1
+gravity pipe,P344,trunk main,DN601UP,1200,cover 1.30 - 10 m,1822.491506,m,47
+gravity pipe,P344,trunk main,DN601UP,1200,cover 10 - 12 m,48.518465,m,1
+gravity pipe,P345,lateral,DN-250,200,cover 1.30 - 10 m,9316.401587,m,220
+gravity pipe,P345,main,DN-250,200,cover 1.30 - 10 m,3105.833536,m,68
+gravity pipe,P345,main,DN-250,200,cover 10 - 12 m,202.30587,m,4
+gravity pipe,P345,main,DN-250,200,cover PAST the 12 m cap,114.658513,m,3
+gravity pipe,P345,main,DN-250,250,cover 1.30 - 10 m,250.037199,m,7
+gravity pipe,P345,sub main,DN-250,200,cover 1.30 - 10 m,1482.829178,m,30
+gravity pipe,P345,sub main,DN-250,250,cover 1.30 - 10 m,360.181763,m,5
+gravity pipe,P345,sub main,DN351-600,400,cover 1.30 - 10 m,102.40097,m,2
+gravity pipe,P345,sub main,DN351-600,400,cover 10 - 12 m,372.448168,m,12
+gravity pipe,P345,sub main,DN351-600,400,cover PAST the 12 m cap,91.420469,m,3
+gravity pipe,P346,lateral,DN-250,200,cover 1.30 - 10 m,5396.47586,m,174
+gravity pipe,P346,main,DN-250,200,cover 1.30 - 10 m,3064.30409,m,90
+gravity pipe,P346,main,DN-250,200,cover 10 - 12 m,141.596946,m,5
+gravity pipe,P346,sub main,DN601UP,700,cover 1.30 - 10 m,578.266384,m,23
+gravity pipe,P346,sub main,DN601UP,700,cover 10 - 12 m,326.60952,m,12
+gravity pipe,P346,sub main,DN601UP,700,cover PAST the 12 m cap,22.5168,m,1
+gravity pipe,P347,lateral,DN-250,200,cover 1.30 - 10 m,2152.56271,m,46
+gravity pipe,P347,lateral,DN-250,200,cover 10 - 12 m,65.902295,m,2
+gravity pipe,P347,main,DN-250,200,cover 1.30 - 10 m,310.136267,m,11
+gravity pipe,P347,main,DN-250,200,cover 10 - 12 m,43.54105,m,1
+gravity pipe,P347,sub main,DN-250,200,cover 1.30 - 10 m,349.851581,m,6
+gravity pipe,P347,sub main,DN-250,200,cover 10 - 12 m,159.674036,m,4
+gravity pipe,P348,lateral,DN-250,200,cover 1.30 - 10 m,1786.612359,m,57
+gravity pipe,P348,sub main,DN-250,200,cover 1.30 - 10 m,16.534727,m,1
+gravity pipe,P348,sub main,DN-250,200,cover 10 - 12 m,307.444857,m,12
+gravity pipe,P348,sub main,DN-250,200,cover PAST the 12 m cap,228.679053,m,9
+gravity pipe,P349,lateral,DN-250,200,cover 1.30 - 10 m,1710.47552,m,33
+gravity pipe,P349,main,DN-250,200,cover 1.30 - 10 m,80.0,m,1
+gravity pipe,P349,main,DN-250,200,cover 10 - 12 m,84.317697,m,2
+gravity pipe,P35,lateral,DN-250,200,cover 1.30 - 10 m,685.834163,m,23
+gravity pipe,P35,main,DN-250,200,cover 1.30 - 10 m,806.411516,m,23
+gravity pipe,P350,lateral,DN-250,200,cover 1.30 - 10 m,1204.298551,m,29
+gravity pipe,P350,main,DN-250,200,cover 1.30 - 10 m,362.565464,m,7
+gravity pipe,P351,lateral,DN-250,200,cover 1.30 - 10 m,335.391945,m,7
+gravity pipe,P351,trunk main,DN601UP,1000,cover 1.30 - 10 m,687.191372,m,18
+gravity pipe,P352,sub main,DN-250,200,cover 1.30 - 10 m,940.835784,m,22
+gravity pipe,P352,sub main,DN-250,200,cover 10 - 12 m,35.0,m,1
+gravity pipe,P353,lateral,DN-250,200,cover 1.30 - 10 m,16888.738338,m,356
+gravity pipe,P353,main,DN-250,200,cover 1.30 - 10 m,5186.591544,m,116
+gravity pipe,P353,sub main,DN-250,200,cover 1.30 - 10 m,684.949888,m,12
+gravity pipe,P353,sub main,DN-250,250,cover 1.30 - 10 m,228.882839,m,5
+gravity pipe,P353,sub main,DN351-600,400,cover 1.30 - 10 m,676.759862,m,12
+gravity pipe,P353,sub main,DN351-600,500,cover 1.30 - 10 m,1022.860719,m,22
+gravity pipe,P353,trunk main,DN601UP,1000,cover 1.30 - 10 m,2563.149689,m,63
+gravity pipe,P354,lateral,DN-250,200,cover 1.30 - 10 m,11203.322277,m,268
+gravity pipe,P354,main,DN-250,200,cover 1.30 - 10 m,3588.874555,m,76
+gravity pipe,P354,sub main,DN-250,200,cover 1.30 - 10 m,238.530302,m,3
+gravity pipe,P354,sub main,DN-250,250,cover 1.30 - 10 m,595.664913,m,13
+gravity pipe,P354,sub main,DN251-350,315,cover 1.30 - 10 m,674.750523,m,14
+gravity pipe,P354,sub main,DN251-350,315,cover 10 - 12 m,244.875632,m,5
+gravity pipe,P354,sub main,DN351-600,400,cover 1.30 - 10 m,1442.961342,m,27
+gravity pipe,P354,trunk main,DN-250,200,cover 1.30 - 10 m,65.892647,m,3
+gravity pipe,P354,trunk main,DN601UP,900,cover 10 - 12 m,168.876242,m,2
+gravity pipe,P354,trunk main,DN601UP,1000,cover 1.30 - 10 m,1502.540381,m,44
+gravity pipe,P354,trunk main,DN601UP,1000,cover 10 - 12 m,393.983503,m,11
+gravity pipe,P355,lateral,DN-250,200,cover 1.30 - 10 m,3182.184876,m,104
+gravity pipe,P355,main,DN-250,200,cover 1.30 - 10 m,650.20222,m,12
+gravity pipe,P355,sub main,DN251-350,315,cover 1.30 - 10 m,1779.81119,m,57
+gravity pipe,P355,sub main,DN251-350,315,cover 10 - 12 m,533.551541,m,11
+gravity pipe,P355,sub main,DN351-600,600,cover 1.30 - 10 m,1152.246525,m,50
+gravity pipe,P355,sub main,DN601UP,700,cover 1.30 - 10 m,96.43683,m,2
+gravity pipe,P355,sub main,DN601UP,700,cover 10 - 12 m,420.785368,m,7
+gravity pipe,P356,lateral,DN-250,200,cover 1.30 - 10 m,3384.881816,m,88
+gravity pipe,P356,main,DN-250,200,cover 1.30 - 10 m,784.579399,m,38
+gravity pipe,P356,sub main,DN601UP,700,cover 1.30 - 10 m,405.537781,m,7
+gravity pipe,P356,sub main,DN601UP,700,cover 10 - 12 m,303.683632,m,8
+gravity pipe,P357,lateral,DN-250,200,cover 1.30 - 10 m,259.423555,m,8
+gravity pipe,P357,sub main,DN-250,200,cover 1.30 - 10 m,2088.690574,m,45
+gravity pipe,P358,lateral,DN-250,200,cover 1.30 - 10 m,476.918923,m,9
+gravity pipe,P358,sub main,DN-250,200,cover 1.30 - 10 m,595.775985,m,10
+gravity pipe,P358,sub main,DN-250,200,cover 10 - 12 m,50.0,m,2
+gravity pipe,P359,lateral,DN-250,200,cover 1.30 - 10 m,267.839412,m,16
+gravity pipe,P359,main,DN-250,200,cover 1.30 - 10 m,416.986255,m,24
+gravity pipe,P359,main,DN-250,200,cover 10 - 12 m,26.246276,m,2
+gravity pipe,P36,lateral,DN-250,200,cover 1.30 - 10 m,1039.663022,m,27
+gravity pipe,P36,main,DN-250,200,cover 1.30 - 10 m,387.259538,m,8
+gravity pipe,P360,lateral,DN-250,200,cover 1.30 - 10 m,426.18939,m,7
+gravity pipe,P360,main,DN-250,200,cover 1.30 - 10 m,151.059788,m,4
+gravity pipe,P361,lateral,DN-250,200,cover 1.30 - 10 m,516.900763,m,11
+gravity pipe,P362,lateral,DN-250,200,cover 1.30 - 10 m,193.334065,m,6
+gravity pipe,P363,lateral,DN-250,200,cover 1.30 - 10 m,18654.024253,m,582
+gravity pipe,P363,main,DN-250,200,cover 1.30 - 10 m,4561.922343,m,147
+gravity pipe,P363,main,DN-250,200,cover 10 - 12 m,170.391171,m,5
+gravity pipe,P363,sub main,DN-250,200,cover 1.30 - 10 m,823.747336,m,22
+gravity pipe,P363,sub main,DN-250,200,cover 10 - 12 m,183.680441,m,4
+gravity pipe,P363,sub main,DN-250,250,cover 10 - 12 m,190.034693,m,6
+gravity pipe,P363,sub main,DN-250,250,cover PAST the 12 m cap,177.583034,m,4
+gravity pipe,P363,sub main,DN351-600,400,cover 1.30 - 10 m,307.759372,m,11
+gravity pipe,P363,sub main,DN351-600,500,cover 1.30 - 10 m,1169.522062,m,43
+gravity pipe,P363,sub main,DN351-600,500,cover 10 - 12 m,74.798625,m,4
+gravity pipe,P363,trunk main,DN-250,200,cover 1.30 - 10 m,42.033822,m,2
+gravity pipe,P363,trunk main,DN601UP,800,cover 1.30 - 10 m,948.670581,m,24
+gravity pipe,P363,trunk main,DN601UP,900,cover 1.30 - 10 m,339.832898,m,8
+gravity pipe,P363,trunk main,DN601UP,900,cover 10 - 12 m,47.410009,m,1
+gravity pipe,P364,lateral,DN-250,200,cover 1.30 - 10 m,11648.447248,m,467
+gravity pipe,P364,main,DN-250,200,cover 1.30 - 10 m,8982.463296,m,308
+gravity pipe,P364,main,DN-250,200,cover 10 - 12 m,100.0,m,5
+gravity pipe,P364,main,DN-250,200,cover PAST the 12 m cap,440.0,m,26
+gravity pipe,P364,sub main,DN-250,200,cover 1.30 - 10 m,1644.598568,m,58
+gravity pipe,P364,sub main,DN-250,250,cover 1.30 - 10 m,1281.035555,m,28
+gravity pipe,P364,sub main,DN-250,250,cover 10 - 12 m,74.79677,m,1
+gravity pipe,P364,sub main,DN251-350,315,cover 10 - 12 m,64.683621,m,1
+gravity pipe,P365,lateral,DN-250,200,cover 1.30 - 10 m,11278.490583,m,272
+gravity pipe,P365,lateral,DN-250,200,cover 10 - 12 m,50.0,m,3
+gravity pipe,P365,lateral,DN-250,200,cover PAST the 12 m cap,110.0,m,9
+gravity pipe,P365,main,DN-250,200,cover 1.30 - 10 m,6148.552041,m,133
+gravity pipe,P365,main,DN-250,200,cover 10 - 12 m,25.0,m,1
+gravity pipe,P365,main,DN-250,200,cover PAST the 12 m cap,60.0,m,7
+gravity pipe,P365,sub main,DN-250,200,cover 1.30 - 10 m,351.652183,m,9
+gravity pipe,P365,sub main,DN-250,250,cover 1.30 - 10 m,1235.081123,m,23
+gravity pipe,P365,sub main,DN251-350,315,cover 1.30 - 10 m,45.023775,m,2
+gravity pipe,P365,sub main,DN351-600,400,cover 1.30 - 10 m,922.763431,m,17
+gravity pipe,P366,lateral,DN-250,200,cover 1.30 - 10 m,9763.918345,m,367
+gravity pipe,P366,main,DN-250,200,cover 1.30 - 10 m,2988.273755,m,113
+gravity pipe,P366,sub main,DN-250,200,cover 1.30 - 10 m,2339.256964,m,80
+gravity pipe,P366,sub main,DN-250,200,cover 10 - 12 m,103.007216,m,4
+gravity pipe,P366,sub main,DN-250,250,cover 1.30 - 10 m,45.0,m,1
+gravity pipe,P366,sub main,DN-250,250,cover 10 - 12 m,1034.555252,m,33
+gravity pipe,P366,sub main,DN-250,250,cover PAST the 12 m cap,244.568879,m,7
+gravity pipe,P367,lateral,DN-250,200,cover 1.30 - 10 m,6095.032658,m,123
+gravity pipe,P367,lateral,DN-250,200,cover 10 - 12 m,82.241737,m,2
+gravity pipe,P367,main,DN-250,200,cover 1.30 - 10 m,2420.740192,m,44
+gravity pipe,P367,sub main,DN-250,200,cover 1.30 - 10 m,356.455193,m,7
+gravity pipe,P367,sub main,DN-250,250,cover 1.30 - 10 m,153.687559,m,4
+gravity pipe,P367,sub main,DN251-350,315,cover 1.30 - 10 m,600.0,m,9
+gravity pipe,P367,sub main,DN251-350,315,cover 10 - 12 m,227.417142,m,5
+gravity pipe,P367,sub main,DN351-600,400,cover 1.30 - 10 m,60.0,m,1
+gravity pipe,P367,sub main,DN351-600,400,cover 10 - 12 m,97.744569,m,2
+gravity pipe,P368,lateral,DN-250,200,cover 1.30 - 10 m,7069.141645,m,180
+gravity pipe,P368,main,DN-250,200,cover 1.30 - 10 m,977.0233,m,19
+gravity pipe,P368,sub main,DN-250,250,cover 1.30 - 10 m,177.41273,m,3
+gravity pipe,P368,sub main,DN251-350,315,cover 1.30 - 10 m,250.783398,m,5
+gravity pipe,P368,sub main,DN351-600,600,cover 1.30 - 10 m,868.196801,m,16
+gravity pipe,P368,sub main,DN351-600,600,cover 10 - 12 m,247.563338,m,6
+gravity pipe,P368,sub main,DN601UP,700,cover 1.30 - 10 m,80.0,m,1
+gravity pipe,P369,lateral,DN-250,200,cover 1.30 - 10 m,2867.376477,m,59
+gravity pipe,P369,main,DN-250,200,cover 1.30 - 10 m,1089.092236,m,20
+gravity pipe,P369,main,DN-250,200,cover 10 - 12 m,56.146481,m,2
+gravity pipe,P369,sub main,DN-250,200,cover 1.30 - 10 m,70.0,m,1
+gravity pipe,P369,sub main,DN-250,200,cover 10 - 12 m,67.418282,m,1
+gravity pipe,P37,lateral,DN-250,200,cover 1.30 - 10 m,1422.511728,m,57
+gravity pipe,P370,lateral,DN-250,200,cover 1.30 - 10 m,2660.240804,m,53
+gravity pipe,P370,main,DN-250,200,cover 1.30 - 10 m,922.0555,m,20
+gravity pipe,P370,main,DN-250,200,cover 10 - 12 m,144.779225,m,6
+gravity pipe,P371,lateral,DN-250,200,cover 1.30 - 10 m,1550.257839,m,33
+gravity pipe,P371,main,DN-250,200,cover 1.30 - 10 m,682.913709,m,13
+gravity pipe,P371,sub main,DN-250,250,cover 1.30 - 10 m,1096.799223,m,19
+gravity pipe,P371,sub main,DN-250,250,cover 10 - 12 m,312.406059,m,6
+gravity pipe,P372,lateral,DN-250,200,cover 1.30 - 10 m,1514.144501,m,36
+gravity pipe,P372,main,DN-250,200,cover 1.30 - 10 m,961.927647,m,20
+gravity pipe,P372,main,DN-250,200,cover 10 - 12 m,471.990264,m,10
+gravity pipe,P373,lateral,DN-250,200,cover 1.30 - 10 m,991.633297,m,45
+gravity pipe,P373,main,DN-250,200,cover 1.30 - 10 m,445.651808,m,11
+gravity pipe,P373,sub main,DN251-350,315,cover 1.30 - 10 m,10.204543,m,1
+gravity pipe,P373,sub main,DN351-600,500,cover 10 - 12 m,1103.484415,m,35
+gravity pipe,P373,sub main,DN351-600,600,cover 1.30 - 10 m,7.438558,m,1
+gravity pipe,P373,sub main,DN351-600,600,cover 10 - 12 m,39.700783,m,4
+gravity pipe,P374,lateral,DN-250,200,cover 1.30 - 10 m,1508.142677,m,39
+gravity pipe,P374,main,DN-250,200,cover 1.30 - 10 m,374.743537,m,7
+gravity pipe,P374,main,DN-250,200,cover 10 - 12 m,166.861772,m,4
+gravity pipe,P375,lateral,DN-250,200,cover 1.30 - 10 m,1347.746633,m,29
+gravity pipe,P375,main,DN-250,200,cover 1.30 - 10 m,220.19556,m,4
+gravity pipe,P375,main,DN-250,200,cover 10 - 12 m,131.969449,m,3
+gravity pipe,P376,lateral,DN-250,200,cover 1.30 - 10 m,493.941952,m,15
+gravity pipe,P376,main,DN-250,200,cover 1.30 - 10 m,630.177824,m,14
+gravity pipe,P376,sub main,DN-250,200,cover 1.30 - 10 m,385.0,m,6
+gravity pipe,P376,sub main,DN-250,200,cover 10 - 12 m,180.0,m,2
+gravity pipe,P377,lateral,DN-250,200,cover 1.30 - 10 m,217.585337,m,6
+gravity pipe,P377,sub main,DN-250,200,cover 1.30 - 10 m,891.811431,m,17
+gravity pipe,P377,sub main,DN-250,200,cover 10 - 12 m,10.0,m,1
+gravity pipe,P378,trunk main,DN601UP,1000,cover 1.30 - 10 m,79.62644,m,1
+gravity pipe,P379,lateral,DN-250,200,cover 1.30 - 10 m,13437.101079,m,455
+gravity pipe,P379,main,DN-250,200,cover 1.30 - 10 m,6363.67671,m,215
+gravity pipe,P379,sub main,DN-250,200,cover 1.30 - 10 m,2537.229099,m,64
+gravity pipe,P379,sub main,DN-250,250,cover 1.30 - 10 m,8.098264,m,1
+gravity pipe,P379,sub main,DN251-350,315,cover 1.30 - 10 m,869.101077,m,34
+gravity pipe,P38,lateral,DN-250,200,cover 1.30 - 10 m,1011.533176,m,53
+gravity pipe,P38,main,DN-250,200,cover 1.30 - 10 m,358.995788,m,12
+gravity pipe,P380,lateral,DN-250,200,cover 1.30 - 10 m,11683.013097,m,448
+gravity pipe,P380,main,DN-250,200,cover 1.30 - 10 m,5226.851701,m,183
+gravity pipe,P380,sub main,DN-250,200,cover 1.30 - 10 m,2913.751232,m,51
+gravity pipe,P380,sub main,DN-250,200,cover 10 - 12 m,494.555231,m,7
+gravity pipe,P380,sub main,DN-250,250,cover 1.30 - 10 m,737.856473,m,14
+gravity pipe,P380,sub main,DN351-600,400,cover 1.30 - 10 m,253.926933,m,5
+gravity pipe,P380,sub main,DN351-600,500,cover 1.30 - 10 m,1107.852378,m,17
+gravity pipe,P380,sub main,DN351-600,500,cover 10 - 12 m,22.318131,m,1
+gravity pipe,P381,lateral,DN-250,200,cover 1.30 - 10 m,12542.149998,m,406
+gravity pipe,P381,main,DN-250,200,cover 1.30 - 10 m,4346.497877,m,143
+gravity pipe,P381,sub main,DN-250,200,cover 1.30 - 10 m,2000.502331,m,63
+gravity pipe,P381,sub main,DN-250,200,cover 10 - 12 m,78.523459,m,5
+gravity pipe,P381,sub main,DN-250,250,cover 1.30 - 10 m,319.999987,m,4
+gravity pipe,P381,sub main,DN-250,250,cover 10 - 12 m,382.440774,m,20
+gravity pipe,P381,sub main,DN251-350,315,cover 1.30 - 10 m,101.888024,m,2
+gravity pipe,P381,sub main,DN251-350,315,cover 10 - 12 m,837.928191,m,23
+gravity pipe,P381,sub main,DN351-600,400,cover 1.30 - 10 m,707.25304,m,14
+gravity pipe,P382,lateral,DN-250,200,cover 1.30 - 10 m,11840.203501,m,251
+gravity pipe,P382,main,DN-250,200,cover 1.30 - 10 m,2673.295178,m,51
+gravity pipe,P382,sub main,DN-250,250,cover 1.30 - 10 m,1006.080688,m,42
+gravity pipe,P382,sub main,DN251-350,315,cover 1.30 - 10 m,667.975728,m,19
+gravity pipe,P382,sub main,DN351-600,400,cover 1.30 - 10 m,227.867599,m,5
+gravity pipe,P382,sub main,DN351-600,400,cover 10 - 12 m,15.0,m,1
+gravity pipe,P382,trunk main,DN601UP,900,cover 1.30 - 10 m,3296.338425,m,72
+gravity pipe,P382,trunk main,DN601UP,900,cover 10 - 12 m,700.0,m,16
+gravity pipe,P382,trunk main,DN601UP,1000,cover 1.30 - 10 m,75.338255,m,2
+gravity pipe,P382,trunk main,DN601UP,1000,cover 10 - 12 m,296.722079,m,6
+gravity pipe,P382,trunk main,DN601UP,1000,cover PAST the 12 m cap,3.597333,m,1
+gravity pipe,P383,lateral,DN-250,200,cover 1.30 - 10 m,5380.45118,m,135
+gravity pipe,P383,main,DN-250,200,cover 1.30 - 10 m,2252.656873,m,41
+gravity pipe,P383,sub main,DN-250,200,cover 1.30 - 10 m,50.0,m,1
+gravity pipe,P383,sub main,DN-250,200,cover 10 - 12 m,140.505759,m,3
+gravity pipe,P383,trunk main,DN601UP,800,cover 1.30 - 10 m,1614.006662,m,37
+gravity pipe,P383,trunk main,DN601UP,800,cover 10 - 12 m,930.614754,m,24
+gravity pipe,P383,trunk main,DN601UP,800,cover PAST the 12 m cap,24.613175,m,1
+gravity pipe,P384,lateral,DN-250,200,cover 1.30 - 10 m,7695.162403,m,162
+gravity pipe,P384,lateral,DN-250,200,cover 10 - 12 m,30.0,m,2
+gravity pipe,P384,main,DN-250,200,cover 1.30 - 10 m,1650.373978,m,28
+gravity pipe,P384,sub main,DN-250,200,cover 1.30 - 10 m,40.154654,m,1
+gravity pipe,P384,sub main,DN-250,250,cover 1.30 - 10 m,60.0,m,1
+gravity pipe,P384,sub main,DN-250,250,cover 10 - 12 m,211.121418,m,3
+gravity pipe,P385,lateral,DN-250,200,cover 1.30 - 10 m,4859.581927,m,193
+gravity pipe,P385,lateral,DN-250,200,cover 10 - 12 m,12.529964,m,2
+gravity pipe,P385,main,DN-250,200,cover 1.30 - 10 m,2557.376774,m,79
+gravity pipe,P385,main,DN-250,200,cover 10 - 12 m,161.797903,m,11
+gravity pipe,P385,main,DN-250,200,cover PAST the 12 m cap,10.0,m,2
+gravity pipe,P385,sub main,DN-250,200,cover 1.30 - 10 m,21.281425,m,1
+gravity pipe,P385,sub main,DN-250,200,cover 10 - 12 m,741.774574,m,25
+gravity pipe,P386,lateral,DN-250,200,cover 1.30 - 10 m,3441.253939,m,72
+gravity pipe,P386,main,DN-250,200,cover 1.30 - 10 m,785.568176,m,18
+gravity pipe,P386,sub main,DN-250,200,cover 1.30 - 10 m,283.333826,m,5
+gravity pipe,P386,sub main,DN-250,250,cover 1.30 - 10 m,316.653831,m,6
+gravity pipe,P386,sub main,DN-250,250,cover 10 - 12 m,302.726992,m,7
+gravity pipe,P387,lateral,DN-250,200,cover 1.30 - 10 m,2218.024158,m,82
+gravity pipe,P387,main,DN-250,200,cover 1.30 - 10 m,1681.503478,m,58
+gravity pipe,P387,sub main,DN-250,200,cover 1.30 - 10 m,853.959976,m,33
+gravity pipe,P387,sub main,DN-250,200,cover 10 - 12 m,243.100906,m,15
+gravity pipe,P387,sub main,DN-250,200,cover PAST the 12 m cap,50.966611,m,3
+gravity pipe,P388,lateral,DN-250,200,cover 1.30 - 10 m,1575.126642,m,63
+gravity pipe,P388,main,DN-250,200,cover 1.30 - 10 m,1734.95484,m,68
+gravity pipe,P388,main,DN-250,200,cover 10 - 12 m,335.229729,m,10
+gravity pipe,P389,lateral,DN-250,200,cover 1.30 - 10 m,1931.787476,m,38
+gravity pipe,P389,main,DN-250,200,cover 1.30 - 10 m,326.405639,m,8
+gravity pipe,P389,sub main,DN-250,200,cover 1.30 - 10 m,313.810614,m,5
+gravity pipe,P389,sub main,DN351-600,500,cover 1.30 - 10 m,333.073368,m,6
+gravity pipe,P389,sub main,DN351-600,500,cover 10 - 12 m,342.329655,m,6
+gravity pipe,P389,sub main,DN351-600,600,cover 1.30 - 10 m,93.870346,m,1
+gravity pipe,P39,lateral,DN-250,200,cover 1.30 - 10 m,1351.22327,m,54
+gravity pipe,P390,lateral,DN-250,200,cover 1.30 - 10 m,2106.172091,m,46
+gravity pipe,P390,main,DN-250,200,cover 1.30 - 10 m,69.782099,m,4
+gravity pipe,P390,sub main,DN-250,200,cover 1.30 - 10 m,542.403133,m,12
+gravity pipe,P390,sub main,DN-250,200,cover 10 - 12 m,12.015055,m,1
+gravity pipe,P390,sub main,DN-250,250,cover 1.30 - 10 m,90.0,m,1
+gravity pipe,P390,sub main,DN-250,250,cover 10 - 12 m,270.0,m,3
+gravity pipe,P391,lateral,DN-250,200,cover 1.30 - 10 m,1473.213439,m,31
+gravity pipe,P391,main,DN-250,200,cover 1.30 - 10 m,1240.085627,m,21
+gravity pipe,P391,main,DN-250,200,cover 10 - 12 m,7.204538,m,1
+gravity pipe,P391,sub main,DN-250,200,cover 1.30 - 10 m,92.535685,m,1
+gravity pipe,P391,sub main,DN-250,200,cover 10 - 12 m,90.0,m,1
+gravity pipe,P392,lateral,DN-250,200,cover 1.30 - 10 m,1470.793647,m,54
+gravity pipe,P392,main,DN-250,200,cover 1.30 - 10 m,1346.87011,m,39
+gravity pipe,P392,main,DN-250,200,cover 10 - 12 m,16.544352,m,1
+gravity pipe,P393,lateral,DN-250,200,cover 1.30 - 10 m,2061.728544,m,40
+gravity pipe,P393,main,DN-250,200,cover 1.30 - 10 m,466.854835,m,8
+gravity pipe,P393,main,DN-250,200,cover 10 - 12 m,140.0,m,2
+gravity pipe,P394,lateral,DN-250,200,cover 1.30 - 10 m,1052.415356,m,37
+gravity pipe,P394,main,DN-250,200,cover 1.30 - 10 m,737.733342,m,15
+gravity pipe,P394,main,DN-250,200,cover 10 - 12 m,203.229978,m,9
+gravity pipe,P395,lateral,DN-250,200,cover 1.30 - 10 m,1540.0,m,26
+gravity pipe,P396,lateral,DN-250,200,cover 1.30 - 10 m,34.302041,m,2
+gravity pipe,P396,main,DN-250,200,cover 1.30 - 10 m,90.0,m,4
+gravity pipe,P397,lateral,DN-250,200,cover 1.30 - 10 m,14023.064844,m,285
+gravity pipe,P397,main,DN-250,200,cover 1.30 - 10 m,4481.265267,m,82
+gravity pipe,P397,sub main,DN-250,200,cover 1.30 - 10 m,913.0143,m,31
+gravity pipe,P397,sub main,DN-250,250,cover 1.30 - 10 m,600.59113,m,12
+gravity pipe,P397,sub main,DN351-600,500,cover 1.30 - 10 m,2752.88968,m,62
+gravity pipe,P397,sub main,DN351-600,500,cover 10 - 12 m,55.0,m,2
+gravity pipe,P397,sub main,DN351-600,600,cover 1.30 - 10 m,446.165202,m,13
+gravity pipe,P397,sub main,DN601UP,800,cover 1.30 - 10 m,514.573993,m,14
+gravity pipe,P397,trunk main,DN-250,200,cover 1.30 - 10 m,1482.77631,m,31
+gravity pipe,P397,trunk main,DN351-600,500,cover 1.30 - 10 m,64.999681,m,2
+gravity pipe,P397,trunk main,DN351-600,500,cover 10 - 12 m,123.02488,m,3
+gravity pipe,P397,trunk main,DN601UP,900,cover 10 - 12 m,65.0,m,1
+gravity pipe,P398,lateral,DN-250,200,cover 1.30 - 10 m,12967.15555,m,428
+gravity pipe,P398,main,DN-250,200,cover 1.30 - 10 m,5442.057084,m,180
+gravity pipe,P398,sub main,DN-250,200,cover 1.30 - 10 m,2553.048624,m,64
+gravity pipe,P398,sub main,DN-250,250,cover 1.30 - 10 m,1195.806063,m,18
+gravity pipe,P398,sub main,DN251-350,315,cover 1.30 - 10 m,221.513593,m,5
+gravity pipe,P398,sub main,DN351-600,400,cover 1.30 - 10 m,80.0,m,1
+gravity pipe,P399,lateral,DN-250,200,cover 1.30 - 10 m,9037.141168,m,263
+gravity pipe,P399,main,DN-250,200,cover 1.30 - 10 m,4560.556575,m,118
+gravity pipe,P399,sub main,DN-250,200,cover 1.30 - 10 m,2876.099732,m,60
+gravity pipe,P399,sub main,DN-250,200,cover 10 - 12 m,173.272641,m,2
+gravity pipe,P399,trunk main,DN-250,200,cover 1.30 - 10 m,42.80478,m,1
+gravity pipe,P399,trunk main,DN601UP,800,cover 1.30 - 10 m,1522.589829,m,33
+gravity pipe,P399,trunk main,DN601UP,800,cover 10 - 12 m,2011.209888,m,49
+gravity pipe,P40,lateral,DN-250,200,cover 1.30 - 10 m,897.602678,m,19
+gravity pipe,P40,main,DN-250,200,cover 1.30 - 10 m,446.091927,m,8
+gravity pipe,P400,lateral,DN-250,200,cover 1.30 - 10 m,5384.620454,m,122
+gravity pipe,P400,main,DN-250,200,cover 1.30 - 10 m,1603.890594,m,47
+gravity pipe,P400,sub main,DN-250,200,cover 1.30 - 10 m,98.643925,m,2
+gravity pipe,P400,sub main,DN-250,250,cover 1.30 - 10 m,1093.16171,m,19
+gravity pipe,P400,sub main,DN251-350,315,cover 1.30 - 10 m,2520.464514,m,58
+gravity pipe,P400,sub main,DN251-350,315,cover 10 - 12 m,513.510167,m,10
+gravity pipe,P401,lateral,DN-250,200,cover 1.30 - 10 m,5659.878515,m,225
+gravity pipe,P401,main,DN-250,200,cover 1.30 - 10 m,3128.512125,m,122
+gravity pipe,P401,sub main,DN-250,200,cover 1.30 - 10 m,737.079311,m,28
+gravity pipe,P401,sub main,DN-250,200,cover 10 - 12 m,491.297022,m,21
+gravity pipe,P402,lateral,DN-250,200,cover 1.30 - 10 m,4057.919853,m,163
+gravity pipe,P402,main,DN-250,200,cover 1.30 - 10 m,3316.998227,m,130
+gravity pipe,P402,sub main,DN-250,200,cover 1.30 - 10 m,702.036181,m,23
+gravity pipe,P402,sub main,DN-250,200,cover 10 - 12 m,496.198357,m,19
+gravity pipe,P403,lateral,DN-250,200,cover 1.30 - 10 m,5080.494552,m,209
+gravity pipe,P403,main,DN-250,200,cover 1.30 - 10 m,2437.333841,m,91
+gravity pipe,P403,sub main,DN-250,200,cover 1.30 - 10 m,667.638795,m,24
+gravity pipe,P403,sub main,DN-250,200,cover 10 - 12 m,124.089412,m,5
+gravity pipe,P404,lateral,DN-250,200,cover 1.30 - 10 m,2436.13818,m,89
+gravity pipe,P404,main,DN-250,200,cover 1.30 - 10 m,1420.134036,m,58
+gravity pipe,P404,sub main,DN-250,200,cover 1.30 - 10 m,952.176399,m,16
+gravity pipe,P404,sub main,DN-250,200,cover 10 - 12 m,195.0,m,5
+gravity pipe,P405,lateral,DN-250,200,cover 1.30 - 10 m,3011.752077,m,50
+gravity pipe,P405,sub main,DN-250,200,cover 1.30 - 10 m,993.02239,m,41
+gravity pipe,P405,sub main,DN-250,250,cover 1.30 - 10 m,701.835744,m,35
+gravity pipe,P406,lateral,DN-250,200,cover 1.30 - 10 m,2232.912113,m,42
+gravity pipe,P406,main,DN-250,200,cover 1.30 - 10 m,593.463312,m,9
+gravity pipe,P406,sub main,DN351-600,500,cover 1.30 - 10 m,1242.715654,m,21
+gravity pipe,P406,sub main,DN351-600,500,cover 10 - 12 m,160.0,m,2
+gravity pipe,P407,lateral,DN-250,200,cover 1.30 - 10 m,1822.600366,m,34
+gravity pipe,P407,main,DN-250,200,cover 1.30 - 10 m,515.247654,m,10
+gravity pipe,P407,main,DN-250,200,cover 10 - 12 m,191.977555,m,5
+gravity pipe,P408,sub main,DN-250,200,cover 1.30 - 10 m,2292.723655,m,40
+gravity pipe,P408,sub main,DN-250,200,cover 10 - 12 m,187.276345,m,4
+gravity pipe,P409,lateral,DN-250,200,cover 1.30 - 10 m,1443.891294,m,32
+gravity pipe,P409,main,DN-250,200,cover 1.30 - 10 m,312.278743,m,5
+gravity pipe,P409,sub main,DN-250,200,cover 1.30 - 10 m,275.969523,m,5
+gravity pipe,P409,sub main,DN-250,200,cover 10 - 12 m,251.123006,m,4
+gravity pipe,P41,lateral,DN-250,200,cover 1.30 - 10 m,850.501731,m,40
+gravity pipe,P41,main,DN-250,200,cover 1.30 - 10 m,492.696809,m,24
+gravity pipe,P410,lateral,DN-250,200,cover 1.30 - 10 m,1175.0,m,18
+gravity pipe,P410,lateral,DN-250,200,cover 10 - 12 m,185.0,m,4
+gravity pipe,P411,lateral,DN-250,200,cover 1.30 - 10 m,12917.223195,m,490
+gravity pipe,P411,main,DN-250,200,cover 1.30 - 10 m,4508.792676,m,168
+gravity pipe,P411,sub main,DN-250,200,cover 1.30 - 10 m,1298.097601,m,47
+gravity pipe,P411,sub main,DN-250,250,cover 1.30 - 10 m,126.263754,m,3
+gravity pipe,P411,sub main,DN-250,250,cover 10 - 12 m,64.523275,m,1
+gravity pipe,P411,trunk main,DN-250,200,cover 1.30 - 10 m,56.558112,m,4
+gravity pipe,P411,trunk main,DN601UP,700,cover 1.30 - 10 m,341.268209,m,13
+gravity pipe,P411,trunk main,DN601UP,700,cover 10 - 12 m,303.734592,m,18
+gravity pipe,P411,trunk main,DN601UP,800,cover 1.30 - 10 m,153.381558,m,3
+gravity pipe,P411,trunk main,DN601UP,800,cover 10 - 12 m,1083.135369,m,28
+gravity pipe,P412,lateral,DN-250,200,cover 1.30 - 10 m,13739.366284,m,233
+gravity pipe,P412,main,DN-250,200,cover 1.30 - 10 m,1800.786995,m,31
+gravity pipe,P412,sub main,DN-250,200,cover 1.30 - 10 m,1918.606167,m,36
+gravity pipe,P412,sub main,DN-250,250,cover 1.30 - 10 m,478.876016,m,9
+gravity pipe,P412,sub main,DN251-350,315,cover 1.30 - 10 m,277.414361,m,6
+gravity pipe,P412,sub main,DN351-600,400,cover 1.30 - 10 m,1698.628443,m,27
+gravity pipe,P412,sub main,DN351-600,500,cover 1.30 - 10 m,450.948656,m,8
+gravity pipe,P413,lateral,DN-250,200,cover 1.30 - 10 m,9026.758247,m,190
+gravity pipe,P413,main,DN-250,200,cover 1.30 - 10 m,2641.647482,m,53
+gravity pipe,P413,sub main,DN-250,200,cover 1.30 - 10 m,1181.315625,m,24
+gravity pipe,P413,sub main,DN-250,250,cover 1.30 - 10 m,237.316912,m,4
+gravity pipe,P413,sub main,DN351-600,400,cover 10 - 12 m,1107.864004,m,22
+gravity pipe,P413,sub main,DN351-600,400,cover PAST the 12 m cap,265.094324,m,6
+gravity pipe,P413,sub main,DN351-600,500,cover 10 - 12 m,660.037931,m,13
+gravity pipe,P413,sub main,DN351-600,500,cover PAST the 12 m cap,70.0,m,1
+gravity pipe,P413,sub main,DN351-600,600,cover 1.30 - 10 m,60.0,m,1
+gravity pipe,P413,sub main,DN351-600,600,cover 10 - 12 m,522.491469,m,10
+gravity pipe,P414,lateral,DN-250,200,cover 1.30 - 10 m,7913.320499,m,209
+gravity pipe,P414,main,DN-250,200,cover 1.30 - 10 m,2773.240417,m,69
+gravity pipe,P414,sub main,DN-250,200,cover 1.30 - 10 m,982.804235,m,20
+gravity pipe,P414,sub main,DN351-600,400,cover 1.30 - 10 m,550.822222,m,9
+gravity pipe,P414,sub main,DN351-600,500,cover 1.30 - 10 m,1567.919777,m,30
+gravity pipe,P414,sub main,DN351-600,500,cover 10 - 12 m,407.970371,m,8
+gravity pipe,P415,lateral,DN-250,200,cover 1.30 - 10 m,3065.157736,m,79
+gravity pipe,P415,main,DN-250,200,cover 1.30 - 10 m,668.322894,m,17
+gravity pipe,P415,trunk main,DN-250,200,cover 1.30 - 10 m,3051.782137,m,60
+gravity pipe,P415,trunk main,DN-250,200,cover 10 - 12 m,685.660751,m,15
+gravity pipe,P416,lateral,DN-250,200,cover 1.30 - 10 m,2926.972202,m,125
+gravity pipe,P416,lateral,DN-250,200,cover 10 - 12 m,13.652011,m,1
+gravity pipe,P416,lateral,DN-250,200,cover PAST the 12 m cap,97.778867,m,6
+gravity pipe,P416,main,DN-250,200,cover 1.30 - 10 m,3359.55869,m,115
+gravity pipe,P416,main,DN-250,200,cover 10 - 12 m,120.56949,m,5
+gravity pipe,P416,main,DN-250,200,cover PAST the 12 m cap,18.788294,m,1
+gravity pipe,P416,sub main,DN-250,200,cover 1.30 - 10 m,80.0,m,1
+gravity pipe,P416,sub main,DN-250,200,cover 10 - 12 m,523.874259,m,8
+gravity pipe,P417,lateral,DN-250,200,cover 1.30 - 10 m,4568.027746,m,99
+gravity pipe,P417,main,DN-250,200,cover 1.30 - 10 m,176.779334,m,4
+gravity pipe,P417,sub main,DN-250,200,cover 1.30 - 10 m,596.487841,m,9
+gravity pipe,P417,sub main,DN-250,250,cover 1.30 - 10 m,1391.692566,m,26
+gravity pipe,P417,sub main,DN-250,250,cover 10 - 12 m,279.800107,m,5
+gravity pipe,P418,lateral,DN-250,200,cover 1.30 - 10 m,3595.760675,m,113
+gravity pipe,P418,main,DN-250,200,cover 1.30 - 10 m,2117.236055,m,58
+gravity pipe,P418,main,DN-250,200,cover 10 - 12 m,78.18615,m,3
+gravity pipe,P418,sub main,DN-250,200,cover 1.30 - 10 m,24.765789,m,1
+gravity pipe,P418,sub main,DN-250,200,cover 10 - 12 m,416.933192,m,9
+gravity pipe,P419,lateral,DN-250,200,cover 1.30 - 10 m,4280.359588,m,87
+gravity pipe,P419,main,DN-250,200,cover 1.30 - 10 m,1457.986124,m,26
+gravity pipe,P419,sub main,DN-250,200,cover 1.30 - 10 m,199.056624,m,3
+gravity pipe,P419,sub main,DN-250,200,cover 10 - 12 m,163.041275,m,3
+gravity pipe,P42,lateral,DN-250,200,cover 1.30 - 10 m,1279.547399,m,42
+gravity pipe,P420,lateral,DN-250,200,cover 1.30 - 10 m,3435.175931,m,91
+gravity pipe,P420,main,DN-250,200,cover 1.30 - 10 m,1928.82824,m,55
+gravity pipe,P420,sub main,DN-250,200,cover 1.30 - 10 m,388.607546,m,9
+gravity pipe,P420,sub main,DN-250,200,cover 10 - 12 m,169.583917,m,3
+gravity pipe,P421,lateral,DN-250,200,cover 1.30 - 10 m,1964.588511,m,90
+gravity pipe,P421,main,DN-250,200,cover 1.30 - 10 m,2907.556498,m,111
+gravity pipe,P421,main,DN-250,200,cover 10 - 12 m,353.89498,m,5
+gravity pipe,P421,sub main,DN-250,200,cover 1.30 - 10 m,402.522056,m,12
+gravity pipe,P421,sub main,DN-250,200,cover 10 - 12 m,84.140473,m,4
+gravity pipe,P422,lateral,DN-250,200,cover 1.30 - 10 m,2725.610283,m,102
+gravity pipe,P422,main,DN-250,200,cover 1.30 - 10 m,2049.626588,m,66
+gravity pipe,P422,main,DN-250,200,cover 10 - 12 m,83.454466,m,3
+gravity pipe,P422,sub main,DN-250,200,cover 1.30 - 10 m,70.0,m,1
+gravity pipe,P422,sub main,DN-250,200,cover 10 - 12 m,211.011831,m,9
+gravity pipe,P423,lateral,DN-250,200,cover 1.30 - 10 m,1909.03393,m,38
+gravity pipe,P423,main,DN-250,200,cover 1.30 - 10 m,672.079186,m,13
+gravity pipe,P423,sub main,DN-250,200,cover 1.30 - 10 m,411.766117,m,7
+gravity pipe,P423,sub main,DN-250,200,cover 10 - 12 m,299.826974,m,5
+gravity pipe,P424,lateral,DN-250,200,cover 1.30 - 10 m,1504.91729,m,75
+gravity pipe,P424,main,DN-250,200,cover 1.30 - 10 m,149.737533,m,6
+gravity pipe,P424,sub main,DN351-600,500,cover 1.30 - 10 m,564.280304,m,18
+gravity pipe,P425,lateral,DN-250,200,cover 1.30 - 10 m,1408.435514,m,28
+gravity pipe,P425,main,DN-250,200,cover 1.30 - 10 m,351.006472,m,5
+gravity pipe,P425,main,DN-250,200,cover 10 - 12 m,26.590828,m,1
+gravity pipe,P425,sub main,DN-250,200,cover 1.30 - 10 m,60.0,m,1
+gravity pipe,P426,lateral,DN-250,200,cover 1.30 - 10 m,370.478177,m,15
+gravity pipe,P426,main,DN-250,200,cover 1.30 - 10 m,756.574842,m,23
+gravity pipe,P426,sub main,DN-250,200,cover 1.30 - 10 m,156.047377,m,11
+gravity pipe,P426,sub main,DN-250,200,cover 10 - 12 m,218.520652,m,4
+gravity pipe,P427,sub main,DN-250,200,cover 1.30 - 10 m,613.596548,m,20
+gravity pipe,P428,lateral,DN-250,200,cover 1.30 - 10 m,15012.38306,m,256
+gravity pipe,P428,main,DN-250,200,cover 1.30 - 10 m,4391.17441,m,88
+gravity pipe,P428,sub main,DN-250,200,cover 1.30 - 10 m,1059.842424,m,23
+gravity pipe,P428,sub main,DN-250,200,cover 10 - 12 m,20.0,m,2
+gravity pipe,P428,sub main,DN-250,250,cover 1.30 - 10 m,189.38386,m,5
+gravity pipe,P428,sub main,DN251-350,315,cover 1.30 - 10 m,519.69762,m,23
+gravity pipe,P428,sub main,DN351-600,400,cover 10 - 12 m,84.429993,m,2
+gravity pipe,P429,lateral,DN-250,200,cover 1.30 - 10 m,10441.75674,m,416
+gravity pipe,P429,main,DN-250,200,cover 1.30 - 10 m,4891.596376,m,197
+gravity pipe,P429,sub main,DN-250,200,cover 1.30 - 10 m,640.864972,m,17
+gravity pipe,P429,sub main,DN-250,250,cover 1.30 - 10 m,723.679581,m,17
+gravity pipe,P429,trunk main,DN351-600,600,cover 1.30 - 10 m,309.267444,m,7
+gravity pipe,P429,trunk main,DN351-600,600,cover 10 - 12 m,661.559427,m,14
+gravity pipe,P429,trunk main,DN601UP,700,cover 1.30 - 10 m,2632.739716,m,51
+gravity pipe,P43,lateral,DN-250,200,cover 1.30 - 10 m,605.428708,m,26
+gravity pipe,P43,main,DN-250,200,cover 1.30 - 10 m,665.481529,m,34
+gravity pipe,P430,lateral,DN-250,200,cover 1.30 - 10 m,5759.90017,m,159
+gravity pipe,P430,main,DN-250,200,cover 1.30 - 10 m,2399.514302,m,91
+gravity pipe,P430,sub main,DN-250,200,cover 1.30 - 10 m,899.875915,m,16
+gravity pipe,P430,sub main,DN-250,200,cover 10 - 12 m,939.179394,m,18
+gravity pipe,P430,sub main,DN-250,200,cover PAST the 12 m cap,70.0,m,1
+gravity pipe,P431,lateral,DN-250,200,cover 1.30 - 10 m,6725.65295,m,173
+gravity pipe,P431,main,DN-250,200,cover 1.30 - 10 m,1295.317428,m,43
+gravity pipe,P431,sub main,DN-250,200,cover 1.30 - 10 m,879.664884,m,22
+gravity pipe,P431,sub main,DN-250,200,cover 10 - 12 m,716.303434,m,13
+gravity pipe,P431,sub main,DN-250,200,cover PAST the 12 m cap,15.0,m,1
+gravity pipe,P432,lateral,DN-250,200,cover 1.30 - 10 m,4533.938657,m,86
+gravity pipe,P432,main,DN-250,200,cover 1.30 - 10 m,572.660079,m,8
+gravity pipe,P432,sub main,DN-250,200,cover 1.30 - 10 m,172.289798,m,3
+gravity pipe,P432,sub main,DN-250,200,cover 10 - 12 m,745.131772,m,14
+gravity pipe,P433,lateral,DN-250,200,cover 1.30 - 10 m,1794.325526,m,88
+gravity pipe,P433,main,DN-250,200,cover 1.30 - 10 m,1007.425163,m,43
+gravity pipe,P433,sub main,DN-250,200,cover 1.30 - 10 m,1389.6971,m,74
+gravity pipe,P433,sub main,DN-250,200,cover 10 - 12 m,123.620684,m,8
+gravity pipe,P434,lateral,DN-250,200,cover 1.30 - 10 m,2649.096601,m,119
+gravity pipe,P434,main,DN-250,200,cover 1.30 - 10 m,1327.704714,m,57
+gravity pipe,P434,sub main,DN-250,200,cover 1.30 - 10 m,180.263887,m,13
+gravity pipe,P434,sub main,DN-250,200,cover 10 - 12 m,90.767946,m,11
+gravity pipe,P435,lateral,DN-250,200,cover 1.30 - 10 m,2665.942528,m,52
+gravity pipe,P435,main,DN-250,200,cover 1.30 - 10 m,112.489265,m,4
+gravity pipe,P435,sub main,DN-250,200,cover 1.30 - 10 m,894.578012,m,27
+gravity pipe,P435,sub main,DN-250,200,cover 10 - 12 m,204.526672,m,5
+gravity pipe,P436,lateral,DN-250,200,cover 1.30 - 10 m,2356.521896,m,50
+gravity pipe,P436,main,DN-250,200,cover 1.30 - 10 m,1162.072111,m,22
+gravity pipe,P436,main,DN-250,200,cover 10 - 12 m,172.099765,m,3
+gravity pipe,P437,lateral,DN-250,200,cover 1.30 - 10 m,1658.714413,m,54
+gravity pipe,P437,main,DN-250,200,cover 1.30 - 10 m,1862.623037,m,63
+gravity pipe,P438,lateral,DN-250,200,cover 1.30 - 10 m,2420.671805,m,45
+gravity pipe,P438,main,DN-250,200,cover 1.30 - 10 m,316.403967,m,8
+gravity pipe,P438,sub main,DN-250,200,cover 1.30 - 10 m,550.0,m,13
+gravity pipe,P438,sub main,DN-250,200,cover 10 - 12 m,218.627284,m,6
+gravity pipe,P438,sub main,DN-250,200,cover PAST the 12 m cap,10.0,m,1
+gravity pipe,P439,lateral,DN-250,200,cover 1.30 - 10 m,1359.633505,m,53
+gravity pipe,P439,main,DN-250,200,cover 1.30 - 10 m,70.393903,m,3
+gravity pipe,P439,sub main,DN-250,200,cover 1.30 - 10 m,874.79794,m,33
+gravity pipe,P439,sub main,DN351-600,500,cover 1.30 - 10 m,1075.447396,m,41
+gravity pipe,P439,sub main,DN351-600,500,cover 10 - 12 m,5.853553,m,1
+gravity pipe,P44,lateral,DN-250,200,cover 1.30 - 10 m,995.520021,m,32
+gravity pipe,P44,main,DN-250,200,cover 1.30 - 10 m,223.129158,m,7
+gravity pipe,P440,lateral,DN-250,200,cover 1.30 - 10 m,1501.605656,m,25
+gravity pipe,P440,main,DN-250,200,cover 1.30 - 10 m,907.932758,m,24
+gravity pipe,P440,sub main,DN-250,200,cover 1.30 - 10 m,936.712913,m,19
+gravity pipe,P441,lateral,DN-250,200,cover 1.30 - 10 m,2035.59302,m,55
+gravity pipe,P441,main,DN-250,200,cover 1.30 - 10 m,951.364647,m,43
+gravity pipe,P441,main,DN-250,200,cover 10 - 12 m,249.680888,m,9
+gravity pipe,P442,lateral,DN-250,200,cover 1.30 - 10 m,1464.797514,m,60
+gravity pipe,P442,main,DN-250,200,cover 1.30 - 10 m,354.533232,m,17
+gravity pipe,P442,sub main,DN-250,200,cover 1.30 - 10 m,1179.273039,m,36
+gravity pipe,P442,sub main,DN-250,200,cover 10 - 12 m,153.956968,m,6
+gravity pipe,P443,lateral,DN-250,200,cover 1.30 - 10 m,873.542687,m,39
+gravity pipe,P443,main,DN-250,200,cover 1.30 - 10 m,824.076352,m,18
+gravity pipe,P443,main,DN-250,200,cover 10 - 12 m,243.342913,m,4
+gravity pipe,P444,lateral,DN-250,200,cover 1.30 - 10 m,203.224542,m,4
+gravity pipe,P444,sub main,DN251-350,315,cover 1.30 - 10 m,82.703447,m,1
+gravity pipe,P444,sub main,DN251-350,315,cover 10 - 12 m,322.036722,m,4
+gravity pipe,P445,lateral,DN-250,200,cover 1.30 - 10 m,149.275787,m,9
+gravity pipe,P445,lateral,DN-250,200,cover 10 - 12 m,12.529964,m,1
+gravity pipe,P446,lateral,DN-250,200,cover 1.30 - 10 m,33.571335,m,2
+gravity pipe,P447,lateral,DN-250,200,cover 1.30 - 10 m,11066.105093,m,464
+gravity pipe,P447,lateral,DN-250,200,cover PAST the 12 m cap,32.789494,m,3
+gravity pipe,P447,main,DN-250,200,cover 1.30 - 10 m,8330.46993,m,282
+gravity pipe,P447,main,DN-250,200,cover 10 - 12 m,47.72869,m,4
+gravity pipe,P447,main,DN-250,200,cover PAST the 12 m cap,85.892175,m,7
+gravity pipe,P447,sub main,DN-250,200,cover 1.30 - 10 m,1830.59452,m,58
+gravity pipe,P447,sub main,DN-250,250,cover 1.30 - 10 m,701.39147,m,16
+gravity pipe,P447,sub main,DN-250,250,cover 10 - 12 m,499.78887,m,9
+gravity pipe,P447,sub main,DN251-350,315,cover 10 - 12 m,105.506027,m,2
+gravity pipe,P447,trunk main,DN351-600,500,cover 1.30 - 10 m,3047.433345,m,58
+gravity pipe,P447,trunk main,DN351-600,500,cover 10 - 12 m,796.67903,m,14
+gravity pipe,P447,trunk main,DN351-600,600,cover 10 - 12 m,69.999279,m,1
+gravity pipe,P448,lateral,DN-250,200,cover 1.30 - 10 m,12534.399356,m,277
+gravity pipe,P448,main,DN-250,200,cover 1.30 - 10 m,3607.390655,m,77
+gravity pipe,P448,sub main,DN-250,200,cover 1.30 - 10 m,786.700521,m,14
+gravity pipe,P448,sub main,DN-250,250,cover 1.30 - 10 m,2102.652068,m,33
+gravity pipe,P448,sub main,DN-250,250,cover 10 - 12 m,401.826194,m,9
+gravity pipe,P448,sub main,DN251-350,315,cover 1.30 - 10 m,1230.04081,m,20
+gravity pipe,P449,lateral,DN-250,200,cover 1.30 - 10 m,7366.697624,m,355
+gravity pipe,P449,lateral,DN-250,200,cover 10 - 12 m,77.714114,m,9
+gravity pipe,P449,lateral,DN-250,200,cover PAST the 12 m cap,76.647435,m,9
+gravity pipe,P449,main,DN-250,200,cover 1.30 - 10 m,4972.660241,m,202
+gravity pipe,P449,main,DN-250,200,cover 10 - 12 m,15.0,m,1
+gravity pipe,P449,main,DN-250,200,cover PAST the 12 m cap,38.700903,m,3
+gravity pipe,P449,sub main,DN-250,200,cover 1.30 - 10 m,1420.578343,m,54
+gravity pipe,P449,sub main,DN-250,200,cover 10 - 12 m,266.357726,m,10
+gravity pipe,P45,lateral,DN-250,200,cover 1.30 - 10 m,244.455059,m,11
+gravity pipe,P45,main,DN-250,200,cover 1.30 - 10 m,956.205685,m,23
+gravity pipe,P450,lateral,DN-250,200,cover 1.30 - 10 m,4787.495675,m,191
+gravity pipe,P450,main,DN-250,200,cover 1.30 - 10 m,2031.523625,m,88
+gravity pipe,P450,main,DN-250,200,cover 10 - 12 m,23.223954,m,2
+gravity pipe,P450,sub main,DN-250,200,cover 1.30 - 10 m,71.133931,m,1
+gravity pipe,P450,sub main,DN-250,200,cover 10 - 12 m,23.866069,m,2
+gravity pipe,P451,lateral,DN-250,200,cover 1.30 - 10 m,2892.381908,m,112
+gravity pipe,P451,main,DN-250,200,cover 1.30 - 10 m,1546.756378,m,56
+gravity pipe,P451,sub main,DN351-600,400,cover 1.30 - 10 m,760.109519,m,16
+gravity pipe,P451,sub main,DN351-600,500,cover 1.30 - 10 m,217.461127,m,6
+gravity pipe,P451,sub main,DN351-600,500,cover 10 - 12 m,249.131733,m,10
+gravity pipe,P452,lateral,DN-250,200,cover 1.30 - 10 m,2211.696467,m,58
+gravity pipe,P452,main,DN-250,200,cover 1.30 - 10 m,1564.679813,m,43
+gravity pipe,P452,sub main,DN-250,200,cover 1.30 - 10 m,656.185025,m,26
+gravity pipe,P452,sub main,DN-250,200,cover 10 - 12 m,143.704967,m,6
+gravity pipe,P453,lateral,DN-250,200,cover 1.30 - 10 m,2778.232564,m,117
+gravity pipe,P453,main,DN-250,200,cover 1.30 - 10 m,1114.727742,m,41
+gravity pipe,P453,main,DN-250,200,cover 10 - 12 m,66.944895,m,3
+gravity pipe,P453,sub main,DN-250,200,cover 1.30 - 10 m,88.362888,m,1
+gravity pipe,P453,sub main,DN-250,200,cover 10 - 12 m,82.248344,m,1
+gravity pipe,P454,lateral,DN-250,200,cover 1.30 - 10 m,1642.440467,m,79
+gravity pipe,P454,main,DN-250,200,cover 1.30 - 10 m,1050.488738,m,38
+gravity pipe,P454,main,DN-250,200,cover 10 - 12 m,171.652667,m,7
+gravity pipe,P455,lateral,DN-250,200,cover 1.30 - 10 m,1874.278,m,73
+gravity pipe,P455,main,DN-250,200,cover 1.30 - 10 m,701.229145,m,20
+gravity pipe,P455,main,DN-250,200,cover 10 - 12 m,180.529745,m,5
+gravity pipe,P456,lateral,DN-250,200,cover 1.30 - 10 m,1037.279712,m,50
+gravity pipe,P456,main,DN-250,200,cover 1.30 - 10 m,1572.227942,m,63
+gravity pipe,P456,main,DN-250,200,cover 10 - 12 m,113.209322,m,5
+gravity pipe,P457,lateral,DN-250,200,cover 1.30 - 10 m,1727.385677,m,71
+gravity pipe,P457,main,DN-250,200,cover 1.30 - 10 m,504.464202,m,22
+gravity pipe,P457,main,DN-250,200,cover 10 - 12 m,229.045815,m,9
+gravity pipe,P458,lateral,DN-250,200,cover 1.30 - 10 m,1083.471527,m,45
+gravity pipe,P458,main,DN-250,200,cover 1.30 - 10 m,614.742299,m,19
+gravity pipe,P458,main,DN-250,200,cover 10 - 12 m,181.677868,m,4
+gravity pipe,P458,main,DN-250,200,cover PAST the 12 m cap,166.246981,m,4
+gravity pipe,P459,lateral,DN-250,200,cover 1.30 - 10 m,1565.271142,m,27
+gravity pipe,P459,lateral,DN-250,200,cover 10 - 12 m,145.563592,m,3
+gravity pipe,P459,main,DN-250,200,cover 1.30 - 10 m,26.006093,m,1
+gravity pipe,P459,main,DN-250,200,cover 10 - 12 m,24.981385,m,3
+gravity pipe,P46,lateral,DN-250,200,cover 1.30 - 10 m,592.838147,m,30
+gravity pipe,P46,main,DN-250,200,cover 1.30 - 10 m,604.578391,m,26
+gravity pipe,P460,lateral,DN-250,200,cover 1.30 - 10 m,763.60209,m,31
+gravity pipe,P460,sub main,DN-250,200,cover 1.30 - 10 m,824.466396,m,25
+gravity pipe,P460,sub main,DN-250,200,cover 10 - 12 m,92.293663,m,3
+gravity pipe,P461,lateral,DN-250,200,cover 1.30 - 10 m,159.925955,m,11
+gravity pipe,P462,lateral,DN-250,200,cover 1.30 - 10 m,11126.416256,m,420
+gravity pipe,P462,main,DN-250,200,cover 1.30 - 10 m,5905.453875,m,206
+gravity pipe,P462,main,DN-250,200,cover 10 - 12 m,463.510888,m,13
+gravity pipe,P462,trunk main,DN351-600,400,cover 1.30 - 10 m,3387.35106,m,72
+gravity pipe,P462,trunk main,DN351-600,400,cover 10 - 12 m,139.717319,m,6
+gravity pipe,P462,trunk main,DN351-600,400,cover PAST the 12 m cap,46.838302,m,2
+gravity pipe,P462,trunk main,DN351-600,500,cover 1.30 - 10 m,435.581212,m,8
+gravity pipe,P463,lateral,DN-250,200,cover 1.30 - 10 m,3954.121124,m,147
+gravity pipe,P463,lateral,DN-250,200,cover 10 - 12 m,7.149576,m,1
+gravity pipe,P463,main,DN-250,200,cover 1.30 - 10 m,2668.887816,m,92
+gravity pipe,P463,main,DN-250,200,cover 10 - 12 m,185.186617,m,6
+gravity pipe,P463,sub main,DN-250,200,cover 1.30 - 10 m,89.054272,m,1
+gravity pipe,P463,sub main,DN-250,200,cover 10 - 12 m,556.418158,m,15
+gravity pipe,P464,lateral,DN-250,200,cover 1.30 - 10 m,4347.393762,m,171
+gravity pipe,P464,main,DN-250,200,cover 1.30 - 10 m,2188.746969,m,89
+gravity pipe,P464,sub main,DN-250,200,cover 1.30 - 10 m,222.899588,m,8
+gravity pipe,P464,sub main,DN-250,200,cover 10 - 12 m,165.020773,m,7
+gravity pipe,P465,lateral,DN-250,200,cover 1.30 - 10 m,2337.419058,m,85
+gravity pipe,P465,main,DN-250,200,cover 1.30 - 10 m,3934.695345,m,174
+gravity pipe,P465,main,DN-250,200,cover 10 - 12 m,171.282859,m,7
+gravity pipe,P465,sub main,DN-250,200,cover 1.30 - 10 m,33.337676,m,1
+gravity pipe,P465,sub main,DN-250,200,cover 10 - 12 m,81.398026,m,4
+gravity pipe,P466,lateral,DN-250,200,cover 1.30 - 10 m,3169.81699,m,141
+gravity pipe,P466,main,DN-250,200,cover 1.30 - 10 m,2286.225927,m,82
+gravity pipe,P466,sub main,DN-250,200,cover 1.30 - 10 m,300.192168,m,8
+gravity pipe,P466,sub main,DN-250,200,cover 10 - 12 m,221.344736,m,5
+gravity pipe,P467,lateral,DN-250,200,cover 1.30 - 10 m,2301.841521,m,101
+gravity pipe,P467,lateral,DN-250,200,cover PAST the 12 m cap,94.600088,m,6
+gravity pipe,P467,main,DN-250,200,cover 1.30 - 10 m,1544.895839,m,60
+gravity pipe,P467,main,DN-250,200,cover 10 - 12 m,54.184182,m,5
+gravity pipe,P467,main,DN-250,200,cover PAST the 12 m cap,40.018378,m,2
+gravity pipe,P467,sub main,DN-250,200,cover 1.30 - 10 m,879.74501,m,35
+gravity pipe,P467,sub main,DN-250,200,cover 10 - 12 m,236.512998,m,6
+gravity pipe,P468,lateral,DN-250,200,cover 1.30 - 10 m,1895.969405,m,78
+gravity pipe,P468,main,DN-250,200,cover 1.30 - 10 m,1183.349162,m,42
+gravity pipe,P468,sub main,DN351-600,400,cover 1.30 - 10 m,947.712843,m,26
+gravity pipe,P468,sub main,DN351-600,400,cover 10 - 12 m,328.118626,m,17
+gravity pipe,P469,lateral,DN-250,200,cover 1.30 - 10 m,1729.641059,m,83
+gravity pipe,P469,main,DN-250,200,cover 1.30 - 10 m,1391.959619,m,41
+gravity pipe,P469,sub main,DN-250,200,cover 1.30 - 10 m,627.774853,m,26
+gravity pipe,P469,sub main,DN-250,200,cover 10 - 12 m,230.353333,m,6
+gravity pipe,P47,lateral,DN-250,200,cover 1.30 - 10 m,656.150854,m,30
+gravity pipe,P47,main,DN-250,200,cover 1.30 - 10 m,537.397887,m,13
+gravity pipe,P470,lateral,DN-250,200,cover 1.30 - 10 m,2072.295295,m,87
+gravity pipe,P470,main,DN-250,200,cover 1.30 - 10 m,1341.056333,m,44
+gravity pipe,P470,main,DN-250,200,cover 10 - 12 m,137.407239,m,2
+gravity pipe,P471,lateral,DN-250,200,cover 1.30 - 10 m,1798.339123,m,46
+gravity pipe,P471,main,DN-250,200,cover 1.30 - 10 m,612.910439,m,13
+gravity pipe,P471,sub main,DN-250,200,cover 1.30 - 10 m,789.190503,m,17
+gravity pipe,P471,sub main,DN-250,200,cover 10 - 12 m,100.567943,m,3
+gravity pipe,P472,lateral,DN-250,200,cover 1.30 - 10 m,941.818555,m,53
+gravity pipe,P472,main,DN-250,200,cover 1.30 - 10 m,1253.521167,m,61
+gravity pipe,P472,sub main,DN-250,200,cover 1.30 - 10 m,120.854513,m,2
+gravity pipe,P472,sub main,DN-250,200,cover 10 - 12 m,217.416842,m,12
+gravity pipe,P473,lateral,DN-250,200,cover 1.30 - 10 m,1543.533851,m,55
+gravity pipe,P473,main,DN-250,200,cover 1.30 - 10 m,706.122021,m,26
+gravity pipe,P473,main,DN-250,200,cover 10 - 12 m,216.93406,m,14
+gravity pipe,P474,lateral,DN-250,200,cover 1.30 - 10 m,9391.456172,m,375
+gravity pipe,P474,main,DN-250,200,cover 1.30 - 10 m,4742.912293,m,180
+gravity pipe,P474,main,DN-250,200,cover 10 - 12 m,386.367023,m,21
+gravity pipe,P474,main,DN-250,200,cover PAST the 12 m cap,66.426451,m,4
+gravity pipe,P474,sub main,DN-250,200,cover 10 - 12 m,136.338265,m,6
+gravity pipe,P474,trunk main,DN-250,200,cover 1.30 - 10 m,2682.181712,m,95
+gravity pipe,P474,trunk main,DN-250,200,cover 10 - 12 m,272.702621,m,13
+gravity pipe,P474,trunk main,DN-250,200,cover PAST the 12 m cap,50.008977,m,3
+gravity pipe,P474,trunk main,DN-250,250,cover 1.30 - 10 m,470.535152,m,18
+gravity pipe,P474,trunk main,DN251-350,315,cover 1.30 - 10 m,553.737871,m,17
+gravity pipe,P474,trunk main,DN251-350,315,cover 10 - 12 m,122.808272,m,2
+gravity pipe,P474,trunk main,DN351-600,400,cover 1.30 - 10 m,1131.393234,m,24
+gravity pipe,P475,lateral,DN-250,200,cover 1.30 - 10 m,2883.185143,m,89
+gravity pipe,P475,main,DN-250,200,cover 1.30 - 10 m,492.040059,m,22
+gravity pipe,P475,sub main,DN351-600,400,cover 1.30 - 10 m,1066.747893,m,21
+gravity pipe,P475,sub main,DN351-600,400,cover 10 - 12 m,221.695261,m,5
+gravity pipe,P476,lateral,DN-250,200,cover 1.30 - 10 m,1797.913806,m,72
+gravity pipe,P476,main,DN-250,200,cover 1.30 - 10 m,1184.191773,m,47
+gravity pipe,P476,main,DN-250,200,cover 10 - 12 m,221.530816,m,8
+gravity pipe,P477,lateral,DN-250,200,cover 1.30 - 10 m,992.025197,m,40
+gravity pipe,P477,main,DN-250,200,cover 1.30 - 10 m,756.447771,m,16
+gravity pipe,P477,sub main,DN-250,200,cover 1.30 - 10 m,1100.687984,m,43
+gravity pipe,P477,sub main,DN-250,200,cover 10 - 12 m,116.471839,m,7
+gravity pipe,P478,lateral,DN-250,200,cover 1.30 - 10 m,1768.014883,m,90
+gravity pipe,P478,main,DN-250,200,cover 1.30 - 10 m,1013.677577,m,37
+gravity pipe,P478,main,DN-250,200,cover 10 - 12 m,149.016186,m,6
+gravity pipe,P479,lateral,DN-250,200,cover 1.30 - 10 m,2458.677682,m,43
+gravity pipe,P479,main,DN-250,200,cover 1.30 - 10 m,300.318094,m,5
+gravity pipe,P479,main,DN-250,200,cover 10 - 12 m,117.989038,m,3
+gravity pipe,P48,lateral,DN-250,200,cover 1.30 - 10 m,1172.305341,m,29
+gravity pipe,P480,lateral,DN-250,200,cover 1.30 - 10 m,571.390092,m,16
+gravity pipe,P480,main,DN-250,200,cover 1.30 - 10 m,367.320496,m,16
+gravity pipe,P480,main,DN-250,200,cover 10 - 12 m,138.583457,m,3
+gravity pipe,P481,lateral,DN-250,200,cover 1.30 - 10 m,2777.200939,m,96
+gravity pipe,P481,main,DN-250,200,cover 1.30 - 10 m,389.857531,m,9
+gravity pipe,P481,sub main,DN-250,200,cover 1.30 - 10 m,653.539918,m,22
+gravity pipe,P481,sub main,DN-250,200,cover 10 - 12 m,961.99886,m,34
+gravity pipe,P481,sub main,DN-250,200,cover PAST the 12 m cap,46.861999,m,6
+gravity pipe,P481,sub main,DN251-350,315,cover 1.30 - 10 m,1326.92147,m,36
+gravity pipe,P481,sub main,DN251-350,315,cover 10 - 12 m,457.556087,m,25
+gravity pipe,P481,sub main,DN351-600,400,cover 1.30 - 10 m,307.210369,m,13
+gravity pipe,P481,sub main,DN351-600,400,cover 10 - 12 m,199.711552,m,5
+gravity pipe,P482,lateral,DN-250,200,cover 1.30 - 10 m,4418.921758,m,195
+gravity pipe,P482,main,DN-250,200,cover 1.30 - 10 m,1637.797763,m,62
+gravity pipe,P482,sub main,DN-250,200,cover 1.30 - 10 m,201.061848,m,8
+gravity pipe,P482,trunk main,DN-250,200,cover 1.30 - 10 m,231.98055,m,7
+gravity pipe,P482,trunk main,DN-250,200,cover 10 - 12 m,321.551577,m,29
+gravity pipe,P483,lateral,DN-250,200,cover 1.30 - 10 m,2206.093674,m,91
+gravity pipe,P483,main,DN-250,200,cover 1.30 - 10 m,1303.15689,m,40
+gravity pipe,P483,main,DN-250,200,cover 10 - 12 m,263.428205,m,9
+gravity pipe,P483,sub main,DN-250,200,cover 1.30 - 10 m,90.080439,m,1
+gravity pipe,P483,sub main,DN-250,200,cover 10 - 12 m,251.901092,m,6
+gravity pipe,P484,lateral,DN-250,200,cover 1.30 - 10 m,1859.19654,m,84
+gravity pipe,P484,main,DN-250,200,cover 1.30 - 10 m,855.080139,m,33
+gravity pipe,P484,main,DN-250,200,cover 10 - 12 m,339.500939,m,16
+gravity pipe,P485,lateral,DN-250,200,cover 1.30 - 10 m,1328.675483,m,46
+gravity pipe,P485,main,DN-250,200,cover 1.30 - 10 m,561.216252,m,19
+gravity pipe,P485,main,DN-250,200,cover 10 - 12 m,98.966412,m,6
+gravity pipe,P486,lateral,DN-250,200,cover 1.30 - 10 m,544.818457,m,24
+gravity pipe,P486,main,DN-250,200,cover 1.30 - 10 m,857.337203,m,22
+gravity pipe,P486,main,DN-250,200,cover 10 - 12 m,100.189339,m,3
+gravity pipe,P487,lateral,DN-250,200,cover 1.30 - 10 m,371.764036,m,19
+gravity pipe,P487,main,DN-250,200,cover 1.30 - 10 m,583.414584,m,21
+gravity pipe,P487,main,DN-250,200,cover 10 - 12 m,6.915884,m,1
+gravity pipe,P487,main,DN-250,200,cover PAST the 12 m cap,5.0,m,1
+gravity pipe,P488,lateral,DN-250,200,cover 1.30 - 10 m,830.0,m,12
+gravity pipe,P489,lateral,DN-250,200,cover 1.30 - 10 m,110.594049,m,7
+gravity pipe,P489,lateral,DN-250,200,cover 10 - 12 m,8.778817,m,1
+gravity pipe,P49,lateral,DN-250,200,cover 1.30 - 10 m,1148.459722,m,44
+gravity pipe,P490,trunk main,DN-250,250,cover 1.30 - 10 m,110.253702,m,3
+gravity pipe,P491,lateral,DN-250,200,cover 1.30 - 10 m,8377.9916,m,352
+gravity pipe,P491,main,DN-250,200,cover 1.30 - 10 m,5594.781102,m,210
+gravity pipe,P491,main,DN-250,200,cover 10 - 12 m,499.139878,m,9
+gravity pipe,P491,main,DN-250,200,cover PAST the 12 m cap,217.462302,m,5
+gravity pipe,P491,sub main,DN-250,200,cover 1.30 - 10 m,1199.482608,m,41
+gravity pipe,P491,sub main,DN-250,200,cover 10 - 12 m,119.455136,m,2
+gravity pipe,P491,sub main,DN-250,200,cover PAST the 12 m cap,7.643226,m,1
+gravity pipe,P491,trunk main,DN-250,200,cover 1.30 - 10 m,2611.714337,m,53
+gravity pipe,P491,trunk main,DN-250,250,cover 1.30 - 10 m,968.777799,m,26
+gravity pipe,P491,trunk main,DN-250,250,cover 10 - 12 m,403.621893,m,11
+gravity pipe,P492,lateral,DN-250,200,cover 1.30 - 10 m,924.201258,m,21
+gravity pipe,P492,main,DN-250,200,cover 1.30 - 10 m,551.839429,m,11
+gravity pipe,P492,sub main,DN251-350,315,cover 1.30 - 10 m,1523.642812,m,28
+gravity pipe,P492,sub main,DN251-350,315,cover 10 - 12 m,369.360901,m,8
+gravity pipe,P493,lateral,DN-250,200,cover 1.30 - 10 m,1335.745257,m,28
+gravity pipe,P493,sub main,DN-250,200,cover 1.30 - 10 m,108.763684,m,5
+gravity pipe,P493,sub main,DN-250,200,cover 10 - 12 m,113.640057,m,5
+gravity pipe,P494,lateral,DN-250,200,cover 1.30 - 10 m,765.399612,m,30
+gravity pipe,P494,main,DN-250,200,cover 1.30 - 10 m,680.770614,m,23
+gravity pipe,P494,main,DN-250,200,cover 10 - 12 m,71.074011,m,2
+gravity pipe,P495,lateral,DN-250,200,cover 1.30 - 10 m,2566.111683,m,70
+gravity pipe,P495,main,DN-250,200,cover 1.30 - 10 m,421.625807,m,10
+gravity pipe,P495,sub main,DN-250,200,cover 1.30 - 10 m,213.790145,m,4
+gravity pipe,P495,sub main,DN-250,250,cover 1.30 - 10 m,378.958361,m,8
+gravity pipe,P495,sub main,DN251-350,315,cover 1.30 - 10 m,618.125366,m,13
+gravity pipe,P495,sub main,DN251-350,315,cover 10 - 12 m,803.920469,m,16
+gravity pipe,P495,sub main,DN251-350,315,cover PAST the 12 m cap,165.417261,m,4
+gravity pipe,P496,lateral,DN-250,200,cover 1.30 - 10 m,2200.79607,m,89
+gravity pipe,P496,main,DN-250,200,cover 1.30 - 10 m,1371.877688,m,41
+gravity pipe,P496,sub main,DN-250,200,cover 1.30 - 10 m,120.618416,m,3
+gravity pipe,P496,sub main,DN-250,200,cover 10 - 12 m,109.512238,m,4
+gravity pipe,P497,lateral,DN-250,200,cover 1.30 - 10 m,1189.139756,m,52
+gravity pipe,P497,main,DN-250,200,cover 1.30 - 10 m,333.023219,m,15
+gravity pipe,P497,main,DN-250,200,cover 10 - 12 m,149.484637,m,4
+gravity pipe,P498,lateral,DN-250,200,cover 1.30 - 10 m,3489.742756,m,97
+gravity pipe,P498,main,DN-250,200,cover 1.30 - 10 m,1401.391919,m,31
+gravity pipe,P498,main,DN-250,200,cover 10 - 12 m,182.307524,m,5
+gravity pipe,P498,main,DN-250,200,cover PAST the 12 m cap,129.197853,m,3
+gravity pipe,P498,sub main,DN-250,200,cover 1.30 - 10 m,91.722886,m,1
+gravity pipe,P498,sub main,DN-250,200,cover 10 - 12 m,491.206728,m,10
+gravity pipe,P498,sub main,DN-250,200,cover PAST the 12 m cap,220.936276,m,4
+gravity pipe,P499,lateral,DN-250,200,cover 1.30 - 10 m,849.343695,m,22
+gravity pipe,P499,lateral,DN-250,200,cover 10 - 12 m,25.859787,m,1
+gravity pipe,P499,main,DN-250,200,cover 1.30 - 10 m,181.390229,m,4
+gravity pipe,P499,sub main,DN-250,200,cover 1.30 - 10 m,418.567114,m,11
+gravity pipe,P499,sub main,DN-250,200,cover 10 - 12 m,35.593133,m,1
+gravity pipe,P50,lateral,DN-250,200,cover 1.30 - 10 m,1138.43323,m,56
+gravity pipe,P500,lateral,DN-250,200,cover 1.30 - 10 m,2240.606407,m,69
+gravity pipe,P500,main,DN-250,200,cover 1.30 - 10 m,595.819429,m,15
+gravity pipe,P500,sub main,DN-250,200,cover 1.30 - 10 m,1341.401934,m,32
+gravity pipe,P500,sub main,DN-250,200,cover 10 - 12 m,335.318629,m,8
+gravity pipe,P501,lateral,DN-250,200,cover 1.30 - 10 m,2411.513822,m,62
+gravity pipe,P501,main,DN-250,200,cover 1.30 - 10 m,1498.787109,m,25
+gravity pipe,P501,sub main,DN-250,200,cover 1.30 - 10 m,412.244494,m,9
+gravity pipe,P501,sub main,DN-250,200,cover 10 - 12 m,273.317633,m,7
+gravity pipe,P501,sub main,DN-250,200,cover PAST the 12 m cap,60.0,m,1
+gravity pipe,P502,lateral,DN-250,200,cover 1.30 - 10 m,2414.005646,m,73
+gravity pipe,P502,lateral,DN-250,200,cover 10 - 12 m,42.554101,m,2
+gravity pipe,P502,main,DN-250,200,cover 1.30 - 10 m,351.008607,m,8
+gravity pipe,P502,main,DN-250,200,cover 10 - 12 m,148.630091,m,3
+gravity pipe,P51,lateral,DN-250,200,cover 1.30 - 10 m,1113.194977,m,54
+gravity pipe,P52,lateral,DN-250,200,cover 1.30 - 10 m,1040.893867,m,17
+gravity pipe,P52,main,DN-250,200,cover 1.30 - 10 m,5.999388,m,1
+gravity pipe,P53,lateral,DN-250,200,cover 1.30 - 10 m,928.350036,m,27
+gravity pipe,P54,lateral,DN-250,200,cover 1.30 - 10 m,882.235012,m,24
+gravity pipe,P55,lateral,DN-250,200,cover 1.30 - 10 m,878.534798,m,30
+gravity pipe,P56,lateral,DN-250,200,cover 1.30 - 10 m,862.174462,m,37
+gravity pipe,P57,lateral,DN-250,200,cover 1.30 - 10 m,815.050424,m,34
+gravity pipe,P58,lateral,DN-250,200,cover 1.30 - 10 m,811.671684,m,23
+gravity pipe,P59,lateral,DN-250,200,cover 1.30 - 10 m,458.100708,m,22
+gravity pipe,P59,main,DN-250,200,cover 1.30 - 10 m,351.16569,m,15
+gravity pipe,P60,lateral,DN-250,200,cover 1.30 - 10 m,803.361297,m,14
+gravity pipe,P61,lateral,DN-250,200,cover 1.30 - 10 m,767.029406,m,16
+gravity pipe,P62,lateral,DN-250,200,cover 1.30 - 10 m,377.432841,m,20
+gravity pipe,P62,main,DN-250,200,cover 1.30 - 10 m,372.476728,m,12
+gravity pipe,P63,lateral,DN-250,200,cover 1.30 - 10 m,583.333842,m,17
+gravity pipe,P63,main,DN-250,200,cover 1.30 - 10 m,90.068785,m,3
+gravity pipe,P64,lateral,DN-250,200,cover 1.30 - 10 m,667.244092,m,14
+gravity pipe,P65,lateral,DN-250,200,cover 1.30 - 10 m,413.137764,m,21
+gravity pipe,P65,main,DN-250,200,cover 1.30 - 10 m,249.427093,m,10
+gravity pipe,P66,lateral,DN-250,200,cover 1.30 - 10 m,649.926298,m,18
+gravity pipe,P67,lateral,DN-250,200,cover 1.30 - 10 m,646.344937,m,19
+gravity pipe,P68,lateral,DN-250,200,cover 1.30 - 10 m,639.897798,m,14
+gravity pipe,P69,lateral,DN-250,200,cover 1.30 - 10 m,631.486037,m,11
+gravity pipe,P70,lateral,DN-250,200,cover 1.30 - 10 m,614.906953,m,19
+gravity pipe,P71,lateral,DN-250,200,cover 1.30 - 10 m,609.472182,m,23
+gravity pipe,P72,lateral,DN-250,200,cover 1.30 - 10 m,603.201739,m,16
+gravity pipe,P73,lateral,DN-250,200,cover 1.30 - 10 m,591.517124,m,39
+gravity pipe,P74,lateral,DN-250,200,cover 1.30 - 10 m,570.492303,m,21
+gravity pipe,P75,lateral,DN-250,200,cover 1.30 - 10 m,558.273839,m,21
+gravity pipe,P76,lateral,DN-250,200,cover 1.30 - 10 m,421.12946,m,19
+gravity pipe,P76,main,DN-250,200,cover 1.30 - 10 m,88.314531,m,6
+gravity pipe,P77,lateral,DN-250,200,cover 1.30 - 10 m,502.297005,m,12
+gravity pipe,P78,lateral,DN-250,200,cover 1.30 - 10 m,490.036418,m,17
+gravity pipe,P79,lateral,DN-250,200,cover 1.30 - 10 m,482.604691,m,17
+gravity pipe,P80,lateral,DN-250,200,cover 1.30 - 10 m,476.208482,m,14
+gravity pipe,P81,lateral,DN-250,200,cover 1.30 - 10 m,452.055912,m,16
+gravity pipe,P82,lateral,DN-250,200,cover 1.30 - 10 m,448.498504,m,10
+gravity pipe,P83,lateral,DN-250,200,cover 1.30 - 10 m,421.687967,m,20
+gravity pipe,P83,main,DN-250,200,cover 1.30 - 10 m,24.738634,m,1
+gravity pipe,P84,lateral,DN-250,200,cover 1.30 - 10 m,258.743541,m,19
+gravity pipe,P84,main,DN-250,200,cover 1.30 - 10 m,183.624022,m,5
+gravity pipe,P85,lateral,DN-250,200,cover 1.30 - 10 m,435.787588,m,12
+gravity pipe,P86,lateral,DN-250,200,cover 1.30 - 10 m,430.859039,m,6
+gravity pipe,P87,lateral,DN-250,200,cover 1.30 - 10 m,421.933143,m,8
+gravity pipe,P88,lateral,DN-250,200,cover 1.30 - 10 m,410.359238,m,6
+gravity pipe,P89,lateral,DN-250,200,cover 1.30 - 10 m,398.721975,m,7
+gravity pipe,P90,lateral,DN-250,200,cover 1.30 - 10 m,375.098574,m,27
+gravity pipe,P91,lateral,DN-250,200,cover 1.30 - 10 m,364.386839,m,8
+gravity pipe,P92,lateral,DN-250,200,cover 1.30 - 10 m,357.863802,m,7
+gravity pipe,P93,lateral,DN-250,200,cover 1.30 - 10 m,350.972756,m,6
+gravity pipe,P94,lateral,DN-250,200,cover 1.30 - 10 m,345.548331,m,8
+gravity pipe,P95,lateral,DN-250,200,cover 1.30 - 10 m,322.827793,m,12
+gravity pipe,P96,lateral,DN-250,200,cover 1.30 - 10 m,311.918248,m,9
+gravity pipe,P97,lateral,DN-250,200,cover 1.30 - 10 m,302.153227,m,6
+gravity pipe,P98,lateral,DN-250,200,cover 1.30 - 10 m,301.26172,m,5
+gravity pipe,P99,lateral,DN-250,200,cover 1.30 - 10 m,299.89776,m,5
+lifting station,P251,Type 1,,,n/a - station,1.0,no,1
+lifting station,P253,Type 1,,,n/a - station,1.0,no,1
+lifting station,P255,Type 1,,,n/a - station,1.0,no,1
+lifting station,P259,Type 1,,,n/a - station,1.0,no,1
+lifting station,P261,Type 1,,,n/a - station,1.0,no,1
+lifting station,P263,Type 1,,,n/a - station,1.0,no,1
+lifting station,P266,Type 1,,,n/a - station,1.0,no,1
+lifting station,P267,Type 1,,,n/a - station,1.0,no,1
+lifting station,P274,Type 1,,,n/a - station,1.0,no,1
+lifting station,P277,Type 1,,,n/a - station,1.0,no,1
+lifting station,P278,Type 1,,,n/a - station,1.0,no,1
+lifting station,P279,Type 1,,,n/a - station,1.0,no,1
+lifting station,P281,Type 1,,,n/a - station,1.0,no,1
+lifting station,P284,Type 1,,,n/a - station,1.0,no,1
+lifting station,P289,Type 1,,,n/a - station,1.0,no,1
+lifting station,P290,Type 1,,,n/a - station,1.0,no,1
+lifting station,P292,Type 1,,,n/a - station,1.0,no,1
+lifting station,P300,Type 1,,,n/a - station,1.0,no,1
+lifting station,P303,Type 1,,,n/a - station,1.0,no,1
+lifting station,P304,Type 1,,,n/a - station,1.0,no,1
+lifting station,P306,Type 1,,,n/a - station,1.0,no,1
+lifting station,P307,Type 1,,,n/a - station,1.0,no,1
+lifting station,P308,Type 1,,,n/a - station,1.0,no,1
+lifting station,P309,Type 1,,,n/a - station,1.0,no,1
+lifting station,P312,Type 1,,,n/a - station,1.0,no,1
+lifting station,P313,Type 1,,,n/a - station,1.0,no,1
+lifting station,P314,Type 1,,,n/a - station,1.0,no,1
+lifting station,P315,Type 1,,,n/a - station,1.0,no,1
+lifting station,P318,Type 1,,,n/a - station,1.0,no,1
+lifting station,P319,Type 1,,,n/a - station,1.0,no,1
+lifting station,P322,Type 1,,,n/a - station,1.0,no,1
+lifting station,P324,Type 1,,,n/a - station,1.0,no,1
+lifting station,P325,Type 1,,,n/a - station,1.0,no,1
+lifting station,P327,Type 1,,,n/a - station,1.0,no,1
+lifting station,P328,Type 1,,,n/a - station,1.0,no,1
+lifting station,P331,Type 1,,,n/a - station,1.0,no,1
+lifting station,P333,Type 1,,,n/a - station,1.0,no,1
+lifting station,P334,Type 1,,,n/a - station,1.0,no,1
+lifting station,P335,Type 1,,,n/a - station,1.0,no,1
+lifting station,P338,Type 1,,,n/a - station,1.0,no,1
+lifting station,P340,Type 1,,,n/a - station,1.0,no,1
+lifting station,P342,Type 1,,,n/a - station,1.0,no,1
+lifting station,P343,Type 1,,,n/a - station,1.0,no,1
+lifting station,P347,Type 1,,,n/a - station,1.0,no,1
+lifting station,P348,Type 1,,,n/a - station,1.0,no,1
+lifting station,P350,Type 1,,,n/a - station,1.0,no,1
+lifting station,P355,Type 1,,,n/a - station,1.0,no,1
+lifting station,P359,Type 1,,,n/a - station,1.0,no,1
+lifting station,P361,Type 1,,,n/a - station,1.0,no,1
+lifting station,P362,Type 1,,,n/a - station,1.0,no,1
+lifting station,P366,Type 1,,,n/a - station,1.0,no,1
+lifting station,P368,Type 1,,,n/a - station,1.0,no,1
+lifting station,P386,Type 1,,,n/a - station,1.0,no,1
+lifting station,P387,Type 1,,,n/a - station,1.0,no,1
+lifting station,P390,Type 1,,,n/a - station,1.0,no,1
+lifting station,P391,Type 1,,,n/a - station,1.0,no,1
+lifting station,P393,Type 1,,,n/a - station,1.0,no,1
+lifting station,P395,Type 1,,,n/a - station,1.0,no,1
+lifting station,P400,Type 1,,,n/a - station,1.0,no,1
+lifting station,P409,Type 1,,,n/a - station,1.0,no,1
+lifting station,P410,Type 1,,,n/a - station,1.0,no,1
+lifting station,P419,Type 1,,,n/a - station,1.0,no,1
+lifting station,P424,Type 1,,,n/a - station,1.0,no,1
+lifting station,P426,Type 1,,,n/a - station,1.0,no,1
+lifting station,P430,Type 1,,,n/a - station,1.0,no,1
+lifting station,P432,Type 1,,,n/a - station,1.0,no,1
+lifting station,P434,Type 1,,,n/a - station,1.0,no,1
+lifting station,P435,Type 1,,,n/a - station,1.0,no,1
+lifting station,P437,Type 1,,,n/a - station,1.0,no,1
+lifting station,P439,Type 1,,,n/a - station,1.0,no,1
+lifting station,P444,Type 1,,,n/a - station,1.0,no,1
+lifting station,P446,Type 1,,,n/a - station,1.0,no,1
+lifting station,P450,Type 1,,,n/a - station,1.0,no,1
+lifting station,P452,Type 1,,,n/a - station,1.0,no,1
+lifting station,P460,Type 1,,,n/a - station,1.0,no,1
+lifting station,P461,Type 1,,,n/a - station,1.0,no,1
+lifting station,P463,Type 1,,,n/a - station,1.0,no,1
+lifting station,P464,Type 1,,,n/a - station,1.0,no,1
+lifting station,P465,Type 1,,,n/a - station,1.0,no,1
+lifting station,P469,Type 1,,,n/a - station,1.0,no,1
+lifting station,P470,Type 1,,,n/a - station,1.0,no,1
+lifting station,P472,Type 1,,,n/a - station,1.0,no,1
+lifting station,P473,Type 1,,,n/a - station,1.0,no,1
+lifting station,P475,Type 1,,,n/a - station,1.0,no,1
+lifting station,P476,Type 1,,,n/a - station,1.0,no,1
+lifting station,P477,Type 1,,,n/a - station,1.0,no,1
+lifting station,P478,Type 1,,,n/a - station,1.0,no,1
+lifting station,P480,Type 1,,,n/a - station,1.0,no,1
+lifting station,P484,Type 1,,,n/a - station,1.0,no,1
+lifting station,P485,Type 1,,,n/a - station,1.0,no,1
+lifting station,P486,Type 1,,,n/a - station,1.0,no,1
+lifting station,P487,Type 1,,,n/a - station,1.0,no,1
+lifting station,P489,Type 1,,,n/a - station,1.0,no,1
+lifting station,P490,Type 1,,,n/a - station,1.0,no,1
+lifting station,P493,Type 1,,,n/a - station,1.0,no,1
+lifting station,P496,Type 1,,,n/a - station,1.0,no,1
+lifting station,P497,Type 1,,,n/a - station,1.0,no,1
+lifting station,P499,Type 1,,,n/a - station,1.0,no,1

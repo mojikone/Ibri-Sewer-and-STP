@@ -1,0 +1,12 @@
+﻿item,blocks,source,holder,note
+"OPEN-1  [CLOSED 2026-09-02]  audit.h15 required exactly ONE connected component. Philosophy sec 8a contemplates a central network, satellite works and on-site systems - more than one.",nothing - closed,W11a contract OPEN_ITEMS,NWS / design team,n/a
+OPEN-2  May a MAIN sewer be PVC-U at DN315?,"the material column of the pipe schedule, and any DN315 main",W11a contract OPEN_ITEMS,NWS / design team,"conservative default until NWS answers: HDPE or GRP on a main above DN250. _cross_field flags PVC-U on a main above 250 so the count is known, not zero."
+"OPEN-3  Is the auditor's 0.10 m bedding allowance right, or is criteria's 0.05 m?",every invert level in the design,W11a contract OPEN_ITEMS,NWS / design team,"the contract uses the AUDITOR's 0.10, because designing to the shallower number fails a blocking check. If 0.05 is correct, audit.h3 and criteria.WALL_ALLOW change together and min_invert_depth() follows - never the design alone."
+OPEN-4  tau for the tractive-force route.,"the reported self-cleansing split, and any flat reach",W11a contract OPEN_ITEMS,NWS / design team,TAU_PA travels on every reach so a sensitivity run is visible in the layer itself and not only in a note. Confirm with NWS.
+NWS manhole numbering system,final `MH_ID` format; every schedule and drawing annotation,DELIVERABLE_SPEC D.8,NWS,scope-p25
+NWS Geo-Database Specifications,"the layer schema itself, and the GIS upload",DELIVERABLE_SPEC D.8,NWS,scope-p18; scope-p4 item 3
+PAM-SPC-4xx (civil works) and PAM-STD-4xx (civil drawings),"bedding, cover classes, chamber types, standard details",DELIVERABLE_SPEC D.8,NWS,G201-p136
+"Topographic survey, geotechnical investigation, 50 trial pits","depths, constructability, and the utility clashes behind rule 7",DELIVERABLE_SPEC D.8,NWS,scope-p7 items 11–13; scope-p12
+NWS's preferred contracting split,whether packages are contract sections or separate tenders,DELIVERABLE_SPEC D.8,NWS,scope-p6 item D.1; TD-p149
+Confirmation of the maximum-depth working figure,"whether 12.00 m is cover or invert, and whether it is a limit at all",DELIVERABLE_SPEC D.8,NWS,"G203-p33 says ""approximately 10 – 12 m"", recommended, cost-triggered"
+A design value for tractive tension τ,the minimum gradient at the head of every branch,DELIVERABLE_SPEC D.8,NWS,"G203-p27 gives the method, not the value"

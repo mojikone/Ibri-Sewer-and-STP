@@ -1,17 +1,75 @@
 {
   "contract": "W11a-contract-1.1",
-  "written": "2026-09-02 10:09:29",
+  "written": "2026-09-02 14:50:01",
   "stages": [
     {
       "stage": "s8_packages",
       "order": 8,
-      "seconds": 0.0,
-      "reads": [],
-      "writes": [],
-      "metrics": {},
-      "notes": [],
-      "no_change_reason": "upstream layers absent: reaches, connections. A package is a subtree of the design graph and cannot be computed before the graph exists.",
-      "funnels": []
+      "seconds": 14.81,
+      "reads": [
+        {
+          "name": "nodes",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 49624
+        },
+        {
+          "name": "reaches",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 49377
+        },
+        {
+          "name": "connections",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 50428
+        }
+      ],
+      "writes": [
+        {
+          "name": "packages",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 502
+        },
+        {
+          "name": "nodes",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 49624
+        },
+        {
+          "name": "reaches",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 49377
+        },
+        {
+          "name": "connections",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 50428
+        },
+        {
+          "name": "stations",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 98
+        }
+      ],
+      "metrics": {
+        "package_count": 502,
+        "package_network_km": 1731.7,
+        "independent_package_count": 247,
+        "phase_0_packages": 161,
+        "commissioning_point_stations": 0
+      },
+      "notes": [
+        "COMM_PT set on 98 station(s); 0 of them are a commissioning point - the outlet of a package that can be switched on without the trench below it (P8, DELIVERABLE_SPEC C.4). A station in mid-tree still drains onward and is not one."
+      ],
+      "no_change_reason": "",
+      "funnels": [
+        {
+          "name": "nodes into packages",
+          "n0": 49624,
+          "n": 49624,
+          "line": "nodes into packages: 49,624",
+          "steps": []
+        }
+      ]
     }
   ]
 }

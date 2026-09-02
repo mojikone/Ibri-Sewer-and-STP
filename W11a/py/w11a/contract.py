@@ -1794,6 +1794,13 @@ class Network:
                      DS_NODE=self.edges[self.out_edge[u]].ds if u in self.out_edge else "",
                      N_IN=len(self.in_edges.get(u, ())),
                      N_OUT=1 if u in self.out_edge else 0,
+                     # IS_OUTFALL is DERIVED, never asserted: a node with no outgoing edge
+                     # is where its system discharges, and the graph is the only thing that
+                     # knows. The field was added to the spec on 2026-09-02 and nothing
+                     # wrote it, so every stage publishing `nodes` failed the contract - the
+                     # right failure, in the wrong place. H15 reads it to prove each
+                     # component drains somewhere.
+                     IS_OUTFALL=0 if u in self.out_edge else 1,
                      SRC=nd.src, CONFIDENCE=nd.confidence, STAGE=nd.stage,
                      PACKAGE=nd.package, PHASE=nd.phase)
             r.update(nd.attrs)
