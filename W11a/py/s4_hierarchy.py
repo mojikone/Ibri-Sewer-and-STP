@@ -169,9 +169,19 @@ PLOT_FRONT_M = 60.0                       # config_w10_reference.PLOT_SERVED_M -
 STP_EXISTING = (444422.8, 2563337.9)      # user-confirmed 2026-09-01, ground 328.7 m
 
 # --- geometric tolerances. NOT design values. -----------------------------------------
-TRUNK_ON_M = 0.5             # a noded segment whose midpoint is this close to the trunk
-                             # alignment IS the trunk. 0.5 m is W10's NODE_SNAP_M, a snapping
-                             # tolerance; it decides nothing about the design.
+TRUNK_ON_M = 0.5             # W10's NODE_SNAP_M. Kept only as the historical record of what
+                             # the mask used to be: NOTHING reads it now. On the adopted path
+                             # it asked a midpoint question of an UN-noded corridor set and
+                             # turned a 4-piece trunk into 74 - see `weld_trunk` and
+                             # OPEN-S4-1. On the fallback path the same probe over-selected,
+                             # flagging 128.5 km of "trunk" against an 85.5 km alignment,
+                             # because after planar noding a segment is short enough for any
+                             # parallel corridor to sit inside the tolerance. Both now use
+                             # containment in a TRUNK_WELD_M buffer instead.
+TRUNK_WELD_M = 0.05          # the drawing tolerance at which stage 3's alignment and a stage
+                             # 2 corridor are THE SAME LINE. 50 mm is the coordinate agreement
+                             # of the two layers, not a design distance: nothing is served or
+                             # not served by it, and nothing is moved by it.
 MIN_SEG_M = 1e-6             # a zero-length artefact of the noding, not a pipe.
 
 # --- input paths ----------------------------------------------------------------------
@@ -344,7 +354,18 @@ def adopt_graph(corr, corr_nodes, trunk_where, rec):
                 if uid not in idx.nodes:
                     idx.nodes[uid] = contract.Node(uid=uid, x=float(pt[0]), y=float(pt[1]))
                     idx._cells.setdefault(idx._cell(pt[0], pt[1]), []).append(uid)
-    idx._n = len(idx.nodes)
+    # The next uid this index mints must be above every uid already in it, and the COUNT is
+    # not that number. Stage 2 published 23,916 corridor nodes whose highest uid is N0000023935
+    # - 19 of its own ids sit above its own count - so seeding the counter with the count
+    # would mint N0000023917 straight on top of a live corridor node, silently move that
+    # chamber and take every reach referencing it with it. It never bit before because
+    # nothing minted a node after this point; `weld_trunk` does.
+    hi = 0
+    for uid in idx.nodes:
+        tail = uid[1:] if uid[:1].isalpha() else uid
+        if tail.isdigit():
+            hi = max(hi, int(tail))
+    idx._n = max(len(idx.nodes), hi)
 
     fun = rec.funnel("corridor segments -> tiered edges", len(corr))
     G = nx.Graph()
@@ -386,10 +407,199 @@ def adopt_graph(corr, corr_nodes, trunk_where, rec):
     rec.metric("graph_nodes", G.number_of_nodes())
     _say(f"  adopted stage 2 topology: {G.number_of_nodes():,} nodes, "
          f"{G.number_of_edges():,} edges; worst line-end to node offset {off:.3f} m")
-    # nodes stage 2 published but no surviving corridor uses
-    for u in [u for u in list(idx.nodes) if u not in G]:
+    # Nodes stage 2 published that no surviving corridor uses. The SPATIAL index has to be
+    # purged with them: NodeIndex.find walks `_cells` and dereferences every uid it holds, so
+    # a uid popped from `nodes` and left in a cell raises KeyError the moment anything asks
+    # this index for a node again - which is exactly what `weld_trunk` does next.
+    dead = {u for u in idx.nodes if u not in G}
+    for u in dead:
         idx.nodes.pop(u, None)
-    return G, idx, fun
+    if dead:
+        for cell, uids in list(idx._cells.items()):
+            keep = [u for u in uids if u not in dead]
+            if keep:
+                idx._cells[cell] = keep
+            else:
+                idx._cells.pop(cell, None)
+    # This funnel is CLOSED here, on the corridors alone. The trunk is a SECOND input welded
+    # in next, and a funnel whose n0 is `len(corr)` cannot account for edges that were never
+    # corridors - it would have to "drop" a negative number. The tiering funnel that follows
+    # therefore starts at the GRAPH, after the weld. Two funnels, each closing on its own
+    # arithmetic, is the only way both additions and losses stay visible (P2).
+    fun.close(G.number_of_edges())
+    return G, idx
+
+
+def weld_trunk(G, idx, trunk, rec):
+    """Stage 3's trunk, WELDED INTO stage 2's corridor graph as edges of its own.
+
+    THE DEFECT THIS FIXES (OPEN-S4-1). Until now the trunk was never in this graph. It was a
+    TRUNK_ON_M proximity MASK over stage 2's corridors: a corridor whose midpoint fell within
+    0.5 m of the alignment was called `trunk`, so the trunk arrived in as many pieces as
+    stage 2's COPY of it - 74, against the 4 stage 3 designed and the 3 in the user's
+    drawing. Measured 2026-09-02: only 3.2 % of stage 3's 758 chambers land within 0.5 m of a
+    corridor node and 6.9 % within the 3 m merge radius, median offset 42.4 m, max 379 m - so
+    there is nothing to snap to either, and a tolerance big enough to catch the median would
+    move a client INPUT by tens of metres. The 74 pieces cannot be rejoined through the
+    corridor graph at all: 35 of them are mutually unreachable.
+
+    THE METHOD. The trunk lines and ONLY the corridors they touch go into one planar union,
+    exactly as `build_graph` already does for the fallback path - "noding it separately and
+    snapping afterwards is how a trunk ends up 1.0 m from the network that is supposed to
+    drain into it". A corridor is CUT at the trunk and the cut becomes a node in both.
+    Nothing else is re-derived: the corridors the trunk never touches keep the US_NODE /
+    DS_NODE stage 2 wrote, so contract P3 still holds for the overwhelming majority of the
+    layer, and the share re-noded is published as `weld_corridors_renoded`.
+
+    WHAT MOVES. The trunk's own vertices do not - a planar union splits lines, it does not
+    move them. What can move is a CHAMBER, by up to the NODE_MERGE_M radius stage 2 itself
+    applies, where a trunk chamber and a corridor node are closer than the chamber clearance
+    and philosophy sec 4 therefore makes them ONE structure. The worst move is asserted below
+    that radius and published as `weld_chamber_move_max_m`; past it this raises, because the
+    alignment is a client INPUT (CLAUDE.md) and is never re-routed. NO PIPE MOVES.
+    """
+    from shapely.strtree import STRtree
+
+    t_lines, t_attr = [], []
+    for r in trunk.itertuples():
+        g = r.geometry
+        if g is None or g.is_empty:
+            continue
+        for p in (g.geoms if g.geom_type.startswith("Multi") else [g]):
+            t_lines.append(p)
+            t_attr.append(r)
+    if not t_lines:
+        rec.note("stage 3 published no trunk geometry - nothing welded")
+        return
+    t_km_in = sum(g.length for g in t_lines) / 1000.0
+
+    # 1. stage 3's chambers enter the node index FIRST, so a corridor split point lands on a
+    #    DESIGNED chamber rather than the reverse.
+    n0_nodes, reuse_max = len(idx.nodes), 0.0
+    for g in t_lines:
+        c = list(g.coords)
+        for x, y in (c[0], c[-1]):
+            uid = idx.get_or_create(float(x), float(y))
+            nd = idx.nodes[uid]
+            reuse_max = max(reuse_max, float(np.hypot(nd.x - x, nd.y - y)))
+    if reuse_max > NODE_MERGE_M:
+        raise contract.ContractError(
+            f"a trunk chamber moved {reuse_max:.2f} m onto a corridor node, past the "
+            f"{NODE_MERGE_M:.1f} m merge radius. The trunk is a client INPUT.")
+
+    # 2. the corridors the trunk actually touches - and only those
+    ekeys = list(G.edges())
+    egeom = [G[a][b]["geom"] for a, b in ekeys]
+    emeta = [G[a][b]["meta"] for a, b in ekeys]
+    live = [i for i, g in enumerate(egeom) if g is not None and not g.is_empty]
+    tree = STRtree([egeom[i] for i in live])
+    touched = set()
+    for t in t_lines:
+        for j in tree.query(t.buffer(TRUNK_WELD_M)):
+            i = live[int(j)]
+            if egeom[i].distance(t) <= TRUNK_WELD_M:
+                touched.add(i)
+    order = sorted(touched)
+    plines = [egeom[i] for i in order]
+    pmeta = [emeta[i] for i in order]
+    p_km = sum(g.length for g in plines) / 1000.0
+    for i in order:
+        a, b = ekeys[i]
+        if G.has_edge(a, b):
+            G.remove_edge(a, b)
+
+    # 3. ONE planar union - the trunk and its neighbours noded together, never separately
+    noded = unary_union(plines + t_lines)
+    segs = [s for s in (noded.geoms if noded.geom_type.startswith("Multi") else [noded])
+            if s.length > MIN_SEG_M]
+    ptree = STRtree(plines) if plines else None
+    ttree = STRtree(t_lines)
+    tbuf = unary_union(t_lines).buffer(TRUNK_WELD_M)
+    mids = [s.interpolate(0.5, normalized=True) for s in segs]
+    pnear = np.asarray(ptree.nearest(mids)).reshape(-1) if ptree else None
+    tnear = np.asarray(ttree.nearest(mids)).reshape(-1)
+
+    fun = rec.funnel("trunk weld: corridor + trunk lines -> welded edges", len(segs))
+    n_self, self_m, n_par, par_m, move = 0, 0.0, 0, 0.0, 0.0
+    for i, s in enumerate(segs):
+        c = list(s.coords)
+        u = idx.get_or_create(c[0][0], c[0][1])
+        v = idx.get_or_create(c[-1][0], c[-1][1])
+        nu, nv = idx.nodes[u], idx.nodes[v]
+        move = max(move, float(np.hypot(c[0][0] - nu.x, c[0][1] - nu.y)),
+                   float(np.hypot(c[-1][0] - nv.x, c[-1][1] - nv.y)))
+        if u == v:
+            n_self += 1
+            self_m += s.length
+            continue
+        # CONTAINMENT, not a midpoint probe. A midpoint probe on a noded set flagged 128 km
+        # of "trunk" against an 85.5 km alignment, because after noding a segment is short
+        # enough for any parallel corridor to sit inside the tolerance.
+        is_tr = bool(tbuf.covers(s))
+        if is_tr:
+            t = t_attr[int(tnear[i])]
+            # H1 flags come from STAGE 3's own exposure figures, not zeroed. Project rule 7 is
+            # explicit that no pipe of any kind runs along a dual carriageway, trunk included,
+            # and stage 3 measures ON_DUAL_M and ON_WADI_M on this alignment. Clearing them
+            # here would hide the evidence on the reaches where a late H1 discovery is most
+            # expensive.
+            meta = dict(SRC="main_pipe", CORR_ID="", QFLAG="", CONF="drafted",
+                        DUAL_WARN=int(float(getattr(t, "ON_DUAL_M", 0) or 0) > 0),
+                        WADI_WARN=int(float(getattr(t, "ON_WADI_M", 0) or 0) > 0))
+        else:
+            meta = dict(pmeta[int(pnear[i])])       # the parent corridor's provenance, P6
+        if G.has_edge(u, v):
+            if G[u][v]["trunk"] or (not is_tr and G[u][v]["length"] <= s.length):
+                n_par += 1
+                par_m += s.length
+                continue
+            n_par += 1
+            par_m += G[u][v]["length"]
+        G.add_edge(u, v, length=float(s.length), geom=s, trunk=is_tr, meta=meta)
+    fun.drop(f"welded segment whose two ends fall in one {NODE_MERGE_M:.0f} m chamber "
+             f"({self_m / 1000:.3f} km)", n=n_self)
+    fun.drop(f"parallel welded segment between the same two chambers "
+             f"({par_m / 1000:.3f} km)", n=n_par)
+    fun.close(len(segs) - n_self - n_par)
+
+    # 4. THE SPINE IS A TREE. Stage 2 publishes its own copy of the alignment a few
+    #    centimetres off stage 3's, so the weld leaves a shadow beside the trunk. It shows up
+    #    as a cycle in the trunk subgraph - a spine cannot have one - and the longest edge of
+    #    each cycle is the shadow.
+    Gt = nx.Graph([(a, b, d) for a, b, d in G.edges(data=True) if d["trunk"]])
+    n_shadow, shadow_m = 0, 0.0
+    while True:
+        try:
+            cyc = nx.find_cycle(Gt)
+        except nx.NetworkXNoCycle:
+            break
+        a, b = max(((e[0], e[1]) for e in cyc), key=lambda e: Gt[e[0]][e[1]]["length"])
+        shadow_m += Gt[a][b]["length"]
+        n_shadow += 1
+        Gt.remove_edge(a, b)
+        G.remove_edge(a, b)
+
+    t_km_out = sum(d["length"] for *_, d in G.edges(data=True) if d["trunk"]) / 1000.0
+    pieces = nx.number_connected_components(Gt) if len(Gt) else 0
+    rec.metric("weld_corridors_renoded", len(order))
+    rec.metric("weld_segments", len(segs))
+    rec.metric("weld_new_nodes", len(idx.nodes) - n0_nodes)
+    rec.metric("weld_chamber_move_max_m", round(max(move, reuse_max), 3))
+    rec.metric("weld_shadow_km", round(shadow_m / 1000, 3))
+    rec.metric("trunk_km_welded", round(t_km_out, 2))
+    rec.metric("trunk_km_stage3", round(t_km_in, 2))
+    _say(f"  welded stage 3's trunk in: {len(order):,} corridors ({p_km:.2f} km) re-noded "
+         f"with {len(t_lines):,} trunk lines ({t_km_in:.2f} km) -> {len(segs):,} segments")
+    _say(f"    {len(idx.nodes) - n0_nodes:,} new chambers, worst chamber move "
+         f"{max(move, reuse_max):.3f} m (merge radius {NODE_MERGE_M:.1f} m); "
+         f"{n_shadow} shadow edges, {shadow_m / 1000:.2f} km, removed so the spine is a tree")
+    _say(f"    TRUNK now {t_km_out:.2f} km in {pieces} piece(s) against stage 3's "
+         f"{t_km_in:.2f} km")
+    if abs(t_km_out - t_km_in) > 0.01 * t_km_in:
+        rec.note(f"the welded trunk is {t_km_out:.2f} km against stage 3's {t_km_in:.2f} km "
+                 f"({100 * (t_km_out - t_km_in) / t_km_in:+.1f} %). Stage 2 publishes its own "
+                 "copy of the alignment a few centimetres off stage 3's; the two are welded "
+                 "as one spine and the excess is reported, not laundered.")
 
 
 def build_graph(corr, trunk, rec):
@@ -418,6 +628,11 @@ def build_graph(corr, trunk, rec):
             continue
         trunk_lines += list(g.geoms) if g.geom_type.startswith("Multi") else [g]
     trunk_u = unary_union(trunk_lines)
+    # PATCH 3, and the same rule `weld_trunk` uses: a noded segment IS the trunk when the
+    # trunk CONTAINS it, not when its midpoint is near it. Measured on a planar-noded set,
+    # `midpoint < TRUNK_ON_M` flags 128.5 km against an 85.5 km alignment and yields 11
+    # pieces; containment flags 93.6 km and yields 4. Built ONCE, not per segment.
+    trunk_buf = trunk_u.buffer(TRUNK_WELD_M)
 
     t0 = time.time()
     noded = unary_union(corr_lines + trunk_lines)
@@ -444,7 +659,7 @@ def build_graph(corr, trunk, rec):
         c = list(s.coords)
         a = idx.get_or_create(c[0][0], c[0][1])
         b = idx.get_or_create(c[-1][0], c[-1][1])
-        is_tr = trunk_u.distance(mids[i]) < TRUNK_ON_M
+        is_tr = bool(trunk_buf.covers(s))
         if a == b:
             # Both endpoints fell inside one 3 m chamber. The structure absorbs it; nothing is
             # disconnected, because every neighbouring segment now shares that same node.
@@ -487,7 +702,10 @@ def build_graph(corr, trunk, rec):
              n=n_par)
     rec.metric("graph_nodes", G.number_of_nodes())
     rec.metric("graph_km", round(sum(d["length"] for *_, d in G.edges(data=True)) / 1000, 1))
-    return G, idx, fun, trunk_u
+    # Closed here for the same reason `adopt_graph` closes its own: this funnel counts the
+    # noding, and the tiering funnel that follows starts at the graph both paths produce.
+    fun.close(G.number_of_edges())
+    return G, idx, trunk_u
 
 
 def wadi_recheck(reaches, nodes, rec):
@@ -550,7 +768,12 @@ def wadi_recheck(reaches, nodes, rec):
             reaches.iloc[np.array(_xa, dtype=int),
                          reaches.columns.get_loc("WADI_XING")] = 1
         rec.metric("reaches_along_a_wadi", int(len(_along)))
-        rec.metric("reaches_crossing_a_wadi", int(len(_xing_bad) + _xing_ok))
+        # `_r4_classify` returns three LISTS, not two lists and a count. `len(_xing_bad) +
+        # _xing_ok` therefore raised TypeError, the except below caught it, and the run
+        # recorded a note saying the along/across classification "did not run" when it had
+        # run and had already written WADI_ALONG / WADI_XING. The crossing count went
+        # unpublished and the report printed 0 crossings from `metrics.get(..., 0)`.
+        rec.metric("reaches_crossing_a_wadi", int(len(_xing_bad) + len(_xing_ok)))
     except Exception as _e:                       # noqa: BLE001 - reported, never swallowed
         rec.note(f"H1a along/across classification did not run ({type(_e).__name__}: {_e}); "
                  "WADI_HERE is an undifferentiated contact count and OVERSTATES the defect, "
@@ -741,7 +964,7 @@ def contributing(edges, kids, rev, L):
 # 4. THE HIERARCHY
 # ======================================================================================
 
-def prune_fingers(edges, kids, L, nplot, rec):
+def prune_fingers(edges, kids, L, nplot, trunk_of, rec):
     """Philosophy sec 4: a dead-end reach under ~60 m serving nothing is pruned or absorbed.
 
     Strictly as written - a LEAF edge, shorter than 60 m, with no load-bearing plot inside the
@@ -749,8 +972,20 @@ def prune_fingers(edges, kids, L, nplot, rec):
     longer than 60 m that also serves nothing is NOT pruned here: that is the P7 scope
     question and it belongs to stage 1 with the user, not to a tiering script. Its extent is
     measured and reported instead.
+
+    THE TRUNK IS EXEMPT, and it has to be said out loud because the weld is what made this
+    bite. The finger rule is a rule about laterals - "a dead-end reach ... SERVING NOTHING" -
+    and the trunk serves nothing by design: it conveys. It is also a client INPUT (CLAUDE.md)
+    and this stage declares it LOCKED. Before `weld_trunk` the trunk arrived as whole stage 2
+    corridors, mostly longer than FINGER_M, and the rule rarely reached it. After the weld it
+    arrives as segments cut wherever stage 2's shadow copy of the alignment crosses stage 3's,
+    which in open ground averages ~48 m - under the 60 m threshold. Measured 2026-09-02: with
+    no exemption the rule walked 524.9 m off the eastern tail of the 11.54 km trunk leg, one
+    leaf at a time, and the published trunk came out 85.75 km against the 86.11 km in the
+    graph. A design must not delete a client's alignment as untidy.
     """
     removed, removed_m = set(), 0.0
+    kept = set()                      # a SET: the loop revisits the same leaf every pass
     live_kids = {k: list(v) for k, v in kids.items()}
     changed = True
     while changed:
@@ -759,6 +994,9 @@ def prune_fingers(edges, kids, L, nplot, rec):
             if v in removed or live_kids.get(v):
                 continue
             if L[v] < FINGER_M and nplot.get(v, 0) == 0:
+                if trunk_of.get(v):
+                    kept.add(v)
+                    continue
                 removed.add(v)
                 removed_m += L[v]
                 p = edges[v]
@@ -767,6 +1005,8 @@ def prune_fingers(edges, kids, L, nplot, rec):
                 changed = True
     rec.metric("fingers_pruned", len(removed))
     rec.metric("fingers_pruned_km", round(removed_m / 1000, 3))
+    rec.metric("fingers_trunk_exempt", len(kept))
+    rec.metric("fingers_trunk_exempt_km", round(sum(L[v] for v in kept) / 1000, 3))
     return removed, removed_m
 
 
@@ -1032,19 +1272,26 @@ def main():
                     and not corr[["US_NODE", "DS_NODE"]].isna().any().any())
         if has_topo:
             if trunk_how == "in_corridors":
+                # the trunk IS a subset of the corridors here and is matched by IDENTITY,
+                # not by a tolerance. Nothing to weld.
                 trunk_ids = set(trunk.CORR_ID.astype(str)) if "CORR_ID" in trunk.columns \
                     else set()
 
                 def trunk_where(r, g, _ids=trunk_ids):
                     return str(getattr(r, "CORR_ID", "")) in _ids
-            else:
-                trunk_u = unary_union(list(trunk.geometry))
 
-                def trunk_where(r, g, _u=trunk_u):
-                    return _u.distance(g.interpolate(0.5, normalized=True)) < TRUNK_ON_M
-            G, idx, fun = adopt_graph(corr, corr_nodes, trunk_where, rec)
+                G, idx = adopt_graph(corr, corr_nodes, trunk_where, rec)
+            else:
+                # stage 3's trunk (or the user's drawing) is a SEPARATE layer with its own
+                # chambers. It is WELDED in, never matched by proximity - OPEN-S4-1.
+                G, idx = adopt_graph(corr, corr_nodes, lambda r, g: False, rec)
+                weld_trunk(G, idx, trunk, rec)
         else:
-            G, idx, fun, _ = build_graph(corr, trunk, rec)
+            G, idx, _ = build_graph(corr, trunk, rec)
+        # The trunk is a SECOND input, so the tiering funnel starts at the GRAPH, not at the
+        # corridor count: a funnel that starts upstream of an addition cannot close. The
+        # noding funnel closed inside adopt_graph / build_graph, and the weld closed its own.
+        fun = rec.funnel("graph edges -> tiered reaches", G.number_of_edges())
         _say(f"  {G.number_of_nodes():,} nodes, {G.number_of_edges():,} edges, "
              f"{sum(d['length'] for *_, d in G.edges(data=True)) / 1000:,.1f} km")
 
@@ -1112,7 +1359,7 @@ def main():
             _say("  SKIPPED - the finger rule needs the plot layer to know what serves "
                  "nothing, and pruning on an empty one prunes served streets too")
         else:
-            pruned, pruned_m = prune_fingers(edges, kids, L, nplot, rec)
+            pruned, pruned_m = prune_fingers(edges, kids, L, nplot, trunk_of, rec)
         if pruned:
             for v in pruned:
                 edges.pop(v, None)
@@ -1121,7 +1368,11 @@ def main():
             contrib = contributing(edges, kids, rev, L)
         fun.drop(f"dead-end reach under {FINGER_M:.0f} m serving nothing - philosophy sec 4 "
                  f"finger rule ({pruned_m / 1000:.3f} km)", n=len(pruned))
-        _say(f"  pruned {len(pruned):,} fingers, {pruned_m / 1000:.3f} km")
+        _say(f"  pruned {len(pruned):,} fingers, {pruned_m / 1000:.3f} km"
+             + (f"; {int(rec.metrics.get('fingers_trunk_exempt', 0)):,} trunk leaves "
+                f"({rec.metrics.get('fingers_trunk_exempt_km', 0):.3f} km) met the rule and "
+                f"were EXEMPT - the trunk is an INPUT"
+                if rec.metrics.get("fingers_trunk_exempt") else ""))
 
         _say("[6] tiers")
         tier, why, sm_id, routes = assign_sub_mains(edges, kids, contrib, L, trunk_of)
@@ -1496,15 +1747,14 @@ def main():
         n_trunk_pieces = int(rec.metrics.get("trunk_pieces", 0))
         rep.append(f"  THE CORRIDOR NETWORK arrives from stage 2 in {n_corr_comp:,} "
                    f"disconnected pieces, and THE TRUNK in {n_trunk_pieces:,}.")
-        rep.append(f"     A hierarchy can only be as connected as the corridors under it, and "
-                   f"a trunk in {n_trunk_pieces:,} pieces is not a")
-        rep.append(f"     spine - it is {n_trunk_pieces:,} spines, each of which this stage "
-                   f"had to root separately. That is why the design")
-        rep.append(f"     comes out with {len(comp_km):,} drainage systems (largest "
-                   f"{comp_km.iloc[0]:,.1f} km; {int((comp_km >= 10).sum()):,} carry 10 km or "
-                   f"more), and it is")
-        rep.append(f"     a STAGE 2 / STAGE 3 finding before it is a satellite-works question "
-                   f"for the options appraisal (sec 8a).")
+        rep.append(f"     A hierarchy can only be as connected as the corridors under it. "
+                   f"Each trunk piece has to be rooted separately,")
+        rep.append(f"     so every piece past the first is an extra outfall and an H15 breach; "
+                   f"the design comes out with {len(comp_km):,} drainage")
+        rep.append(f"     systems (largest {comp_km.iloc[0]:,.1f} km; "
+                   f"{int((comp_km >= 10).sum()):,} carry 10 km or more), and that count is a "
+                   f"STAGE 2 finding before it is a")
+        rep.append(f"     satellite-works question for the options appraisal (sec 8a).")
         tl = rec.metrics.get("trunk_km_lost_vs_drawing")
         if tl:
             rep.append(f"     The trunk as used here is {trunk_km:,.1f} km against the user's "
@@ -1518,22 +1768,54 @@ def main():
         rep.append(f"        stage 3's DESIGNED trunk ..........  4 components, 85.5 km")
         rep.append(f"        stage 2 corridors, SRC=main_pipe ... 58 components, 80.5 km")
         rep.append(f"     Stage 3's trunk is the best source and is the one used. Two separate "
-                   f"defects follow, and they had been reported as one:")
+                   f"defects followed, and they had been reported as one:")
         rep.append(f"       (a) the CORRIDOR treatment shreds the trunk from 3 pieces to 58 "
-                   f"and loses 5.0 km of it - a stage 2 defect, not an alignment one;")
-        rep.append(f"       (b) THIS STAGE then takes a 4-piece trunk to {n_trunk_pieces:,} - "
-                   f"a stage 4 defect. The trunk's chamber coordinates do not coincide with "
-                   f"the corridor node set it is matched into, so it breaks at every join "
-                   f"that misses.")
-        rep.append(f"     OPEN-S4-1: stage 3 should design ON the corridor graph, or stage 4 "
-                   f"should snap the trunk into it. Until one of them does, the drainage-"
-                   f"system count above is an artefact of this and not a design result.")
+                   f"and loses 5.0 km of it - a stage 2 defect, not an alignment one. STILL "
+                   f"OPEN (OPEN-S2-2);")
+        rep.append(f"       (b) THIS STAGE used to take that 4-piece trunk to 74, because the "
+                   f"trunk was never in the graph - it was a "
+                   f"{TRUNK_ON_M:.1f} m proximity MASK over stage 2's corridors, so it "
+                   f"arrived in as many pieces as stage 2's COPY of it. CLOSED.")
+        if "weld_corridors_renoded" in rec.metrics:
+            rep.append(f"     OPEN-S4-1 is CLOSED by the WELD in `weld_trunk`: stage 3's "
+                       f"alignment enters the graph as edges of its own and the "
+                       f"{int(rec.metrics['weld_corridors_renoded']):,} corridors it touches "
+                       f"are re-noded WITH it")
+            rep.append(f"     ({100 * int(rec.metrics['weld_corridors_renoded']) / max(1, len(corr)):.1f} % "
+                       f"of the layer; the rest keep the US_NODE / DS_NODE stage 2 wrote, so "
+                       f"contract P3 still holds for the remainder).")
+            rep.append(f"     The trunk is now {rec.metrics.get('trunk_km_welded', 0):,.2f} km "
+                       f"in {n_trunk_pieces:,} piece(s) against stage 3's "
+                       f"{rec.metrics.get('trunk_km_stage3', 0):,.2f} km; "
+                       f"{rec.metrics.get('weld_shadow_km', 0):,.3f} km of stage 2's shadow "
+                       f"copy was removed so the spine is a tree.")
+            rep.append(f"     NO PIPE MOVED and the client's alignment was NOT re-routed: a "
+                       f"planar union splits lines, it does not move them. The only thing "
+                       f"that moved is a CHAMBER, worst case")
+            rep.append(f"     {rec.metrics.get('weld_chamber_move_max_m', 0):.3f} m, inside "
+                       f"the {NODE_MERGE_M:.1f} m merge radius stage 2 itself applies "
+                       f"(criteria.MH_SNAP_M - closer than the clearance means ONE "
+                       f"structure). Past that radius the weld raises.")
+        else:
+            rep.append(f"     The trunk was already a subset of the corridors and was matched "
+                       f"by CORR_ID identity, not by a tolerance - nothing to weld.")
         rep.append(f"     {km_off:,.1f} km ({100 * km_off / net_km:.0f} %) reaches no piece of "
                    f"the trunk at all and drains to a provisional outfall.")
         if "SYSTEM" in reaches.columns:
             sy = reaches.groupby("SYSTEM").LEN_M.sum().div(1000).round(1)
             rep.append(f"  SYSTEM as stage 1 decided it: "
                        + ", ".join(f"{k} {v:,.1f} km" for k, v in sy.items()))
+        rep.append("")
+        rep.append("THE ACCOUNTING (invariant 1 - every input that did not become a published "
+                   "reach is named)")
+        rep.append("  Three funnels, not one, because the trunk is a SECOND input: a funnel "
+                   "starting at the corridor")
+        rep.append("  count cannot account for edges that were never corridors. Each closes "
+                   "on its own arithmetic.")
+        for f_ in rec.funnels:
+            rep.append(f"  {f_.line()}")
+            for s_ in f_.steps:
+                rep.append(f"     -{s_['n']:,}  {s_['reason']}")
         rep.append("")
         rep.append("GRAPH INVARIANTS")
         rep.append(f"  invariant 2 (published layers ARE the graph): "

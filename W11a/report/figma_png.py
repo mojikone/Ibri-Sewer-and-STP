@@ -28,11 +28,13 @@ MAX_RATIO = 2.2
 RASTER = r"""
 const {Resvg} = require('@resvg/resvg-js');
 const fs = require('fs');
-// Read as a BUFFER, not a utf8 string: a string round-trip made resvg report
-// "unknown token at 2:1" on a file that parses fine everywhere else.
-const svg = fs.readFileSync(process.argv[1]);
-const r = new Resvg(svg, {fitTo: {mode: 'width', value: parseInt(process.argv[3], 10)}});
-fs.writeFileSync(process.argv[2], r.render().asPng());
+// argv[2], not argv[1]. With `node script.js a b c` argv[1] is the SCRIPT - so this
+// handed resvg its own JavaScript and it reported "unknown token at 2:1", which reads
+// exactly like a corrupt SVG and sent me looking at encodings, BOMs and line endings.
+// Read as a Buffer while we are here; resvg takes either.
+const svg = fs.readFileSync(process.argv[2]);
+const r = new Resvg(svg, {fitTo: {mode: 'width', value: parseInt(process.argv[4], 10)}});
+fs.writeFileSync(process.argv[3], r.render().asPng());
 """
 
 

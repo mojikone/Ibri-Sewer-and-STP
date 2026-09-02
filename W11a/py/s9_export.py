@@ -1197,11 +1197,16 @@ def run_audit_table(layers, rec) -> pd.DataFrame:
     two gravity components and H15 FAILS - on a network that is perfectly connected through
     its rising main. H15's own FAIL is left standing, because the auditor is not editable
     from here and quietly re-scoring a blocking check is the whole disease. The extra row
-    `H15+` reports the same test over gravity PLUS pressure edges, which is the property
+    `H15+` runs THE SAME CHECK over gravity PLUS pressure edges, which is the property
     H15 is reaching for and which contract OPEN-1 already proposes as the fix.
+
+    H15+ goes through `audit.run_one("H15", ...)` and not through a copy of h15's
+    arithmetic. It used to be a copy - four lines of networkx counting components and
+    cycles - and that is a P2 breach whatever its size: the auditor's h15 has since grown
+    an IS_OUTFALL test that the copy knew nothing about, so the two would have reported
+    different verdicts on the same layer. One function, one answer.
     """
     from w11a import audit
-    import networkx as nx
     roads = None
     try:
         roads = gpd.read_file(ROADS_SHP)
@@ -1222,41 +1227,54 @@ def run_audit_table(layers, rec) -> pd.DataFrame:
         # supplied" with no way to tell a missing file from an unreadable one.
         print(f"    (existing-network layer unavailable, H14 will report "
               f"NOT_CHECKABLE: {type(e).__name__}: {e})")
+    # `crossings` is the crossings REGISTER, and R4 cannot score a wadi crossing without
+    # it: `audit._scheduled_as_wadi` looks the CROSS_ID up in this frame and treats an id
+    # with no row behind it as unscheduled. Omit it and every legal, scheduled crossing is
+    # reported as an H1a(4) breach - a false FAIL on a blocking check.
+    # `terrain=` and `plots=` were removed from Ctx (no check read them); passing them
+    # raised a TypeError that took the whole schedule block down with it.
     ctx = audit.Ctx(pipes=layers["reaches"], nodes=layers["nodes"], crit=C,
-                    terrain=TERRAIN_VRT, hazard=HAZARD_TIF, roads=roads,
-                    plots=None, existing=existing)
+                    hazard=HAZARD_TIF, roads=roads, existing=existing,
+                    crossings=layers.get("crossings"))
     res = audit.run(ctx)
     print(audit.report(res))
     df = pd.DataFrame([r.__dict__ for r in res])
 
     rising = layers.get("rising_mains")
     if rising is not None and len(rising):
-        cols = ["EDGE_UID", "US_NODE", "DS_NODE", "geometry"]
+        # Carry every column h15 might read - the geometry, and IS_OUTFALL if the reach
+        # layer publishes it - rather than the four it needed when this was a copy.
+        cols = [c for c in ("EDGE_UID", "US_NODE", "DS_NODE", "LEN_M", "IS_OUTFALL")
+                if c in layers["reaches"].columns and c in rising.columns]
         both = gpd.GeoDataFrame(
-            pd.concat([layers["reaches"][cols], rising[cols]], ignore_index=True),
+            pd.concat([layers["reaches"][cols + ["geometry"]],
+                       rising[cols + ["geometry"]]], ignore_index=True),
             geometry="geometry", crs=layers["reaches"].crs)
-        g = audit.Ctx(pipes=both).graph()
-        cycles = g.number_of_edges() - g.number_of_nodes() + \
-            nx.number_connected_components(g)
-        parts = nx.number_connected_components(g)
-        ok = (cycles == 0 and parts == 1)
+        ctx_both = audit.Ctx(pipes=both, nodes=layers["nodes"], crit=C,
+                             crossings=layers.get("crossings"))
+        try:
+            status, summary, n_bad, extent = audit.run_one("H15", ctx_both)
+        except Exception as e:                 # noqa: BLE001 - scored the way run() scores
+            status, summary, n_bad, extent = audit.NOT_CHECKABLE, f"{e}", 0, ""
+        ok = status == audit.PASS
         df = pd.concat([df, pd.DataFrame([dict(
             id="H15+", group="topology",
             requirement="The network is a forest across gravity AND pressure edges "
                         "(diagnostic - contract OPEN-1, not a replacement for H15)",
             source="philosophy H15 + contract OPEN-1", blocking=False,
-            status=audit.PASS if ok else audit.FAIL,
-            summary=("one connected tree once the rising mains are included" if ok else
-                     f"{cycles} independent cycles, {parts} pieces even with the rising "
-                     "mains included - this is a real break, not the H15 artefact"),
-            n_bad=0 if ok else cycles, extent="")])], ignore_index=True)
+            status=status, summary=summary + " [gravity + rising mains]",
+            n_bad=n_bad, extent=extent)])], ignore_index=True)
         if ok:
             msg = (f"H15 FAILs because {len(rising)} rising main(s) are not on the gravity "
-                   "reach layer the auditor reads. Including them, the network IS one "
-                   "connected tree (row H15+). audit.h15 needs the OPEN-1 amendment; "
-                   "nothing in the design is wrong here.")
+                   "reach layer the auditor reads. Including them, the same check passes "
+                   "(row H15+). audit.h15 needs the OPEN-1 amendment; nothing in the "
+                   "design is wrong here.")
             print("\n  NOTE " + msg)
             rec.note("audit H15 artefact: " + msg)
+        else:
+            rec.note("H15+ (gravity + rising mains) also does not pass: " + summary
+                     + " - so H15's FAIL is NOT the rising-main artefact and the break "
+                       "is real.")
 
     blocking_fail = df[(df["blocking"].astype(bool)) &
                        (df["status"] != audit.PASS)]
@@ -1973,6 +1991,9 @@ def _demo_network() -> Tuple[Dict[str, gpd.GeoDataFrame], K.Network]:
         [dict(CORR_ID=f"CO{i:04d}", LEN_M=float(r.LEN_M),
               WIDTH_M=2.0,          # G203-p32 Tab 13: DN200-500 -> a 2.0 m reserve
               ON_DUAL_M=0.0, ON_WADI_M=0.0, IS_STREET=1, N_PLOT=2, USED=1,
+              # blank_ok, but the COLUMN is required: a corridor with ON_WADI_M > 0 and no
+              # CROSS_ID is a defect, so the field has to exist for that to be sayable.
+              CROSS_ID="",
               SRC="draft", CONFIDENCE="drafted", STAGE="s0_demo", PACKAGE="P1", PHASE=1)
          for i, r in enumerate(reaches.itertuples())],
         geometry=list(reaches.geometry), crs=K.CRS_EPSG)

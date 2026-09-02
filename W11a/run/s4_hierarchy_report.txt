@@ -3,77 +3,96 @@
 TIER SHARES  (philosophy sec 4 target: lateral 66 / sub main 18 / trunk 5;
               the 11 % those three leave unattributed is the `main` tier)
 ========================================================================================
-  lateral        1,138.5 km    61.9 %   target 66 %
-  main             370.1 km    20.1 %   (residual - inferred, no as-built band)
-  sub main         254.0 km    13.8 %   target 18 %
-  trunk main        76.0 km     4.1 %   target 5 %
-  TOTAL          1,838.7 km
+  lateral        1,074.3 km    59.0 %   target 66 %
+  main             394.2 km    21.6 %   (residual - inferred, no as-built band)
+  sub main         267.1 km    14.7 %   target 18 %
+  trunk main        86.3 km     4.7 %   target 5 %
+  TOTAL          1,822.0 km
 
-  SUB MAIN = 254.0 km against the philosophy sec 4 expectation of ROUGHLY 270 km
+  SUB MAIN = 267.1 km against the philosophy sec 4 expectation of ROUGHLY 270 km
              ('a design producing 20 km is wrong on sight')
 
 F-CHECKS (W8_W10_POSTMORTEM contract F1-F4; F5 is diameters, stage 6)
   F1 every pipe carries a legal TIER        PASS
   F2 tier monotonic (no lateral below a main) PASS
-  F3 trunk joins   328 (5.61 km of network each; as-built 4.6) (232 m of trunk each; as-built 460) [REPORTING]
-     of which laterals straight onto the trunk: 222 (as-built 13 of 22, R10) [REPORTING]
-     they bring 42.7 km of network between them, 192 m each - every one below the
+  F3 trunk joins   445 (4.09 km of network each; as-built 4.6) (194 m of trunk each; as-built 460) [REPORTING]
+     of which laterals straight onto the trunk: 315 (as-built 13 of 22, R10) [REPORTING]
+     they bring 53.2 km of network between them, 169 m each - every one below the
      4 km floor, so R6 says the sub-district is too small to justify a sub main (5A-3 does exactly this)
   F4 tier shares above [REPORTING]
 
 GENERATED SHAPES against the as-built bands (HIERARCHY_RULES)
-  lateral run length m               76 / 426 / 4199            as-built 132 / 500 / 916
-     49 lateral runs exceed the 920 m cap, 49 of them a SINGLE corridor segment with no node inside it -
+  lateral run length m               73 / 409 / 3862            as-built 132 / 500 / 916
+     35 lateral runs exceed the 920 m cap, 35 of them a SINGLE corridor segment with no node inside it -
      those are cut by the chamber spacing at stage 5 (H12, G203-p30 Tab 12), not here
   lateral chain, runs                1 / 3 / 3                  as-built 2 / 3 / 5
-  lateral flow path to a main m      100 / 539 / 4199           as-built 258 / 722 / 1153
-  sub-main route length m            1047 / 32 / 10014          as-built 910 / 231 / 1805
-  sub-main catchment sewer m         8996 / 4017 / 116839       as-built 4159 / 1237 / 15994
-  sub-main own/catchment %           7.9 / 0.2 / 89.5           as-built 21.0 / 11.3 / 35.2
-  network km per sub main            9.24                       as-built 4.0 - 10.0
+  lateral flow path to a main m      97 / 533 / 3862            as-built 258 / 722 / 1153
+  sub-main route length m            989 / 8 / 10014            as-built 910 / 231 / 1805
+  sub-main catchment sewer m         9193 / 4005 / 131772       as-built 4159 / 1237 / 15994
+  sub-main own/catchment %           7.2 / 0.1 / 89.5           as-built 21.0 / 11.3 / 35.2
+  network km per sub main            8.47                       as-built 4.0 - 10.0
 
 PROVENANCE (P6 - SRC and CONFIDENCE travel to the drawings)
-  auto_block      312.6 km   ['provisional']
+  auto_block      312.5 km   ['provisional']
   auto_link       102.2 km   ['provisional']
-  auto_road       472.8 km   ['derived']
-  draft           875.0 km   ['drafted', 'provisional']
-  main_pipe        76.1 km   ['drafted']
+  auto_road       455.4 km   ['derived']
+  draft           861.8 km   ['drafted', 'provisional']
+  main_pipe        90.1 km   ['drafted']
 
 WHAT SET EACH TIER
-  chain_bound       153.5 km   1,280 reaches
-  monotonic         216.7 km   3,350 reaches
-  residual        1,138.5 km   15,138 reaches
-  stem              254.0 km   1,556 reaches
-  trunk_input        76.0 km   532 reaches
+  chain_bound       158.4 km   1,319 reaches
+  monotonic         235.8 km   3,609 reaches
+  residual        1,074.3 km   15,673 reaches
+  stem              267.1 km   1,820 reaches
+  trunk_input        86.3 km   2,168 reaches
 
 OPEN AND HANDED ON
-  362.3 km of corridor closes a loop and gets no pipe in this tree.
+  425.3 km of corridor closes a loop and gets no pipe in this tree.
      A spanning tree omits every loop-closing street. W8 solved it with augment_cross_streets;
      it belongs to stage 2/3, and it is the reason the lateral chains here run deeper than
      the as-built - which is what inflates the `main` tier.
-  189.5 km carries no load-bearing plot within 60 m - the P7 scope question, stage 1.
-  109 reaches inherit a corridor with dual-carriageway length (1.4 km).
+  201.0 km carries no load-bearing plot within 60 m - the P7 scope question, stage 1.
+  135 reaches inherit a corridor with dual-carriageway length (2.4 km).
   H1a WADI, MEASURED ON OUR OWN GEOMETRY against Hazard_T50y class >= 4, classified ALONG vs ACROSS by audit._r4_classify:
-     0 reaches (0.0 km) run ALONG a wadi - the defect H1 forbids. 2,142 CROSS one, which H1a permits once each is scheduled with a CROSS_ID and given 1.5 m cover to crown (G203-p52 8.2.4).
-     (A midpoint test alone reports 1,982 reaches, 92.6 km, touching wadi ground. It samples ONE point per reach where the classifier samples the whole length, so the two are not comparable and only the classified counts are a finding.)
-     1,051 CHAMBERS sit on wadi ground. H1a item 2 admits no exemption for a chamber, on a crossing or anywhere else (G201-p86) - every one is a defect to re-site.
-     UNTESTED: 950.9 km (52 %) falls outside the Lekhuwair grid and carries NO wadi answer either way. audit.R4 now PUBLISHES this share rather than scoring it a pass, so a clean R4 is explicitly a clean result on the tested half. Full-coverage flood mapping is a data request, not a modelling choice.
-  THE CORRIDOR NETWORK arrives from stage 2 in 771 disconnected pieces, and THE TRUNK in 74.
-     A hierarchy can only be as connected as the corridors under it, and a trunk in 74 pieces is not a
-     spine - it is 74 spines, each of which this stage had to root separately. That is why the design
-     comes out with 773 drainage systems (largest 189.5 km; 36 carry 10 km or more), and it is
-     a STAGE 2 / STAGE 3 finding before it is a satellite-works question for the options appraisal (sec 8a).
+     62 reaches (5.6 km) run ALONG a wadi - the defect H1 forbids. 2,367 CROSS one, which H1a permits once each is scheduled with a CROSS_ID and given 1.5 m cover to crown (G203-p52 8.2.4).
+     (A midpoint test alone reports 2,224 reaches, 99.4 km, touching wadi ground. It samples ONE point per reach where the classifier samples the whole length, so the two are not comparable and only the classified counts are a finding.)
+     running along, by tier: trunk main 5,640 m.  H1 admits no tier exemption (project rule 7).
+     1,233 CHAMBERS sit on wadi ground. H1a item 2 admits no exemption for a chamber, on a crossing or anywhere else (G201-p86) - every one is a defect to re-site.
+     UNTESTED: 933.1 km (51 %) falls outside the Lekhuwair grid and carries NO wadi answer either way. audit.R4 now PUBLISHES this share rather than scoring it a pass, so a clean R4 is explicitly a clean result on the tested half. Full-coverage flood mapping is a data request, not a modelling choice.
+  THE CORRIDOR NETWORK arrives from stage 2 in 283 disconnected pieces, and THE TRUNK in 4.
+     A hierarchy can only be as connected as the corridors under it. Each trunk piece has to be rooted separately,
+     so every piece past the first is an extra outfall and an H15 breach; the design comes out with 261 drainage
+     systems (largest 1,381.1 km; 8 carry 10 km or more), and that count is a STAGE 2 finding before it is a
+     satellite-works question for the options appraisal (sec 8a).
      MEASURED 2026-09-02, the same 85.5 km noded at 10 mm from each available source:
         the user's drawing as given .......  3 components, 85.5 km
         stage 3's DESIGNED trunk ..........  4 components, 85.5 km
         stage 2 corridors, SRC=main_pipe ... 58 components, 80.5 km
-     Stage 3's trunk is the best source and is the one used. Two separate defects follow, and they had been reported as one:
-       (a) the CORRIDOR treatment shreds the trunk from 3 pieces to 58 and loses 5.0 km of it - a stage 2 defect, not an alignment one;
-       (b) THIS STAGE then takes a 4-piece trunk to 74 - a stage 4 defect. The trunk's chamber coordinates do not coincide with the corridor node set it is matched into, so it breaks at every join that misses.
-     OPEN-S4-1: stage 3 should design ON the corridor graph, or stage 4 should snap the trunk into it. Until one of them does, the drainage-system count above is an artefact of this and not a design result.
-     729.3 km (40 %) reaches no piece of the trunk at all and drains to a provisional outfall.
-  SYSTEM as stage 1 decided it: central 1,802.4 km, onsite 6.3 km, satellite 29.9 km
+     Stage 3's trunk is the best source and is the one used. Two separate defects followed, and they had been reported as one:
+       (a) the CORRIDOR treatment shreds the trunk from 3 pieces to 58 and loses 5.0 km of it - a stage 2 defect, not an alignment one. STILL OPEN (OPEN-S2-2);
+       (b) THIS STAGE used to take that 4-piece trunk to 74, because the trunk was never in the graph - it was a 0.5 m proximity MASK over stage 2's corridors, so it arrived in as many pieces as stage 2's COPY of it. CLOSED.
+     OPEN-S4-1 is CLOSED by the WELD in `weld_trunk`: stage 3's alignment enters the graph as edges of its own and the 819 corridors it touches are re-noded WITH it
+     (3.1 % of the layer; the rest keep the US_NODE / DS_NODE stage 2 wrote, so contract P3 still holds for the remainder).
+     The trunk is now 86.11 km in 4 piece(s) against stage 3's 85.55 km; 5.802 km of stage 2's shadow copy was removed so the spine is a tree.
+     NO PIPE MOVED and the client's alignment was NOT re-routed: a planar union splits lines, it does not move them. The only thing that moved is a CHAMBER, worst case
+     2.942 m, inside the 3.0 m merge radius stage 2 itself applies (criteria.MH_SNAP_M - closer than the clearance means ONE structure). Past that radius the weld raises.
+     265.7 km (15 %) reaches no piece of the trunk at all and drains to a provisional outfall.
+  SYSTEM as stage 1 decided it: central 1,785.0 km, onsite 6.7 km, satellite 30.3 km
+
+THE ACCOUNTING (invariant 1 - every input that did not become a published reach is named)
+  Three funnels, not one, because the trunk is a SECOND input: a funnel starting at the corridor
+  count cannot account for edges that were never corridors. Each closes on its own arithmetic.
+  corridor segments -> tiered edges: 26,450 -> 26,450 -> 26,450 -> 26,292
+     -0  corridor with an unresolvable node reference or multipart geometry
+     -0  corridor whose two ends are the same node
+     -158  parallel corridor between the same two nodes (11.61 km)
+  trunk weld: corridor + trunk lines -> welded edges: 3,973 -> 3,563 -> 2,943
+     -410  welded segment whose two ends fall in one 3 m chamber (0.367 km)
+     -620  parallel welded segment between the same two chambers (17.718 km)
+  graph edges -> tiered reaches: 28,331 -> 25,309 -> 24,589
+     -3,022  loop-closing street - a spanning tree cannot lay pipe on every edge of a grid without a cycle (H15). W8's augment_cross_streets is the fix and it belongs to stage 2/3 (425.3 km)
+     -720  dead-end reach under 60 m serving nothing - philosophy sec 4 finger rule (18.022 km)
 
 GRAPH INVARIANTS
   invariant 2 (published layers ARE the graph): PASS
-  Network.check: 773 components (W10 published 7,919). Largest 1,873 nodes, smallest 2; systems present: ['central', 'satellite']. H15 permits more than one component (OPEN-1 closed): a satellite works is legal. What it requires is that EACH component ends at exactly one outfall - so this is a finding only for compo
+  Network.check: 261 components (W10 published 7,919). Largest 19,603 nodes, smallest 2; systems present: ['central', 'satellite']. H15 permits more than one component (OPEN-1 closed): a satellite works is legal. What it requires is that EACH component ends at exactly one outfall - so this is a finding only for comp

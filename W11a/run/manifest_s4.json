@@ -1,16 +1,16 @@
 {
   "contract": "W11a-contract-1.1",
-  "written": "2026-09-02 12:08:45",
+  "written": "2026-09-02 14:00:10",
   "stages": [
     {
       "stage": "s4_hierarchy",
       "order": 4,
-      "seconds": 54.4,
+      "seconds": 72.35,
       "reads": [
         {
           "name": "corridors (stage 2)",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
-          "n": 25122
+          "n": 26450
         },
         {
           "name": "trunk (stage 3)",
@@ -20,7 +20,7 @@
         {
           "name": "corridor_nodes (stage 2)",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
-          "n": 23355
+          "n": 23916
         },
         {
           "name": "servicing (stage 1 scope decision)",
@@ -30,7 +30,7 @@
         {
           "name": "terrain 0.5 m VRT",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Data\\Terrain\\Sat_0p5m\\IBRI_0p5_VRT2.vrt",
-          "n": 23342
+          "n": 25595
         },
         {
           "name": "plot_loads (load-bearing only)",
@@ -42,27 +42,27 @@
         {
           "name": "s4_reaches",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_s4.gpkg",
-          "n": 21856
+          "n": 24589
         },
         {
           "name": "s4_nodes",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_s4.gpkg",
-          "n": 22629
+          "n": 24850
         },
         {
           "name": "reaches (canonical)",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
-          "n": 21856
+          "n": 24589
         },
         {
           "name": "nodes (canonical)",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
-          "n": 22629
+          "n": 24850
         },
         {
           "name": "s4_submains",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_s4.gpkg",
-          "n": 1556
+          "n": 1820
         },
         {
           "name": "s4_hierarchy_report.txt",
@@ -72,46 +72,55 @@
       ],
       "metrics": {
         "node_offset_max_m": 0.0,
-        "graph_nodes": 23342,
-        "trunk_pieces": 74,
-        "trunk_longest_piece_km": 7.89,
-        "corridor_components": 771,
-        "tree_km": 1856.4,
-        "loop_closing_km_no_pipe": 362.3,
-        "outfalls": 810,
-        "fingers_pruned": 676,
-        "fingers_pruned_km": 17.734,
-        "monotonicity_fixes": 3350,
-        "reaches_outside_a_servicing_polygon": 853,
-        "node_system_reconciled_to_reaches": 20655,
-        "reaches_along_a_wadi": 0,
-        "reaches_crossing_a_wadi": 2142,
-        "reaches_on_wadi_measured": 1982,
-        "km_on_wadi_measured": 92.596,
-        "chambers_on_wadi_measured": 1051,
-        "reaches_on_wadi_inherited": 2185,
-        "km_outside_hazard_grid_untestable": 950.9,
-        "km_no_loadbearing_plot_within_60m": 189.5,
-        "km_lateral": 1138.54,
-        "km_main": 370.11,
-        "km_sub_main": 254.04,
-        "km_trunk_main": 75.99,
-        "trunk_joins": 328,
-        "sub_main_routes": 199,
+        "graph_nodes": 23903,
+        "weld_corridors_renoded": 819,
+        "weld_segments": 3973,
+        "weld_new_nodes": 1692,
+        "weld_chamber_move_max_m": 2.942,
+        "weld_shadow_km": 5.802,
+        "trunk_km_welded": 86.11,
+        "trunk_km_stage3": 85.55,
+        "trunk_pieces": 4,
+        "trunk_longest_piece_km": 66.34,
+        "corridor_components": 283,
+        "tree_km": 1839.7,
+        "loop_closing_km_no_pipe": 425.3,
+        "outfalls": 286,
+        "fingers_pruned": 720,
+        "fingers_pruned_km": 18.022,
+        "fingers_trunk_exempt": 6,
+        "fingers_trunk_exempt_km": 0.072,
+        "monotonicity_fixes": 3609,
+        "reaches_outside_a_servicing_polygon": 1129,
+        "node_system_reconciled_to_reaches": 5077,
+        "reaches_along_a_wadi": 62,
+        "reaches_crossing_a_wadi": 2367,
+        "reaches_on_wadi_measured": 2224,
+        "km_on_wadi_measured": 99.425,
+        "chambers_on_wadi_measured": 1233,
+        "reaches_on_wadi_inherited": 2634,
+        "km_outside_hazard_grid_untestable": 933.1,
+        "km_no_loadbearing_plot_within_60m": 201.0,
+        "km_lateral": 1074.34,
+        "km_main": 394.2,
+        "km_sub_main": 267.1,
+        "km_trunk_main": 86.33,
+        "trunk_joins": 445,
+        "sub_main_routes": 215,
         "F1_untiered": 0,
         "F2_monotonicity_breaches": 0,
         "round_trip": "PASS"
       },
       "notes": [
-        "713 nodes carried no reach after the 3.0 m merge and were dropped"
+        "745 nodes carried no reach after the 3.0 m merge and were dropped"
       ],
       "no_change_reason": "",
       "funnels": [
         {
           "name": "corridor segments -> tiered edges",
-          "n0": 25122,
-          "n": 21856,
-          "line": "corridor segments -> tiered edges: 25,122 -> 25,122 -> 25,122 -> 24,963 -> 22,532 -> 21,856",
+          "n0": 26450,
+          "n": 26292,
+          "line": "corridor segments -> tiered edges: 26,450 -> 26,450 -> 26,450 -> 26,292",
           "steps": [
             {
               "reason": "corridor with an unresolvable node reference or multipart geometry",
@@ -128,22 +137,52 @@
               "ids_truncated": false
             },
             {
-              "reason": "parallel corridor between the same two nodes (12.86 km)",
-              "n": 159,
+              "reason": "parallel corridor between the same two nodes (11.61 km)",
+              "n": 158,
+              "qty": 0.0,
+              "ids": [],
+              "ids_truncated": false
+            }
+          ]
+        },
+        {
+          "name": "trunk weld: corridor + trunk lines -> welded edges",
+          "n0": 3973,
+          "n": 2943,
+          "line": "trunk weld: corridor + trunk lines -> welded edges: 3,973 -> 3,563 -> 2,943",
+          "steps": [
+            {
+              "reason": "welded segment whose two ends fall in one 3 m chamber (0.367 km)",
+              "n": 410,
               "qty": 0.0,
               "ids": [],
               "ids_truncated": false
             },
             {
-              "reason": "loop-closing street - a spanning tree cannot lay pipe on every edge of a grid without a cycle (H15). W8's augment_cross_streets is the fix and it belongs to stage 2/3 (362.3 km)",
-              "n": 2431,
+              "reason": "parallel welded segment between the same two chambers (17.718 km)",
+              "n": 620,
+              "qty": 0.0,
+              "ids": [],
+              "ids_truncated": false
+            }
+          ]
+        },
+        {
+          "name": "graph edges -> tiered reaches",
+          "n0": 28331,
+          "n": 24589,
+          "line": "graph edges -> tiered reaches: 28,331 -> 25,309 -> 24,589",
+          "steps": [
+            {
+              "reason": "loop-closing street - a spanning tree cannot lay pipe on every edge of a grid without a cycle (H15). W8's augment_cross_streets is the fix and it belongs to stage 2/3 (425.3 km)",
+              "n": 3022,
               "qty": 0.0,
               "ids": [],
               "ids_truncated": false
             },
             {
-              "reason": "dead-end reach under 60 m serving nothing - philosophy sec 4 finger rule (17.734 km)",
-              "n": 676,
+              "reason": "dead-end reach under 60 m serving nothing - philosophy sec 4 finger rule (18.022 km)",
+              "n": 720,
               "qty": 0.0,
               "ids": [],
               "ids_truncated": false

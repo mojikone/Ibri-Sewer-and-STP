@@ -88,6 +88,40 @@ that proves the exit - because both exits are DISTANCE-bounded, the distance is 
 Nothing past the cap is final: it waits on a manufacturer's rating for that cover and on NWS's
 station establishment cost, and both are named in the register this stage writes.
 
+THE DROP CEILING, AND WHY IT SITS INSIDE THE LADDER RATHER THAN BESIDE IT.
+
+G203-p30 is the only clause on drops and it is quoted here in full because the rule is easy
+to half-remember: "Drops are sometimes required at manholes when a branch sewer adjoins a
+trunk sewer. Connections under these conditions require the use of a backdrop when the
+difference in invert elevations exceeds 600 mm. Backdrops shall be constructed external to
+the manhole... The maximum backdrop height should be of 2 m. Beyond this limit, specific
+devices like vortex drop shafts should be used." Note what is NOT there: the guideline gives
+a maximum for a BACKDROP and **no maximum at all for a vortex drop shaft**. Read literally it
+would let a chamber take a drop of any height, and a run on the full area does exactly that -
+measured 2026-09-02, four chambers wanted 21.5 to 35.1 m.
+
+What forbids it is philosophy sec 5, in terms: **"Never a drop used to dodge a station."** A
+35 m fall into a chamber is not a drop structure, it is the shadow of a trench nobody will
+dig, and every shallow branch on that run pays for it. So the ceiling on a drop is a PROJECT
+DECISION, not a guideline number, and it is read at run time from `contract.NODES.DROP_M.hi`
+so the design and the validator cannot drift apart - the contract is the written artefact
+that carries it, and nothing here invents a value.
+
+The consequence is a ladder step, not a clamp. A breach that the two sec 5 exits would let
+past the 12 m cap, but whose levels force a drop above that ceiling somewhere on the run, is
+a breach buying its way past the cap WITH A DROP - so the exit is not available to it, and
+the fourth physical resolution is taken at the head of the breach exactly as it is for a
+breach that never had an exit. Nothing about the exits' distances changes; the cap does not
+move; DROP_M is never rounded, clipped or capped. Where a drop above the ceiling survives
+every pass, the stage REFUSES TO PUBLISH and names the chambers, because the resolutions left
+are a re-route or not serving that branch (philosophy sec 3) and neither is stage 6's to take.
+
+A note on the direction of the answer, because it is the thing that reads wrong at first: a
+station is never put AT the over-deep chamber. A drop is flow going down and a station lifts
+flow up, so pumping cannot resolve a fall. The station goes at the FOOT OF THE CLIMB - the
+last chamber inside the cap, the head of the breach - which is where the ladder already puts
+one, and it is the deep main that then never exists, not the branch that then never drops.
+
 WHAT A STATION IS HERE, STATED PLAINLY SO IT IS NOT MISREAD. Where the cap is breached and
 neither exit applies, the fourth physical resolution (philosophy sec 3) is taken: a station.
 This module represents it as a LIFT INSIDE THE CHAMBER - the chamber's outgoing invert is
@@ -152,12 +186,29 @@ TERRAIN_VRT = os.path.join(BASE, "Data", "Terrain", "Sat_0p5m", "IBRI_0p5_VRT2.v
 # philosophy number, or it is a declared method choice with its reason. Nothing is invented.
 # ======================================================================================
 
+# The ceiling on a drop STRUCTURE, read from the contract rather than written here. G203-p30
+# gives 2 m for a backdrop and NO maximum for the vortex drop shaft that replaces it, so this
+# number cannot be quoted from the guideline; it is a PROJECT DECISION and the contract is
+# where the project already wrote it down. Reading it means the design and the validator move
+# together or not at all - a hardcoded copy here is exactly how a stage ends up publishing a
+# value its own contract refuses.
+_DROP_CEILING_M = float(
+    getattr(K.NODES.field("DROP_M"), "hi", None) or C.BACKDROP_MAX)
+
+
 @dataclass(frozen=True)
 class SolverOptions:
     # --- philosophy sec 5, the two distance-bounded exits past the cap
     max_cover_m: float = C.MAX_DEPTH          # 12.0 m of COVER (G203-p33 via criteria)
     cap_recover_m: float = 500.0              # "the cover recovers within 500 m"
     cap_outfall_m: float = 1000.0             # "reaches the outfall within 1,000 m"
+
+    # --- the drop ceiling. PROJECT DECISION, sourced from contract.NODES.DROP_M.hi, not from
+    # G203 - see the module docstring. `drop_ceiling_mints_station` is what makes it a rung of
+    # the ladder rather than a bare validation bound: switched off, the stage still refuses to
+    # publish an unbuildable drop, it just has no way to resolve one.
+    max_drop_m: float = _DROP_CEILING_M
+    drop_ceiling_mints_station: bool = True
 
     # --- method choices, declared
     profile_step_m: float = 10.0
@@ -1034,27 +1085,167 @@ class LevelSolver:
             else:
                 # No exit. A station goes at the LAST chamber still inside the cap, which is
                 # the upstream node of the head reach.
-                u = self.reaches[head].us
-                arr = [self.reaches[e].inv_dn for e in self.in_edges.get(u, ())
-                       if math.isfinite(self.reaches[e].inv_dn)]
-                arrive = min(arr) if arr else self.reaches[head].inv_up
-                lift = max(0.0, (self.grd[u] - self._min_depth(self.reaches[head].dn)) - arrive)
-                self.lift[u] = lift
-                self.station_note[u] = dict(
-                    NODE_UID=u, X=float(self.nodes.at[u, "X"]),
-                    Y=float(self.nodes.at[u, "Y"]), GRD_M=round(self.grd[u], 3),
-                    ARRIVE_INV_M=round(arrive, 3),
-                    ARRIVE_DEPTH_M=round(self.grd[u] - arrive, 2),
-                    LIFT_M=round(lift, 2),
-                    Q_PK_LS=round(self.reaches[head].q_pk_ls, 2),
-                    WHY="cap",
-                    BREACH_LEN_M=round(seg_len, 1),
-                    WORST_COVER_M=rec["worst_cover_m"],
-                    RECOVERS_IN_M=rec["recover_m"],
-                    OUTFALL_IN_M=rec["outfall_m"],
-                    WAITS_ON=("a manufacturer's rating for this cover, and NWS's station "
-                              "establishment cost (philosophy sec 5)"))
+                self._mint_station(rec, why="cap")
         return breaches
+
+    def _mint_station(self, rec: Dict, why: str = "cap") -> bool:
+        """Rung 1's physical resolution: a station at the head of a breach.
+
+        Split out of `apply_ladder` so the drop ceiling below resolves a breach the SAME way
+        rather than with a second, subtly different copy - the one-function rule the
+        philosophy's provenance checks exist for. Returns False when the chamber is already a
+        station, which is not a no-op to swallow: it means the breach survived being pumped
+        and the caller has to register it rather than mint a duplicate.
+        """
+        head = rec["head"]
+        u = self.reaches[head].us
+        if u in self.lift:
+            return False
+        arr = [self.reaches[e].inv_dn for e in self.in_edges.get(u, ())
+               if math.isfinite(self.reaches[e].inv_dn)]
+        arrive = min(arr) if arr else self.reaches[head].inv_up
+        lift = max(0.0, (self.grd[u] - self._min_depth(self.reaches[head].dn)) - arrive)
+        self.lift[u] = lift
+        self.station_note[u] = dict(
+            NODE_UID=u, X=float(self.nodes.at[u, "X"]),
+            Y=float(self.nodes.at[u, "Y"]), GRD_M=round(self.grd[u], 3),
+            ARRIVE_INV_M=round(arrive, 3),
+            ARRIVE_DEPTH_M=round(self.grd[u] - arrive, 2),
+            LIFT_M=round(lift, 2),
+            Q_PK_LS=round(self.reaches[head].q_pk_ls, 2),
+            WHY=why,
+            BREACH_LEN_M=rec["seg_len_m"],
+            WORST_COVER_M=rec["worst_cover_m"],
+            RECOVERS_IN_M=rec["recover_m"],
+            OUTFALL_IN_M=rec["outfall_m"],
+            WAITS_ON=("a manufacturer's rating for this cover, and NWS's station "
+                      "establishment cost (philosophy sec 5)"))
+        return True
+
+    # ---------------------------------------------------------------- drops at a chamber
+    def node_drops(self) -> Dict[str, Tuple[float, str]]:
+        """The fall INTO each chamber, and the arriving reach that sets it.
+
+        G203-p30 defines a drop as "the difference in invert elevations" where a branch
+        adjoins the sewer it discharges to, so the structure at a chamber is sized on the
+        TALLEST arriving difference. That is what this returns, and it is the ONLY place the
+        number is computed - `write_back` publishes it, the ceiling below tests it and the
+        register prints it, so the layer and the register cannot disagree.
+
+        The arriving invert is taken as `inv_up - SLOPE_LAID/100 x LEN_M`, which is the
+        expression `write_back` publishes as INV_DN, not the solver's own `inv_dn`. The two
+        agree to float noise today; using the published one means they agree by construction
+        even if a later pass stops being exact.
+
+        A chamber's own invert is its OUTGOING reach's upstream invert. At a terminal there is
+        no outgoing reach and the reverse pass seats the chamber on the LOWEST arrival, so the
+        drop there is the spread between arrivals - which is a real benching problem and is
+        reported as one, not hidden behind a zero.
+        """
+        out: Dict[str, Tuple[float, str]] = {}
+        for u, iv in self.node_inv.items():
+            d, who = 0.0, ""
+            for x in self.in_edges.get(u, ()):
+                r = self.reaches[x]
+                dd = (r.inv_up - r.slope_frac * r.length) - iv
+                if dd > d:
+                    d, who = dd, x
+            out[u] = (max(0.0, d), who)
+        return out
+
+    def _withdraw_exits_forcing_unbuildable_drop(
+            self, breaches: List[Dict]) -> Tuple[List[Dict], List[Dict]]:
+        """Philosophy sec 5: "Never a drop used to dodge a station."
+
+        A sec 5 exit is granted on DISTANCE alone - the cover recovers within 500 m, or the
+        run reaches the outfall within 1,000 m - and nothing in it bounds how deep the
+        excursion goes on the way. Applied to a ridge rather than the hump it was written for,
+        it authorises a trench whose every shallow branch must then fall tens of metres into
+        it. That fall is a drop, and it is buying the run its way past the 12 m cap: exactly
+        what the sentence above forbids. So the exit is not available to that breach, and the
+        breach takes the fourth physical resolution at the foot of the climb.
+
+        Returns (withdrawn, unresolved). An `unresolved` row is a chamber whose drop is past
+        the ceiling and that this stage cannot resolve - the head is already a station, or no
+        breach owns the deep arrival at all. Those are registered and the stage refuses to
+        publish; a re-route or a change of served set is philosophy sec 3's answer and is not
+        stage 6's to take.
+        """
+        if not self.opts.drop_ceiling_mints_station:
+            return [], []
+        ceil = self.opts.max_drop_m
+        drops = self.node_drops()
+        bad = sorted(((d, u, who) for u, (d, who) in drops.items() if d > ceil + 1e-9),
+                     reverse=True)
+        if not bad:
+            return [], []
+
+        owner: Dict[str, Dict] = {}
+        for b in breaches:
+            for x in b["chain"]:
+                owner[x] = b
+
+        withdrawn: List[Dict] = []
+        unresolved: List[Dict] = []
+        done: set = set()
+        for d, u, who in bad:
+            # Which over-cap run put the chamber this deep? Normally the deep arrival is
+            # itself in a breach chain. Where it is not - the chamber is deep but the arriving
+            # reach's own cover came back - walk up the deepest arrivals until a breach owns
+            # one, bounded so a pathological graph cannot spin.
+            b, x = owner.get(who), who
+            for _ in range(400):
+                if b is not None:
+                    break
+                ups = [e for e in self.in_edges.get(self.reaches[x].us, ())
+                       if math.isfinite(self.reaches[e].inv_dn)]
+                if not ups:
+                    break
+                x = min(ups, key=lambda e: self.reaches[e].inv_dn)
+                b = owner.get(x)
+            row = dict(NODE_UID=u, DROP_M=round(d, 3), CEILING_M=ceil,
+                       ARRIVING_EDGE=who, GRD_M=round(self.grd[u], 3),
+                       NODE_INV_M=round(self.node_inv.get(u, float("nan")), 3),
+                       NODE_KIND=self.kind.get(u, ""),
+                       BREACH_HEAD=("" if b is None else b["head"]),
+                       BREACH_EXIT=("" if b is None else (b["exit"] or "")))
+            if b is None:
+                row["WHY_UNRESOLVED"] = (
+                    "no over-cap run owns the arriving reach, so there is no head to put a "
+                    "station at. The chamber is deep for a reason this stage did not level - "
+                    "look upstream of stage 6 (philosophy sec 3: re-route, or do not serve)")
+                unresolved.append(row)
+                continue
+            if id(b) in done:
+                continue                       # this breach is already being resolved
+            if not b["exit"]:
+                row["WHY_UNRESOLVED"] = (
+                    "the run already has no exit and a station at its head did not bring the "
+                    "drop under the ceiling. The resolutions left are physical and none is "
+                    "stage 6's: a re-route, a different outlet, or not serving that branch")
+                unresolved.append(row)
+                continue
+            was = b["exit"]
+            if not self._mint_station(b, why="drop_ceiling"):
+                row["WHY_UNRESOLVED"] = (
+                    f"the head of this run ({self.reaches[b['head']].us}) is ALREADY a "
+                    "station and the drop is still past the ceiling - pumping at the foot of "
+                    "the climb did not resolve it")
+                unresolved.append(row)
+                continue
+            done.add(id(b))
+            for e in b["chain"]:
+                rr = self.reaches[e]
+                rr.past_cap, rr.cap_exit, rr.cap_len_m = 0, "", 0.0
+            b["exit"], b["exit_len_m"] = "", 0.0
+            b["exit_withdrawn"] = (
+                f"{was}: withdrawn because chamber {u} on this run would need a "
+                f"{d:.2f} m drop, past the {ceil:.1f} m project ceiling. Philosophy sec 5: "
+                "never a drop used to dodge a station")
+            withdrawn.append(dict(row, WITHDRAWN_EXIT=was,
+                                  STATION_AT=self.reaches[b["head"]].us))
+            self._bump("exit_withdrawn_by_drop_ceiling")
+        return withdrawn, unresolved
 
     # ---------------------------------------------------------------- run
     def solve(self) -> Dict:
@@ -1069,7 +1260,8 @@ class LevelSolver:
         The loop ends when a whole pass adds no station, which is the only stable state: a
         station changes every level below it, which can expose the next breach.
         """
-        rep: Dict = {"passes": 0, "breaches": [], "stations": 0}
+        rep: Dict = {"passes": 0, "breaches": [], "stations": 0,
+                     "drop_withdrawn": [], "drop_unresolved": []}
         for p in range(1, self.opts.max_cap_passes + 1):
             rep["passes"] = p
             for r in self.reaches.values():
@@ -1078,10 +1270,33 @@ class LevelSolver:
             rep["reverse"] = self.reverse()
             before = len(self.lift)
             rep["breaches"] = self.apply_ladder()
+            # The drop ceiling is tested AFTER the ladder and INSIDE the loop, for the same
+            # reason the ladder is inside it: withdrawing an exit mints a station, a station
+            # changes every level below it, and a drop measured before that is a drop that no
+            # longer exists. `drop_withdrawn` accumulates across passes because `counters` is
+            # cleared by `forward()` and the final pass, by definition, withdraws nothing.
+            wd, un = self._withdraw_exits_forcing_unbuildable_drop(rep["breaches"])
+            rep["drop_withdrawn"].extend(wd)
+            rep["drop_unresolved"] = un
             if len(self.lift) == before:
                 break
         else:
             rep["cap_loop_exhausted"] = True
+
+        # The drop the LAYER will carry, measured on the levels that will be published.
+        drops = self.node_drops()
+        rep["drops"] = drops
+        rep["n_backdrop"] = sum(1 for d, _ in drops.values()
+                                if self.crit.DROP_TRIGGER + 1e-9 < d
+                                <= self.crit.BACKDROP_MAX + 1e-9)
+        rep["n_vortex"] = sum(1 for d, _ in drops.values()
+                              if d > self.crit.BACKDROP_MAX + 1e-9)
+        rep["drop_over_ceiling"] = sorted(
+            (dict(NODE_UID=u, DROP_M=round(d, 3), ARRIVING_EDGE=who,
+                  GRD_M=round(self.grd[u], 3), NODE_KIND=self.kind.get(u, ""),
+                  DEPTH_M=round(self.grd[u] - self.node_inv[u], 2))
+             for u, (d, who) in drops.items() if d > self.opts.max_drop_m + 1e-9),
+            key=lambda r: -r["DROP_M"])
 
         # A breach that no exit justifies and no station has yet resolved is the exact W10
         # failure - a chamber past the cap carrying no flag. It cannot be published: the
@@ -1340,6 +1555,9 @@ def write_back(nodes_gdf, reaches_gdf, solver: LevelSolver) -> Tuple:
     nce = np.empty(len(ng), dtype=object)
     kinds = ng["NODE_KIND"].astype(str).tolist()
     tiers = ng["TIER"].astype(str).tolist() if "TIER" in ng.columns else [""] * len(ng)
+    # ONE function computes the drop - `LevelSolver.node_drops` - and this publishes what it
+    # returns. Recomputing it here is how the layer and the register end up disagreeing.
+    drops = solver.node_drops()
 
     for i, u in enumerate(uids):
         iv = solver.node_inv.get(u)
@@ -1360,14 +1578,19 @@ def write_back(nodes_gdf, reaches_gdf, solver: LevelSolver) -> Tuple:
             covers.append(K.cover(rr.dn, solver.grd[u] - rr.inv_dn))
         cover_m[i] = min(covers) if covers else 0.0
 
-        # the drop INSIDE the chamber: arrivals against what leaves it
-        d = 0.0
-        for x in solver.in_edges.get(u, ()):
-            d = max(d, solver.reaches[x].inv_dn - iv)
-        drop_m[i] = max(0.0, d)
-        drop_t[i] = ("none" if drop_m[i] <= C_.DROP_TRIGGER + 1e-9
-                     else ("backdrop" if drop_m[i] <= C_.BACKDROP_MAX + 1e-9 else "vortex"))
-        vortex[i] = 1 if drop_m[i] > C_.BACKDROP_MAX + 1e-9 else 0
+        # the drop INSIDE the chamber: arrivals against what leaves it (G203-p30)
+        d = drops.get(u, (0.0, ""))[0]
+        drop_m[i] = d
+        drop_t[i] = ("none" if d <= C_.DROP_TRIGGER + 1e-9
+                     else ("backdrop" if d <= C_.BACKDROP_MAX + 1e-9 else "vortex"))
+        vortex[i] = 1 if d > C_.BACKDROP_MAX + 1e-9 else 0
+        if d > solver.opts.max_drop_m + 1e-9:
+            # Never clipped. A drop this stage could not resolve reaches `write_back` only
+            # when `run()` has already decided to refuse, and it is published as measured so
+            # the register and the refusal describe the same number. Clamping it to the
+            # contract's ceiling would satisfy the validator by lying, which is the exact
+            # class of defect the validator exists to catch.
+            solver._bump("drop_over_ceiling_published")
 
         if u in solver.lift:
             kinds[i] = "station"
@@ -1447,7 +1670,12 @@ def summary(rg, ng, solver: LevelSolver, rep: Dict) -> str:
         f"lifting stations   {rep.get('stations_final', 0)} demanded by the cap "
         f"(rung 1 only; veto and economics are stage 7's)",
         f"drops              {int((ng['DROP_TYPE'] == 'backdrop').sum()):,} backdrops, "
-        f"{int(ng['VORTEX'].sum()):,} vortex shafts (G203-p30: > 0.60 m, > 2.0 m)",
+        f"{int(ng['VORTEX'].sum()):,} vortex shafts (G203-p30: > 0.60 m, > 2.0 m); "
+        f"tallest {ng['DROP_M'].max():.2f} m against the {solver.opts.max_drop_m:.1f} m "
+        f"project ceiling (contract.NODES.DROP_M.hi)"
+        + ("" if not rep["drop_withdrawn"] else
+           f"\n                   {len(rep['drop_withdrawn'])} sec 5 exit(s) WITHDRAWN and "
+           "pumped instead - 'never a drop used to dodge a station'"),
         f"solver             {rep['passes']} cap pass(es), reverse "
         + ", ".join(f"{k}={v}" for k, v in rep["reverse"].items()),
         f"fixed structures   {len(solver.fixed_inv)} existing inverts the design yields to "
@@ -1584,6 +1812,50 @@ def run(root: str = K.W11A_ROOT, gpkg_name: str = "W11a.gpkg",
         rec.wrote("tie conflict register", tc_csv, len(tc))
         rec.metric("tie_conflicts", len(tc))
 
+        # ---- the drop schedule. G203-p30 makes every drop over 600 mm a STRUCTURE with a
+        # cost and a maintenance regime, so it is a schedule the take-off reads, not a column
+        # on the node layer that nobody opens.
+        dr_csv = os.path.join(root, "run", "s6_drop_structures.csv")
+        _dcols = [c for c in ("NODE_UID", "NODE_KIND", "TIER", "GRD_M", "INV_M", "DEPTH_M",
+                              "DROP_M", "DROP_TYPE", "VORTEX", "MH_DIA")
+                  if c in ng.columns]
+        dr = ng.loc[ng["DROP_TYPE"] != "none", _dcols].copy()
+        if len(dr):
+            dr["ARRIVING_EDGE"] = [report["drops"].get(str(u), (0.0, ""))[1]
+                                   for u in dr["NODE_UID"]]
+            dr = dr.sort_values("DROP_M", ascending=False)
+        dr.to_csv(dr_csv, index=False)
+        rec.wrote("drop structure schedule", dr_csv, len(dr))
+        rec.metric("backdrops_0p6_to_2m", report["n_backdrop"])
+        rec.metric("vortex_drop_shafts_over_2m", report["n_vortex"])
+        rec.metric("exits_withdrawn_by_drop_ceiling", len(report["drop_withdrawn"]))
+        rec.metric("drop_ceiling_m", opts.max_drop_m)
+        if report["drop_withdrawn"]:
+            wd_csv = os.path.join(root, "run", "s6_drop_ceiling_withdrawals.csv")
+            pd.DataFrame(report["drop_withdrawn"]).to_csv(wd_csv, index=False)
+            rec.wrote("exits withdrawn by the drop ceiling", wd_csv,
+                      len(report["drop_withdrawn"]))
+            rec.note(f"{len(report['drop_withdrawn'])} philosophy sec 5 exit(s) were "
+                     "WITHDRAWN because the run they let past the cap would have forced a "
+                     f"drop above the {opts.max_drop_m:.1f} m project ceiling "
+                     "(contract.NODES.DROP_M.hi; G203-p30 sets 2 m for a backdrop and no "
+                     "maximum for the vortex shaft that replaces it). Each was resolved by a "
+                     "station at the foot of the climb - philosophy sec 5, 'never a drop used "
+                     "to dodge a station'. This is a PROJECT DECISION, not a guideline value.")
+
+        if report["drop_over_ceiling"] or report["drop_unresolved"]:
+            publish = False
+            uc_csv = os.path.join(root, "run", "s6_drops_unbuildable.csv")
+            pd.DataFrame(report["drop_over_ceiling"] or report["drop_unresolved"]) \
+                .to_csv(uc_csv, index=False)
+            rec.wrote("chambers whose drop cannot be built", uc_csv,
+                      len(report["drop_over_ceiling"]))
+            rec.note(f"REFUSED TO PUBLISH: {len(report['drop_over_ceiling'])} chamber(s) need "
+                     f"a drop above the {opts.max_drop_m:.1f} m ceiling that this stage could "
+                     "not resolve. The resolutions left are physical and none is stage 6's - "
+                     "a re-route, a different outlet, or not serving that branch "
+                     "(philosophy sec 3).")
+
         if report["unexited"]:
             # Rung 1 of the ladder could not be discharged. Every resolution left is physical
             # (philosophy sec 3) and none of them is this stage's to take: more stations than the
@@ -1620,8 +1892,20 @@ def run(root: str = K.W11A_ROOT, gpkg_name: str = "W11a.gpkg",
     print(f"\n  station demand -> {st_csv}")
     print(f"  cap breaches   -> {br_csv}")
     print(f"  tie conflicts  -> {tc_csv}")
+    print(f"  drop schedule  -> {dr_csv}")
     print(f"  manifest       -> {man}")
     print(f"  {time.time() - t0:.1f} s")
+    if report["drop_over_ceiling"] or report["drop_unresolved"]:
+        print(f"\nNOTHING PUBLISHED. {len(report['drop_over_ceiling'])} chamber(s) need a "
+              f"drop above the {opts.max_drop_m:.1f} m ceiling this stage could not resolve "
+              f"(worst {report['drop_over_ceiling'][0]['DROP_M'] if report['drop_over_ceiling'] else 0:.2f} m).")
+        print("G203-p30 gives 2 m for a backdrop and no maximum for the vortex shaft that "
+              "replaces it, so\nthe ceiling is a PROJECT DECISION read from "
+              "contract.NODES.DROP_M.hi. Philosophy sec 5:\n'never a drop used to dodge a "
+              "station'. The resolutions left are a re-route, a different\noutlet, or not "
+              "serving that branch - none of them stage 6's.")
+        print(f"Read {os.path.join(root, 'run', 's6_drops_unbuildable.csv')}.")
+        return 1
     if report["unexited"]:
         print(f"\nNOTHING PUBLISHED. {len(report['unexited'])} cap breaches "
               f"({report['km_unexited']:.2f} km) sit past {opts.max_cover_m:.0f} m of cover "

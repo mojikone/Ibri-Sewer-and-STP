@@ -197,6 +197,9 @@ SLS_CASCADE_M = C.SLS_CASCADE_M         # 1,500 m - CLAUDE.md rule 9, reporting 
 
 WADI_CLASSES = C.HAZARD_WADI_CLASSES    # (4, 5, 6) on Hazard_T50y
 
+# The levels stage's own record of rung 1. See declared_stations().
+STATION_DEMAND_CSV = "s6_station_demand.csv"
+
 # ======================================================================================
 # PENDING - assumptions this stage had to make because no cited number exists. Printed on
 # every run and written into the manifest. The rule is "do not guess"; where a number was
@@ -562,6 +565,54 @@ def _f(v, default=float("nan")):
 # Rung 1 of the ladder - the CAP, with its two distance-bounded exits
 # ======================================================================================
 
+def declared_stations(root: str, nodes: gpd.GeoDataFrame, tree: Tree):
+    """Which chambers the LEVELS stage already said need a station. Read, never re-derived.
+
+    THIS IS THE FIX FOR THE BIGGEST BREAK IN THE 6 -> 7 CHAIN, so it is worth stating in
+    full. Philosophy sec 5's rung 1 is implemented in `s6_levels.LevelSolver.apply_ladder` -
+    which is the only place it CAN be implemented, because the cap is a statement about a
+    solved invert and nothing before the solve has one. That stage records its answer twice:
+    as `NODE_KIND='station'` on the published node layer, and as `run/s6_station_demand.csv`
+    carrying the lift, the breach length, the worst cover and the two exit distances that
+    failed. This stage reads that answer and SIZES it.
+
+    Until this function existed, s7 re-derived rung 1 from cover and read the levels stage's
+    answer nowhere. Two consequences, both real and both measured on the live run:
+
+      * A SECOND DEFINITION of one published number (P2). The two do not agree. The levels
+        stage samples cover ALONG each reach and puts the station at the last chamber INSIDE
+        the cap; `breach_heads` below reads cover at the upstream END of the outgoing reach
+        and takes the first chamber OVER it. On rising ground those are different chambers.
+      * On a CONVERGED frame s7 found NOTHING. The levels stage resolves every breach it
+        mints - the gravity line restarts at minimum cover at the station chamber - so no
+        cover is over the cap any more and `breach_heads` returns an empty set. s7 would
+        then call `did_nothing()`, publish no `stations` and no `rising_mains`, and stage 9
+        would print `stations 0` and `total lift 0.0 m` on the concept map while
+        `s6_station_demand.csv` beside it listed 178. A published number that is flatly
+        wrong is exactly the failure the `@published` register exists to stop.
+
+    `breach_heads` is kept, but demoted to a RESIDUAL detector: a breach still standing on
+    the published layers that nothing has resolved. On a converged frame it returns nothing,
+    and a non-zero count is itself the finding.
+
+    Returns (declared_uids, register_or_None, register_path).
+    """
+    declared: List[str] = []
+    if "NODE_KIND" in nodes.columns:
+        declared = sorted(u for u, k in zip(nodes["NODE_UID"].astype(str),
+                                            nodes["NODE_KIND"].astype(str))
+                          if k == "station" and u in tree.N)
+    path = os.path.join(root, "run", STATION_DEMAND_CSV)
+    reg = None
+    if os.path.exists(path):
+        try:
+            reg = pd.read_csv(path)
+            reg.index = reg["NODE_UID"].astype(str)
+        except Exception:
+            reg = None
+    return declared, reg, path
+
+
 def breach_heads(tree: Tree):
     """The most upstream chamber of every run whose cover is over the 12 m cap.
 
@@ -910,12 +961,42 @@ def run(root: str, nodes: gpd.GeoDataFrame, reaches: gpd.GeoDataFrame,
                      "numbers were meant to agree; in W10 they did not and the depth "
                      "difference reached 10.39 m. Reported, not resolved here.")
 
+        # ---- rung 1: WHO demands a station. READ from the levels stage, not re-derived.
+        declared, reg, reg_path = declared_stations(root, nodes, tree)
         heads, breached = breach_heads(tree)
-        fun = rec.funnel("cap breaches -> stations", len(heads))
+        residual_heads = [h for h in heads if h not in set(declared)]
 
-        # ---- rung 1: the cap, with its exits ------------------------------------------
-        placed, exits = [], {"recovers_500m": [], "outfall_1000m": []}
-        for h in heads:
+        fun = rec.funnel("station demand -> stations built",
+                         len(declared) + len(residual_heads))
+        if declared:
+            rec.note(
+                f"{len(declared):,} station(s) were DECLARED by the levels stage "
+                "(NODE_KIND='station'). This stage SIZES them; it does not re-decide them "
+                "- 'which chambers demand a station' is one published number and it comes "
+                "from one function (P2). Evidence: "
+                + (f"{reg_path} ({len(reg):,} rows)" if reg is not None else
+                   f"{reg_path} is NOT beside the layers, so the lift, the breach length "
+                   "and the two exit distances behind each station are unavailable here "
+                   "and LIFT_M is recomputed from the published inverts instead"))
+            if reg is not None:
+                only_reg = sorted(set(reg.index) - set(declared))
+                only_lay = sorted(set(declared) - set(reg.index))
+                if only_reg or only_lay:
+                    rec.note(
+                        f"the station register and the node layer DISAGREE: {len(only_reg):,} "
+                        f"rows in {STATION_DEMAND_CSV} name a node the layer does not mark "
+                        f"as a station, {len(only_lay):,} stations on the layer have no row. "
+                        "The LAYER is taken as the roster, because it is what stages 8 and 9 "
+                        "read; the register is stale and the levels stage should be re-run "
+                        "before this design is quoted.")
+        else:
+            rec.note("no node carries NODE_KIND='station', so the levels stage declared no "
+                     "station. Every station below is one THIS stage found from a cap "
+                     "breach the published layers still carry.")
+
+        # ---- the residual: a breach still standing, with its two exits ----------------
+        placed, exits = list(declared), {"recovers_500m": [], "outfall_1000m": []}
+        for h in residual_heads:
             tok, dist = cap_exit(tree, h, breached)
             if tok:
                 exits[tok].append(h)
@@ -924,6 +1005,16 @@ def run(root: str, nodes: gpd.GeoDataFrame, reaches: gpd.GeoDataFrame,
         for tok, ids in exits.items():
             if ids:
                 fun.drop(f"philosophy sec 5 exit '{tok}' applies", ids=ids)
+        n_resid = len(placed) - len(declared)
+        if n_resid:
+            rec.note(
+                f"{n_resid:,} FURTHER station(s) come from a cap breach the published "
+                "layers still carry and no philosophy sec 5 exit disposes of. On a "
+                "converged frame this is ZERO. A non-zero count means either the levels "
+                "stage has not re-run since the last station was placed, or the two "
+                "stages disagree about where the cap is breached - this stage reads cover "
+                "at the upstream END of the outgoing reach, the levels stage samples ALONG "
+                "it, and on rising ground those differ by a chamber.")
 
         # ---- consolidation: a station removes the depth on everything below it ---------
         # A run head that lies downstream of a station already placed will not be deep once
@@ -936,11 +1027,17 @@ def run(root: str, nodes: gpd.GeoDataFrame, reaches: gpd.GeoDataFrame,
         # relief attributed to a station that was then withheld is an unresolved H4 breach
         # wearing a funnel reason, which is the W10 class of failure exactly. So the funnel
         # drop is deferred until the build loop has said which stations survived.
+        #
+        # Only a RESIDUAL station can be relieved this way. A DECLARED one is already in the
+        # levels - the frame on disk was solved with it - so suppressing it would delete a
+        # station the design is already built around and leave the chamber it serves with no
+        # pump. The relief argument only holds for a station this stage is proposing onto an
+        # un-pumped stretch.
         relieved_by = {}
-        placed_set = set(placed)
+        resid_set = set(placed) - set(declared)
         for s in placed:
             for uid, _d, _i in tree.walk(s, max_m=float("inf")):
-                if uid in placed_set and uid not in relieved_by:
+                if uid in resid_set and uid not in relieved_by:
                     relieved_by[uid] = s
         placed = [s for s in placed if s not in relieved_by]
 

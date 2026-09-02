@@ -49,6 +49,29 @@ p22 Tab 6 attaches it only to laterals - the CONSERVATIVE reading is taken: the 
 tertiary path from an HCC to its chamber is capped at 45 m, and the count of plots that the
 looser reading would recover is reported rather than assumed away.
 
+TWO THINGS THIS STAGE GOT WRONG, AND WHAT REPLACED THEM (both measured on the published
+layers, both fixed 2026-09-02, neither by relaxing a guideline number).
+
+  1. IT TESTED DRAINABILITY AGAINST PLACEHOLDER LEVELS. `levels_known` was
+     `INV_M.notna().any()`, so stage 5's SEEDS - a constant 1.600 m depth on all 50,033
+     chambers, which stage 5 declares as seeds in its own manifest - passed as designed
+     levels. 5,715 plots carrying 7,194.2 m3/d (9.6 % of project load) were published as
+     "cannot drain", the largest single rejection group in the stage, against a chamber
+     invert that was GRD_M - 1.6 m everywhere by construction. The test is now the SPREAD of
+     the depths: a constant one is a seed, CAN_DRAIN stays null and no plot is refused on a
+     level test. The engineering point behind it is a doctrine point - THE DEEPEST FRONTING
+     CONNECTION IS AN INPUT TO THE CHAMBER INVERT, not a test applied after stage 6 has laid
+     every chamber at the shallowest legal depth (P6). Stage 6 owes this stage that floor.
+
+  2. IT INSPECTED ONE CANDIDATE CHAMBER PER PLOT. The frontage rule took the nearest carrier
+     and then the nearer of that one reach's two ends, and never looked at the other end or
+     at a second carrier. 4,633 plots (6,418.1 m3/d, 8.6 %) were stranded past the 45 m
+     tertiary run of which all but ~650 had a chamber INSIDE the limit that was never
+     considered. Ranking every carrier within reach and both ends of each recovers them for
+     no capital cost at all - no new chamber, no new pipe, no rule relaxed. The rejected
+     alternative is on record: clearing the same plots by uniform spacing reduction needs
+     some 16,000 extra chambers and takes the density past NAMA's own as-built 32.3/km.
+
 THE CONSEQUENCE, and it is the most useful thing this stage produces. A 45 m cap on the
 tertiary run means CHAMBER SPACING ON A FRONTED STREET IS SET BY THE TERTIARY LIMIT, NOT BY
 TABLE 12. Table 12's 100 m (G203-p30) is a maintenance maximum; it leaves a mid-block plot
@@ -101,8 +124,8 @@ import geopandas as gpd                                     # noqa: E402
 import numpy as np                                          # noqa: E402
 import pandas as pd                                         # noqa: E402
 import rasterio                                             # noqa: E402
+import shapely                                              # noqa: E402  the 2.x array API
 from shapely.geometry import LineString, Point              # noqa: E402
-from shapely.ops import nearest_points                      # noqa: E402
 from shapely.strtree import STRtree                         # noqa: E402
 
 from w11a import contract as K                              # noqa: E402  THE shared contract
@@ -186,6 +209,19 @@ HCC_OFFSET_M = 2.5        # "The HCC is usually installed 2.5 m from the propert
 PCC_MAX_DEPTH_M = 1.50    # "a minimum cover of 600 mm is required and can go up to 1.50 m
                           # depth (in square dimension 800x800)" - G203-p19 sec 3.5
 HCC_MAX_DEPTH_M = 2.00    # circular HCC "depth ranges from 1.0 m to 2.0 m" - G203-p19 sec 3.4
+
+# The least plot-boundary-to-carrier offset at which a property connection has somewhere to
+# sit. G203-p32 Table 13 "Minimum Corridor Widths" (the table runs onto p33) gives the
+# service reservation for a 200-500 mm sewer as 2.00 m, and G203-p17 sec 3.2 puts the HCC
+# "in the public right-of-way (ROW)". A plot boundary nearer than HALF that width to the
+# carrier CENTRELINE is inside the reservation, so there is no right-of-way left for a PCC.
+#
+# A PROJECT TOLERANCE, NOT A GUIDELINE NUMBER. The guideline gives the corridor width; the
+# offset is ours, derived from it, and it is declared here rather than buried inside a
+# geometry test. Its only use is to RANK candidates - a plot with no ROW-clear carrier still
+# gets its connection, published at CONFIDENCE 'provisional' with the finding recorded, so
+# the tolerance can never silently unserve a plot.
+ROW_MIN_OFFSET_M = 1.0
 
 # Minimum invert depth for the tertiary, through the CONTRACT's definition and not the
 # criteria helper. `criteria.invert_depth_min()` is 50 mm shallow against the auditor's own
@@ -556,8 +592,9 @@ class Inputs:
     reaches: gpd.GeoDataFrame
     terrain: str
     source: str = ""              # which file and layers were actually read
-    levels_known: bool = False    # are the chamber inverts published yet?
+    levels_known: bool = False    # are the chamber inverts DESIGNED yet? (not just present)
     levelled_elsewhere: str = ""  # a levelled node layer exists but has no reaches yet
+    levels_note: str = ""         # why levels_known is False when INV_M is not null
 
     @staticmethod
     def load(gpkg: Optional[str] = None, plots_path: str = PLOT_LOADS,
@@ -595,7 +632,38 @@ class Inputs:
         # The load allocation this stage produces is what the levelling stage sizes against,
         # so the two are circular and the break is deliberate: assign first, level second,
         # re-run. Nothing is guessed in between; the placeholder is declared as one.
-        levels_known = bool(pd.to_numeric(nodes["INV_M"], errors="coerce").notna().any())
+        #
+        # AND A NON-NULL INV_M IS NOT A LEVELLED NETWORK. Stage 5 SEEDS every chamber at the
+        # shallowest legal invert and says so in its own manifest ("levels and flows are
+        # stage 5 SEEDS, not design values"). On the layer read 2026-09-02 all 50,033 nodes
+        # carried DEPTH_M = 1.600 m to machine precision, so INV_M was GRD_M - 1.6 m
+        # everywhere BY CONSTRUCTION. Testing whether a plot drains against that constant and
+        # publishing the failures as "cannot drain to N..." reported 5,715 plots
+        # (7,194.2 m3/d, 9.6 % of project load) that are an artefact of the seed - the single
+        # largest rejection group in the stage, and not a design result at all. Philosophy
+        # sec 8: a check that CANNOT run is a failure; a check run on placeholder inputs and
+        # reported as a design failure is worse, because it produces a number that looks like
+        # evidence. The test is the SPREAD of the depths, not the presence of the inverts.
+        inv = pd.to_numeric(nodes["INV_M"], errors="coerce")
+        if "DEPTH_M" in nodes.columns and \
+                pd.to_numeric(nodes["DEPTH_M"], errors="coerce").notna().any():
+            dep, dep_src = pd.to_numeric(nodes["DEPTH_M"], errors="coerce"), "DEPTH_M"
+        else:
+            dep = pd.to_numeric(nodes["GRD_M"], errors="coerce") - inv
+            dep_src = "GRD_M - INV_M"
+        d = dep.dropna()
+        spread = float(d.std(ddof=0)) if len(d) else float("nan")
+        seeded = bool(len(d) > 1 and np.isfinite(spread) and spread < 1e-6)
+        levels_known = bool(inv.notna().any()) and not seeded
+        levels_note = ""
+        if seeded:
+            levels_note = (
+                f"SEEDED LEVELS, NOT DESIGNED ONES: INV_M is present but {dep_src} is "
+                f"CONSTANT at {float(d.iloc[0]):.3f} m across {len(d):,} nodes (spread "
+                f"{spread:.2e} m). These are stage 5 seeds at the shallowest legal invert. "
+                "CAN_DRAIN is left null and NO plot is rejected on a level test - the "
+                "tertiary arrivals published here are the constraint stage 6 must level the "
+                "chambers to meet, not a test to apply after it. Re-run after stage 6.")
         levelled_elsewhere = ""
         if not levels_known and seen:
             levelled_elsewhere = ("a better-levelled pair was not available; rejected: "
@@ -609,7 +677,7 @@ class Inputs:
             K.validate(reaches, "reaches", stage=STAGE)
         return Inputs(plots=plots, nodes=nodes, reaches=reaches, terrain=terrain,
                       source=src, levels_known=levels_known,
-                      levelled_elsewhere=levelled_elsewhere)
+                      levelled_elsewhere=levelled_elsewhere, levels_note=levels_note)
 
 
 class Ground:
@@ -661,6 +729,9 @@ class Frontage:
     out_node: str                  # the chamber the chain discharges at
     d_along: float                 # gate to that chamber, along the carrier
     to_us: bool                    # discharging at the carrier's upstream end
+    row_ok: bool = True            # is there a right-of-way between plot and carrier?
+    n_cand: int = 1                # candidate chambers this plot had inside the 45 m run
+    drains: int = -1               # -1 not tested (levels are seeds), else 0/1 at selection
 
     @property
     def pcs_len(self) -> float:
@@ -674,7 +745,30 @@ class Frontage:
 
 
 class Frontages:
-    """Assign every load-bearing plot to a carrier, a gate and a discharge chamber."""
+    """Assign every load-bearing plot to a carrier, a gate and a discharge chamber.
+
+    EVERY CARRIER WITHIN REACH, AND BOTH ENDS OF EACH. The rule this replaced inspected
+    exactly ONE of a plot's candidate chambers - `query_nearest(..., all_matches=False)` for
+    the nearest reach, then `st <= L - st` for the nearer of that one reach's two ends. It
+    never looked at the other end of the same reach and never at a second carrier, and on the
+    published layers that stranded 4,633 plots (6,418.1 m3/d, 8.59 % of project load) beyond
+    the 45 m tertiary run of which all but ~650 had another chamber INSIDE the limit that was
+    never considered. Zero new chambers, zero new pipe, no rule relaxed.
+
+    Both ends of a reach are manholes, which is all G203-p19 sec 3.6 asks for ("Connection to
+    the Main Sewer will be done at a manhole"), and a chamber upstream of the flow is still a
+    chamber.
+
+    RANKING - the philosophy's order, not a solver's:
+      1. it is inside the 45 m tertiary run  (G203-p22 Tab 6, Lateral Sewer)
+      2. it drains  - tested ONLY when the chamber inverts are designed levels rather than
+                      stage 5 seeds. On seeds every candidate scores equal and the choice
+                      falls through to the geometry, which is the honest answer.
+      3. shortest leg  - P6 (minimum depth) and the least OD160 in the ground
+      4. EDGE_UID, then NODE_UID  - determinism, so two runs of the same layers agree
+    A candidate with no right-of-way (offset < ROW_MIN_OFFSET_M) is dropped only when the
+    plot has a ROW-clear alternative; otherwise it is kept and flagged, never dropped.
+    """
 
     def __init__(self, inp: Inputs, rec: K.StageRecord):
         self.inp = inp
@@ -682,9 +776,17 @@ class Frontages:
         self.carriers = inp.reaches[inp.reaches.TIER.isin(CARRIER_TIERS)].reset_index(drop=True)
         self.node_xy = {r.NODE_UID: (r.geometry.x, r.geometry.y)
                         for r in inp.nodes.itertuples()}
+        self.ground = Ground(inp.terrain)
+        self.stats: Dict[str, float] = {}
 
     def build(self, plots: gpd.GeoDataFrame) -> Tuple[List[Frontage], Dict[int, str]]:
-        """Returns the frontages, and the plots that could not get one with the reason."""
+        """Returns the frontages, and the plots that could not get one with the reason.
+
+        A plot whose every candidate is over the 45 m run still gets its BEST (shortest-leg)
+        frontage back, because `Tertiary.run` turns those into the chamber requests in
+        `run/s5b_chamber_requests.csv` - coordinates the chamber stage can act on, which is
+        more use than a rejection with no location.
+        """
         rejected: Dict[int, str] = {}
         out: List[Frontage] = []
         if not len(self.carriers):
@@ -692,36 +794,113 @@ class Frontages:
                 rejected[i] = "no carrier reach of any tier exists"
             return out, rejected
 
-        geoms = list(self.carriers.geometry.values)
+        geoms = np.asarray(self.carriers.geometry.values)
         tree = STRtree(geoms)
-        us = self.carriers.US_NODE.astype(str).values
-        ds = self.carriers.DS_NODE.astype(str).values
+        # Fixed-width unicode, not pandas' object dtype: np.lexsort needs a sortable dtype
+        # and the tie-break below is what makes two runs of the same layers agree.
+        us = np.asarray(self.carriers.US_NODE.astype(str).tolist())
+        ds = np.asarray(self.carriers.DS_NODE.astype(str).tolist())
+        eid = np.asarray(self.carriers.EDGE_UID.astype(str).tolist())
+        pgs = np.asarray(plots.geometry.values)
+        pos_of = {int(i): k for k, i in enumerate(plots.index)}    # label -> array position
+        idx_of = np.asarray(plots.index)
 
-        for i, pg in zip(plots.index, plots.geometry.values):
-            hit = tree.query_nearest(pg, max_distance=CARRIER_SEARCH_M,
-                                     return_distance=False, all_matches=False)
-            hit = np.atleast_1d(hit)
-            if not hit.size:
+        # --- pass 1: enumerate every candidate carrier, vectorised -----------------------
+        # `dwithin` measures polygon-to-line distance, so a carrier crossing the plot scores
+        # 0 and is included - the same reach `query_nearest` used to return, plus all the
+        # others it discarded.
+        pairs = tree.query(pgs, predicate="dwithin", distance=CARRIER_SEARCH_M)
+        pi, ci = pairs[0].astype(np.int64), pairs[1].astype(np.int64)
+        if not pi.size:
+            for i in plots.index:
                 rejected[i] = (f"no {'/'.join(CARRIER_TIERS)} reach within "
                                f"{CARRIER_SEARCH_M:.1f} m of the plot boundary")
-                continue
-            j = int(hit[0])
-            line = geoms[j]
-            g_pt, p_pt = nearest_points(line, pg)
-            gate = (g_pt.x, g_pt.y)
-            pcc = (p_pt.x, p_pt.y)
-            offset = math.hypot(gate[0] - pcc[0], gate[1] - pcc[1])
-            hcc = _lerp(pcc, gate, min(HCC_OFFSET_M, offset))
-            st = float(line.project(g_pt))
-            L = float(line.length)
-            # Either end of the reach is a legal discharge: a chamber upstream of the flow is
-            # still a chamber, and it is often the nearer one. Both are manholes, which is
-            # what G203-p19 3.6 requires.
-            to_us = st <= (L - st)
-            out.append(Frontage(plot_i=i, reach_i=j, pcc=pcc, hcc=hcc, gate=gate,
-                                station=st, offset=offset,
-                                out_node=(us[j] if to_us else ds[j]),
-                                d_along=(st if to_us else L - st), to_us=to_us))
+            return out, rejected
+
+        sl = shapely.shortest_line(geoms[ci], pgs[pi])       # carrier end first, plot end last
+        g_pt = shapely.get_point(sl, 0)
+        p_pt = shapely.get_point(sl, -1)
+        gx, gy = shapely.get_x(g_pt), shapely.get_y(g_pt)
+        px, py = shapely.get_x(p_pt), shapely.get_y(p_pt)
+        off = np.hypot(gx - px, gy - py)
+        stn = shapely.line_locate_point(geoms[ci], g_pt)
+        rl = shapely.length(geoms[ci])
+
+        # --- pass 2: two ends per carrier ------------------------------------------------
+        n = pi.size
+        two = np.concatenate
+        k_of = two([np.arange(n), np.arange(n)])             # back-reference to the carrier
+        pi2 = pi[k_of]
+        spur = np.maximum(0.0, off - HCC_OFFSET_M)
+        d_along = two([stn, rl - stn])
+        leg = spur[k_of] + d_along
+        to_us = two([np.ones(n, bool), np.zeros(n, bool)])
+        node = np.where(to_us, us[ci[k_of]], ds[ci[k_of]])
+        off2 = off[k_of]
+
+        # Right-of-way: a candidate whose offset leaves no reservation is used only when the
+        # plot has nothing better (G203-p32 Tab 13 / p17 sec 3.2 - see ROW_MIN_OFFSET_M).
+        row_ok = off2 >= ROW_MIN_OFFSET_M
+        has_clear = np.zeros(len(pgs), bool)
+        np.logical_or.at(has_clear, pi2, row_ok)
+        usable = row_ok | ~has_clear[pi2]
+        adm = usable & (leg <= TERTIARY_MAX_LEN_M + 1e-9)
+
+        # --- the drain test, and ONLY when the levels are levels --------------------------
+        # Same arithmetic as Link.solve()'s at-chamber branch, on the same terrain point the
+        # solve uses, so the ranking and the solve cannot disagree. Skipped entirely on
+        # seeded inverts: every candidate would score identically and the sample would cost
+        # a terrain pass over every candidate for nothing.
+        drains = np.zeros(leg.size, dtype=np.int8)
+        if self.inp.levels_known:
+            inv_of = {str(r.NODE_UID): float(r.INV_M)
+                      for r in self.inp.nodes.itertuples()
+                      if pd.notna(getattr(r, "INV_M", None))}
+            grd = self.ground.at(list(zip(px.tolist(), py.tolist())))[k_of]
+            inv_n = np.array([inv_of.get(u, np.nan) for u in node], dtype="float64")
+            inv_up = (grd - PCS_MIN_INV_DEPTH_M
+                      - PCS_MIN_SLOPE_PCT / 100.0 * np.minimum(HCC_OFFSET_M, off2))
+            ok = np.isfinite(grd) & np.isfinite(inv_n)
+            drains[ok] = ((inv_up[ok] - inv_n[ok])
+                          >= RIDER_MIN_SLOPE_PCT / 100.0 * np.maximum(leg[ok], 1e-6))
+            self.stats["cand_tested_for_drainage"] = int(ok.sum())
+
+        # --- pass 3: rank, one winner per plot -------------------------------------------
+        # pref 0 = inside the run and drains, 1 = inside the run, 2 = over the run. An
+        # over-run candidate can never beat an in-run one whatever its levels say.
+        pref = np.where(adm, 1 - drains, 2).astype(np.int8)
+        order = np.lexsort((node, eid[ci[k_of]], np.round(leg, 3), pref, pi2))
+        head = np.ones(order.size, bool)
+        head[1:] = pi2[order][1:] != pi2[order][:-1]
+        win = order[head]
+
+        n_cand = np.zeros(len(pgs), dtype=np.int64)     # candidate chambers actually ranked
+        np.add.at(n_cand, pi2[usable], 1)
+
+        seen_plot = np.zeros(len(pgs), bool)
+        seen_plot[pi2[win]] = True
+        for i in plots.index:
+            if not seen_plot[pos_of[int(i)]]:
+                rejected[i] = (f"no {'/'.join(CARRIER_TIERS)} reach within "
+                               f"{CARRIER_SEARCH_M:.1f} m of the plot boundary")
+
+        for w in win:
+            k = int(k_of[w])
+            p = int(pi2[w])
+            o = float(off2[w])
+            gate = (float(gx[k]), float(gy[k]))
+            pcc = (float(px[k]), float(py[k]))
+            out.append(Frontage(
+                plot_i=int(idx_of[p]), reach_i=int(ci[k]), pcc=pcc,
+                hcc=_lerp(pcc, gate, min(HCC_OFFSET_M, o)), gate=gate,
+                station=float(stn[k]), offset=o, out_node=str(node[w]),
+                d_along=float(d_along[w]), to_us=bool(to_us[w]),
+                row_ok=bool(row_ok[w]), n_cand=int(n_cand[p]),
+                drains=(int(drains[w]) if self.inp.levels_known else -1)))
+
+        self.stats["candidate_carriers"] = int(n)
+        self.stats["candidate_chambers"] = int(leg.size)
+        self.stats["plots_with_no_row_clear_carrier"] = int(sum(1 for f in out if not f.row_ok))
         return out, rejected
 
 
@@ -781,6 +960,7 @@ class Tertiary:
         self.rows: List[Dict] = []
         self.geoms: List[LineString] = []
         self.requests: List[Dict] = []       # chambers and corridors the layout owes us
+        self.chambers_to_add: List[Dict] = []  # ... the same requests, clustered, one per MH
         self.unassigned: List[Dict] = []     # every plot named, never subtracted
         self.degenerate: List[str] = []      # plots the corridor runs through
         self._n = 0
@@ -828,6 +1008,7 @@ class Tertiary:
 
         fr = Frontages(self.inp, self.rec)
         frontages, rejected = fr.build(plots)
+        self.stats.update(fr.stats)
         if rejected:
             fn.drop(f"no carrier within {CARRIER_SEARCH_M:.1f} m",
                     ids=plots.loc[list(rejected), "PLOT_ID"].tolist())
@@ -842,16 +1023,30 @@ class Tertiary:
             fn.drop(f"no chamber within the {TERTIARY_MAX_LEN_M:.0f} m tertiary run "
                     "(G203-p22 Tab 6)",
                     ids=plots.loc[[f.plot_i for f in reach_over], "PLOT_ID"].tolist())
+            q_of = pd.to_numeric(plots["Q_AVG_M3D"], errors="coerce").fillna(0.0).to_dict()
+            self.chambers_to_add = self._cluster_chambers(reach_over, q_of)
+            req_of = {f.plot_i: c["CH_REQ"] for c in self.chambers_to_add
+                      for f in c.pop("_members")}
             for f in reach_over:
                 row = plots.loc[f.plot_i]
+                req = req_of.get(f.plot_i, "")
+                fix = (f"a chamber is requested at {req} (G203-p18 note under Tab 4: 'If "
+                       "necessary, a manhole will be added')" if req else
+                       f"the {f.offset:.1f} m offset alone exceeds the "
+                       f"{TERTIARY_MAX_LEN_M:.0f} m allowance, so NO chamber on this carrier "
+                       "reaches it - it needs a nearer corridor (stage 2) or another system "
+                       "(philosophy sec 8a)")
                 self._name_unassigned(plots.loc[[f.plot_i]],
                                       f"nearest chamber {f.leg_len:.1f} m away along the "
-                                      f"tertiary path, over the {TERTIARY_MAX_LEN_M:.0f} m "
-                                      f"limit (G203-p22 Tab 6)")
+                                      f"tertiary path, over all {f.n_cand:,} candidate "
+                                      f"chambers within {CARRIER_SEARCH_M:.1f} m - past the "
+                                      f"{TERTIARY_MAX_LEN_M:.0f} m limit (G203-p22 Tab 6); "
+                                      + fix)
                 self.requests.append(dict(PLOT_ID=str(row.PLOT_ID), X=f.gate[0], Y=f.gate[1],
                                           REACH=str(self.carriers.EDGE_UID.iloc[f.reach_i]),
                                           STATION_M=round(f.station, 2),
                                           SHORT_BY_M=round(f.leg_len - TERTIARY_MAX_LEN_M, 2),
+                                          CH_REQ=req_of.get(f.plot_i, ""),
                                           ISSUE="beyond the 45 m tertiary run"))
         # The finding, made actionable. A plot beyond the 45 m tertiary run is not a plot
         # problem, it is a chamber the layout does not have - so what goes back to the
@@ -922,7 +1117,7 @@ class Tertiary:
         np_of = pd.to_numeric(plots["N_PROP"], errors="coerce").fillna(0.0).to_dict()
 
         carriers = self.carriers
-        n_backdrop = n_nodrain = n_deep = n_grd_fallback = 0
+        n_backdrop = n_nodrain = n_deep = n_grd_fallback = n_no_row = n_stub_at_ch = 0
         shortfall: List[float] = []      # how far below the flow line a failed arrival lands
         gi = 0
 
@@ -973,25 +1168,51 @@ class Tertiary:
                     tail = _substring(line, f.station, float(end_station))
                 head = [f.hcc] if is_future else [f.pcc, f.hcc]
                 coords = _clean(head + [f.gate] + tail)
+                stub_at_chamber = False
+                if is_future and f.row_ok and (len(coords) < 2
+                                               or LineString(coords).length < 0.05):
+                    # A STUB WHOSE PLOT IS AT THE CHAMBER - not a plot with no right-of-way.
+                    # A stub starts at the HCC 2.5 m into the ROW and has no PC sewer, so
+                    # when the plot boundary is inside that 2.5 m AND the gate lands on the
+                    # discharge point the drawn chain has nowhere to go and collapses to a
+                    # point. That is not a corridor fault: the plot is AT a chamber, and
+                    # G203-p19 sec 3.4 says what the connection is - "Chambers are to be
+                    # provided with stubs / plugged ports for the future connections". The
+                    # stub IS the port. Re-drawn from the plot boundary so there is a
+                    # geometry to publish (at most the 2.5 m of G203-p17 sec 3.2), and the
+                    # row says so. Measured 2026-09-02: 411 of the 416 plots this branch
+                    # used to refuse were stubs of exactly this kind - 411 plots standing on
+                    # a manhole, reported as having no right-of-way to it.
+                    coords = _clean([f.pcc, f.gate] + tail)
+                    stub_at_chamber = True
                 if len(coords) < 2 or LineString(coords).length < 0.05:
-                    # The whole chain has collapsed to a point, which happens only when the
-                    # carrier runs through or along the plot boundary AND its gate lands on
-                    # the chamber. That is not a plot with a very short connection - it is a
-                    # CORRIDOR fault: there is no right-of-way between the plot and the pipe,
-                    # so there is nowhere to put the PCC or the HCC. It goes back to the
-                    # corridor stage named, and the next member up still discharges where
-                    # this one would have.
+                    # The whole chain has collapsed to a point: the carrier runs through or
+                    # along the plot boundary AND its gate lands on the chamber. There is no
+                    # geometry to publish - a zero-length LineString is not a pipe - so the
+                    # plot is named and the finding goes back to the corridor stage, and the
+                    # next member up still discharges where this one would have.
+                    #
+                    # THE FAULT IS THE OFFSET, NOT THE COLLAPSE, and that distinction used to
+                    # be lost here: this test fired only when the gate ALSO happened to land
+                    # on the chosen chamber, so on the layers read 2026-09-02 3,086 plots had
+                    # an offset under 5 mm and 2,055 of them were published anyway - the same
+                    # right-of-way fault accepted and refused in the same run. The offset is
+                    # now tested where it belongs, in the candidate ranking
+                    # (ROW_MIN_OFFSET_M), so a plot only reaches this branch when it had NO
+                    # right-of-way-clear carrier at all.
                     why = (f"the carrier runs through or along the plot boundary (offset "
-                           f"{f.offset:.2f} m) and its gate lands on the chamber - no "
-                           f"right-of-way for a property connection chamber; the corridor "
-                           f"needs re-cutting")
+                           f"{f.offset:.2f} m, and G203-p32 Tab 13 reserves 2.00 m for a "
+                           f"200-500 mm sewer) and its gate lands on the chamber - no "
+                           f"right-of-way for a property connection chamber on ANY of the "
+                           f"{f.n_cand:,} carriers in range; the corridor needs re-cutting")
                     self._name_unassigned(plots.loc[[f.plot_i]], why)
                     self.degenerate.append(pid_of.get(f.plot_i, ""))
                     self.requests.append(dict(PLOT_ID=pid_of.get(f.plot_i, ""),
                                               X=f.gate[0], Y=f.gate[1],
                                               REACH=str(carriers.EDGE_UID.iloc[rd.reach_i]),
                                               STATION_M=round(f.station, 2),
-                                              SHORT_BY_M=0.0, ISSUE="corridor through plot"))
+                                              SHORT_BY_M=0.0, CH_REQ="",
+                                              ISSUE="corridor through plot"))
                     continue
                 geom = LineString(coords)
 
@@ -1066,6 +1287,11 @@ class Tertiary:
 
                 why = ("assigned; capped stub-out at the frontage, plot not yet built "
                        "(G203-p19 3.4)" if is_future else "assigned")
+                if stub_at_chamber:
+                    n_stub_at_ch += 1
+                    why = ("assigned; the plot stands AT the chamber - the stub-out is the "
+                           "chamber's own plugged port (G203-p19 3.4), not a length of pipe, "
+                           f"and the {f.offset:.2f} m drawn is the boundary-to-carrier spur")
                 if not link.can_drain:
                     why = f"cannot drain to {rd.out_node}: {link.note}"
                     self._name_unassigned(plots.loc[[f.plot_i]], why)
@@ -1074,6 +1300,30 @@ class Tertiary:
                 if not self.levels_known:
                     why += ("; LEVELS PENDING - gradient is the G203-p18 Tab 5 minimum, not a "
                             "solve, and the arrival at the chamber is unchecked")
+
+                # NO RIGHT-OF-WAY, published rather than dropped. The plot's every candidate
+                # carrier sits inside its own service reservation (G203-p32 Tab 13: 2.00 m
+                # for a 200-500 mm sewer), so there is no room for the PCC that G203-p17
+                # sec 3.2 puts "in the public right-of-way". Dropping it would unserve a plot
+                # over OUR tolerance, not the guideline's (see ROW_MIN_OFFSET_M); publishing
+                # it silently would hide a real corridor fault. So it is published, its
+                # CONFIDENCE is knocked down to provisional - never laundered upward,
+                # contract P6 - and the finding travels on the row.
+                conf_row = conf
+                if not f.row_ok:
+                    conf_row = "provisional"
+                    n_no_row += 1
+                    why += (f"; NO RIGHT-OF-WAY - the plot boundary is {f.offset:.2f} m from "
+                            f"the carrier centreline and G203-p32 Tab 13 reserves 2.00 m, so "
+                            "the corridor needs re-cutting before this one is built "
+                            "(CONFIDENCE downgraded to provisional)")
+                    self.requests.append(dict(PLOT_ID=pid_of.get(f.plot_i, ""),
+                                              X=f.gate[0], Y=f.gate[1],
+                                              REACH=str(carriers.EDGE_UID.iloc[rd.reach_i]),
+                                              STATION_M=round(f.station, 2),
+                                              SHORT_BY_M=round(ROW_MIN_OFFSET_M - f.offset, 2),
+                                              CH_REQ="", ISSUE="no right-of-way beside the "
+                                              "carrier"))
 
                 for _c in range(n_conn):
                     # A second connection is a SECOND PIPE, so it is offset into its own
@@ -1097,7 +1347,7 @@ class Tertiary:
                         # null, not 1: "not checked" and "checked and it drains" are
                         # different answers, and only one of them is a design statement.
                         CAN_DRAIN=(int(link.can_drain) if self.levels_known else None),
-                        SRC=src, CONFIDENCE=conf, STAGE=STAGE,
+                        SRC=src, CONFIDENCE=conf_row, STAGE=STAGE,
                         PACKAGE=pkg, PHASE=phase))
                     self.geoms.append(g_c)
 
@@ -1109,7 +1359,9 @@ class Tertiary:
 
         self.stats.update(backdrops=n_backdrop, cannot_drain=n_nodrain,
                           chambers_over_2m=n_deep,
-                          ground_from_chamber=n_grd_fallback)
+                          ground_from_chamber=n_grd_fallback,
+                          published_without_row=n_no_row,
+                          stub_is_a_port_on_the_chamber=n_stub_at_ch)
         if shortfall:
             # The actionable half of "cannot drain": how much shallower the chamber would
             # have to sit. A 0.10 m answer is a levelling decision for stage 5; a 2 m answer
@@ -1118,6 +1370,94 @@ class Tertiary:
                 else np.array([0.0])
             self.stats["nodrain_shortfall_median_m"] = round(float(np.median(s)), 2)
             self.stats["nodrain_shortfall_max_m"] = round(float(s.max()), 2)
+
+    # ---- the guideline's own remedy for an over-long run -------------------------------
+    def _cluster_chambers(self, over: List[Frontage],
+                          q_of: Dict[int, float]) -> List[Dict]:
+        """One REQUESTED chamber per cluster of stranded gates on the same carrier.
+
+        G203-p18, the note under Table 4, gives the remedy in the guideline's own words:
+
+            "The length of the PCS should not exceed 50 m in order to allow maintenance.
+             IF NECESSARY, A MANHOLE WILL BE ADDED."
+
+        So a plot the geometry strands past the 45 m run of G203-p22 Tab 6 is answered with a
+        chamber, not with a relaxation of the limit and not with a blanket reduction in
+        spacing. This clusters the stranded gates so the answer is the SMALLEST set of
+        chambers that clears them, and it is targeted rather than uniform: clearing the same
+        plots by cutting mean spacing to the p90 offset needs some 16,000 extra chambers and
+        takes the density past NAMA's own as-built 32.3 chambers/km.
+
+        A chamber at station t clears a plot whose gate is at station s and whose spur across
+        the offset is `spur` only if  spur + |t - s| <= 45. The feasible t for a cluster is
+        therefore the INTERSECTION of those intervals, and a cluster is closed the moment the
+        intersection empties. A plot whose spur alone exceeds 45 m has no feasible t at all -
+        no chamber on that carrier can reach it - and it is reported as such rather than
+        counted into a chamber that would not help it.
+
+        This stage REQUESTS; it does not mint. The chambers are stage 5's to place, against
+        Table 12 spacing (G203-p30) and the merge radius, and every request carries the
+        right-of-way question with it: these gates sit a long way back from the carrier, and
+        G203-p17 sec 3.2 puts the connection in the public right-of-way.
+        """
+        by_reach: Dict[int, List[Frontage]] = {}
+        for f in over:
+            by_reach.setdefault(f.reach_i, []).append(f)
+        out: List[Dict] = []
+        n = 0
+        for ri, fs in sorted(by_reach.items()):
+            line = self.carriers.geometry.iloc[ri]
+            L = float(line.length)
+            eid = str(self.carriers.EDGE_UID.iloc[ri])
+            fs.sort(key=lambda f: f.station)
+            cluster: List[Frontage] = []
+            lo = hi = 0.0
+
+            def close(cl: List[Frontage], a: float, b: float) -> None:
+                nonlocal n
+                if not cl:
+                    return
+                n += 1
+                t = min(max(0.5 * (a + b), 0.0), L)
+                p = line.interpolate(t)
+                legs = [max(0.0, f.offset - HCC_OFFSET_M) + abs(f.station - t) for f in cl]
+                out.append(dict(
+                    CH_REQ=f"R{n:05d}", REACH=eid, STATION_M=round(t, 2),
+                    X=round(p.x, 3), Y=round(p.y, 3), N_PLOTS=len(cl),
+                    Q_ADF_M3D=round(sum(q_of.get(f.plot_i, 0.0) for f in cl), 3),
+                    MAX_LEG_M=round(max(legs), 2),
+                    OFFSET_MED_M=round(float(np.median([f.offset for f in cl])), 2),
+                    WHY=("G203-p18 note under Tab 4: 'If necessary, a manhole will be "
+                         "added'. These plots have no chamber inside the 45 m tertiary "
+                         "run of G203-p22 Tab 6 on ANY carrier within "
+                         f"{CARRIER_SEARCH_M:.1f} m"),
+                    ROW_QUESTION=("the connection runs "
+                                  f"{float(np.median([f.offset for f in cl])):.0f} m from the "
+                                  "plot boundary to the carrier; G203-p17 sec 3.2 puts it in "
+                                  "the public right-of-way - confirm one exists across that "
+                                  "land before building"),
+                    _members=list(cl)))
+
+            for f in fs:
+                a = TERTIARY_MAX_LEN_M - max(0.0, f.offset - HCC_OFFSET_M)
+                if a < 0.0:
+                    # The offset alone has spent the whole allowance. No chamber ON THIS
+                    # CARRIER reaches it - it needs a nearer corridor (stage 2) or another
+                    # system (philosophy sec 8a), and saying "add a manhole" would be wrong.
+                    close(cluster, lo, hi)
+                    cluster, lo, hi = [], 0.0, 0.0
+                    continue
+                nlo, nhi = max(lo, f.station - a), min(hi, f.station + a)
+                if not cluster:
+                    cluster, lo, hi = [f], f.station - a, f.station + a
+                elif nlo <= nhi:
+                    cluster.append(f)
+                    lo, hi = nlo, nhi
+                else:
+                    close(cluster, lo, hi)
+                    cluster, lo, hi = [f], f.station - a, f.station + a
+            close(cluster, lo, hi)
+        return out
 
     @staticmethod
     def _connections_needed(qadf_m3d: float, slope_pct: float) -> int:
@@ -1198,14 +1538,17 @@ def summarise(gdf: gpd.GeoDataFrame, t: Tertiary, fn_line: str) -> str:
         L += [
             "",
             "  +-----------------------------------------------------------------------+",
-            "  | LEVELS PENDING. The chamber layer carries no INV_M, so the gradients   |",
-            "  | below are the G203-p18 Tab 5 MINIMA declared as placeholders, not a    |",
-            "  | solve, and CAN_DRAIN is null - not checked, which is not the same as   |",
-            "  | checked and passing. What IS designed here is the ASSIGNMENT: which    |",
-            "  | plot enters the network at which chamber, by what route, over what     |",
-            "  | length. The levelling stage needs exactly that to accumulate flow, so  |",
-            "  | the order is assign -> level -> RE-RUN THIS STAGE, and the re-run      |",
-            "  | replaces every placeholder with a solve.                               |",
+            "  | LEVELS PENDING. The chamber inverts are absent, or they are stage 5    |",
+            "  | SEEDS - one constant depth on every chamber. So the gradients below    |",
+            "  | are the G203-p18 Tab 5 MINIMA declared as placeholders, not a solve,   |",
+            "  | and CAN_DRAIN is null: not checked, which is not the same as checked   |",
+            "  | and passing. NO PLOT IS REJECTED ON A LEVEL TEST HERE. The tertiary    |",
+            "  | arrivals are the CONSTRAINT stage 6 must level the chambers to meet,   |",
+            "  | not a test to apply after it. What IS designed here is the ASSIGNMENT: |",
+            "  | which plot enters the network at which chamber, by what route, over    |",
+            "  | what length. The levelling stage needs exactly that to accumulate      |",
+            "  | flow, so the order is assign -> level -> RE-RUN THIS STAGE, and the    |",
+            "  | re-run replaces every placeholder with a solve.                        |",
             "  +-----------------------------------------------------------------------+",
         ]
     L += [
@@ -1235,13 +1578,28 @@ def summarise(gdf: gpd.GeoDataFrame, t: Tertiary, fn_line: str) -> str:
         "  backdrops / drainability   NOT CHECKED - waiting on the chamber inverts",
     ]) + [
         "",
+        "  CHAMBER SELECTION",
+        f"    candidate carriers examined        "
+        f"{int(t.stats.get('candidate_carriers', 0)):,}"
+        f"   (every {'/'.join(CARRIER_TIERS)} within {CARRIER_SEARCH_M:.1f} m)",
+        f"    candidate chambers ranked          "
+        f"{int(t.stats.get('candidate_chambers', 0)):,}"
+        f"   (both ends of each - G203-p19 3.6 wants a manhole, either end is one)",
+        "",
         "  BACK TO THE CHAMBER STAGE",
         f"    plots beyond the {TERTIARY_MAX_LEN_M:.0f} m tertiary run   "
-        f"{sum(1 for r in t.requests if r['ISSUE'].startswith('beyond')):,}",
+        f"{sum(1 for r in t.requests if r['ISSUE'].startswith('beyond')):,}"
+        f"   on EVERY carrier in range",
+        f"    ... chambers that would clear them {len(t.chambers_to_add):,}"
+        "   (G203-p18 Tab 4 note: 'a manhole will be added')",
         f"    carrier runs through the plot      "
         f"{sum(1 for r in t.requests if r['ISSUE'] == 'corridor through plot'):,}"
         f"   (a corridor fault, not a chamber one)",
-        "    ... coordinates for both in run/s5b_chamber_requests.csv",
+        f"    published with NO right-of-way     "
+        f"{int(t.stats.get('published_without_row', 0)):,}"
+        f"   (offset < {ROW_MIN_OFFSET_M:.1f} m on every carrier; CONFIDENCE provisional)",
+        "    ... coordinates in run/s5b_chamber_requests.csv, one row per chamber in",
+        "        run/s5b_chambers_to_add.csv",
         f"    shortfall, median / worst          "
         f"{t.stats.get('shortfall_median_m', 0)} / {t.stats.get('shortfall_max_m', 0)} m",
         f"    plot offset from its carrier       "
@@ -1308,6 +1666,9 @@ def build(gpkg: Optional[str] = None, root: str = W11A_ROOT, plots_path: str = P
         if inp.levelled_elsewhere:
             rec.note("LEVELLED NODES EXIST ELSEWHERE: " + inp.levelled_elsewhere)
             print("  ! " + inp.levelled_elsewhere)
+        if inp.levels_note:
+            rec.note(inp.levels_note)
+            print("  ! " + inp.levels_note)
         if not inp.levels_known:
             rec.note("LEVELS PENDING: the chamber layer carries no INV_M, so every "
                      "SLOPE_LAID is the G203-p18 Tab 5 minimum DECLARED as a placeholder and "
@@ -1339,7 +1700,18 @@ def build(gpkg: Optional[str] = None, root: str = W11A_ROOT, plots_path: str = P
         if t.requests:
             cr = os.path.join(run_dir, "s5b_chamber_requests.csv")
             pd.DataFrame(t.requests).to_csv(cr, index=False, encoding="utf-8")
-            rec.wrote("chamber requests", cr, len(t.requests))
+            rec.wrote("chamber requests (one row per plot)", cr, len(t.requests))
+        if t.chambers_to_add:
+            # The same finding as ONE ROW PER CHAMBER, which is what stage 5 can act on.
+            # G203-p18, note under Tab 4: "If necessary, a manhole will be added."
+            ca = os.path.join(run_dir, "s5b_chambers_to_add.csv")
+            pd.DataFrame(t.chambers_to_add).to_csv(ca, index=False, encoding="utf-8")
+            rec.wrote("chambers to add (clustered)", ca, len(t.chambers_to_add))
+            rec.metric("chambers_requested", len(t.chambers_to_add))
+            rec.metric("chambers_requested_plots",
+                       int(sum(c["N_PLOTS"] for c in t.chambers_to_add)))
+            rec.metric("chambers_requested_m3d",
+                       round(float(sum(c["Q_ADF_M3D"] for c in t.chambers_to_add)), 1))
 
         rec.metric("tertiary_km", round(K.value("tertiary_km", gdf), 3))
         rec.metric("tertiary_km_drainable", round(K.value("tertiary_km_drainable", gdf), 3))
