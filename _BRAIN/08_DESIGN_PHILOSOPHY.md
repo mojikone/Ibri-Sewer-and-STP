@@ -13,8 +13,7 @@ merged.**
 This document is binding on every network design in this project. Where it conflicts with
 `02`, `02` wins — a criterion is a rule of law and this is a rule of judgement.
 
-**Status: DRAFT, 2026-09-02.** Sections 8 and 9 await the software and cost research now
-running. Everything else rests on measurements made in W8, W10 and NAMA's as-built network,
+**Status: 2026-09-02.** Section 9 complete. Section 8 awaits the cost research now running. Everything else rests on measurements made in W8, W10 and NAMA's as-built network,
 and every claim carries where it came from.
 
 ---
@@ -78,18 +77,31 @@ sub main, sub mains join the trunk. Measured on NAMA's properly labelled package
 1,123 pipes — everything there parses as a lateral because no other label exists. In the
 labelled packages the chain is **median 2, max 5**.
 
-**3.2 Long runs beat short ones.** Every junction is a chamber, a bend, a cost and a place
-to block. Maximise the distance between junctions subject to Table 12 spacing. Target the
-as-built's median run of 88 m or better; W10 achieved 76 m with 3.5 junctions per km.
+**3.2 Long runs beat short ones — but chamber spacing is capped by the jetting truck, not
+by hydraulics.** Every junction is a chamber, a cost and a place to block, so maximise the
+distance between junctions. The cap is an operations rule and every adoption standard says
+so: **90 m** manhole-to-manhole (Water UK DCG), **120 m** for ≤375 mm and **150 m** for
+450–750 mm (Ten States). WEF MOP 60: *"this must be coordinated with the capabilities of the
+utility's cleaning equipment."* Target the as-built's median run of 88 m or better; W10
+achieved 76 m with 3.5 junctions per km — **and a longest reach of 6,541 m, roughly fifty
+times outside every adoption standard in the English-speaking world.**
 
-**3.3 No fingers.** A dead-end reach under ~60 m serving nothing is an artefact of routing,
-not a design. Prune it or absorb it into its neighbour. W10 carried **4,041 fingers,
-126 km**.
+**3.3 No fingers — and this rule is OURS, not a standard.** A dead-end reach under ~60 m
+serving nothing is an artefact of routing. Prune it or absorb it into its neighbour. W10
+carried **4,041 fingers, 126 km**.
 
-**3.4 Mains run straight.** A main pipe follows a through-route and changes direction as
-little as the street allows. Bends on a main are chambers, head loss and maintenance. W10
-had no bend rule at all and put 2,372° of direction change into its DN900+ pipes, one reach
-turning 165°.
+*Stated honestly because it will be challenged:* **no adoption standard prohibits dead ends
+or short branches.** They price them instead — every branch head needs an adopted chamber,
+and Water UK DCG B5.2.5 relaxes the requirement below three properties. If we penalise short
+branches it is on cost grounds, and it must never be cited to a standard.
+
+**3.4 Straight and uniform between chambers.** Stronger than a preference — it is unanimous
+across the adoption standards. Ten States §33.5: *"straight alignment between manholes …
+checked by laser beam or lamping"*, and §33.44: *"uniform slope between manholes"*. Water UK
+DCG B4.2 requires straight in **both plan and profile**. Curves are a size-gated exception
+(>600 mm, beginning and ending at manholes). So a main follows a through-route and changes
+direction at a chamber, never between. W10 had no bend rule at all and put 2,372° of
+direction change into its DN900+ pipes, one reach turning 165°.
 
 **3.5 Sub mains belong on through-streets.** Chaining a sub main through small residential
 roads to save length produces many bends and a route no jetting crew can work. This is
@@ -123,7 +135,8 @@ paying for; it is not worth a pumping station.
 
 **4.4 On steep ground, the pipe does not follow the cliff.** Where the ground falls faster
 than the maximum-velocity gradient, the pipe holds its gradient and the difference is taken
-at a **drop chamber**. W10 had no such rule: it let the pipe follow the ground to a laid
+at a **drop chamber** — **ramped, not vertical** (DCG B5.2.27), used only where a steeper
+gradient is impractical (Ten States triggers a drop at ≥610 mm). W10 had no such rule: it let the pipe follow the ground to a laid
 gradient of **980 %**, put 43 reaches over the 3.0 m/s maximum, and published `SLOPE_PCT`
 as the *minimum required* gradient, so none of it was visible.
 
@@ -163,7 +176,9 @@ cheaper.** This is the one case where objective 4 outranks objective 5.
 ## 6. Sizing philosophy
 
 **6.1 The diameter is set by the flow, never by the depth you want.** G203-p29: *"Sewers
-shall not be oversized to facilitate flatter slopes."* Every pipe records **what set its
+shall not be oversized to facilitate flatter slopes."* **This is not an Omani quirk** — Ten
+States §33.43 says the same thing independently: *"Flatter slopes shall not be justified with
+oversize sewers."* Two unrelated codes, one sentence. Every pipe records **what set its
 diameter** — capacity, d/D limit, velocity, or the ultimate-flow horizon. "Depth" is not an
 admissible answer.
 
@@ -207,15 +222,100 @@ survive it.*
 
 ---
 
-## 9. What the design software actually does
+## 9. What the design software actually does — and does not
 
-*Awaiting research into SewerGEMS, InfoDrainage, InfoWorks and Civil 3D: the constraint set,
-the priority order, whether the engine iterates and in which direction, how it treats steep
-and flat ground, and — importantly — what it does NOT do, since none of them chooses a
-layout. Also the optimisation literature's consensus on the objective function and on
-whether layout and sizing can be separated.*
+Researched 2026-09-02 across Bentley SewerGEMS/SewerCAD, Autodesk InfoDrainage and Civil 3D,
+Innovyze InfoWorks ICM and InfoSewer, and the sewer-optimisation literature. Full account and
+citations: `W10/docs/research/SEWERGEMS_DESIGN_METHOD.md` and `DESIGN_ENGINES_COMPARED.md`.
 
----
+**9.1 The finding that matters most: not one of them chooses a layout.** [Certain, four
+independent vendors] Every engine sizes and levels a layout the engineer hands it. **A solver
+can referee our hydraulics and can never referee our routing** — which is exactly why §1 puts
+buildability above hydraulic minimality, and why stages 1–5 of §2 finish before any solver
+runs.
+
+**9.2 Bentley alone publishes its rule priority, and it is a real ranking.** Verbatim,
+identical in SewerCAD and SewerGEMS:
+
+| | Constraint |
+|---|---|
+| 1 | Pipe fits within adjacent **existing** structures |
+| 2 | Pipe crown not above an adjacent **designed** structure |
+| 3 | Capacity ≥ discharge |
+| 4 | Downstream pipe ≥ upstream pipe in size |
+| 5 | **Downstream** invert/crown matching |
+| 6 | **Minimum cover** |
+| 7 | **Upstream** invert/crown matching |
+| 8 | **Maximum slope** |
+
+Genuinely ordered: every entry that names an overriding rule names one *earlier*
+("because of higher design priorities, such as the pipe fitting within existing structures,
+the matching criteria may not always be met"). Minimum velocity and minimum slope act but are
+unranked. **Maximum cover and maximum velocity are explicitly demoted** as "may be too
+limiting"; tractive stress ranks below both.
+
+**ADOPT the artefact. REJECT that demotion.** A written ranking with the winner recorded on
+every reach is the most transferable thing in this research and we have no equivalent — W10
+shipped 45.92 km below minimum cover partly because nothing stated which rule yields. But for
+Bentley maximum cover is a preference; **for us it is the 12 m rule, the single constraint
+that decides whether a pumping station exists.** It cannot be demoted.
+
+**9.3 The order of operations, and the reverse pass.** Bentley runs a **forward pass
+upstream→downstream, then a separate reverse pass downstream→upstream**. Two passes, fixed,
+**no published convergence criterion**. The forward pass answers "size first or level first"
+with *neither*: **bracket the diameter range → level → size for capacity → re-level**. The
+reverse pass has no sizing, cover or capacity step; its first action adjusts the *structure*
+elevation to match the conduit invert — **the manhole yields to the pipe**. Reconciliation,
+not re-optimisation.
+
+Two details to copy exactly: **"adjust both ends"** — translate the pipe rigidly rather than
+rotating it, which preserves a gradient decision, and for us preserves the round 0.05 % step
+the drawing depends on; and the reverse pass is **four operations, not a re-solve** —
+precisely the class of cheap check that would have caught our minimum-cover failure.
+
+*Caveat kept deliberately:* the detailed step sequence sits under a heading reading
+"(StormCAD Only)", though it ships in all three products' help and Bentley's own article is
+titled for SewerCAD too. Rated [Likely]. **Never write "SewerGEMS performs 22 steps" into a
+client document without that footnote.**
+
+**9.4 What the other engines add.**
+
+| | InfoDrainage | Civil 3D | InfoWorks ICM 2027 | InfoSewer | SewerGEMS |
+|---|---|---|---|---|---|
+| Optimises | shallowest trench | nothing | a penalty score, **not cost** | "cost", undefined | minimum excavation |
+| Priority published | **no** | yes, 3 levels | no | no | **yes, 8 levels** |
+| Iteration | one downstream sweep, **no reverse pass** | one-directional | unpublished | one pipe at a time | **forward + reverse** |
+| Chooses layout | no | no | no | no | **no** |
+
+Convergent across four vendors: the objective is **minimum excavation**, the method is a
+**greedy downstream sweep with local search over (slope, diameter)**, and layout is always
+the engineer's. **Nobody ships a global optimiser.** One InfoSewer behaviour to avoid: on
+failure it stops the entire downstream branch.
+
+**9.5 The literature, and where it disagrees with the manuals.** The standard objective
+(de Villiers et al. 2017, after Moeini & Afshar 2012) prices pipe as a function of **diameter
+and mean cover depth**, and manholes by depth — excavation is never a separate term, which is
+why "minimise excavation" and "minimise cost" collapse into one for a fixed layout. **But WEF
+MOP FD-5 §6.1 requires the lowest ANNUAL cost** — life-cycle, not capital. The academic
+literature almost never optimises life-cycle; the manual of practice does, and **our settled
+NPV-at-5 %-over-25-years method sides with the manual.** All three formulations agree on one
+thing: **station count is not an objective.**
+
+**On separating layout from sizing** the literature openly disagrees. de Villiers et al.
+(2018): *"the sub-problems have to be solved simultaneously."* Duque et al. (2020): *"This
+separation allows for tractability of the problem **at the price of design optimality**."*
+Separation is theoretically wrong and practically universal. **Our justification must be
+stated, not assumed**: our layout is nearly determined already — corridors are roads, dual
+carriageways excluded, the trunk is an input — so the price is small here. The mature third
+way (Duque et al. 2020) separates but gives the layout stage a **cost surrogate refined by
+feedback from the sizing stage**, and that is what the two-pass method in §7 should become.
+
+**On depth versus pumping**, Li & Matthew (1990) find the optimum is a *balance* between
+excavation depth and the number of online pumping stations, and that **relaxing the maximum
+depth constraint reduces the station count.** That independently corroborates our own
+measurement — 10 m cover gives 16 stations but 3,095 m of lift, 14 m gives 2,247 m — and
+confirms §5: total lift is the honest measure, station count an artefact of where the limit
+is drawn.
 
 ## 10. How to know you followed this
 
