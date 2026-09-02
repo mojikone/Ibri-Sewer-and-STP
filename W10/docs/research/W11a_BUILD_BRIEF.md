@@ -1,4 +1,13 @@
-# W11a — the design philosophy, before any code
+# W11a — the BUILD BRIEF
+
+**This is not the design philosophy.** The one binding philosophy is
+`_BRAIN/08_DESIGN_PHILOSOPHY.md`; most of what was drafted here was folded into it on
+2026-09-02, and where the two differ **`08` governs**. What remains useful here is the
+*execution* half: the seven-stage build order with a gate on each, the audit contract to
+build first, and the decisions needed from the engineer before stage 1.
+
+Renamed from `W11a_BUILD_BRIEF.md` on 2026-09-02 — two files with "philosophy" in the title
+is exactly the drift the split between `02` and `08` exists to prevent.
 
 Written 2026-09-01, after four research strands and an audit of W10 against W8's own check
 registry. The instruction was to settle the logic first rather than build and patch, because

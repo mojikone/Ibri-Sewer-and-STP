@@ -118,7 +118,7 @@ every reach — 0.30 m at DN200, 1.30 m at DN1200. Measured cost: 219 breaches t
    12 m, with no exceptions … The limit applies to every chamber AND to the trench between
    chambers."* That is depth. `08` changes it to cover — up to 1.3 m per reach — and records
    no supersession anywhere.
-3. **It settles a question explicitly reserved for the user.** `W11a_PHILOSOPHY.md`, "What
+3. **It settles a question explicitly reserved for the user.** `W11a_BUILD_BRIEF.md`, "What
    needs your decision before stage 1", decision 3: *"The depth limit. Hard 12 m to invert, or
    10–12 m of cover as G203-p33 frames it? Cost of getting it wrong: 20 % of the pumping."*
    `T02` §15 lists the same item among the things the guideline does not decide: *"A single
@@ -174,10 +174,10 @@ numbers. Four cannot be found.
 | §1 "a trunk that carried a main on only **21 %** of its length" | nowhere. The only 21 % in the corpus is a **sub main's own length as a share of its catchment** (`HIERARCHY_RULES.md` R4) — a different quantity |
 | §3.4 "**2,372°** of direction change … one reach turning **165°**" | nowhere |
 | §4.4 "a laid gradient of **980 %**" and "**43 reaches** over the 3.0 m/s maximum" | nowhere |
-| §3.2 "W10 achieved **76 m** with **3.5 junctions per km**" | nowhere for W10. The nearest real figures are W7's 105 m and 3.6 junctions/km (`07_PROJECT_STATE.md`) and W10's 11.1 nodes/km (`W11a_PHILOSOPHY.md` P4) |
+| §3.2 "W10 achieved **76 m** with **3.5 junctions per km**" | nowhere for W10. The nearest real figures are W7's 105 m and 3.6 junctions/km (`07_PROJECT_STATE.md`) and W10's 11.1 nodes/km (`W11a_BUILD_BRIEF.md` P4) |
 
 **Why it is critical.** `00_INDEX.md` prime rule 1: *"No invented metrics."*
-`W11a_PHILOSOPHY.md` P2: *"Every published number comes from exactly one function … seven
+`W11a_BUILD_BRIEF.md` P2: *"Every published number comes from exactly one function … seven
 different lifting-station counts are in circulation."* `08` is the document meant to enforce
 both, and it breaks them in its opening paragraph. A reader trying to verify the case against
 W10 — which is the case for changing method — cannot.
@@ -241,7 +241,7 @@ meanings at once.
 
 **What is wrong.** §10 opens *"Each rule above has a check in the audit registry."* It does not.
 
-W10 was audited non-compliant on four counts (`W10_SUMMARY.md`, `W11a_PHILOSOPHY.md` P1):
+W10 was audited non-compliant on four counts (`W10_SUMMARY.md`, `W11a_BUILD_BRIEF.md` P1):
 45.92 km below minimum cover; 2.80 km of surcharged trunk; 10.68 km over the d/D limit;
 1.67 km of pipe along a dual carriageway. **None of the four has a row in §10.**
 
@@ -257,7 +257,7 @@ W10 was audited non-compliant on four counts (`W10_SUMMARY.md`, `W11a_PHILOSOPHY
 Also absent: §3.5 (which says it "is checked and corrected in the review pass" — a pass is not
 a test); §6.3's start-year self-cleansing check; and any check that depth is measured
 **between** chambers as well as at them, which `07_PROJECT_STATE.md` §2.3 requires,
-`W11a_PHILOSOPHY.md` invariant 5 requires, and `T02` §16 states outright: *"A rule about cover
+`W11a_BUILD_BRIEF.md` invariant 5 requires, and `T02` §16 states outright: *"A rule about cover
 must be checked along the whole pipe, not only at the two manholes: ground rises between
 chambers, and the shallowest point is rarely at either end."*
 
@@ -401,7 +401,7 @@ are already in `02` §5 and `T02` §14. G203 p30, verbatim:
 
 (p19 §3.6 states the 600 mm rule a second time.) `HIERARCHY_RULES.md` step 6 makes it a required
 check — *"drops ≥ 2.00 m needing a vortex shaft — report and price every one; as-built 37"* — and
-`W11a_PHILOSOPHY.md` P10 records that 37 as-built backdrops already breach it. On a scheme with a
+`W11a_BUILD_BRIEF.md` P10 records that 37 as-built backdrops already breach it. On a scheme with a
 closed western basin and an 11.93 m saddle, 2 m drops will not be rare.
 
 **Fix.** State G203's numbers first; keep the foreign standards only where G203 is silent. Add two
@@ -518,10 +518,10 @@ Table 12 and give the run-length target its own name.
 Missing, all measured and all checkable:
 
 - **~270 km of sub main that does not exist today** — the largest quantitative consequence of the
-  whole research (`HIERARCHY_RULES.md` §Guard; `W11a_PHILOSOPHY.md` P5). `08` never states the
+  whole research (`HIERARCHY_RULES.md` §Guard; `W11a_BUILD_BRIEF.md` P5). `08` never states the
   size of the work it is commissioning
 - the tier-share pass bands — trunk **10–15 %**, sub main **12–18 %**, lateral **68–76 %** of
-  length. `W11a_PHILOSOPHY.md` makes these a **build gate**
+  length. `W11a_BUILD_BRIEF.md` makes these a **build gate**
 - **"a district under about 4 km of sewer gets no sub main"** (R6). §3.1 says a sub main is *not*
   defined by a load threshold but supplies no positive rule for when one is created
 - **"Only sub mains touch the trunk"**, expected at one trunk connection per 4–5 km of network —
