@@ -53,8 +53,8 @@ constraint; it yields only to its own stated exits, and every use is flagged.*
 | **H2** | Capacity ≥ discharge, within the d/D limit | G203-p27 T10 |
 | **H3** | Minimum cover 1.30 m to crown, on the reach's **own** outside diameter | G203-p33 |
 | **H4** | **Maximum cover 12 m** — exits only via §5 | G203-p33 |
-| **H5** | Minimum velocity **0.75 m/s at peak flow** (preferred 0.90) | G203-p26 |
-| **H6** | Gradient ≥ the steeper of Table 11 and the tractive minimum. *This is the starting point; **H5 is the test** — Table 11 is a full-bore derivation and the weaker of the two* | G203-p26–29 |
+| **H5** | **Self-cleansing, by EITHER of the two methods G203 offers** — velocity ≥ 0.75 m/s at peak flow (preferred 0.90), **or** the tractive-force minimum gradient. **Record which route each pipe takes.** They are alternatives, not cumulative: G203-p26 heads the clause *"Minimum Tractive force"* with both beneath it, and derives the tractive method *"based on the assumption of d/D = 0.2"* — i.e. it exists **for** the small lightly-loaded pipe where 0.75 m/s cannot be reached | G203-p26–27 |
+| **H6** | Gradient ≥ Table 11 for the diameter — the velocity route expressed as a gradient, and the floor under H5 | G203-p29 T11 |
 | **H7** | Maximum velocity **3.0 m/s gravity, 2.5 m/s rising main** | G203-p27, p50 |
 | **H8** | Diameter set by flow — **never** by the depth wanted | G203-p29 |
 | **H9** | Minimum sizes and materials by tier | G203-p22 T6 |
@@ -64,6 +64,8 @@ constraint; it yields only to its own stated exits, and every use is flagged.*
 | **H13** | **Uniform slope between successive manholes** | G203-p29 |
 | **H14** | An **existing** structure's invert is fixed and the design yields to it. Tie in **soffit to soffit**, never invert to invert | practice |
 | **H15** | The network is a **forest** — zero loops, checked on the published layer | project rule |
+
+**On H5, and why it matters more than it looks.** A DN200 carrying a few litres per second runs at a very small depth of flow, and no legal gradient will make it reach 0.75 m/s. Applied as an absolute test, the velocity route condemns almost every small sewer ever built, NAMA's own included. That is why the guideline offers the tractive route — and why **the share of the network relying on it is a reported number**, since the tractive minimum depends on a τ the guideline never gives (assumed 1.0 Pa, GAP-9; at 2.0 the requirement rises 2.35×).
 
 **Every reach records which constraint set its diameter and which set its gradient.**
 "Depth" is not an admissible answer for a diameter.

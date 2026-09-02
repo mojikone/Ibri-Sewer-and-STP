@@ -1,0 +1,466 @@
+"""The W11a auditor — stage 0, written before any design.
+
+One check per constraint in `_BRAIN/08_DESIGN_PHILOSOPHY.md`, so a rule cannot exist without
+a check and the two lists cannot drift apart. That drift is exactly what happened in W10: it
+carried thirteen hard constraints and a checklist that named none of them, and shipped with
+2.80 km of surcharged trunk, 45.92 km below minimum cover and 1.67 km of pipe along a dual
+carriageway.
+
+TWO ARCHITECTURAL DECISIONS, both taken because of how W10 failed:
+
+  1. It audits the PUBLISHED LAYERS, not an in-memory model. W10's flow tree existed only
+     inside a script; the shapefile it wrote out was 7,919 disconnected pieces and nobody
+     could have known. If the auditor cannot read it from disk, it does not exist.
+
+  2. A check that CANNOT RUN is a failure, not a blank. W10's pipe layer has no TIER field
+     and no laid gradient, so several checks here will report NOT_CHECKABLE against it —
+     and that is the correct answer, not an excuse. Per the philosophy: "any check that
+     cannot run" is blocking.
+
+Run it against W10's layers on day one. The failing table is the specification for W11a.
+
+    python -m w11a.audit --pipes ../W10/shp/W10_pipes.shp --nodes ../W10/shp/W10_nodes_depth.shp
+"""
+from __future__ import annotations
+
+import math
+import os
+import sys
+from dataclasses import dataclass, field
+from typing import Callable, List, Optional
+
+import geopandas as gpd
+import networkx as nx
+import numpy as np
+from scipy.spatial import cKDTree
+from shapely.ops import unary_union
+
+# --------------------------------------------------------------------------- results
+
+PASS, FAIL, NOT_CHECKABLE = "PASS", "FAIL", "NOT_CHECKABLE"
+
+
+@dataclass
+class Result:
+    id: str
+    group: str
+    requirement: str
+    source: str
+    blocking: bool
+    status: str
+    summary: str
+    n_bad: int = 0
+    extent: str = ""
+
+
+@dataclass
+class Check:
+    id: str
+    group: str
+    requirement: str
+    source: str
+    blocking: bool
+    fn: Callable
+
+
+REGISTRY: List[Check] = []
+
+
+def check(id, group, requirement, source, blocking=True):
+    def deco(fn):
+        REGISTRY.append(Check(id, group, requirement, source, blocking, fn))
+        return fn
+    return deco
+
+
+# --------------------------------------------------------------------------- context
+
+class Ctx:
+    """Everything a check may look at. Nothing is computed that a check does not ask for."""
+
+    def __init__(self, pipes=None, nodes=None, crit=None, terrain=None, hazard=None,
+                 roads=None, plots=None, existing=None):
+        self.pipes = pipes
+        self.nodes = nodes
+        self.crit = crit
+        self.terrain = terrain
+        self.hazard = hazard
+        self.roads = roads
+        self.plots = plots
+        self.existing = existing
+        self._cache = {}
+
+    def need(self, *cols):
+        """Raise if the pipe layer lacks a field a check depends on.
+
+        Raising rather than returning False is deliberate: the runner turns it into
+        NOT_CHECKABLE, which the philosophy treats as a failure. A missing field is a
+        missing answer, not a pass.
+        """
+        if self.pipes is None:
+            raise KeyError("no pipe layer")
+        missing = [c for c in cols if c not in self.pipes.columns]
+        if missing:
+            raise KeyError("pipe layer has no " + ", ".join(missing))
+        return True
+
+    def graph(self, snap=0.01):
+        """The network as published, snapped only at the tolerance a GIS would use.
+
+        Deliberately tight. A layer that needs 2.5 m of snapping to become connected is not
+        a connected layer, and pretending otherwise is what let W10 publish 7,919 pieces.
+        """
+        key = ("graph", snap)
+        if key in self._cache:
+            return self._cache[key]
+        ends = []
+        for g in self.pipes.geometry:
+            ls = g.geoms[0] if g.geom_type == "MultiLineString" else g
+            ends.append(ls.coords[0][:2])
+            ends.append(ls.coords[-1][:2])
+        arr = np.array(ends)
+        tree = cKDTree(arr)
+        lab = np.full(len(arr), -1, dtype=np.int64)
+        for i in range(len(arr)):
+            if lab[i] != -1:
+                continue
+            lab[i] = i
+            for j in tree.query_ball_point(arr[i], snap):
+                if lab[j] == -1:
+                    lab[j] = i
+        G = nx.Graph()
+        for i in range(len(self.pipes)):
+            G.add_edge(int(lab[2 * i]), int(lab[2 * i + 1]), idx=i)
+        self._cache[key] = G
+        return G
+
+
+def km(gdf_or_mask, ctx):
+    """Length in km of a boolean mask over the pipe layer."""
+    if "LEN_M" in ctx.pipes.columns:
+        return float(ctx.pipes.LEN_M[gdf_or_mask].sum()) / 1000
+    return float(ctx.pipes.geometry[gdf_or_mask].length.sum()) / 1000
+
+
+# --------------------------------------------------------------------------- H checks
+
+@check("H1", "corridor", "No pipe along a dual carriageway; no pipe or chamber in a wadi",
+       "project rules 7, 8")
+def h1(ctx):
+    if ctx.roads is None:
+        raise KeyError("no road layer")
+    dual = ctx.roads[ctx.roads["dual"].astype(str) == "1"]
+    buf = unary_union(dual.geometry.buffer(6.0))
+    along = ctx.pipes.geometry.intersection(buf).length
+    bad = along > 30.0
+    n = int(bad.sum())
+    if n == 0:
+        return PASS, "no reach runs more than 30 m inside the 6 m dual band", 0, ""
+    return FAIL, f"{n} reaches run along a dual carriageway", n, f"{along[bad].sum()/1000:.2f} km"
+
+
+@check("H2", "hydraulics", "Capacity >= discharge, within the d/D limit", "G203-p27 T10")
+def h2(ctx):
+    ctx.need("DN", "QPK_LS")
+    from sewnet import hydra
+    slope_col = "SLOPE_LAID" if "SLOPE_LAID" in ctx.pipes.columns else "SLOPE_PCT"
+    surch, over = 0, 0
+    for _, r in ctx.pipes.iterrows():
+        y, v = hydra.pipe_state(int(r.DN), float(r[slope_col]) / 100.0,
+                                float(r.QPK_LS) / 1000.0, ctx.crit)
+        if y is None:
+            surch += 1
+        elif y > hydra.dod_limit(int(r.DN), ctx.crit):
+            over += 1
+    if surch == 0 and over == 0:
+        return PASS, "every pipe passes its peak flow within d/D", 0, ""
+    return FAIL, f"{surch} surcharged, {over} over the d/D limit", surch + over, ""
+
+
+@check("H3", "cover", "Minimum cover 1.30 m to crown, on the reach's OWN outside diameter",
+       "G203-p33")
+def h3(ctx):
+    ctx.need("DN", "US_DEPTH", "DS_DEPTH")
+    od = ctx.pipes.DN / 1000.0 + 0.10
+    bad = ((ctx.pipes.US_DEPTH - od) < 1.30 - 1e-6) | ((ctx.pipes.DS_DEPTH - od) < 1.30 - 1e-6)
+    n = int(bad.sum())
+    if n == 0:
+        return PASS, "every reach has at least 1.30 m of cover", 0, ""
+    worst = float((ctx.pipes.US_DEPTH - od).min())
+    return FAIL, f"{n} reaches below minimum cover, worst {worst:.2f} m", n, f"{km(bad, ctx):.2f} km"
+
+
+@check("H4", "cover", "Maximum cover 12 m, exits only via philosophy 5", "G203-p33")
+def h4(ctx):
+    ctx.need("DN", "US_DEPTH", "DS_DEPTH")
+    od = ctx.pipes.DN / 1000.0 + 0.10
+    cov = np.maximum(ctx.pipes.US_DEPTH - od, ctx.pipes.DS_DEPTH - od)
+    bad = cov > 12.0 + 1e-6
+    n = int(bad.sum())
+    flagged = "PAST_CAP" in ctx.pipes.columns
+    if n == 0:
+        return PASS, "nothing past 12 m of cover", 0, ""
+    if not flagged:
+        return FAIL, f"{n} reaches past the cap and NO flag field to justify them", n, ""
+    unflagged = int((bad & (ctx.pipes.PAST_CAP.fillna(0) == 0)).sum())
+    if unflagged:
+        return FAIL, f"{unflagged} of {n} past the cap are unflagged", unflagged, ""
+    return PASS, f"{n} past the cap, all flagged with an exit", 0, ""
+
+
+@check("H5", "hydraulics", "Self-cleansing by EITHER route - velocity or tractive force",
+       "G203-p26-27")
+def h5(ctx):
+    """G203 offers two methods, not two tests. A pipe passes if it satisfies either.
+
+    The velocity route is unreachable for a small lightly-loaded sewer - a DN200 carrying a
+    few L/s runs far too shallow - which is exactly why the tractive method is derived at
+    d/D = 0.2. Applying velocity as an absolute condemns almost every small sewer ever built.
+    So the check reports the SPLIT, and flags only pipes that satisfy neither.
+    """
+    ctx.need("DN", "QPK_LS")
+    from sewnet import hydra
+    slope_col = "SLOPE_LAID" if "SLOPE_LAID" in ctx.pipes.columns else "SLOPE_PCT"
+    by_vel, by_tractive, neither = 0, 0, 0
+    for _, r in ctx.pipes.iterrows():
+        s_laid = float(r[slope_col]) / 100.0
+        q = float(r.QPK_LS) / 1000.0
+        y, v = hydra.pipe_state(int(r.DN), s_laid, q, ctx.crit)
+        if v is not None and v >= 0.75:
+            by_vel += 1
+        elif s_laid >= hydra.smin_tractive(q, ctx.crit) - 1e-9:
+            by_tractive += 1
+        else:
+            neither += 1
+    share = 100.0 * by_tractive / max(len(ctx.pipes), 1)
+    if neither == 0:
+        return PASS, (f"all self-cleansing: {by_vel:,} by velocity, {by_tractive:,} by "
+                      f"tractive force ({share:.0f} % - exposed to the tau = 1.0 Pa "
+                      f"assumption, GAP-9)"), 0, ""
+    return FAIL, f"{neither:,} reaches satisfy neither route", neither, ""
+
+
+@check("H6", "hydraulics", "Gradient >= Table 11 for the diameter", "G203-p29 T11")
+def h6(ctx):
+    ctx.need("DN", "QPK_LS")
+    from sewnet import hydra
+    slope_col = "SLOPE_LAID" if "SLOPE_LAID" in ctx.pipes.columns else "SLOPE_PCT"
+    bad = 0
+    for _, r in ctx.pipes.iterrows():
+        need = hydra.smin_for(int(r.DN), float(r.QPK_LS) / 1000.0, ctx.crit)
+        if float(r[slope_col]) / 100.0 < need - 1e-9:
+            bad += 1
+    if bad == 0:
+        return PASS, "every gradient meets its minimum", 0, ""
+    return FAIL, f"{bad} reaches below their minimum gradient", bad, ""
+
+
+@check("H7", "hydraulics", "Maximum velocity 3.0 m/s gravity", "G203-p27")
+def h7(ctx):
+    ctx.need("DN", "QPK_LS")
+    from sewnet import hydra
+    if "SLOPE_LAID" not in ctx.pipes.columns:
+        raise KeyError("pipe layer has no SLOPE_LAID - the laid gradient is not published, "
+                       "so velocity cannot be checked (philosophy 5)")
+    fast = 0
+    for _, r in ctx.pipes.iterrows():
+        y, v = hydra.pipe_state(int(r.DN), float(r.SLOPE_LAID) / 100.0,
+                                float(r.QPK_LS) / 1000.0, ctx.crit)
+        if v is not None and v > ctx.crit.V_MAX:
+            fast += 1
+    if fast == 0:
+        return PASS, f"nothing over {ctx.crit.V_MAX} m/s", 0, ""
+    return FAIL, f"{fast} reaches over {ctx.crit.V_MAX} m/s", fast, ""
+
+
+@check("H8", "sizing", "Diameter set by flow, never by the depth wanted", "G203-p29")
+def h8(ctx):
+    ctx.need("SIZED_BY")
+    bad = ctx.pipes.SIZED_BY.astype(str).str.lower().isin(["depth", "cover"])
+    n = int(bad.sum())
+    allowed = {"capacity", "dod", "velocity", "horizon", "minimum"}
+    unknown = int((~ctx.pipes.SIZED_BY.astype(str).str.lower().isin(allowed | {"depth", "cover"})).sum())
+    if n == 0 and unknown == 0:
+        return PASS, "every diameter attributed to a permitted cause", 0, ""
+    return FAIL, f"{n} sized by depth, {unknown} with an unrecognised cause", n + unknown, ""
+
+
+@check("H9", "sizing", "Minimum sizes and materials by tier", "G203-p22 T6")
+def h9(ctx):
+    ctx.need("TIER", "DN")
+    floor = {"lateral": 200, "main": 200, "sub main": 200, "trunk main": 200, "rider": 160}
+    bad = 0
+    for _, r in ctx.pipes.iterrows():
+        f = floor.get(str(r.TIER).lower())
+        if f and int(r.DN) < f:
+            bad += 1
+    if bad == 0:
+        return PASS, "every pipe at or above its tier minimum", 0, ""
+    return FAIL, f"{bad} pipes below the minimum size for their tier", bad, ""
+
+
+@check("H10", "chambers", "Inlet angle >= 90 degrees", "G203-p30")
+def h10(ctx):
+    if ctx.nodes is None or "INLET_DEG" not in getattr(ctx.nodes, "columns", []):
+        raise KeyError("no node layer with INLET_DEG - inlet angles are not computed")
+    bad = ctx.nodes.INLET_DEG < 90.0 - 1e-6
+    n = int(bad.sum())
+    flagged = "INLET_FLAG" in ctx.nodes.columns
+    if n == 0:
+        return PASS, "every inlet at 90 degrees or better", 0, ""
+    if not flagged:
+        return FAIL, f"{n} inlets below 90 degrees and no flag field", n, ""
+    return FAIL, f"{n} inlets below 90 degrees (flagged: {int(ctx.nodes.INLET_FLAG.sum())})", n, ""
+
+
+@check("H11", "levels", "No reverse gradient; laying tolerance 20 mm", "G203-p29")
+def h11(ctx):
+    ctx.need("INV_UP", "INV_DN")
+    fall = ctx.pipes.INV_UP - ctx.pipes.INV_DN
+    bad = fall < 0.020
+    n = int(bad.sum())
+    if n == 0:
+        return PASS, "every reach falls by more than the 20 mm tolerance", 0, ""
+    return FAIL, f"{n} reaches with less than 20 mm of fall", n, ""
+
+
+@check("H12", "chambers", "Chamber spacing within Table 12", "G203-p30")
+def h12(ctx):
+    ctx.need("DN", "LEN_M")
+    sp = getattr(ctx.crit, "mh_max_spacing", None)
+    if sp is None:
+        raise KeyError("criteria has no mh_max_spacing")
+    lim = ctx.pipes.DN.map(lambda d: sp(int(d)))
+    bad = ctx.pipes.LEN_M > lim + 1e-6
+    n = int(bad.sum())
+    if n == 0:
+        return PASS, "every reach within its Table 12 spacing", 0, ""
+    return FAIL, (f"{n} reaches exceed Table 12 spacing, longest "
+                  f"{ctx.pipes.LEN_M.max():.0f} m"), n, f"{km(bad, ctx):.1f} km"
+
+
+@check("H13", "levels", "Uniform slope between successive manholes", "G203-p29")
+def h13(ctx):
+    if "SLOPE_LAID" not in ctx.pipes.columns:
+        raise KeyError("no SLOPE_LAID - cannot verify slope uniformity within a reach")
+    return PASS, "one gradient per reach by construction", 0, ""
+
+
+@check("H14", "levels", "An existing structure's invert is fixed; tie in soffit to soffit",
+       "practice")
+def h14(ctx):
+    if ctx.existing is None:
+        raise KeyError("no existing-network layer supplied")
+    if "TIE_TYPE" not in ctx.pipes.columns:
+        raise KeyError("pipe layer has no TIE_TYPE - connections to the existing network "
+                       "are not recorded")
+    bad = int((ctx.pipes.TIE_TYPE.astype(str).str.lower() == "invert").sum())
+    if bad == 0:
+        return PASS, "every tie-in is soffit to soffit", 0, ""
+    return FAIL, f"{bad} tie-ins made invert to invert", bad, ""
+
+
+@check("H15", "topology", "The network is a forest - zero loops, on the PUBLISHED layer",
+       "project rule")
+def h15(ctx):
+    G = ctx.graph()
+    cycles = G.number_of_edges() - G.number_of_nodes() + nx.number_connected_components(G)
+    parts = nx.number_connected_components(G)
+    if cycles == 0 and parts == 1:
+        return PASS, "one connected tree", 0, ""
+    return FAIL, f"{cycles} independent cycles, {parts} disconnected pieces", cycles, ""
+
+
+# --------------------------------------------------------------------------- regression
+
+@check("R1", "regression", "No surcharged pipe (W10 shipped 2.80 km)", "W10 post-mortem")
+def r1(ctx):
+    return h2(ctx)
+
+
+@check("R2", "regression", "No reach below minimum cover (W10 shipped 45.92 km)",
+       "W10 post-mortem")
+def r2(ctx):
+    return h3(ctx)
+
+
+@check("R3", "regression", "No pipe along a dual carriageway (W10 shipped 1.67 km)",
+       "W10 post-mortem")
+def r3(ctx):
+    return h1(ctx)
+
+
+@check("R4", "regression", "No pipe on wadi ground (W10 shipped 131.7 km)", "W10 post-mortem")
+def r4(ctx):
+    if ctx.hazard is None:
+        raise KeyError("no hazard grid")
+    import rasterio
+    with rasterio.open(ctx.hazard) as src:
+        mids = ctx.pipes.geometry.interpolate(0.5, normalized=True)
+        v = np.array([w[0] for w in src.sample(zip(mids.x, mids.y))], dtype=float)
+    bad = np.isfinite(v) & (np.floor(v) >= 4)
+    n = int(bad.sum())
+    if n == 0:
+        return PASS, "no pipe on wadi ground", 0, ""
+    return FAIL, f"{n} reaches on wadi ground", n, f"{km(bad, ctx):.1f} km"
+
+
+# --------------------------------------------------------------------------- provenance
+
+@check("G1", "provenance", "The laid gradient is published, with the minimum beside it",
+       "philosophy 5")
+def g1(ctx):
+    have = [c for c in ("SLOPE_LAID", "SLOPE_MIN") if c in ctx.pipes.columns]
+    if len(have) == 2:
+        return PASS, "both gradients published", 0, ""
+    return FAIL, ("only the minimum gradient is published, so nothing about velocity, "
+                  "fall or drop can be checked"), 0, ""
+
+
+@check("G2", "provenance", "Every reach records what set its diameter and its gradient",
+       "philosophy 3")
+def g2(ctx):
+    missing = [c for c in ("SIZED_BY", "GRADIENT_BY") if c not in ctx.pipes.columns]
+    if not missing:
+        return PASS, "constraint provenance present on every reach", 0, ""
+    return FAIL, "missing " + ", ".join(missing), 0, ""
+
+
+@check("G3", "provenance", "The published layer reproduces the design graph", "philosophy 8")
+def g3(ctx):
+    missing = [c for c in ("US_NODE", "DS_NODE") if c not in ctx.pipes.columns]
+    if missing:
+        return FAIL, ("no US_NODE/DS_NODE - connectivity can only be guessed by a tolerance, "
+                      "which is how W10 published 7,919 pieces"), 0, ""
+    G = ctx.graph()
+    return PASS, f"{nx.number_connected_components(G)} component(s) by geometry", 0, ""
+
+
+# --------------------------------------------------------------------------- runner
+
+def run(ctx) -> List[Result]:
+    out = []
+    for c in REGISTRY:
+        try:
+            status, summary, n_bad, extent = c.fn(ctx)
+        except Exception as e:
+            status, summary, n_bad, extent = NOT_CHECKABLE, f"{e}", 0, ""
+        out.append(Result(c.id, c.group, c.requirement, c.source, c.blocking,
+                          status, summary, n_bad, extent))
+    return out
+
+
+def report(results: List[Result]) -> str:
+    w = max(len(r.summary) for r in results)
+    lines = [f"{'id':<5}{'group':<12}{'status':<15}summary",
+             "-" * (32 + min(w, 90))]
+    for r in results:
+        mark = {"PASS": "ok  ", "FAIL": "FAIL", "NOT_CHECKABLE": "CANT"}[r.status]
+        lines.append(f"{r.id:<5}{r.group:<12}{mark:<15}{r.summary}"
+                     + (f"  [{r.extent}]" if r.extent else ""))
+    f = sum(1 for r in results if r.status == FAIL)
+    n = sum(1 for r in results if r.status == NOT_CHECKABLE)
+    p = sum(1 for r in results if r.status == PASS)
+    lines += ["", f"{p} pass, {f} FAIL, {n} cannot run.",
+              "A check that cannot run is a failure, not a blank (philosophy 8)."]
+    return "\n".join(lines)

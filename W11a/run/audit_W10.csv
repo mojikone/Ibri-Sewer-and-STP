@@ -1,0 +1,23 @@
+id,group,requirement,source,blocking,status,summary,n_bad,extent
+H1,corridor,No pipe along a dual carriageway; no pipe or chamber in a wadi,"project rules 7, 8",True,FAIL,21 reaches run along a dual carriageway,21,1.67 km
+H2,hydraulics,"Capacity >= discharge, within the d/D limit",G203-p27 T10,True,FAIL,"5 surcharged, 66 over the d/D limit",71,
+H3,cover,"Minimum cover 1.30 m to crown, on the reach's OWN outside diameter",G203-p33,True,FAIL,"169 reaches below minimum cover, worst 0.30 m",169,45.92 km
+H4,cover,"Maximum cover 12 m, exits only via philosophy 5",G203-p33,True,PASS,nothing past 12 m of cover,0,
+H5,hydraulics,Self-cleansing by EITHER route - velocity or tractive force,G203-p26-27,True,PASS,"all self-cleansing: 621 by velocity, 20,315 by tractive force (97 % - exposed to the tau = 1.0 Pa assumption, GAP-9)",0,
+H6,hydraulics,Gradient >= Table 11 for the diameter,G203-p29 T11,True,PASS,every gradient meets its minimum,0,
+H7,hydraulics,Maximum velocity 3.0 m/s gravity,G203-p27,True,NOT_CHECKABLE,"'pipe layer has no SLOPE_LAID - the laid gradient is not published, so velocity cannot be checked (philosophy 5)'",0,
+H8,sizing,"Diameter set by flow, never by the depth wanted",G203-p29,True,NOT_CHECKABLE,'pipe layer has no SIZED_BY',0,
+H9,sizing,Minimum sizes and materials by tier,G203-p22 T6,True,NOT_CHECKABLE,'pipe layer has no TIER',0,
+H10,chambers,Inlet angle >= 90 degrees,G203-p30,True,NOT_CHECKABLE,'no node layer with INLET_DEG - inlet angles are not computed',0,
+H11,levels,No reverse gradient; laying tolerance 20 mm,G203-p29,True,NOT_CHECKABLE,"'pipe layer has no INV_UP, INV_DN'",0,
+H12,chambers,Chamber spacing within Table 12,G203-p30,True,FAIL,"4763 reaches exceed Table 12 spacing, longest 6541 m",4763,1220.2 km
+H13,levels,Uniform slope between successive manholes,G203-p29,True,NOT_CHECKABLE,'no SLOPE_LAID - cannot verify slope uniformity within a reach',0,
+H14,levels,An existing structure's invert is fixed; tie in soffit to soffit,practice,True,NOT_CHECKABLE,'pipe layer has no TIE_TYPE - connections to the existing network are not recorded',0,
+H15,topology,"The network is a forest - zero loops, on the PUBLISHED layer",project rule,True,FAIL,"0 independent cycles, 7919 disconnected pieces",0,
+R1,regression,No surcharged pipe (W10 shipped 2.80 km),W10 post-mortem,True,FAIL,"5 surcharged, 66 over the d/D limit",71,
+R2,regression,No reach below minimum cover (W10 shipped 45.92 km),W10 post-mortem,True,FAIL,"169 reaches below minimum cover, worst 0.30 m",169,45.92 km
+R3,regression,No pipe along a dual carriageway (W10 shipped 1.67 km),W10 post-mortem,True,FAIL,21 reaches run along a dual carriageway,21,1.67 km
+R4,regression,No pipe on wadi ground (W10 shipped 131.7 km),W10 post-mortem,True,FAIL,1089 reaches on wadi ground,1089,131.7 km
+G1,provenance,"The laid gradient is published, with the minimum beside it",philosophy 5,True,FAIL,"only the minimum gradient is published, so nothing about velocity, fall or drop can be checked",0,
+G2,provenance,Every reach records what set its diameter and its gradient,philosophy 3,True,FAIL,"missing SIZED_BY, GRADIENT_BY",0,
+G3,provenance,The published layer reproduces the design graph,philosophy 8,True,FAIL,"no US_NODE/DS_NODE - connectivity can only be guessed by a tolerance, which is how W10 published 7,919 pieces",0,
