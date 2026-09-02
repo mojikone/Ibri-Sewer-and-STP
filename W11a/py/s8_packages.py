@@ -956,28 +956,35 @@ def load_inputs() -> Tuple[Optional[Dict], List[Tuple[str, str]]]:
     rms = _read(GPKG, "rising_mains")
 
     missing: List[Tuple[str, str]] = []
+    # Named BY FILE, not by build-brief stage number. The brief numbers the seven design
+    # stages and the files number the ten modules, so "stage 5" here pointed at
+    # s5_chambers.py when the stations it wants come from s7_stations.py.
     if nodes is None:
-        missing.append(("nodes", "stage 4 (chambers) - the vertex set, and NODE_KIND, "
-                                 "which marks the station / outfall / tie seams"))
+        missing.append(("nodes", "s5_chambers.py - the vertex set, and NODE_KIND, which "
+                                 "marks the station / outfall / tie seams"))
     if reaches is None:
-        missing.append(("reaches", "stage 3-5 - US_NODE / DS_NODE / LEN_M are the tree "
-                                   "the partition cuts"))
+        missing.append(("reaches", "s4_hierarchy.py / s5_chambers.py - US_NODE / DS_NODE / "
+                                   "LEN_M are the tree the partition cuts"))
     if conns is None:
-        missing.append(("connections", "stage 1/5 - one row per load unit. The package "
-                                       "band is measured in PLOTS (180-2,180), so without "
-                                       "it no package size can be checked at all"))
+        missing.append(("connections", "s1_scope.py / s5b_tertiary.py - one row per load "
+                                       "unit. The package band is measured in PLOTS "
+                                       "(180-2,180), so without it no package size can be "
+                                       "checked at all"))
     if missing:
         return None, missing
 
     notes = []
     if stations is None:
-        notes.append("no `stations` layer: no forced seams, so the partition is cut on "
-                     "size alone and no package will be marked INDEP. That is the P8 "
-                     "property a station buys, so the phasing plan is materially weaker "
-                     "until stage 5 publishes them.")
+        notes.append("no `stations` layer from s7_stations.py: the NODE_KIND='station' "
+                     "seams still bind, but no station carries a duty, a wet well or a "
+                     "COMM_PT, so the phasing plan cannot say which packages a station "
+                     "makes independently commissionable (P8).")
     if rms is None:
         notes.append("no `rising_mains` layer: a station package cannot record which "
-                     "package it discharges into, only that it does not depend on one.")
+                     "package it discharges into, only that it does not depend on one. "
+                     "Note this is also the correct state where every lift is taken inside "
+                     "its own chamber - s7 publishes the layer EMPTY in that case, and an "
+                     "empty layer is different from an absent one.")
     return dict(nodes=nodes, reaches=reaches, connections=conns,
                 stations=stations, rising_mains=rms, notes=notes), []
 
@@ -1175,6 +1182,35 @@ def run(horizon_targets: Optional[Dict[int, float]] = None, publish: bool = True
 
         if stations is not None and len(stations):
             st = stamp(stations, "NODE_UID", node_pkg, node_phase, "stations")
+            # The relabel above rewrote NODE_REF on the CHAMBERS. The stations layer carries
+            # its own copy of the same label, and leaving it behind means the station
+            # schedule prints `P1-L-MH0014` for the chamber the chamber schedule now calls
+            # `P02-SM-MH0007` - two deliverables naming one structure differently. Copied,
+            # not recomputed: the chamber layer is where the label is minted, and a second
+            # derivation here is a second definition (P2).
+            ref_of = dict(zip(nodes_out["NODE_UID"].astype(str),
+                              nodes_out["NODE_REF"].astype(str)))
+            st["NODE_REF"] = (st["NODE_UID"].astype(str).map(ref_of)
+                              .fillna(st["NODE_REF"].astype(str)))
+            # COMM_PT - "1 where this station makes its package commissionable on its own,
+            # the P8 case where objective 4 beats objective 5". It was declared on the
+            # contract's STATIONS spec and written by NO stage: s7 defers it here in as many
+            # words ("package seams are stage 8's; this stage would be inventing them") and
+            # this stage did not pick it up, so the field shipped blank on every station and
+            # the one property a station is bought for was unreadable in the deliverable.
+            # It is computable here and only here: a station is a commissioning point when
+            # it is the OUTLET of a package that INDEP says can be switched on without its
+            # downstream neighbour. Same number, same source - COMM_PT on the station and
+            # INDEP on the package can never now disagree.
+            indep_at = {str(o): int(i) for o, i in zip(diag["OUTLET"], diag["INDEP"])}
+            st["COMM_PT"] = (st["NODE_UID"].astype(str).map(indep_at)
+                             .fillna(0).astype(int))
+            n_cp = int(st["COMM_PT"].sum())
+            rec.metric("commissioning_point_stations", n_cp)
+            rec.note(f"COMM_PT set on {len(st):,} station(s); {n_cp:,} of them are a "
+                     "commissioning point - the outlet of a package that can be switched "
+                     "on without the trench below it (P8, DELIVERABLE_SPEC C.4). A station "
+                     "in mid-tree still drains onward and is not one.")
             K.publish(st, "stations", W11A, stage=STAGE)
             rec.wrote("stations", GPKG, len(st))
         if rms is not None and len(rms):

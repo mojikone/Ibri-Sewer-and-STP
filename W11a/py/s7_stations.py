@@ -908,6 +908,20 @@ def duty_x_lift(stations: pd.DataFrame) -> float:
 # The stage
 # ======================================================================================
 
+def _empty_rising_mains() -> gpd.GeoDataFrame:
+    """An empty `rising_mains` layer carrying its full contract schema.
+
+    Built from the LayerSpec rather than from a hand-written column list, so a field added
+    to the contract cannot leave this frame one column short. A design where every lift is
+    in-chamber has no pressure pipe, and publishing the layer empty says that; not
+    publishing it at all is indistinguishable from a stage that fell over.
+    """
+    cols = list(contract.RISING_MAINS.names)
+    return gpd.GeoDataFrame(pd.DataFrame({c: pd.Series(dtype="object") for c in cols}),
+                            geometry=gpd.GeoSeries([], crs=contract.CRS_EPSG),
+                            crs=contract.CRS_EPSG)
+
+
 def load_layers(root: str, gpkg: str = "W11a.gpkg", nodes_path=None, reaches_path=None):
     """Read the levels stage's frame. Missing input is reported, never worked around."""
     waiting = []
@@ -951,8 +965,23 @@ def run(root: str, nodes: gpd.GeoDataFrame, reaches: gpd.GeoDataFrame,
         # levels frame that legitimately still carries unexcused cap breaches - that is the
         # thing it exists to consume - and a strict re-validation here would refuse the one
         # frame the stage is for. The missing-field gate still bites.
-        contract.validate(nodes, "nodes", stage=STAGE, strict=False)
-        contract.validate(reaches, "reaches", stage=STAGE, strict=False)
+        try:
+            contract.validate(nodes, "nodes", stage=STAGE, strict=False)
+            contract.validate(reaches, "reaches", stage=STAGE, strict=False)
+        except contract.ContractError as e:
+            # Caught, not allowed to escape. An exception leaving this `with` re-enters
+            # Manifest.stage's finally, which sees no writes and no did_nothing() and
+            # raises ITS OWN error over the top - so the last line a reader sees names the
+            # manifest and not the eleven missing fields. Same pattern as s9's graph gate:
+            # report the real failure, file it, stop.
+            print("WAITING ON AN UPSTREAM STAGE - the input layers are not complete.\n")
+            print(str(e))
+            print("\n  Nothing written. This stage reads the LEVELS stage's frame; the "
+                  "fields above are written by s6_levels (and the flow fields by s5c). "
+                  "Re-run s7 once they are on the layer.")
+            rec.did_nothing("input layers failed the contract's presence gate: "
+                            + str(e).split("\n")[0])
+            return None, None, [str(e)]
 
         tree = Tree(nodes, reaches)
         if tree.ds_disagree:
@@ -1060,6 +1089,7 @@ def run(root: str, nodes: gpd.GeoDataFrame, reaches: gpd.GeoDataFrame,
         # ---- build each station and its main -------------------------------------------
         st_rows, rm_rows, findings = [], [], []
         dropped_flood, dropped_wadi, dropped_geom = [], [], []
+        declared_set = set(declared)
         for k, uid in enumerate(sorted(placed), start=1):
             nd = tree.N[uid]
             q_arr0 = nd["qpk"]
@@ -1072,26 +1102,99 @@ def run(root: str, nodes: gpd.GeoDataFrame, reaches: gpd.GeoDataFrame,
                 findings.append(f"{uid}: no peak flow on the node or its outgoing reach - "
                                 "a duty cannot be derived and will not be assumed.")
                 continue
-            disc = pick_discharge(tree, uid, q_arr0, q_avg0)
-            if disc is None:
-                dropped_geom.append(uid)
-                findings.append(f"{uid}: no downstream chamber inside "
-                                f"{RM_SEARCH_MAX_M:,.0f} m with a usable ground level - "
-                                "the run has nowhere to discharge to. Philosophy sec 3: the "
-                                "answer is a re-route or a plot not served, not a longer main.")
-                continue
-            al = alignment(tree, uid, disc["uid"])
-            if al is None:
-                dropped_geom.append(uid)
-                findings.append(f"{uid}: the gravity path to {disc['uid']} has a broken or "
-                                "empty geometry, so no corridor exists to lay the main in.")
-                continue
-            line, conf, src = al
+            # ---- ONE STATION, ONE OUTGOING EDGE -----------------------------------------
+            # Two physically different structures wear the same word, and which one this is
+            # decides whether a pressure main exists at all:
+            #
+            #   IN-CHAMBER LIFT.  The levels stage DECLARED this station and the chamber
+            #     still has an outgoing gravity reach, which means that stage has already
+            #     restarted the gravity line here at minimum cover (its own words: "at a
+            #     station the arriving levels are irrelevant by construction ... only cover
+            #     binds"). The lift is taken inside the structure and the flow continues by
+            #     gravity. Publishing a rising main as well would give this node TWO
+            #     outgoing edges - the gravity restart AND the main - and
+            #     `Network.assert_degrees` would then refuse the WHOLE export at stage 9
+            #     (node says N_OUT=1, the edges say 2). That is not a cosmetic clash: it is
+            #     the design showing two different pipes leaving one wet well.
+            #
+            #   WET WELL AND RISING MAIN.  Either the chamber is a gravity terminal - the
+            #     flow has nowhere to go and must be pumped onward - or this is a RESIDUAL
+            #     station, one this stage is proposing onto a stretch the levels stage has
+            #     not re-solved, where the outgoing reach is still the deep continuation
+            #     that caused the breach rather than a restart. Both need a main.
+            #
+            # Keying on `uid in declared` and not on the graph alone is what separates the
+            # two: on an interim frame a residual breach head also has an outgoing reach,
+            # and reading that as "already restarted" would publish a 0.00 m lift and no
+            # main for a station that has neither.
+            in_chamber = (uid in declared_set) and (uid in tree.out)
+            disc = line = None
+            conf, src = nd["conf"], nd["src"]
+            if in_chamber:
+                # Static lift = what leaves the chamber, minus the deepest thing arriving.
+                # The outgoing invert is the node's own INV_M, which the contract defines
+                # as "invert of the OUTGOING reach - the governing level at this structure".
+                arr = [_f(tree.reaches.iloc[i].INV_DN) for i in tree.inn.get(uid, [])]
+                arr = [a for a in arr if np.isfinite(a)]
+                lift = max(0.0, nd["inv"] - min(arr)) if (arr and np.isfinite(nd["inv"])) \
+                    else 0.0
+                q_min = tab16_factor(max(q_avg0, 1e-9)) * max(q_avg0, 0.0)
+                m = dict(dn=0, q_duty_ls=q_arr0, duty_raised=False, v_duty=0.0, v_min=0.0,
+                         q_min_ls=q_min, hf=0.0, stat=lift, total=lift, retent_min=0.0,
+                         v_window_ok=True, v_intermittent_ok=True)
+            else:
+                if not tree.walk(uid, max_m=RM_SEARCH_MAX_M):
+                    # NOT a ground-data problem, and it used to be reported as one. This
+                    # chamber is a gravity TERMINAL: there is no reach leaving it, so there
+                    # is no downstream gravity path, so `pick_discharge` has no candidates
+                    # and `alignment` has no corridor to lay a main in. Both of them
+                    # deliberately follow the gravity path rather than routing, because
+                    # stage 2 applied the wadi and dual-carriageway exclusions AT SOURCE
+                    # (philosophy sec 2) and routing a pressure main independently would
+                    # re-open every one of them.
+                    #
+                    # NOTHING PRODUCES A RISING-MAIN ROUTE. Stage 2 produces gravity
+                    # corridors; this stage reuses the gravity path; a terminal station has
+                    # neither. The layer that could answer it is `corridors` - it IS the
+                    # legal-route network and it carries US_NODE/DS_NODE - but no stage
+                    # routes on it, and inventing an alignment here would put a pressure
+                    # main through ground H1 excludes. Named, not guessed.
+                    dropped_geom.append(uid)
+                    findings.append(
+                        f"BLOCKING {uid}: this station is a gravity TERMINAL, so its rising "
+                        "main needs a ROUTE and no stage produces one. The discharge "
+                        "chamber and the alignment are both taken from the downstream "
+                        "gravity path, and a terminal has none. The station is withheld "
+                        "rather than given an invented alignment: routing a pressure main "
+                        "off the corridor network would re-open the H1 wadi and "
+                        "dual-carriageway exclusions that stage 2 applied at source. This "
+                        "is a MISSING STAGE, not a bad input - a rising-main router over "
+                        "the `corridors` layer, which is the only published thing that "
+                        "knows where a pipe may legally go.")
+                    continue
+                disc = pick_discharge(tree, uid, q_arr0, q_avg0)
+                if disc is None:
+                    dropped_geom.append(uid)
+                    findings.append(f"{uid}: there are chambers on the downstream gravity "
+                                    f"path within {RM_SEARCH_MAX_M:,.0f} m but not one has "
+                                    "a usable ground level, so no delivery level can be "
+                                    "derived. Philosophy sec 3: the answer is a re-route "
+                                    "or a plot not served, not a longer main.")
+                    continue
+                al = alignment(tree, uid, disc["uid"])
+                if al is None:
+                    dropped_geom.append(uid)
+                    findings.append(f"{uid}: the gravity path to {disc['uid']} has a broken "
+                                    "or empty geometry, so no corridor exists to lay the "
+                                    "main in.")
+                    continue
+                line, conf, src = al
 
-            # Re-sized on the ALIGNMENT length, not the cumulative LEN_M the search scored
-            # on. The two differ by the geometry's own sinuosity, and every published
-            # length, head and retention has to describe the line that was actually drawn.
-            m = size_main(q_arr0, line.length, disc["lift"], q_avg0)
+                # Re-sized on the ALIGNMENT length, not the cumulative LEN_M the search
+                # scored on. The two differ by the geometry's own sinuosity, and every
+                # published length, head and retention has to describe the line that was
+                # actually drawn.
+                m = size_main(q_arr0, line.length, disc["lift"], q_avg0)
             q_arr = q_arr0
             typ = station_type(m["q_duty_ls"])
             well = well_volume_m3(m["q_duty_ls"], WW_STARTS_PER_H)
@@ -1138,8 +1241,7 @@ def run(root: str, nodes: gpd.GeoDataFrame, reaches: gpd.GeoDataFrame,
                     "resolve stands.")
                 continue
 
-            n_air, n_wash, n_iso, relief = valve_counts(rasters, line)
-            rm_uid = f"RM{k:04d}"
+            rm_uid = "" if in_chamber else f"RM{k:04d}"
 
             st_rows.append(dict(
                 NODE_UID=uid,
@@ -1160,22 +1262,57 @@ def run(root: str, nodes: gpd.GeoDataFrame, reaches: gpd.GeoDataFrame,
                 PACKAGE=nd["pkg"], PHASE=nd["phase"],
                 geometry=Point(nd["x"], nd["y"]),
             ))
-            rm_rows.append(dict(
-                EDGE_UID=rm_uid, US_NODE=uid, DS_NODE=disc["uid"], STATION=uid,
-                DN=m["dn"], MATERIAL=RM_MATERIAL,
-                LEN_M=round(line.length, 3),
-                Q_DUTY_LS=round(m["q_duty_ls"], 3),
-                V_DUTY_MS=round(m["v_duty"], 3),
-                V_MIN_MS=round(m["v_min"], 3),
-                STAT_HD_M=round(m["stat"], 3),
-                TOT_HD_M=round(m["total"], 3),
-                RETENT_M=round(m["retent_min"], 2),
-                N_AIRV=int(n_air), N_WASH=int(n_wash),
-                SEPTIC_FL=1,
-                SRC=src, CONFIDENCE=conf, STAGE=STAGE,
-                PACKAGE=nd["pkg"], PHASE=nd["phase"],
-                geometry=line,
-            ))
+            if in_chamber:
+                # An in-chamber lift, so there is no pressure pipe and nothing in the
+                # rising-main schedule. Said once here rather than left as an absence: a
+                # station row with no rising main beside it otherwise reads as a main
+                # somebody forgot to design.
+                findings.append(
+                    f"{uid}: IN-CHAMBER lift of {m['stat']:.2f} m - the gravity line "
+                    f"already restarts at this chamber (its outgoing reach is on the "
+                    "published layer), so the flow continues by gravity and there is NO "
+                    "rising main. The wet well, the duty and the land take are still "
+                    "required (G203-p48 sec 7.8, p43 Tab 21); the pressure-main clauses of "
+                    "G203-pp50-55 do not apply to it.")
+                if np.isfinite(nd["inv"]) and not [
+                        a for a in (_f(tree.reaches.iloc[i].INV_DN)
+                                    for i in tree.inn.get(uid, []))
+                        if np.isfinite(a)]:
+                    findings.append(
+                        f"{uid}: nothing arrives at this chamber on the published layer, so "
+                        "the static lift is published as 0.00 m. A station at the head of a "
+                        "run with no inflow is either a chamber the levels stage mislabelled "
+                        "or a run this stage cannot see - check it before it is priced.")
+            else:
+                n_air, n_wash, n_iso, relief = valve_counts(rasters, line)
+                rm_rows.append(dict(
+                    EDGE_UID=rm_uid, US_NODE=uid, DS_NODE=disc["uid"], STATION=uid,
+                    DN=m["dn"], MATERIAL=RM_MATERIAL,
+                    LEN_M=round(line.length, 3),
+                    Q_DUTY_LS=round(m["q_duty_ls"], 3),
+                    V_DUTY_MS=round(m["v_duty"], 3),
+                    V_MIN_MS=round(m["v_min"], 3),
+                    STAT_HD_M=round(m["stat"], 3),
+                    TOT_HD_M=round(m["total"], 3),
+                    RETENT_M=round(m["retent_min"], 2),
+                    N_AIRV=int(n_air), N_WASH=int(n_wash),
+                    SEPTIC_FL=1,
+                    SRC=src, CONFIDENCE=conf, STAGE=STAGE,
+                    PACKAGE=nd["pkg"], PHASE=nd["phase"],
+                    geometry=line,
+                ))
+
+            # ---- the findings below are all about a PRESSURE MAIN, so they only apply
+            #      where one was designed. Guarding them here rather than making each one
+            #      test `disc` keeps the pressure-main reasoning in one block.
+            if in_chamber:
+                if np.isfinite(nd["nprop"]) and nd["nprop"] < SLS_MIN_PLOTS:
+                    findings.append(
+                        f"{uid}: {nd['nprop']:.0f} properties upstream, under the "
+                        f"{SLS_MIN_PLOTS:.0f} of CLAUDE.md rule 9. Reported only - the "
+                        "breach is real, so the pocket is a candidate for absorption at "
+                        "detail design, not a station to delete here.")
+                continue
 
             if disc["lift"] < -1e-6:
                 findings.append(
@@ -1254,8 +1391,9 @@ def run(root: str, nodes: gpd.GeoDataFrame, reaches: gpd.GeoDataFrame,
             fun.drop("station chamber falls on wadi ground, Hazard_T50y classes "
                      f"{WADI_CLASSES} (H1) - siting decision required", ids=dropped_wadi)
         if dropped_geom:
-            fun.drop("no usable discharge chamber, corridor or arriving flow",
-                     ids=dropped_geom)
+            fun.drop("no arriving flow, or a gravity-TERMINAL station whose rising main "
+                     "needs a route no stage produces - see the findings, which say which "
+                     "of the two each one is", ids=dropped_geom)
 
         # The deferred relief drop, now that the build loop has said which stations exist.
         built = {r["NODE_UID"] for r in st_rows}
@@ -1295,36 +1433,64 @@ def run(root: str, nodes: gpd.GeoDataFrame, reaches: gpd.GeoDataFrame,
             # contract's only way of saying it - a stage that writes nothing and stays
             # silent raises, because that is what W10's RoadTreatment did.
             rec.did_nothing(
-                f"{len(heads):,} cap breach runs found and every one was disposed of by a "
-                "philosophy sec 5 exit or withheld for a named reason - see the funnel. No "
-                "station is a legitimate answer here and it is being stated, not implied.")
+                f"{len(declared):,} station(s) declared by the levels stage and "
+                f"{len(residual_heads):,} residual cap breach run(s) found; every one was "
+                "disposed of by a philosophy sec 5 exit or withheld for a named reason - "
+                "see the funnel. No station is a legitimate answer here and it is being "
+                "stated, not implied.")
         else:
             st = gpd.GeoDataFrame(st_rows, geometry="geometry", crs=contract.CRS_EPSG)
-            rm = gpd.GeoDataFrame(rm_rows, geometry="geometry", crs=contract.CRS_EPSG)
+            rm = _empty_rising_mains() if not rm_rows else gpd.GeoDataFrame(
+                rm_rows, geometry="geometry", crs=contract.CRS_EPSG)
 
             p1 = contract.publish(st, "stations", root, stage=STAGE)
-            p2 = contract.publish(rm, "rising_mains", root, stage=STAGE)
+            # allow_empty is the honest answer, not a shortcut: a design in which every
+            # lift is taken inside its own chamber has no pressure main, and the flag is
+            # the contract's way of making the caller SAY that rather than leaving an
+            # absent layer to be read as a stage that no-opped.
+            p2 = contract.publish(rm, "rising_mains", root, stage=STAGE,
+                                  allow_empty=True)
             rec.wrote("stations", p1, len(st))
             rec.wrote("rising_mains", p2, len(rm))
             if mirror:
                 contract.mirror_shapefile(st, "stations", root)
-                contract.mirror_shapefile(rm, "rising_mains", root)
+                if len(rm):
+                    contract.mirror_shapefile(rm, "rising_mains", root)
 
+            n_ic = int(sum(1 for r in st_rows if not str(r["RM_EDGE"])))
             rec.metric("station_count", contract.value("station_count", st))
             rec.metric("station_total_lift_m",
                        round(contract.value("station_total_lift_m", st), 2))
             rec.metric("rising_main_km", round(contract.value("rising_main_km", rm), 3))
             rec.metric("duty_x_lift_ls_m", round(contract.value("duty_x_lift_ls_m", st), 1))
+            rec.metric("stations_in_chamber", n_ic)
+            rec.metric("stations_with_rising_main", len(st) - n_ic)
+            if not len(rm):
+                rec.note("no rising main was designed: every station takes its lift INSIDE "
+                         "its own chamber and the gravity line restarts there, so there is "
+                         "no pressure pipe. The layer is published EMPTY on purpose - an "
+                         "absent layer and an empty one say different things.")
 
             # The directive. Without it the next reader assumes the levels on disk account
-            # for these stations, and they do not.
-            rec.note("RE-SOLVE REQUIRED. The levels stage must now re-run with every "
-                     "station NODE_UID as a terminal (kind='station', no outgoing gravity "
-                     "reach) and every rising-main DS_NODE as a head restarting at "
-                     "min_invert_depth(DN) below ground. Until it does, `nodes` and "
-                     "`reaches` on disk still describe the un-pumped design and H4 will "
-                     "still report the breaches these stations resolve. Re-run s7 "
-                     "afterwards; the loop has converged when it places no new station.")
+            # for these stations, and they do not. It applies ONLY to a station this stage
+            # added on top of what the levels stage already knows about - a station the
+            # levels stage declared is already in those levels.
+            if len(st) - len(declared) > 0:
+                rec.note(
+                    f"RE-SOLVE REQUIRED for the {len(st) - len(declared):,} station(s) "
+                    "this stage added beyond the ones the levels stage declared. The "
+                    "levels stage must re-run with each of them as a gravity terminal "
+                    "(kind='station', no outgoing gravity reach) and each rising-main "
+                    "DS_NODE as a head restarting at min_invert_depth(DN) below ground. "
+                    "Until it does, `nodes` and `reaches` on disk still describe the "
+                    "un-pumped design there and H4 will still report the breaches those "
+                    "stations resolve. Re-run s7 afterwards; the loop has converged when "
+                    "it adds no new station.")
+            else:
+                rec.note("no re-solve is required: every station published here was already "
+                         "declared by the levels stage, so the levels on disk already "
+                         "account for all of them. This stage sized them and did not move "
+                         "one.")
         for pid, title, why in PENDING:
             rec.note(f"PENDING {pid} - {title}: {why}")
 
@@ -1383,6 +1549,9 @@ def _synthetic(root: str, rasters: "Rasters"):
     inv = nd.INV_M.to_numpy()
     grd = nd.GRD_M.to_numpy()
     nd["COVER_M"] = grd - inv - (dn / 1000.0 + 0.10)
+    # One chain, one component, one outfall at its foot - H15's requirement is one per
+    # connected component, and this frame has a single one.
+    nd["IS_OUTFALL"] = (nd.NODE_KIND.astype(str) == "outfall").astype(int)
     nd["INLET_DEG"] = 180.0
     nd["INLET_FLAG"] = 0
     nd["DROP_M"] = 0.0
@@ -1477,6 +1646,37 @@ def self_test(root: str):
         print("\n--- findings ---")
         for f in findings:
             print("  " + f)
+
+    # ---- pass 2: the DECLARED station, which is the other half of the stage -----------
+    # Pass 1 above proves the residual path - a breach this stage found itself, resolved
+    # with a wet well and a rising main. It does not touch the path that matters most in
+    # practice, because on the live run the levels stage declares the stations and this
+    # stage only sizes them. Re-run the same frame with the chamber marked the way the
+    # levels stage marks it and prove the other branch: an in-chamber lift, no pressure
+    # main, and a `rising_mains` layer published EMPTY rather than absent.
+    root2 = root + "_declared"
+    os.makedirs(os.path.join(root2, "shp"), exist_ok=True)
+    nd2 = nd.copy()
+    st_uid = str(st.NODE_UID.iloc[0]) if st is not None else str(nd.NODE_UID.iloc[11])
+    nd2.loc[nd2.NODE_UID == st_uid, "NODE_KIND"] = "station"
+    p2 = contract.gpkg_path(root2)
+    nd2.to_file(p2, layer="nodes", driver="GPKG")
+    ed.to_file(p2, layer="reaches", driver="GPKG")
+    r2 = Rasters()
+    try:
+        st2, rm2, find2 = run(root2, nd2, ed, r2,
+                              manifest_path=os.path.join(root2, "run", "manifest.json"),
+                              mirror=False)
+    finally:
+        r2.close()
+    assert st2 is not None and len(st2) == 1, "a declared station must still be BUILT"
+    assert len(rm2) == 0, ("a declared station whose chamber still has an outgoing gravity "
+                           "reach takes its lift inside the chamber - no rising main")
+    assert str(st2.RM_EDGE.iloc[0]) == "", "an in-chamber lift names no rising main"
+    contract.validate(gpd.read_file(p2, layer="rising_mains"), "rising_mains",
+                      stage="round-trip")
+    print(f"\npass 2 (declared station at {st_uid}): 1 station, 0 rising mains, the empty "
+          "layer re-read and re-validated. Both branches of the stage are exercised.")
 
 
 # ======================================================================================

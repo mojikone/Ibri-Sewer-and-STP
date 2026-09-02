@@ -357,17 +357,23 @@ def depth_band_label(cover_m: float) -> str:
 # Reading the published set, and the graceful stop when a stage has not run yet
 # ======================================================================================
 
-# Which stage owes which layer. Named so a missing layer is answered with "waiting on
-# stage 5", not with a stack trace - the build order is in W11a_BUILD_BRIEF.md.
+# Which stage owes which layer, BY FILE NAME. The build brief numbers the seven design
+# stages and the files number the ten modules, so "waiting on stage 5" sent a reader to
+# s5_chambers.py when the levels it wanted are in s6_levels.py. Name the file: it is the
+# thing that has to be run, and it is unambiguous.
 PRODUCED_BY: Dict[str, str] = {
-    "nodes":        "stage 4 (chambers) then stage 5 (levels)",
-    "reaches":      "stages 3-5 (hierarchy, chambers, hydraulics)",
-    "corridors":    "stage 2 (corridors)",
-    "crossings":    "stage 2 (corridors - the schedule H1 demands)",
-    "connections":  "stage 1/5 (the served set and load allocation)",
-    "stations":     "stage 5 (the cap-and-veto ladder)",
-    "rising_mains": "stage 5 (pump duty from the wet-well cycle)",
-    "packages":     "stage 6 (packages and phasing)",
+    "nodes":        "s5_chambers.py (the chambers), then s6_levels.py (INV_M, DEPTH_M, "
+                    "COVER_M, the cap flags) and s5c_flows.py (Q_ADF_M3D, Q_PK_LS, N_PROP)",
+    "reaches":      "s4_hierarchy.py and s5_chambers.py (the graph), s5c_flows.py (the "
+                    "flows), s6_levels.py (DN, gradients, inverts, covers)",
+    "corridors":    "s2_corridors.py",
+    "crossings":    "s2_corridors.py - the schedule H1 demands",
+    "connections":  "s1_scope.py and s5b_tertiary.py (the served set and load allocation)",
+    "stations":     "s7_stations.py, sizing what s6_levels.py declared by the "
+                    "cap-and-veto ladder",
+    "rising_mains": "s7_stations.py - and legitimately EMPTY where every lift is taken "
+                    "inside its own chamber",
+    "packages":     "s8_packages.py",
 }
 REQUIRED = ("nodes", "reaches")      # without these there is nothing to export at all
 
@@ -1526,11 +1532,28 @@ def export_sewergems(layers, root: str, rec) -> str:
                  f"{total_net:,.1f} m3/d, {abs(pct):.2f} % {way}.")
         print(f"    WARNING load conservation off by {pct:+.2f} % - {way}")
 
-    mh = K.gems_frame(nd[~nd["NODE_KIND"].astype(str).eq("outfall")], "MANHOLES",
-                      stage="s9_export")
+    # `gems_frame` raises when the layer lacks a mapped field, and several of them are
+    # `required=False` in the contract - MH_DIA above all, which is publishable-blank at
+    # stage 5 and only filled later. Letting that raise took the ENTIRE model export down
+    # with it and printed a stack trace instead of naming the field, which is the same
+    # shape as the `PACKAGE` crash already fixed in the take-off. Nothing is invented to
+    # paper over it: the package is skipped and the missing field and its owner are named.
+    try:
+        mh = K.gems_frame(nd[~nd["NODE_KIND"].astype(str).eq("outfall")], "MANHOLES",
+                          stage="s9_export")
+        cd = K.gems_frame(cond, "CONDUITS", stage="s9_export")
+    except ContractError as e:
+        msg = ("SewerGEMS package NOT written: " + str(e).split("\n")[0]
+               + ". Every field in contract.SEWERGEMS is mandatory for the Bentley import "
+                 "(START_ND/STOP_ND must resolve against MANHOLES.LABEL), so a model built "
+                 "without one imports with orphan conduits - it runs, reports nothing, and "
+                 "is wrong. No value is substituted here; the stage that owns the field "
+                 "writes it.")
+        print("    " + msg)
+        rec.note(msg)
+        return ""
     mh.to_file(os.path.join(out, "MANHOLES.shp"), encoding="utf-8")
 
-    cd = K.gems_frame(cond, "CONDUITS", stage="s9_export")
     cd["MANNING_N"] = C.MANNING_N_EXPORT       # a model parameter, not a design value
     # START_ND / STOP_ND are US_NODE / DS_NODE renamed one-to-one by contract.SEWERGEMS.
     # The originals ride along as well, so this exported network layer answers on its own
@@ -1559,15 +1582,43 @@ def export_sewergems(layers, root: str, rec) -> str:
         rec.note(f"SewerGEMS LOADS.xlsx not written ({type(e).__name__}: {e}); "
                  "LOADS.csv is complete and is what ModelBuilder reads")
 
+    # THE REFEREE HAS TO COMPARE LIKE WITH LIKE, and the first version of this file did not.
+    # It published only OUR_Q_LS - the PEAK flow - and told the modeller to compare the
+    # model against it, while LOADS.csv carries AVERAGE flow with no peaking. A steady-state
+    # run on average loads returns average conduit flow, so every pipe would have read
+    # 40-70 % low and the referee would have "found" a defect in every reach of a correct
+    # design.
+    #
+    # And the fix is NOT to load peak flows instead. Our peak factor is catchment-dependent
+    # (Merrimack falls as properties accumulate, G201-p71-72), so peak flow is NOT ADDITIVE:
+    # the incremental peak at a junction where a large catchment meets a small one can be
+    # negative, and a node load set cannot reproduce it. Average flow is additive and
+    # conserves, which is why it is what the model is loaded with.
+    #
+    # So the peak factor is applied EXACTLY ONCE, in our own sizing, and never in the model;
+    # the columns below let the comparison be made at either horizon without re-deriving
+    # anything. OUR_QADF_LS is what the model will actually report. OUR_PF and OUR_QINF_LS
+    # are what reconstructs OUR_Q_LS from it - infiltration is UNPEAKED (G201-p72-73), so a
+    # reconstruction that multiplies the whole average by PF is wrong by the infiltration.
     ref = pd.DataFrame({
         "LABEL": cond["EDGE_UID"].values,
         "DIA_MM": pd.to_numeric(cond["DN"], errors="coerce").values,
         "SLOPE_LAID_PCT": pd.to_numeric(cond["SLOPE_LAID"], errors="coerce").values,
         "SLOPE_MIN_PCT": pd.to_numeric(cond["SLOPE_MIN"], errors="coerce").values,
+        # what the model, loaded from LOADS.csv, will carry: average sanitary flow
+        "OUR_QADF_LS": (pd.to_numeric(cond["QADF_M3D"], errors="coerce")
+                        * 1000.0 / 86400.0).round(5).values,
+        # ... and what reconstructs our design flow from it
+        "OUR_PF": pd.to_numeric(cond["PF"], errors="coerce").values,
+        "PF_METH": cond["PF_METH"].astype(str).values,
+        "OUR_QINF_LS": pd.to_numeric(cond["QINF_LS"], errors="coerce").values,
         "OUR_Q_LS": pd.to_numeric(cond["QPK_LS"], errors="coerce").values,
         "OUR_V_MS": pd.to_numeric(cond["V_PK_MS"], errors="coerce").values,
         "OUR_DOD": pd.to_numeric(cond["DOD_PK"], errors="coerce").values,
-        "SG_Q_LS": "", "SG_V_MS": "", "SG_DOD": "", "DQ_PCT": "", "DV_PCT": ""})
+        # SG_Q_LS is filled from the model's conduit FlexTable. Compare it with
+        # OUR_QADF_LS, not with OUR_Q_LS - see IMPORT_PROCEDURE.md.
+        "SG_Q_LS": "", "SG_V_MS": "", "SG_DOD": "",
+        "DQ_PCT_vs_QADF": "", "DV_PCT": ""})
     ref.to_csv(os.path.join(out, "REFEREE_pipes.csv"), index=False)
 
     with open(os.path.join(out, "IMPORT_PROCEDURE.md"), "w", encoding="utf-8") as fh:
@@ -1583,10 +1634,30 @@ def export_sewergems(layers, root: str, rec) -> str:
             "at a chamber is its accumulated flow minus the accumulated flow of the "
             "modelled reaches arriving at it - so the total in LOADS.csv equals the "
             f"network total, {total_net:,.0f} m3/d.\n\n"
-            "BASEFLOW is AVERAGE dry weather flow in L/s. The peak factor is OURS "
-            "(G201-p71-72, Merrimack above 100 properties) and is carried in "
-            "REFEREE_pipes.csv as OUR_Q_LS, not applied in the model - so compare the "
-            "model against OUR_Q_LS, never against BASEFLOW.\n\n"
+            "### The peak factor, and how to compare\n\n"
+            "BASEFLOW is **average** dry weather flow in L/s, sanitary only. The peak "
+            "factor is OURS - G201-p71-72, Merrimack above "
+            f"{C.PF_HOLD_PROPERTIES:.0f} properties - and it is applied EXACTLY ONCE, in "
+            "our own sizing. **Do not set a peaking factor, an extreme-flow multiplier or "
+            "any pattern other than `Fixed` in the model**, or it is applied twice and the "
+            "referee reports our pipes as undersized.\n\n"
+            "It follows that a steady-state run on this package returns AVERAGE conduit "
+            "flow. So:\n\n"
+            "* compare the model's conduit flow against **`OUR_QADF_LS`** in "
+            "`REFEREE_pipes.csv` (column `DQ_PCT_vs_QADF`). That is the like-for-like "
+            "test, and what it actually referees is the accumulation and the topology - "
+            "which is the half a second engine can check.\n"
+            "* `OUR_Q_LS` is our PEAK design flow and the model will NOT reproduce it. "
+            "Reconstruct it if you want to see it: "
+            "`OUR_Q_LS = OUR_QADF_LS x OUR_PF + OUR_QINF_LS`. Infiltration is UNPEAKED "
+            "(G201-p72-73), so multiplying the whole average by PF is wrong by exactly the "
+            "infiltration.\n"
+            "* `OUR_V_MS` and `OUR_DOD` are the state at PEAK. To referee those, the model "
+            "has to be run at peak - and peak flow is **not additive**, because Merrimack "
+            "falls as properties accumulate, so it cannot simply be loaded at the nodes: "
+            "the incremental peak at a junction can come out negative. The defensible "
+            "route is a load-multiplier scenario per catchment, and it is a modelling "
+            "decision, not something this exporter should take.\n\n"
             "The element counts in the procedure above are W8's and are left as written; "
             "this note supersedes them.\n")
     rec.wrote("sewergems", out, len(cond))
@@ -1634,7 +1705,25 @@ def main(argv=None) -> int:
     print(f"W11a stage 9 - deliverables\n  root      {root}\n  contract  "
           f"{K.CONTRACT_VERSION}\n  parts     {', '.join(parts)}\n")
 
-    layers, missing = read_published(root)
+    try:
+        layers, missing = read_published(root)
+    except ContractError as e:
+        # A layer that is PRESENT but does not satisfy its own contract is a third kind of
+        # failure, and it used to come out as a bare traceback from inside a list
+        # comprehension. It is neither "not yet" (a missing layer, handled below) nor "the
+        # layers are not the graph" (handled at the gate), and the exit code has to say so.
+        # The common cause is real and expected: an INTERIM frame - the levels stage
+        # mid-loop, carrying cap breaches with no exit named - which s7 is built to consume
+        # and this stage must refuse, because a deliverable may not carry an unexcused
+        # breach.
+        print("  REFUSED. A published layer does not satisfy its own contract, so nothing "
+              "is exported:\n")
+        print(str(e))
+        print("\n  This is a layer that EXISTS and is wrong, not one that is missing. If "
+              "the frame is\n  an interim one - the levels/stations loop has not converged "
+              "- that is expected and the\n  answer is to finish the loop, not to export "
+              "it. Fix it in the stage that wrote it.")
+        return 1
 
     # The manifest is written to a stage-specific file ON PURPOSE. contract.Manifest keeps
     # `records` as a PER-PROCESS list and save() rewrites the whole file, so a standalone
@@ -1915,7 +2004,14 @@ def _demo_network() -> Tuple[Dict[str, gpd.GeoDataFrame], K.Network]:
         drop_t.append("vortex" if d > C.BACKDROP_MAX else
                       ("backdrop" if d > C.DROP_TRIGGER else "none"))
         vortex.append(1 if d > C.BACKDROP_MAX else 0)
+    # H15 wants exactly ONE outfall per connected component of the GRAVITY layer, and this
+    # network has two: the main tree, which ends at the works inlet, and the pumped branch,
+    # whose gravity component ends at the station. The station IS where that component
+    # discharges - the flow leaves it through the rising main - so it carries the flag too.
+    # One per component, never one per network (philosophy sec 8a allows satellite works).
     nodes = nodes.assign(
+        IS_OUTFALL=[1 if u in (of_uid, st_uid) else 0
+                    for u in nodes["NODE_UID"].astype(str)],
         COVER_M=cover_m, DROP_M=drop_m, DROP_TYPE=drop_t, VORTEX=vortex,
         INLET_DEG=180.0, INLET_FLAG=0, MH_DIA=1.0,
         MH_MAT="precast concrete (stated assumption - G203 gives no table; PAM-SPC pending)",
