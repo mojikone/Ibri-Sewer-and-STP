@@ -415,6 +415,33 @@ def main():
     print(f"wrote {out3}")
     print(cd[(cd.B == 1.5) & (cd.BREACH_DEPTH_M == 13.0)].to_string(index=False))
 
+    # -------------------------------------------------- what p3_lookahead measured
+    # p3_lookahead.csv was produced elsewhere; its script is not in the repository and its
+    # node ids belong to a different graph build. Both files hold the same 239 breaches, so
+    # they are joined on the breach depth. The claim tested: recover_m is NOT the distance
+    # at which the depth recovers, it is the distance at which the un-stationed pipe passes
+    # 12.00 m AGAIN - i.e. how far the station can be deferred.
+    lap = os.path.join(C.OUT_RUN, "p3_lookahead.csv")
+    if os.path.exists(lap):
+        la = pd.read_csv(lap)
+        o1 = df.sort_values("DEPTH_M").reset_index(drop=True)
+        o2 = la.sort_values("depth").reset_index(drop=True)
+        if len(o1) == len(o2):
+            chk = pd.concat([o1[["NODE", "DEPTH_M", "EXC_M", "STATUS", "MAXDEPTH_NOPS"]],
+                             o2[["depth", "recover_m", "best_depth", "q"]]], axis=1)
+            chk["DIFF_M"] = (chk.recover_m.round(1) - chk.EXC_M).abs()
+            out5 = os.path.join(C.OUT_RUN, "research_breakeven_lookahead_check.csv")
+            chk.to_csv(out5, index=False)
+            rb = chk[chk.STATUS == "REBREACH"]
+            print(f"\nwrote {out5}")
+            print(f"  p3_lookahead recover_m equals the distance at which the un-stationed "
+                  f"pipe passes 12.00 m again on {int((rb.DIFF_M <= 0.2).sum())} of "
+                  f"{len(rb)} re-breaching rows (median |diff| {rb.DIFF_M.median():.1f} m)")
+            print(f"  read as a RECOVERY distance it gives "
+                  f"{int((la.recover_m <= 100).sum())} within 100 m and "
+                  f"{int((la.recover_m <= 500).sum())} within 500 m - which is what it is "
+                  f"not measuring")
+
     print(f"\ndone in {time.time()-t0:.0f} s")
 
 

@@ -13,7 +13,7 @@ merged.**
 This document is binding on every network design in this project. Where it conflicts with
 `02`, `02` wins — a criterion is a rule of law and this is a rule of judgement.
 
-**Status: 2026-09-02.** Section 9 complete. Section 8 awaits the cost research now running. Everything else rests on measurements made in W8, W10 and NAMA's as-built network,
+**Status: 2026-09-02.** Complete. Sections 8 and 9 are sourced; §5.1 carries a retraction. Everything else rests on measurements made in W8, W10 and NAMA's as-built network,
 and every claim carries where it came from.
 
 ---
@@ -152,10 +152,36 @@ anyone.
 words: *"Where the cost of excavation becomes prohibitive the Engineer shall incorporate
 pumping stations into the design."*
 
-**5.1 A breach is not a station.** Measured on W10: of 239 points where the pipe passed
-12 m, **115 recover below 12 m within 100 m downstream, 206 within 500 m, and not one fails
-to recover within 3 km.** Every one was a local hump. Placing a station at the first breach
-is a greedy rule that manufactures stations.
+**5.1 A breach is usually NOT local — a claim made on 2026-09-01 and retracted on 2026-09-02.**
+
+The retracted claim was that of 239 breaches, 115 recovered below 12 m within 100 m and none
+failed to recover within 3 km — so every station was spurious. **It was wrong, and the error
+was mine.** The look-ahead clamped the depth to minimum cover at each step
+(`d = min(d, MIN_COVER_CROWN + od)`), so at a breach of 12 m or more the test passed on the
+first pipe every time and the "recovery distance" was simply the length of one reach. The
+comment written beside it — *"the pipe can also come back to cover if the ground drops below
+it"* — is the wrong physics: an invert cannot rise.
+
+**Re-measured correctly** (independent rebuild reproducing all 239 lift heights to 0.005 m):
+
+| | |
+|---|---|
+| Breaches that **never rejoin** — the pipe only gets deeper | **226 of 239** |
+| Breaches that **do rejoin** downstream | **13** |
+| Of those 13, **cheaper to dig through than to pump** | **10** |
+| **Clusters that still need a station** (the level rule 9 counts) | **30 of 30**, at every rate and every cost exponent |
+
+So the station count stands. What survives is the *method*, not the result: **you must look
+ahead and price the excursion before placing a station** — it just does not remove many here.
+
+**5.1a The real defect the correct measurement exposed.** W10 triggers a station on **depth**,
+and depth is uncorrelated with flow. Node 2933 **breaches by 3 mm** while carrying **36,974
+plots and 42,754 m³/d**, and the design answers that with an **85 kW station** where about
+279 kOMR of extra excavation would have done. Node 8543 is the same at 16,368 plots. In the
+literature a station's cost correlates 0.99 with power and 0.72 with head — so **a station
+belongs upstream where the flow is small**, and depth alone must never choose its position.
+Station placement has to be a decision variable inside the design search, not a trigger fired
+by a threshold.
 
 **5.2 The rule is: look ahead, then price the excursion.**
 
@@ -215,10 +241,52 @@ relaxation, convergence.)*
 
 ## 8. The excavation-versus-pumping economics
 
-*Awaiting research. Will carry: the cost-versus-depth relationship and its source; where the
-practical break points are (trench box, sheet piling, headings); station capital and 25-year
-operating cost against duty; the break-even excursion; and how many of the 239 breaches
-survive it.*
+Researched 2026-09-02. Full account, sources and sensitivity:
+`W10/docs/research/DEPTH_VS_PUMPING.md`.
+
+**8.1 The honest headline: it is not the excavation rate that decides. It is the manning.**
+NWS's own pre-investment appraisals price station establishment at **169,127 OMR of present
+value per station — 86 % of the median station's whole life-cycle cost.** Pumping **energy is
+0.4 % of OPEX** (median 49 OMR/yr). Sensitivity across the whole rule: the cost exponent is
+irrelevant (≤2 breaches change across b = 1.0–2.0), the excavation rate is weak (11→4
+breaches across 10–90 OMR/m/m), and **the manning rule is decisive (10→2).**
+
+**Settle station establishment cost with NWS before spending another day on excavation
+rates.** Every hour spent refining the dig cost is an hour spent on the wrong variable.
+
+**8.2 The cost of depth — and the honest limit of what is published.** Three modern fitted
+forms exist and they disagree on the depth exponent: **1.0** (Maurer et al. 2010, as
+reproduced by Duque et al. 2024), **1.47–1.53** (Mansouri & Khanjani 1999), **2.0** (Swamee &
+Sharma). None uses the classic separable `a·D^b·d^c`; every fitted form is additive — a
+diameter term plus a depth term plus a manhole term.
+
+**No published depth-banded rate table goes past about 5 m.** Our excursions run 12 to 57 m,
+so **every rate we can cite is a two- to threefold extrapolation** and must be labelled as
+one. Two empirical tables were extracted in full: Central Coast NSW DSP 2019/20 (median
+marginal 93 AUD per metre of trench per metre of depth) and EPA-430/9-81-003 (777 projects;
+the marginal cost per unit depth rises **2.7× to 17×** above 15 ft on seven of nine
+diameters).
+
+Where the construction method changes — these are the real steps in the curve: **1.52 m**
+(OSHA protection required), **~2 m** (microtunnelling starts to beat open cut in a road
+reserve), **4.5–4.6 m** (the last band of every published table), **~6 m** (standard trench
+boxes stop), **6.1 m** (OSHA requires a professionally designed system), **6–10 m** (the depth
+limit the optimisation literature actually imposes), **10–12 m** (G203-p33).
+
+**8.3 A station costs roughly the square root of its duty.** `ln C = 4.3189 + 0.5329·ln Pe`
+from 360 Portuguese stations (Cabral et al. 2018), cross-checked against EPA's
+`Cost = 1.59×10³·q^0.59`. Exponents 0.53 and 0.59, forty years and a continent apart.
+
+**8.4 The rule, as something implementable.** At a breach, project the un-stationed invert
+downstream — `invert_noPS[m] = min(invert_shipped[m], invert_noPS[prev] − s·L)`, exact by the
+monotonicity of `min`, no re-solve needed. Integrate the **excursion depth-metre integral**
+`DM = ∫(depth_noPS − depth_withPS) dL` in m². Price the dig against a rate anchored at 4 m,
+the deepest depth with real data. Price the station as capital plus PVAF(14.0939) × (energy +
+M&E + **manning**). Dig through only if it is cheaper **and** the excursion actually rejoins;
+if it re-breaches, the station is deferred, not saved.
+
+**Report `K_FLIP = k_ref·C_PS/C_dig`** — the excavation rate at which the decision flips. It
+is rate-free, so it survives the missing BoQs and can be quoted today.
 
 ---
 
