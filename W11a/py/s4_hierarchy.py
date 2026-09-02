@@ -1579,6 +1579,39 @@ def main():
         nodes.to_file(P_GPKG_W11A, layer="nodes", driver="GPKG")
         rec.wrote("reaches (canonical)", P_GPKG_W11A, len(reaches))
         rec.wrote("nodes (canonical)", P_GPKG_W11A, len(nodes))
+
+        # USED, written BACK onto the corridors. Stage 2 publishes it as 0 on every row
+        # because at stage 2 nothing has been laid yet, and until now nothing ever wrote it
+        # - so 202 km of corridor that carries no pipe could not be told from corridor
+        # deliberately not used. A field that is 0 everywhere is a claim, not a number; it
+        # is the same defect stage 2 fixed in ON_WADI_M, one layer along.
+        #
+        # It matters because the conversion rate PER SOURCE is the number that exposed the
+        # W10 inversion: the sources trusted least were used most. A corridor is a proposal;
+        # USED is whether the proposal was taken.
+        try:
+            _cor = gpd.read_file(P_GPKG_W11A, layer="corridors")
+            _laid = set(reaches["CORR_ID"].astype(str)) - {"", "nan", "None"}
+            _cor["USED"] = _cor["CORR_ID"].astype(str).isin(_laid).astype(int)
+            _cor.to_file(P_GPKG_W11A, layer="corridors", driver="GPKG")
+            _by = _cor.groupby(["SRC", "CONFIDENCE"]).agg(
+                n=("USED", "size"), used=("USED", "sum"),
+                km=("LEN_M", lambda x: x.sum() / 1000.0))
+            _say(f"      USED written back: {int(_cor.USED.sum()):,} of {len(_cor):,} "
+                 f"corridors carry a reach "
+                 f"({_cor.loc[_cor.USED == 1, 'LEN_M'].sum() / 1000:,.1f} km of "
+                 f"{_cor.LEN_M.sum() / 1000:,.1f} km)")
+            for (src, conf), r in _by.iterrows():
+                _say(f"         {src:<11s} {conf:<12s} {int(r['used']):>6,} of "
+                     f"{int(r['n']):>6,}  ({100.0 * r['used'] / max(r['n'], 1):5.1f} %)"
+                     f"   {r['km']:>7.1f} km offered")
+            rec.metric("corridors_used", int(_cor.USED.sum()))
+            rec.metric("corridors_used_km",
+                       round(float(_cor.loc[_cor.USED == 1, "LEN_M"].sum()) / 1000.0, 1))
+        except Exception as _e:                    # noqa: BLE001 - reported, never swallowed
+            rec.note(f"USED not written back ({type(_e).__name__}: {_e}); the corridors layer "
+                     f"still reads 0 everywhere, which cannot be distinguished from a "
+                     f"corridor deliberately not used")
         if sm_geom is not None and len(sm_geom):
             sm_geom.to_file(OUT_GPKG, layer="s4_submains", driver="GPKG")
             rec.wrote("s4_submains", OUT_GPKG, len(sm_geom))
