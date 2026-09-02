@@ -481,14 +481,32 @@ def g2(ctx):
     return FAIL, "missing " + ", ".join(missing), 0, ""
 
 
-@check("G3", "provenance", "The published layer reproduces the design graph", "philosophy 8")
-def g3(ctx):
+@check("H16", "topology",
+       "Every pipe publishes US_NODE/DS_NODE, and the declared graph MATCHES the geometry",
+       "philosophy 3.6a / H16")
+def h16(ctx):
+    """Topology is written down, not inferred - and the two must agree.
+
+    The weak version of this check only asked whether the fields exist. That is not the
+    failure worth catching. The failure worth catching is a layer that DECLARES a connected
+    network and DRAWS a disconnected one: both halves look fine alone, and the declared
+    graph is what a modeller imports while the drawn geometry is what a contractor sets out.
+    """
     missing = [c for c in ("US_NODE", "DS_NODE") if c not in ctx.pipes.columns]
     if missing:
-        return FAIL, ("no US_NODE/DS_NODE - connectivity can only be guessed by a tolerance, "
-                      "which is how W10 published 7,919 pieces"), 0, ""
-    G = ctx.graph()
-    return PASS, f"{nx.number_connected_components(G)} component(s) by geometry", 0, ""
+        return FAIL, ("no " + "/".join(missing) + " - topology can only be guessed from a "
+                      "tolerance, and the guess moves with it (see H15)"), 0, ""
+    D = nx.Graph()
+    D.add_edges_from(zip(ctx.pipes.US_NODE.astype(str), ctx.pipes.DS_NODE.astype(str)))
+    dc = nx.number_connected_components(D)
+    gc = nx.number_connected_components(ctx.graph())
+    if dc != gc:
+        return FAIL, (f"declared topology has {dc:,} component(s), the drawn geometry has "
+                      f"{gc:,} at {SNAP_M} m - the layer says one thing and draws another"), abs(dc - gc), ""
+    self_j = int((ctx.pipes.US_NODE.astype(str) == ctx.pipes.DS_NODE.astype(str)).sum())
+    if self_j:
+        return FAIL, f"{self_j} pipes start and end at the same node", self_j, ""
+    return PASS, f"declared and drawn topology agree: {dc:,} component(s)", 0, ""
 
 
 # --------------------------------------------------------------------------- runner
@@ -502,7 +520,10 @@ def run(ctx) -> List[Result]:
             status, summary, n_bad, extent = NOT_CHECKABLE, f"{e}", 0, ""
         out.append(Result(c.id, c.group, c.requirement, c.source, c.blocking,
                           status, summary, n_bad, extent))
-    return out
+    # Report in ID order, not the order the checks happen to be defined in. A reader looking
+    # for H16 should find it next to H15, not at the bottom because it was written last.
+    order = {"H": 0, "R": 1, "G": 2}
+    return sorted(out, key=lambda r: (order.get(r.id[0], 9), int(r.id[1:])))
 
 
 def report(results: List[Result]) -> str:

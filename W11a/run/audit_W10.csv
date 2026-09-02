@@ -14,10 +14,10 @@ H12,chambers,Chamber spacing within Table 12,G203-p30,True,FAIL,"4763 reaches ex
 H13,levels,Uniform slope between successive manholes,G203-p29,True,NOT_CHECKABLE,'no SLOPE_LAID - cannot verify slope uniformity within a reach',0,
 H14,levels,An existing structure's invert is fixed; tie in soffit to soffit,practice,True,NOT_CHECKABLE,'pipe layer has no TIE_TYPE - connections to the existing network are not recorded',0,
 H15,topology,"The network is a FOREST - zero loops, and every component reaches exactly one outfall",project rule,True,FAIL,"7,919 disconnected pieces at 0.01 m - loop-free only because nothing is joined; no IS_OUTFALL to prove any piece drains",7919,
+H16,topology,"Every pipe publishes US_NODE/DS_NODE, and the declared graph MATCHES the geometry",philosophy 3.6a / H16,True,FAIL,"no US_NODE/DS_NODE - topology can only be guessed from a tolerance, and the guess moves with it (see H15)",0,
 R1,regression,No surcharged pipe (W10 shipped 2.80 km),W10 post-mortem,True,FAIL,"5 surcharged, 66 over the d/D limit",71,
 R2,regression,No reach below minimum cover (W10 shipped 45.92 km),W10 post-mortem,True,FAIL,"125 reaches below minimum cover, worst 0.35 m",125,34.78 km
 R3,regression,No pipe along a dual carriageway (W10 shipped 1.67 km),W10 post-mortem,True,FAIL,21 reaches run along a dual carriageway,21,1.67 km
 R4,regression,No pipe on wadi ground (W10 shipped 131.7 km),W10 post-mortem,True,FAIL,1089 reaches on wadi ground,1089,131.7 km
 G1,provenance,"The laid gradient is published, with the minimum beside it",philosophy 5,True,FAIL,"only the minimum gradient is published, so nothing about velocity, fall or drop can be checked",0,
 G2,provenance,Every reach records what set its diameter and its gradient,philosophy 3,True,FAIL,"missing SIZED_BY, GRAD_BY",0,
-G3,provenance,The published layer reproduces the design graph,philosophy 8,True,FAIL,"no US_NODE/DS_NODE - connectivity can only be guessed by a tolerance, which is how W10 published 7,919 pieces",0,

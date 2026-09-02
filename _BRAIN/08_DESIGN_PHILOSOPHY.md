@@ -63,9 +63,18 @@ constraint; it yields only to its own stated exits, and every use is flagged.*
 | **H12** | Chamber spacing within Table 12 | G203-p30 |
 | **H13** | **Uniform slope between successive manholes** | G203-p29 |
 | **H14** | An **existing** structure's invert is fixed and the design yields to it. Tie in **soffit to soffit**, never invert to invert | practice |
-| **H15** | The network is a **forest** — zero loops, checked on the published layer | project rule |
+| **H15** | The network is a **forest** — zero loops, and **each component ends at exactly one outfall**, checked on the published layer. Not *one* component: §8a allows satellite works. What is never legal is a piece that drains nowhere | project rule |
+| **H16** | Every pipe publishes `US_NODE` and `DS_NODE`. **Topology is written down, never inferred from geometry** | project rule |
 
 **On H5, and why it matters more than it looks.** A DN200 carrying a few litres per second runs at a very small depth of flow, and no legal gradient will make it reach 0.75 m/s. Applied as an absolute test, the velocity route condemns almost every small sewer ever built, NAMA's own included. That is why the guideline offers the tractive route — and why **the share of the network relying on it is a reported number**, since the tractive minimum depends on a τ the guideline never gives (assumed 1.0 Pa, GAP-9; at 2.0 the requirement rises 2.35×).
+
+**On H16, and why it is a hard constraint rather than a housekeeping note.** Connectivity
+recovered by snapping endpoints is a guess about intent, and the answer moves with the
+tolerance. W10's published layer has 7,919 pieces and **zero** loops at 10 mm, and 105
+pieces and **311** loops at 2.5 m — the same file, squeezed harder. Every topological
+statement about that layer, including the loop count this document used to quote, is a
+statement about the tolerance. The design knows which chamber a pipe runs between; it
+must write it down. Evidence: `W11a/run/EVIDENCE_snap_tolerance.md`.
 
 **Every reach records which constraint set its diameter and which set its gradient.**
 "Depth" is not an admissible answer for a diameter.
