@@ -616,21 +616,28 @@ def _north(ax, x: float = 0.962, y: float = 0.885) -> None:
 _BOUND_CACHE = {}
 
 
-def _inset(ax, loc=(0.012, 0.70, 0.16, 0.24)) -> None:
-    """Locator: the study boundary with a box round the mapped extent."""
+def _inset(ax, loc=(0.828, 0.60, 0.16, 0.23)) -> None:
+    """Locator: the study boundary with a box round the mapped extent.
+
+    Skipped when the frame already holds the whole study area -- a locator whose
+    box is the whole picture tells the reader nothing.
+    """
     try:
         if "b" not in _BOUND_CACHE:
             _BOUND_CACHE["b"] = study_boundary()
         b = _BOUND_CACHE["b"]
     except Exception:                               # noqa: BLE001
         return
+    bx0, by0, bx1, by1 = b.total_bounds
+    ex0, ex1 = ax.get_xlim()
+    ey0, ey1 = ax.get_ylim()
+    if (ex1 - ex0) >= 0.95 * (bx1 - bx0) and (ey1 - ey0) >= 0.95 * (by1 - by0):
+        return
     iax = ax.inset_axes(loc)
     b.boundary.plot(ax=iax, color=C.GREY, lw=0.7)
-    x0, x1 = ax.get_xlim()
-    y0, y1 = ax.get_ylim()
+    x0, x1, y0, y1 = ex0, ex1, ey0, ey1
     iax.add_patch(Rectangle((x0, y0), x1 - x0, y1 - y0, facecolor="none",
                             edgecolor=C.BOUNDARY, lw=1.2))
-    bx0, by0, bx1, by1 = b.total_bounds
     iax.set_xlim(min(bx0, x0), max(bx1, x1))
     iax.set_ylim(min(by0, y0), max(by1, y1))
     iax.set_aspect("equal")
@@ -676,6 +683,26 @@ def style_axes(ax, *, xgrid: bool = False, ygrid: bool = True) -> None:
 def thousands(ax, axis: str = "y") -> None:
     getattr(ax, f"{axis}axis").set_major_formatter(
         FuncFormatter(lambda v, _: f"{v:,.0f}"))
+
+
+def label_ink(role: str) -> str:
+    """Text colour that stays legible on a ``status_style`` fill, light or dark."""
+    col = STATUS_COLOR.get(str(role).strip().lower(), C.GREY)
+    return "white" if _rel_luminance(col) < 0.30 else C.INK
+
+
+def legend_below(ax, handles, *, ncol: int = 4, drop: float = 0.60):
+    """A frameless legend under the axes, with room made for it.
+
+    Use this on any chart whose bars reach the full width -- an in-axes legend
+    would sit on the data.  ``drop`` is inches of extra bottom margin.
+    """
+    fig = ax.figure
+    h_in = fig.get_size_inches()[1]
+    fig.subplots_adjust(bottom=fig.subplotpars.bottom + drop / h_in)
+    return ax.legend(handles=handles, loc="upper center", ncol=ncol,
+                     bbox_to_anchor=(0.5, -0.26 - 0.02 * h_in), frameon=False,
+                     borderaxespad=0.0, columnspacing=1.6, handlelength=1.9)
 
 
 def tier_legend(labels: dict | None = None) -> list[Line2D]:
@@ -726,7 +753,7 @@ def _demo_map() -> Path:
     onwadi = cor[cor["ON_WADI_M"].fillna(0) > 0]
     fig, ax, note = map_frame(
         ext,
-        title=f"{pct:.0f} % of the corridor network has no flood answer at all",
+        title=f"{pct:.1f} % of the corridor network has no flood answer at all",
         subtitle=("Every corridor midpoint sampled against the 50-year hazard grid. "
                   "Hatched ground is outside the grid, where the wadi rule cannot be "
                   "tested — not ground that has been tested and found clear."))
@@ -785,7 +812,7 @@ def _demo_chart() -> Path:
         subtitle=("A check that cannot run counts as a failure, not a blank. On the "
                   "full W11a network at stage 4 the fields most checks need are not "
                   "published yet, so almost nothing can be tested."),
-        figsize=(9.0, 3.6), ygrid=False, xgrid=True)
+        figsize=(9.4, 4.0), ygrid=False, xgrid=True)
 
     order = ["pass", "flag", "untested", "fail"]
     names = {"pass": "PASS", "flag": "runs, outcome not published",
@@ -799,15 +826,14 @@ def _demo_chart() -> Path:
                 continue
             ax.barh(y, v, left=left, height=0.55, **status_style(k))
             ax.text(left + v / 2, y, str(v), ha="center", va="center", fontsize=7.5,
-                    color=C.INK if k in ("pass", "flag", "untested") else "white",
-                    fontweight="bold")
+                    color=label_ink(k), fontweight="bold")
             left += v
     ax.set_yticks(ypos)
     ax.set_yticklabels([r[0] for r in rows], fontsize=7.6)
     ax.set_xlabel("checks in the 22-check registry")
     ax.set_xlim(0, 22.6)
-    ax.legend(handles=[Patch(label=names[k], **status_style(k)) for k in order],
-              loc="lower right", ncol=2, framealpha=0.95, edgecolor="#9a9a9a")
+    legend_below(ax, [Patch(label=names[k], **status_style(k)) for k in order],
+                 ncol=4)
     finish_chart(fig, source=source_line(trunk, w10, ready))
     return save(fig, "FK_example_chart_audit_outcomes")
 

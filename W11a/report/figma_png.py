@@ -24,6 +24,15 @@ IMG = os.path.join(HERE, "img")
 # An A4 portrait text column is about 16.6 cm. Past this ratio a diagram either sets its own
 # type too small to read or has to go on a landscape page of its own.
 MAX_RATIO = 2.2
+# And the other way. A full A4 portrait figure area is about 16.6 x 24 cm = 0.69:1, so
+# anything much taller than that shrinks to fit the HEIGHT and wastes the width: FC04 came
+# back at 0.30:1 and would have set 7 cm wide on the page. Guarding one direction only
+# invited exactly this overcorrection.
+# 0.40, not 0.55. A tall diagram whose nodes carry SHORT lines still sets large type at
+# about 10 cm wide on a full page and reads perfectly; what fails is a tall diagram whose
+# nodes wrap long lines, which is the real driver of height in FigJam. The ratio is a proxy
+# for that, so the bound is set where it catches the bad case without rejecting the good one.
+MIN_RATIO = 0.40
 
 RASTER = r"""
 const {Resvg} = require('@resvg/resvg-js');
@@ -58,9 +67,14 @@ def fetch(url: str, name: str, width: int = 3200):
     with Image.open(png) as im:
         w, h = im.size
     ratio = w / max(h, 1)
-    flag = "" if ratio <= MAX_RATIO else (
-        f"   <-- {ratio:.1f}:1 is too wide to read at A4. Change the DIAGRAM "
-        f"(TB instead of LR, or subgraphs), do not shrink the image.")
+    flag = ""
+    if ratio > MAX_RATIO:
+        flag = (f"   <-- {ratio:.2f}:1 is too WIDE for A4. Redraw TB, or group into "
+                f"subgraphs. Do not shrink the image.")
+    elif ratio < MIN_RATIO:
+        flag = (f"   <-- {ratio:.2f}:1 is too TALL for A4; it would set about "
+                f"{16.6 * ratio / 0.69:.0f} cm wide on a full page. Redraw with fewer, "
+                f"denser nodes, or put detail inside a node instead of after it.")
     print(f"{name}: {w} x {h}  ratio {ratio:.2f}:1{flag}")
     return png, ratio
 
