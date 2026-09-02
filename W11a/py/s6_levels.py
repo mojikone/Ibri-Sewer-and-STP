@@ -195,6 +195,36 @@ TERRAIN_VRT = os.path.join(BASE, "Data", "Terrain", "Sat_0p5m", "IBRI_0p5_VRT2.v
 _DROP_CEILING_M = float(
     getattr(K.NODES.field("DROP_M"), "hi", None) or C.BACKDROP_MAX)
 
+# The ceiling on the LAID GRADIENT, read the same way and for the same reason. G203 sets no
+# maximum gradient for a gravity sewer - the only maximum it gives is H7's 3.0 m/s (p27), and
+# that never binds on the pipe this matters for: a DN200 lateral carrying a fraction of a
+# litre per second runs at d/D under 0.03 and reaches 0.8 m/s on a 49 % slope. So without this
+# the solver lays the pipe down the cliff, which philosophy sec 5 forbids in terms: "on steep
+# ground the pipe does not follow the cliff. Hold the gradient and take the difference at a
+# drop chamber." PROJECT DECISION, carried by contract.REACHES.SLOPE_LAID.hi.
+_SLOPE_CEILING_PCT = float(
+    getattr(K.REACHES.field("SLOPE_LAID"), "hi", None) or 25.0)
+
+# The bedding allowance below the crown is NOT the same number in the two files that use it,
+# and the difference changes sign at the cap. `contract.cover()` subtracts
+# AUDITOR_OD_ALLOW_M = 0.10; `audit.od()` subtracts `crit.WALL_ALLOW` = 0.05 (its own
+# docstring records the change from 0.10, and contract.py's constant did not follow). At the
+# MINIMUM the contract is the conservative one - the design lays 50 mm deeper than H3 asks,
+# which is harmless. At the MAXIMUM it is the optimistic one: a reach the design reads at
+# 11.96 m of cover the auditor reads at 12.01 m, and H4 fails it as an unflagged breach.
+# Measured 2026-09-02: 44 reaches, every one within 50 mm of the cap.
+#
+# So the CAP is tested on the LARGER of the two covers, and the flag it sets is a superset of
+# what the auditor tests - which is what `_cover_mid` already promised and could not deliver
+# while it read one definition. What is PUBLISHED stays `contract.cover()` and nothing else:
+# there is one published definition, and this is a test threshold, not a second one.
+_CAP_OD_ALLOW_M = min(float(K.AUDITOR_OD_ALLOW_M), float(C.WALL_ALLOW))
+
+
+def _cap_cover(dn: int, invert_depth: float) -> float:
+    """Cover to crown for the CAP test only - the stricter of the two definitions in play."""
+    return float(invert_depth) - (int(dn) / 1000.0 + _CAP_OD_ALLOW_M)
+
 
 @dataclass(frozen=True)
 class SolverOptions:
@@ -209,6 +239,9 @@ class SolverOptions:
     # publish an unbuildable drop, it just has no way to resolve one.
     max_drop_m: float = _DROP_CEILING_M
     drop_ceiling_mints_station: bool = True
+
+    # --- the cliff ceiling. PROJECT DECISION, sourced from contract.REACHES.SLOPE_LAID.hi.
+    max_slope_pct: float = _SLOPE_CEILING_PCT
 
     # --- method choices, declared
     profile_step_m: float = 10.0
@@ -243,6 +276,12 @@ class SolverOptions:
     # settles in 1-2 passes at about 0.5 s each.
 
     tau_pa: float = C.TAU_PA                  # GAP-9, no numeric value in G203 (OPEN-4)
+
+    @property
+    def max_slope_k(self) -> int:
+        """The cliff ceiling as a whole number of 0.05 % steps. Rounded DOWN: rounding up
+        would publish a gradient above the ceiling the number came from."""
+        return max(1, int(math.floor(self.max_slope_pct / K.SLOPE_STEP_PCT + 1e-9)))
 
 
 # ======================================================================================
@@ -690,7 +729,7 @@ class LevelSolver:
             if premium_steps == 0:
                 pass                                   # already uniform; the cause stands
             elif premium_steps <= o.uniform_premium_steps:
-                cov_dn_after = K.cover(
+                cov_dn_after = _cap_cover(
                     dn, gv - (i_up - prev_k * K.SLOPE_STEP_PCT / 100.0 * L))
                 if cov_dn_after <= o.max_cover_m:
                     # No counter here on purpose. A carry made at this point can still be
@@ -705,8 +744,29 @@ class LevelSolver:
                     why = "cover_max"
                     self._bump("uniform_refused_by_cap")
 
-        # ---- 10: maximum slope. v <= 3.0 m/s (H7, G203-p27) is enforced, not demoted.
+        # ---- 10: maximum slope. TWO ceilings now, and the tighter of them wins.
+        #
+        #   H7      v <= 3.0 m/s (G203-p27), enforced and not demoted, as before
+        #   CLIFF   the laid-gradient ceiling. Philosophy sec 5: "on steep ground the pipe does
+        #           not follow the cliff. Hold the gradient and take the difference at a drop
+        #           chamber." H7 does NOT do this job and cannot: on the pipe where it matters -
+        #           a DN200 lateral at a fraction of a litre per second - d/D stays under 0.03
+        #           and the velocity on a 49 % slope is 0.8 m/s, so H7 never binds and the
+        #           solver lays the pipe straight down the cliff. Measured 2026-09-02: 20 reaches
+        #           between 25.0 and 49.3 %, every one of them a near-zero-flow DN200 lateral.
+        #
+        # Both ceilings take the SAME action, which is why they share a branch: hold the
+        # downstream end at its cover target, lower the upstream end, and let the fall we are no
+        # longer allowed to use become a drop at the upstream chamber (G203-p30 sizes the
+        # structure; the node layer publishes it as DROP_M/DROP_TYPE). Which ceiling bound is
+        # recorded in the run report, because `contract.GRAD_BY` has one token for "flattened by
+        # a maximum-gradient rule" - `vmax` - and widening that enum is the contract's decision,
+        # not this stage's. See the run report counters `vmax_capped` and `cliff_capped`.
         k_max = self._k_vmax(dn, q, k)
+        k_cliff = self.opts.max_slope_k
+        capped_by_cliff = False
+        if k_cliff < k and (k_max is None or k_cliff < k_max):
+            k_max, capped_by_cliff = k_cliff, True
         drop_up = 0.0
         if k_max is not None and k_max < k:
             k_floor = max(self._k_up(s_hyd), self._k_up(s_fall), 1)
@@ -720,7 +780,7 @@ class LevelSolver:
             new_i_up = t_dn + k * K.SLOPE_STEP_PCT / 100.0 * L
             drop_up = max(0.0, i_up - new_i_up)
             i_up = min(i_up, new_i_up)
-            self._bump("vmax_capped")
+            self._bump("cliff_capped" if capped_by_cliff else "vmax_capped")
 
         s = k * K.SLOPE_STEP_PCT / 100.0
         i_dn = i_up - s * L
@@ -890,6 +950,41 @@ class LevelSolver:
                     i_dn, drop, why = i_up - s * r.length, 0.0, "vmax"
                     self._bump("vmax_unsatisfiable")
 
+            # ---- CAPACITY, RE-PUT AT THE GRADIENT THE REACH IS ACTUALLY LAID AT.
+            # Step 14 judges each candidate at LEVEL A's gradient, because that is the only
+            # gradient that exists when the diameter is chosen. Level B then re-levels on the
+            # chosen diameter and can land FLATTER - a bigger pipe sits deeper, which shortens
+            # the fall available to it, and the vmax and cliff ceilings only ever reduce k. A
+            # capacity test made at a gradient the pipe was not laid at is exactly the W10
+            # defect this module's own header claims to prevent, and it shipped 4 reaches over
+            # their d/D limit (measured 2026-09-02: DN600 at 0.15 %, y = 0.527 against a 0.50
+            # limit; the next size passes at 0.416 on the same gradient).
+            #
+            # The answer is a bigger pipe, never a flatter one and never a relaxed limit -
+            # G203-p29 forbids oversizing to lay flatter, and this is its converse: the
+            # gradient is already fixed, and the pipe follows the flow. Bounded by the
+            # catalogue; where the catalogue runs out the cause is recorded and the auditor
+            # fails it loudly, which is the same policy `_size_reach` already takes.
+            for _ in range(len(self.crit.DN_SERIES)):
+                q_lim, q_peak = self._q_caps(dn, k)
+                if r.q_m3s <= q_lim + 1e-12:
+                    break
+                cause = "capacity" if r.q_m3s > q_peak else "dod"
+                bigger = [d for d in self._candidates(r.tier) if d > dn]
+                if not bigger:
+                    sized_by = cause
+                    self._bump("no_catalogue_size_at_laid_gradient")
+                    break
+                dn, sized_by = bigger[0], cause
+                self._bump("upsized_at_laid_gradient")
+                i_up, i_dn, k, why, drop = self._level(r, dn, prev_k.get(u))
+                if k < 0:
+                    k = max(self._k_up(H.smin_for(dn, r.q_m3s, self.crit)), 1)
+                    s = k * K.SLOPE_STEP_PCT / 100.0
+                    i_up, _w = self._upstream_limit(r, dn)
+                    i_dn, drop, why = i_up - s * r.length, 0.0, "vmax"
+                    self._bump("vmax_unsatisfiable")
+
             r.dn = dn
             r.sized_by = sized_by
             r.gradient_by = why
@@ -940,11 +1035,16 @@ class LevelSolver:
                     r.gradient_by = "tie"
                     n["ds_fixed"] += 1
 
-            # ---- 3. upstream invert to maximum slope
+            # ---- 3. upstream invert to maximum slope. BOTH ceilings, as in the forward pass:
+            # operations 2 and 4 move an invert, so a reach that was inside the cliff ceiling
+            # on the way down can be outside it on the way back up, and a reverse pass that
+            # only checked H7 would let exactly that through to the layer.
             if r.length > 0:
                 s_now = (r.inv_up - r.inv_dn) / r.length
                 k_now = int(round(s_now * 100.0 / K.SLOPE_STEP_PCT))
                 k_max = self._k_vmax(r.dn, r.q_m3s, max(k_now, 1))
+                k_cliff = self.opts.max_slope_k
+                k_max = k_cliff if k_max is None else min(k_max, k_cliff)
                 if k_max is not None and k_max < k_now:
                     new_up = r.inv_dn + k_max * K.SLOPE_STEP_PCT / 100.0 * r.length
                     r.drop_up += max(0.0, r.inv_up - new_up)
@@ -983,10 +1083,10 @@ class LevelSolver:
 
     # ---------------------------------------------------------------- the ladder
     def _cover_us(self, r: Reach) -> float:
-        return K.cover(r.dn, self.grd[r.us] - r.inv_up)
+        return _cap_cover(r.dn, self.grd[r.us] - r.inv_up)
 
     def _cover_dn(self, r: Reach) -> float:
-        return K.cover(r.dn, self.grd[r.ds] - r.inv_dn)
+        return _cap_cover(r.dn, self.grd[r.ds] - r.inv_dn)
 
     def _cover_mid(self, r: Reach) -> float:
         """Worst cover along the reach, from the terrain profile.
@@ -999,7 +1099,7 @@ class LevelSolver:
         for chn, z in r.profile:
             if not math.isfinite(z):
                 continue
-            worst = max(worst, K.cover(r.dn, z - (r.inv_up - s * chn)))
+            worst = max(worst, _cap_cover(r.dn, z - (r.inv_up - s * chn)))
         return worst
 
     def apply_ladder(self) -> List[Dict]:
@@ -1189,11 +1289,28 @@ class LevelSolver:
         unresolved: List[Dict] = []
         done: set = set()
         for d, u, who in bad:
-            # Which over-cap run put the chamber this deep? Normally the deep arrival is
-            # itself in a breach chain. Where it is not - the chamber is deep but the arriving
-            # reach's own cover came back - walk up the deepest arrivals until a breach owns
-            # one, bounded so a pathological graph cannot spin.
-            b, x = owner.get(who), who
+            # WHICH SIDE OF THE JUNCTION TO LOOK AT, because getting this wrong makes the
+            # whole rung silently useless. `who` is the arrival that SETS the drop, and that
+            # is the SHALLOW one - a 1.7 m deep street lateral falling into a 36.8 m deep
+            # main. The shallow branch is not in any breach and never will be; the run that
+            # is over the cap is the one the chamber sits ON. So the breach is looked for on
+            # the DEEP side: the reach leaving the chamber first, then the deepest arrival,
+            # then upstream along the deepest arrivals, bounded so a pathological graph
+            # cannot spin.
+            b = None
+            probe = []
+            e_out = self.out_edge.get(u)
+            if e_out is not None:
+                probe.append(e_out)
+            deep = [e for e in self.in_edges.get(u, ())
+                    if math.isfinite(self.reaches[e].inv_dn)]
+            if deep:
+                probe.append(min(deep, key=lambda e: self.reaches[e].inv_dn))
+            for x in probe:
+                b = owner.get(x)
+                if b is not None:
+                    break
+            x = probe[-1] if probe else who
             for _ in range(400):
                 if b is not None:
                     break
@@ -1568,15 +1685,18 @@ def write_back(nodes_gdf, reaches_gdf, solver: LevelSolver) -> Tuple:
         # COVER_M is the cover to the crown of the SHALLOWEST connected pipe, on that pipe's
         # OWN outside diameter - one definition, `contract.cover()`, for the schedule, the
         # drawing and the audit alike.
-        covers = []
+        covers, strict = [], []
         e = solver.out_edge.get(u)
         if e is not None:
             rr = solver.reaches[e]
             covers.append(K.cover(rr.dn, solver.grd[u] - rr.inv_up))
+            strict.append(_cap_cover(rr.dn, solver.grd[u] - rr.inv_up))
         for x in solver.in_edges.get(u, ()):
             rr = solver.reaches[x]
             covers.append(K.cover(rr.dn, solver.grd[u] - rr.inv_dn))
+            strict.append(_cap_cover(rr.dn, solver.grd[u] - rr.inv_dn))
         cover_m[i] = min(covers) if covers else 0.0
+        cover_strict = min(strict) if strict else 0.0
 
         # the drop INSIDE the chamber: arrivals against what leaves it (G203-p30)
         d = drops.get(u, (0.0, ""))[0]
@@ -1603,7 +1723,7 @@ def write_back(nodes_gdf, reaches_gdf, solver: LevelSolver) -> Tuple:
             rr = solver.reaches[x]
             if rr.past_cap:
                 pc, ce = 1, (ce or rr.cap_exit)
-        if cover_m[i] > solver.opts.max_cover_m + 1e-6 and not pc:
+        if cover_strict > solver.opts.max_cover_m + 1e-6 and not pc:
             # A chamber past the cap that no reach flagged. The contract's node cross-check
             # refuses PAST_CAP=1 with a blank CAP_EXIT, and naming an exit here to get past
             # that check would be inventing the evidence philosophy sec 5 demands ("flagged,
@@ -1611,7 +1731,7 @@ def write_back(nodes_gdf, reaches_gdf, solver: LevelSolver) -> Tuple:
             # the exits; if it did not reach this chamber, the honest answer is to stop the
             # write, not to guess `recovers_500m`.
             raise ContractError(
-                f"chamber {u} sits at {cover_m[i]:.2f} m of cover, past the "
+                f"chamber {u} sits at {cover_strict:.2f} m of cover, past the "
                 f"{solver.opts.max_cover_m:.0f} m cap, and no reach at it carries PAST_CAP. "
                 "The cap-and-veto ladder did not see it, so no exit has been tested and none "
                 "may be named (philosophy sec 5). This is a solver defect, not a data "
@@ -1846,8 +1966,12 @@ def run(root: str = K.W11A_ROOT, gpkg_name: str = "W11a.gpkg",
         if report["drop_over_ceiling"] or report["drop_unresolved"]:
             publish = False
             uc_csv = os.path.join(root, "run", "s6_drops_unbuildable.csv")
-            pd.DataFrame(report["drop_over_ceiling"] or report["drop_unresolved"]) \
-                .to_csv(uc_csv, index=False)
+            # the measured drops, each carrying the reason the last pass could not resolve it
+            why = {r["NODE_UID"]: r.get("WHY_UNRESOLVED", "")
+                   for r in report["drop_unresolved"]}
+            pd.DataFrame([dict(r, WHY_UNRESOLVED=why.get(r["NODE_UID"], ""))
+                          for r in report["drop_over_ceiling"]]
+                         or report["drop_unresolved"]).to_csv(uc_csv, index=False)
             rec.wrote("chambers whose drop cannot be built", uc_csv,
                       len(report["drop_over_ceiling"]))
             rec.note(f"REFUSED TO PUBLISH: {len(report['drop_over_ceiling'])} chamber(s) need "
@@ -1988,6 +2112,13 @@ def self_test(root: Optional[str] = None) -> int:
     def _qadf(i):                          # m3/d accumulated - up to a trunk-sized flow
         return round(120.0 * (i + 1), 2)
 
+    # IS_OUTFALL arrived in the contract on 2026-09-02 and neither `Network.to_nodes_gdf` nor
+    # stage 5 writes it yet, so the self-test fabricates it here along with everything else
+    # stage 5 owns. H15 reads it: exactly one per connected component, and this run is one
+    # chain, so it is the last chamber. When stage 5 starts publishing it this block becomes
+    # a no-op, which is why it is written as a fill rather than an overwrite.
+    if "IS_OUTFALL" not in ng.columns:
+        ng["IS_OUTFALL"] = [0] * (len(ng) - 1) + [1]
     ng["INLET_DEG"] = 180.0
     ng["INLET_FLAG"] = 0
     ng["Q_ADF_M3D"] = [_qadf(i) for i in range(len(ng))]
