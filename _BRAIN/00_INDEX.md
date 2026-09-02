@@ -1,9 +1,10 @@
 # BRAIN — Source of Truth (2621 Ibri Sewer & STP)
 
-**Read `07_PROJECT_STATE.md` FIRST (single-file orientation: data, progress, settled doctrine, next tasks), then this index, then `02_DESIGN_CRITERIA.md` before writing any number.**
+**Read `07_PROJECT_STATE.md` FIRST (single-file orientation: data, progress, settled doctrine, next tasks), then this index, then `02_DESIGN_CRITERIA.md` before writing any number, and `08_DESIGN_PHILOSOPHY.md` before laying out any network.**
 
 ## Prime rules
 1. **No invented metrics.** Every slope, velocity, depth, flow, spacing, buffer used in analysis/report MUST trace to `02_DESIGN_CRITERIA.md` (with PAM-GUD-203 page ref) or be explicitly tagged `[GAP — pending source]` in `05_GAPS.md`.
+1b. **Criteria are not philosophy.** `02` holds the numbers that must be true; `08_DESIGN_PHILOSOPHY.md` holds the method that produces a design worth building. A design can satisfy every number in `02` and still be unbuildable — W10 did. Where the two conflict, `02` wins: a criterion is a rule of law, philosophy is a rule of judgement.
 2. Scope obligations live in `01_SCOPE_REGISTER.md`. Outputs must map to scope items.
 3. Data quality flags in `03_DATA_INVENTORY.md` are binding (e.g. DEM is rough DSM → no invert design from it, screening only).
 4. Work happens in `../W1`, `../W2`, ... (new folder = rework iteration). BRAIN is shared across all W folders and updated as knowledge grows.
@@ -20,3 +21,4 @@
 | 05_GAPS.md | Missing sources, open questions, items needing client/user input |
 | 06_W2_FEEDBACK.md | Binding user feedback constraints from W1 review (maps, zones, SLS, report style) |
 | 07_PROJECT_STATE.md | **START HERE** — orientation snapshot: data, doctrine, progress, key numbers, next tasks |
+| 08_DESIGN_PHILOSOPHY.md | **How to arrive at a GOOD design.** `02` says whether a design is legal; `08` says how to make it good — the order of design, layout and levelling philosophy, when to pump, and the two-pass strict-then-review method. Binding on every network design |
