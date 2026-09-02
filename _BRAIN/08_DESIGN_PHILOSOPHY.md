@@ -13,6 +13,11 @@ merged.**
 This document is binding on every network design in this project. Where it conflicts with
 `02`, `02` wins — a criterion is a rule of law and this is a rule of judgement.
 
+**Scope:** the **gravity foul sewer network**, from the property connection to the works
+inlet, including its lifting stations and rising mains. The treated-effluent network and the
+treatment works are governed by their own criteria in `02` and need their own philosophy;
+neither is covered here, and that omission is deliberate rather than an oversight.
+
 **Status: 2026-09-02.** Complete. Sections 8 and 9 are sourced; §5.1 carries a retraction. Everything else rests on measurements made in W8, W10 and NAMA's as-built network,
 and every claim carries where it came from.
 
@@ -114,8 +119,36 @@ layer contains **310 independent cycles**.
 of the perpendicular from the first plot's centroid — where the house connection will
 actually arrive. Not at the end of a road centreline.
 
+**3.8a Inlets arrive at 90° or better, and anything less is flagged by name.** G203-p30
+requires an incoming pipe to make an angle of **not less than 90°** with the flow — no pipe
+may arrive pointing against it. Where a street meets at a bad angle, a **bend chamber** goes
+a few metres short of the junction so the turn is made in two halves. Where there is no room
+for one — 2 m plot clearance, 3 m chamber clearance — the junction is **flagged individually
+for a purpose-made chamber with a curved channel**, never quietly accepted.
+
+*Recorded because it is a live inconsistency:* W8's code carries `INLET_MIN_DEG = 85.0` while
+its own docstring and assumption register say 75°, and W7 relaxed 90° to 85° as a stated
+deviation. **A deviation from a "shall" cannot be carried at three different values.** W11a
+holds the guideline's 90° and reports every junction below it as a named exception. W10
+checked the angle nowhere at all.
+
 **3.8 Ten metres of clearance at a junction.** A branch starts at least 10 m from the
 chamber it will join, so the junction is a chamber and not a collision.
+
+**3.9 The tertiary layer is part of the design, not a detail left for later.** A network that
+stops at the lateral has not connected anybody. Three elements, each with its own rule:
+
+- **Property connection** — from the plot to the rider or lateral, at 3–10 %, **maximum 50 m**
+  (G203-p18 Tab 4/5), minimum 0.60 m cover, OD160 minimum
+- **Rider** — a shallow pipe in the frontage collecting up to **3 property connections** before
+  it joins a lateral (G203-p19 3.4)
+- **Stub-out** — a capped connection left at the frontage of every **future** plot, sized for
+  that area's saturation flow. Building the main and returning later to break into it is the
+  most expensive way to connect a house
+
+The gate rule in §3.7 exists to serve this layer: the head chamber sits where the connections
+will actually arrive. **W10 has no tertiary layer at all** — its loads land on a corridor node
+and no property connects to anything.
 
 ---
 
@@ -257,6 +290,23 @@ minimum, at the actual peak flow.
 **6.3 Size on the ultimate horizon, check on the first year.** Buried civil work is sized at
 saturation. Self-cleansing is verified at start-year flows, because a pipe that scours at
 2055 and silts in 2030 has failed.
+
+**6.3a Septicity is a design driver here, not an afterthought.** G203 devotes a whole chapter
+to hydrogen sulphide, and it is the **reason** the oversizing prohibition in §6.1 exists.
+p167 lists the causes: *"a. Oversized lateral sewers and mains resulting in low sewage
+velocity in sewers causing solids deposition and long retention times, promoting anaerobic
+conditions"* and *"b. Low sewer gradients resulting in low velocity"*. p185 adds that
+*"Gravity sewers with very low slopes are the ones with the greatest risk of H₂S formation"*,
+and warns about networks that become oversized when occupancy varies seasonally.
+
+At Omani wastewater temperatures the margin is thin, so three things follow:
+
+- **retention time is a design output**, reported per route from the head to the works, not
+  discovered later in an odour study
+- a long flat run at minimum gradient carrying little flow is the **highest-risk
+  combination**, and it is exactly what an outlying branch produces
+- the odour and corrosion assessment is a **reason to shorten a marginal branch or not sewer
+  it at all** — it belongs in the §7 review pass, not only in the treatment design
 
 **6.4 Diameter is not a tier label.** NAMA used OD160 for every lateral *and* every sub main,
 one of them carrying 686 properties, and 110 of their pipes cannot pass today's peak flow.
