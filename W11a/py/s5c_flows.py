@@ -1,0 +1,294 @@
+"""W11a stage 5c - flow accumulation, and the ground each reach sits on.
+
+THE STAGE THAT WAS MISSING. Stages 1-5b build the graph and put a load at every chamber;
+stage 6 levels and sizes each reach and needs to know what it carries. Nothing joined the
+two, so stage 6 stopped with `reaches missing: QPK_LS, QADF_M3D, QINF_LS, PF, PF_METH,
+ON_DUAL_M, ON_WADI_M, CROSS_ID` and the chain ended there. The ten stages were built in
+parallel against the contract and this step fell between two of them.
+
+WHAT IT DOES, and where every number comes from:
+
+  1. Reads `connections` (one row per plot, Q_ADF_M3D and N_PROP at an OUT_NODE), `reaches`
+     (chamber-to-chamber, split by stage 5) and `nodes` from W11a.gpkg.
+  2. Builds the directed graph US_NODE -> DS_NODE and accumulates load, properties and
+     upstream length down it in topological order.
+  3. Peak factor: Merrimack `Qpdf = 2.65 Qadf^0.879` in Ml/d above 100 properties
+     (G201-p71, mandatory). BELOW 100 properties G201 prescribes no formula at all, so the
+     value is HELD at Merrimack evaluated on the 100-property flow and tagged PF_METH =
+     'held'. This is stage 3's method, called from stage 3's own criteria object - not a
+     second implementation of it.
+  4. Infiltration 720 L/d/km on the accumulated upstream length (G201-p72-73), unpeaked.
+  5. Measures ON_WADI_M and ON_DUAL_M on the REACH's own geometry and mints a CROSS_ID for
+     every reach that crosses a wadi (philosophy H1a item 4). Measured, never inherited: a
+     flag carried down from a corridor is a claim about stage 2, not a fact about this line.
+
+WHAT IT DELIBERATELY DOES NOT DO. It does not size, level, or move anything. Diameter and
+gradient are stage 6's, and a stage that quietly sized a pipe while claiming to add a flow
+column would be the hardest kind of defect to find.
+"""
+from __future__ import annotations
+
+import os
+import sys
+import time
+import warnings
+from typing import Dict, Tuple
+
+import numpy as np
+import pandas as pd
+import geopandas as gpd
+import networkx as nx
+import shapely
+from shapely.ops import unary_union
+
+warnings.filterwarnings("ignore")
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+W11A = os.path.dirname(HERE)
+REPO = os.path.dirname(W11A)
+BASE = os.path.dirname(os.path.dirname(REPO))
+sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.join(REPO, "W8", "py"))
+
+from sewnet.criteria import DEFAULT as C            # noqa: E402
+from w11a import audit                              # noqa: E402
+
+GPKG = os.path.join(W11A, "shp", "W11a.gpkg")
+RUN = os.path.join(W11A, "run")
+P_ROADS = os.path.join(BASE, "Hydraulic", "SHP", "Road centerline 2", "Road_Centercline.shp")
+P_HAZARD = os.path.join(BASE, "Data", "04 Lekhuwair", "Hazard_T50y.tif")
+STAGE = "s5c_flows"
+
+# Infiltration is charged on the accumulated upstream LENGTH. Stage 3 adds a small
+# flow-proportional term for the reaches upstream of the trunk that it does not model
+# individually; here every reach is modelled, so the term is zero and is not invented.
+KM_PER_M3D = 0.0
+
+DUAL_BAND_M = 6.0        # audit.h1's band, so the number this stage publishes is the number
+                         # the auditor will read back
+
+
+def say(m=""):
+    print(m, flush=True)
+
+
+def load() -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame, gpd.GeoDataFrame]:
+    import fiona
+    have = set(fiona.listlayers(GPKG))
+    need = {"reaches", "nodes", "connections"}
+    if not need <= have:
+        say("\nWAITING ON AN UPSTREAM STAGE - nothing computed, nothing written.")
+        say(f"  needs {sorted(need - have)} in W11a.gpkg (present: {sorted(have)})")
+        say("  run s4_hierarchy.py, then s5_chambers.py, then s5b_tertiary.py")
+        raise SystemExit(0)
+    r = gpd.read_file(GPKG, layer="reaches")
+    n = gpd.read_file(GPKG, layer="nodes")
+    c = gpd.read_file(GPKG, layer="connections")
+    return r, n, c
+
+
+def accumulate(reaches: gpd.GeoDataFrame, conns: gpd.GeoDataFrame
+               ) -> Tuple[Dict, Dict, Dict, int]:
+    """Sum load, properties and upstream length down the graph. Returns dicts by node."""
+    G = nx.DiGraph()
+    lens = {}
+    for u, v, L in zip(reaches.US_NODE.astype(str), reaches.DS_NODE.astype(str),
+                       reaches.geometry.length):
+        # Parallel reaches between one pair of chambers would collapse in a DiGraph, so the
+        # length carried is the LONGEST - infiltration is charged on pipe in the ground.
+        if G.has_edge(u, v):
+            lens[(u, v)] = max(lens[(u, v)], float(L))
+        else:
+            G.add_edge(u, v)
+            lens[(u, v)] = float(L)
+
+    q0: Dict[str, float] = {}
+    n0: Dict[str, float] = {}
+    for node, q, npr in zip(conns.OUT_NODE.astype(str),
+                            pd.to_numeric(conns.Q_ADF_M3D, errors="coerce").fillna(0.0),
+                            pd.to_numeric(conns.N_PROP, errors="coerce").fillna(0.0)):
+        q0[node] = q0.get(node, 0.0) + float(q)
+        n0[node] = n0.get(node, 0.0) + float(npr)
+
+    # H15 says the network is a forest. Where it is not, break the cycles EXPLICITLY - a
+    # topological sort on a cyclic graph raises, and silently dropping the flow instead
+    # would be worse than either. nx.find_cycle returns ONE cycle in O(V+E); nx.simple_cycles
+    # enumerates EVERY cycle and is exponential - it was tried here first and never returned
+    # on 49,274 edges.
+    n_cyc = 0
+    while True:
+        try:
+            cyc = nx.find_cycle(G, orientation="original")
+        except nx.NetworkXNoCycle:
+            break
+        a, b = cyc[0][0], cyc[0][1]
+        G.remove_edge(a, b)
+        n_cyc += 1
+        if n_cyc > 5000:
+            raise RuntimeError("over 5,000 cycles - this is not a forest and not a "
+                               "roundable error; fix the topology upstream")
+
+    q = {u: q0.get(u, 0.0) for u in G.nodes}
+    npr = {u: n0.get(u, 0.0) for u in G.nodes}
+    km = {u: 0.0 for u in G.nodes}
+    for u in nx.topological_sort(G):
+        for v in G.successors(u):
+            q[v] += q[u]
+            npr[v] += npr[u]
+            km[v] += km[u] + lens[(u, v)] / 1000.0
+    return q, npr, km, n_cyc
+
+
+def ground(reaches: gpd.GeoDataFrame) -> Tuple[np.ndarray, np.ndarray, list]:
+    """ON_WADI_M, ON_DUAL_M and CROSS_ID, MEASURED on each reach's own geometry."""
+    on_dual = np.zeros(len(reaches))
+    if os.path.exists(P_ROADS):
+        roads = gpd.read_file(P_ROADS).set_crs(32640, allow_override=True)
+        dual = roads[roads["dual"].astype(str) == "1"]
+        if len(dual):
+            band = unary_union(list(dual.geometry.buffer(DUAL_BAND_M)))
+            on_dual = reaches.geometry.intersection(band).length.values
+
+    on_wadi = np.zeros(len(reaches))
+    cross = [""] * len(reaches)
+    if os.path.exists(P_HAZARD):
+        import rasterio
+        from rasterio.windows import from_bounds
+        step = audit.WADI_SAMPLE_M
+        # Read the hazard grid ONCE into a windowed boolean mask and index it, instead of
+        # calling rasterio.sample per reach. Sampling 49,274 reaches one at a time is about
+        # 1.2 million point reads through the driver and did not finish in ten minutes;
+        # this is the same arithmetic in a few seconds. Stage 2 already does it this way.
+        # Read in STRIPS and keep only the boolean, never the float. The window over the
+        # network is about 45 x 25 km at 3 m - some 124 million cells - and reading it in
+        # one call holds a 500 MB float32 array plus two copies, which thrashes rather than
+        # computes. Stage 2 reads the same grid this way for the same reason.
+        l, b, r_, t = reaches.total_bounds
+        with rasterio.open(P_HAZARD) as src:
+            ND = src.nodata
+            win = from_bounds(l - 50, b - 50, r_ + 50, t + 50,
+                              src.transform).round_offsets().round_lengths()
+            tr = src.window_transform(win)
+            H, W = int(win.height), int(win.width)
+            mask = np.zeros((H, W), dtype=bool)
+            for r0 in range(0, H, 2000):
+                r1 = min(H, r0 + 2000)
+                sub = rasterio.windows.Window(win.col_off, win.row_off + r0, W, r1 - r0)
+                a = src.read(1, window=sub)
+                ok = np.isfinite(a)
+                if ND is not None:
+                    ok &= (a != ND)
+                mask[r0:r1] = ok & (a >= 4)
+                del a, ok
+
+        def at(xs, ys):
+            col = ((np.asarray(xs) - tr.c) / tr.a).astype(np.int64)
+            row = ((np.asarray(ys) - tr.f) / tr.e).astype(np.int64)
+            ok = (row >= 0) & (col >= 0) & (row < H) & (col < W)
+            out = np.zeros(len(col), bool)
+            if ok.any():
+                out[ok] = mask[row[ok], col[ok]]
+            return out
+
+        for i, g in enumerate(reaches.geometry):
+            L = g.length
+            k = max(2, int(L / step) + 1)
+            xy = shapely.get_coordinates(
+                shapely.line_interpolate_point(g, np.linspace(0.0, L, k)))
+            on = at(xy[:, 0], xy[:, 1])
+            if on.any():
+                on_wadi[i] = float(on.mean()) * L
+        k = 0
+        for i in np.where(on_wadi > 0)[0]:
+            k += 1
+            cross[i] = f"W11a-XG{k:05d}"
+    return on_wadi, on_dual, cross
+
+
+def main() -> int:
+    t0 = time.time()
+    say("=" * 88)
+    say("W11a  STAGE 5c - FLOW ACCUMULATION")
+    say("      the step between 'a load sits at every chamber' and 'this pipe carries X'")
+    say("=" * 88)
+
+    reaches, nodes, conns = load()
+    say(f"\n  reaches {len(reaches):,}  ({reaches.geometry.length.sum() / 1000:,.1f} km)"
+        f"   nodes {len(nodes):,}   connections {len(conns):,}")
+
+    q, npr, km, n_cyc = accumulate(reaches, conns)
+    if n_cyc:
+        say(f"  WARNING: {n_cyc} edge(s) removed to break cycles - H15 says the network is "
+            f"a forest, so this is a topology defect, not a modelling choice")
+
+    root_q = max(q.values()) if q else 0.0
+    root_n = max(npr.values()) if npr else 0.0
+    q_per_prop = root_q / max(root_n, 1.0)
+    PF_HELD = C.pf_merrimack(C.PF_HOLD_PROPERTIES * q_per_prop / 1000.0)
+
+    us = reaches.US_NODE.astype(str).values
+    qadf = np.array([q.get(u, 0.0) for u in us])
+    nprop = np.array([npr.get(u, 0.0) for u in us])
+    upkm = np.array([km.get(u, 0.0) for u in us])
+
+    qinf = (C.INFILT_L_D_KM / 86400.0) * (upkm + KM_PER_M3D * qadf)
+    big = nprop > C.PF_HOLD_PROPERTIES
+    pf = np.where(big, [C.pf_merrimack(x / 1000.0) if x > 0 else 1.0 for x in qadf], PF_HELD)
+    qpk = qadf * 1000.0 / 86400.0 * pf + qinf
+
+    on_wadi, on_dual, cross = ground(reaches)
+
+    out = reaches.copy()
+    out["QADF_M3D"] = np.round(qadf, 4)
+    out["N_PROP"] = np.round(nprop, 3)
+    out["QINF_LS"] = np.round(qinf, 6)
+    out["PF"] = np.round(pf, 4)
+    out["PF_METH"] = np.where(big, "merrimack", "held")
+    out["QPK_LS"] = np.round(qpk, 6)
+    out["UPSTR_KM"] = np.round(upkm, 4)
+    out["ON_WADI_M"] = np.round(on_wadi, 3)
+    out["ON_DUAL_M"] = np.round(on_dual, 3)
+    out["CROSS_ID"] = cross
+    out["STAGE"] = STAGE
+
+    # ---- the checks this stage owes -----------------------------------------------------
+    say("\nFLOW BALANCE  (nothing created, nothing lost)")
+    total_conn = float(pd.to_numeric(conns.Q_ADF_M3D, errors="coerce").fillna(0).sum())
+    outfalls = set(nodes.loc[nodes.NODE_KIND.astype(str) == "outfall", "NODE_UID"].astype(str)) \
+        if "NODE_KIND" in nodes.columns else set()
+    at_out = sum(q.get(u, 0.0) for u in outfalls)
+    heads = [u for u in q if u not in set(reaches.DS_NODE.astype(str))]
+    say(f"    load placed by stage 5b        {total_conn:12,.1f} m3/d")
+    say(f"    arriving at an outfall node    {at_out:12,.1f} m3/d "
+        f"({100 * at_out / max(total_conn, 1e-9):.1f} %)")
+    say(f"    largest single reach           {qadf.max():12,.1f} m3/d "
+        f"({qpk.max():,.0f} L/s peak)")
+    say(f"    reaches carrying nothing       {int((qadf <= 0).sum()):12,}   "
+        f"({out.geometry.length[qadf <= 0].sum() / 1000:,.1f} km - a pipe that conveys "
+        f"nothing and collects nothing is a stage 2/4 question, not a sizing one)")
+    say(f"    peak factor                    merrimack on {int(big.sum()):,} reaches, "
+        f"held at {PF_HELD:.3f} on {int((~big).sum()):,} (G201-p71: no formula below "
+        f"{C.PF_HOLD_PROPERTIES:.0f} properties)")
+    say(f"    infiltration                   {C.INFILT_L_D_KM:.0f} L/d/km on accumulated "
+        f"upstream length (G201-p72-73), {qinf.sum():,.0f} L/s in total")
+
+    say("\nGROUND, MEASURED ON THESE REACHES  (not inherited from a corridor flag)")
+    nw = int((on_wadi > 0).sum()); nd = int((on_dual > 0).sum())
+    say(f"    touching wadi ground           {nw:,} reaches, {on_wadi.sum() / 1000:,.2f} km"
+        f" - each scheduled with a CROSS_ID (H1a item 4)")
+    say(f"    inside the {DUAL_BAND_M:.0f} m dual band        {nd:,} reaches, "
+        f"{on_dual.sum() / 1000:,.2f} km")
+
+    out.to_file(GPKG, layer="reaches", driver="GPKG")
+    os.makedirs(RUN, exist_ok=True)
+    cols = [c for c in out.columns if c != "geometry"]
+    out[cols].to_csv(os.path.join(RUN, "s5c_reach_flows.csv"), index=False)
+    say(f"\n  written  {GPKG}  (layer 'reaches', {len(out):,} rows, "
+        f"{len([c for c in out.columns if c != 'geometry'])} fields)")
+    say(f"           {os.path.join(RUN, 's5c_reach_flows.csv')}")
+    say(f"\ntotal {time.time() - t0:.0f} s")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

@@ -1,11 +1,11 @@
 {
   "contract": "W11a-contract-1.1",
-  "written": "2026-09-02 12:02:12",
+  "written": "2026-09-02 12:14:35",
   "stages": [
     {
       "stage": "s5b_tertiary",
       "order": 52,
-      "seconds": 32.66,
+      "seconds": 32.07,
       "reads": [
         {
           "name": "plot_loads",
@@ -14,44 +14,44 @@
         },
         {
           "name": "nodes",
-          "path": "W11a.gpkg[nodes] + s5_reach_skeleton.gpkg[s5_reach_skeleton]  (chambers published + split reaches from the run folder; 100.000% of reach endpoints resolve)",
-          "n": 50060
+          "path": "W11a.gpkg[nodes] + W11a.gpkg[reaches]  (contract layers; 100.000% of reach endpoints resolve)",
+          "n": 50033
         },
         {
           "name": "reaches",
-          "path": "W11a.gpkg[nodes] + s5_reach_skeleton.gpkg[s5_reach_skeleton]  (chambers published + split reaches from the run folder; 100.000% of reach endpoints resolve)",
-          "n": 49318
+          "path": "W11a.gpkg[nodes] + W11a.gpkg[reaches]  (contract layers; 100.000% of reach endpoints resolve)",
+          "n": 49274
         }
       ],
       "writes": [
         {
           "name": "connections",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
-          "n": 45230
+          "n": 45232
         },
         {
           "name": "connections (CAD mirror)",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_connections.shp",
-          "n": 45230
+          "n": 45232
         },
         {
           "name": "unassigned plots (named)",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\s5b_unassigned.csv",
-          "n": 24560
+          "n": 24554
         },
         {
           "name": "chamber requests",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\s5b_chamber_requests.csv",
-          "n": 5876
+          "n": 5867
         }
       ],
       "metrics": {
         "load_units": 56388,
         "qadf_m3d_in": 74675.3,
-        "riders": 29237,
-        "tertiary_km": 813.342,
-        "tertiary_km_drainable": 693.427,
-        "qadf_m3d_to_chamber": 52174.0,
+        "riders": 29221,
+        "tertiary_km": 813.345,
+        "tertiary_km_drainable": 693.445,
+        "qadf_m3d_to_chamber": 52188.0,
         "dn_tertiary_mm": 160,
         "offset_p50_m": 9.58,
         "chamber_spacing_p50_m": 70.8,
@@ -59,9 +59,9 @@
         "chamber_spacing_p90_m": 26.3,
         "shortfall_median_m": 7.4,
         "shortfall_max_m": 44.7,
-        "backdrops": 30,
-        "cannot_drain": 5719,
-        "chambers_over_2m": 78,
+        "backdrops": 29,
+        "cannot_drain": 5715,
+        "chambers_over_2m": 77,
         "ground_from_chamber": 0,
         "nodrain_shortfall_median_m": 0.14,
         "nodrain_shortfall_max_m": 8.79
@@ -77,8 +77,8 @@
         {
           "name": "plots -> load units",
           "n0": 64071,
-          "n": 45230,
-          "line": "plots -> load units: 64,071 -> 64,027 -> 59,792 -> 59,737 -> 56,388 -> 51,106 -> 46,475 -> 45,230",
+          "n": 45232,
+          "line": "plots -> load units: 64,071 -> 64,027 -> 59,792 -> 59,737 -> 56,388 -> 51,099 -> 46,466 -> 45,232",
           "steps": [
             {
               "reason": "outside the project boundary",
@@ -613,7 +613,7 @@
             },
             {
               "reason": "no carrier within 47.5 m",
-              "n": 5282,
+              "n": 5289,
               "qty": 0.0,
               "ids": [
                 "1104427",
@@ -740,9 +740,7 @@
                 "1105753",
                 "1105764",
                 "1105825",
-                "1105838",
                 "1105849",
-                "1105852",
                 "1105857",
                 "1105878",
                 "1105879",
@@ -815,13 +813,15 @@
                 "1106294",
                 "1106295",
                 "1106308",
-                "1106309"
+                "1106309",
+                "1106312",
+                "1106340"
               ],
               "ids_truncated": true
             },
             {
               "reason": "no chamber within the 45 m tertiary run (G203-p22 Tab 6)",
-              "n": 4631,
+              "n": 4633,
               "qty": 0.0,
               "ids": [
                 "1104414",
@@ -964,6 +964,8 @@
                 "1105824",
                 "1105829",
                 "1105830",
+                "1105838",
+                "1105852",
                 "1105856",
                 "1105881",
                 "1105882",
@@ -1021,18 +1023,17 @@
                 "1106342",
                 "1106354",
                 "1106359",
-                "1106362",
-                "1106366",
-                "1106382"
+                "1106362"
               ],
               "ids_truncated": true
             },
             {
               "reason": "the carrier runs through or along the plot boundary - no right-of-way for a property connection chamber",
-              "n": 1245,
+              "n": 1234,
               "qty": 0.0,
               "ids": [
                 "1104456",
+                "1117280",
                 "1104453",
                 "1104516",
                 "1104517",
@@ -1069,6 +1070,7 @@
                 "1107111",
                 "1107128",
                 "1107129",
+                "1107166",
                 "1107197",
                 "1107277",
                 "1107287",
@@ -1081,7 +1083,6 @@
                 "1107369",
                 "1107337",
                 "1107357",
-                "1107352",
                 "1107353",
                 "1107356",
                 "1107361",
@@ -1103,6 +1104,7 @@
                 "1107646",
                 "1107648",
                 "1107822",
+                "1107821",
                 "1107816",
                 "1107678",
                 "1107686",
@@ -1111,11 +1113,10 @@
                 "1107715",
                 "1107808",
                 "1107728",
-                "1107837",
                 "1107786",
                 "1107787",
                 "1107800",
-                "1107821",
+                "1107837",
                 "1107838",
                 "1107932",
                 "1107936",
@@ -1128,6 +1129,7 @@
                 "1108099",
                 "1108155",
                 "1108173",
+                "1108215",
                 "1108230",
                 "1108263",
                 "1108273",
@@ -1146,6 +1148,7 @@
                 "1109449",
                 "1109787",
                 "1109853",
+                "1119594",
                 "1110199",
                 "1110287",
                 "1110576",
@@ -1157,8 +1160,8 @@
                 "1110680",
                 "1110678",
                 "1110684",
-                "1110709",
-                "1110710",
+                "1110708",
+                "1110711",
                 "1112243",
                 "1112255",
                 "1112387",
@@ -1192,8 +1195,8 @@
                 "1115021",
                 "1115020",
                 "1115019",
-                "1115016",
                 "1115014",
+                "1115016",
                 "1115017",
                 "1115018",
                 "1115022",
@@ -1209,6 +1212,7 @@
                 "1115314",
                 "1115327",
                 "1115331",
+                "1115394",
                 "1115396",
                 "1115444",
                 "1115445",
@@ -1227,11 +1231,7 @@
                 "1116279",
                 "1115738",
                 "1115752",
-                "1115765",
-                "1117256",
-                "1115887",
-                "1115909",
-                "1115940"
+                "1115765"
               ],
               "ids_truncated": true
             }

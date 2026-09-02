@@ -1,23 +1,49 @@
-# What is current, and what is not — checked 2026-09-02
+# What is current, and what is not — checked 2026-09-02 (evening)
 
 **READ THIS FIRST, THEN `07_PROJECT_STATE.md`, THEN `08_DESIGN_PHILOSOPHY.md` BEFORE LAYING
 OUT ANY NETWORK.**
 
-## Where the project actually stands, in six lines
+## Where the project actually stands, in eight lines
 
-1. **`_BRAIN/08_DESIGN_PHILOSOPHY.md` is new and binding** — 232 lines, rules only. `02` says
+1. **`_BRAIN/08_DESIGN_PHILOSOPHY.md` is binding** — rules only, no measurements. `02` says
    whether a design is legal; `08` says how to make it good. Read it before any layout work.
-2. **W10 is complete but NOT ISSUABLE** — four compliance failures, listed below. Its
-   *findings* stand and are worth reading; its *design* is not.
-3. **W11a has started.** Stage 0 — the auditor — is built and runs. Nothing else exists.
-4. **The TOR requires ALL plots to be served** (scope p4 item 3). An earlier working
-   assumption that 31 settlements would be dropped is **withdrawn**. The question is which
-   *system* serves each, not whether.
-5. **97 % of W10's self-cleansing rests on the tractive route**, whose τ the guideline never
-   gives (GAP-9, assumed 1.0 Pa; at 2.0 the required gradient rises 2.35×). This is the
-   largest open assumption in the hydraulic design.
-6. **Waiting on two deliveries**: the draftsman's final treated lines, and the GIS expert's
+   It gained **H1a** (when a wadi crossing is legal), **H16** (topology is written down,
+   never inferred) and a corrected **H15** today.
+2. **W11a runs from stage 1 to stage 5b.** Stages 6–9 (levels and sizes, stations, packages,
+   export) are blocked behind stage **5c**, a flow-accumulation step that was MISSING — the
+   ten stages were built in parallel against the contract and nothing joined "a load sits at
+   every chamber" to "this pipe carries X".
+3. **Our own wadi rule was the largest constraint on the design, and it was wrong.** G203
+   forbids pipes and chambers IN a wadi; G201 §9.3 gives a full procedure for CROSSING one.
+   Deleting every crossing severed the corridor network into 1,381 pieces. H1a keeps a
+   square, scheduled, chamber-free crossing: **784 pieces, 2,428 crossings scheduled**.
+4. **W10 does NOT have 310 loops.** It has zero at any tolerance a GIS would use. The count
+   is an artefact of snapping — 7,919 pieces and 0 cycles at 10 mm, 105 and 311 at 2.5 m.
+   The figure is struck from `CLAUDE.md`; evidence in `W11a/run/EVIDENCE_snap_tolerance.md`.
+5. **The auditor had six defects of its own**, one a build-stopper: it demanded 50 mm more
+   cover than the criteria lay, at every diameter, failing a BLOCKING check on every reach.
+   Every one was found by two things DISAGREEING, never by review.
+6. **51 % of the network has no wadi answer at all.** The 50-year hazard grid does not cover
+   the study area, and its nodata is −9999.0 — finite, so a `np.isfinite` guard passed it as
+   "not a wadi". Now published beside every wadi result. Largest data gap in the layout.
+7. **97 % of self-cleansing rests on the tractive route**, whose τ the guideline never gives
+   (GAP-9, assumed 1.0 Pa; at 2.0 the required gradient rises 2.35×). Largest open
+   assumption in the hydraulic design, and one question to one client.
+8. **Waiting on two deliveries**: the draftsman's final treated lines, and the GIS expert's
    clean land-use data. The scripts are being purified so both drop straight in.
+
+## Open defects in W11a, measured and named
+
+| # | What | Size | Note |
+|---|---|---|---|
+| OPEN-S4-1 | Stage 4 fragments a 4-piece trunk into 74 | 773 "drainage systems", 729 km (40 %) reaching no trunk | Those counts are an ARTEFACT of this, not a design result. The trunk's chamber coordinates do not coincide with the corridor node set |
+| — | Corridor treatment shreds the trunk 3 → 58 pieces and loses 5.0 km | 5.0 km | A stage 2 defect, separate from OPEN-S4-1 |
+| — | Chambers on wadi ground | 1,051 | H1a item 2 / G201-p86 admit NO exemption, on a crossing or anywhere |
+| — | Plots outside the 45 m tertiary limit (G203-p22 Tab 6) | 24,554 plots, 22,513 m³/d | Includes plots with no load at all — the real figure is smaller and is being decomposed |
+| — | Inlets under 90° | 2,788 | H10 / G203-p30, each needs a swept channel |
+| — | Trunk on a dual carriageway | 535 m, 10 reaches | A defect of the INPUT alignment — the client's decision, not ours |
+| S3-3 | Existing works inlet invert unknown | — | Trunk laid to its own level, 319.94 m aOD, 8.78 m below ground at the works, published for confirmation |
+| S3-2 | `criteria.DN_SERIES` stops at DN1200, the trunk needs more | — | 1400/1700/1800/2000/2400 are what G203-p32 Tab 13, p35 Tab 15 and p30 Tab 12 print |
 
 ## Live — use these
 
@@ -27,6 +53,12 @@ OUT ANY NETWORK.**
 | `_BRAIN/07_PROJECT_STATE.md` | the one-page orientation: data, doctrine, progress | 2026-08-19 |
 | `_BRAIN/02_DESIGN_CRITERIA.md` | every design number with its guideline page | 2026-08-19 |
 | `_BRAIN/08_DESIGN_PHILOSOPHY.md` | **how to arrive at a GOOD design** — objectives in priority order, the order of design, layout/levelling/sizing philosophy, the cap-and-veto ladder for pumping, our constraint ranking, and the two-pass method. Binding on every network design | 2026-09-02 |
+| `W11a/py/w11a/audit.py` | **the auditor — 22 checks, and the specification.** A check that cannot run is a FAILURE, not a blank. It audits PUBLISHED layers, never an in-memory model | 2026-09-02 |
+| `W11a/py/w11a/contract.py` | the layer schemas, field by field, with the audit check each field feeds | 2026-09-02 |
+| `W11a/py/s1…s9` | the stage modules. 1 scope · 2 corridors · 3 trunk · 4 hierarchy · 5 chambers · 5b tertiary · **5c flows (new)** · 6 levels · 7 stations · 8 packages · 9 export | 2026-09-02 |
+| `W11a/shp/W11a.gpkg` | the canonical layers: `corridors`, `nodes`, `reaches`, `connections`, `servicing` | 2026-09-02 |
+| `W11a/run/EVIDENCE_snap_tolerance.md` | why W10's "310 loops" was never a design defect | 2026-09-02 |
+| `W11a/report/W11a_Design_Review_R1.docx` | **the design review** — what was wrong with the rules, where the design stands, and the recommendations. Internal, not for issue | 2026-09-02 |
 | `W5/docs/CRITERIA_UPDATE_R1.md` | the register of rules agreed 18–19 Aug and what is built | 2026-08-19 |
 | `W8/report/W8_Sewer_Network_Design.docx / .pdf` | **the current report**, built on every run | 2026-08-23 |
 | `W8/py/` | **the design code** that produced the current outputs | 2026-08-23 |

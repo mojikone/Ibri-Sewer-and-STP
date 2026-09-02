@@ -1601,6 +1601,23 @@ def main(argv=None) -> int:
             else:
                 K.publish(n_gdf, "nodes", K.W11A_ROOT, stage=STAGE)
                 rec.wrote("nodes", GPKG, len(n_gdf))
+
+                # The SPLIT skeleton is the canonical `reaches`, and it has to be published
+                # as such. Stage 4's reaches are the hierarchy BEFORE chamber splitting -
+                # whole runs between junctions - and stage 5b measured its 45 m tertiary
+                # path along them, where only the two end nodes count as chambers. On a
+                # 700 m lateral run the nearest chamber is then 350 m away, so 64,038 plots
+                # of 64,071 were rejected as unreachable and the connected load fell from
+                # 52,174 to 43.7 m3/d. Nothing was wrong with the chambers: 96.9 % of them
+                # sit within 10 mm of a carrier at 36 m spacing. The reach layer was simply
+                # the wrong one. A reach is chamber-to-chamber - that is what a pipe
+                # schedule is, and what H13's uniform slope between successive manholes is
+                # written about.
+                _keep = ["EDGE_UID", "US_NODE", "DS_NODE", "TIER", "LEN_M", "SRC",
+                         "CONFIDENCE", "STAGE", "geometry"]
+                _sk = e_gdf[[c for c in _keep if c in e_gdf.columns]].copy()
+                _sk.to_file(GPKG, layer="reaches", driver="GPKG")
+                rec.wrote("reaches (canonical, split at chambers)", GPKG, len(_sk))
                 n_gdf.to_file(MANHOLES_SHP)
                 with open(MANHOLES_SHP.replace(".shp", ".README.txt"), "w",
                           encoding="utf-8") as fh:

@@ -4,45 +4,101 @@
 ## 1. Project in three lines
 Concept→detailed design + supervision of sewer network, TE network and STP capacity for Ibri Wilayat, Oman (Client NWS, Tender T/2719110/2025, Renardet job 2621). Horizons: start / 2030 / 2055 / ultimate-saturated; ≥3 options each for sewer, TE, STP. Existing STP at E444387 N2563352 (ground ≈327.5 m); ultimate flows ≫ 20,000 m³/d ⇒ STP phasing is the pivotal decision.
 
-## 1b. WHERE THE PROJECT STANDS — 2026-09-02 (read this before anything else)
+## 1b. WHERE THE PROJECT STANDS — 2026-09-02 evening (read this before anything else)
 
-**A new source exists and it is binding: `_BRAIN/08_DESIGN_PHILOSOPHY.md`.** 232 lines, rules
-only. `02` says whether a design is LEGAL; `08` says how to make it GOOD. Read it before
-laying out any network. It carries: six objectives in priority order with **hydraulic
+**A new source exists and it is binding: `_BRAIN/08_DESIGN_PHILOSOPHY.md`.** Rules only, no
+measurements. `02` says whether a design is LEGAL; `08` says how to make it GOOD. Read it
+before laying out any network. It carries: six objectives in priority order with **hydraulic
 minimality LAST**; the order of design with **the trunk designed end to end before anything
-drains to it**; fifteen hard constraints (H1–H15) and six preferences (P1–P6); the
-**cap-and-veto ladder** for pumping; and the **two-pass strict-then-review** method.
+drains to it**; the hard constraints H1–H16 and preferences P1–P6; the **cap-and-veto ladder**
+for pumping; and the **two-pass strict-then-review** method.
 
-**W10 is complete but NOT ISSUABLE.** Four compliance failures — 2.80 km of surcharged trunk,
-10.68 km over d/D, 45.92 km below minimum cover, 1.67 km along a dual carriageway — plus
-131.7 km on wadi ground and a published layer in 7,919 disconnected pieces. Its **findings
-stand and are valuable**; its **design does not**. Detail: `_BRAIN/00_CURRENT.md`.
+**W11a runs from stage 1 to stage 5b.** Stages 6–9 are blocked behind stage **5c**, a
+flow-accumulation step that was MISSING: nothing joined *"a load sits at every chamber"* to
+*"this pipe carries X"*, so no reach knew what it carried. The ten stages were built in
+parallel against the contract and this one fell between two of them — a fair warning about
+how a parallel build fails.
 
-**W11a has started. Only stage 0 exists** — the auditor, `W11a/py/w11a/audit.py`, 22 checks,
-run with `python W11a/py/run_audit.py`. Against W10 it returns **2 pass, 13 FAIL, 7 cannot
-run**, and that table is the specification. It audits the **published layers**, never an
-in-memory model, and treats **a check that cannot run as a failure**.
+| Stage | State | Headline |
+|---|---|---|
+| 1 scope | runs | 187 settlements, all central. The G201-p80 25 km fall-back never fires — the furthest zero-load settlement is 6.34 km from the core |
+| 2 corridors | runs | 25,122 corridors, 2,232.9 km, **784 components**; 2,428 wadi crossings scheduled, 475 along-wadi runs deleted; 98.0 % of load-bearing plots have a corridor within 60 m |
+| 3 trunk | runs | 85.55 km gravity, 758 chambers, DN200–1700, **73,442 m³/d and 1,350 L/s at the works**, 3 stations, deepest cover 11.86 m, nothing past the 12 m cap |
+| 4 hierarchy | runs | 773 drainage systems — **an artefact of OPEN-S4-1, not a result** |
+| 5 chambers | runs | 50,033 chambers, 27.5/km, 36 m mean spacing; 2,788 inlets under 90° |
+| 5b tertiary | runs | 52,188 m³/d reaches a chamber; 22,513 m³/d over 24,554 plots does not |
+| **5c flows** | **new, being made to complete** | accumulates load, properties and upstream length down the graph; Merrimack above 100 properties, held below |
+| 6–9 | blocked | levels and sizes, stations, packages, export |
 
-**THE TOR REQUIRES EVERY PLOT TO BE SERVED.** Scope p4 item 3: *"All plots open and build up
-shall be designed and serviced including these plots located in existing areas."* An earlier
-working assumption that 31 marginal settlements would be dropped is **WITHDRAWN**. But
-*serviced* is not *connected to one network* — the question is which **system** serves each
-(central, satellite, on-site), decided on life-cycle cost. Scope p12 also makes pumping
-minimisation a **client requirement**: *"avoid pumping and utilize gravity as much as
-practically possible."*
+### Three rules were wrong, and fixing them mattered more than any code change
 
-**THE LARGEST OPEN ASSUMPTION IN THE HYDRAULIC DESIGN**: 97 % of W10's network self-cleanses
-by the **tractive-force route**, not by velocity — and the guideline gives **no numeric τ**
-(GAP-9, assumed 1.0 Pa; at 2.0 the required gradient rises 2.35×). The auditor reports this
-exposure on every run. Settle it with NWS.
+**H1a — a wadi crossing is legal.** G203-p30 §4.4.1 and p33 forbid pipes and chambers **in**
+a wadi because of washout. **G201 §9.3 prints a full procedure for crossing one** and
+G203-p52 §8.2.4 gives the cover, 1.5 m to crown against 1.3 m normally. We were reading a
+prohibition on *presence* as a prohibition on *passage*. Deleting every crossing severed the
+corridor network into **1,381 pieces** and the trunk into 108, against **2** when the same
+alignment is noded on its own — the fragmentation was manufactured by the rule, not found in
+the ground. A crossing is now legal when the contact is one contiguous run, square within a
+stated skew tolerance, carries **no chamber** on wadi ground, has 1.5 m cover, and is
+scheduled with a `CROSS_ID`. The along/across test is geometric — probe perpendicular to the
+pipe until both banks are found — so **no length threshold is invented**; the skew tolerance
+is the one number and it is declared as **ours**, not a guideline's.
+
+**H16 — topology is written down, never inferred.** Every pipe publishes `US_NODE` and
+`DS_NODE`, and the declared graph must match the drawn geometry. **W10 never had 310 loops**:
+it has zero at any tolerance a GIS would use, and 311 only at a 2.5 m snap. Same file,
+squeezed harder. Disconnection and loops were one defect, not two.
+
+**H15 — corrected.** It required a single connected component, which no design with a
+satellite works can be, so a compliant design failed a blocking check. It now reads: zero
+loops, and **each component terminates at exactly one outfall**.
+
+### The auditor had six defects of its own
+
+One was a build-stopper: it demanded **50 mm more cover than the criteria function lays**, at
+every diameter, so a correctly built design failed a BLOCKING check on every reach. It also
+sampled wadi ground at the **midpoint only** and missed 40 % of the contact; scored the hazard
+grid's nodata as a pass (**nodata is −9999.0, which IS finite**, so the finiteness guard let
+it through); named a field 11 characters long where a shapefile truncates at 10; keyed its
+diameter floors with spaces so a dictionary miss silently skipped the pipe; and dropped every
+part of a MultiLineString but the first.
+
+**Every one was found by two things DISAGREEING, never by review** — the auditor against the
+criteria, a stage against the auditor, the declared graph against the drawn one. Where a stage
+needs the auditor's answer it now **calls** the auditor; where two samplers still differed at
+the boundary, the stage asks the auditor which rows fail and removes exactly those. That is
+the method to keep when the final data arrives and the pressure is to ship a network.
+
+**W10 remains NOT ISSUABLE** — 3 pass, 12 FAIL, 7 cannot run against the corrected auditor.
+Its **findings stand**; its **design does not**.
+
+### The data gaps that decide more than we can
+
+**51 % of the network has no wadi answer at all.** The 50-year hazard grid does not cover the
+study area. Every wadi statement is a statement about the tested half, and that share is now
+published beside every result. Full-coverage flood mapping is a **data request**, not a
+modelling choice.
+
+**97 % of self-cleansing rests on the tractive route**, whose τ the guideline never gives
+(GAP-9, assumed 1.0 Pa; at 2.0 the required gradient rises **2.35×**). Largest open assumption
+in the hydraulic design, and one question to one client.
+
+**The existing works inlet invert is unknown.** H14 says an existing structure's invert is
+fixed and the design yields to it, soffit to soffit. The trunk is laid to its own level —
+**319.94 m aOD, 8.78 m below ground at the works** — and that level is published for
+confirmation rather than agreed.
+
+**THE TOR REQUIRES EVERY PLOT TO BE SERVED.** Scope p4 item 3. An earlier assumption that 31
+marginal settlements would be dropped is **WITHDRAWN**. But *serviced* is not *connected to
+one network* — the question is which **system** serves each, decided on life-cycle cost. Scope
+p12 also makes pumping minimisation a **client requirement**.
 
 **Waiting on:** the draftsman's final treated lines, and the GIS expert's clean land-use data.
-The scripts are being purified so both drop straight in and the full run repeats immediately.
 
-**Nine research documents in `W10/docs/research/`** underpin all of the above — the hierarchy
-rules measured from the as-built, corridor quality per source, what to sewer, the
-depth-versus-pumping economics, the solver comparison, the W8/W10 post-mortem, the deliverable
-specification, the adversarial review of the philosophy, and the W11a build brief.
+**`W11a/report/W11a_Design_Review_R1.docx`** carries the review and the recommendations,
+ranked. On **BAT**: carry conveyance *and* a satellite works into the appraisal rather than
+deciding now — manning is 86 % of a station's life-cycle cost and energy 0.4 %, so any
+comparison ranking on energy or capital alone gets that question wrong.
 
 ## 2. Settled engineering doctrine (user-agreed, binding for design work)
 1. **Load allocation** (agreed 2026-08-15): *plots at saturation size the pipes; capped-and-spilled zone totals at dated years size the STP phases; the two meet only at trunk nodes.*
