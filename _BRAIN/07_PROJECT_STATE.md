@@ -22,7 +22,7 @@ how a parallel build fails.
 | Stage | State | Headline |
 |---|---|---|
 | 1 scope | runs | 187 settlements, all central. The G201-p80 25 km fall-back never fires — the furthest zero-load settlement is 6.34 km from the core |
-| 2 corridors | runs | 25,122 corridors, 2,232.9 km, **784 components**; 2,428 wadi crossings scheduled, 475 along-wadi runs deleted; 98.0 % of load-bearing plots have a corridor within 60 m |
+| 2 corridors | runs | 26,450 corridors, 2,234.8 km, **311 components** (was 1,381 before H1a, 784 after, 311 after the cut hole was healed); **2,539 crossings in a published register**, not just ids; R4 PASSES on the published corridors |
 | 3 trunk | runs | 85.55 km gravity, 758 chambers, DN200–1700, **73,442 m³/d and 1,350 L/s at the works**, 3 stations, deepest cover 11.86 m, nothing past the 12 m cap |
 | 4 hierarchy | runs | 773 drainage systems — **an artefact of OPEN-S4-1, not a result** |
 | 5 chambers | runs | 50,033 chambers, 27.5/km, 36 m mean spacing; 2,788 inlets under 90° |

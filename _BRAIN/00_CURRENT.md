@@ -36,8 +36,8 @@ OUT ANY NETWORK.**
 
 | # | What | Size | Note |
 |---|---|---|---|
-| OPEN-S4-1 | Stage 4 fragments a 4-piece trunk into 74 | 773 "drainage systems", 729 km (40 %) reaching no trunk | Those counts are an ARTEFACT of this, not a design result. The trunk's chamber coordinates do not coincide with the corridor node set |
-| — | Corridor treatment shreds the trunk 3 → 58 pieces and loses 5.0 km | 5.0 km | A stage 2 defect, separate from OPEN-S4-1 |
+| **FIXED 2026-09-02** | **The 4 m cut hole — the dominant defect in the pipeline** | corridor components **1,381 → 784 → 311**; before the exclusion **509 → 68** | `rest = g.difference(draft_cut)` left a 4.0 m gap wherever a treated road met a drafted line, and `NODE_MERGE_M` is 3.0 m so nothing closed it. **490 of 560 pre-exclusion components were this one hole.** The code comment already knew the failure mode from W10's 25 m version — the cut was narrowed and never closed. Healed with 785 connectors, 3.140 km |
+| OPEN-S4-1 | Stage 4 fragments a 4-piece trunk into 74 | ~0.7 km of the 729 km | **I published this priority backwards.** Welding the trunk recovers almost nothing on its own — the corridor graph reached stage 4 in 771 pieces *before the trunk was looked at*. The trunk fix matters for **H15** (810 roots = 39 excess outfalls), not for the km |
 | — | Chambers on wadi ground | **2,354** of 50,033 | H1a item 2 admits NO exemption (G203-p30 §4.4.1, p33). Only **48.2 %** of chambers sit on a valid hazard cell, so this is the tested half. The 1,051 previously quoted was a stage-4 figure taken BEFORE stage 5 minted the chamber set |
 | — | Chambers that cannot simply be slid clear | 587 have no non-wadi ground within 250 m | The corridors run DOWN the wadis — 100.4 km of on-wadi corridor, contiguous runs to 789 m. 1,272 need crossing redesign and 291 need corridor re-routing; sliding fixes only 319 |
 | — | Trunk-main chambers on wadi ground | 72 | The trunk is the CLIENT's drawn alignment; ~500 m of it runs down a class-5/6 wadi near E450 050 / N2 569 400. **One decision for the client, not 72** |
