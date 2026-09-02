@@ -6,9 +6,10 @@ merged.**
 > **Criteria tell you whether a design is LEGAL. Philosophy tells you how to make it GOOD.**
 >
 > A design can satisfy every number in `02` and still be one no contractor would build and
-> no operator would adopt. W10 proved it: it met the gradient table, the velocity band and
-> the depth limit, and it produced 4,041 dead-end fingers, 310 loops, 62 km of pipe in wadis
-> serving nothing, and a trunk that carried a main on only 21 % of its length.
+> no operator would adopt — full of dead-end fingers, looped, laid through wadis that serve
+> nothing, with a trunk that is a trunk on the drawing and a lateral on the ground. That is
+> not hypothetical; it is what W10 produced while passing every criterion in `02`.
+> The measurements are in `W10/docs/`, not here.
 
 This document is binding on every network design in this project. Where it conflicts with
 `02`, `02` wins — a criterion is a rule of law and this is a rule of judgement.
@@ -26,20 +27,23 @@ neither is covered here, and that omission is deliberate rather than an oversigh
 > "a solver can referee hydraulics and never routing" all check out. **What failed is the
 > layer beneath it: the numbers, the citations and the checks.**
 >
-> The worst of it, and it is this document convicting itself: **about a dozen headline
-> measurements cannot be traced to any saved file** — including four in the blockquote below,
-> which is the document's whole reason to exist. They were computed in throwaway scripts that
-> were never kept. That is a direct breach of **P2 — "every published number comes from
-> exactly one function"** — by the document that states it.
+> **C4, C5 and C8 are closed by removal, on the engineer's instruction (2026-09-02):** a
+> philosophy states rules, not a report of old measurements. Every W10 figure has been struck
+> out of the rules. The evidence lives in `W10/docs/` and is superseded the moment W11a runs
+> its own audit — so it was never a design input, and quoting it here only made the document
+> stale, longer, and impossible to trace.
 >
 > Fixed so far: the 20 mm tolerance (was wrongly stated as 40 mm), the missing 0.75 m/s
 > minimum velocity and 0.90 m/s preferred, the tractive-τ gap, the tier-vocabulary clash with
 > G203, and **C3 — the engineer settled cover-versus-invert on 2026-09-02 and §5.1c now
 > carries the four rules that replace it.**
 >
-> **Outstanding: C4 the §5.1b depth histogram, C5 the traceability rebuild, C7 the §10
-> checklist, C8 the §9 citations, and 13 of the 14 MAJOR findings.** Do not design from this
-> until this banner is removed. Everything else rests on measurements made in W8, W10 and NAMA's as-built network,
+> **Outstanding — nine operative blockers, all of them missing RULES rather than missing
+> numbers:** C7 the §10 checklist; M4 tying into the existing network and the outfall level;
+> M5 backdrop and vortex thresholds; M6 rising-main rules; M7 "uniform slopes" filed as a
+> preference when it is a "shall"; M11 chamber spacing confused with run length; M12 the
+> hierarchy generation rules and quantities; M13 corridor legality and utility clearance;
+> M14 ventilation, missing from `02` as well. Do not design from this until they are in. Everything else rests on measurements made in W8, W10 and NAMA's as-built network,
 and every claim carries where it came from.
 
 ---
@@ -58,8 +62,8 @@ order**, and the order is the philosophy:
 | 5 | **It costs least over 25 years** | Life-cycle, not capital. Pumping is an operating cost forever; a deeper trench is paid once |
 | 6 | **It is hydraulically minimal** | Smallest pipe, flattest legal gradient, least depth — **last**, because this is what a solver optimises by default and it is the least important of the six |
 
-**W10 optimised 6 and ignored 2, 3 and 4.** That single inversion explains almost every
-defect found in it.
+The commonest failure in sewer design software, and in W10, is to optimise 6 and ignore
+2, 3 and 4. That single inversion explains almost every defect worth preventing.
 
 ---
 
@@ -127,12 +131,11 @@ distance between junctions. The cap is an operations rule and every adoption sta
 so: **90 m** manhole-to-manhole (Water UK DCG), **120 m** for ≤375 mm and **150 m** for
 450–750 mm (Ten States). WEF MOP 60: *"this must be coordinated with the capabilities of the
 utility's cleaning equipment."* Target the as-built's median run of 88 m or better; W10
-achieved 76 m with 3.5 junctions per km — **and a longest reach of 6,541 m, roughly fifty
-times outside every adoption standard in the English-speaking world.**
+Target the as-built's median run of 88 m or better. **Note that this is a rule about
+junctions, not about chambers — the two are independent, and §3.2a keeps them apart.**
 
 **3.3 No fingers — and this rule is OURS, not a standard.** A dead-end reach under ~60 m
-serving nothing is an artefact of routing. Prune it or absorb it into its neighbour. W10
-carried **4,041 fingers, 126 km**.
+serving nothing is an artefact of routing. Prune it or absorb it into its neighbour.
 
 *Stated honestly because it will be challenged:* **no adoption standard prohibits dead ends
 or short branches.** They price them instead — every branch head needs an adopted chamber,
@@ -144,15 +147,17 @@ across the adoption standards. Ten States §33.5: *"straight alignment between m
 checked by laser beam or lamping"*, and §33.44: *"uniform slope between manholes"*. Water UK
 DCG B4.2 requires straight in **both plan and profile**. Curves are a size-gated exception
 (>600 mm, beginning and ending at manholes). So a main follows a through-route and changes
-direction at a chamber, never between. W10 had no bend rule at all and put 2,372° of
-direction change into its DN900+ pipes, one reach turning 165°.
+direction at a chamber, never between. **A design with no bend rule at all will put tens
+of degrees of turn into a main without ever reporting it** — so degrees of direction change
+per 100 m, by tier, is a reported quantity.
 
 **3.5 Sub mains belong on through-streets.** Chaining a sub main through small residential
 roads to save length produces many bends and a route no jetting crew can work. This is
 checked and corrected in the review pass (§7), not left to the router.
 
-**3.6 The network is a forest.** Zero loops, by construction and by check. W10's published
-layer contains **310 independent cycles**.
+**3.6 The network is a forest.** Zero loops, by construction and by check — and checked on
+the **published layer**, not only in memory, because a graph that is a tree in the solver can
+be written out as something else.
 
 **3.7 A head starts at the gate.** The first chamber of a run sits on the road at the foot
 of the perpendicular from the first plot's centroid — where the house connection will
@@ -208,13 +213,14 @@ paying for; it is not worth a pumping station.
 **4.4 On steep ground, the pipe does not follow the cliff.** Where the ground falls faster
 than the maximum-velocity gradient, the pipe holds its gradient and the difference is taken
 at a **drop chamber** — **ramped, not vertical** (DCG B5.2.27), used only where a steeper
-gradient is impractical (Ten States triggers a drop at ≥610 mm). W10 had no such rule: it let the pipe follow the ground to a laid
-gradient of **980 %**, put 43 reaches over the 3.0 m/s maximum, and published `SLOPE_PCT`
-as the *minimum required* gradient, so none of it was visible.
+gradient is impractical (Ten States triggers a drop at ≥610 mm). **Without this rule the
+pipe simply follows the ground however steep, the velocity limit is never tested, and — if
+the deliverable publishes the minimum required gradient rather than the laid one (§4.5) —
+none of it is even visible.**
 
 **4.5 Publish the laid gradient.** The deliverable carries the gradient the pipe is laid at,
-with the minimum beside it. A layer that reports only the minimum cannot be checked by
-anyone.
+with the minimum beside it. A layer that reports only the *minimum required* gradient cannot
+be checked by anyone — not the velocity, not the drop, not the fall.
 
 ---
 
@@ -376,9 +382,10 @@ At Omani wastewater temperatures the margin is thin, so three things follow:
 - the odour and corrosion assessment is a **reason to shorten a marginal branch or not sewer
   it at all** — it belongs in the §7 review pass, not only in the treatment design
 
-**6.4 Diameter is not a tier label.** NAMA used OD160 for every lateral *and* every sub main,
-one of them carrying 686 properties, and 110 of their pipes cannot pass today's peak flow.
-Copy their shape and their packaging; do not copy their sizing.
+**6.4 Diameter is not a tier label.** The as-built uses one size for every lateral *and*
+every sub main regardless of what they carry, and a significant fraction of its pipes cannot
+pass today's peak flow (`W10/docs/research/HIERARCHY_RULES.md`). **Copy the as-built's shape
+and its packaging; do not copy its sizing.**
 
 ---
 
@@ -598,9 +605,8 @@ them automatically, on two separate triggers (KB0015543, KB0057310):
   the volume of excavation"*
 
 KB0016766 gives the reasoning: a drop is used *"instead of a pipe that is too steep, or
-instead of upstream piping that would require much more excavation."* **This is direct vendor
-support for §4.4, and it is the feature W10 had no equivalent of** — which is why W10 let a
-pipe follow the ground to a laid gradient of 980 %.
+instead of upstream piping that would require much more excavation."* **Direct vendor support for §4.4**, and the feature whose absence lets a design follow the
+ground down a cliff.
 
 **9.3b The design engine will never propose a pumping station.** [Certain — now on a named
 Bentley staffer, not only on mechanism] Sushma Choure of Bentley, answering a user asking
