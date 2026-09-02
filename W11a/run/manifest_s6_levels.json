@@ -1,0 +1,76 @@
+{
+  "contract": "W11a-contract-1.1",
+  "written": "2026-09-02 13:10:55",
+  "stages": [
+    {
+      "stage": "S6 levels and sizes",
+      "order": 6,
+      "seconds": 96.05,
+      "reads": [
+        {
+          "name": "nodes",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 50033
+        },
+        {
+          "name": "reaches",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 49274
+        },
+        {
+          "name": "terrain",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Data\\Terrain\\Sat_0p5m\\IBRI_0p5_VRT2.vrt",
+          "n": null
+        }
+      ],
+      "writes": [
+        {
+          "name": "station demand register",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\s6_station_demand.csv",
+          "n": 178
+        },
+        {
+          "name": "cap breach register",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\s6_cap_breaches.csv",
+          "n": 98
+        },
+        {
+          "name": "tie conflict register",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\s6_tie_conflicts.csv",
+          "n": 0
+        }
+      ],
+      "metrics": {
+        "pipe_km": 1737.46,
+        "stations_demanded_by_cap": 178,
+        "reaches_past_cap": 626,
+        "km_past_cap": 19.114,
+        "deepest_chamber_m": 36.81,
+        "min_cover_m": 1.3,
+        "tractive_share_pct": 95.0,
+        "material_downgraded_to_HDPE": 864,
+        "profile_points_nodata": 0,
+        "reaches_with_no_terrain_read": 0,
+        "counter_midspan_cover_translations": 12626,
+        "counter_gradient_by_fall_guard": 8349,
+        "counter_uniform_refused_by_cap": 48,
+        "counter_dn_floor_by_upstream_continuity": 2228,
+        "tie_conflicts": 0
+      },
+      "notes": [
+        "Order of operations is Bentley's published sequence: bracket (3-4), Level A (5-13), size for capacity (14), Level B (15-22), then a four-operation reverse reconciliation in which the manhole yields to the pipe (W10/docs/research/SEWERGEMS_DESIGN_METHOD.md).",
+        "A station here is a LIFT INSIDE THE CHAMBER: the arriving invert stays, the outgoing invert is re-seated at minimum cover, and the difference is the static lift. Wet well, duty, rising main and discharge chamber are stage 7's. Published DEPTH_M at a station node is therefore the SHALLOW outgoing depth; the true wet-well depth is in run/s6_station_demand.csv."
+      ],
+      "no_change_reason": "",
+      "funnels": [
+        {
+          "name": "reaches into the solver",
+          "n0": 49274,
+          "n": 49274,
+          "line": "reaches into the solver: 49,274",
+          "steps": []
+        }
+      ]
+    }
+  ]
+}

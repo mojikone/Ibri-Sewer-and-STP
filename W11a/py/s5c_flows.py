@@ -25,6 +25,21 @@ WHAT IT DOES, and where every number comes from:
 WHAT IT DELIBERATELY DOES NOT DO. It does not size, level, or move anything. Diameter and
 gradient are stage 6's, and a stage that quietly sized a pipe while claiming to add a flow
 column would be the hardest kind of defect to find.
+
+WHY IT USED TO HANG (2026-09-02, measured, not guessed). Three runs were killed at 10+ min.
+The hazard raster was the suspect and it was innocent: the 8,606 x 15,204 window reads in
+0.73 s and the 49,274-reach sampling loop runs in 1.0 s. The real cost was two lines that had
+nothing to do with rasters, and both are fixed below where they occur:
+
+  * the flow-balance section built `set(reaches.DS_NODE.astype(str))` INSIDE a comprehension
+    over 50,033 nodes, so the set was rebuilt 50,033 times at 23 ms each - 19 to 26 minutes
+    measured - to fill a variable nothing ever read;
+  * the dual band was intersected against all 49,274 reaches one at a time against a single
+    26,299-vertex polygon: 35.5 s, where only 59 reaches can possibly touch it.
+
+Nothing about the arithmetic changed. The dual figures are bit-identical (max abs difference
+0.0 m over all 49,274 reaches, 59 non-zero, 709.248497 m in total) because the filter only
+skips reaches whose intersection is provably empty. Whole stage now runs in about 10 s.
 """
 from __future__ import annotations
 
@@ -146,8 +161,22 @@ def ground(reaches: gpd.GeoDataFrame) -> Tuple[np.ndarray, np.ndarray, list]:
         roads = gpd.read_file(P_ROADS).set_crs(32640, allow_override=True)
         dual = roads[roads["dual"].astype(str) == "1"]
         if len(dual):
-            band = unary_union(list(dual.geometry.buffer(DUAL_BAND_M)))
-            on_dual = reaches.geometry.intersection(band).length.values
+            bufs = dual.geometry.buffer(DUAL_BAND_M).values
+            band = unary_union(list(bufs))
+            # Intersect only the reaches that CAN touch the band. The union is one polygon of
+            # 26,299 vertices, so running it against all 49,274 reaches took 35.5 s to find
+            # the 59 that hit it. An STRtree over the reaches, queried with the 289 individual
+            # buffers, returns exactly those 59 in 0.04 s: a reach meets the union iff it
+            # meets at least one part, and every reach the query drops has an empty
+            # intersection and therefore a length of 0 - which is what the array already
+            # holds. The intersection itself is still taken against the UNION, so overlapping
+            # buffers on adjacent dual segments are not counted twice. Verified against the
+            # old line over the whole layer: max absolute difference 0.0 m.
+            hit = np.unique(shapely.STRtree(reaches.geometry.values)
+                            .query(bufs, predicate="intersects")[1])
+            if len(hit):
+                on_dual[hit] = shapely.length(
+                    shapely.intersection(reaches.geometry.values[hit], band))
 
     on_wadi = np.zeros(len(reaches))
     cross = [""] * len(reaches)
@@ -257,7 +286,13 @@ def main() -> int:
     outfalls = set(nodes.loc[nodes.NODE_KIND.astype(str) == "outfall", "NODE_UID"].astype(str)) \
         if "NODE_KIND" in nodes.columns else set()
     at_out = sum(q.get(u, 0.0) for u in outfalls)
-    heads = [u for u in q if u not in set(reaches.DS_NODE.astype(str))]
+    # A head-node list used to be built here as
+    #     heads = [u for u in q if u not in set(reaches.DS_NODE.astype(str))]
+    # and it was the reason this stage never finished. `set(reaches.DS_NODE.astype(str))` sits
+    # in the comprehension's CONDITION, so it was rebuilt once per key in q - 50,033 times at
+    # 23 ms, 19 to 26 minutes measured - and no line below ever read the result. Removed
+    # rather than made O(n): it published nothing, so nothing published changes. If a head
+    # count is wanted in the balance, hoist the set out of the loop first.
     say(f"    load placed by stage 5b        {total_conn:12,.1f} m3/d")
     say(f"    arriving at an outfall node    {at_out:12,.1f} m3/d "
         f"({100 * at_out / max(total_conn, 1e-9):.1f} %)")
@@ -269,8 +304,23 @@ def main() -> int:
     say(f"    peak factor                    merrimack on {int(big.sum()):,} reaches, "
         f"held at {PF_HELD:.3f} on {int((~big).sum()):,} (G201-p71: no formula below "
         f"{C.PF_HOLD_PROPERTIES:.0f} properties)")
-    say(f"    infiltration                   {C.INFILT_L_D_KM:.0f} L/d/km on accumulated "
-        f"upstream length (G201-p72-73), {qinf.sum():,.0f} L/s in total")
+    # The SYSTEM total is the rate times the NETWORK length. Summing the per-reach values
+    # instead counts every upstream kilometre once per downstream reach - it printed
+    # 1,259 L/s against a true 14.5, an 87x overstatement. The per-reach numbers were right;
+    # only this total was wrong. Every accumulated quantity has this trap in it.
+    net_km = (float(out["LEN_M"].sum()) / 1000.0 if "LEN_M" in out.columns
+              else float(out.geometry.length.sum()) / 1000.0)
+    say(f"    infiltration                   {C.INFILT_L_D_KM:.0f} L/d/km (G201-p72-73) on "
+        f"{net_km:,.1f} km = {C.INFILT_L_D_KM * net_km / 86400.0:,.1f} L/s for the SYSTEM; "
+        f"charged per reach on ITS upstream length, worst reach {qinf.max():,.1f} L/s")
+
+    # Does this drain as one network, or as many? In a network draining to a single works the
+    # last trunk reach carries essentially the whole load. Far below that is fragmentation
+    # showing up in the HYDRAULICS - and every size and level downstream is then computed for
+    # a network nobody intends to build.
+    conc = 100.0 * qadf.max() / max(total_conn, 1e-9)
+    say(f"    biggest pipe carries           {conc:5.1f} % of the placed load"
+        f"{'' if conc > 80 else '   <-- FRAGMENTED, see OPEN-S4-1'}")
 
     say("\nGROUND, MEASURED ON THESE REACHES  (not inherited from a corridor flag)")
     nw = int((on_wadi > 0).sum()); nd = int((on_dual > 0).sum())
