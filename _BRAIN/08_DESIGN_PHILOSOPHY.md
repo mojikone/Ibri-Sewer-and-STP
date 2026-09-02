@@ -271,7 +271,7 @@ commissioned without first building 7 km of deep gravity trunk. **A station that
 package independently buildable earns its place even when the trench would have been
 cheaper.** This is the one case where objective 4 outranks objective 5.
 
-*(§8 will carry the cost curve and the break-even rule.)*
+The cost curve, the break-even rule and its sensitivity are in **§8**.
 
 ---
 
@@ -314,6 +314,53 @@ Copy their shape and their packaging; do not copy their sizing.
 
 ---
 
+## 6a. The constraint ranking — what yields when two rules disagree
+
+§9.2 calls a written ranking the most transferable thing in the whole research, and we had
+none. This is ours. **Every reach records which constraint set its diameter and which set its
+gradient**, so the ranking is auditable rather than aspirational.
+
+**Our ranking differs from Bentley's in one structural way, and it matters.** Bentley resolves
+the classic conflict — minimum gradient forcing depth past maximum cover — by *demoting
+maximum cover*. We cannot: maximum cover is the 12 m cap. **So for us that conflict is not
+resolved by yielding at all. It is resolved by adding a lifting station or a drop chamber.**
+That is why our hard set can hold both constraints where Bentley's cannot.
+
+### Hard — never yield. A conflict between two of these is resolved by a station, a drop chamber or a re-route, never by relaxation
+
+| | Constraint | Source |
+|---|---|---|
+| H1 | No pipe along a dual carriageway; no pipe or chamber in a wadi | project rules 7 and 8 |
+| H2 | Capacity ≥ discharge within the d/D limit | G203-p27 Tab 10 |
+| H3 | Minimum cover 1.30 m to crown, on the reach's **own** outside diameter | G203-p33 4.6.3 |
+| H4 | **Maximum cover 12 m — the cap** | G203-p33 + project rule, no exemption |
+| H5 | Self-cleansing: the steeper of Table 11 and the tractive-force minimum | G203-p26–29 |
+| H6 | Maximum velocity — 3.0 m/s gravity, **2.5 m/s rising main** | G203-p27, p50 |
+| H7 | Diameter set by flow; **never** by the depth wanted | G203-p29, Ten States §33.43 |
+| H8 | Minimum sizes and materials by tier | G203-p22 Tab 6 |
+| H9 | Inlet angle ≥ 90° | G203-p30 |
+| H10 | No reverse gradient; 40 mm construction tolerance absorbed | G203-p29 4.3.1 |
+| H11 | Chamber spacing within Table 12 | G203-p30 |
+| H12 | The network is a forest — zero loops | project rule |
+
+### Preferences — these DO yield, and in this order
+
+| | Preference | Yields to |
+|---|---|---|
+| P1 | Constant gradient along a run, on round 0.05 % steps | any hard constraint — **and never at the price of a station** (§4.3) |
+| P2 | Straight between chambers | P1 |
+| P3 | Long runs, few junctions | P1, P2 |
+| P4 | Sub mains on through-streets | P1–P3 |
+| P5 | Invert or crown matching at a chamber | P1–P4 |
+| P6 | Minimum depth | everything above — it is last, as in §1 |
+
+**The reading rule:** a preference never overrides a hard constraint; preferences yield to
+each other in the order listed; and where two hard constraints cannot both be met, the
+resolution is a **physical element** — a station, a drop chamber, a re-route — recorded by
+name with the two constraints that forced it.
+
+---
+
 ## 7. Iteration — design strictly, then review and redesign
 
 **One pass is not a design.** The philosophy is two passes and a check:
@@ -327,8 +374,13 @@ Copy their shape and their packaging; do not copy their sizing.
 Pass 2 is where the design becomes one a real engineer would sign, and **W10 had no pass 2
 at all.**
 
-*(§9 will add what the commercial solvers do here — forward and reverse passes, constraint
-relaxation, convergence.)*
+**What the solvers do here, and what to take from it (§9).** Bentley runs a forward pass then
+a **reverse reconciliation pass** — four operations, not a re-solve. Adopt that shape: pass 2
+is cheap and structural, not another optimisation. And the mature form of our two-pass method
+is Duque et al.'s (2020): **let pass 2 feed a cost surrogate back into the layout of pass 1**,
+so the review is not merely cosmetic but changes what pass 1 would produce next time. Bentley
+say plainly what one pass is worth: *"Automated design is not meant to provide perfect
+results."*
 
 ---
 
@@ -556,7 +608,14 @@ registry, and the registry runs on every build:
 | 4.4 | Reaches over the velocity maximum; drop chambers where the ground outruns the pipe |
 | 4.5 | Laid gradient present in the deliverable |
 | 5.2 | Every station carries its excursion economics |
+| 3.8 | Inlet angle ≥ 90° at every junction; anything less listed by name |
+| 3.10 | Property connections ≤50 m at 3–10 %; riders ≤3 connections; a stub-out at every future frontage |
+| 5.1b | Every station attributed to its layer — cap, veto or economics |
+| 5.1c | The derogation list: excursions dug through past the cap, named individually |
 | 6.1 | Every diameter carries `SIZED_BY`; "depth" prohibited |
+| 6.3a | Retention time per route, head to works; long flat lightly-loaded runs flagged for septicity |
+| 6a | Every reach records the constraint that set its diameter and the one that set its gradient |
+| 2 §3 | The given trunk carries a main diameter over its whole length |
 | 7 | Pass 2 ran, and pass 3 passes everything pass 1 passed |
 
 ---
