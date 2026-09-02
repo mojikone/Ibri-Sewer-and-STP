@@ -41,8 +41,11 @@ Evidence, research and the history of how these rules were arrived at live in
 
 ## 3. Hard constraints — these never yield
 
-Where two cannot both be met, the answer is a **physical element** — a station, a drop
-chamber, a re-route — never relaxation.
+Where two cannot both be met, the answer is one of four **physical** things — a station, a
+drop chamber, a re-route, or **not serving that plot** — never relaxation of the constraint.
+
+*H4 is the one hard constraint with a written exit, in §5. It never yields to another
+constraint; it yields only to its own stated exits, and every use is flagged.*
 
 | | Constraint | Source |
 |---|---|---|
@@ -51,7 +54,7 @@ chamber, a re-route — never relaxation.
 | **H3** | Minimum cover 1.30 m to crown, on the reach's **own** outside diameter | G203-p33 |
 | **H4** | **Maximum cover 12 m** — exits only via §5 | G203-p33 |
 | **H5** | Minimum velocity **0.75 m/s at peak flow** (preferred 0.90) | G203-p26 |
-| **H6** | Gradient ≥ the steeper of Table 11 and the tractive minimum | G203-p26–29 |
+| **H6** | Gradient ≥ the steeper of Table 11 and the tractive minimum. *This is the starting point; **H5 is the test** — Table 11 is a full-bore derivation and the weaker of the two* | G203-p26–29 |
 | **H7** | Maximum velocity **3.0 m/s gravity, 2.5 m/s rising main** | G203-p27, p50 |
 | **H8** | Diameter set by flow — **never** by the depth wanted | G203-p29 |
 | **H9** | Minimum sizes and materials by tier | G203-p22 T6 |
@@ -67,7 +70,9 @@ chamber, a re-route — never relaxation.
 
 ## 3a. Preferences — these yield, in this order
 
-**P1** constant gradient along a run, on 0.05 % steps · **P2** straight between chambers ·
+**P1** the *same* gradient carried across consecutive reaches where practical, on 0.05 %
+steps — **H13 already requires uniformity *within* a reach; P1 extends it across a run** ·
+**P2** straight between chambers ·
 **P3** long runs, few junctions · **P4** sub mains on through-streets · **P5** invert or crown
 matching at a chamber · **P6** minimum depth.
 
@@ -80,9 +85,10 @@ pumping station** — if rounding a gradient creates one, relax the rounding on 
 
 - **The hierarchy is generated, not recognised.** A **lateral** is one unbranched street run
   (median ~130 m, cap 920 m). **At most 3 laterals and 750 m of flow path before a main.** A
-  **sub main** is a collector route defined by its outlet, about 21 % of the length of the
-  catchment it drains, one per 4–10 km of network. The **trunk** is traced from the outfall
-  backwards.
+  **sub main** is a collector route defined by its outlet. Two measures describe it — about
+  21 % of the length of the catchment it drains, and one per 4–10 km of network. **Where they
+  disagree, the outlet governs**: a sub main exists because a catchment needs one way out, not
+  because a ratio was met. The **trunk** is traced from the outfall backwards.
 - **Expect roughly 270 km of sub main** on this network. A design producing 20 km is wrong on
   sight. Target tier shares near the as-built: lateral 66 %, sub main 18 %, trunk 5 %.
 - **Vocabulary:** G203 calls a 45 m tertiary pipe a "lateral"; NAMA's tokens call a street run
@@ -98,6 +104,13 @@ pumping station** — if rounding a gradient creates one, relax the rounding on 
 - **The corridor must be legal** — a public reserve of stated width, **3 m minimum horizontal
   clearance** to other utilities, and a shared trench puts the other utility on a separate
   bench on undisturbed soil (G203-p33).
+- **A platted reserve with nothing built on it is a legitimate corridor at a saturation
+  horizon — but it is not a street.** It carries `CONFIDENCE = provisional`, its pipes are
+  identified separately in every drawing and schedule, and it is never reported as existing.
+  A corridor with *neither* a built street *nor* a platted reserve is not a corridor: route
+  elsewhere or do not serve.
+- **Where no legal corridor exists at all, the plot is not served.** That is the fourth
+  resolution in §3, and it is a scope answer, not a routing one.
 
 ---
 
@@ -188,6 +201,23 @@ function · no re-filtered metric · no stage silently doing nothing.**
 derogation; any published number that cannot be traced; any check that cannot run.
 **Reporting only:** economic trades the guideline itself frames as trades, as-built
 calibration, and assumption sensitivities.
+
+---
+
+## 8a. Two scope decisions, resolved as working assumptions
+
+Both are reversible, both are the designer's to propose and the client's to confirm, and
+both are recorded here so the design is not blocked waiting for them.
+
+**What is served.** Sewer the **106 settlements** that cost 12.9–15.4 m of exclusive sewer
+per property. **Price** the 17 marginal ones (21.1 km, 0.75 % of the load) as a separate
+option. **Do not sewer** the 31 that cost 204 m per property for 0.36 % of the load — carry
+them as a decentralised item instead. Evidence: `W10/docs/research/WHAT_TO_SEWER.md`.
+
+**BAT.** 2,231 properties, 1,752 m³/d, 22–25 km out, above every decentralised ceiling in the
+guidelines. **Do not choose — carry both**, conveyance and a satellite works, into the options
+appraisal. The options doctrine already requires three per system, and this is exactly the
+kind of question it exists to answer. Deciding it here would pre-empt the appraisal.
 
 ---
 
