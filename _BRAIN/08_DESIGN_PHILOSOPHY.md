@@ -160,6 +160,17 @@ pumping station** — if rounding a gradient creates one, relax the rounding on 
   main, trunk main.
 - **Chamber spacing (H12) and run length (P3) are different rules.** A 500 m run has five
   chambers at 100 m centres. Report run length as a **maximum**, never a median.
+- **The tree drains WITH the ground.** Flow follows the fall. A reach carrying flow uphill
+  buys its rise in depth, at the minimum gradient, for its whole length — and pays for it
+  twice, because the depth must then be given back on the far side or taken at a drop.
+  Uphill drainage is **not forbidden** — a spur into a cul-de-sac on rising ground has nowhere
+  else to go — but it is **bounded and reported**: the share of length draining against the
+  ground, the cumulative climb along the flow path, and the worst single rise.
+  **The diagnostic is the drop-structure count.** A design generating vortex shafts by the
+  thousand where the as-built has tens is not describing the same ground; it is describing its
+  own tree. Measured 2026-09-02: **42.5 % of length draining uphill (737.7 km), 7,061 m of
+  cumulative climb against 10,177 m of descent, and 2,254 vortex shafts against 37 built.**
+  No levelling arithmetic fixes this; only re-orienting the tree does.
 - **No fingers** — a dead-end reach under ~60 m serving nothing is pruned or absorbed. *Ours,
   on cost grounds; no adoption standard requires it.*
 - **A head starts at the gate** — on the road, at the foot of the perpendicular from the first
@@ -198,10 +209,27 @@ pumping station** — if rounding a gradient creates one, relax the rounding on 
 Layers 1 and 2 can only ever **add** a station. The economics can only make you pump
 **earlier**, never later.
 
-**Past the cap, two exits — either alone is sufficient:**
+**Past the cap, two exits — either alone is sufficient, and BOTH are bounded twice:**
 
 - the cover **recovers within 500 m**, or
 - the run **reaches the outfall** — works or an existing station — **within 1,000 m**
+
+**An exit is bounded by DEPTH as well as by distance, and is WITHDRAWN when either bound is
+crossed.** Stated as distance alone, an exit says nothing about how deep the excursion goes in
+between, and on 2026-09-02 that omission produced a chamber **36.81 m deep** with a **35.06 m
+drop** into it. 85 of 98 breaches took the 500 m exit and **15 peaked above 20 m of cover**.
+The run recovered, so the exit held, and the design was legal all the way down.
+
+The depth bound is the **drop ceiling**: an exit is withdrawn from any breach whose levels
+force a drop past what a drop structure can be built to. G203-p30 requires a backdrop past
+**600 mm**, caps it at **2 m**, and sends anything beyond to a **vortex drop shaft** — for
+which it gives **no maximum**. So the ceiling is a **PROJECT DECISION**, declared in
+`contract.NODES.DROP_M`, with design and validator reading the same constant so they cannot
+drift. Where a drop survives every pass, **the stage refuses to publish and names the
+chambers**. It is never clipped: clipping satisfies a validator by lying.
+
+**And the station goes at the FOOT of the climb, not at the junction.** A drop is flow going
+down; a station lifts it up. One where they meet is physically incoherent.
 
 **Everything past 12 m is flagged**, with its depth, its length, which exit allowed it, and
 what it waits on: a **manufacturer's rating** for that cover, and **NWS's station
@@ -209,7 +237,9 @@ establishment cost**. G203 gives no depth because that is a pipe question, and d
 "prohibitive" only as *more than a station costs*. Neither is settled, so nothing past the cap
 is final.
 
-*This reverses "12 m with no exceptions" — deliberately, on 2026-09-02, bounded by distance.*
+*This reverses "12 m with no exceptions" — deliberately, on 2026-09-02, bounded by distance
+**and by depth**. The depth bound was added the same day, after the distance-only version
+produced a 35 m drop that every rule in this document permitted.*
 
 ---
 
