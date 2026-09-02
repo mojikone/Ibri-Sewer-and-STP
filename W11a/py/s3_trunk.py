@@ -52,13 +52,27 @@ reported rather than quietly fixed, because the main pipe is the user's drawing:
            pipes drawn but last part not good.zip", which is consistent. It is closed here
            with a straight connector carrying CONFIDENCE='provisional' so it can never be
            reported as a drafted line, and it is OPEN ITEM S3-1: the draftsman's real line.
-  2. IT RUNS 11.0 km (12.8 %) ON WADI GROUND (Hazard_T50y class >= 4) - H1 and regression
-     R4. Not a crossing pattern; whole kilometres lie in the band.
+  2. IT TOUCHES WADI GROUND (Hazard_T50y class >= 4) FOR ABOUT 11 km - AND THAT ONE NUMBER
+     IS TWO FINDINGS, NOT ONE. Philosophy H1a settles the point the earlier version of this
+     docstring got wrong: G203-p30 sec 4.4.1 and p33 forbid a pipe or a chamber IN a wadi,
+     but G201-p85-86 sec 9.3 gives a full procedure for CROSSING one and G203-p52 sec 8.2.4
+     gives the cover to use. So the contact is classified ALONG vs ACROSS by the auditor's
+     own `audit._r4_classify` - about half of it runs ALONG a wadi, which IS the breach,
+     and about half CROSSES one, which is legal once scheduled with a CROSS_ID. The exact
+     split is printed by the run and is not repeated here, because a number in a docstring
+     is a number nobody recomputes. Separately: the chambers. H1a item 2 admits NO
+     exemption for a chamber, on a crossing or anywhere else (G201-p86), so every chamber
+     on wadi ground is a defect to re-site.
+     AND MORE THAN HALF OF THE TEST NEVER RAN. The 50-year grid does not cover the study
+     area; its nodata is -9999.0, which `np.isfinite` reports as a perfectly good number,
+     so a naive test scores untested ground as clear. The untested share is published
+     beside every wadi figure this stage prints.
   3. IT RUNS 535 m INSIDE THE 6 m DUAL-CARRIAGEWAY BAND, the longest single stretch 378 m -
      H1 and regression R3, which fail any reach over 30 m in the band.
   None of the three is fixed by moving the line. Stage 3 measures them onto the layer
-  (ON_WADI_M, ON_DUAL_M), schedules the dual contacts so they are a register and not a
-  silence, and hands them back as decisions.
+  (ON_WADI_M, WADI_ALONG, WADI_XING, WADI_COV, ON_DUAL_M), schedules both the dual contacts
+  and the wadi crossings so they are a register and not a silence, and hands them back as
+  decisions.
 
 THE ONE ENGINEERING RESULT THAT MATTERS, and it is not a small one: THE TRUNK CANNOT BE
 GRAVITY THE WHOLE WAY ON THE LINE AS DRAWN. The western leg falls into a basin at chainage
@@ -85,11 +99,13 @@ off-step gradient, so the design complies and the number is reported.
 
 WHAT THE AUDITOR SAYS ABOUT THE RESULT: 17 pass, 5 fail, 0 cannot run - against W10's 2 pass,
 13 fail, 7 cannot run. Every one of the five traces to something stage 3 is forbidden to
-change or to a contradiction the contract already records: H1/R3 (dual carriageway) and R4
-(wadi) are defects of the INPUT alignment, H10 is five chambers where the INPUT turns the
-flow through 87.8-89.8 deg, and H15 is the three stations, which split the gravity layer
-into four components where audit.h15 demands exactly one - contract OPEN-1. Every failing
-reach and chamber is named by id in `run/s3_trunk_findings.csv`; none is summarised away.
+change or to a contradiction the contract already records: H1/R3 (dual carriageway) and the
+ALONG share of R4 (wadi) are defects of the INPUT alignment, H10 is five chambers where the
+INPUT turns the flow through 87.8-89.8 deg, and H15 is the three stations, which split the
+gravity layer into four components where audit.h15 demands exactly one - contract OPEN-1.
+Every failing reach and chamber is named by id in `run/s3_trunk_findings.csv`; none is
+summarised away, and the file now distinguishes a reach running ALONG a wadi (the defect)
+from one CROSSING it (legal under H1a, listed for its G201 sec 9.3 obligations).
 
 METHOD, in the order the code runs it
   1  read      54 polylines; node the T; close the measured gap; root at the existing works
@@ -107,7 +123,11 @@ METHOD, in the order the code runs it
   5  size+level the coupled solve. Diameter follows flow, gradient follows diameter (H8),
                 and the level solve lays as shallow as H3 allows (sec 5).
   6  cap        the two sec 5 exits, then stations where neither applies.
-  7  measure    dual and wadi exposure per reach, crossings schedule.
+  7  measure    dual and wadi exposure per reach; the wadi contact is classified ALONG vs
+                ACROSS by audit._r4_classify (the auditor's function, called - never a copy,
+                because s2 kept a copy once and the two then disagreed about every legal
+                crossing), a CROSS_ID is minted on each crossing, and the untested share of
+                the hazard grid is published beside the result.
   8  publish    contract.publish() -> W11a/shp/W11a_trunk.gpkg (layers `reaches`, `nodes`,
                 `crossings`) - the AUDITED artefact, and its own GeoPackage rather than the
                 shared W11a.gpkg so a later stage cannot overwrite an audited design.
@@ -138,8 +158,16 @@ _HERE = os.path.dirname(os.path.abspath(__file__))          # .../W11a/py
 if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
 
+from w11a import audit as AUD                               # noqa: E402  the auditor itself
 from w11a import contract as K                              # noqa: E402
 from w11a.contract import C, hydra                          # noqa: E402  criteria + CW maths
+
+# The along/across test and its tolerances live in ONE place - the auditor - and are used
+# from there, never copied. s2 carried a hand-lifted copy of r4; when r4 gained the H1a
+# along/across test the copy stayed on the superseded rule and the stage and its own gate
+# disagreed about every legal crossing. WADI_SAMPLE_M / WADI_XING_SKEW / WADI_PROBE_M are
+# PROJECT TOLERANCES on H1's word "perpendicular", not guideline values (H1a item 1).
+from w11a.audit import WADI_SAMPLE_M, WADI_XING_SKEW, WADI_PROBE_M   # noqa: E402
 
 import geopandas as gpd                                     # noqa: E402
 import networkx as nx                                       # noqa: E402
@@ -202,6 +230,14 @@ STEP         = C.SLOPE_STEP                     # 0.05 % gradient steps (P1)
 CAP_M        = C.MAX_DEPTH                      # 12 m of cover (H4, G203-p33)
 EXIT_RECOVER_M = 500.0                          # philosophy sec 5, both distances
 EXIT_OUTFALL_M = 1000.0
+
+# H1a item 3. G203-p52 sec 8.2.4 requires 1.5 m of cover TO CROWN at a wadi crossing,
+# against C.MIN_COVER_CROWN = 1.30 m everywhere else - the one place H3's number is not the
+# governing one, which is why it is a named constant here and not the criteria value.
+# G201-p86 asks for 2.0 m in SOFT SOIL on top of that; no soil data exists for this
+# alignment (GAP - reported at the crossings schedule, never assumed satisfied).
+WADI_COVER_CROWN_M = 1.5
+WADI_COVER_SOFT_SOIL_M = 2.0                    # G201-p86, pending soil data
 
 
 # ======================================================================================
@@ -637,9 +673,24 @@ class Terrain:
         v[v < -1000] = np.nan
         return v
 
-    def wadi(self, xy: Sequence[Tuple[float, float]]) -> np.ndarray:
+    def wadi(self, xy: Sequence[Tuple[float, float]]) -> Tuple[np.ndarray, np.ndarray]:
+        """(is_wadi, is_known) on Hazard_T50y, classes criteria.HAZARD_WADI_CLASSES = (4,5,6).
+
+        RETURNS TWO MASKS, NOT ONE, AND THAT IS THE WHOLE POINT. The grid's declared nodata
+        is -9999.0, which `np.isfinite` reports as a perfectly good number - so a test built
+        on finiteness alone counts every untested cell as TESTED and scores it "not a wadi".
+        The 50-year grid covers well under half this study area, so a single boolean turns
+        "no answer" into a pass and publishes a clean wadi result over ground nobody has
+        mapped. `known` is read from the raster's OWN declared nodata (the same thing
+        audit._r4_classify reads), never from a hardcoded sentinel, and every wadi statement
+        this stage makes is published beside the share that was never tested
+        (philosophy H1a, "the hazard grid must be reported, not assumed").
+        """
         v = np.array([s[0] for s in self.haz.sample(xy)], dtype=float)
-        return np.isfinite(v) & (v > -1000) & (np.floor(v) >= min(C.HAZARD_WADI_CLASSES))
+        known = np.isfinite(v)
+        if self.haz.nodata is not None:
+            known &= (v != self.haz.nodata)
+        return (known & (np.floor(v) >= min(C.HAZARD_WADI_CLASSES))), known
 
 
 def _loads(chamber_xy: np.ndarray, rec: K.StageRecord) -> Tuple[np.ndarray, np.ndarray, float]:
@@ -1296,6 +1347,77 @@ def _rows(res, reaches, flow, solver: Solver, root, XY, Z, T) -> List[Dict]:
 # corridor exposure and the crossings register
 # ======================================================================================
 
+def _wadi_contact(g: LineString, terr: Terrain) -> Dict:
+    """Measure ONE reach's contact with wadi ground. It does NOT decide along vs across.
+
+    THE DIVISION OF LABOUR HERE IS DELIBERATE AND IT IS THE POINT OF THIS WHOLE FUNCTION.
+    Whether a contact is a legal CROSSING or an illegal run ALONG a wadi is decided in
+    exactly one place - `audit._r4_classify` - and this function never second-guesses it.
+    What the auditor does not return is the geometry the SCHEDULE needs: how long the
+    contact is, where it starts and ends, how wide the band is across the pipe there. H1a
+    item 4 requires every crossing to be scheduled with a CROSS_ID and the G201 sec 9.3
+    obligations attached to it, and a schedule of crossings with no lengths, no angles and
+    no cover is not a schedule. So the classification is imported and the dimensions are
+    measured, on the SAME constants the auditor uses (WADI_SAMPLE_M, WADI_PROBE_M) read
+    from the same module, so the two cannot drift to different answers about the same line.
+
+    Returns chainages d0/d1 of the single contiguous contact (or the outermost extent where
+    there is more than one), the contact length, the perpendicular band width at its middle,
+    the skew, and the share of the reach for which the grid HAS an answer at all.
+    """
+    L = g.length
+    n = max(2, int(L / WADI_SAMPLE_M) + 1)
+    ds = np.linspace(0.0, L, n)
+    pts = [(p.x, p.y) for p in (g.interpolate(d) for d in ds)]
+    on, known = terr.wadi(pts)
+    out = dict(on_m=float(on.mean() * L), known_frac=float(known.mean()),
+               n_samp=int(known.size), n_nodata=int((~known).sum()),
+               d0=0.0, d1=0.0, contact_m=0.0, width_m=0.0, skew_deg=0.0, n_runs=0)
+    if not on.any():
+        return out
+    idx = np.where(on)[0]
+    # contiguous on-wadi runs, counted the same way audit._r4_classify counts them
+    runs, a = [], None
+    for k, flag in enumerate(on):
+        if flag and a is None:
+            a = k
+        elif not flag and a is not None:
+            runs.append((a, k - 1)); a = None
+    if a is not None:
+        runs.append((a, len(on) - 1))
+    out["n_runs"] = len(runs)
+    lo, hi = int(idx[0]), int(idx[-1])
+    out["d0"], out["d1"] = float(ds[lo]), float(ds[hi])
+    longest = max(runs, key=lambda ab: ab[1] - ab[0])
+    contact = float(ds[longest[1]] - ds[longest[0]]) + WADI_SAMPLE_M
+    out["contact_m"] = contact
+
+    # the band width ACROSS the pipe at the middle of the longest contact - the same
+    # perpendicular probe audit._r4_classify makes, at the same step and the same range
+    mid = 0.5 * (ds[longest[0]] + ds[longest[1]])
+    p0 = g.interpolate(max(0.0, mid - 1.0))
+    p1 = g.interpolate(min(L, mid + 1.0))
+    vx, vy = p1.x - p0.x, p1.y - p0.y
+    m = math.hypot(vx, vy) or 1.0
+    nx_, ny_ = -vy / m, vx / m
+    c = g.interpolate(mid)
+    width = 0.0
+    for sgn in (1.0, -1.0):
+        probe = [(c.x + sgn * t * nx_, c.y + sgn * t * ny_)
+                 for t in np.arange(0.0, WADI_PROBE_M, WADI_SAMPLE_M)]
+        pon, pknown = terr.wadi(probe)
+        off = np.where(pknown & ~pon)[0]
+        width += float(off[0] * WADI_SAMPLE_M) if len(off) else WADI_PROBE_M
+    out["width_m"] = width
+    # Skew from square, in degrees: a pipe crossing a band of width W at angle theta off
+    # the perpendicular has a contact W / cos(theta). This is a DESCRIPTION of a crossing
+    # the auditor has already accepted, never a second acceptance test - the tolerance
+    # WADI_XING_SKEW = 1/cos(30 deg) is applied in audit._r4_classify and nowhere else.
+    ratio = max(width, WADI_SAMPLE_M) / max(contact, 1e-9)
+    out["skew_deg"] = math.degrees(math.acos(max(0.0, min(1.0, ratio))))
+    return out
+
+
 def _corridor_exposure(rows: List[Dict], terr: Terrain, rec: K.StageRecord):
     """ON_DUAL_M and ON_WADI_M, measured per reach, plus the crossings register H1 demands.
 
@@ -1303,6 +1425,19 @@ def _corridor_exposure(rows: List[Dict], terr: Terrain, rec: K.StageRecord):
     number on the layer is the DESIGN'S OWN CLAIM, so a disagreement with the auditor is
     itself the finding. W10 published neither and shipped 1.67 km along a dual carriageway
     and 131.7 km on wadi ground.
+
+    THE DEFECT THIS REPLACES, and it was ours, not the draftsman's. Until now this stage
+    reported one undifferentiated number - "on wadi ground 10.98 km over 152 reaches, a
+    defect of the INPUT alignment" - which lumps a legal designed crossing of a flood
+    channel in with a pipe laid down the length of one. Philosophy H1a, added 2026-09-02,
+    settles that they are not the same thing: G203-p30 sec 4.4.1 and p33 forbid a pipe or a
+    chamber IN a wadi, while G201-p85-86 sec 9.3 sets out a whole procedure for CROSSING one
+    and G203-p52 sec 8.2.4 gives the cover to use (1.5 m to crown, against 1.30 m normally).
+    Reading the prohibition on PRESENCE as a prohibition on PASSAGE is what severed the
+    W11a corridor network into 1,381 pieces. The classification is now made by
+    `audit._r4_classify` - the auditor's own function, imported and called, not copied -
+    and this stage reports the two numbers separately, mints a CROSS_ID on every crossing
+    (H1a item 4) and publishes the share of the line the hazard grid cannot answer for.
     """
     roads = gpd.read_file(P_ROADS)
     if roads.crs is None or roads.crs.to_epsg() != K.CRS_EPSG:
@@ -1315,19 +1450,27 @@ def _corridor_exposure(rows: List[Dict], terr: Terrain, rec: K.StageRecord):
         if dual_lines else None
 
     cross = []
+    dual_geom: Dict[int, object] = {}
+    dual_ang: Dict[int, float] = {}
+    wc: Dict[int, Dict] = {}
     for r in rows:
         g = r["geom"]
         inter = g.intersection(band)
         r["ON_DUAL_M"] = float(inter.length) if not inter.is_empty else 0.0
-        # wadi: sample the reach, not just the midpoint the auditor uses
-        n = max(int(r["LEN_M"] // SAMPLE_M), 1)
-        pts = [g.interpolate(k * r["LEN_M"] / n) for k in range(n + 1)]
-        w = terr.wadi([(p.x, p.y) for p in pts])
-        r["ON_WADI_M"] = float(w.mean() * r["LEN_M"])
+        # ---- wadi: sampled along the WHOLE reach at the auditor's own step. It used to be
+        #      sampled at SAMPLE_M = 10 m, which is more than three times the hazard grid's
+        #      3.0 m cell and steps clean over cells; WADI_SAMPLE_M is 1.5 m, half a cell,
+        #      and it is the rate the source has to be read at to be read without aliasing.
+        #      Nodata is honoured, so a metre outside the grid's footprint is UNTESTED and
+        #      is not silently counted as clear ground.
+        w = _wadi_contact(g, terr)
+        wc[r["i"]] = w
+        r["ON_WADI_M"] = w["on_m"]
+        r["WADI_COV"] = round(w["known_frac"], 4)   # 0.0 = H1 could not be tested here
+        r["WADI_ALONG"] = 0
+        r["WADI_XING"] = 0
         r["CROSS_ID"] = ""
         if r["ON_DUAL_M"] > 0.0:
-            cid = f"X{len(cross) + 1:04d}"
-            r["CROSS_ID"] = cid
             ang = 90.0
             if dtree is not None:
                 mid = g.interpolate(0.5, normalized=True)
@@ -1344,11 +1487,121 @@ def _corridor_exposure(rows: List[Dict], terr: Terrain, rec: K.StageRecord):
                 # (120 m at 173.8 deg, 58.6 m at 173.3 deg) as near-perpendicular, which is
                 # exactly the field H1 relies on to say a crossing IS a crossing.
                 ang = min(ang, 180.0 - ang)
-            cross.append(dict(CROSS_ID=cid, EDGE_UID="", OBSTACLE="dual",
-                              LEN_M=r["ON_DUAL_M"], ANGLE_DEG=float(min(ang, 90.0)),
-                              METHOD="thrust_bore", APPROVED=0, geometry=inter,
-                              _reach=r["i"]))
-    return cross
+            dual_geom[r["i"]] = inter
+            dual_ang[r["i"]] = float(min(ang, 90.0))
+
+    # ------------------------------------------------------------------ H1a: along vs across
+    # The classifier is the AUDITOR'S, called - not a copy of it. Nothing below re-decides
+    # what it decided; the stage only labels the rows it named and schedules the crossings.
+    frame = gpd.GeoDataFrame(
+        dict(LEN_M=[r["LEN_M"] for r in rows],
+             CROSS_ID=[r["CROSS_ID"] for r in rows]),
+        geometry=[r["geom"] for r in rows], crs=K.CRS_EPSG)
+    ctx = AUD.Ctx(pipes=frame, hazard=P_HAZARD, crit=C)
+    along, xing_unsched, xing_ok, n_samp, n_nodata, n_reach_nodata = AUD._r4_classify(ctx)
+    # Every CROSS_ID is blank on this pass by construction, so `xing_ok` must be 0 and
+    # `xing_unsched` IS the full list of crossings. Asserting it rather than assuming it:
+    # if a future auditor changes what counts as scheduled, this stage finds out here.
+    if xing_ok:
+        rec.note(f"audit._r4_classify reported {xing_ok} ALREADY-scheduled crossing(s) on a "
+                 "frame whose CROSS_ID is blank on every row - the auditor's definition of "
+                 "'scheduled' has moved and this stage's minting is now incomplete")
+    xing = list(xing_unsched)
+    for k in along:
+        rows[int(k)]["WADI_ALONG"] = 1
+    for k in xing:
+        rows[int(k)]["WADI_XING"] = 1
+
+    # ---- mint CROSS_ID. s2's convention, so one register spans the two stages -----------
+    # H1a item 4: a crossing is legal only when it is IN the crossings schedule with an id
+    # carrying the G201 sec 9.3 obligations - bed profile and cross-sections, 1:20/1:50/1:100
+    # flood levels, bed material and bed-level change, MoAFWR approval (G201-p85), isolation
+    # and air valves both sides, washout at the low point (G201-p86). An unscheduled
+    # crossing is not a lesser crossing; it is a pipe in a place it may not be.
+    #
+    # A REACH CARRIES ONE CROSS_ID AND CAN MEET TWO OBSTACLES. Where a reach both touches a
+    # dual carriageway and crosses a wadi the WADI id is the one published on the reach,
+    # because that is the id audit.r4 reads to decide whether H1a item 4 is met; the dual
+    # contact keeps its own row in the schedule and is reported below by count, never
+    # dropped. Before this, the reverse happened silently: 4 reaches carried a DUAL id,
+    # audit.r4 saw a non-blank CROSS_ID and counted them as SCHEDULED WADI CROSSINGS. They
+    # were not scheduled as wadi crossings at all - nothing in the register mentioned a
+    # wadi - and the check passed on a coincidence.
+    for k, i_row in enumerate(xing):
+        rows[int(i_row)]["CROSS_ID"] = f"W11a-XG{k + 1:05d}"
+    n_dual = 0
+    both = 0
+    for r in rows:
+        if r["i"] not in dual_geom:
+            continue
+        n_dual += 1
+        cid_d = f"X{n_dual:04d}"
+        if r["CROSS_ID"]:
+            both += 1
+        else:
+            r["CROSS_ID"] = cid_d
+        cross.append(dict(CROSS_ID=cid_d, EDGE_UID="", OBSTACLE="dual",
+                          LEN_M=r["ON_DUAL_M"], ANGLE_DEG=dual_ang[r["i"]],
+                          METHOD="thrust_bore", COVER_M=min(r["COVER_US"], r["COVER_DN"]),
+                          APPROVED=0, geometry=dual_geom[r["i"]], _reach=r["i"]))
+
+    # ---- the wadi schedule rows, with the cover H1a item 3 actually asks for -------------
+    # G203-p52 sec 8.2.4: 1.5 m to CROWN at a wadi crossing, against the 1.30 m of H3 -
+    # the one place H3's number is not the governing one. Measured at the crossing itself,
+    # not taken from the reach ends: the pipe is one straight grade inside a reach, so the
+    # invert at any chainage is exact, and the ground comes from the same 0.5 m VRT the
+    # levels were laid on. G201-p86 additionally requires 2.0 m in SOFT SOIL; no soil
+    # information exists for this alignment, so that condition is reported as pending and
+    # not silently assumed to be met.
+    n_thin = 0
+    for i_row in xing:
+        r = rows[int(i_row)]
+        w = wc[r["i"]]
+        d0, d1 = w["d0"], w["d1"]
+        if d1 - d0 < 1e-6:
+            d0, d1 = max(0.0, d0 - 0.5 * WADI_SAMPLE_M), min(r["LEN_M"], d1 + 0.5 * WADI_SAMPLE_M)
+        geom = _cut(r["geom"], d0, min(d1, r["LEN_M"]))
+        od = r["DN"] / 1000.0 + K.AUDITOR_OD_ALLOW_M
+        n = max(2, int((d1 - d0) / WADI_SAMPLE_M) + 1)
+        dd = np.linspace(d0, min(d1, r["LEN_M"]), n)
+        gp = terr.z([(p.x, p.y) for p in (r["geom"].interpolate(float(x)) for x in dd)])
+        invp = r["INV_UP"] - (r["SLOPE_LAID"] / 100.0) * dd
+        cov = float(np.nanmin(gp - invp - od)) if np.isfinite(gp).any() else \
+            float(min(r["COVER_US"], r["COVER_DN"]))
+        if cov < WADI_COVER_CROWN_M - 1e-6:
+            n_thin += 1
+        r["XING_COV_M"] = round(cov, 3)
+        cross.append(dict(CROSS_ID=r["CROSS_ID"], EDGE_UID="", OBSTACLE="wadi",
+                          LEN_M=w["contact_m"],
+                          # 90 deg = square across the band. Derived from the SAME contact
+                          # and band width audit._r4_classify measured, so the register and
+                          # the check describe one geometry (contract validate(): "the
+                          # schedule and the drawing are describing different pipes").
+                          ANGLE_DEG=round(90.0 - w["skew_deg"], 1),
+                          # open_cut, NOT thrust_bore. G201-p86 describes a buried wadi
+                          # crossing - DI over the crossing length plus 15 m each side,
+                          # mechanical joints, PAM-STD-404 protection, an anti-flotation
+                          # check on the empty pipe - which is an open-cut crossing with
+                          # protection, not a bore. Trenchless is offered as an ALTERNATIVE
+                          # at major crossings subject to NWS approval (G203-p21, p35), so
+                          # naming it here would be choosing a method nobody has approved.
+                          METHOD="open_cut", COVER_M=round(cov, 3),
+                          APPROVED=0, geometry=geom, _reach=r["i"]))
+
+    # ---- verification: ask the AUDITOR, now that the ids exist ---------------------------
+    frame["CROSS_ID"] = [r["CROSS_ID"] for r in rows]
+    st4, sum4, n4, ext4 = AUD.run_one("R4", AUD.Ctx(pipes=frame, hazard=P_HAZARD, crit=C))
+    stats = dict(along=len(along), xing=len(xing), n_samp=n_samp, n_nodata=n_nodata,
+                 n_reach_nodata=n_reach_nodata, both=both, thin_cover=n_thin,
+                 r4_status=st4, r4_summary=sum4, r4_n=int(n4), r4_extent=ext4)
+    rec.metric("wadi_reaches_along", len(along))
+    rec.metric("wadi_reaches_crossing", len(xing))
+    rec.metric("wadi_samples_untested_pct", round(100.0 * n_nodata / max(n_samp, 1), 1))
+    rec.metric("wadi_reaches_wholly_untested", n_reach_nodata)
+    if along:
+        rec.note(f"{len(along)} trunk reaches run ALONG a wadi - H1 forbids it and H1a does "
+                 "not excuse it. A defect of the INPUT alignment; stage 3 may not re-route")
+    return cross, stats
 
 
 # ======================================================================================
@@ -1362,7 +1615,8 @@ def _publish(al: Alignment, design, straight, rec: K.StageRecord) -> int:
     t2 = Terrain.__new__(Terrain)
     t2.dem = rasterio.open(P_TERRAIN)
     t2.haz = rasterio.open(P_HAZARD)
-    cross = _corridor_exposure(rows, t2, rec)
+    cross, wadi_stats = _corridor_exposure(rows, t2, rec)
+    design["wadi"] = wadi_stats
 
     # ---- build the contract graph. Geometry is DERIVED from node coordinates here and
     #      nowhere else, so a reach cannot end anywhere but on its own chambers.
@@ -1371,12 +1625,23 @@ def _publish(al: Alignment, design, straight, rec: K.StageRecord) -> int:
     used = sorted({r["us"] for r in rows} | {r["ds"] for r in rows})
     inv = design["level"]["inv"]
 
-    # ---- H1 names the CHAMBER as well as the pipe: "no pipe or chamber in a wadi".
-    #      _corridor_exposure answers only the pipe half, and neither audit.h1 (dual only)
-    #      nor audit.r4 (pipe midpoints only) ever samples a node - so a chamber standing in
-    #      the 50-year band was invisible on both sides of the check. Same grid, same
-    #      classes, same reader as ON_WADI_M.
-    node_wadi = dict(zip(used, t2.wadi([(float(XY[n, 0]), float(XY[n, 1])) for n in used])))
+    # ---- H1 names the CHAMBER as well as the pipe: "no pipe or chamber in a wadi", and
+    #      H1a ITEM 2 ADMITS NO EXEMPTION FOR ONE. A pipe may cross a wadi; a chamber may
+    #      not stand on wadi ground, on the embankment, or in the bed, on a crossing or
+    #      anywhere else (G201-p86: "no chambers/markers in wadi bed or embankments").
+    #      So unlike the pipe half there is nothing here to classify: every chamber on wadi
+    #      ground is a defect to re-site, full stop.
+    #      Neither audit.h1 (dual only) nor audit.r4 (pipe geometry only) ever samples a
+    #      node, so a chamber standing in the 50-year band is reported here or nowhere.
+    #      Same grid, same classes, same reader and the same nodata handling as ON_WADI_M.
+    _nw, _nk = t2.wadi([(float(XY[n, 0]), float(XY[n, 1])) for n in used])
+    node_wadi = dict(zip(used, _nw))
+    node_wadi_known = dict(zip(used, _nk))
+    design["wadi"]["chambers_on_wadi"] = int(_nw.sum())
+    design["wadi"]["chambers_untested"] = int((~_nk).sum())
+    design["wadi"]["chambers_total"] = int(len(used))
+    rec.metric("chambers_on_wadi_ground", int(_nw.sum()))
+    rec.metric("chambers_outside_hazard_grid", int((~_nk).sum()))
 
     # ---- CONFIDENCE follows the line the chamber stands on. The gap connector is this
     #      stage's own straight line, not the draftsman's (OPEN S3-1), and philosophy sec 4
@@ -1476,6 +1741,9 @@ def _publish(al: Alignment, design, straight, rec: K.StageRecord) -> int:
             VORTEX=1 if d > C.BACKDROP_MAX + 1e-9 else 0,
             STEP_UP_M=float(stepup.get(n, 0.0)),
             IN_WADI=1 if bool(node_wadi.get(n, False)) else 0,
+            # 1 = the hazard grid answers for this chamber at all. IN_WADI = 0 with
+            # WADI_COV = 0 is "never tested", not "clear" (H1a, the untested share).
+            WADI_COV=1 if bool(node_wadi_known.get(n, False)) else 0,
             Q_ADF_M3D=float(design["q_acc"][n]),
             Q_PK_LS=float(design["flow"](n)[3]),
             N_PROP=float(design["n_acc"][n]),
@@ -1492,7 +1760,14 @@ def _publish(al: Alignment, design, straight, rec: K.StageRecord) -> int:
         "SIZED_BY", "CLEAN_BY", "TAU_PA", "INV_UP", "INV_DN", "US_DEPTH", "DS_DEPTH",
         "COVER_US", "COVER_DN", "QADF_M3D", "QINF_LS", "PF", "PF_METH", "QPK_LS",
         "V_PK_MS", "DOD_PK", "RET_MIN", "PAST_CAP", "CAP_EXIT", "CAP_LEN_M", "TIE_TYPE",
-        "ON_DUAL_M", "ON_WADI_M", "CROSS_ID")} for r in rows])
+        "ON_DUAL_M", "ON_WADI_M", "CROSS_ID",
+        # H1a's three answers, published beside the undifferentiated contact length so a
+        # reader never has to infer which kind of contact ON_WADI_M is describing:
+        #   WADI_ALONG 1 = runs along a wadi, the defect H1 forbids
+        #   WADI_XING  1 = crosses one, legal under H1a once scheduled (see CROSS_ID)
+        #   WADI_COV   = share of this reach the 50-year grid has ANY answer for; 0.0 means
+        #                H1 could not be tested here at all, which is not a pass
+        "WADI_ALONG", "WADI_XING", "WADI_COV")} for r in rows])
     edges = net.to_edges_gdf("gravity", extra=extra_e)
     nodes = net.to_nodes_gdf()
 
@@ -1573,19 +1848,50 @@ def _publish(al: Alignment, design, straight, rec: K.StageRecord) -> int:
                              cause="INPUT alignment - no pipe may run along a dual "
                                    "carriageway (project rule 7); a crossing is scheduled, "
                                    "a run along one is not a crossing"))
-        if r["ON_WADI_M"] > 0.0:
-            find.append(dict(check="R4", kind="reach", id=r["EDGE_UID"],
-                             value=round(r["ON_WADI_M"], 1), unit="m on wadi ground",
-                             cause="INPUT alignment - Hazard_T50y class >= 4 (G203-p30 "
-                                   "sec 4.4.1, p33: pipelines AND chambers prohibited)"))
+        # H1a splits what used to be one row. A reach running ALONG a wadi is the defect
+        # G203-p30 sec 4.4.1 and p33 forbid; a reach CROSSING one is legal under H1a and
+        # its findings are the obligations that make it legal, not the contact itself.
+        if r.get("WADI_ALONG"):
+            find.append(dict(check="H1/R4", kind="reach", id=r["EDGE_UID"],
+                             value=round(r["ON_WADI_M"], 1), unit="m ALONG a wadi",
+                             cause="INPUT alignment - the pipe runs ALONG Hazard_T50y class "
+                                   ">= 4 ground, which H1a does not excuse (G203-p30 sec "
+                                   "4.4.1, p33). Resolutions are the four in philosophy sec "
+                                   "3: re-route, a station, a crossing that DOES qualify, "
+                                   "or not serving that plot - stage 3 may take none of "
+                                   "them, because the main pipe is an INPUT"))
+        elif r.get("WADI_XING"):
+            cov = float(r.get("XING_COV_M", 0.0))
+            if cov < WADI_COVER_CROWN_M - 1e-6:
+                find.append(dict(check="H1a(3)", kind="reach", id=r["EDGE_UID"],
+                                 value=round(cov, 2), unit="m cover to crown at the crossing",
+                                 cause=f"H1a item 3 requires {WADI_COVER_CROWN_M} m to crown "
+                                       "at a wadi crossing (G203-p52 sec 8.2.4), not H3's "
+                                       "1.30 m. The reach is laid to H3 and is short here"))
+            find.append(dict(check="H1a(4)", kind="reach", id=r["EDGE_UID"],
+                             value=round(r["ON_WADI_M"], 1), unit="m across a wadi - LEGAL",
+                             cause=f"scheduled crossing {r['CROSS_ID']}. Not a defect: G201 "
+                                   "sec 9.3 permits it. Listed because the schedule carries "
+                                   "OPEN obligations - bed profile and cross-sections, "
+                                   "1:20/1:50/1:100 flood levels, bed material and bed-level "
+                                   "change, MoAFWR approval (G201-p85); isolation and air "
+                                   "valves both sides, washout at the low point, all "
+                                   "accessible during flood (G201-p86); DI over the crossing "
+                                   "plus 15 m each side and PAM-STD-404 protection "
+                                   f"(G201-p86); and {WADI_COVER_SOFT_SOIL_M} m of cover if "
+                                   "the soil is soft, which no data yet says either way"))
     for nrow in nodes.itertuples():
         if int(getattr(nrow, "IN_WADI", 0)) == 1:
-            find.append(dict(check="H1", kind="chamber", id=nrow.NODE_UID,
+            find.append(dict(check="H1a(2)", kind="chamber", id=nrow.NODE_UID,
                              value=1, unit="chamber on wadi ground",
-                             cause="INPUT alignment - H1 forbids a CHAMBER in a wadi as well "
-                                   "as a pipe (G203-p33, project rule 8). audit.h1 tests only "
-                                   "the dual band and audit.r4 only pipe midpoints, so a "
-                                   "chamber in the 50-year band is reported here or nowhere"))
+                             cause="INPUT alignment - H1a item 2 admits NO exemption for a "
+                                   "chamber: not on wadi ground, not on the embankment, not "
+                                   "in the bed, ON A LEGAL CROSSING OR ANYWHERE ELSE "
+                                   "(G201-p86 'no chambers/markers in wadi bed or "
+                                   "embankments'; G203-p33). Every one is a defect to "
+                                   "re-site. audit.h1 tests only the dual band and audit.r4 "
+                                   "only pipe geometry, so a chamber in the 50-year band is "
+                                   "reported here or nowhere"))
         if float(getattr(nrow, "STEP_UP_M", 0.0)) > 1e-6:
             find.append(dict(check="H11(intent)", kind="chamber", id=nrow.NODE_UID,
                              value=round(float(nrow.STEP_UP_M), 3),
@@ -1669,9 +1975,52 @@ def _summary(al, design, edges, nodes, straight, rec: K.StageRecord) -> None:
     _log(f"  on a dual carriageway  {edges.ON_DUAL_M.sum():,.0f} m over "
          f"{int((edges.ON_DUAL_M > 0).sum())} reaches, longest single reach "
          f"{edges.ON_DUAL_M.max():,.0f} m   [H1 / R3 - a defect of the INPUT alignment]")
-    _log(f"  on wadi ground         {edges.ON_WADI_M.sum() / 1000:,.2f} km over "
-         f"{int((edges.ON_WADI_M > 0).sum())} reaches "
-         f"   [H1 / R4 - a defect of the INPUT alignment]")
+    # ---- H1a. ALONG and ACROSS are different findings and are never added together.
+    ws = design.get("wadi", {})
+    w_along = edges.WADI_ALONG == 1
+    w_xing = edges.WADI_XING == 1
+    _log(f"  WADI CONTACT           {edges.ON_WADI_M.sum() / 1000:,.2f} km of contact over "
+         f"{int((edges.ON_WADI_M > 0).sum())} reaches, classified ALONG vs ACROSS by "
+         f"audit._r4_classify")
+    _log(f"      ALONG a wadi       {int(w_along.sum())} reaches, "
+         f"{edges.ON_WADI_M[w_along].sum() / 1000:,.2f} km of contact on "
+         f"{edges.LEN_M[w_along].sum() / 1000:,.2f} km of pipe   [H1 / R4 - THE DEFECT, and it "
+         f"is in the INPUT alignment: G203-p30 sec 4.4.1 and p33 forbid a pipe in a wadi]")
+    _log(f"      ACROSS a wadi      {int(w_xing.sum())} reaches, "
+         f"{edges.ON_WADI_M[w_xing].sum() / 1000:,.2f} km of contact   [LEGAL under H1a - "
+         f"G201-p85-86 sec 9.3 gives the procedure, G203-p52 sec 8.2.4 the cover. Each is "
+         f"scheduled with a CROSS_ID; H1a item 4 makes an UNSCHEDULED one illegal]")
+    _log(f"      the skew tolerance  contact / band width <= {WADI_XING_SKEW:.3f} "
+         f"(= 1/cos 30 deg), sampled at {WADI_SAMPLE_M} m - HALF the grid's 3.0 m cell - and "
+         f"probed {WADI_PROBE_M:.0f} m for the far bank. These are PROJECT TOLERANCES on "
+         f"H1's word 'perpendicular', NOT guideline values: the guidelines give the cover "
+         f"(G203-p52 sec 8.2.4) and the procedure (G201 sec 9.3) and never say how square a "
+         f"crossing must be. They live in audit.py and are used from there.")
+    _log(f"      crossings scheduled {int((edges.CROSS_ID.astype(str).str.strip() != '').sum())} "
+         f"reaches carry a CROSS_ID (wadi + dual); "
+         f"{ws.get('thin_cover', 0)} wadi crossing(s) have less than the "
+         f"{WADI_COVER_CROWN_M} m to crown G203-p52 sec 8.2.4 asks for, and "
+         f"{WADI_COVER_SOFT_SOIL_M} m in soft soil (G201-p86) is untested - no soil data")
+    if ws.get("both"):
+        _log(f"      NOTE {ws['both']} reach(es) meet BOTH obstacles. The reach publishes the "
+             f"WADI id (that is the one audit.r4 reads); the dual contact keeps its own "
+             f"schedule row. Before H1a was applied here, 4 reaches carried a DUAL id, "
+             f"audit.r4 saw a non-blank CROSS_ID and scored them SCHEDULED WADI CROSSINGS - "
+             f"a pass bought by a coincidence of field names.")
+    _log(f"      CHAMBERS on wadi   {ws.get('chambers_on_wadi', 0)} of "
+         f"{ws.get('chambers_total', len(nodes))}   [H1a item 2 admits NO exemption for a "
+         f"chamber - not on a crossing, not anywhere (G201-p86). Every one is a defect to "
+         f"re-site, and re-siting a chamber is a level change, not a field]")
+    _log(f"      UNTESTED           {100.0 * ws.get('n_nodata', 0) / max(ws.get('n_samp', 1), 1):,.0f} % "
+         f"of wadi samples fall outside the 50-year hazard grid ("
+         f"{ws.get('n_reach_nodata', 0)} reaches and {ws.get('chambers_untested', 0)} "
+         f"chambers entirely so, {edges.LEN_M[edges.WADI_COV <= 0.0].sum() / 1000:,.1f} km). "
+         f"Nodata is -9999.0 and np.isfinite() calls that a number, so a check built on "
+         f"finiteness alone scores it a PASS - every figure above is a result on the tested "
+         f"share only. Full-coverage flood mapping is a DATA REQUEST, not a modelling "
+         f"choice (philosophy H1a).")
+    _log(f"      auditor's verdict  R4 {ws.get('r4_status', '?')}: {ws.get('r4_summary', '')}"
+         + (f"  [{ws['r4_extent']}]" if ws.get("r4_extent") else ""))
     sharp = nodes[nodes.INLET_DEG < 90.0 - 1e-6]
     if len(sharp):
         _log(f"  inlets under 90 deg    {len(sharp)}, from "
@@ -1699,6 +2048,9 @@ def _summary(al, design, edges, nodes, straight, rec: K.StageRecord) -> None:
     rec.metric("stations", len(design["stations"]))
     rec.metric("on_dual_m", round(float(edges.ON_DUAL_M.sum()), 1))
     rec.metric("on_wadi_km", round(float(edges.ON_WADI_M.sum()) / 1000.0, 2))
+    rec.metric("wadi_along_km", round(float(edges.ON_WADI_M[w_along].sum()) / 1000.0, 2))
+    rec.metric("wadi_across_km", round(float(edges.ON_WADI_M[w_xing].sum()) / 1000.0, 2))
+    rec.metric("wadi_untested_km", round(float(edges.LEN_M[edges.WADI_COV <= 0.0].sum()) / 1000.0, 1))
 
     _log("\nOPEN ITEMS RAISED BY THIS STAGE")
     _log("  S3-1  the western leg's real alignment. The drawn line stops 879.82 m short of "
@@ -1713,10 +2065,43 @@ def _summary(al, design, edges, nodes, straight, rec: K.StageRecord) -> None:
          "is fixed\n        and the design yields to it, soffit to soffit. NWS have not "
          "given it, so the\n        trunk is laid to its own level and that level is "
          "published above for confirmation.")
-    _log("  S3-4  the given alignment breaches H1 in two ways (wadi ground and a dual "
-         "carriageway).\n        Stage 3 measures them onto the layer and does not move the "
-         "line: the main pipe is\n        an INPUT (CLAUDE.md / 00_CURRENT). Both need the "
-         "user's decision.")
+    _log(f"  S3-4  H1 breaches in the given alignment, now that ALONG and ACROSS are "
+         f"separated.\n"
+         f"        (a) WADI, ALONG: {int(w_along.sum())} reaches, "
+         f"{edges.ON_WADI_M[w_along].sum() / 1000:,.2f} km of contact on "
+         f"{edges.LEN_M[w_along].sum() / 1000:,.2f} km of pipe. This is\n"
+         f"            the breach - a pipe laid along a flood channel (G203-p30 sec 4.4.1, "
+         f"p33).\n"
+         f"        (b) WADI, ACROSS: {int(w_xing.sum())} reaches, "
+         f"{edges.ON_WADI_M[w_xing].sum() / 1000:,.2f} km of contact, NOT a breach. G201-p85-86 "
+         f"sec 9.3\n"
+         f"            permits a crossing and gives the procedure; each is scheduled with a "
+         f"CROSS_ID\n"
+         f"            (H1a item 4) and needs MoAFWR approval, bed profiles and 1:20/1:50/"
+         f"1:100 flood\n"
+         f"            levels before it is final. What the earlier text called "
+         f"'{edges.ON_WADI_M.sum() / 1000:,.2f} km on wadi ground,\n"
+         f"            a defect of the INPUT alignment' was these two added together, and "
+         f"they are not\n"
+         f"            the same finding.\n"
+         f"        (c) CHAMBERS on wadi ground: {ws.get('chambers_on_wadi', 0)}. No "
+         f"exemption exists for a chamber, on a\n"
+         f"            crossing or anywhere else (H1a item 2, G201-p86) - every one is to be "
+         f"re-sited.\n"
+         f"        (d) DUAL CARRIAGEWAY: {int((edges.ON_DUAL_M > 30.0).sum())} reaches over "
+         f"the 30 m test, {edges.ON_DUAL_M.sum():,.0f} m in the 6 m band over\n"
+         f"            {int((edges.ON_DUAL_M > 0).sum())} reaches. Unchanged and still a "
+         f"breach (project rule 7).\n"
+         f"        Stage 3 measures all four onto the layer and does not move the line: the "
+         f"main pipe\n"
+         f"        is an INPUT (CLAUDE.md / 00_CURRENT). (a), (c) and (d) need the user's "
+         f"decision.\n"
+         f"  S3-5  the 50-year hazard grid does not cover the alignment. "
+         f"{100.0 * ws.get('n_nodata', 0) / max(ws.get('n_samp', 1), 1):,.0f} % of wadi\n"
+         f"        samples and {edges.LEN_M[edges.WADI_COV <= 0.0].sum() / 1000:,.1f} km of "
+         f"pipe have NO wadi answer either way. Every figure in (a)-(c)\n"
+         f"        above is a result on the tested share. Full-coverage flood mapping is a "
+         f"data request.")
 
 
 if __name__ == "__main__":
