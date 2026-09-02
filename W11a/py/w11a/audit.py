@@ -97,7 +97,7 @@ class Ctx:
     """Everything a check may look at. Nothing is computed that a check does not ask for."""
 
     def __init__(self, pipes=None, nodes=None, crit=None, hazard=None,
-                 roads=None, existing=None):
+                 roads=None, existing=None, crossings=None):
         # `terrain` and `plots` were accepted and read by no check. A parameter nothing
         # uses is a promise the auditor does not keep; removed rather than left dangling.
         self.pipes = pipes
@@ -106,6 +106,9 @@ class Ctx:
         self.hazard = hazard
         self.roads = roads
         self.existing = existing
+        # The crossings REGISTER. A CROSS_ID on a pipe is a pointer; the register is
+        # what carries the G201 9.3 obligations. Without it, nothing is scheduled.
+        self.crossings = crossings
         self._cache = {}
 
     def need(self, *cols):
@@ -460,6 +463,38 @@ def r3(ctx):
     return h1(ctx)
 
 
+def _scheduled_as_wadi(ctx, i) -> bool:
+    """Is reach `i` actually SCHEDULED as a wadi crossing?
+
+    The first version accepted any non-blank CROSS_ID. That is not scheduling, it is a
+    pointer, and on one publish FOUR reaches carrying a DUAL-CARRIAGEWAY crossing id were
+    scored as legal wadi crossings on a coincidence of field names - with nothing in the
+    register mentioning a wadi at all. H1a item 4 requires the crossing to be IN the
+    schedule, because the schedule is what carries the G201 9.3 obligations: bed profile,
+    1:20/1:50/1:100 flood levels, bed material and MoAFWR approval. An id with no row
+    behind it carries none of them.
+    """
+    if "CROSS_ID" not in ctx.pipes.columns:
+        return False
+    cid = str(ctx.pipes.CROSS_ID.iloc[i])
+    if cid in ("", "nan", "None", "0"):
+        return False
+    reg = ctx.crossings
+    if reg is None or "CROSS_ID" not in getattr(reg, "columns", []):
+        return False          # no register: nothing is scheduled, however many ids exist
+    rows = reg[reg.CROSS_ID.astype(str) == cid]
+    if "OBSTACLE" in reg.columns:
+        rows = rows[rows.OBSTACLE.astype(str).str.lower() == "wadi"]
+    return len(rows) > 0
+
+
+def _wadi_classes(ctx):
+    """The hazard classes that mean 'wadi', from criteria - not hardcoded in two places."""
+    crit = getattr(ctx, "crit", None)
+    cl = getattr(crit, "HAZARD_WADI_CLASSES", None) if crit is not None else None
+    return tuple(cl) if cl else (4, 5, 6)
+
+
 def _r4_classify(ctx):
     """One walk over the geometry. Returns (along, unscheduled, scheduled_ok, n_samples,
     n_nodata, n_reaches_entirely_nodata).
@@ -480,15 +515,17 @@ def _r4_classify(ctx):
         # fill. Read the declared nodata and honour it.
         ND = src.nodata
 
+        lo = min(_wadi_classes(ctx))
+
         def onwadi(pts):
             """(is_wadi, is_known). Nodata is neither on nor off - it is unknown."""
             v = np.array([w[0] for w in src.sample(pts)], dtype=float)
             known = np.isfinite(v)
             if ND is not None:
                 known &= (v != ND)
-            return (known & (np.floor(v) >= 4)), known
+            return (known & (np.floor(v) >= lo)), known
 
-        along, xing_ok, xing_bad, no_data_reach = [], 0, [], 0
+        along, xing_ok, xing_bad, no_data_reach = [], [], [], 0
         n_samp = n_nodata = 0
         for i, g in enumerate(ctx.pipes.geometry):
             if g is None or g.is_empty:
@@ -537,10 +574,9 @@ def _r4_classify(ctx):
                 width += float(off[0] * WADI_SAMPLE_M) if len(off) else WADI_PROBE_M
 
             square = contact <= WADI_XING_SKEW * max(width, WADI_SAMPLE_M)
-            has_id = ("CROSS_ID" in ctx.pipes.columns
-                      and str(ctx.pipes.CROSS_ID.iloc[i]) not in ("", "nan", "None", "0"))
+            has_id = _scheduled_as_wadi(ctx, i)
             if square and has_id:
-                xing_ok += 1
+                xing_ok.append(i)
             elif square:
                 xing_bad.append(i)                 # geometrically a crossing, not scheduled
             else:
@@ -601,7 +637,7 @@ def r4(ctx):
         m = np.zeros(len(ctx.pipes), bool); m[np.array(xing_bad, dtype=int)] = True
         return FAIL, (f"{len(xing_bad):,} wadi crossings with no CROSS_ID - H1a(4) requires "
                       f"each in the crossings schedule{cover}"), len(xing_bad), f"{km(m, ctx):.1f} km"
-    return PASS, f"nothing along a wadi; {xing_ok:,} scheduled crossing(s){cover}", 0, ""
+    return PASS, f"nothing along a wadi; {len(xing_ok):,} scheduled crossing(s){cover}", 0, ""
 
 
 # --------------------------------------------------------------------------- provenance

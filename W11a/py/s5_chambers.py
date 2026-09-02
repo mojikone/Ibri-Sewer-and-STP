@@ -472,11 +472,27 @@ class Surface:
         return v
 
     def is_wadi(self, xs, ys) -> np.ndarray:
-        """audit.r4's own test, recomputed here so the design does not have to be told."""
+        """audit.r4's own test, recomputed here so the design does not have to be told.
+
+        The hazard grid's declared nodata is -9999.0, and np.isfinite(-9999) is True - so
+        testing finiteness alone let nodata through and `floor(-9999) >= 4` then scored it
+        NOT a wadi. Untested ground read as clear ground, silently, which is the same
+        defect audit.r4 carried until today. The terrain sampler above already strips its
+        own nodata; this one did not.
+
+        Unknown still returns False here, because a chamber placer needs a yes/no. What
+        must not happen is unknown being INDISTINGUISHABLE from a measured clear - the
+        untested share is published by audit.R4 and by stage 4, and over half this network
+        has no wadi answer either way.
+        """
         if self._h is None or not len(xs):
             return np.zeros(len(xs), dtype=bool)
         v = np.array([w[0] for w in self._h.sample(zip(xs, ys))], dtype=float)
-        return np.isfinite(v) & (np.floor(v) >= min(C.HAZARD_WADI_CLASSES))
+        known = np.isfinite(v)
+        nod = self._h.nodata
+        if nod is not None:
+            known &= (v != nod)
+        return known & (np.floor(v) >= min(C.HAZARD_WADI_CLASSES))
 
     def close(self):
         self._t.close()

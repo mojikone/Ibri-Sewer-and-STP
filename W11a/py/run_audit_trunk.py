@@ -18,6 +18,14 @@ from sewnet.criteria import DEFAULT as CRIT
 BASE = os.path.dirname(os.path.dirname(K.REPO_ROOT))
 
 
+def _layers(path):
+    import fiona
+    try:
+        return set(fiona.listlayers(path))
+    except Exception:
+        return set()
+
+
 def main(gpkg: str = "W11a_trunk.gpkg") -> int:
     p = K.gpkg_path(K.W11A_ROOT, gpkg)
     K.assert_audited_path(p, "reaches")
@@ -27,9 +35,13 @@ def main(gpkg: str = "W11a_trunk.gpkg") -> int:
                                        "Road_Centercline.shp")).set_crs(32640, allow_override=True)
     ctx = audit.Ctx(
         pipes=pipes, nodes=nodes, crit=CRIT,
-        terrain=os.path.join(BASE, "Data", "Terrain", "Sat_0p5m", "IBRI_0p5_VRT2.vrt"),
         hazard=os.path.join(BASE, "Data", "04 Lekhuwair", "Hazard_T50y.tif"),
-        roads=roads, plots=None,
+        roads=roads,
+        # The crossings REGISTER, not just the CROSS_ID on the pipe. audit.r4 verifies that
+        # an id resolves to an OBSTACLE='wadi' row - without the register nothing counts as
+        # scheduled, however many ids the layer carries.
+        crossings=(gpd.read_file(p, layer="crossings")
+                   if "crossings" in _layers(p) else None),
         existing=gpd.read_file(os.path.join(K.REPO_ROOT, "W10", "shp",
                                             "W10_existing_built.shp")))
     print(f"auditing the W11a trunk: {len(pipes):,} reaches, {len(nodes):,} chambers\n")
