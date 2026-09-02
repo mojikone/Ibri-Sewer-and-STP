@@ -595,6 +595,12 @@ NODES = LayerSpec(
         F("NODE_UID", "str", "-", "immutable identity, minted once by NodeIndex and never "
           "reassigned. Everything that references a chamber references THIS, so a pass-2 "
           "relabel cannot orphan a reference", audit="G3"),
+        F("IS_OUTFALL", "int", "0/1", "1 where this chamber is where its system discharges. "
+          "H15 requires EXACTLY ONE per connected component - not one network, because sec 8a "
+          "allows satellite works, but never a piece that drains nowhere. It lives on the "
+          "NODE because an outfall is a property of a chamber; audit.h15 looked for it on the "
+          "PIPE layer and returned a blocking FALSE failure against a design that had one per "
+          "component", audit="H15", lo=0, hi=1),
         F("NODE_REF", "str", "-", "the human/NAMA-style label (5A-2-SM.2-MH391). Derived "
           "from tier+package+sequence, recomputed freely, referenced by NOTHING - "
           "objective 3 says it must read like their network, and that must not cost "

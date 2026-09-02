@@ -431,17 +431,44 @@ def h15(ctx):
     # the same layer, squeezed harder. The loops were never in the design; they appear the
     # moment you snap hard enough to hide the disconnection. Both are one root cause, and
     # G3 names it: no US_NODE/DS_NODE, so connectivity is inferred from a tolerance.
-    if parts > 1 and "IS_OUTFALL" not in ctx.pipes.columns:
-        return FAIL, (f"{parts:,} disconnected pieces at {SNAP_M} m - loop-free only because "
-                      f"nothing is joined; no IS_OUTFALL to prove any piece drains"), parts, ""
+    # An outfall is a property of a CHAMBER, not of a pipe. This check read
+    # ctx.pipes.IS_OUTFALL, stage 4 writes it on the node layer, and contract.py declared it
+    # on neither - so a design with exactly one outfall per component returned
+    # "no IS_OUTFALL to prove any piece drains", a BLOCKING false failure. Read the nodes.
+    have_ids = {"US_NODE", "DS_NODE"} <= set(ctx.pipes.columns)
+    nodes_ok = (ctx.nodes is not None and "IS_OUTFALL" in getattr(ctx.nodes, "columns", [])
+                and "NODE_UID" in getattr(ctx.nodes, "columns", []))
+
     if cycles:
         return FAIL, f"{cycles} independent cycles across {parts} component(s)", cycles, ""
-    if "IS_OUTFALL" not in ctx.pipes.columns:
-        return FAIL, "single component, but no IS_OUTFALL field - cannot prove it drains", 0, ""
-    n_out = int(ctx.pipes.IS_OUTFALL.astype(bool).sum())
-    if n_out != parts:
-        return FAIL, f"{parts} component(s) but {n_out} outfall(s) - must be one each", abs(n_out - parts), ""
-    return PASS, f"loop-free forest, {parts} component(s), one outfall each", 0, ""
+    if not nodes_ok:
+        return FAIL, (f"loop-free in {parts:,} piece(s), but no node layer carrying "
+                      f"IS_OUTFALL - nothing proves any piece drains"), parts, ""
+    if not have_ids:
+        return FAIL, (f"loop-free in {parts:,} piece(s), but no US_NODE/DS_NODE - an outfall "
+                      f"cannot be attributed to a component (see H16)"), parts, ""
+
+    # Components on the DECLARED graph, which is what the outfall ids can be joined to.
+    D = nx.Graph()
+    D.add_edges_from(zip(ctx.pipes.US_NODE.astype(str), ctx.pipes.DS_NODE.astype(str)))
+    comp_of = {}
+    for i, cc in enumerate(nx.connected_components(D)):
+        for u in cc:
+            comp_of[u] = i
+    n_comp = max(comp_of.values()) + 1 if comp_of else 0
+
+    outs = ctx.nodes.loc[ctx.nodes.IS_OUTFALL.astype(float).fillna(0) > 0, "NODE_UID"].astype(str)
+    per = {}
+    for u in outs:
+        if u in comp_of:
+            per[comp_of[u]] = per.get(comp_of[u], 0) + 1
+    none_ = [i for i in range(n_comp) if per.get(i, 0) == 0]
+    many = [i for i in range(n_comp) if per.get(i, 0) > 1]
+    if none_ or many:
+        return FAIL, (f"{len(none_):,} component(s) drain NOWHERE and {len(many):,} carry "
+                      f"more than one outfall, of {n_comp:,}"), len(none_) + len(many), ""
+    return PASS, (f"loop-free forest, {n_comp:,} component(s), exactly one outfall each "
+                  f"({len(outs):,} outfalls)"), 0, ""
 
 
 # --------------------------------------------------------------------------- regression

@@ -13,7 +13,7 @@ H11,levels,No reverse gradient; laying tolerance 20 mm,G203-p29,True,PASS,every 
 H12,chambers,Chamber spacing within Table 12,G203-p30,True,PASS,every reach within its Table 12 spacing,0,
 H13,levels,Uniform slope between successive manholes,G203-p29,True,PASS,one gradient per reach by construction,0,
 H14,levels,An existing structure's invert is fixed; tie in soffit to soffit,practice,True,PASS,every tie-in is soffit to soffit,0,
-H15,topology,"The network is a FOREST - zero loops, and every component reaches exactly one outfall",project rule,True,FAIL,4 disconnected pieces at 0.01 m - loop-free only because nothing is joined; no IS_OUTFALL to prove any piece drains,4,
+H15,topology,"The network is a FOREST - zero loops, and every component reaches exactly one outfall",project rule,True,FAIL,"loop-free in 4 piece(s), but no node layer carrying IS_OUTFALL - nothing proves any piece drains",4,
 H16,topology,"Every pipe publishes US_NODE/DS_NODE, and the declared graph MATCHES the geometry",philosophy 3.6a / H16,True,PASS,declared and drawn topology agree: 4 component(s),0,
 R1,regression,No surcharged pipe (W10 shipped 2.80 km),W10 post-mortem,True,PASS,every pipe passes its peak flow within d/D,0,
 R2,regression,No reach below minimum cover (W10 shipped 45.92 km),W10 post-mortem,True,PASS,every reach has at least 1.30 m of cover,0,
