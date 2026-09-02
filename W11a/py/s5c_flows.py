@@ -43,6 +43,7 @@ skips reaches whose intersection is provably empty. Whole stage now runs in abou
 """
 from __future__ import annotations
 
+import math
 import os
 import sys
 import time
@@ -386,20 +387,43 @@ def main() -> int:
     # scheduled however many ids exist. The register is what carries the obligations forward.
     _sch = out[out["CROSS_ID"].astype(str) != ""].copy()
     if len(_sch):
+        # The skew, from the auditor's own walk over the geometry.
+        # contact = width / cos(deviation from perpendicular), so the angle TO the obstacle
+        # is 90 - deviation. Where the far bank is outside the grid the angle CANNOT be
+        # measured, and the row carries NaN rather than a number nobody derived.
+        try:
+            _ctx4 = audit.Ctx(pipes=out, hazard=P_HAZARD, crit=C)
+            _xg = audit.wadi_crossing_geometry(_ctx4)
+        except Exception as _e:                    # noqa: BLE001 - reported, never swallowed
+            _xg = {}
+            say(f"    WARNING: crossing skew not measured ({type(_e).__name__}: {_e}) - "
+                f"ANGLE_DEG will be blank rather than assumed")
         _pos = {u: k for k, u in enumerate(out["EDGE_UID"])}
         _geo = [xsub[_pos[u]] for u in _sch["EDGE_UID"]]
         _keep = [g is not None and not g.is_empty for g in _geo]
         _sch, _geo = _sch[_keep], [g for g, k in zip(_geo, _keep) if k]
         _wadi = _sch["ON_WADI_M"] > 0
+        _angle = []
+        for _u in _sch["EDGE_UID"]:
+            _i = _pos.get(_u)
+            _m = _xg.get(_i)
+            if _m and _m[2] == 2 and _m[0] > 0:
+                _dev = math.degrees(math.acos(max(-1.0, min(1.0, _m[1] / _m[0]))))
+                _angle.append(round(90.0 - _dev, 2))
+            else:
+                _angle.append(float("nan"))
         _reg = gpd.GeoDataFrame(dict(
             CROSS_ID=_sch["CROSS_ID"].values,
             EDGE_UID=_sch["EDGE_UID"].values,
             OBSTACLE=np.where(_wadi, "wadi", "dual"),
             LEN_M=np.round([g.length for g in _geo], 3),
-            # Square by construction: stage 2 deleted everything that was not, and H1's own
-            # band test re-checks it on the published layer. Published as 90 rather than
-            # measured per reach, and that is a DECLARATION - audit.h1 is the measurement.
-            ANGLE_DEG=[90.0] * len(_sch),
+            # MEASURED, not declared. This published 90.0 on every one of 3,290 rows and
+            # called it a declaration. It was a fabricated measurement: stage 3, on the same
+            # geometry, finds a minimum of 0.84 degrees with 7 of 91 crossings below 45 -
+            # including a 150 m "crossing" at 0.84 deg, which is a pipe running down the
+            # road. The angle now comes from audit.wadi_crossing_geometry, so the register
+            # and the check read one measurement (philosophy P2).
+            ANGLE_DEG=_angle,
             METHOD=["open_cut"] * len(_sch),
             # APPROVED = 0 until a third-party consent exists. G201-p85 requires MoAFWR
             # approval for a wadi crossing; an open item should never be a silent one.

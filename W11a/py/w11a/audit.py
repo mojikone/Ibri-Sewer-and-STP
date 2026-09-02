@@ -553,6 +553,12 @@ def _r4_classify(ctx):
             return (known & (np.floor(v) >= lo)), known
 
         along, xing_ok, xing_bad, no_data_reach = [], [], [], 0
+        unknown = []       # touches a wadi, far bank outside the grid
+        # index -> (contact_m, band_width_m, banks_found). The MEASUREMENT, so a
+        # stage publishing a crossings register can carry the real skew instead of
+        # declaring one. s5c wrote ANGLE_DEG = 90.0 on all 3,290 rows; stage 3, on
+        # the same geometry, measures a minimum of 0.84 deg with 7 of 91 below 45.
+        geom = {}
         n_samp = n_nodata = 0
         for i, g in enumerate(ctx.pipes.geometry):
             if g is None or g.is_empty:
@@ -591,14 +597,37 @@ def _r4_classify(ctx):
             nx_, ny_ = -vy / m, vx / m             # unit normal to the pipe
             c = g.interpolate(mid)
 
-            # probe both ways along the normal until the band ends
-            width = 0.0
+            # Probe both ways along the normal until KNOWN DRY ground is found.
+            #
+            # This is where the nodata defect walked back in after being cured at the
+            # sampler. `off` needs a cell that is both KNOWN and NOT wadi; across the 53 %
+            # of the grid that is nodata no such cell exists, so the probe ran to its 400 m
+            # cap and the cap was ADDED TO THE WIDTH as though a bank had been found. Both
+            # sides capped gives a width of 800 m, and contact <= 1.155 x 800 = 924 m passes
+            # essentially any contact. Measured independently by distance transform: 546
+            # corridors, 47.40 km, run ALONG a wadi that this check scored as square
+            # crossings - roughly five times the exposure it was reporting. Worst case was
+            # 150 m of continuous contact in a channel 8.5 m wide, skew 17.7.
+            #
+            # An unfound bank is an UNKNOWN width, never a wide one. Where the width cannot
+            # be established the reach is UNTESTABLE, and philosophy sec 8 makes that a
+            # failure rather than a pass.
+            width, banks = 0.0, 0
             for sgn in (1.0, -1.0):
                 probe = [(c.x + sgn * t * nx_, c.y + sgn * t * ny_)
                          for t in np.arange(0.0, WADI_PROBE_M, WADI_SAMPLE_M)]
                 pon, pknown = onwadi(probe)
                 off = np.where(pknown & ~pon)[0]
-                width += float(off[0] * WADI_SAMPLE_M) if len(off) else WADI_PROBE_M
+                if len(off):
+                    width += float(off[0] * WADI_SAMPLE_M)
+                    banks += 1
+                else:
+                    width += WADI_PROBE_M
+
+            geom[i] = (contact, width, banks)
+            if banks < 2:
+                unknown.append(i)
+                continue
 
             square = contact <= WADI_XING_SKEW * max(width, WADI_SAMPLE_M)
             has_id = _scheduled_as_wadi(ctx, i)
@@ -612,15 +641,28 @@ def _r4_classify(ctx):
     # Coverage is reported at SAMPLE level, not reach level. A reach with one cell of grid
     # under it and the rest nodata was passing the reach-level test and hiding the gap; the
     # 50-year grid does not cover the study area and every wadi result must say so.
-    return along, xing_bad, xing_ok, n_samp, n_nodata, no_data_reach
+    return along, xing_bad, xing_ok, n_samp, n_nodata, no_data_reach, unknown, geom
+
+
+def wadi_crossing_geometry(ctx):
+    """{reach index: (contact_m, band_width_m, banks_found)} for every reach touching a wadi.
+
+    Exists so a stage publishing the crossings register carries the MEASURED skew. s5c wrote
+    ANGLE_DEG = 90.0 on all 3,290 rows and called it a declaration; on the same geometry
+    stage 3 measures a minimum of 0.84 degrees, with 7 of 91 below 45 - including a 150 m
+    "crossing" at 0.84 deg, which is a pipe running down the road. A constant in a published
+    register is not a declaration, it is a fabricated measurement.
+    """
+    return _r4_classify(ctx)[7]
 
 
 def r4_failing_mask(ctx):
     """Boolean mask of the rows R4 rejects - WHICH, not HOW MANY."""
-    along, xing_bad, _ok, _s, _n, _r = _r4_classify(ctx)
+    along, xing_bad, _ok, _s, _n, _r, unk, _g = _r4_classify(ctx)
     m = np.zeros(len(ctx.pipes), bool)
-    if along or xing_bad:
-        m[np.array(along + xing_bad, dtype=int)] = True
+    bad = along + xing_bad + unk
+    if bad:
+        m[np.array(bad, dtype=int)] = True
     return m
 
 
@@ -648,7 +690,8 @@ def r4(ctx):
     running down a band has a long contact and a narrow perpendicular extent. The ratio is
     the measurement, and WADI_XING_SKEW is the stated tolerance on the word "perpendicular".
     """
-    along, xing_bad, xing_ok, n_samp, n_nodata, no_data_reach = _r4_classify(ctx)
+    res4 = _r4_classify(ctx)
+    along, xing_bad, xing_ok, n_samp, n_nodata, no_data_reach, unknown, _g = res4
 
     # Coverage is reported at SAMPLE level. A reach with one cell of grid under it and the
     # rest nodata passed a reach-level test and hid the gap.
@@ -656,10 +699,16 @@ def r4(ctx):
     if n_nodata:
         cover = (f"; {100.0 * n_nodata / max(n_samp, 1):.0f} % of samples fall outside the "
                  f"hazard grid and are UNTESTED ({no_data_reach:,} reaches entirely so)")
-    if along:
-        m = np.zeros(len(ctx.pipes), bool); m[np.array(along, dtype=int)] = True
+    if along or unknown:
+        m = np.zeros(len(ctx.pipes), bool)
+        m[np.array(along + unknown, dtype=int)] = True
         extra = f", {len(xing_bad):,} cross one without a scheduled CROSS_ID" if xing_bad else ""
-        return FAIL, f"{len(along):,} reaches run ALONG a wadi{extra}{cover}", len(along), f"{km(m, ctx):.1f} km"
+        unk = ""
+        if unknown:
+            unk = (f", and {len(unknown):,} touch a wadi whose far bank lies outside the "
+                   f"grid, so along-or-across CANNOT BE DECIDED")
+        msg = f"{len(along):,} reaches run ALONG a wadi{extra}{unk}{cover}"
+        return FAIL, msg, len(along) + len(unknown), f"{km(m, ctx):.1f} km"
     if xing_bad:
         m = np.zeros(len(ctx.pipes), bool); m[np.array(xing_bad, dtype=int)] = True
         return FAIL, (f"{len(xing_bad):,} wadi crossings with no CROSS_ID - H1a(4) requires "
