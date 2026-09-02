@@ -1303,7 +1303,7 @@ def _synthetic(root: str, rasters: "Rasters"):
     ed["MATERIAL"] = C.material(dn)
     ed["SLOPE_LAID"] = 0.35                      # 0.35 %, the gradient the inverts were laid at
     ed["SLOPE_MIN"] = round(C.TABLE11[dn] * 100.0, 4)
-    ed["GRADIENT_BY"] = "ground"
+    ed["GRAD_BY"] = "ground"
     ed["SIZED_BY"] = "capacity"
     ed["CLEAN_BY"] = "velocity"
     ed["TAU_PA"] = C.TAU_PA

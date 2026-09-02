@@ -167,7 +167,7 @@ ROUTES_LAYER = "corridors"                      # stage 2's layer; carries a tie
 ROUTES_NEEDS = ("CORR_ID", "TIER", "DS_CORR")   # stage 4 ever publishes runs directly
 
 # The deliverable the brief names. It is a CAD MIRROR: `contract.assert_audited_path()`
-# refuses to hand a .shp to the auditor at all, because the DBF truncates GRADIENT_BY to
+# refuses to hand a .shp to the auditor at all, because the DBF truncates GRAD_BY to
 # GRADIENT_B and audit G2 then fails a design that was correct in memory.
 MANHOLES_SHP = os.path.join(SHP_DIR, "W11a_manholes.shp")
 SHARP_INLETS_CSV = os.path.join(RUN_DIR, "s5_sharp_inlets.csv")

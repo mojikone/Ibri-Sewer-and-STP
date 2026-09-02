@@ -67,7 +67,7 @@ THE W10 FAILURES THIS MODULE EXISTS TO PREVENT, each named where it is prevented
   |                                      | definition, on the reach's OWN outside diameter   |
   | no laid gradient published, only the | SLOPE_LAID **and** SLOPE_MIN on every reach, and  |
   | minimum - so nothing was checkable   | the pair is what audit G1 tests for               |
-  | no constraint provenance             | GRADIENT_BY and SIZED_BY on every reach (audit G2)|
+  | no constraint provenance             | GRAD_BY and SIZED_BY on every reach (audit G2)|
   | chambers past 12 m unflagged         | the cap-and-veto ladder, PAST_CAP + CAP_EXIT +    |
   |                                      | CAP_LEN_M, and a station where no exit applies    |
   | node layer and pipe layer from       | node levels are SEATED onto the pipes in the      |
@@ -574,7 +574,7 @@ class LevelSolver:
         # FALL_TOLERANCE = 2 x the 20 mm laying tolerance (G203-p29 sec 4.3.1): a reach with less
         # fall than that cannot be set out without risking a reverse gradient, and audit H11
         # fails anything under 20 mm. It is a G203-p29 floor like Table 11 and is reported
-        # under the same GRADIENT_BY token, counted separately in the run report.
+        # under the same GRAD_BY token, counted separately in the run report.
 
         # ---- 7/9: what the downstream end must do. Two different regimes, and conflating
         # them is a real error: a MINIMUM COVER target is a CEILING on the invert (lay at
@@ -645,7 +645,7 @@ class LevelSolver:
                     # No counter here on purpose. A carry made at this point can still be
                     # overridden by the maximum-slope move below, and a counter incremented
                     # before the decision is final is how a metric ends up disagreeing with
-                    # the layer it claims to describe (P2). The published GRADIENT_BY tally
+                    # the layer it claims to describe (P2). The published GRAD_BY tally
                     # is the count, and it is taken from the rows themselves.
                     k, why = prev_k, "uniform"
                 else:
@@ -1099,7 +1099,7 @@ class LevelSolver:
 # ======================================================================================
 
 # Fields this stage OWNS - it computes them, so they need not arrive from stage 5.
-OWNED_REACH = {"DN", "MATERIAL", "SLOPE_LAID", "SLOPE_MIN", "GRADIENT_BY", "SIZED_BY",
+OWNED_REACH = {"DN", "MATERIAL", "SLOPE_LAID", "SLOPE_MIN", "GRAD_BY", "SIZED_BY",
                "CLEAN_BY", "TAU_PA", "INV_UP", "INV_DN", "US_DEPTH", "DS_DEPTH",
                "COVER_US", "COVER_DN", "V_PK_MS", "DOD_PK", "RET_MIN", "PAST_CAP",
                "CAP_EXIT", "CAP_LEN_M", "TIE_TYPE"}
@@ -1303,7 +1303,7 @@ def write_back(nodes_gdf, reaches_gdf, solver: LevelSolver) -> Tuple:
     rg["MATERIAL"] = material
     rg["SLOPE_LAID"] = slope_laid
     rg["SLOPE_MIN"] = slope_min
-    rg["GRADIENT_BY"] = grad_by
+    rg["GRAD_BY"] = grad_by
     rg["SIZED_BY"] = sized_by
     rg["CLEAN_BY"] = clean_by
     # the tau the tractive gradients were ACTUALLY computed at - `hydra.smin_tractive` reads
@@ -1428,7 +1428,7 @@ def summary(rg, ng, solver: LevelSolver, rep: Dict) -> str:
         f"diameters          " + ", ".join(
             f"DN{int(d)} {int(c)}" for d, c in rg["DN"].value_counts().sort_index().items()),
         f"gradient set by    " + ", ".join(
-            f"{k} {int(v)}" for k, v in rg["GRADIENT_BY"].value_counts().items()),
+            f"{k} {int(v)}" for k, v in rg["GRAD_BY"].value_counts().items()),
         f"diameter set by    " + ", ".join(
             f"{k} {int(v)}" for k, v in rg["SIZED_BY"].value_counts().items()),
         f"self-cleansing by  " + ", ".join(

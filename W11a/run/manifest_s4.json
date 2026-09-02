@@ -1,11 +1,11 @@
 {
   "contract": "W11a-contract-1.1",
-  "written": "2026-09-02 10:21:13",
+  "written": "2026-09-02 11:09:56",
   "stages": [
     {
       "stage": "s4_hierarchy",
       "order": 4,
-      "seconds": 19.43,
+      "seconds": 14.93,
       "reads": [
         {
           "name": "corridors (stage 2)",
@@ -78,7 +78,7 @@
         "reaches_on_wadi_measured": 0,
         "km_on_wadi_measured": 0.0,
         "chambers_on_wadi_measured": 0,
-        "reaches_on_wadi_inherited": 0,
+        "reaches_on_wadi_inherited": 100,
         "km_outside_hazard_grid_untestable": 968.3,
         "km_no_loadbearing_plot_within_60m": 168.5,
         "km_lateral": 1115.37,

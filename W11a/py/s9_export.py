@@ -458,7 +458,7 @@ def export_shapefiles(layers: Dict[str, gpd.GeoDataFrame], root: str, rec) -> Li
     """The exchange copy. The GeoPackage stays the audited artefact.
 
     `mirror_shapefile` writes a README beside any layer whose field names the DBF
-    truncates - GRADIENT_BY becomes GRADIENT_B, and audit G2 then fails a design that was
+    truncates - GRAD_BY becomes GRADIENT_B, and audit G2 then fails a design that was
     correct in memory. `assert_audited_path` makes that a raise rather than a note,
     so the mirror can never be handed to the auditor by mistake.
     """
@@ -687,7 +687,7 @@ def export_kmz(layers, root: str, rec) -> str:
                 ("Size", f"DN{int(r.DN)} {r.MATERIAL}"),
                 ("Length", f"{float(r.LEN_M):.1f} m"),
                 ("Gradient laid", f"{float(r.SLOPE_LAID):.3f} %"),
-                ("Gradient minimum", f"{float(r.SLOPE_MIN):.3f} % ({r.GRADIENT_BY})"),
+                ("Gradient minimum", f"{float(r.SLOPE_MIN):.3f} % ({r.GRAD_BY})"),
                 ("Invert up / down", f"{float(r.INV_UP):.2f} / {float(r.INV_DN):.2f} m aOD"),
                 ("Cover up / down", f"{float(r.COVER_US):.2f} / {float(r.COVER_DN):.2f} m"),
                 ("Peak flow", f"{float(r.QPK_LS):.2f} L/s  (PF {float(r.PF):.2f} "
@@ -1864,7 +1864,7 @@ def _demo_network() -> Tuple[Dict[str, gpd.GeoDataFrame], K.Network]:
         DN=dn_v,
         MATERIAL=["GRP" if d > K.PVC_MAIN_MAX_DN else "PVC-U" for d in dn_v],
         CONSTR="open_trench", SLOPE_LAID=SLOPE, SLOPE_MIN=[round(s, 4) for s in smin],
-        GRADIENT_BY=["table11" if s >= SLOPE - 1e-9 else "uniform" for s in smin],
+        GRAD_BY=["table11" if s >= SLOPE - 1e-9 else "uniform" for s in smin],
         SIZED_BY="minimum", CLEAN_BY=clean, TAU_PA=C.TAU_PA,
         INV_UP=inv_up, INV_DN=inv_dn,
         US_DEPTH=[grd[u] - iu for u, iu in zip(reaches["US_NODE"], inv_up)],

@@ -2,7 +2,7 @@
 
 Separate from run_audit.py, which is pointed at W10's shapefiles by filename. This one goes
 through contract.assert_audited_path() so a shapefile can never be handed to the auditor:
-the DBF renames GRADIENT_BY to GRADIENT_B and audit G2 then fails a correct design.
+the DBF renames GRAD_BY to GRADIENT_B and audit G2 then fails a correct design.
 
     python run_audit_trunk.py
 """

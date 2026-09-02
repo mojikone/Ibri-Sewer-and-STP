@@ -29,7 +29,7 @@ WHAT IT PREVENTS, NAMED FAILURE BY NAMED FAILURE
                                           contract.Network, so a reach physically cannot
                                           stop short of its own chamber (invariant 2).
   * W10 no TIER / no laid gradient      - TIER = 'trunk main' on every reach as instructed,
-                                          SLOPE_LAID beside SLOPE_MIN, and GRADIENT_BY /
+                                          SLOPE_LAID beside SLOPE_MIN, and GRAD_BY /
                                           SIZED_BY / CLEAN_BY on every row (G1, G2, H8).
   * W10 digging past the cap in silence - cover over 12 m is tested against the two sec 5
                                           exits; where neither applies the answer is a
@@ -813,7 +813,7 @@ class Solver:
 
     @staticmethod
     def _attribute(d: Dict, inv_us: float, grd_prof: np.ndarray, L: float) -> Dict:
-        """What SET the laid gradient (contract.GRADIENT_BY)."""
+        """What SET the laid gradient (contract.GRAD_BY)."""
         dn = d["dn"]
         if d.get("capped"):
             by = "vmax"
@@ -1277,7 +1277,7 @@ def _rows(res, reaches, flow, solver: Solver, root, XY, Z, T) -> List[Dict]:
             us=s["us"], ds=s["ds"], DN=int(dn), MATERIAL=_material(dn),
             CONSTR="open_trench", LEN_M=L,
             SLOPE_LAID=sl * 100.0, SLOPE_MIN=solver.smin(dn, q) * 100.0,
-            GRADIENT_BY=s["gradient_by"],
+            GRAD_BY=s["gradient_by"],
             SIZED_BY=s.get("sized_by", "capacity"),
             CLEAN_BY=clean, TAU_PA=C.TAU_PA,
             INV_UP=inv_up, INV_DN=inv_dn, US_DEPTH=us_depth, DS_DEPTH=ds_depth,
@@ -1488,7 +1488,7 @@ def _publish(al: Alignment, design, straight, rec: K.StageRecord) -> int:
         rec.note(p)
 
     extra_e = pd.DataFrame([{k: r[k] for k in (
-        "EDGE_UID", "DN", "MATERIAL", "CONSTR", "SLOPE_LAID", "SLOPE_MIN", "GRADIENT_BY",
+        "EDGE_UID", "DN", "MATERIAL", "CONSTR", "SLOPE_LAID", "SLOPE_MIN", "GRAD_BY",
         "SIZED_BY", "CLEAN_BY", "TAU_PA", "INV_UP", "INV_DN", "US_DEPTH", "DS_DEPTH",
         "COVER_US", "COVER_DN", "QADF_M3D", "QINF_LS", "PF", "PF_METH", "QPK_LS",
         "V_PK_MS", "DOD_PK", "RET_MIN", "PAST_CAP", "CAP_EXIT", "CAP_LEN_M", "TIE_TYPE",
@@ -1525,7 +1525,7 @@ def _publish(al: Alignment, design, straight, rec: K.StageRecord) -> int:
         rec.wrote("crossings", p, len(cg))
 
     # ---- CAD mirrors. The brief names W11a_trunk.shp; the GeoPackage above is the audited
-    #      artefact, because a DBF renames GRADIENT_BY to GRADIENT_B and audit G2 then fails
+    #      artefact, because a DBF renames GRAD_BY to GRADIENT_B and audit G2 then fails
     #      a design that was correct in memory.
     shp = os.path.join(OUT_SHP, "W11a_trunk.shp")
     edges.to_file(shp)
@@ -1657,7 +1657,7 @@ def _summary(al, design, edges, nodes, straight, rec: K.StageRecord) -> None:
     _log(f"  self-cleansing      {vel:,} by velocity, {tra:,} by tractive force "
          f"({100 * tra / max(len(edges), 1):.0f} % - exposed to tau = {C.TAU_PA} Pa, GAP-9)")
     _log("  gradient set by     " + ", ".join(
-        f"{k} {v}" for k, v in edges.GRADIENT_BY.value_counts().items()))
+        f"{k} {v}" for k, v in edges.GRAD_BY.value_counts().items()))
     _log("  diameter set by     " + ", ".join(
         f"{k} {v}" for k, v in edges.SIZED_BY.value_counts().items()))
     _log(f"  stations            {len(design['stations'])} "

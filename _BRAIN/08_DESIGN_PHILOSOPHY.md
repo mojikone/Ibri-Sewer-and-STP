@@ -49,7 +49,8 @@ constraint; it yields only to its own stated exits, and every use is flagged.*
 
 | | Constraint | Source |
 |---|---|---|
-| **H1** | No pipe along a dual carriageway; no pipe or chamber in a wadi. Crossings perpendicular and scheduled | project rules 7, 8 |
+| **H1** | No pipe **along** a dual carriageway; no pipe or chamber **along** a wadi. A **crossing** of either is legal under H1a | project rules 7, 8 · G203-p30 §4.4.1, p33 |
+| **H1a** | A wadi crossing is legal **only** when all four hold — see below | G201-p85–86 §9.3 · G203-p52 §8.2.4 |
 | **H2** | Capacity ≥ discharge, within the d/D limit | G203-p27 T10 |
 | **H3** | Minimum cover 1.30 m to crown, on the reach's **own** outside diameter | G203-p33 |
 | **H4** | **Maximum cover 12 m** — exits only via §5 | G203-p33 |
@@ -65,6 +66,38 @@ constraint; it yields only to its own stated exits, and every use is flagged.*
 | **H14** | An **existing** structure's invert is fixed and the design yields to it. Tie in **soffit to soffit**, never invert to invert | practice |
 | **H15** | The network is a **forest** — zero loops, and **each component ends at exactly one outfall**, checked on the published layer. Not *one* component: §8a allows satellite works. What is never legal is a piece that drains nowhere | project rule |
 | **H16** | Every pipe publishes `US_NODE` and `DS_NODE`. **Topology is written down, never inferred from geometry** | project rule |
+
+**On H1a, and why deleting every crossing is the wrong reading of H1.** The guideline forbids
+pipes and chambers **in** wadis because of washout (G203-p30 §4.4.1, p33). It does **not**
+forbid crossing one — G201 §9.3 sets out a whole procedure for doing it, and G203-p52 §8.2.4
+gives the cover to use. Treating any contact with wadi ground as prohibited reads a
+prohibition on *presence* as a prohibition on *passage*, and the cost of that misreading is
+enormous: applied literally it severed the W11a corridor network into **1,381 pieces** and the
+trunk into **108**, against **2** when the same alignment is noded on its own. The
+fragmentation was manufactured by the rule, not found in the ground. A design cannot be built
+as 1,257 separate drainage systems, so the rule has to distinguish *along* from *across*.
+
+**A crossing is legal when all four hold:**
+
+1. **It crosses, it does not run along.** The on-wadi contact is a *single contiguous run*,
+   and its length is within the stated skew tolerance of the shortest crossing available at
+   that point. *H1 says "perpendicular"; the tolerance on that word is a **project rule**,
+   declared in `criteria`, not a guideline number.*
+2. **No chamber on wadi ground or on the embankment**, and none in the bed (G201-p86).
+3. **Cover ≥ 1.5 m to crown at the crossing**, not the normal 1.3 m (G203-p52 §8.2.4).
+4. **It is in the crossings schedule** with an `XING_ID`, carrying the G201 §9.3 obligations:
+   bed profile and cross-sections, 1:20/1:50/1:100 flood levels, bed material and bed-level
+   change, and **MoAFWR approval** (G201-p85). Isolation and air valves both sides on an
+   active or major crossing, washout at the low point, all accessible during flood (G201-p86).
+
+**Anything on wadi ground that fails any of the four is prohibited**, and the resolutions are
+the four in §3: re-route, a station, a designed crossing that *does* qualify, or not serving
+that plot.
+
+**And the hazard grid must be reported, not assumed.** The 50-year grid covers **45 %** of the
+study area. A wadi check that scores nodata as a pass reports a clean result on the tested half
+and says nothing about the rest — so **the untested fraction is published beside every wadi
+result**. Full coverage is a data request, not a modelling choice.
 
 **On H5, and why it matters more than it looks.** A DN200 carrying a few litres per second runs at a very small depth of flow, and no legal gradient will make it reach 0.75 m/s. Applied as an absolute test, the velocity route condemns almost every small sewer ever built, NAMA's own included. That is why the guideline offers the tractive route — and why **the share of the network relying on it is a reported number**, since the tractive minimum depends on a τ the guideline never gives (assumed 1.0 Pa, GAP-9; at 2.0 the requirement rises 2.35×).
 

@@ -37,7 +37,7 @@ six things and nothing else is negotiable:
 
 WHY validate() RAISES INSTEAD OF WARNING. `audit.py` scores a missing field as
 NOT_CHECKABLE, and the philosophy (sec 8) makes "any check that cannot run" blocking. So a
-stage that omits `GRADIENT_BY` has not published a slightly incomplete layer - it has
+stage that omits `GRAD_BY` has not published a slightly incomplete layer - it has
 published an unauditable one. Thirteen of W10's 22 checks were unanswerable for exactly this
 reason. Failing loudly at the writing stage costs a minute; failing at the audit costs a
 rebuild.
@@ -64,7 +64,7 @@ FIVE THINGS FOUND WHILE WRITING THIS, all verified against the real source, all 
     H15's component count without failing anything. C's own round-trip check had the same
     blind spot. A reach is one part or it is not a reach.
 
-  * `GRADIENT_BY` is 11 characters. An ESRI Shapefile DBF truncates field names at 10, so
+  * `GRAD_BY` is 11 characters. An ESRI Shapefile DBF truncates field names at 10, so
     writing the audited layer to .shp silently renames it `GRADIENT_B` and audit G2 fails on
     a layer that was correct in memory. **GeoPackage is the published, audited format.**
     Shapefile and DXF are mirrors for CAD; `assert_audited_path()` refuses to hand a .shp to
@@ -226,7 +226,7 @@ SIZED_BY: Tuple[str, ...] = ("capacity", "dod", "velocity", "horizon", "minimum"
 # What set the LAID gradient. Depth IS admissible here - the philosophy prohibits it as an
 # answer for a diameter, not for a gradient ("'Depth' is not an admissible answer for a
 # diameter", sec 3). Nothing in audit.py constrains this set, so the contract does.
-GRADIENT_BY: Tuple[str, ...] = (
+GRAD_BY: Tuple[str, ...] = (
     "table11",     # H6, G203-p29 T11 floor governed
     "tractive",    # H5 tractive route governed (exposed to tau, GAP-9)
     "ground",      # laid to the ground fall, both minima already satisfied
@@ -318,7 +318,7 @@ BANNED_FIELDS: Dict[str, str] = {
     "DEPTH": "to invert or to crown? Use DEPTH_M (to invert) and COVER_M (to crown)",
     "COVER": "same ambiguity. Use COVER_M, computed by cover() and nowhere else",
     "MAT": "the schedules and the SewerGEMS map read MATERIAL",
-    "GRADIENT_B": ("the DBF truncation of GRADIENT_BY. If this name is on a layer, the "
+    "GRADIENT_B": ("the DBF truncation of GRAD_BY. If this name is on a layer, the "
                    "layer came back from a shapefile round trip and audit G2 will fail on "
                    "a design that was correct in memory. Republish from the GeoPackage"),
 }
@@ -407,7 +407,7 @@ EXCLUDED: Tuple[Excluded, ...] = (
     Excluded(
         "a shapefile as the audited deliverable",
         "every downstream tool reads .shp and the client asked for shapefiles",
-        "the DBF truncates GRADIENT_BY to GRADIENT_B and audit G2 then fails a correct "
+        "the DBF truncates GRAD_BY to GRADIENT_B and audit G2 then fails a correct "
         "design. mirror_shapefile() still writes one; assert_audited_path() stops it being "
         "handed to the auditor",
         "never for the audit. Always for CAD"),
@@ -704,10 +704,10 @@ REACHES = LayerSpec(
           "Table 11 and the tractive minimum at this reach's own peak flow "
           "(hydra.smin_for). A layer carrying only the minimum cannot be checked; one "
           "carrying only the laid value cannot be justified", audit="G1", lo=0.0, hi=25.0),
-        F("GRADIENT_BY", "str", "-", "what SET the laid gradient. 11 characters: this field "
+        F("GRAD_BY", "str", "-", "what SET the laid gradient. 11 characters: this field "
           "is why the audited format is GeoPackage - a shapefile DBF truncates it to "
           "GRADIENT_B and audit G2 then fails on a correct design",
-          allowed=GRADIENT_BY, audit="G2"),
+          allowed=GRAD_BY, audit="G2"),
         F("SIZED_BY", "str", "-", "what set the diameter. 'depth' and 'cover' are "
           "PROHIBITED answers (G203-p29 and Ten States sec 33.43 independently); this enum is "
           "pinned to audit.py H8's own allowed set and cannot be widened from here",
@@ -948,6 +948,10 @@ CORRIDORS = LayerSpec(
           lo=0),
         F("USED", "int", "0/1", "1 where a reach was laid on it; the conversion rate per "
           "SRC is the number that exposed the W10 inversion", lo=0, hi=1),
+        F("CROSS_ID", "str", "-", "links to the crossings schedule where this corridor "
+          "CROSSES a wadi. H1a makes a crossing legal and an unscheduled one is not, so a "
+          "corridor with ON_WADI_M > 0 and no CROSS_ID is a defect, not a rounding residue",
+          blank_ok=True),
     ) + _PROV,
 )
 
@@ -1069,7 +1073,7 @@ def validate(gdf, layer_name: str, *, stage: str = "", strict: bool = True,
 
     Why it raises rather than warns: `audit.py` scores a missing field as NOT_CHECKABLE, and
     the philosophy (sec 8) makes any check that cannot run BLOCKING. A stage that writes a
-    layer without `GRADIENT_BY` has not published a slightly incomplete layer - it has
+    layer without `GRAD_BY` has not published a slightly incomplete layer - it has
     published an unauditable one, and thirteen of W10's 22 checks died exactly there.
 
     `strict=False` relaxes the value checks (enums, ranges, cross-field consistency) but
@@ -2104,8 +2108,8 @@ def assert_audited_path(path: str, layer_name: Optional[str] = None) -> str:
     """Refuse to hand the auditor anything a DBF would mangle.
 
     `mirror_shapefile()` writes a README beside the .shp saying it is not the deliverable.
-    A raise is better than a note nobody opens: `GRADIENT_BY` becomes `GRADIENT_B` on the
-    way into a shapefile, audit G2 then reports 'missing GRADIENT_BY', and the design that
+    A raise is better than a note nobody opens: `GRAD_BY` becomes `GRADIENT_B` on the
+    way into a shapefile, audit G2 then reports 'missing GRAD_BY', and the design that
     fails its own audit was correct in memory the whole time.
     """
     ext = os.path.splitext(str(path))[1].lower()
@@ -2190,7 +2194,7 @@ AUDIT_NEEDS: Dict[str, Dict[str, Tuple[str, ...]]] = {
     "R3":  {"external": ("roads",)},
     "R4":  {"external": ("hazard",)},
     "G1":  {"reaches": ("SLOPE_LAID", "SLOPE_MIN")},
-    "G2":  {"reaches": ("SIZED_BY", "GRADIENT_BY")},
+    "G2":  {"reaches": ("SIZED_BY", "GRAD_BY")},
     "G3":  {"reaches": ("US_NODE", "DS_NODE")},
 }
 
@@ -2302,7 +2306,7 @@ SCHEDULES: Dict[str, Schedule] = {s.name: s for s in (
          ("US depth (m)", "US_DEPTH"), ("DS depth (m)", "DS_DEPTH"),
          ("Length (m)", "LEN_M"), ("DN (mm)", "DN"), ("Material", "MATERIAL"),
          ("Laid gradient (%)", "SLOPE_LAID"), ("Minimum gradient (%)", "SLOPE_MIN"),
-         ("Gradient set by", "GRADIENT_BY"), ("Diameter set by", "SIZED_BY"),
+         ("Gradient set by", "GRAD_BY"), ("Diameter set by", "SIZED_BY"),
          ("Peak factor", "PF"), ("PF method", "PF_METH"),
          ("Qadf (m3/d)", "QADF_M3D"), ("Qpeak (L/s)", "QPK_LS"),
          ("Velocity (m/s)", "V_PK_MS"), ("d/D", "DOD_PK"),
@@ -2464,7 +2468,7 @@ def _self_test() -> None:
         validate(eg, "reaches", stage="T")
         raise AssertionError("validate let an unauditable layer through")
     except ContractError as e:
-        assert "GRADIENT_BY" in str(e) and "NOT_CHECKABLE" in str(e)
+        assert "GRAD_BY" in str(e) and "NOT_CHECKABLE" in str(e)
 
     # the underscore tier that audit.py H9 would skip in silence
     bad = eg.copy()
@@ -2529,7 +2533,7 @@ def _self_test() -> None:
         assert_audited_path("W11a/shp/W11a_reaches.shp", "reaches")
         raise AssertionError("a .shp was accepted as the audited artefact")
     except ContractError as e:
-        assert "GRADIENT_BY" in str(e)
+        assert "GRAD_BY" in str(e)
     assert assert_audited_path("W11a/shp/W11a.gpkg").endswith(".gpkg")
 
     # funnels must close

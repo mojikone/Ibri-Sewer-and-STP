@@ -18,6 +18,6 @@ H16,topology,"Every pipe publishes US_NODE/DS_NODE, and the declared graph MATCH
 R1,regression,No surcharged pipe (W10 shipped 2.80 km),W10 post-mortem,True,FAIL,"5 surcharged, 66 over the d/D limit",71,
 R2,regression,No reach below minimum cover (W10 shipped 45.92 km),W10 post-mortem,True,FAIL,"125 reaches below minimum cover, worst 0.35 m",125,34.78 km
 R3,regression,No pipe along a dual carriageway (W10 shipped 1.67 km),W10 post-mortem,True,FAIL,21 reaches run along a dual carriageway,21,1.67 km
-R4,regression,No pipe on wadi ground (W10 shipped 131.7 km),W10 post-mortem,True,FAIL,1089 reaches on wadi ground,1089,131.7 km
+R4,regression,No pipe ALONG a wadi. A crossing is legal only under H1a (W10 shipped 131.7 km),"philosophy H1a / G203-p30 4.4.1, p33 / G201-p85-86",True,FAIL,"437 reaches run ALONG a wadi, 1,329 cross one without a scheduled XING_ID; 51 % of samples fall outside the hazard grid and are UNTESTED (5,978 reaches entirely so)",437,170.6 km
 G1,provenance,"The laid gradient is published, with the minimum beside it",philosophy 5,True,FAIL,"only the minimum gradient is published, so nothing about velocity, fall or drop can be checked",0,
 G2,provenance,Every reach records what set its diameter and its gradient,philosophy 3,True,FAIL,"missing SIZED_BY, GRAD_BY",0,

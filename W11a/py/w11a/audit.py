@@ -42,6 +42,21 @@ PASS, FAIL, NOT_CHECKABLE = "PASS", "FAIL", "NOT_CHECKABLE"
 # Endpoints closer than this are the same node. Deliberately tight: see h15.
 SNAP_M = 0.01
 
+# --- wadi crossing tolerances (philosophy H1a) ------------------------------------------
+# H1 says a crossing is "perpendicular". These put a number on that word. They are PROJECT
+# tolerances on our own rule, NOT guideline values - the guidelines give the cover at a
+# crossing (G203-p52 8.2.4) and the procedure for one (G201 9.3) but never say how square it
+# must be, and inventing a guideline number is prohibited.
+WADI_SAMPLE_M = 1.5     # HALF the hazard grid's 3.0 m cell. Sampling AT the cell size can
+                        # step over a cell entirely, and it did: the auditor at 3.0 m and
+                        # s2 at 1.5 m disagreed about where an on-wadi run begins, so 19
+                        # corridors were legal to the stage and illegal to the auditor. Not
+                        # finer precision than the source - the rate the source has to be
+                        # read at to be read without aliasing. ONE constant, both callers.
+WADI_XING_SKEW = 1.155  # contact / band-width across the pipe; 1/cos(30 deg)
+WADI_PROBE_M = 400.0    # how far a perpendicular probe looks for the far bank before
+                        # concluding the pipe runs ALONG the band rather than across it
+
 
 @dataclass
 class Result:
@@ -445,19 +460,148 @@ def r3(ctx):
     return h1(ctx)
 
 
-@check("R4", "regression", "No pipe on wadi ground (W10 shipped 131.7 km)", "W10 post-mortem")
-def r4(ctx):
+def _r4_classify(ctx):
+    """One walk over the geometry. Returns (along, unscheduled, scheduled_ok, n_samples,
+    n_nodata, n_reaches_entirely_nodata).
+
+    Split out so `r4` (which reports) and `r4_failing_mask` (which names the rows a stage
+    must remove) cannot diverge. They diverged before: s2 carried its own sampler, and 44
+    corridors of 25,166 were legal to the stage and illegal to the auditor.
+    """
     if ctx.hazard is None:
         raise KeyError("no hazard grid")
     import rasterio
+    from shapely.geometry import Point
+
     with rasterio.open(ctx.hazard) as src:
-        mids = ctx.pipes.geometry.interpolate(0.5, normalized=True)
-        v = np.array([w[0] for w in src.sample(zip(mids.x, mids.y))], dtype=float)
-    bad = np.isfinite(v) & (np.floor(v) >= 4)
-    n = int(bad.sum())
-    if n == 0:
-        return PASS, "no pipe on wadi ground", 0, ""
-    return FAIL, f"{n} reaches on wadi ground", n, f"{km(bad, ctx):.1f} km"
+        # The grid's declared nodata is -9999.0, and np.isfinite(-9999) is True. Testing
+        # finiteness alone counted every nodata cell as TESTED and scored it not-a-wadi,
+        # which is how this check first reported "0 % untested" over a grid that is largely
+        # fill. Read the declared nodata and honour it.
+        ND = src.nodata
+
+        def onwadi(pts):
+            """(is_wadi, is_known). Nodata is neither on nor off - it is unknown."""
+            v = np.array([w[0] for w in src.sample(pts)], dtype=float)
+            known = np.isfinite(v)
+            if ND is not None:
+                known &= (v != ND)
+            return (known & (np.floor(v) >= 4)), known
+
+        along, xing_ok, xing_bad, no_data_reach = [], 0, [], 0
+        n_samp = n_nodata = 0
+        for i, g in enumerate(ctx.pipes.geometry):
+            if g is None or g.is_empty:
+                continue
+            L = g.length
+            n = max(2, int(L / WADI_SAMPLE_M) + 1)
+            ds = np.linspace(0, L, n)
+            pts = [(p.x, p.y) for p in (g.interpolate(d) for d in ds)]
+            on, known = onwadi(pts)
+            n_samp += known.size; n_nodata += int((~known).sum())
+            if not known.any():
+                no_data_reach += 1
+                continue
+            if not on.any():
+                continue
+
+            # contiguous on-wadi runs
+            runs, a = [], None
+            for k, flag in enumerate(on):
+                if flag and a is None:
+                    a = k
+                elif not flag and a is not None:
+                    runs.append((a, k - 1)); a = None
+            if a is not None:
+                runs.append((a, len(on) - 1))
+
+            if len(runs) > 1:
+                along.append(i); continue          # more than one contact is not one crossing
+
+            a, b = runs[0]
+            contact = float(ds[b] - ds[a]) + WADI_SAMPLE_M
+            mid = 0.5 * (ds[a] + ds[b])
+            p0 = g.interpolate(max(0.0, mid - 1.0)); p1 = g.interpolate(min(L, mid + 1.0))
+            vx, vy = p1.x - p0.x, p1.y - p0.y
+            m = (vx * vx + vy * vy) ** 0.5 or 1.0
+            nx_, ny_ = -vy / m, vx / m             # unit normal to the pipe
+            c = g.interpolate(mid)
+
+            # probe both ways along the normal until the band ends
+            width = 0.0
+            for sgn in (1.0, -1.0):
+                probe = [(c.x + sgn * t * nx_, c.y + sgn * t * ny_)
+                         for t in np.arange(0.0, WADI_PROBE_M, WADI_SAMPLE_M)]
+                pon, pknown = onwadi(probe)
+                off = np.where(pknown & ~pon)[0]
+                width += float(off[0] * WADI_SAMPLE_M) if len(off) else WADI_PROBE_M
+
+            square = contact <= WADI_XING_SKEW * max(width, WADI_SAMPLE_M)
+            has_id = ("CROSS_ID" in ctx.pipes.columns
+                      and str(ctx.pipes.CROSS_ID.iloc[i]) not in ("", "nan", "None", "0"))
+            if square and has_id:
+                xing_ok += 1
+            elif square:
+                xing_bad.append(i)                 # geometrically a crossing, not scheduled
+            else:
+                along.append(i)
+
+    # Coverage is reported at SAMPLE level, not reach level. A reach with one cell of grid
+    # under it and the rest nodata was passing the reach-level test and hiding the gap; the
+    # 50-year grid does not cover the study area and every wadi result must say so.
+    return along, xing_bad, xing_ok, n_samp, n_nodata, no_data_reach
+
+
+def r4_failing_mask(ctx):
+    """Boolean mask of the rows R4 rejects - WHICH, not HOW MANY."""
+    along, xing_bad, _ok, _s, _n, _r = _r4_classify(ctx)
+    m = np.zeros(len(ctx.pipes), bool)
+    if along or xing_bad:
+        m[np.array(along + xing_bad, dtype=int)] = True
+    return m
+
+
+@check("R4", "regression",
+       "No pipe ALONG a wadi. A crossing is legal only under H1a (W10 shipped 131.7 km)",
+       "philosophy H1a / G203-p30 4.4.1, p33 / G201-p85-86")
+def r4(ctx):
+    """Along, not across - and say what fraction of the area was never tested.
+
+    Three defects in the first version, all of them mine:
+
+    1. It sampled the MIDPOINT ONLY, so a reach could run 200 m down a wadi and pass
+       because its centre happened to fall clear.
+    2. Nodata scored as a PASS, silently - and the grid's nodata is -9999.0, which is
+       finite, so even the finiteness guard let it through. The 50-year grid covers under
+       half the study area, so "no pipe on wadi ground" was a statement about the tested
+       part being read as a statement about all of it.
+    3. It had no exemption for a crossing, though H1 itself says crossings are legal and
+       G201 9.3 gives the procedure. Applied literally it cut the corridor network into
+       1,381 pieces - a prohibition on presence read as a prohibition on passage.
+
+    The along/across test is geometric, not a length threshold: at the middle of each
+    on-wadi run, probe PERPENDICULAR to the pipe until both banks are found. A pipe
+    crossing a band square has a contact no longer than the band is wide across it; a pipe
+    running down a band has a long contact and a narrow perpendicular extent. The ratio is
+    the measurement, and WADI_XING_SKEW is the stated tolerance on the word "perpendicular".
+    """
+    along, xing_bad, xing_ok, n_samp, n_nodata, no_data_reach = _r4_classify(ctx)
+
+    # Coverage is reported at SAMPLE level. A reach with one cell of grid under it and the
+    # rest nodata passed a reach-level test and hid the gap.
+    cover = ""
+    if n_nodata:
+        cover = (f"; {100.0 * n_nodata / max(n_samp, 1):.0f} % of samples fall outside the "
+                 f"hazard grid and are UNTESTED ({no_data_reach:,} reaches entirely so)")
+    if along:
+        m = np.zeros(len(ctx.pipes), bool); m[np.array(along, dtype=int)] = True
+        extra = f", {len(xing_bad):,} cross one without a scheduled CROSS_ID" if xing_bad else ""
+        return FAIL, f"{len(along):,} reaches run ALONG a wadi{extra}{cover}", len(along), f"{km(m, ctx):.1f} km"
+    if xing_bad:
+        m = np.zeros(len(ctx.pipes), bool); m[np.array(xing_bad, dtype=int)] = True
+        return FAIL, (f"{len(xing_bad):,} wadi crossings with no CROSS_ID - H1a(4) requires "
+                      f"each in the crossings schedule{cover}"), len(xing_bad), f"{km(m, ctx):.1f} km"
+    return PASS, f"nothing along a wadi; {xing_ok:,} scheduled crossing(s){cover}", 0, ""
 
 
 # --------------------------------------------------------------------------- provenance
@@ -510,6 +654,20 @@ def h16(ctx):
 
 
 # --------------------------------------------------------------------------- runner
+
+def run_one(check_id: str, ctx):
+    """Run ONE registered check and return its raw (status, summary, n, extent).
+
+    Exists so a stage can gate itself on the auditor's ACTUAL arithmetic instead of a
+    copy of it. s2 carried a hand-lifted copy of h1 and r4; when r4 gained the H1a
+    along/across test the copy stayed on the superseded midpoint rule and rejected every
+    legal crossing the stage had just kept. One function, one answer (philosophy P2).
+    """
+    for c in REGISTRY:
+        if c.id == check_id:
+            return c.fn(ctx)
+    raise KeyError(f"no check {check_id!r}")
+
 
 def run(ctx) -> List[Result]:
     out = []

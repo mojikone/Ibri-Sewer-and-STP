@@ -204,20 +204,7 @@ DUAL_ALONG_M = 30.0
 
 DUAL_STEP_M = 1.0        # sampling step for the dual band; the band is 12 m wide, so 1 m
                          # resolves an entry and an exit to +/- 0.5 m
-WADI_STEP_M = 1.5        # HALF the hazard grid's 3.0 m cell. Sampling AT the cell size was
-                         # tried and leaked: a single 3 m cell can fall entirely between two
-                         # samples 3 m apart, and 59 published corridors came back with
-                         # their midpoint on wadi ground when audit.r4's own test was run
-                         # against them. Half the cell cannot be stepped over. This is not
-                         # finer precision than the source - it is the sampling rate the
-                         # source requires to be read without aliasing.
-
-WADI_XING_CANDIDATE_M = 70.0
-# ASSUMPTION, no guideline value. G203 gives cover AT a wadi crossing (1.5 m to crown,
-# p52 sec 8.2.4) and forbids pipes and chambers IN wadis (p30 sec 4.4.1, p33), but nowhere
-# states how long a crossing may be. 70 m is borrowed from criteria.DUAL_CROSS_MAX_M, the
-# only crossing cap the project holds, and it is used ONLY to label a removed piece as a
-# crossing CANDIDATE on the review layer. It sizes nothing and no corridor depends on it.
+from w11a.audit import WADI_SAMPLE_M as WADI_STEP_M   # noqa: E402  - see audit.py
 
 CORRIDOR_MATCH_M = 25.0  # W10 config: a drafted line this close to a treated road counts
 CORRIDOR_CUT_M = 4.0     # as covering it - but the cut is made at the tighter distance,
@@ -227,6 +214,40 @@ AUTO_ROAD_MIN_M = 15.0   # a leftover shorter than this after the cut is a clip 
 
 CLUSTER_GROW_M = 40.0    # W10 p0_auto: plots within this of each other are one pocket
 CLUSTER_MIN_PLOTS = 6    # a pocket smaller than this is left to detail design
+
+# H1a's along/across test. The tolerances live in ONE place - w11a.audit - because the
+# auditor is the specification and a second copy here is how the two drift apart (P2).
+from w11a.audit import WADI_XING_SKEW, WADI_PROBE_M   # noqa: E402
+
+
+def _square_crossing(g: LineString, a: float, b: float, wadi: "WadiMask"):
+    """Does the on-wadi run [a, b] CROSS the band, or run along it?  (H1a item 1)
+
+    Probes PERPENDICULAR to the pipe at the middle of the run until both banks are found.
+    A pipe crossing square has a contact no longer than the band is wide across it; a pipe
+    running down the band has a long contact and a narrow perpendicular extent. The ratio
+    is the measurement - no length threshold is invented, and WADI_XING_SKEW is the stated
+    tolerance on H1's word "perpendicular".
+
+    Returns (is_crossing, contact_m, band_width_m).
+    """
+    contact = b - a
+    mid = 0.5 * (a + b)
+    p0 = g.interpolate(max(0.0, mid - 1.0))
+    p1 = g.interpolate(min(g.length, mid + 1.0))
+    vx, vy = p1.x - p0.x, p1.y - p0.y
+    m = math.hypot(vx, vy) or 1.0
+    nx_, ny_ = -vy / m, vx / m
+    c = g.interpolate(mid)
+    ts = np.arange(0.0, WADI_PROBE_M, WADI_STEP_M)
+    width = 0.0
+    for sgn in (1.0, -1.0):
+        on = wadi.at(c.x + sgn * ts * nx_, c.y + sgn * ts * ny_)
+        off = np.where(~on)[0]
+        width += float(off[0] * WADI_STEP_M) if len(off) else WADI_PROBE_M
+    return contact <= WADI_XING_SKEW * max(width, WADI_STEP_M), contact, width
+
+
 FRONTAGE_M = 40.0        # criteria.CROSS_STREET_FRONTAGE - a plot fronts a line this close
 STITCH_MAX_M = 400.0     # how far a stranded pocket may reach; beyond, a person chooses
 STITCH_MIN_M = 0.05      # below this the two islands already touch; noding will join them
@@ -778,12 +799,20 @@ def apply_exclusions(lines: List[LineString], srcs: List[str], band, band_prepar
                 if sub.is_empty or sub.geom_type != "LineString" or sub.length < 1e-6:
                     continue
                 if inside:
-                    short = sub.length <= WADI_XING_CANDIDATE_M
+                    # H1a: a crossing is legal, a run ALONG a wadi is not. Deleting both is
+                    # what severed the network into 1,381 pieces - see the module docstring
+                    # and philosophy H1a. The test is geometric, not a length threshold.
+                    is_x, contact, wide = _square_crossing(g, a, b, wadi)
+                    if is_x:
+                        share = on_dual * (sub.length / g.length) if g.length > 0 else 0.0
+                        keep_g.append(sub); keep_s.append(src); keep_dual.append(share)
+                        continue
                     removed.append(dict(
                         SRC=src,
-                        REASON="wadi (crossing candidate)" if short else "wadi",
-                        DETAIL=(f"{sub.length:.0f} m on hazard class "
-                                f"{'/'.join(str(c) for c in CRIT.HAZARD_WADI_CLASSES)}"),
+                        REASON="wadi (along)",
+                        DETAIL=(f"{contact:.0f} m of contact against a band {wide:.0f} m "
+                                f"wide across the line - over the {WADI_XING_SKEW:.3f} skew "
+                                f"tolerance, so this runs ALONG the wadi, not across it"),
                         LEN_M=sub.length, geometry=sub))
                     continue
                 # the in-band dual length belongs to whichever surviving piece carries it;
@@ -884,14 +913,28 @@ def audit_sweep(geoms: List[LineString], band_prepared, wadi: Optional[WadiMask]
     mids = shapely.line_interpolate_point(np.array(geoms, dtype=object),
                                           0.5, normalized=True)
     if wadi is not None:
+        # H1a, not the superseded midpoint rule. A CROSSING has its midpoint on the wadi by
+        # definition, so a plain midpoint sweep deletes exactly what H1a permits - which is
+        # what it did on the first run, taking 103.7 km of legal crossings back out and
+        # leaving the network as fragmented as before the crossing rule was written. The
+        # sweep now asks the same question audit.r4 asks: across, or along?
         xy = shapely.get_coordinates(mids)
         on = wadi.at(xy[:, 0], xy[:, 1])
         for i in np.nonzero(on)[0]:
+            g = geoms[i]
+            runs = [(a, b) for a, b, ins in _runs(g, wadi.at, WADI_STEP_M) if ins]
+            ok = False
+            if len(runs) == 1:
+                ok, contact, wide = _square_crossing(g, runs[0][0], runs[0][1], wadi)
+            if ok:
+                continue                       # a legal crossing; CROSS_ID is minted later
+            out.append(dict(SRC="", REASON="wadi (along, audit.r4 sweep)",
+                            DETAIL=("midpoint on hazard class >= 4 after snapping and the "
+                                    "contact is not a square crossing"
+                                    if len(runs) == 1 else
+                                    f"{len(runs)} separate on-wadi runs - not one crossing"),
+                            LEN_M=g.length, geometry=g))
             keep[i] = False
-            out.append(dict(SRC="", REASON="wadi (audit.r4 midpoint sweep)",
-                            DETAIL="midpoint on hazard class >= 4 after snapping; the "
-                                   "sampled runs missed a cell corner or the snap moved it",
-                            LEN_M=geoms[i].length, geometry=geoms[i]))
     if band_prepared is not None:
         for i, g in enumerate(geoms):
             if not keep[i] or not shapely.intersects(band_prepared, g):
@@ -960,13 +1003,12 @@ def mint_nodes(lines: List[LineString], srcs: List[str], on_dual: List[float]
 def assert_h1_r4(corridors: gpd.GeoDataFrame, roads: gpd.GeoDataFrame) -> Dict:
     """Run the AUDITOR'S OWN H1 and R4 against the published corridor layer.
 
-    Not a paraphrase of them - the same arithmetic, lifted from `audit.h1` and `audit.r4`
-    and applied to corridors instead of reaches:
-
-        H1  dual = roads[dual == '1'];  buf = union(dual.buffer(6.0))
-            bad = corridor.intersection(buf).length > 30.0
-        R4  v = hazard.sample(corridor.interpolate(0.5, normalized=True))
-            bad = floor(v) >= 4
+    Not a paraphrase and no longer a copy: it CALLS `audit.run_one("H1")` and
+    `audit.run_one("R4")` on the published corridor layer. The previous version lifted
+    their arithmetic by hand, and when r4 gained the H1a along/across test the copy stayed
+    on the superseded midpoint rule - so the stage kept 2,456 legal crossings and its own
+    gate then rejected every one of them. A gate that re-implements what it gates will
+    drift from it; this one cannot.
 
     Two reasons this belongs in the stage rather than in a later audit. First, the auditor
     reads reaches, and a reach inherits the ground its corridor sits on - so if a corridor
@@ -980,35 +1022,22 @@ def assert_h1_r4(corridors: gpd.GeoDataFrame, roads: gpd.GeoDataFrame) -> Dict:
     carriageways `RoadTreatment._drop_dual_twins` found - so passing this is necessary and
     not sufficient, which is the right direction for a gate to err in.
     """
-    out: Dict = {}
-    dual = roads[roads["dual"].astype(str) == "1"]
-    if len(dual):
-        buf = unary_union(list(dual.geometry.buffer(6.0)))
-        along = corridors.geometry.intersection(buf).length
-        bad = along > 30.0
-        out["h1_bad"] = int(bad.sum())
-        out["h1_worst_m"] = float(along.max()) if len(along) else 0.0
-        out["h1_band_km"] = float(along.sum() / 1000.0)
-    else:
-        out["h1_bad"], out["h1_worst_m"], out["h1_band_km"] = 0, 0.0, 0.0
+    from w11a import audit as _audit
 
-    with rasterio.open(HAZARD) as src:
-        mids = corridors.geometry.interpolate(0.5, normalized=True)
-        v = np.array([w[0] for w in src.sample(zip(mids.x, mids.y))], dtype=float)
-    r4 = np.isfinite(v) & (np.floor(v) >= 4)
-    out["r4_bad"] = int(r4.sum())
-    out["r4_km"] = float(corridors.loc[r4, "LEN_M"].sum() / 1000.0)
-
-    if out["h1_bad"] or out["r4_bad"]:
+    ctx = _audit.Ctx(pipes=corridors, roads=roads, hazard=HAZARD, crit=CRIT)
+    st1, sum1, n1, ext1 = _audit.run_one("H1", ctx)
+    st4, sum4, n4, ext4 = _audit.run_one("R4", ctx)
+    out: Dict = {"h1_status": st1, "h1_summary": sum1, "h1_bad": int(n1), "h1_extent": ext1,
+                 "r4_status": st4, "r4_summary": sum4, "r4_bad": int(n4), "r4_extent": ext4}
+    if st1 != _audit.PASS or st4 != _audit.PASS:
         raise ContractError(
             "THE PUBLISHED CORRIDORS WOULD FAIL THE AUDITOR AT SOURCE:\n"
-            f"  H1 (audit.h1, 6 m band, 30 m threshold): {out['h1_bad']:,} corridors run "
-            f"along a dual carriageway, worst {out['h1_worst_m']:.0f} m in band\n"
-            f"  R4 (audit.r4, midpoint on hazard class >= 4): {out['r4_bad']:,} corridors "
-            f"on wadi ground, {out['r4_km']:.2f} km\n"
-            "Every reach laid on these fails a BLOCKING check. The exclusion is applied in "
-            "apply_exclusions(); if this fires, the sampling step is too coarse for the "
-            "obstacle or an exclusion was skipped - it is not something to relax here.")
+            f"  H1  {st1}: {sum1}  {ext1}\n"
+            f"  R4  {st4}: {sum4}  {ext4}\n"
+            "Every reach laid on these fails a BLOCKING check. The exclusions are applied "
+            "in apply_exclusions() and audit_sweep(); if this fires, the sampling step is "
+            "too coarse for the obstacle or an exclusion was skipped - it is not something "
+            "to relax here.")
     return out
 
 
@@ -1393,10 +1422,59 @@ def build() -> Dict:
         on_wadi.append(round(float(wadi.at(xy[:, 0], xy[:, 1]).mean()) * L, 3))
     cor["ON_WADI_M"] = on_wadi
     n_res = int((cor["ON_WADI_M"] > 0).sum())
+
+    # CROSS_ID - H1a item 4. Every run ALONG a wadi has been deleted, so whatever still
+    # touches wadi ground is either a crossing this stage deliberately kept or a cell-corner
+    # clip finer than the 1.5 m sampling. Both are scheduled: audit.r4 will not accept an
+    # unscheduled crossing, and a clip too small to design is still a fact about the line.
+    # The schedule is what carries the G201 9.3 obligations - bed profile, 1:20/1:50/1:100
+    # flood levels, bed material, MoAFWR approval - to the next stage.
+    def _mint_cross_ids(frame):
+        """Every corridor still touching wadi ground is scheduled. H1a item 4."""
+        t = frame["ON_WADI_M"] > 0
+        ids = [""] * len(frame)
+        for k, i in enumerate(np.where(t.values)[0]):
+            ids[i] = f"W11a-XG{k + 1:05d}"
+        frame["CROSS_ID"] = ids
+        return frame
+
+    cor = _mint_cross_ids(cor)
+
+    # ---- the auditor decides which rows go, not a second sampler ----------------------
+    # Two implementations of one test always disagree at the boundary. s2 sampled the wadi
+    # through a windowed in-memory mask, audit.r4 samples the raster directly, and even
+    # after both were put on the same 1.5 m step, 44 corridors of 25,166 came out legal to
+    # the stage and illegal to the auditor. Chasing bit-parity between two samplers is the
+    # wrong fix: the auditor IS the specification, so ask it which rows fail and remove
+    # exactly those. Parity then holds by construction and cannot drift again.
+    from w11a import audit as _audit
+    for _attempt in range(4):
+        _ctx = _audit.Ctx(pipes=cor, roads=roads, hazard=HAZARD, crit=CRIT)
+        _st, _sum, _n, _ext = _audit.run_one("R4", _ctx)
+        if _st == _audit.PASS:
+            print(f"      auditor-driven sweep: R4 PASS - {_sum}")
+            break
+        _bad = _audit.r4_failing_mask(_ctx)
+        if not _bad.any():
+            raise ContractError(
+                f"audit.r4 says {_st} ({_sum}) but names no failing row - the check and its "
+                "mask disagree, which is a defect in the auditor, not in the corridors")
+        _gone = cor.loc[_bad]
+        for _, _r in _gone.iterrows():
+            removed.append(dict(SRC=_r["SRC"], REASON="wadi (along, auditor sweep)",
+                                DETAIL=f"audit.r4 pass {_attempt + 1}", 
+                                LEN_M=float(_r["LEN_M"]), geometry=_r.geometry))
+        print(f"      auditor-driven sweep pass {_attempt + 1}: removed "
+              f"{int(_bad.sum()):,} corridors, {_gone['LEN_M'].sum() / 1000:.2f} km")
+        cor = _mint_cross_ids(cor.loc[~_bad].reset_index(drop=True))
+    else:
+        raise ContractError(
+            "audit.r4 still fails after 4 removal passes - removing a corridor changes the "
+            "geometry the check reads and it is not converging. Inspect before relaxing.")
     print(f"      ON_WADI_M measured, not asserted: {n_res:,} corridors still touch wadi "
           f"ground for {cor['ON_WADI_M'].sum():.0f} m in total, worst "
-          f"{cor['ON_WADI_M'].max():.1f} m - cell-corner clips the 1.5 m sampling cannot "
-          f"see. Exposed, not zeroed.")
+          f"{cor['ON_WADI_M'].max():.1f} m. Each is scheduled with an CROSS_ID; H1a makes a "
+          f"crossing legal and an unscheduled one is not.")
 
     # N_PLOT - the load-bearing plots for which THIS corridor is the nearest within 60 m.
     # Nearest, not "within 60 m": a plot is served by one corridor, and counting it against
@@ -1459,11 +1537,8 @@ def build() -> Dict:
     _assert_round_trip(back_c, back_n)
     hr = assert_h1_r4(back_c, roads)
     res["metrics"]["audit_h1_r4_on_corridors"] = hr
-    print(f"   audit.h1 on the PUBLISHED corridors: {hr['h1_bad']} over the 30 m "
-          f"threshold, worst {hr['h1_worst_m']:.1f} m in band, {hr['h1_band_km']:.3f} km "
-          f"of scheduled crossing inside it")
-    print(f"   audit.r4 on the PUBLISHED corridors: {hr['r4_bad']} midpoints on wadi "
-          f"ground  (W10's design shipped 131.7 km)")
+    print(f"   audit.h1 on the PUBLISHED corridors -> {hr['h1_status']}: {hr['h1_summary']} {hr['h1_extent']}")
+    print(f"   audit.r4 on the PUBLISHED corridors -> {hr['r4_status']}: {hr['r4_summary']} {hr['r4_extent']}")
     import networkx as nx
     G = nx.Graph()
     G.add_nodes_from(back_n["NODE_UID"])
@@ -1476,21 +1551,20 @@ def build() -> Dict:
     t = step(f"round trip OK: {len(back_c):,} corridors on {len(back_n):,} nodes, "
              f"{comp:,} components, largest holds {100.0*big/max(len(back_n),1):.1f} % "
              f"of the nodes  (W10 published 7,919 pieces, largest 5.9 %)", t)
-    n_sever = int((rem["REASON"].isin(["wadi", "wadi (crossing candidate)"])).sum()) \
-        if len(rem) else 0
-    n_short = int((rem["REASON"] == "wadi (crossing candidate)").sum()) if len(rem) else 0
+    n_along = int(rem["REASON"].str.startswith("wadi (along").sum()) if len(rem) else 0
+    n_xing = int((cor["CROSS_ID"] != "").sum())
     print(f"\n      THE NUMBER STAGE 3 INHERITS: H1 took the corridor network from "
           f"{c0:,} components to {comp:,}.")
-    print(f"      {n_sever:,} severances are wadi crossings, {n_short:,} of them under "
-          f"{WADI_XING_CANDIDATE_M:.0f} m. Each is a candidate for a DESIGNED crossing "
-          f"(H1 permits one)")
-    print(f"      but audit.r4 has no exemption for one, so the corridor set stays cut "
-          f"until a crossing is justified individually.")
-    print(f"      The alternative resolutions are the other three in philosophy sec 3: a "
-          f"station, a re-route, or a plot not served.")
+    print(f"      {n_xing:,} wadi crossings are KEPT and scheduled - H1a: across is legal, "
+          f"along is not - and {n_along:,} runs ALONG a wadi are deleted.")
+    print(f"      Each crossing carries the G201 9.3 obligations to stage 3 (bed profile, "
+          f"1:20/1:50/1:100 flood levels, bed material, MoAFWR approval) and G203-p52 "
+          f"8.2.4's 1.5 m cover to crown in place of the normal 1.3 m.")
+    print(f"      Where a severance remains, the resolutions are the four in philosophy "
+          f"sec 3: a station, a re-route, a crossing that does qualify, or a plot not served.")
     res["metrics"]["components_added_by_H1"] = comp - c0
-    res["metrics"]["wadi_severances"] = n_sever
-    res["metrics"]["wadi_severances_short"] = n_short
+    res["metrics"]["wadi_along_removed"] = n_along
+    res["metrics"]["wadi_crossings_kept"] = n_xing
 
     # ---------------------------------------------------------------- the summary table
     tab = cor.groupby(["SRC", "CONFIDENCE"]).agg(
@@ -1591,15 +1665,23 @@ def main() -> int:
             "is written into W11a.gpkg outside publish(). US_NODE that resolves to nothing "
             "is worse than no US_NODE, and contract.py is not this stage's file to edit.")
         rec.note(
-            "OPEN, audit contradiction: philosophy H1 permits a scheduled perpendicular "
-            "wadi crossing; audit.r4 tests every reach midpoint against the grid with no "
-            "exemption. Stage 2 therefore removes ALL wadi ground and hands the short runs "
-            "over as candidates. The contradiction is the auditor's to resolve, like "
-            "OPEN-1 on H15.")
+            "RESOLVED (was: audit contradiction). Philosophy H1a now states when a wadi "
+            "crossing is legal - one contiguous contact, square within the stated skew "
+            "tolerance, no chamber on wadi ground, 1.5 m cover to crown (G203-p52 8.2.4), "
+            "and scheduled with a CROSS_ID carrying the G201 9.3 obligations. audit.r4 "
+            "tests along-vs-across instead of any contact, and this stage KEEPS a "
+            "qualifying crossing instead of deleting it. Deleting them all took the "
+            "corridor network to 1,381 components; keeping them takes it to 784.")
         rec.note(
-            f"ASSUMPTION, no guideline value: WADI_XING_CANDIDATE_M = "
-            f"{WADI_XING_CANDIDATE_M:.0f} m, borrowed from criteria.DUAL_CROSS_MAX_M. It "
-            "labels a removed piece on the review layer and sizes nothing.")
+            "PROJECT TOLERANCE, not a guideline value: WADI_XING_SKEW = "
+            f"{WADI_XING_SKEW:.3f} (= 1/cos 30 deg), the tolerance on H1's word "
+            "'perpendicular'. The guidelines give the cover at a crossing and the "
+            "procedure for one but never say how square it must be. It is declared in "
+            "w11a.audit and read from there by this stage - one definition, two callers.")
+        rec.note(
+            "DATA GAP: the 50-year hazard grid leaves 53 % of corridor samples with no "
+            "wadi answer either way. Every R4 result is a statement about the tested half. "
+            "Full-coverage flood mapping is a data request (see 05_GAPS).")
 
     print("\n" + "-" * 88)
     print(contract.Manifest.report())

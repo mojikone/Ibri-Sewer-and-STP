@@ -1,0 +1,238 @@
+{
+  "contract": "W11a-contract-1.1",
+  "written": "2026-09-02 11:54:59",
+  "stages": [
+    {
+      "stage": "S2 corridors",
+      "order": 2,
+      "seconds": 407.17,
+      "reads": [
+        {
+          "name": "roads",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\SHP\\Road centerline 2\\Road_Centercline.shp",
+          "n": 9245
+        },
+        {
+          "name": "plot_loads",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\shp\\W10_plot_loads.gpkg",
+          "n": 64027
+        },
+        {
+          "name": "drafted corridors",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W10\\shp\\W10_corridors_drafted.shp",
+          "n": 5721
+        },
+        {
+          "name": "main pipe",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\SHP\\Main Pipe\\Main Pipe.shp",
+          "n": 54
+        }
+      ],
+      "writes": [
+        {
+          "name": "corridors",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 25122
+        },
+        {
+          "name": "corridor_nodes",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 23355
+        },
+        {
+          "name": "removed (review)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_corridors_removed.gpkg",
+          "n": 583
+        }
+      ],
+      "metrics": {
+        "road_treatment": {
+          "segments_in": 9245,
+          "segments_out": 6760,
+          "km_in": 1351.42,
+          "km_out": 1165.37,
+          "points_tidied": 1233,
+          "collinear_joins": 1572,
+          "traffic_links_dropped": 249,
+          "empty_stubs_dropped": 0,
+          "orphan_links_dropped": 141,
+          "dual_crossings_added": 58,
+          "free_crossings_at_underpass": 0,
+          "dual_twins_dropped": 69,
+          "dual_excluded": 289,
+          "two_lane_side_dropped": 17,
+          "roundabouts": 60,
+          "sliver_rings": 1
+        },
+        "road_treatment_rings_rejected": {
+          "plots_inside": 130,
+          "too_big": 0,
+          "no_arms": 0,
+          "straight_sides": 14
+        },
+        "dual_centrelines": 358,
+        "dual_twins_untagged": 69,
+        "skeleton": {
+          "pockets": 799,
+          "pockets_used": 217,
+          "pockets_failed": 0,
+          "plots_covered": 10680,
+          "plots_in_small_pockets": 1106
+        },
+        "stitch": {
+          "islands": 2496,
+          "links": 2496,
+          "stranded_islands": 0,
+          "already_touching": 0
+        },
+        "stitch_worst_endpoint_gap_m": 0.0,
+        "components_before_exclusion": 509,
+        "largest_component_share_before": 67.9,
+        "removed_km_by_reason": {
+          "along a dual carriageway": 2.741,
+          "dual crossing off square": 1.164,
+          "wadi (along)": 65.799,
+          "wadi (along, audit.r4 sweep)": 1.492
+        },
+        "removed_km_by_source": {
+          "auto_block": 0.935,
+          "auto_link": 0.316,
+          "auto_road": 34.4,
+          "draft_existing": 22.678,
+          "draft_future": 4.611,
+          "main_pipe": 6.765,
+          "post-snap": 1.492
+        },
+        "source_lines_by_grade": {
+          "auto_block": 12501,
+          "draft_existing": 3368,
+          "auto_road": 2834,
+          "auto_link": 2496,
+          "draft_future": 2353,
+          "main_pipe": 54
+        },
+        "km_in_by_grade": {
+          "auto_block": 331.7,
+          "auto_link": 103.6,
+          "auto_road": 589.8,
+          "draft_existing": 588.6,
+          "draft_future": 606.8,
+          "main_pipe": 85.5
+        },
+        "audit_h1_r4_on_corridors": {
+          "h1_status": "PASS",
+          "h1_summary": "no reach runs more than 30 m inside the 6 m dual band",
+          "h1_bad": 0,
+          "h1_extent": "",
+          "r4_status": "PASS",
+          "r4_summary": "nothing along a wadi; 2,381 scheduled crossing(s); 53 % of samples fall outside the hazard grid and are UNTESTED (6,235 reaches entirely so)",
+          "r4_bad": 0,
+          "r4_extent": ""
+        },
+        "components": 784,
+        "largest_component_nodes": 5559,
+        "largest_component_share": 23.8,
+        "components_added_by_H1": 275,
+        "wadi_along_removed": 475,
+        "wadi_crossings_kept": 2428,
+        "km_by_source": {
+          "auto_block/provisional": 328.8,
+          "auto_link/provisional": 103.7,
+          "auto_road/derived": 551.7,
+          "draft/drafted": 565.2,
+          "draft/provisional": 601.7,
+          "main_pipe/drafted": 80.5
+        },
+        "km_total": 2231.6,
+        "km_on_dual_band": 1.503,
+        "km_on_wadi": 98.523,
+        "km_fronting_no_load": 727.9,
+        "terrain_nodata_fallbacks": 0,
+        "terrain_samples": 34,
+        "load_plots": 56388,
+        "load_plots_served": 55243,
+        "load_plots_unserved": 1145,
+        "load_m3d_unserved": 1425.9
+      },
+      "notes": [
+        "1,145 load-bearing plots (1,426 m3/d) have no corridor within 60 m. TOR scope p4 item 3 requires every plot to be served; philosophy sec 8a says the choice is which SYSTEM serves it. Listed by name in W11a_plots_no_corridor.gpkg - not dropped.",
+        "WIDTH_M is the G203-p32 Tab 13 band for DN200 (2.0 m) on every corridor, because no diameter exists before stage 6. Stage 6 MUST re-stamp it from the designed DN - a DN1000-1200 trunk needs 3.2 m and a 2.0 m reserve stated against it would be wrong.",
+        "USED = 0 on every corridor: nothing is laid yet. The conversion rate per SRC is the number that exposed W10's inversion (auto_block 97.4 % against the draftsman's 76.3 %), so the stage that lays reaches must stamp it back.",
+        "ORDERING, stated because it bounds the result: the skeleton (step B) fills gaps in the PRE-exclusion corridor set, and H1 is applied after it. A plot stranded BY the exclusion is therefore reported as unserved rather than re-skeletonised. Re-running the skeleton after the cut would be a second full pass and would still have to route around the same ground; the honest answer is the unserved list, which is a scope question for stage 1.",
+        "The crossings schedule is NOT published. contract.CROSSINGS requires EDGE_UID - the reach that crosses - and no reach exists at stage 2. Candidates are on the review layer W11a_corridors_removed.gpkg.",
+        "OPEN for the contract owner: the corridor node layer has no LayerSpec, so it is written into W11a.gpkg outside publish(). US_NODE that resolves to nothing is worse than no US_NODE, and contract.py is not this stage's file to edit.",
+        "RESOLVED (was: audit contradiction). Philosophy H1a now states when a wadi crossing is legal - one contiguous contact, square within the stated skew tolerance, no chamber on wadi ground, 1.5 m cover to crown (G203-p52 8.2.4), and scheduled with a CROSS_ID carrying the G201 9.3 obligations. audit.r4 tests along-vs-across instead of any contact, and this stage KEEPS a qualifying crossing instead of deleting it. Deleting them all took the corridor network to 1,381 components; keeping them takes it to 784.",
+        "PROJECT TOLERANCE, not a guideline value: WADI_XING_SKEW = 1.155 (= 1/cos 30 deg), the tolerance on H1's word 'perpendicular'. The guidelines give the cover at a crossing and the procedure for one but never say how square it must be. It is declared in w11a.audit and read from there by this stage - one definition, two callers.",
+        "DATA GAP: the 50-year hazard grid leaves 53 % of corridor samples with no wadi answer either way. Every R4 result is a statement about the tested half. Full-coverage flood mapping is a data request (see 05_GAPS)."
+      ],
+      "no_change_reason": "",
+      "funnels": [
+        {
+          "name": "plot records",
+          "n0": 64071,
+          "n": 64027,
+          "line": "plot records: 64,071 -> 64,027",
+          "steps": [
+            {
+              "reason": "outside the study boundary",
+              "n": 44,
+              "qty": 0.0,
+              "ids": [],
+              "ids_truncated": false
+            }
+          ]
+        },
+        {
+          "name": "corridor metres (noded -> published)",
+          "n0": 2305836,
+          "n": 2232924,
+          "line": "corridor metres (noded -> published): 2,305,836 -> 2,303,095 -> 2,301,931 -> 2,236,132 -> 2,234,640 -> 2,225,372 -> 2,232,924",
+          "steps": [
+            {
+              "reason": "H1: along a dual carriageway",
+              "n": 2741,
+              "qty": 0.0,
+              "ids": [],
+              "ids_truncated": false
+            },
+            {
+              "reason": "H1: dual crossing off square",
+              "n": 1164,
+              "qty": 0.0,
+              "ids": [],
+              "ids_truncated": false
+            },
+            {
+              "reason": "H1: wadi (along)",
+              "n": 65799,
+              "qty": 0.0,
+              "ids": [],
+              "ids_truncated": false
+            },
+            {
+              "reason": "H1: wadi (along, audit.r4 sweep)",
+              "n": 1492,
+              "qty": 0.0,
+              "ids": [],
+              "ids_truncated": false
+            },
+            {
+              "reason": "under the 0.5 m floor or inside the 3 m node merge radius",
+              "n": 9268,
+              "qty": 0.0,
+              "ids": [],
+              "ids_truncated": false
+            },
+            {
+              "reason": "endpoint snapped onto its node coordinate, plus whole-metre rounding (NEGATIVE here means snapping LENGTHENED the network - an endpoint moves up to the 3 m merge radius to reach its node, and most of those moves are outward)",
+              "n": -7552,
+              "qty": 0.0,
+              "ids": [],
+              "ids_truncated": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

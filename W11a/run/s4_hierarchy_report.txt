@@ -55,7 +55,7 @@ OPEN AND HANDED ON
   99 reaches inherit a corridor with dual-carriageway length (1.3 km).
   H1 WADI, MEASURED ON OUR OWN GEOMETRY against Hazard_T50y class >= 4 (the test audit.R4 applies):
      0 reaches (0.000 km) and 0 chambers sit on wadi ground.
-     The inherited corridor flag claimed 0. An inherited flag is a claim about stage 2, not a measurement of this geometry - re-routing is stage 2/3's, the count is ours.
+     The inherited corridor flag claimed 100. An inherited flag is a claim about stage 2, not a measurement of this geometry - re-routing is stage 2/3's, the count is ours.
      UNTESTED: 968.3 km (55 %) falls outside the Lekhuwair grid and carries NO wadi answer either way. audit.R4 scores nodata as a pass, so a clean R4 on this network is a clean result on the tested half. A hazard grid covering the whole study area is a data request, not a modelling choice.
   THE CORRIDOR NETWORK arrives from stage 2 in 1,381 disconnected pieces, and THE TRUNK in 108.
      A hierarchy can only be as connected as the corridors under it, and a trunk in 108 pieces is not a

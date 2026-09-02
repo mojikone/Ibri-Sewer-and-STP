@@ -19,5 +19,5 @@ R2,False,"reaches.DN, reaches.US_DEPTH, reaches.DS_DEPTH"
 R3,False,external.roads
 R4,False,external.hazard
 G1,False,"reaches.SLOPE_LAID, reaches.SLOPE_MIN"
-G2,False,"reaches.SIZED_BY, reaches.GRADIENT_BY"
+G2,False,"reaches.SIZED_BY, reaches.GRAD_BY"
 G3,True,
