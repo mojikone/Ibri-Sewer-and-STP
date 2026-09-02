@@ -33,9 +33,13 @@ neither is covered here, and that omission is deliberate rather than an oversigh
 > exactly one function"** — by the document that states it.
 >
 > Fixed so far: the 20 mm tolerance (was wrongly stated as 40 mm), the missing 0.75 m/s
-> minimum velocity and 0.90 m/s preferred, and the tier-vocabulary clash with G203.
-> **Outstanding: the traceability rebuild, the depth re-measurement in §5.1b, and the §9
-> citations.** Do not design from this until that banner is removed. Everything else rests on measurements made in W8, W10 and NAMA's as-built network,
+> minimum velocity and 0.90 m/s preferred, the tractive-τ gap, the tier-vocabulary clash with
+> G203, and **C3 — the engineer settled cover-versus-invert on 2026-09-02 and §5.1c now
+> carries the four rules that replace it.**
+>
+> **Outstanding: C4 the §5.1b depth histogram, C5 the traceability rebuild, C7 the §10
+> checklist, C8 the §9 citations, and 13 of the 14 MAJOR findings.** Do not design from this
+> until this banner is removed. Everything else rests on measurements made in W8, W10 and NAMA's as-built network,
 and every claim carries where it came from.
 
 ---
@@ -265,7 +269,7 @@ non-negotiable and only the third weighs anything:**
 
 | | Layer | Test | Overridable |
 |---|---|---|---|
-| 1 | **CAP** | Cover reaches 12 m → **station, mandatory** | **No.** Not by cost, not by anything |
+| 1 | **CAP** | **Cover** reaches 12 m → **station** unless §5.1c lets it through | **No**, except by §5.1c |
 | 2 | **VETO** | A chamber here would be unmaintainable — no plant access, confined-space entry with no rescue route, under a live carriageway → **station** | **No.** A veto, not a term in a sum |
 | 3 | **ECONOMICS** | Only now: is a station cheaper over 25 years than carrying the trench on? (§8) | Yes — the only layer that weighs |
 
@@ -280,19 +284,48 @@ function — a 12 m chamber is a fifty-year operating liability and no exponent 
 The **economics** exists because a bare threshold has no cost basis at all, which is how node
 2933 was given an 85 kW station for a **3 mm** breach.
 
-**5.1c The single bounded derogation — the only thing that can REMOVE a station.**
-An excursion may be dug through past the cap **only if all of these hold**:
+**5.1c GOING PAST THE CAP — the four rules.** (Engineer's decision, 2026-09-02. This
+supersedes the earlier 12–14 m band, and it supersedes a 20 m cap proposed and then
+withdrawn on the same day.)
 
-- it **demonstrably rejoins** downstream (here: 13 of 239 breaches, not a general case)
-- it peaks **within a stated band**, 12 → 14 m of cover
-- it is **short**, and the length is stated
-- it is **listed by name**, item by item, never as a class
-- it is **put to NWS** and accepted
+**Why there is no invented depth number here.** G203-p33 defines "prohibitive" only by
+comparison — the trigger is that excavation costs *more than a pumping station*, equipment,
+construction, staffing and maintenance included. And it gives **no depth** on purpose,
+because how deep a pipe may be buried is a **pipe** question — cover load, bedding class,
+manufacturer's rating — not a hydraulic one, which is why the same clause says depths past
+the range *"shall be investigated with pipe manufacturers"*. We hold neither the confirmed
+station cost nor a manufacturer's rating, so **inventing a depth cap would be filling a gap
+that belongs to two other parties.** Instead the exits are bounded by **distance**, which we
+can measure today.
 
-G203-p33 requires that depths past the range *"shall be investigated with pipe manufacturers
-to identify any special requirements"* — that is a procedure to follow, not permission to
-ignore the range. So the derogation is a named exception list NWS can accept or refuse line
-by line, and it is thirteen lines long, not a licence.
+| | Rule | Why it is safe without cost data |
+|---|---|---|
+| 1 | **12 m of cover is the cap.** Past it a station is the default | The guideline's own range, and the default is always the conservative one |
+| 2 | **May pass it if the cover recovers within 500 m** | Bounded by distance, so the trench cannot run away |
+| 3 | **May pass it if it reaches the outfall — the works or a lifting station already in the design — within 1,000 m** | A station 300 m from the works is absurd; this catches it |
+| 4 | **Everything past 12 m is FLAGGED**, without exception | Turns the unknown into a named schedule instead of a silent assumption |
+
+**Rules 2 and 3 are either/or.** Each is sufficient on its own — a run that recovers in 400 m
+does not also have to be near an outfall.
+
+**The flag list is the real output**, and it is a schedule someone can act on. Per item:
+
+- the **maximum cover reached**, and the **length** for which cover exceeds 12 m
+- **which rule allowed it**, 2 or 3
+- the **pipe and bedding** at that depth, so a manufacturer can rule on it
+- **what it is waiting on** — a manufacturer's rating for that cover, and a cost comparison
+  once NWS confirm what a station actually costs to establish and staff
+
+Two things this list will eventually settle that we cannot settle now: **the real depth
+limit**, which the manufacturer sets, and **the real cost trigger**, which NWS's station
+establishment figure sets. Until both land, every item on the list is provisional and must be
+reported as such — never quietly absorbed into a design total.
+
+*Recorded because it reverses a settled rule:* PROJECT-STATE §2.3 reads *"maximum depth is
+12 m, with no exceptions"*, adopted after the W6 audit passed 21.3 m chambers. Rules 2 and 3
+are exceptions, deliberately created by the engineer on 2026-09-02, bounded by distance and
+individually flagged. That is a reversal made on purpose, not drift, and §2.3 must be updated
+to point here.
 
 **5.2 The rule is: look ahead, then price the excursion.**
 
