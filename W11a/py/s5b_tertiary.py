@@ -585,6 +585,48 @@ def _try_pair(pn: str, ln: str, pr: str, lr: str):
     return True, "", (nodes, reaches, resolved)
 
 
+def levels_are_designed(nodes: pd.DataFrame) -> Tuple[bool, str]:
+    """(levels_known, why_not). A NON-NULL INV_M IS NOT A LEVELLED NETWORK.
+
+    Stage 5 SEEDS every chamber at the shallowest legal invert and says so in its own
+    manifest - "levels and flows are stage 5 SEEDS, not design values". On the layer read
+    2026-09-02 all 50,033 nodes carried DEPTH_M = 1.600 m to machine precision, so INV_M was
+    GRD_M - 1.6 m everywhere BY CONSTRUCTION. The rule this replaced was
+
+        levels_known = INV_M.notna().any()
+
+    so those seeds passed as designed levels, and 5,715 plots carrying 7,194.2 m3/d - 9.6 %
+    of project load, the largest single rejection group in the stage - were published as
+    "cannot drain" against a constant. Philosophy sec 8 says a check that CANNOT run is a
+    failure; a check run on placeholder inputs and reported as a design result is worse,
+    because it produces a number that looks like evidence.
+
+    The test is therefore the SPREAD of the chamber depths, not the presence of the inverts.
+    A designed network has a distribution of depths; a seeded one has exactly one value.
+    DEPTH_M is used when it is there and GRD_M - INV_M when it is not, so a node layer that
+    does not carry the depth field is still tested rather than trusted.
+    """
+    inv = pd.to_numeric(nodes["INV_M"], errors="coerce")
+    if "DEPTH_M" in nodes.columns and \
+            pd.to_numeric(nodes["DEPTH_M"], errors="coerce").notna().any():
+        dep, dep_src = pd.to_numeric(nodes["DEPTH_M"], errors="coerce"), "DEPTH_M"
+    else:
+        dep = pd.to_numeric(nodes["GRD_M"], errors="coerce") - inv
+        dep_src = "GRD_M - INV_M"
+    d = dep.dropna()
+    spread = float(d.std(ddof=0)) if len(d) else float("nan")
+    seeded = bool(len(d) > 1 and np.isfinite(spread) and spread < 1e-6)
+    if not seeded:
+        return bool(inv.notna().any()), ""
+    return False, (
+        f"SEEDED LEVELS, NOT DESIGNED ONES: INV_M is present but {dep_src} is CONSTANT at "
+        f"{float(d.iloc[0]):.3f} m across {len(d):,} nodes (spread {spread:.2e} m). These "
+        "are stage 5 seeds at the shallowest legal invert. CAN_DRAIN is left null and NO "
+        "plot is rejected on a level test - the tertiary arrivals published here are the "
+        "constraint stage 6 must level the chambers to meet, not a test to apply after it. "
+        "Re-run this stage after stage 6.")
+
+
 @dataclass
 class Inputs:
     plots: gpd.GeoDataFrame
@@ -632,38 +674,7 @@ class Inputs:
         # The load allocation this stage produces is what the levelling stage sizes against,
         # so the two are circular and the break is deliberate: assign first, level second,
         # re-run. Nothing is guessed in between; the placeholder is declared as one.
-        #
-        # AND A NON-NULL INV_M IS NOT A LEVELLED NETWORK. Stage 5 SEEDS every chamber at the
-        # shallowest legal invert and says so in its own manifest ("levels and flows are
-        # stage 5 SEEDS, not design values"). On the layer read 2026-09-02 all 50,033 nodes
-        # carried DEPTH_M = 1.600 m to machine precision, so INV_M was GRD_M - 1.6 m
-        # everywhere BY CONSTRUCTION. Testing whether a plot drains against that constant and
-        # publishing the failures as "cannot drain to N..." reported 5,715 plots
-        # (7,194.2 m3/d, 9.6 % of project load) that are an artefact of the seed - the single
-        # largest rejection group in the stage, and not a design result at all. Philosophy
-        # sec 8: a check that CANNOT run is a failure; a check run on placeholder inputs and
-        # reported as a design failure is worse, because it produces a number that looks like
-        # evidence. The test is the SPREAD of the depths, not the presence of the inverts.
-        inv = pd.to_numeric(nodes["INV_M"], errors="coerce")
-        if "DEPTH_M" in nodes.columns and \
-                pd.to_numeric(nodes["DEPTH_M"], errors="coerce").notna().any():
-            dep, dep_src = pd.to_numeric(nodes["DEPTH_M"], errors="coerce"), "DEPTH_M"
-        else:
-            dep = pd.to_numeric(nodes["GRD_M"], errors="coerce") - inv
-            dep_src = "GRD_M - INV_M"
-        d = dep.dropna()
-        spread = float(d.std(ddof=0)) if len(d) else float("nan")
-        seeded = bool(len(d) > 1 and np.isfinite(spread) and spread < 1e-6)
-        levels_known = bool(inv.notna().any()) and not seeded
-        levels_note = ""
-        if seeded:
-            levels_note = (
-                f"SEEDED LEVELS, NOT DESIGNED ONES: INV_M is present but {dep_src} is "
-                f"CONSTANT at {float(d.iloc[0]):.3f} m across {len(d):,} nodes (spread "
-                f"{spread:.2e} m). These are stage 5 seeds at the shallowest legal invert. "
-                "CAN_DRAIN is left null and NO plot is rejected on a level test - the "
-                "tertiary arrivals published here are the constraint stage 6 must level the "
-                "chambers to meet, not a test to apply after it. Re-run after stage 6.")
+        levels_known, levels_note = levels_are_designed(nodes)
         levelled_elsewhere = ""
         if not levels_known and seen:
             levelled_elsewhere = ("a better-levelled pair was not available; rejected: "
@@ -1559,7 +1570,13 @@ def summarise(gdf: gpd.GeoDataFrame, t: Tertiary, fn_line: str) -> str:
         f"  assigned to a chamber      {len(assigned):,}",
         f"  tertiary pipe drawn        {K.value('tertiary_km', gdf):,.2f} km at OD{DN_TERTIARY}"
         f"  (G203-p22 Tab 6 minimum)",
-        f"  ... of which buildable     {K.value('tertiary_km_drainable', gdf):,.2f} km",
+        # `tertiary_km_drainable` reads a null CAN_DRAIN as draining, which is right for the
+        # metric (an unchecked pipe is not a FAILED pipe) and WRONG to print as "buildable"
+        # while the levels are pending: it would equal the total and read as a clean bill.
+        (f"  ... of which buildable     {K.value('tertiary_km_drainable', gdf):,.2f} km"
+         if t.levels_known else
+         "  ... of which buildable     NOT KNOWN - CAN_DRAIN is null on every row until the "
+         "levels are designed"),
         f"  load reaching a chamber    {K.value('tertiary_qadf_m3d', gdf):,.1f} m3/d",
         f"  gradient {'laid':<18}{gdf.SLOPE_LAID.min():.2f} - {gdf.SLOPE_LAID.max():.2f} %"
         f"  (G203-p18 Tab 5: 3-10 % PCS, 1-10 % rider)"
@@ -1860,6 +1877,10 @@ def _synthetic_upstream(out_gpkg: str, plots_path: str = PLOT_LOADS,
     ng["N_PROP"] = 10.0
     ng["PAST_CAP"] = 0
     ng["CAP_EXIT"] = ""
+    # H15 wants exactly one outfall per connected component, and the fixture is one chain.
+    # Added when the contract began requiring the field on `nodes` (2026-09-02); it is the
+    # last chamber, which `net.nodes[uids[-1]].kind = "outfall"` above already declares.
+    ng["IS_OUTFALL"] = (ng.NODE_UID == uids[-1]).astype(int)
     K.validate(ng, "nodes", stage="fixture")
     K.validate(eg, "reaches", stage="fixture")
     K.Network.assert_round_trip(ng, eg)
@@ -1930,6 +1951,28 @@ def selftest(scratch: Optional[str] = None) -> None:
     print(f"  rider grouping ..... ok (7 HCCs -> {len(rs)} riders, none over "
           f"{MAX_HCC_PER_RIDER})")
 
+    # --- a SEED is not a LEVEL -----------------------------------------------------------
+    # The defect this guards: stage 5 seeds every chamber at one depth, `INV_M.notna().any()`
+    # called that a levelled network, and 5,715 plots (7,194.2 m3/d) were published as
+    # "cannot drain" against a constant.
+    grd = pd.Series(np.linspace(330.0, 340.0, 200))
+    seeded = pd.DataFrame(dict(GRD_M=grd, DEPTH_M=1.6, INV_M=grd - 1.6))
+    ok, note = levels_are_designed(seeded)
+    assert ok is False and "SEEDED LEVELS" in note, note
+    # ... and the same layer without a DEPTH_M column must still be caught, on GRD_M - INV_M
+    ok, _ = levels_are_designed(seeded.drop(columns=["DEPTH_M"]))
+    assert ok is False, "a seeded layer with no DEPTH_M column must still be detected"
+    # ... while a real solve, where the depths vary, is a level
+    solved = seeded.copy()
+    solved["DEPTH_M"] = np.linspace(1.6, 6.4, 200)
+    solved["INV_M"] = solved.GRD_M - solved.DEPTH_M
+    assert levels_are_designed(solved)[0] is True, "a varying depth IS a designed level"
+    # ... and an unlevelled layer is still unlevelled
+    assert levels_are_designed(
+        pd.DataFrame(dict(GRD_M=grd, DEPTH_M=np.nan, INV_M=np.nan)))[0] is False
+    print("  seed vs level ...... ok (constant depth = seed, varying depth = level, "
+          "no DEPTH_M column still caught)")
+
     # --- the constant gate ---------------------------------------------------------------
     ran, msgs = verify_constants()
     if ran:
@@ -1979,6 +2022,40 @@ def selftest(scratch: Optional[str] = None) -> None:
         on_node = any(math.hypot(end[0] - x, end[1] - y) <= 0.02 for x, y in npts)
         assert on_node or live_u.distance(Point(end)) <= 0.02, \
             f"{r.CONN_ID} drains into something that does not drain"
+    # --- the selection rule: best of ALL candidates, not the nearest one ------------------
+    # The regression test for the second defect. The old rule took the nearest carrier and
+    # then the nearer of that one reach's two ends; on the published layers that stranded
+    # 4,633 plots (6,418.1 m3/d) past the 45 m of G203-p22 Tab 6 of which all but 647 had a
+    # chamber inside the limit it never looked at. Both rules are run here on the same
+    # fixture and the new one must strand strictly fewer.
+    inp = Inputs.load(gpkg=fx, plots_path=PLOT_LOADS, terrain=TERRAIN)
+    pl = inp.plots
+    pl = pl[pl.get("IN_BND", pd.Series(1, index=pl.index)).astype(int) == 1]
+    pl = pl[pd.to_numeric(pl.Q_AVG_M3D, errors="coerce").fillna(0.0) > 0]
+    car = inp.reaches[inp.reaches.TIER.isin(CARRIER_TIERS)].reset_index(drop=True)
+    cg = np.asarray(car.geometry.values)
+    near_tree = STRtree(cg)
+    n_near_only = 0
+    for pg in pl.geometry.values:
+        h = np.atleast_1d(near_tree.query_nearest(pg, max_distance=CARRIER_SEARCH_M,
+                                                  return_distance=False, all_matches=False))
+        if not h.size:
+            continue
+        line = cg[int(h[0])]
+        sl = shapely.shortest_line(line, pg)
+        gp = shapely.get_point(sl, 0)
+        off = float(shapely.distance(gp, shapely.get_point(sl, -1)))
+        st, L = float(shapely.line_locate_point(line, gp)), float(line.length)
+        n_near_only += (max(0.0, off - HCC_OFFSET_M) + min(st, L - st)) > TERTIARY_MAX_LEN_M
+    n_best_of = sum(1 for f in Frontages(inp, None).build(pl)[0]
+                    if f.leg_len > TERTIARY_MAX_LEN_M)
+    assert n_best_of < n_near_only, (
+        f"the candidate ranking stranded {n_best_of} plots past {TERTIARY_MAX_LEN_M:.0f} m "
+        f"and nearest-only stranded {n_near_only} - it must never be worse, and on real "
+        "geometry it is much better")
+    print(f"  chamber selection .. ok (past the {TERTIARY_MAX_LEN_M:.0f} m run: "
+          f"nearest-only {n_near_only}, best-of-all {n_best_of})")
+
     # the CAD mirror has to survive the DBF, which is the point of mirror_shapefile()
     back = gpd.read_file(os.path.join(scratch, "shp", "W11a_connections.shp"))
     assert set(K.LAYERS["connections"].required_names) <= set(back.columns), \
