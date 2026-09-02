@@ -1,3 +1,14 @@
 node_modules/
 package-lock.json
 _raster.js
+
+# Full-resolution figures: up to 3,730 px and 90 MB for the set. Regenerable by running
+# fig_*.py, and the repo already carries a 68 MB GeoPackage against GitHub's 100 MB limit.
+# The document-sized copies in img_doc/ ARE committed - they are what the report embeds and
+# what anyone reading remotely needs.
+img/*.png
+img/*.jpg
+img/*.svg
+# except the flowcharts: small, and img/*.svg is the only copy of the Figma output
+!img/FC0*.png
+!img/FC0*.svg

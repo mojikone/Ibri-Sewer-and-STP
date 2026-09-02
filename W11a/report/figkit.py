@@ -21,7 +21,9 @@ FOUR RULES THIS MODULE ENFORCES, because each one has already cost us something:
     under half the study area and its nodata is -9999.0, which IS finite -- so a
     `np.isfinite` guard passes it as "not a wadi".  `hazard_coverage()` handles
     that trap in one place, and `hatch_untested()` draws the answer-free ground as
-    hatch.  Clear ground on a map means "tested and clean".
+    hatch.  Clear ground on a map means "tested and clean".  Its class threshold
+    (4, 5, 6) is a PROJECT ASSUMPTION standing in for a scour criterion, never a
+    guideline number -- label it as ours on any figure that uses it.
 
 4.  **Colour is never the only channel.**  The tier ladder is a single-hue
     lightness ramp plus a line-width ramp, so it survives greyscale and every form
@@ -33,7 +35,30 @@ WHAT THIS MODULE DOES NOT DO: it does not decide what a figure says.  It has no
 project numbers in it.  Every figure caption, title and databox is built by the
 agent drawing it, out of values it read from an artefact.
 
-Run `python figkit.py` to rebuild the two worked examples in `W11a/report/img/`.
+HOW TO USE IT — the whole API in eight lines
+--------------------------------------------
+    import figkit as fk
+
+    cor = fk.read_layer("W11a.gpkg", "corridors")          # copy, read, stamped
+    aud = fk.read_csv("audit_W11a_trunk.csv")              # from W11a/run/
+
+    fig, ax, note = fk.map_frame(fk.extent_of(cor), title="<the finding>",
+                                 subtitle="<what was measured, and against what>")
+    cor.plot(ax=ax, **fk.tier_style("lateral"))            # or C.<ROLE> for a colour
+    known, wadi, ext = fk.hazard_coverage(fk.extent_of(cor))
+    fk.hatch_untested(ax, ~known, ext)                     # answer-free ground
+    fk.finish_map(fig, ax, note=note, legend_handles=fk.tier_legend(),
+                  databox="...", source=fk.source_line(cor))
+    path = fk.save(fig, "F07_something")                   # 200 dpi into report/img
+
+    fig, ax = fk.chart_frame(title="<the finding>", subtitle="...")
+    ax.barh(y, v, **fk.status_style("fail"))               # colour + hatch
+    fk.legend_below(ax, fk.status_legend())
+    fk.finish_chart(fig, source=fk.source_line(aud))
+    path = fk.save(fig, "F08_something")
+
+Run `python figkit.py` to rebuild the two worked examples in `W11a/report/img/`,
+or `python figkit.py --check-palette` for the greyscale self-test alone.
 """
 
 from __future__ import annotations
@@ -287,12 +312,12 @@ def snapshot(name: str, *, tries: int = 4) -> Path:
     family = (sorted(src.parent.glob(src.stem + ".*"))
               if src.suffix.lower() == ".shp" else [src])
 
-    def sig(_p=None) -> dict:
+    def sig() -> dict:
         return {f.name: [f.stat().st_mtime_ns, f.stat().st_size] for f in family}
 
     if dst.exists() and tag.exists():
         try:
-            if json.loads(tag.read_text()) == sig(src):
+            if json.loads(tag.read_text()) == sig():
                 return dst
         except Exception:
             pass
@@ -432,6 +457,12 @@ def hazard_coverage(extent, *, px: int = 1400, wadi_classes=(4, 5, 6)):
     that trap is handled here, once, rather than in seven figures.  Arrays are
     decimated for display -- do not quote a percentage off them; sample the grid at
     full resolution for any number that goes in text.
+
+    **``wadi_classes=(4, 5, 6)`` is a PROJECT ASSUMPTION, not a guideline value.**
+    They are AR&R flood-hazard classes, keyed on danger to people and vehicles, and
+    they stand in for G203-p30 4.4.1's *"areas subject to washout"*, which is a
+    SCOUR criterion (philosophy H1a).  Any figure that uses this default must label
+    the threshold as ours, and must publish the untested share beside the result.
     """
     import rasterio
     from rasterio.windows import from_bounds
@@ -494,8 +525,13 @@ def map_frame(extent, *, title: str, subtitle: str | None = None,
               figsize=None, basemap_alpha: float = 0.30, aspect_target: float = 1.0):
     """Open a map figure on ``extent``, EPSG:32640, basemap already drawn.
 
-    Returns ``(fig, ax, note)`` -- ``note`` is the basemap note, which belongs on
-    the figure.  Draw your layers, then call :func:`finish_map`.
+    ``extent`` is used EXACTLY as given -- no padding is added, so lines at the
+    edge would otherwise be clipped: pass ``extent_of(gdf)``, which pads 3 %, not
+    ``gdf.total_bounds``.  ``title`` states the FINDING, not the layer name.
+
+    Returns ``(fig, ax, note)``.  ``note`` says what basemap was actually drawn and
+    belongs on the figure -- pass it straight to :func:`finish_map`.  Draw your
+    layers on ``ax``, then call :func:`finish_map` for the furniture.
     """
     x0, y0, x1, y1 = extent_of(extent, pad=0.0)
     if figsize is None:

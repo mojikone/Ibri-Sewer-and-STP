@@ -22,7 +22,12 @@ import doc as D                                                        # noqa: E
 from docx.shared import Pt                                             # noqa: E402
 
 
-IMG = os.path.join(HERE, "img")
+# Prefer the document-sized copies. The figure programme writes at up to 3,730 px, which is
+# right for GIS inspection and wrong for a Word file - 100 of them made an 88.3 MB document.
+# img_for_doc.py rebuilds them at the width an A4 page can actually use. Originals stay in
+# img/ and are what anyone should open to check a number.
+IMG_FULL = os.path.join(HERE, "img")
+IMG = os.path.join(HERE, "img_doc") if os.path.isdir(os.path.join(HERE, "img_doc")) else IMG_FULL
 
 # A4 portrait, 2.2 cm margins: the text column is 16.6 cm and about 22 cm of height is usable
 # once a caption is allowed for. doc.picture() sizes by WIDTH only, which puts a 0.42:1
@@ -39,8 +44,10 @@ def figure(d, name, caption, finding=None, width_cm=None):
     in parallel and a quietly absent figure is how a report ends up claiming to show
     something it does not.
     """
-    path = os.path.join(IMG, name if name.endswith(".png") else name + ".png")
-    if not os.path.exists(path):
+    stem = name[:-4] if name.endswith(".png") else name
+    path = next((q for q in (os.path.join(IMG, stem + e) for e in (".png", ".jpg"))
+                 if os.path.exists(q)), None)
+    if path is None:
         D.callout(d, "FIGURE MISSING.",
                   f"{name} was not produced. Caption would have read: {caption}")
         return
@@ -51,27 +58,65 @@ def figure(d, name, caption, finding=None, width_cm=None):
     if width_cm is None:
         width_cm = min(COL_CM, MAX_H_CM * ratio)
     D.picture(d, path, width_cm=width_cm)
-    D.fig_caption(d, caption)
+    if caption:
+        D.fig_caption(d, caption)
     if finding:
         D.p(d, finding, italic=True, size=9.5, colour=D.GREY)
 
 
 def figure_appendix(d):
-    """Everything the figure agents produced that the body has not already placed."""
+    """Everything the figure programme produced, grouped by family.
+
+    Each figure carries its own title stating the FINDING and a source line naming the
+    artefact every number came from, so the appendix does not re-caption them - repeating a
+    caption beside a figure that already has one is how the two drift apart.
+    """
+    import glob
     placed = {"FC01_pipeline", "FC02_ladder", "FC03_wadi_tree", "FC04_flow_chain",
               "FC05_method", "FC06_scope", "FC07_appraisal", "FC08_two_pass"}
-    import glob
-    rest = sorted(f for f in glob.glob(os.path.join(IMG, "*.png"))
-                  if os.path.splitext(os.path.basename(f))[0] not in placed)
-    if not rest:
+    groups = [
+        ("F0", "Context and scope"),
+        ("F2", "STP site options"),
+        ("F_C", "The corridor network"),
+        ("FW", "Wadis, and the half of the area with no answer"),
+        ("FT", "The trunk"),
+        ("FM", "Force mains and the works inlet"),
+        ("FH", "Hierarchy and chambers"),
+        ("S0", "Who is served, and who is not"),
+        ("S1", "Who is served, and who is not"),
+        ("FE", "Evidence - how we know what we know"),
+        ("FK", "Toolkit examples"),
+    ]
+    files = sorted((f for e in ("*.png", "*.jpg") for f in glob.glob(os.path.join(IMG, e))
+                    if os.path.splitext(os.path.basename(f))[0] not in placed),
+                   key=lambda q: os.path.basename(q))
+    if not files:
         D.p(d, "No further figures were produced.", italic=True)
         return
-    D.p(d, f"{len(rest)} further figures were produced by the figure programme. Each is "
-           f"named for what it shows and every value on it traces to a layer in "
-           f"W11a/shp/ or a run artefact in W11a/run/.")
-    for f in rest:
-        nm = os.path.splitext(os.path.basename(f))[0]
-        figure(d, nm, nm.replace("_", " "))
+
+    D.p(d, f"{len(files)} figures. Every one carries its own title stating what it shows and "
+           f"a source line naming the layer or run artefact each number came from. Where a "
+           f"value is a project assumption rather than a guideline number, the figure says "
+           f"so on its face.")
+
+    seen, done = set(), []
+    for pref, title in groups:
+        got = [f for f in files
+               if os.path.basename(f).startswith(pref) and f not in seen]
+        if not got:
+            continue
+        if title not in done:
+            D.h(d, 2, title)
+            done.append(title)
+        for f in got:
+            seen.add(f)
+            figure(d, os.path.splitext(os.path.basename(f))[0], "")
+    rest = [f for f in files if f not in seen]
+    if rest:
+        D.h(d, 2, "Further figures")
+        for f in rest:
+            figure(d, os.path.splitext(os.path.basename(f))[0], "")
+
 
 OUT = os.path.join(HERE, "W11a_Design_Review_R1.docx")
 REV = "R1"
