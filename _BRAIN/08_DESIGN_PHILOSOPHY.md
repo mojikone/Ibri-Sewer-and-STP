@@ -211,10 +211,25 @@ calibration, and assumption sensitivities.
 Both are reversible, both are the designer's to propose and the client's to confirm, and
 both are recorded here so the design is not blocked waiting for them.
 
-**What is served.** Sewer the **106 settlements** that cost 12.9–15.4 m of exclusive sewer
-per property. **Price** the 17 marginal ones (21.1 km, 0.75 % of the load) as a separate
-option. **Do not sewer** the 31 that cost 204 m per property for 0.36 % of the load — carry
-them as a decentralised item instead. Evidence: `W10/docs/research/WHAT_TO_SEWER.md`.
+**What is served — ALL of it. The TOR leaves no discretion.** Scope p4 item 3: *"All plots
+open and build up shall be designed and serviced including these plots located in existing
+areas."* p6 item 2: *"provide and design Sewer Connections and for all plots within the
+Project boundary (Constructed, open and under Construction)."* p8 item 17 requires house
+connection sheets **for all plots**.
+
+**But "serviced" is not "connected to one network."** That distinction is the whole design
+question. Every plot is served; the choice is *by which system* — the central network, a
+satellite works, or an on-site solution. A settlement costing 204 m of exclusive sewer per
+property is not dropped; it is **served by the system that suits it**, and the comparison is
+made on life-cycle cost as the options doctrine requires.
+
+*An earlier working assumption in this file said "do not sewer the 31" — that was wrong
+against the TOR and is withdrawn. Nothing is dropped; the question is only what serves it.*
+
+And the TOR is equally explicit on the objective, scope p12: *"The entire layout shall take
+into consideration the topography of the area in order to **avoid pumping and utilize gravity
+as much as practically possible**."* Pumping minimisation is a client requirement, not a
+preference of ours.
 
 **BAT.** 2,231 properties, 1,752 m³/d, 22–25 km out, above every decentralised ceiling in the
 guidelines. **Do not choose — carry both**, conveyance and a satellite works, into the options
