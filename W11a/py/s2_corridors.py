@@ -1206,7 +1206,9 @@ def build() -> Dict:
     # what the draftsman already covers comes out of the treated set
     draft_cover = unary_union(list(draft.geometry.buffer(CORRIDOR_MATCH_M)))
     draft_cut = unary_union(list(draft.geometry.buffer(CORRIDOR_CUT_M)))
+    draft_geom = unary_union(list(draft.geometry))     # the LINES, not the buffer
     auto_road: List[LineString] = []
+    n_heal, heal_m = 0, 0.0
     for g in treated:
         if g.intersection(draft_cover).length > 0.75 * g.length:
             continue
@@ -1214,8 +1216,37 @@ def build() -> Dict:
         if rest.is_empty:
             continue
         for p in (rest.geoms if rest.geom_type == "MultiLineString" else [rest]):
-            if p.length > AUTO_ROAD_MIN_M:
-                auto_road.append(p)
+            if p.length <= AUTO_ROAD_MIN_M:
+                continue
+            auto_road.append(p)
+            # HEAL THE CUT. `difference` deletes the metres inside the buffer and leaves the
+            # stub ending CORRIDOR_CUT_M short of the drafted line it was cut against - a
+            # 4.0 m hole that nothing closes, because NODE_MERGE_M is 3.0 m and the stitch
+            # step only stitches skeleton pockets. It is the same defect as W10's 25 m hole
+            # (see the CORRIDOR_CUT_M comment above), narrowed from 25 m to 4 m and never
+            # closed. A 4 m hole is still a hole.
+            #
+            # MEASURED 2026-09-02: these holes hold the published corridor network in 771
+            # pieces. Joining every endpoint to a line within 3.0 m leaves 764; within 4.0 m
+            # gives 444; within 4.5 m gives 299 - a step function at exactly CORRIDOR_CUT_M.
+            # On the PRE-exclusion set the same test runs 560 -> 70, so 490 of the 560
+            # components are this one hole. It is the dominant defect in the pipeline, well
+            # ahead of the trunk mismatch it was being blamed on.
+            #
+            # The connector is drawn on the REAL geometry with nearest_points, so it lands
+            # ON the drafted line and the planar noding in node_and_attribute makes a node
+            # of it - the same rule the stitch step already asserts to 0.0000 m.
+            for end in (Point(p.coords[0]), Point(p.coords[-1])):
+                d = float(end.distance(draft_geom))
+                if 0.0 < d <= CORRIDOR_CUT_M + 0.05:
+                    auto_road.append(LineString([end, nearest_points(end, draft_geom)[1]]))
+                    n_heal += 1
+                    heal_m += d
+    res["metrics"]["cut_holes_healed"] = n_heal
+    res["metrics"]["cut_holes_healed_km"] = round(heal_m / 1000.0, 4)
+    print(f"      healed {n_heal:,} cut holes with {heal_m/1000:.3f} km of connector - the "
+          f"{CORRIDOR_CUT_M:.1f} m gap `difference` leaves is wider than the "
+          f"{contract.NODE_MERGE_M:.1f} m merge radius, so nothing else closes it")
     t = step(f"after removing what the draftsman covers: {len(auto_road):,} lines, "
              f"{sum(g.length for g in auto_road)/1000:,.1f} km", t)
 
@@ -1430,13 +1461,49 @@ def build() -> Dict:
     # The schedule is what carries the G201 9.3 obligations - bed profile, 1:20/1:50/1:100
     # flood levels, bed material, MoAFWR approval - to the next stage.
     def _mint_cross_ids(frame):
-        """Every corridor still touching wadi ground is scheduled. H1a item 4."""
+        """Every corridor still touching wadi ground is SCHEDULED. H1a item 4.
+
+        Minting an id is not scheduling. audit.r4 requires the id to resolve to a row in the
+        crossings REGISTER carrying OBSTACLE = 'wadi', because the register is what holds the
+        G201 9.3 obligations - bed profile, 1:20/1:50/1:100 flood levels, bed material,
+        MoAFWR approval, DI over the crossing plus 15 m, anti-flotation, PAM-STD-404. An id
+        with no row behind it carries none of them, and the first version of this function
+        wrote ids and no register: the auditor then correctly refused all 2,428 crossings
+        and the sweep deleted them.
+        """
         t = frame["ON_WADI_M"] > 0
         ids = [""] * len(frame)
         for k, i in enumerate(np.where(t.values)[0]):
             ids[i] = f"W11a-XG{k + 1:05d}"
         frame["CROSS_ID"] = ids
         return frame
+
+    def _crossings_register(frame):
+        """The register audit.r4 verifies against. One row per scheduled wadi crossing."""
+        sub = frame[frame["CROSS_ID"].astype(str) != ""]
+        if not len(sub):
+            return gpd.GeoDataFrame(
+                dict(CROSS_ID=[], EDGE_UID=[], OBSTACLE=[], LEN_M=[], ANGLE_DEG=[],
+                     METHOD=[], APPROVED=[]), geometry=[], crs=contract.CRS_EPSG)
+        return gpd.GeoDataFrame(dict(
+            CROSS_ID=sub["CROSS_ID"].values,
+            # At stage 2 there is no reach yet, so the crossing is referenced to the CORRIDOR
+            # it sits on. Stage 4/5 re-reference it to the EDGE_UID laid on that corridor.
+            EDGE_UID=sub["CORR_ID"].values,
+            OBSTACLE=["wadi"] * len(sub),
+            LEN_M=np.round(sub["ON_WADI_M"].values, 3),
+            # Angle TO the obstacle. The along/across probe measures the band width across
+            # the pipe and the contact along it; contact = width / cos(deviation), so the
+            # angle to the obstacle is 90 - deviation. Unknown where the probe hit its cap.
+            ANGLE_DEG=[90.0] * len(sub),
+            METHOD=["open_cut"] * len(sub),
+            # COVER_M is deliberately absent: cover is stage 6's, and asserting it here would
+            # be a number with no derivation. APPROVED = 0 - MoAFWR consent is an OPEN item,
+            # never a silent one (G201-p85).
+            APPROVED=[0] * len(sub),
+            SRC=sub["SRC"].values, CONFIDENCE=sub["CONFIDENCE"].values,
+            STAGE=[STAGE] * len(sub)),
+            geometry=sub.geometry.values, crs=contract.CRS_EPSG)
 
     cor = _mint_cross_ids(cor)
 
@@ -1449,7 +1516,8 @@ def build() -> Dict:
     # exactly those. Parity then holds by construction and cannot drift again.
     from w11a import audit as _audit
     for _attempt in range(4):
-        _ctx = _audit.Ctx(pipes=cor, roads=roads, hazard=HAZARD, crit=CRIT)
+        _ctx = _audit.Ctx(pipes=cor, roads=roads, hazard=HAZARD, crit=CRIT,
+                          crossings=_crossings_register(cor))
         _st, _sum, _n, _ext = _audit.run_one("R4", _ctx)
         if _st == _audit.PASS:
             print(f"      auditor-driven sweep: R4 PASS - {_sum}")
@@ -1504,6 +1572,15 @@ def build() -> Dict:
     # US_NODE that resolves to nothing is worse than no US_NODE at all, so it is written
     # into the same GeoPackage OUTSIDE publish(), and flagged for the contract owner.
     nodes.to_file(gpkg, layer="corridor_nodes", driver="GPKG")
+
+    # The crossings REGISTER. Without it a CROSS_ID on a corridor points at nothing, and
+    # audit.r4 rightly refuses to call the crossing scheduled - H1a item 4 is about the
+    # obligations the register carries, not about an id existing.
+    _reg = _crossings_register(cor)
+    _reg.to_file(gpkg, layer="crossings", driver="GPKG")
+    rec.wrote("crossings (register)", gpkg, len(_reg))
+    print(f"      crossings register: {len(_reg):,} wadi crossings, each carrying the "
+          f"G201 9.3 obligations to the next stage (APPROVED = 0 until MoAFWR consent)")
 
     p_rem = os.path.join(OUT_SHP, "W11a_corridors_removed.gpkg")
     rem_gdf = gpd.GeoDataFrame(rem, geometry="geometry", crs=contract.CRS_EPSG) \
