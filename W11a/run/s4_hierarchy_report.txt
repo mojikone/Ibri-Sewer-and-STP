@@ -59,7 +59,7 @@ OPEN AND HANDED ON
      running along, by tier: trunk main 5,640 m.  H1 admits no tier exemption (project rule 7).
      1,233 CHAMBERS sit on wadi ground. H1a item 2 admits no exemption for a chamber, on a crossing or anywhere else (G201-p86) - every one is a defect to re-site.
      UNTESTED: 933.1 km (51 %) falls outside the Lekhuwair grid and carries NO wadi answer either way. audit.R4 now PUBLISHES this share rather than scoring it a pass, so a clean R4 is explicitly a clean result on the tested half. Full-coverage flood mapping is a data request, not a modelling choice.
-  THE CORRIDOR NETWORK arrives from stage 2 in 283 disconnected pieces, and THE TRUNK in 4.
+  THE CORRIDOR NETWORK arrives from stage 2 in 311 disconnected pieces; welding the trunk in joins 28 of them and leaves 283. THE TRUNK is in 4.
      A hierarchy can only be as connected as the corridors under it. Each trunk piece has to be rooted separately,
      so every piece past the first is an extra outfall and an H15 breach; the design comes out with 261 drainage
      systems (largest 1,381.1 km; 8 carry 10 km or more), and that count is a STAGE 2 finding before it is a
@@ -67,9 +67,9 @@ OPEN AND HANDED ON
      MEASURED 2026-09-02, the same 85.5 km noded at 10 mm from each available source:
         the user's drawing as given .......  3 components, 85.5 km
         stage 3's DESIGNED trunk ..........  4 components, 85.5 km
-        stage 2 corridors, SRC=main_pipe ... 58 components, 80.5 km
+        stage 2 corridors, SRC=main_pipe ... 58 components, 80.3 km
      Stage 3's trunk is the best source and is the one used. Two separate defects followed, and they had been reported as one:
-       (a) the CORRIDOR treatment shreds the trunk from 3 pieces to 58 and loses 5.0 km of it - a stage 2 defect, not an alignment one. STILL OPEN (OPEN-S2-2);
+       (a) the CORRIDOR treatment shreds the trunk from 3 pieces to 58 and loses 5.2 km of it - a stage 2 defect, not an alignment one. STILL OPEN (OPEN-S2-2);
        (b) THIS STAGE used to take that 4-piece trunk to 74, because the trunk was never in the graph - it was a 0.5 m proximity MASK over stage 2's corridors, so it arrived in as many pieces as stage 2's COPY of it. CLOSED.
      OPEN-S4-1 is CLOSED by the WELD in `weld_trunk`: stage 3's alignment enters the graph as edges of its own and the 819 corridors it touches are re-noded WITH it
      (3.1 % of the layer; the rest keep the US_NODE / DS_NODE stage 2 wrote, so contract P3 still holds for the remainder).

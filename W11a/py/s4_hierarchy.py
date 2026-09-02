@@ -170,9 +170,10 @@ STP_EXISTING = (444422.8, 2563337.9)      # user-confirmed 2026-09-01, ground 32
 
 # --- geometric tolerances. NOT design values. -----------------------------------------
 TRUNK_ON_M = 0.5             # W10's NODE_SNAP_M. Kept only as the historical record of what
-                             # the mask used to be: NOTHING reads it now. On the adopted path
-                             # it asked a midpoint question of an UN-noded corridor set and
-                             # turned a 4-piece trunk into 74 - see `weld_trunk` and
+                             # the mask used to be - NO test reads it any more; the report
+                             # quotes it to say what the superseded rule was. On the adopted
+                             # path it asked a midpoint question of an UN-noded corridor set
+                             # and turned a 4-piece trunk into 74 - see `weld_trunk` and
                              # OPEN-S4-1. On the fallback path the same probe over-selected,
                              # flagging 128.5 km of "trunk" against an 85.5 km alignment,
                              # because after planar noding a segment is short enough for any
@@ -405,8 +406,15 @@ def adopt_graph(corr, corr_nodes, trunk_where, rec):
     fun.drop(f"parallel corridor between the same two nodes ({par_m / 1000:.2f} km)", n=n_par)
     rec.metric("node_offset_max_m", round(off, 4))
     rec.metric("graph_nodes", G.number_of_nodes())
+    # STAGE 2's OWN piece count, recorded here where the graph is still only stage 2's.
+    # `corridor_components` is measured in build_tree, AFTER the weld, and the two are
+    # different numbers: printing the post-weld figure under the words "arrives from stage 2"
+    # is the sort of relabelling P2 exists to stop.
+    rec.metric("corridor_components_stage2", nx.number_connected_components(G))
     _say(f"  adopted stage 2 topology: {G.number_of_nodes():,} nodes, "
-         f"{G.number_of_edges():,} edges; worst line-end to node offset {off:.3f} m")
+         f"{G.number_of_edges():,} edges, "
+         f"{nx.number_connected_components(G):,} pieces; worst line-end to node offset "
+         f"{off:.3f} m")
     # Nodes stage 2 published that no surviving corridor uses. The SPATIAL index has to be
     # purged with them: NodeIndex.find walks `_cells` and dereferences every uid it holds, so
     # a uid popped from `nodes` and left in a cell raises KeyError the moment anything asks
@@ -1745,8 +1753,12 @@ def main():
                    ).sort_values(ascending=False)
         n_corr_comp = int(rec.metrics.get("corridor_components", 0))
         n_trunk_pieces = int(rec.metrics.get("trunk_pieces", 0))
-        rep.append(f"  THE CORRIDOR NETWORK arrives from stage 2 in {n_corr_comp:,} "
-                   f"disconnected pieces, and THE TRUNK in {n_trunk_pieces:,}.")
+        n_s2 = int(rec.metrics.get("corridor_components_stage2", n_corr_comp))
+        rep.append(f"  THE CORRIDOR NETWORK arrives from stage 2 in {n_s2:,} disconnected "
+                   f"pieces"
+                   + (f"; welding the trunk in joins {n_s2 - n_corr_comp:,} of them and "
+                      f"leaves {n_corr_comp:,}" if n_s2 != n_corr_comp else "")
+                   + f". THE TRUNK is in {n_trunk_pieces:,}.")
         rep.append(f"     A hierarchy can only be as connected as the corridors under it. "
                    f"Each trunk piece has to be rooted separately,")
         rep.append(f"     so every piece past the first is an extra outfall and an H15 breach; "
@@ -1766,11 +1778,11 @@ def main():
                    f"available source:")
         rep.append(f"        the user's drawing as given .......  3 components, 85.5 km")
         rep.append(f"        stage 3's DESIGNED trunk ..........  4 components, 85.5 km")
-        rep.append(f"        stage 2 corridors, SRC=main_pipe ... 58 components, 80.5 km")
+        rep.append(f"        stage 2 corridors, SRC=main_pipe ... 58 components, 80.3 km")
         rep.append(f"     Stage 3's trunk is the best source and is the one used. Two separate "
                    f"defects followed, and they had been reported as one:")
         rep.append(f"       (a) the CORRIDOR treatment shreds the trunk from 3 pieces to 58 "
-                   f"and loses 5.0 km of it - a stage 2 defect, not an alignment one. STILL "
+                   f"and loses 5.2 km of it - a stage 2 defect, not an alignment one. STILL "
                    f"OPEN (OPEN-S2-2);")
         rep.append(f"       (b) THIS STAGE used to take that 4-piece trunk to 74, because the "
                    f"trunk was never in the graph - it was a "

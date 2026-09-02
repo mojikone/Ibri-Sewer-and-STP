@@ -1,11 +1,11 @@
 {
   "contract": "W11a-contract-1.1",
-  "written": "2026-09-02 14:00:10",
+  "written": "2026-09-02 14:05:36",
   "stages": [
     {
       "stage": "s4_hierarchy",
       "order": 4,
-      "seconds": 72.35,
+      "seconds": 73.92,
       "reads": [
         {
           "name": "corridors (stage 2)",
@@ -73,6 +73,7 @@
       "metrics": {
         "node_offset_max_m": 0.0,
         "graph_nodes": 23903,
+        "corridor_components_stage2": 311,
         "weld_corridors_renoded": 819,
         "weld_segments": 3973,
         "weld_new_nodes": 1692,
