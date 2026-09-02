@@ -119,7 +119,7 @@ layer contains **310 independent cycles**.
 of the perpendicular from the first plot's centroid — where the house connection will
 actually arrive. Not at the end of a road centreline.
 
-**3.8a Inlets arrive at 90° or better, and anything less is flagged by name.** G203-p30
+**3.8 Inlets arrive at 90° or better, and anything less is flagged by name.** G203-p30
 requires an incoming pipe to make an angle of **not less than 90°** with the flow — no pipe
 may arrive pointing against it. Where a street meets at a bad angle, a **bend chamber** goes
 a few metres short of the junction so the turn is made in two halves. Where there is no room
@@ -132,10 +132,10 @@ deviation. **A deviation from a "shall" cannot be carried at three different val
 holds the guideline's 90° and reports every junction below it as a named exception. W10
 checked the angle nowhere at all.
 
-**3.8 Ten metres of clearance at a junction.** A branch starts at least 10 m from the
+**3.9 Ten metres of clearance at a junction.** A branch starts at least 10 m from the
 chamber it will join, so the junction is a chamber and not a collision.
 
-**3.9 The tertiary layer is part of the design, not a detail left for later.** A network that
+**3.10 The tertiary layer is part of the design, not a detail left for later.** A network that
 stops at the lateral has not connected anybody. Three elements, each with its own rule:
 
 - **Property connection** — from the plot to the rider or lateral, at 3–10 %, **maximum 50 m**
@@ -479,13 +479,13 @@ no concept of the trade in §5.
 **The pumping decision belongs to us, taken before the solver runs, and cannot be delegated
 to a referee model.** This is the clearest single justification for the order in §2.
 
-**9.3d Design runs in steady state only.** Confirmed by three named Bentley staff: *"automated
+**9.3c Design runs in steady state only.** Confirmed by three named Bentley staff: *"automated
 design can only be performed in steady state"* (Dringoli); *"for EPS runs automated design is
 not applicable"* (Choure); and it requires the GVF-Convex solver (Kampa). So the referee run
 sizes on a steady peak and never on a hydrograph. Anything we want checked dynamically is a
 separate analysis run, not a design run.
 
-**9.3c One sizing detail to watch when we use SewerGEMS as referee.** KB0057316: *"during the
+**9.3d One sizing detail to watch when we use SewerGEMS as referee.** KB0057316: *"during the
 constraint based design calculations, pipes are sized based on the flow at the upstream end
 of the conduit, before such attenuation is accounted for."* A referee run will therefore size
 marginally conservatively against a dynamic solve; do not read small differences as our
