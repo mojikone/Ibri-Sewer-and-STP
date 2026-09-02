@@ -10,6 +10,7 @@ plainly which document is live and which is a record of past work.
 | `CLAUDE.md` | working rules, folder map, current state | 2026-08-19 |
 | `_BRAIN/07_PROJECT_STATE.md` | the one-page orientation: data, doctrine, progress | 2026-08-19 |
 | `_BRAIN/02_DESIGN_CRITERIA.md` | every design number with its guideline page | 2026-08-19 |
+| `_BRAIN/08_DESIGN_PHILOSOPHY.md` | **how to arrive at a GOOD design** — objectives in priority order, the order of design, layout/levelling/sizing philosophy, the cap-and-veto ladder for pumping, our constraint ranking, and the two-pass method. Binding on every network design | 2026-09-02 |
 | `W5/docs/CRITERIA_UPDATE_R1.md` | the register of rules agreed 18–19 Aug and what is built | 2026-08-19 |
 | `W8/report/W8_Sewer_Network_Design.docx / .pdf` | **the current report**, built on every run | 2026-08-23 |
 | `W8/py/` | **the design code** that produced the current outputs | 2026-08-23 |

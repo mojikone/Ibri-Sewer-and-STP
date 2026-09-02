@@ -1,6 +1,9 @@
 # DESIGN CRITERIA — PAM-GUD-203 (201 pp) + PAM-GUD-201 (152 pp) + PAM-GUD-202 (177 pp)
 Refs: `p##` = PAM-GUD-203; `G1-p##` = PAM-GUD-201; `G2-p##` = PAM-GUD-202 Water & TSE Design Guidelines v1.0 (added 2026-08-14, in `_STANDARDS/` + `Data/`). **Nothing here may be altered without re-reading the source.**
 
+> ## ⚠ THIS FILE IS HALF THE PICTURE
+> **`02` holds the numbers that must be TRUE. `08_DESIGN_PHILOSOPHY.md` holds the method that produces a design worth building.** A design can satisfy every row below and still be one no contractor would build — W10 did exactly that. Read `08` before laying out any network. Where the two conflict, **this file wins**: a criterion is a rule of law, philosophy is a rule of judgement.
+
 > ## ⚠ READ FIRST — the two-tier rule (§11.0)
 > **PAM-GUD-201 §7 gives two methods for almost every demand and flow parameter.** Tier A (LPCD ratios 22 %/14 %, return rates 85 %/54 %) is for *"planning and forecasting purposes across broader service areas"*. Tier B — **mandatory "shall" wording wherever detailed land use exists** — is Table 12 unit rates for non-domestic/governmental demand and BS EN 752 for design flows. **Ibri is a project-specific design with detailed land use: Tier B governs, Tier A is a labelled fallback.** W1–W3 used Tier A throughout without saying so. Full rule and quotes in §11.0.
 >
