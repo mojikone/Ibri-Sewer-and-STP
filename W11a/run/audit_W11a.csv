@@ -1,6 +1,6 @@
 id,group,requirement,source,blocking,status,summary,n_bad,extent
 H1,corridor,No pipe along a dual carriageway; no pipe or chamber in a wadi,"project rules 7, 8",True,FAIL,8 reaches run along a dual carriageway,8,0.36 km
-H2,hydraulics,"Capacity >= discharge, within the d/D limit",G203-p27 T10,True,FAIL,"0 surcharged, 170 over the d/D limit",170,
+H2,hydraulics,"Capacity >= discharge, within the d/D limit",G203-p27 T10,True,PASS,every pipe passes its peak flow within d/D,0,
 H3,cover,"Minimum cover 1.30 m to crown, on the reach's OWN outside diameter",G203-p33,True,PASS,every reach has at least 1.30 m of cover,0,
 H4,cover,"Maximum cover 12 m, exits only via philosophy 5",G203-p33,True,PASS,"518 past the cap, all flagged with an exit",0,
 H5,hydraulics,Self-cleansing by EITHER route - velocity or tractive force,G203-p26-27,True,PASS,"all self-cleansing: 4,425 by velocity, 44,952 by tractive force (91 % - exposed to the tau = 1.0 Pa assumption, GAP-9)",0,
@@ -15,7 +15,7 @@ H13,levels,Uniform slope between successive manholes,G203-p29,True,PASS,one grad
 H14,levels,An existing structure's invert is fixed; tie in soffit to soffit,practice,True,PASS,every tie-in is soffit to soffit,0,
 H15,topology,"The network is a FOREST - zero loops, and every component reaches exactly one outfall",project rule,True,PASS,"loop-free forest, 247 component(s), exactly one outfall each (247 outfalls)",0,
 H16,topology,"Every pipe publishes US_NODE/DS_NODE, and the declared graph MATCHES the geometry",philosophy 3.6a / H16,True,PASS,declared and drawn topology agree: 247 component(s),0,
-R1,regression,No surcharged pipe (W10 shipped 2.80 km),W10 post-mortem,True,FAIL,"0 surcharged, 170 over the d/D limit",170,
+R1,regression,No surcharged pipe (W10 shipped 2.80 km),W10 post-mortem,True,PASS,every pipe passes its peak flow within d/D,0,
 R2,regression,No reach below minimum cover (W10 shipped 45.92 km),W10 post-mortem,True,PASS,every reach has at least 1.30 m of cover,0,
 R3,regression,No pipe along a dual carriageway (W10 shipped 1.67 km),W10 post-mortem,True,FAIL,8 reaches run along a dual carriageway,8,0.36 km
 R4,regression,No pipe ALONG a wadi. A crossing is legal only under H1a (W10 shipped 131.7 km),"philosophy H1a / G203-p30 4.4.1, p33 / G201-p85-86",True,FAIL,"295 reaches run ALONG a wadi, 11 cross one without a scheduled CROSS_ID, and 1,170 touch a wadi whose far bank lies outside the grid, so along-or-across CANNOT BE DECIDED; 52 % of samples fall outside the hazard grid and are UNTESTED (18,227 reaches entirely so)",1465,54.2 km

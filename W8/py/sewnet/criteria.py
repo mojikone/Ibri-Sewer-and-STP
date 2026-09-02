@@ -39,8 +39,17 @@ class Criteria:
         600: 0.00125, 700: 0.00100, 800: 0.00085, 900: 0.00075})
     TABLE11_FLOOR: float = 0.00075    # ">= DN900: 0.75 mm/m" (G203-p29)
 
+    # Stops at 1200 and the trunk needs more, so 168 reaches - 9.57 km, almost all trunk
+    # main - breached the G203-p27 Tab 10 d/D limit for want of a size the code could not
+    # emit. The sizes above 1200 are the ones G203 PRINTS ITSELF: p32 Tab 13 and p35 Tab 15
+    # give service corridor widths for 1400-1700, 1800 and 2000-2400, and p30 Tab 12 gives
+    # chamber spacing "> 1400". A guideline that tabulates a diameter contemplates it.
+    # OPEN S3-2: the series is ours to declare and NWS's to confirm. Extending it can only
+    # ever ADD a candidate - size_pipe still returns the smallest that works - so a design
+    # that did not need these sizes is unchanged by their presence.
     DN_SERIES: List[int] = field(default_factory=lambda:
-                                 [200, 250, 315, 400, 500, 600, 700, 800, 900, 1000, 1200])
+                                 [200, 250, 315, 400, 500, 600, 700, 800, 900, 1000, 1200,
+                                  1400, 1700, 1800, 2000, 2400])
     DN_MIN_MAIN: int = 200            # OD200 minimum main sewer (G203-p22 Tab 6)
 
     # Tractive-force minimum gradient (G203-p27 4.2.2.1, A9-corrected):

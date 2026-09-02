@@ -1,11 +1,11 @@
 {
   "contract": "W11a-contract-1.1",
-  "written": "2026-09-02 14:48:55",
+  "written": "2026-09-02 16:11:29",
   "stages": [
     {
       "stage": "S6 levels and sizes",
       "order": 6,
-      "seconds": 123.01,
+      "seconds": 75.47,
       "reads": [
         {
           "name": "nodes",
@@ -77,8 +77,6 @@
         "counter_uniform_refused_by_cap": 64,
         "counter_dn_floor_by_upstream_continuity": 3735,
         "counter_upsized_at_laid_gradient": 2,
-        "counter_no_catalogue_size": 170,
-        "counter_no_catalogue_size_at_laid_gradient": 170,
         "tie_conflicts": 0,
         "backdrops_0p6_to_2m": 1617,
         "vortex_drop_shafts_over_2m": 2449,
