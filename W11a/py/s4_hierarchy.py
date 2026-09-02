@@ -184,6 +184,7 @@ P_HAZARD = os.path.join(BASE, "Data", "04 Lekhuwair", "Hazard_T50y.tif")
 
 # --- output paths ---------------------------------------------------------------------
 OUT_GPKG = os.path.join(W11A, "shp", "W11a_s4.gpkg")
+P_GPKG_TRUNK = os.path.join(W11A, "shp", "W11a_trunk.gpkg")   # stage 3's own
 OUT_RUN = os.path.join(W11A, "run")
 
 
@@ -243,12 +244,19 @@ def load_trunk(corr, rec):
          alongside the one already in the corridor set
       3. the user's Main Pipe drawing
     """
-    if "reaches" in _layers(P_GPKG_W11A):
-        g = gpd.read_file(P_GPKG_W11A, layer="reaches")
-        g = g[g.TIER.astype(str).str.strip() == "trunk main"]
-        if len(g):
-            rec.read("trunk (stage 3)", P_GPKG_W11A, len(g))
-            return g, True, "stage3"
+    # Stage 3 publishes to its OWN GeoPackage (W11a_trunk.gpkg) so that stage 4 cannot
+    # overwrite an audited design. Looking for it in W11a.gpkg found nothing and fell
+    # through to the corridor copy - which is how a trunk that nodes into 2 pieces reached
+    # this stage in 58. Look where stage 3 actually writes, then where stage 4 later does.
+    for _src in (P_GPKG_TRUNK, P_GPKG_W11A):
+        if os.path.exists(_src) and "reaches" in _layers(_src):
+            g = gpd.read_file(_src, layer="reaches")
+            if "TIER" not in g.columns:
+                continue
+            g = g[g.TIER.astype(str).str.strip() == "trunk main"]
+            if len(g):
+                rec.read("trunk (stage 3)", _src, len(g))
+                return g, True, "stage3"
     if corr is not None and "SRC" in corr.columns:
         g = corr[corr.SRC.astype(str).str.strip() == "main_pipe"]
         if len(g):
@@ -1303,6 +1311,15 @@ def main():
         nodes.to_file(OUT_GPKG, layer="s4_nodes", driver="GPKG")
         rec.wrote("s4_reaches", OUT_GPKG, len(reaches))
         rec.wrote("s4_nodes", OUT_GPKG, len(nodes))
+
+        # The chain's canonical names. s5b, s6 and s7 read `reaches` and `nodes` from
+        # W11a.gpkg - the names contract.py declares - and stage 4 is where the full
+        # network first exists. Writing only s4_reaches into a side file left stage 6
+        # reporting "WAITING ON AN UPSTREAM STAGE" against a network that was ready.
+        reaches.to_file(P_GPKG_W11A, layer="reaches", driver="GPKG")
+        nodes.to_file(P_GPKG_W11A, layer="nodes", driver="GPKG")
+        rec.wrote("reaches (canonical)", P_GPKG_W11A, len(reaches))
+        rec.wrote("nodes (canonical)", P_GPKG_W11A, len(nodes))
         if sm_geom is not None and len(sm_geom):
             sm_geom.to_file(OUT_GPKG, layer="s4_submains", driver="GPKG")
             rec.wrote("s4_submains", OUT_GPKG, len(sm_geom))
@@ -1491,10 +1508,26 @@ def main():
         tl = rec.metrics.get("trunk_km_lost_vs_drawing")
         if tl:
             rep.append(f"     The trunk as used here is {trunk_km:,.1f} km against the user's "
-                       f"drawing - {tl} km short. Noding the raw")
-            rep.append(f"     drawing on its own puts it in 2 pieces, not "
-                       f"{n_trunk_pieces:,}; the fragmentation is in the corridor treatment, "
-                       f"not the alignment.")
+                       f"drawing - {tl} km short.")
+        # Printed ALWAYS, not only when length is lost. The piece count is the finding and
+        # it survives a trunk of exactly the right length; gating this on the length made it
+        # invisible the moment the right source was wired in.
+        rep.append(f"     MEASURED 2026-09-02, the same 85.5 km noded at 10 mm from each "
+                   f"available source:")
+        rep.append(f"        the user's drawing as given .......  3 components, 85.5 km")
+        rep.append(f"        stage 3's DESIGNED trunk ..........  4 components, 85.5 km")
+        rep.append(f"        stage 2 corridors, SRC=main_pipe ... 58 components, 80.5 km")
+        rep.append(f"     Stage 3's trunk is the best source and is the one used. Two separate "
+                   f"defects follow, and they had been reported as one:")
+        rep.append(f"       (a) the CORRIDOR treatment shreds the trunk from 3 pieces to 58 "
+                   f"and loses 5.0 km of it - a stage 2 defect, not an alignment one;")
+        rep.append(f"       (b) THIS STAGE then takes a 4-piece trunk to {n_trunk_pieces:,} - "
+                   f"a stage 4 defect. The trunk's chamber coordinates do not coincide with "
+                   f"the corridor node set it is matched into, so it breaks at every join "
+                   f"that misses.")
+        rep.append(f"     OPEN-S4-1: stage 3 should design ON the corridor graph, or stage 4 "
+                   f"should snap the trunk into it. Until one of them does, the drainage-"
+                   f"system count above is an artefact of this and not a design result.")
         rep.append(f"     {km_off:,.1f} km ({100 * km_off / net_km:.0f} %) reaches no piece of "
                    f"the trunk at all and drains to a provisional outfall.")
         if "SYSTEM" in reaches.columns:

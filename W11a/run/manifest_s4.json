@@ -1,11 +1,11 @@
 {
   "contract": "W11a-contract-1.1",
-  "written": "2026-09-02 12:00:46",
+  "written": "2026-09-02 12:08:45",
   "stages": [
     {
       "stage": "s4_hierarchy",
       "order": 4,
-      "seconds": 53.65,
+      "seconds": 54.4,
       "reads": [
         {
           "name": "corridors (stage 2)",
@@ -13,9 +13,9 @@
           "n": 25122
         },
         {
-          "name": "trunk (stage 2 corridors, SRC=main_pipe)",
-          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
-          "n": 667
+          "name": "trunk (stage 3)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_trunk.gpkg",
+          "n": 754
         },
         {
           "name": "corridor_nodes (stage 2)",
@@ -42,17 +42,27 @@
         {
           "name": "s4_reaches",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_s4.gpkg",
-          "n": 21879
+          "n": 21856
         },
         {
           "name": "s4_nodes",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_s4.gpkg",
-          "n": 22635
+          "n": 22629
+        },
+        {
+          "name": "reaches (canonical)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 21856
+        },
+        {
+          "name": "nodes (canonical)",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
+          "n": 22629
         },
         {
           "name": "s4_submains",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_s4.gpkg",
-          "n": 1557
+          "n": 1556
         },
         {
           "name": "s4_hierarchy_report.txt",
@@ -61,48 +71,47 @@
         }
       ],
       "metrics": {
-        "trunk_km_lost_vs_drawing": 4.98,
         "node_offset_max_m": 0.0,
         "graph_nodes": 23342,
-        "trunk_pieces": 58,
-        "trunk_longest_piece_km": 9.82,
+        "trunk_pieces": 74,
+        "trunk_longest_piece_km": 7.89,
         "corridor_components": 771,
-        "tree_km": 1857.5,
-        "loop_closing_km_no_pipe": 361.3,
-        "outfalls": 792,
-        "fingers_pruned": 671,
-        "fingers_pruned_km": 17.685,
+        "tree_km": 1856.4,
+        "loop_closing_km_no_pipe": 362.3,
+        "outfalls": 810,
+        "fingers_pruned": 676,
+        "fingers_pruned_km": 17.734,
         "monotonicity_fixes": 3350,
-        "reaches_outside_a_servicing_polygon": 860,
-        "node_system_reconciled_to_reaches": 20499,
+        "reaches_outside_a_servicing_polygon": 853,
+        "node_system_reconciled_to_reaches": 20655,
         "reaches_along_a_wadi": 0,
-        "reaches_crossing_a_wadi": 2150,
-        "reaches_on_wadi_measured": 1990,
-        "km_on_wadi_measured": 92.812,
+        "reaches_crossing_a_wadi": 2142,
+        "reaches_on_wadi_measured": 1982,
+        "km_on_wadi_measured": 92.596,
         "chambers_on_wadi_measured": 1051,
-        "reaches_on_wadi_inherited": 2193,
-        "km_outside_hazard_grid_untestable": 951.1,
-        "km_no_loadbearing_plot_within_60m": 189.6,
-        "km_lateral": 1137.72,
-        "km_main": 370.0,
-        "km_sub_main": 254.08,
-        "km_trunk_main": 77.98,
-        "trunk_joins": 342,
+        "reaches_on_wadi_inherited": 2185,
+        "km_outside_hazard_grid_untestable": 950.9,
+        "km_no_loadbearing_plot_within_60m": 189.5,
+        "km_lateral": 1138.54,
+        "km_main": 370.11,
+        "km_sub_main": 254.04,
+        "km_trunk_main": 75.99,
+        "trunk_joins": 328,
         "sub_main_routes": 199,
         "F1_untiered": 0,
         "F2_monotonicity_breaches": 0,
         "round_trip": "PASS"
       },
       "notes": [
-        "707 nodes carried no reach after the 3.0 m merge and were dropped"
+        "713 nodes carried no reach after the 3.0 m merge and were dropped"
       ],
       "no_change_reason": "",
       "funnels": [
         {
           "name": "corridor segments -> tiered edges",
           "n0": 25122,
-          "n": 21879,
-          "line": "corridor segments -> tiered edges: 25,122 -> 25,122 -> 25,122 -> 24,963 -> 22,550 -> 21,879",
+          "n": 21856,
+          "line": "corridor segments -> tiered edges: 25,122 -> 25,122 -> 25,122 -> 24,963 -> 22,532 -> 21,856",
           "steps": [
             {
               "reason": "corridor with an unresolvable node reference or multipart geometry",
@@ -126,15 +135,15 @@
               "ids_truncated": false
             },
             {
-              "reason": "loop-closing street - a spanning tree cannot lay pipe on every edge of a grid without a cycle (H15). W8's augment_cross_streets is the fix and it belongs to stage 2/3 (361.3 km)",
-              "n": 2413,
+              "reason": "loop-closing street - a spanning tree cannot lay pipe on every edge of a grid without a cycle (H15). W8's augment_cross_streets is the fix and it belongs to stage 2/3 (362.3 km)",
+              "n": 2431,
               "qty": 0.0,
               "ids": [],
               "ids_truncated": false
             },
             {
-              "reason": "dead-end reach under 60 m serving nothing - philosophy sec 4 finger rule (17.685 km)",
-              "n": 671,
+              "reason": "dead-end reach under 60 m serving nothing - philosophy sec 4 finger rule (17.734 km)",
+              "n": 676,
               "qty": 0.0,
               "ids": [],
               "ids_truncated": false

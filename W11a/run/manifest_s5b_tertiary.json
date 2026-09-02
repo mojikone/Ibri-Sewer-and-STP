@@ -1,11 +1,11 @@
 {
   "contract": "W11a-contract-1.1",
-  "written": "2026-09-02 10:33:47",
+  "written": "2026-09-02 12:02:12",
   "stages": [
     {
       "stage": "s5b_tertiary",
       "order": 52,
-      "seconds": 39.02,
+      "seconds": 32.66,
       "reads": [
         {
           "name": "plot_loads",
@@ -15,60 +15,61 @@
         {
           "name": "nodes",
           "path": "W11a.gpkg[nodes] + s5_reach_skeleton.gpkg[s5_reach_skeleton]  (chambers published + split reaches from the run folder; 100.000% of reach endpoints resolve)",
-          "n": 48137
+          "n": 50060
         },
         {
           "name": "reaches",
           "path": "W11a.gpkg[nodes] + s5_reach_skeleton.gpkg[s5_reach_skeleton]  (chambers published + split reaches from the run folder; 100.000% of reach endpoints resolve)",
-          "n": 47021
+          "n": 49318
         }
       ],
       "writes": [
         {
           "name": "connections",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
-          "n": 45127
+          "n": 45230
         },
         {
           "name": "connections (CAD mirror)",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_connections.shp",
-          "n": 45127
+          "n": 45230
         },
         {
           "name": "unassigned plots (named)",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\s5b_unassigned.csv",
-          "n": 24614
+          "n": 24560
         },
         {
           "name": "chamber requests",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\run\\s5b_chamber_requests.csv",
-          "n": 5797
+          "n": 5876
         }
       ],
       "metrics": {
         "load_units": 56388,
         "qadf_m3d_in": 74675.3,
-        "riders": 29112,
-        "tertiary_km": 812.257,
-        "tertiary_km_drainable": 692.446,
-        "qadf_m3d_to_chamber": 52169.8,
+        "riders": 29237,
+        "tertiary_km": 813.342,
+        "tertiary_km_drainable": 693.427,
+        "qadf_m3d_to_chamber": 52174.0,
         "dn_tertiary_mm": 160,
-        "offset_p50_m": 9.61,
+        "offset_p50_m": 9.58,
         "chamber_spacing_p50_m": 70.8,
-        "offset_p90_m": 31.92,
-        "chamber_spacing_p90_m": 26.2,
+        "offset_p90_m": 31.84,
+        "chamber_spacing_p90_m": 26.3,
         "shortfall_median_m": 7.4,
         "shortfall_max_m": 44.7,
-        "backdrops": 28,
-        "cannot_drain": 5670,
-        "chambers_over_2m": 79,
-        "nodrain_shortfall_median_m": 0.13,
+        "backdrops": 30,
+        "cannot_drain": 5719,
+        "chambers_over_2m": 78,
+        "ground_from_chamber": 0,
+        "nodrain_shortfall_median_m": 0.14,
         "nodrain_shortfall_max_m": 8.79
       },
       "notes": [
         "constant gate: 13 phrases re-read from PAM-GUD-203 pp17-22 and all still present",
         "DN is not on the layer: the contract's connections spec declares none, and a field is not added here (EXCLUDED: 'a per-stage schema'). Every connection is OD160, G203-p22 Tab 6 minimum.",
-        "AUDIT GAP: none of audit.py's 22 checks reads this layer - all of them take ctx.pipes (the gravity reaches) or ctx.nodes. So 812 km of OD160, roughly half the length of the gravity network, is verified only by contract.validate() and by this stage's own arithmetic. Philosophy sec 8 wants one check per constraint; the tertiary gradients (G203-p18 Tab 5), the 0.60 m cover (p19 3.5), the 45 m run (p22 Tab 6), the 3-HCC rule (p17 3.2) and the 600 mm arrival (p19 3.6) each need one.",
+        "AUDIT GAP: none of audit.py's 22 checks reads this layer - all of them take ctx.pipes (the gravity reaches) or ctx.nodes. So 813 km of OD160, roughly half the length of the gravity network, is verified only by contract.validate() and by this stage's own arithmetic. Philosophy sec 8 wants one check per constraint; the tertiary gradients (G203-p18 Tab 5), the 0.60 m cover (p19 3.5), the 45 m run (p22 Tab 6), the 3-HCC rule (p17 3.2) and the 600 mm arrival (p19 3.6) each need one.",
         "the 50 m PC-sewer limit (G203-p18, note under Tab 4) does not bind at concept scale: the PCC is placed at the plot boundary and the HCC 2.5 m into the ROW (G203-p17 3.2), so the PC sewer is 2.5 m by construction. It binds in detailed design, where the PCC sits at the building and the run across a deep plot is real. The 45 m that governs here is a different rule on a different pipe - G203-p22 Tab 6, Lateral Sewer."
       ],
       "no_change_reason": "",
@@ -76,8 +77,8 @@
         {
           "name": "plots -> load units",
           "n0": 64071,
-          "n": 45127,
-          "line": "plots -> load units: 64,071 -> 64,027 -> 59,792 -> 59,737 -> 56,388 -> 50,924 -> 46,360 -> 45,127",
+          "n": 45230,
+          "line": "plots -> load units: 64,071 -> 64,027 -> 59,792 -> 59,737 -> 56,388 -> 51,106 -> 46,475 -> 45,230",
           "steps": [
             {
               "reason": "outside the project boundary",
@@ -612,7 +613,7 @@
             },
             {
               "reason": "no carrier within 47.5 m",
-              "n": 5464,
+              "n": 5282,
               "qty": 0.0,
               "ids": [
                 "1104427",
@@ -739,7 +740,9 @@
                 "1105753",
                 "1105764",
                 "1105825",
+                "1105838",
                 "1105849",
+                "1105852",
                 "1105857",
                 "1105878",
                 "1105879",
@@ -812,15 +815,13 @@
                 "1106294",
                 "1106295",
                 "1106308",
-                "1106309",
-                "1106312",
-                "1106340"
+                "1106309"
               ],
               "ids_truncated": true
             },
             {
               "reason": "no chamber within the 45 m tertiary run (G203-p22 Tab 6)",
-              "n": 4564,
+              "n": 4631,
               "qty": 0.0,
               "ids": [
                 "1104414",
@@ -835,7 +836,6 @@
                 "1104513",
                 "1104534",
                 "1104535",
-                "1104536",
                 "1104542",
                 "1104546",
                 "1104557",
@@ -964,14 +964,11 @@
                 "1105824",
                 "1105829",
                 "1105830",
-                "1105838",
-                "1105852",
                 "1105856",
                 "1105881",
                 "1105882",
                 "1105908",
                 "1105910",
-                "1105914",
                 "1105925",
                 "1105926",
                 "1105927",
@@ -1022,13 +1019,17 @@
                 "1106337",
                 "1106341",
                 "1106342",
-                "1106354"
+                "1106354",
+                "1106359",
+                "1106362",
+                "1106366",
+                "1106382"
               ],
               "ids_truncated": true
             },
             {
               "reason": "the carrier runs through or along the plot boundary - no right-of-way for a property connection chamber",
-              "n": 1233,
+              "n": 1245,
               "qty": 0.0,
               "ids": [
                 "1104456",
@@ -1054,7 +1055,6 @@
                 "1106595",
                 "1107046",
                 "1106776",
-                "1106805",
                 "1106844",
                 "1106861",
                 "1106887",
@@ -1067,9 +1067,9 @@
                 "1107070",
                 "1107072",
                 "1107111",
-                "1107166",
+                "1107128",
+                "1107129",
                 "1107197",
-                "1107200",
                 "1107277",
                 "1107287",
                 "1107292",
@@ -1096,13 +1096,13 @@
                 "1107452",
                 "1107561",
                 "1107621",
-                "1107827",
                 "1107629",
                 "1107631",
                 "1107633",
                 "1107644",
+                "1107646",
                 "1107648",
-                "1107661",
+                "1107822",
                 "1107816",
                 "1107678",
                 "1107686",
@@ -1112,7 +1112,10 @@
                 "1107808",
                 "1107728",
                 "1107837",
+                "1107786",
+                "1107787",
                 "1107800",
+                "1107821",
                 "1107838",
                 "1107932",
                 "1107936",
@@ -1126,36 +1129,32 @@
                 "1108155",
                 "1108173",
                 "1108230",
-                "1108239",
                 "1108263",
                 "1108273",
-                "1108516",
-                "1108534",
                 "1108535",
+                "1108517",
+                "1108534",
                 "1108553",
                 "1108766",
-                "1108769",
                 "1108813",
                 "1108885",
                 "1108929",
                 "1109166",
-                "1109169",
                 "1109574",
                 "1109290",
                 "1109450",
+                "1109449",
                 "1109787",
                 "1109853",
-                "1119594",
                 "1110199",
                 "1110287",
                 "1110576",
                 "1110578",
                 "1110581",
                 "1110649",
-                "1110652",
+                "1110651",
                 "1110653",
                 "1110680",
-                "1110677",
                 "1110678",
                 "1110684",
                 "1110709",
@@ -1188,12 +1187,14 @@
                 "1114948",
                 "1114985",
                 "1114987",
+                "1114997",
                 "1114999",
                 "1115021",
                 "1115020",
                 "1115019",
                 "1115016",
                 "1115014",
+                "1115017",
                 "1115018",
                 "1115022",
                 "1115036",
@@ -1206,10 +1207,12 @@
                 "1115109",
                 "1115315",
                 "1115314",
+                "1115327",
                 "1115331",
                 "1115396",
                 "1115444",
                 "1115445",
+                "1115446",
                 "1115447",
                 "1115448",
                 "1115471",
@@ -1228,9 +1231,7 @@
                 "1117256",
                 "1115887",
                 "1115909",
-                "1115940",
-                "1115948",
-                "1115950"
+                "1115940"
               ],
               "ids_truncated": true
             }
