@@ -523,6 +523,30 @@ def wadi_recheck(reaches, nodes, rec):
     reaches["WADI_WARN"] = np.maximum(inherited, on_r.astype(int))
     reaches["WADI_HERE"] = on_r.astype(int)      # measured on OUR geometry, not inherited
     nodes["WADI_HERE"] = on_n.astype(int)
+
+    # H1a: ACROSS is legal, ALONG is not, so one undifferentiated "on wadi ground" count is
+    # not a finding - it lumps a designed crossing in with a pipe laid down a flood channel.
+    # The classifier is the auditor's own (audit._r4_classify), not a copy: the stage that
+    # measures and the check that judges must not be able to disagree.
+    reaches["WADI_ALONG"] = 0
+    reaches["WADI_XING"] = 0
+    try:
+        from w11a import audit as _audit
+        _ctx = _audit.Ctx(pipes=reaches, hazard=P_HAZARD)
+        _along, _xing_bad, _xing_ok, _ns, _nd, _ndr = _audit._r4_classify(_ctx)
+        if _along:
+            reaches.iloc[np.array(_along, dtype=int),
+                         reaches.columns.get_loc("WADI_ALONG")] = 1
+        _xa = _xing_bad + list(range(0))          # every crossing here is unscheduled yet
+        if _xa:
+            reaches.iloc[np.array(_xa, dtype=int),
+                         reaches.columns.get_loc("WADI_XING")] = 1
+        rec.metric("reaches_along_a_wadi", int(len(_along)))
+        rec.metric("reaches_crossing_a_wadi", int(len(_xing_bad) + _xing_ok))
+    except Exception as _e:                       # noqa: BLE001 - reported, never swallowed
+        rec.note(f"H1a along/across classification did not run ({type(_e).__name__}: {_e}); "
+                 "WADI_HERE is an undifferentiated contact count and OVERSTATES the defect, "
+                 "because a legal crossing has its midpoint on the wadi by definition")
     km = float(reaches.LEN_M[on_r].sum()) / 1000
     rec.metric("reaches_on_wadi_measured", int(on_r.sum()))
     rec.metric("km_on_wadi_measured", round(km, 3))
@@ -1416,24 +1440,37 @@ def main():
                    f"carriageway length ({reaches.LEN_M[reaches.DUAL_WARN == 1].sum() / 1000:,.1f} km).")
         if "WADI_HERE" in reaches.columns:
             wr = reaches.WADI_HERE == 1
-            rep.append(f"  H1 WADI, MEASURED ON OUR OWN GEOMETRY against Hazard_T50y class "
-                       f">= {WADI_CLASS_MIN} (the test audit.R4 applies):")
-            rep.append(f"     {int(wr.sum()):,} reaches ({reaches.LEN_M[wr].sum() / 1000:,.3f} km) "
-                       f"and {int(nodes.WADI_HERE.sum()):,} chambers sit on wadi ground.")
-            if int(wr.sum()):
-                bt = reaches[wr].groupby("TIER").LEN_M.sum().sort_values(ascending=False)
-                rep.append("     by tier: " + ", ".join(f"{k} {v:,.0f} m" for k, v in bt.items())
+            n_al = int(reaches.get("WADI_ALONG", pd.Series(0, index=reaches.index)).sum())
+            n_xg = int(reaches.get("WADI_XING", pd.Series(0, index=reaches.index)).sum())
+            al = reaches.get("WADI_ALONG", pd.Series(0, index=reaches.index)) == 1
+            rep.append(f"  H1a WADI, MEASURED ON OUR OWN GEOMETRY against Hazard_T50y class "
+                       f">= {WADI_CLASS_MIN}, classified ALONG vs ACROSS by audit._r4_classify:")
+            n_cross = int(rec.metrics.get("reaches_crossing_a_wadi", 0))
+            rep.append(f"     {n_al:,} reaches ({reaches.LEN_M[al].sum() / 1000:,.1f} km) run "
+                       f"ALONG a wadi - the defect H1 forbids. {n_cross:,} CROSS one, which "
+                       f"H1a permits once each is scheduled with a CROSS_ID and given 1.5 m "
+                       f"cover to crown (G203-p52 8.2.4)."
+                       )
+            rep.append(f"     (A midpoint test alone reports {int(wr.sum()):,} reaches, "
+                       f"{reaches.LEN_M[wr].sum() / 1000:,.1f} km, touching wadi ground. It "
+                       f"samples ONE point per reach where the classifier samples the whole "
+                       f"length, so the two are not comparable and only the classified "
+                       f"counts are a finding.)")
+            if n_al:
+                bt = reaches[al].groupby("TIER").LEN_M.sum().sort_values(ascending=False)
+                rep.append("     running along, by tier: "
+                           + ", ".join(f"{k} {v:,.0f} m" for k, v in bt.items())
                            + ".  H1 admits no tier exemption (project rule 7).")
-            rep.append(f"     The inherited corridor flag claimed "
-                       f"{int(rec.metrics.get('reaches_on_wadi_inherited', 0)):,}. An "
-                       f"inherited flag is a claim about stage 2, not a measurement of this "
-                       f"geometry - re-routing is stage 2/3's, the count is ours.")
+            rep.append(f"     {int(nodes.WADI_HERE.sum()):,} CHAMBERS sit on wadi ground. "
+                       f"H1a item 2 admits no exemption for a chamber, on a crossing or "
+                       f"anywhere else (G201-p86) - every one is a defect to re-site.")
             rep.append(f"     UNTESTED: {rec.metrics.get('km_outside_hazard_grid_untestable', 0):,} km "
                        f"({100 * float(rec.metrics.get('km_outside_hazard_grid_untestable', 0)) / max(1e-9, net_km):.0f} %) "
                        f"falls outside the Lekhuwair grid and carries NO wadi answer either "
-                       f"way. audit.R4 scores nodata as a pass, so a clean R4 on this network "
-                       f"is a clean result on the tested half. A hazard grid covering the "
-                       f"whole study area is a data request, not a modelling choice.")
+                       f"way. audit.R4 now PUBLISHES this share rather than scoring it a "
+                       f"pass, so a clean R4 is explicitly a clean result on the tested "
+                       f"half. Full-coverage flood mapping is a data request, not a "
+                       f"modelling choice.")
         n_sat = int((nodes.IS_OUTFALL == 1).sum())
         km_off = reaches.LEN_M[reaches.ON_TRUNK == 0].sum() / 1000
         comp_km = (reaches.groupby(reaches.US_NODE.map(comp_root)).LEN_M.sum() / 1000

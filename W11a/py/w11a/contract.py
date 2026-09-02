@@ -429,16 +429,16 @@ class OpenItem:
 
 OPEN_ITEMS: Tuple[OpenItem, ...] = (
     OpenItem(
-        "OPEN-1",
-        "audit.h15 requires exactly ONE connected component. Philosophy sec 8a contemplates a "
-        "central network, satellite works and on-site systems - more than one.",
-        "A design that correctly serves a remote settlement by a satellite works FAILS H15 "
-        "as the auditor is written. Nobody caught this in the audit's own review.",
-        "stage 6 (packages) and any option that is not 100 % central conveyance",
-        "either (a) amend H15 to 'each component terminates at exactly ONE outfall', which "
-        "is the property that actually matters, or (b) publish each system as its own "
-        "audited layer set and run the auditor per system. Network.check() reports the "
-        "component count and the SYSTEM of each so the choice is visible, not discovered."),
+        "OPEN-1  [CLOSED 2026-09-02]",
+        "audit.h15 required exactly ONE connected component. Philosophy sec 8a contemplates "
+        "a central network, satellite works and on-site systems - more than one.",
+        "CLOSED by resolution (a): H15 now reads 'zero loops, and each component terminates "
+        "at exactly ONE outfall'. That is the property that actually matters - a satellite "
+        "works is legal, a piece that drains NOWHERE never was. Amended in "
+        "_BRAIN/08_DESIGN_PHILOSOPHY.md and in audit.h15 together, so the rule and the "
+        "check say the same thing.",
+        "nothing - closed",
+        "n/a"),
     OpenItem(
         "OPEN-2",
         "May a MAIN sewer be PVC-U at DN315?",
@@ -1748,10 +1748,10 @@ class Network:
             bad.append(
                 f"{n_comp} components (W10 published 7,919). Largest {comps.iloc[0]:,} "
                 f"nodes, smallest {comps.iloc[-1]:,}; systems present: {systems}. "
-                "audit.h15 as written requires exactly ONE, which a compliant multi-system "
-                "design cannot satisfy - OPEN-1. Either every component is a legitimate "
-                "system with its own outfall (say so, and audit per system), or this is "
-                "W10's defect returning.")
+                "H15 permits more than one component (OPEN-1 closed): a satellite works "
+                "is legal. What it requires is that EACH component ends at exactly one "
+                "outfall - so this is a finding only for components that drain nowhere, "
+                "and those are listed below.")
         orphan = [u for u, nd in self.nodes.items()
                   if u not in self.out_edge and not self.in_edges.get(u)]
         if orphan:

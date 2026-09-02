@@ -1,26 +1,26 @@
 {
   "contract": "W11a-contract-1.1",
-  "written": "2026-09-02 11:09:56",
+  "written": "2026-09-02 12:00:46",
   "stages": [
     {
       "stage": "s4_hierarchy",
       "order": 4,
-      "seconds": 14.93,
+      "seconds": 53.65,
       "reads": [
         {
           "name": "corridors (stage 2)",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
-          "n": 22900
+          "n": 25122
         },
         {
           "name": "trunk (stage 2 corridors, SRC=main_pipe)",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
-          "n": 513
+          "n": 667
         },
         {
           "name": "corridor_nodes (stage 2)",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a.gpkg",
-          "n": 21912
+          "n": 23355
         },
         {
           "name": "servicing (stage 1 scope decision)",
@@ -30,7 +30,7 @@
         {
           "name": "terrain 0.5 m VRT",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Data\\Terrain\\Sat_0p5m\\IBRI_0p5_VRT2.vrt",
-          "n": 21912
+          "n": 23342
         },
         {
           "name": "plot_loads (load-bearing only)",
@@ -42,17 +42,17 @@
         {
           "name": "s4_reaches",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_s4.gpkg",
-          "n": 19901
+          "n": 21879
         },
         {
           "name": "s4_nodes",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_s4.gpkg",
-          "n": 21158
+          "n": 22635
         },
         {
           "name": "s4_submains",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11a\\shp\\W11a_s4.gpkg",
-          "n": 1427
+          "n": 1557
         },
         {
           "name": "s4_hierarchy_report.txt",
@@ -61,46 +61,48 @@
         }
       ],
       "metrics": {
-        "trunk_km_lost_vs_drawing": 9.66,
+        "trunk_km_lost_vs_drawing": 4.98,
         "node_offset_max_m": 0.0,
-        "graph_nodes": 21912,
-        "trunk_pieces": 108,
-        "trunk_longest_piece_km": 7.65,
-        "corridor_components": 1381,
-        "tree_km": 1785.6,
-        "loop_closing_km_no_pipe": 332.2,
-        "outfalls": 1391,
-        "fingers_pruned": 620,
-        "fingers_pruned_km": 16.615,
-        "monotonicity_fixes": 2894,
-        "reaches_outside_a_servicing_polygon": 588,
-        "node_system_reconciled_to_reaches": 18819,
-        "reaches_on_wadi_measured": 0,
-        "km_on_wadi_measured": 0.0,
-        "chambers_on_wadi_measured": 0,
-        "reaches_on_wadi_inherited": 100,
-        "km_outside_hazard_grid_untestable": 968.3,
-        "km_no_loadbearing_plot_within_60m": 168.5,
-        "km_lateral": 1115.37,
-        "km_main": 336.86,
-        "km_sub_main": 243.63,
-        "km_trunk_main": 73.18,
-        "trunk_joins": 304,
-        "sub_main_routes": 182,
+        "graph_nodes": 23342,
+        "trunk_pieces": 58,
+        "trunk_longest_piece_km": 9.82,
+        "corridor_components": 771,
+        "tree_km": 1857.5,
+        "loop_closing_km_no_pipe": 361.3,
+        "outfalls": 792,
+        "fingers_pruned": 671,
+        "fingers_pruned_km": 17.685,
+        "monotonicity_fixes": 3350,
+        "reaches_outside_a_servicing_polygon": 860,
+        "node_system_reconciled_to_reaches": 20499,
+        "reaches_along_a_wadi": 0,
+        "reaches_crossing_a_wadi": 2150,
+        "reaches_on_wadi_measured": 1990,
+        "km_on_wadi_measured": 92.812,
+        "chambers_on_wadi_measured": 1051,
+        "reaches_on_wadi_inherited": 2193,
+        "km_outside_hazard_grid_untestable": 951.1,
+        "km_no_loadbearing_plot_within_60m": 189.6,
+        "km_lateral": 1137.72,
+        "km_main": 370.0,
+        "km_sub_main": 254.08,
+        "km_trunk_main": 77.98,
+        "trunk_joins": 342,
+        "sub_main_routes": 199,
         "F1_untiered": 0,
         "F2_monotonicity_breaches": 0,
         "round_trip": "PASS"
       },
       "notes": [
-        "754 nodes carried no reach after the 3.0 m merge and were dropped"
+        "707 nodes carried no reach after the 3.0 m merge and were dropped"
       ],
       "no_change_reason": "",
       "funnels": [
         {
           "name": "corridor segments -> tiered edges",
-          "n0": 22900,
-          "n": 19901,
-          "line": "corridor segments -> tiered edges: 22,900 -> 22,900 -> 22,900 -> 22,760 -> 20,521 -> 19,901",
+          "n0": 25122,
+          "n": 21879,
+          "line": "corridor segments -> tiered edges: 25,122 -> 25,122 -> 25,122 -> 24,963 -> 22,550 -> 21,879",
           "steps": [
             {
               "reason": "corridor with an unresolvable node reference or multipart geometry",
@@ -117,22 +119,22 @@
               "ids_truncated": false
             },
             {
-              "reason": "parallel corridor between the same two nodes (12.45 km)",
-              "n": 140,
+              "reason": "parallel corridor between the same two nodes (12.86 km)",
+              "n": 159,
               "qty": 0.0,
               "ids": [],
               "ids_truncated": false
             },
             {
-              "reason": "loop-closing street - a spanning tree cannot lay pipe on every edge of a grid without a cycle (H15). W8's augment_cross_streets is the fix and it belongs to stage 2/3 (332.2 km)",
-              "n": 2239,
+              "reason": "loop-closing street - a spanning tree cannot lay pipe on every edge of a grid without a cycle (H15). W8's augment_cross_streets is the fix and it belongs to stage 2/3 (361.3 km)",
+              "n": 2413,
               "qty": 0.0,
               "ids": [],
               "ids_truncated": false
             },
             {
-              "reason": "dead-end reach under 60 m serving nothing - philosophy sec 4 finger rule (16.615 km)",
-              "n": 620,
+              "reason": "dead-end reach under 60 m serving nothing - philosophy sec 4 finger rule (17.685 km)",
+              "n": 671,
               "qty": 0.0,
               "ids": [],
               "ids_truncated": false

@@ -1,11 +1,11 @@
 {
   "contract": "W11a-contract-1.1",
-  "written": "2026-09-02 11:09:40",
+  "written": "2026-09-02 11:56:00",
   "stages": [
     {
       "stage": "s3_trunk",
       "order": 3,
-      "seconds": 32.12,
+      "seconds": 32.48,
       "reads": [
         {
           "name": "Main Pipe.shp",
