@@ -158,9 +158,15 @@ SLOPE_STEP_PCT = C.SLOPE_STEP * 100.0    # 0.05 %. P1: gradients are laid on rou
 
 SHP_FIELD_MAXLEN = 10            # ESRI DBF limit. Enforced against the mirror, not the GPKG.
 
-AUDITOR_OD_ALLOW_M = 0.10        # audit.h3/h4: `od = DN/1000 + 0.10`. The auditor's own
-                                 # allowance for wall and bedding below the crown. See
-                                 # min_invert_depth() for why this, and not WALL_ALLOW.
+AUDITOR_OD_ALLOW_M = C.WALL_ALLOW  # THE AUDITOR'S allowance for wall and bedding below the
+                                 # crown, and it must BE the auditor's: audit.od() reads
+                                 # crit.WALL_ALLOW (0.05). This was hard-coded at 0.10, and
+                                 # the 50 mm gap ran both ways. At the MINIMUM the contract
+                                 # was conservative and harmless; at the MAXIMUM it was
+                                 # optimistic, and stage 6 shipped 44 of 633 reaches past the
+                                 # 12 m cap unflagged - every one of them inside that 50 mm.
+                                 # Two constants for one quantity is the defect; there is now
+                                 # one, and it is the one the auditor uses.
 
 NODE_UID_FMT = "N{:07d}"         # dumb, stable, sortable. Meaning lives in NODE_REF.
 EDGE_UID_FMT = "E{:07d}"
@@ -2194,11 +2200,16 @@ AUDIT_NEEDS: Dict[str, Dict[str, Tuple[str, ...]]] = {
     "H12": {"reaches": ("DN", "LEN_M")},
     "H13": {"reaches": ("SLOPE_LAID",)},
     "H14": {"reaches": ("TIE_TYPE",), "external": ("existing",)},
-    "H15": {"reaches": ()},
+    # H15 reads IS_OUTFALL from the NODES - an outfall is a property of a chamber - and needs
+    # the declared node ids to attribute one to a component.
+    "H15": {"reaches": ("US_NODE", "DS_NODE"), "nodes": ("IS_OUTFALL", "NODE_UID")},
+    "H16": {"reaches": ("US_NODE", "DS_NODE")},
     "R1":  {"reaches": ("DN", "QPK_LS", "SLOPE_LAID")},
     "R2":  {"reaches": ("DN", "US_DEPTH", "DS_DEPTH")},
     "R3":  {"external": ("roads",)},
-    "R4":  {"external": ("hazard",)},
+    # R4 needs the crossings REGISTER as well as the grid: a CROSS_ID with no OBSTACLE='wadi'
+    # row behind it schedules nothing, so without the register every crossing reads unscheduled.
+    "R4":  {"external": ("hazard", "crossings")},
     "G1":  {"reaches": ("SLOPE_LAID", "SLOPE_MIN")},
     "G2":  {"reaches": ("SIZED_BY", "GRAD_BY")},
     "G3":  {"reaches": ("US_NODE", "DS_NODE")},
