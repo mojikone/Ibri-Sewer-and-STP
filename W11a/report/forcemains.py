@@ -97,6 +97,29 @@ WORKS = (444422.8, 2563337.9)
 
 # ------------------------------------------------------------------------ helpers
 
+def _wrap(text: str, width: int = 128) -> str:
+    """Hard-wrap a figure note.
+
+    figkit writes the note as one unwrapped line and `save` uses
+    ``bbox_inches="tight"``, so a long note silently stretches the saved PNG to the
+    width of its own text.  Wrapping here keeps the figure the shape it was drawn.
+    """
+    import textwrap
+    return "\n".join(textwrap.wrap(" ".join(text.split()), width=width))
+
+
+def _note_room(fig, note: str, free: int = 1) -> None:
+    """Make bottom margin for a multi-line note.
+
+    figkit stacks the source line and the note upward from the bottom edge; a note
+    longer than one line then sits on the x-axis labels.  This buys 0.17 in per extra
+    line without touching figkit.
+    """
+    n = str(note).count("\n") + 1
+    fig.subplots_adjust(bottom=fig.subplotpars.bottom
+                        + max(0, n - free) * 0.17 / fig.get_size_inches()[1])
+
+
 def _sample(path, pts):
     """Raster values at pts, with the finite-nodata trap handled once."""
     import rasterio
@@ -181,6 +204,37 @@ def wet_well_m3(q_one_pump_ls, starts_per_h=WELL_STARTS_PER_H):
     return 0.25 * (q_one_pump_ls / 1000.0) * (3600.0 / starts_per_h)
 
 
+_ROAD_CACHE: dict = {}
+
+
+def _road_unions(geom=None, pad: float = 400.0):
+    """Dual-carriageway and all-road unions, clipped to ``geom``'s neighbourhood.
+
+    ``Road centerline 2`` carries a WKT projection string with no EPSG code, so the
+    CRS is asserted rather than read — it is UTM zone 40N, the project CRS.  The clip
+    is what makes the exact (buffer-based) road measures affordable: unioning and
+    buffering all 9,242 links takes minutes, the few hundred near one alignment takes
+    a second, and the answer inside the alignment's own neighbourhood is identical.
+    """
+    from shapely.ops import unary_union
+    if "gdf" not in _ROAD_CACHE:
+        import geopandas as gpd
+        rd = gpd.read_file(ROADS, engine="pyogrio").set_crs(fk.EPSG, allow_override=True)
+        _ROAD_CACHE["gdf"] = rd
+        _ROAD_CACHE["n"] = len(rd)
+        _ROAD_CACHE["n_dual"] = int((rd["dual"] == 1).sum())
+    rd = _ROAD_CACHE["gdf"]
+    if geom is None:
+        near = rd
+    else:
+        x0, y0, x1, y1 = geom.bounds
+        from shapely.geometry import box
+        env = box(x0 - pad, y0 - pad, x1 + pad, y1 + pad)
+        near = rd.iloc[list(rd.sindex.query(env, predicate="intersects"))]
+    return (unary_union(near[near["dual"] == 1].geometry.values),
+            unary_union(near.geometry.values))
+
+
 # ------------------------------------------------------------------------- reading
 
 def works_leg(nodes, reaches, start="N0000699", stop="N0000758"):
@@ -205,10 +259,13 @@ def alignment_report(name, geom, step=10.0):
     known = np.isfinite(h)
     wadi = known & (np.floor(h) >= min(PROJ_WADI_CLASSES))
 
-    rd = gpd.read_file(ROADS, engine="pyogrio").set_crs(fk.EPSG, allow_override=True)
-    dual = unary_union(rd[rd["dual"] == 1].geometry.values)
-    every = unary_union(rd.geometry.values)
-    d_dual = np.array([dual.distance(Point(p)) for p in pts])
+    # Road measures are EXACT, not sampled.  Sampling them at 10 m made A and its own
+    # trimmed sub-line disagree about the closest approach to a dual carriageway
+    # (0.50 m against 0.17 m) purely because the sample points landed differently.
+    dual, every = _road_unions(geom)
+    d_dual_min = float(geom.distance(dual)) if not dual.is_empty else float("inf")
+    dual_len = float(geom.intersection(dual.buffer(6.0)).length) if not dual.is_empty else 0.0
+    off_len = float(geom.length - geom.intersection(every.buffer(PROJ_OFFROAD_M)).length)
     d_road = np.array([every.distance(Point(p)) for p in pts])
 
     hi, lo, _ = _turning_points(z, step)
@@ -226,8 +283,9 @@ def alignment_report(name, geom, step=10.0):
         wadi_longest_m=float(max((r[2] for r in wruns), default=0.0)),
         wadi_runs_detail=[(int(a), int(b), int(c)) for a, b, c in wruns],
         wadi_in_first_km_m=float(wadi[ch <= 1000.0].sum() * step),
-        dual_min_m=float(d_dual.min()), dual_within6_m=float((d_dual < 6).sum() * step),
-        offroad_pct=float(100 * (d_road > PROJ_OFFROAD_M).mean()),
+        dual_min_m=d_dual_min, dual_within6_m=dual_len,
+        offroad_pct=float(100 * off_len / max(geom.length, 1e-9)),
+        offroad_m=off_len,
         road_median_m=float(np.median(d_road)),
         summits=len(hi), lows=len(lo),
         access_pts=int(np.ceil(geom.length / ACCESS_EVERY_M)),
@@ -330,6 +388,16 @@ def measure():
         B_minus_A_trimmed_m=float(legline.length - built_trim.length))
     out["built_row"] = built_all[built_all.STATUS == "Ex"].iloc[0]
 
+    # How far apart the two alignments actually are.  If they are the same street then
+    # the "route choice" is not a choice, and the comparison has to say so.
+    sep = np.array([legline.distance(built.interpolate(c))
+                    for c in np.arange(0.0, built.length, 25.0)])
+    out["separation"] = dict(n=float(len(sep)), min_m=float(sep.min()),
+                             median_m=float(np.median(sep)), mean_m=float(sep.mean()),
+                             max_m=float(sep.max()),
+                             pct_within_200m=float(100 * (sep < 200).mean()),
+                             pct_within_500m=float(100 * (sep < 500).mean()))
+
     # ---- the three drawn rising mains -------------------------------------------
     groups = {"FM-1": [0, 1, 2, 3], "FM-2": [4], "FM-3": [5, 6, 7]}
     fms = []
@@ -395,6 +463,20 @@ def measure():
                          v_one_ms=v / nd,
                          ok_vmax=v <= V_MAX_RISING, ok_vmin=v / nd >= V_MIN_RISING))
     out["pumped_alt"] = pd.DataFrame(rows)
+
+    # The flow at which a given main's friction exactly eats the ground fall.  Below
+    # it the main drains and cannot be kept full (G203-p51 8.2.2); above it the pumps
+    # do real work.  A main whose crossover sits at the AVERAGE flow is a main that
+    # spends its life on the boundary.
+    q_avg_ls = out["outfall"]["q_adf"] / 86.4
+    cross = {}
+    for D in (800, 850, 900, 1000):
+        k = hazen_williams_hf(L, 1.0, D / 1000.0, HW_C_DI_20YR)     # hf = k * Q^1.852
+        q0 = (out["leg"]["fall_grd"] / k) ** (1 / 1.852)
+        cross[D] = dict(q0_ls=q0 * 1000.0, q_avg_ls=q_avg_ls,
+                        ratio=q0 * 1000.0 / q_avg_ls)
+    out["crossover"] = cross
+    out["q_avg_ls"] = q_avg_ls
     return out
 
 
@@ -423,8 +505,9 @@ def fig_route_map(M):
                   f"so the like-for-like pair is B {B['len_m']/1000:.2f} km against A' "
                   f"= A trimmed to that start, {At['len_m']/1000:.2f} km. On that pair "
                   f"B is flatter ({B['cum_rise_m']:.1f} m of cumulative rise against "
-                  f"{At['cum_rise_m']:.1f}) and clear of the dual carriageway A runs "
-                  f"within {At['dual_min_m']:.2f} m of. Wadi contact is scored on "
+                  f"{At['cum_rise_m']:.1f}) and touches a dual carriageway over "
+                  f"{B['dual_within6_m']:.0f} m against {At['dual_within6_m']:.0f}. "
+                  f"Wadi contact is scored on "
                   f"hazard classes {PROJ_WADI_CLASSES}, a PROJECT ASSUMPTION standing "
                   f"in for G203-p30 4.4.1's \"areas subject to washout\", not a "
                   f"guideline threshold — and {B['untested_pct']:.0f} % of B has no "
@@ -476,7 +559,7 @@ def fig_route_map(M):
            f"{B['len_m']/1000:5.2f}  {C['len_m']/1000:5.2f}\n"
            f"wadi contact   m  {A['wadi_m']:5.0f}  {At['wadi_m']:5.0f}  "
            f"{B['wadi_m']:5.0f}  {C['wadi_m']:5.0f}\n"
-           f"within 6 m of dual{A['dual_within6_m']:5.0f}  {At['dual_within6_m']:5.0f}  "
+           f"within 6 m of dual{A['dual_within6_m']:5.1f}  {At['dual_within6_m']:5.1f}  "
            f"{B['dual_within6_m']:5.0f}  {C['dual_within6_m']:5.0f}\n"
            f"cross-country  %  {A['offroad_pct']:5.0f}  {At['offroad_pct']:5.0f}  "
            f"{B['offroad_pct']:5.0f}  {C['offroad_pct']:5.0f}\n"
@@ -493,7 +576,7 @@ def fig_route_map(M):
            f"{DEM.relative_to(fk.BASE).as_posix()}, 0.5 m terrain",
            f"{fk.HAZARD.relative_to(fk.BASE).as_posix()}, 50-year grid, nodata -9999.0",
            f"{ROADS.relative_to(fk.HYD).as_posix()}, dual column"]
-    fk.finish_map(fig, ax, legend_handles=handles, databox=box, note=note,
+    fk.finish_map(fig, ax, legend_handles=handles, databox=box, note=_wrap(note),
                   legend_loc="lower left", source=fk.source_line(*src))
     return fk.save(fig, "FM01_force_main_route_options")
 
@@ -527,30 +610,31 @@ def fig_long_section(M):
             label=f"trunk invert, DN{leg['dn'][0]} gravity", zorder=5)
     ax.axhline(leg["arrival_ceiling"], color=fk.C.FLAG, lw=1.3, ls="--", zorder=6)
     ax.annotate(f"highest legal arrival invert {leg['arrival_ceiling']:.2f} m aOD",
-                (leg["len_m"] * 0.02, leg["arrival_ceiling"]), xytext=(0, 5),
+                (leg["len_m"] * 0.42, leg["arrival_ceiling"]), xytext=(0, 5),
                 textcoords="offset points", fontsize=7.4, color=fk.C.FLAG,
                 fontweight="bold")
     ax.plot([leg["len_m"]], [leg["inv_dn1"]], marker="o", ms=7, mfc=fk.C.OUTFALL,
             mec="white", zorder=8)
     ax.annotate(f"arrives {leg['inv_dn1']:.2f} m aOD,\n"
                 f"{leg['grd1'] - leg['inv_dn1']:.2f} m below ground",
-                (leg["len_m"], leg["inv_dn1"]), xytext=(-14, 12),
-                textcoords="offset points", ha="right", va="bottom", fontsize=7.4,
+                (leg["len_m"] * 0.80, leg["arrival_ceiling"] - 1.5),
+                ha="right", va="top", fontsize=7.4,
                 color=fk.C.OUTFALL, fontweight="bold",
-                bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="none", alpha=0.85))
+                bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="none", alpha=0.9))
     # the band a works inlet may NOT sit in without a terminal pumping station
     ytop = float(np.nanmax(grd))
     ax.axhspan(leg["arrival_ceiling"], ytop, xmin=0.86, xmax=1.0,
                facecolor=fk.C.FAIL, alpha=0.13, lw=0, zorder=1)
     ax.annotate("a works inlet anywhere in this band\nneeds a terminal pumping station",
-                (leg["len_m"] * 0.985, (leg["arrival_ceiling"] + ytop) / 2),
-                ha="right", va="center", fontsize=7.2, color=fk.C.FAIL, zorder=7)
+                (leg["len_m"] * 0.985, leg["arrival_ceiling"] + 1.2), ha="right",
+                va="bottom", fontsize=7.2, color=fk.C.FAIL, zorder=7)
     ax.axvline(leg["binding_ch"], color=fk.C.FLAG, lw=0.9, ls=":", zorder=3)
     ax.annotate("binding node", (leg["binding_ch"], grd.max()), xytext=(4, -10),
                 textcoords="offset points", fontsize=6.8, color=fk.C.FLAG)
     ax.set_ylabel("level (m aOD)")
     ax.set_xlim(0, leg["len_m"])
-    ax.legend(loc="upper right", fontsize=7.2, framealpha=0.92, ncol=2)
+    ax.set_ylim(min(inv.min(), leg["arrival_ceiling"]) - 4.0, float(np.nanmax(grd)) + 1.0)
+    ax.legend(loc="lower left", fontsize=7.2, framealpha=0.92, ncol=2)
     ax.set_title(f"Gravity, as designed — {leg['n_reach']} reaches, "
                  f"{leg['fall_inv']:.2f} m of invert fall at {leg['slope_pct']:.3f} %, "
                  f"cover {leg['cover_min']:.2f}–{leg['cover_max']:.2f} m",
@@ -583,16 +667,16 @@ def fig_long_section(M):
     fk.thousands(ax2, "x")
     fk.thousands(ax, "x")
 
-    fk.finish_chart(
-        fig, source=fk.source_line(
-            M["src"]["reaches"], M["src"]["built"],
-            f"{DEM.relative_to(fk.BASE).as_posix()}, 0.5 m terrain"),
-        note=(f"Friction by Hazen-Williams, C = {HW_C_DI_20YR:.0f} for ductile iron at "
+    note2 = _wrap(f"Friction by Hazen-Williams, C = {HW_C_DI_20YR:.0f} for ductile iron at "
               f"20 years (G202-p104 Table 21); pump efficiency {PROJ_PUMP_EFF:.2f} "
               f"wire-to-water is OURS, a screening figure. The static head on this "
               f"route is NEGATIVE — the ground falls {leg['fall_grd']:.1f} m — so the "
               f"whole pump head is friction, forced by the "
-              f"{V_MIN_RISING:.2f}–{V_MAX_RISING:.1f} m/s window of G203-p50 8.1."))
+              f"{V_MIN_RISING:.2f}–{V_MAX_RISING:.1f} m/s window of G203-p50 8.1.")
+    _note_room(fig, note2)
+    fk.finish_chart(fig, note=note2, source=fk.source_line(
+        M["src"]["reaches"], M["src"]["built"],
+        f"{DEM.relative_to(fk.BASE).as_posix()}, 0.5 m terrain"))
     return fk.save(fig, "FM02_works_inlet_long_section")
 
 
@@ -624,8 +708,8 @@ def fig_diameter_window(M):
                  V_MAX_RISING), xytext=(-4, 4), textcoords="offset points",
                  ha="right", fontsize=7.0, color=fk.C.FAIL)
     axL.annotate(f"{V_MIN_RISING:.2f} m/s min at design minimum flow — G203-p50 8.1",
-                 (alt.DN.max(), V_MIN_RISING), xytext=(-4, -12),
-                 textcoords="offset points", ha="right", fontsize=7.0, color=fk.C.FAIL)
+                 (alt.DN.min(), V_MIN_RISING), xytext=(4, -12),
+                 textcoords="offset points", ha="left", fontsize=7.0, color=fk.C.FAIL)
     axL.axhline(V_MAX_GRAVITY, color=fk.C.GREY, lw=1.0, ls=":", zorder=3)
     axL.annotate(f"{V_MAX_GRAVITY:.1f} m/s is the GRAVITY maximum, G203-p27 4.2.2.2 — "
                  "not this pipe", (alt.DN.min(), V_MAX_GRAVITY), xytext=(4, 3),
@@ -654,7 +738,7 @@ def fig_diameter_window(M):
                      (float(alt.DN.max()), 0.0), xytext=(-6, 18),
                      textcoords="offset points", ha="right", va="bottom",
                      fontsize=6.9, color=fk.C.FAIL)
-    axR.annotate("gravity needs none of this", (alt.DN.min(), 0.0), xytext=(6, 6),
+    axR.annotate("gravity needs none of this", (alt.DN.min(), 0.0), xytext=(6, -14),
                  textcoords="offset points", ha="left", fontsize=7.4,
                  color=fk.C.TRUNK, fontweight="bold")
     axR.set_xlabel("nominal diameter (mm)")
@@ -670,13 +754,19 @@ def fig_diameter_window(M):
             if not term["standard_in_window"] else
             "standard diameters in the window: " +
             ", ".join(f"DN{d}" for d in term["standard_in_window"]))
-    fk.finish_chart(
-        fig, source=fk.source_line(M["src"]["reaches"], M["src"]["nodes"]),
-        note=(f"{note}. Head = Hazen-Williams friction (C = {HW_C_DI_20YR:.0f}, "
+    note3 = _wrap(f"{note}. At DN850 the flow at which friction exactly eats the ground "
+              f"fall is {M['crossover'][850]['q0_ls']:,.0f} L/s — "
+              f"{M['crossover'][850]['ratio']:.2f} times the average flow of "
+              f"{M['q_avg_ls']:,.0f} L/s, so the main would sit on the drain/pump "
+              f"boundary for most of its life. Head = Hazen-Williams friction "
+              f"(C = {HW_C_DI_20YR:.0f}, "
               f"G202-p104 Table 21) less the {M['leg']['fall_grd']:.1f} m the ground "
               f"falls. Power at {PROJ_PUMP_EFF:.2f} wire-to-water is OURS. The linear "
               f"scaling of duty with pump count is OURS and a screening assumption — "
-              f"parallel pumps on a common main deliver less."))
+              f"parallel pumps on a common main deliver less.")
+    _note_room(fig, note3)
+    fk.finish_chart(fig, note=note3,
+                    source=fk.source_line(M["src"]["reaches"], M["src"]["nodes"]))
     return fk.save(fig, "FM03_diameter_velocity_window")
 
 
@@ -695,29 +785,32 @@ def fig_retention(M):
     axL, axR = axes
 
     v = np.linspace(V_MIN_RISING, V_MAX_RISING, 120)
-    axL.fill_between(v, 0, v * RETENTION_IDEAL_MIN * 60 / 1000.0,
-                     color=fk.C.PASS, alpha=0.5, lw=0,
-                     label=f"retention <= {RETENTION_IDEAL_MIN:.0f} min")
-    axL.plot(v, v * RETENTION_IDEAL_MIN * 60 / 1000.0, color=fk.C.INK, lw=1.6)
-    for vv in (1.0, 1.5, 2.0):
-        axL.annotate(f"{vv:.1f} m/s -> {vv*RETENTION_IDEAL_MIN*60:,.0f} m",
-                     (vv, vv * RETENTION_IDEAL_MIN * 60 / 1000.0), xytext=(4, -12),
-                     textcoords="offset points", fontsize=7.0, color=fk.C.GREY)
-    pts = [(f["name"], f["rm_len"] / 1000.0, f.get("v_all", np.nan)) for f in M["fms"]]
-    for nm, Lkm, vv in pts:
+    ceil_km = v * RETENTION_IDEAL_MIN * 60 / 1000.0
+    axL.fill_between(v, 0.02, ceil_km, color=fk.C.PASS, alpha=0.5, lw=0)
+    axL.plot(v, ceil_km, color=fk.C.INK, lw=1.6)
+    for vv in (1.0, 1.5, 2.0, 2.5):
+        axL.annotate(f"{vv:.1f} m/s → {vv*RETENTION_IDEAL_MIN*60:,.0f} m",
+                     (vv, vv * RETENTION_IDEAL_MIN * 60 / 1000.0), xytext=(-2, 6),
+                     textcoords="offset points", ha="right", fontsize=6.9,
+                     color=fk.C.GREY)
+    for f in M["fms"]:
+        Lkm, vv = f["rm_len"] / 1000.0, f.get("v_all", np.nan)
         axL.plot([vv], [Lkm], marker="o", ms=7, mfc=fk.C.PASS, mec=fk.C.INK, zorder=6)
-        axL.annotate(f"{nm}  {Lkm*1000:,.0f} m", (vv, Lkm), xytext=(6, 4),
-                     textcoords="offset points", fontsize=7.2)
+        axL.annotate(f"{f['name']}  DN{f['DN']}  {f['rm_len']:,.0f} m", (vv, Lkm),
+                     xytext=(7, -3), textcoords="offset points", fontsize=7.2,
+                     zorder=7)
     bl = M["align"][0]["len_m"] / 1000.0
-    axL.plot([V_MIN_RISING, V_MAX_RISING], [bl, bl], color=fk.C.FAIL, lw=2.0, zorder=6)
-    axL.annotate(f"built 2006 main — {bl:.2f} km, outside the window at every velocity",
-                 (V_MIN_RISING + 0.05, bl), xytext=(0, 6),
-                 textcoords="offset points", fontsize=7.4, color=fk.C.FAIL,
-                 fontweight="bold")
+    axL.plot([V_MIN_RISING, V_MAX_RISING], [bl, bl], color=fk.C.FAIL, lw=2.2, zorder=6)
+    axL.annotate(f"built 2006 main — {bl:.2f} km,\noutside the ceiling at every velocity",
+                 (V_MAX_RISING, bl), xytext=(-4, 7), textcoords="offset points",
+                 ha="right", fontsize=7.4, color=fk.C.FAIL, fontweight="bold")
     axL.set_xlabel("velocity in the main (m/s)")
-    axL.set_ylabel("force-main length (km)")
-    axL.set_ylim(0, bl * 1.22)
-    axL.legend(loc="lower right", fontsize=7.2)
+    axL.set_ylabel("force-main length (km, log scale)")
+    axL.set_yscale("log")
+    axL.set_ylim(0.05, bl * 2.4)
+    axL.text(0.80, 0.075, f"shaded: retention within the {RETENTION_IDEAL_MIN:.0f}-minute\n"
+                          "ideal; the curve is the ceiling itself",
+             fontsize=7.0, color=fk.C.INK, va="bottom", ha="left")
 
     names = [f["name"] for f in M["fms"]] + ["built 2006 main"]
     ret_lo = [f["ret_all_min"] for f in M["fms"]] + [
@@ -727,13 +820,20 @@ def fig_retention(M):
     y = np.arange(len(names))[::-1]
     for yy, a, b, nm in zip(y, ret_lo, ret_hi, names):
         role = "fail" if b > RETENTION_IDEAL_MIN else "pass"
-        axR.barh(yy, b - a, left=a, height=0.5, **fk.status_style(role))
-        axR.annotate(f"{a:.1f}–{b:.1f} min", (b, yy), xytext=(6, 0),
-                     textcoords="offset points", va="center", fontsize=7.2)
+        if b - a < 0.02 * a:                      # one duty pump: a point, not a band
+            axR.plot([a], [yy], marker="D", ms=8, zorder=5, ls="",
+                     mfc=fk.STATUS_COLOR[role], mec=fk.C.INK, mew=0.6)
+            axR.annotate(f"{a:.1f} min (one duty pump)", (a, yy), xytext=(9, 0),
+                         textcoords="offset points", va="center", fontsize=7.2)
+        else:
+            axR.barh(yy, b - a, left=a, height=0.5, **fk.status_style(role))
+            axR.annotate(f"{a:.1f}–{b:.1f} min", (b, yy), xytext=(7, 0),
+                         textcoords="offset points", va="center", fontsize=7.2)
     axR.axvline(RETENTION_IDEAL_MIN, color=fk.C.FAIL, lw=1.4, ls="--", zorder=6)
     axR.annotate(f"{RETENTION_IDEAL_MIN:.0f} min — G203-p50 8.2.1",
-                 (RETENTION_IDEAL_MIN, y.max() + 0.45), xytext=(4, 0),
-                 textcoords="offset points", fontsize=7.2, color=fk.C.FAIL)
+                 (RETENTION_IDEAL_MIN, y.max() - 0.28), xytext=(5, 0),
+                 textcoords="offset points", fontsize=7.2, color=fk.C.FAIL,
+                 va="top", rotation=90, ha="left")
     axR.set_yticks(y)
     axR.set_yticklabels(names, fontsize=7.6)
     axR.set_xscale("log")
@@ -741,13 +841,14 @@ def fig_retention(M):
     fk.legend_below(axR, fk.status_legend({"pass": "within the half-hour ideal",
                                            "fail": "beyond it — a septicity design"}),
                     ncol=2, drop=0.35)
-    fk.finish_chart(
-        fig, source=fk.source_line(M["src"]["pumped"], M["src"]["stations"],
-                                   M["src"]["built"]),
-        note=("Retention is length / velocity. The band is one duty pump running to "
-              "every duty pump running; the diameters are those in the FM-1/2/3 table, "
-              "and the built main's band is the guideline velocity window because its "
-              "diameter is not recorded (OUT_DIAMET = 0 on that row)."))
+    note4 = _wrap("Retention is length / velocity. The band is one duty pump running "
+                  "to every duty pump running; the diameters are those in the FM-1/2/3 "
+                  "table, and the built main's band is the guideline velocity window "
+                  "because its diameter is not recorded (OUT_DIAMET = 0 on that row).")
+    _note_room(fig, note4)
+    fk.finish_chart(fig, note=note4,
+                    source=fk.source_line(M["src"]["pumped"], M["src"]["stations"],
+                                          M["src"]["built"]))
     return fk.save(fig, "FM04_retention_ceiling")
 
 
@@ -784,6 +885,10 @@ def report(M):
     p("\n  endpoint honesty — A and B do not start at the same place:")
     for k, v in M["junction_offset"].items():
         p(f"    {k:>26} : {v:,.1f}")
+    p("\n  separation between the built main and the gravity works leg, sampled every "
+      "25 m along the built main:")
+    for k, v in M["separation"].items():
+        p(f"    {k:>18} : {v:,.1f}")
     p("\n  where the wadi contact sits on each alignment (chainage start, end, length):")
     for a in M["align"] + [M["align_trim"]]:
         p(f"    {a['name']:<38} first km {a['wadi_in_first_km_m']:6.0f} m   "
@@ -808,6 +913,12 @@ def report(M):
     p("THE PUMPED ALTERNATIVE TO THE 9 KM GRAVITY LEG")
     p("=" * 78)
     p(M["pumped_alt"].round(3).to_string(index=False))
+    p(f"\n  average flow at the works {M['q_avg_ls']:,.1f} L/s.  The flow at which "
+      f"friction exactly eats the {M['leg']['fall_grd']:.2f} m of ground fall — below "
+      f"it the main drains and cannot be kept full (G203-p51 8.2.2):")
+    for D, c in M["crossover"].items():
+        p(f"    DN{D:<5d} crossover {c['q0_ls']:8,.1f} L/s = {c['ratio']:.2f} x the "
+          f"average flow")
     p("\n" + "=" * 78)
     p("RETENTION CEILING (G203-p50 8.2.1 with 8.1)")
     p("=" * 78)

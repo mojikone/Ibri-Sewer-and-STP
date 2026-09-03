@@ -167,14 +167,19 @@ class Net:
         self.trunk = fk.read_layer("W11a_trunk.gpkg", "reaches",
                                    columns=["EDGE_UID", "DN", "LEN_M", "TIER"])
         self.unassigned = fk.read_csv("s5b_unassigned.csv")
-        self.conns = fk.read_layer("W11a.gpkg", "connections",
-                                   columns=["CONN_ID", "Q_ADF_M3D", "CAN_DRAIN"])
+        # NOTE: nothing here reads W11a/shp/W11a.gpkg.  Its `reaches`/`nodes` are the
+        # STAGE-4 set (24,589 / 24,850, STAGE='s4_hierarchy') and its `connections`
+        # count moved from 45,232 to 40,359 under this session while 5b was re-running.
+        # The stage-5 network lives in run/s5_reach_skeleton.gpkg, which is stable.
 
-        if not self.sk["EDGE_UID"].isin(self.flows["EDGE_UID"]).all():
-            raise SystemExit("s5c_reach_flows does not cover every skeleton reach — "
-                             "the two artefacts disagree; stop rather than draw it")
-
+        # The two artefacts are written by different stages and have already gone out
+        # of step once during this session: s5c was re-run against the STAGE-4 edge
+        # set (24,589 rows) while the skeleton moved on to 49,377.  Joining them
+        # anyway would put a stage-4 flow on a stage-5 pipe, so coverage is measured
+        # and the flow figures refuse rather than draw the pair.  Figures that need
+        # no flow are unaffected.
         q = self.flows.set_index("EDGE_UID")
+        self.flow_cov = float(self.sk["EDGE_UID"].isin(q.index).mean())
         self.sk["QADF_M3D"] = self.sk["EDGE_UID"].map(q["QADF_M3D"]).astype(float)
         self.sk["N_PROP"] = self.sk["EDGE_UID"].map(q["N_PROP"]).astype(float)
 
@@ -273,6 +278,40 @@ def net() -> Net:
     if _NET is None:
         _NET = Net()
     return _NET
+
+
+class Stale(RuntimeError):
+    """Two artefacts a figure needs are out of step — refuse, do not draw."""
+
+
+def require_flows() -> None:
+    """Guard for any figure that puts a flow on a stage-5 pipe."""
+    n = net()
+    if n.flow_cov < 1.0:
+        raise Stale(
+            f"s5c_reach_flows.csv covers only {100*n.flow_cov:.1f} % of the stage-5 "
+            f"skeleton ({len(n.flows):,} flow rows against {len(n.sk):,} reaches). "
+            f"Stage 5c has been re-run against a different edge set, so a flow here "
+            f"would be a stage-4 number on a stage-5 pipe. Re-run stage 5c against "
+            f"{SKELETON.name}, then rebuild this figure. The PNG already on disk is "
+            f"valid for the artefacts named in its own source line.")
+
+
+def _trunk_note() -> str:
+    """What to say about OPEN-S4-1 — decided by the layer, not by the brief.
+
+    The trunk was arriving at stage 5 in 67 pieces while this module was being
+    written and in 4 during the final run, so the sentence cannot be hard-coded.
+    The client's own drawing is 4 parts, so 4 is not fragmentation.
+    """
+    k = net().n_trunk_pieces
+    if k <= 4:
+        return (f"OPEN-S4-1 no longer inflates this count: the trunk reaches stage 5 "
+                f"in {k} pieces, matching the client's own drawing, so what is left "
+                f"is real fragmentation rather than the trunk mismatch.")
+    return (f"The count is still inflated by OPEN-S4-1: the client's 4-piece trunk "
+            f"reaches stage 5 in {k} pieces, so systems that should share an outfall "
+            f"do not yet.")
 
 
 def _works_flow() -> float:
@@ -487,9 +526,9 @@ def FH03_chamber_spacing():
     ax2.set_title(f"W11a puts {len(n.nodes):,} chambers on the ground — "
                   f"{len(n.nodes)/n.km:.1f} per km against the as-built's "
                   f"{nama_per_km:.1f}", fontsize=8.0, color=fk.C.INK, pad=6)
-    ax2.set_xlabel(f"the W11a trunk is chambered exactly AT the Table 12 maximum on "
-                   f"{tr_at} of its {len(tr)} reaches, and {tr_over} exceed it",
-                   fontsize=7.0, color=fk.C.GREY)
+    ax2.set_xlabel(f"the W11a trunk sits exactly AT the Table 12 maximum on {tr_at} of"
+                   f"\nits {len(tr)} reaches; {tr_over} exceed it",
+                   fontsize=7.2, color=fk.C.GREY)
     fk.finish_chart(fig, source=_src(fig, 
         n.sk, w10, nama, net().trunk,
         "Data/PAM-GUD-203 p30 Table 12 (quoted from the PDF, not from memory)"))
@@ -522,10 +561,7 @@ def FH04_systems_map():
                f"{len(big)} of them hold {100*big['km'].sum()/n.km:.0f} % of the length"),
         subtitle=("Every reach coloured by the size of the drainage system it belongs "
                   "to. Stubs are drawn thickest because they are the finding, not "
-                  "because they are big. The count is "
-                  "still inflated by OPEN-S4-1: stage 4 fragments the client's 4-piece "
-                  f"trunk, and it reaches stage 5 in {n.n_trunk_pieces} pieces, so "
-                  "systems that should share an outfall do not yet."))
+                  "because they are big. " + _trunk_note()))
     # The stubs are the finding, so they are drawn last, darkest and thickest.
     # Size is on the LABEL, not on the ink: a size-ordered ramp buries 113 km of
     # stub under 1,193 km of core network and says nothing.
@@ -567,12 +603,11 @@ def FH05_systems_concentration():
     n90 = int(np.searchsorted(cum.values, 90.0) + 1)
 
     fig, axes = fk.chart_frame(
-        title=(f"{n90} of the {n.ncomp} drainage systems carry 90 % of the pipe; the "
-               f"other {n.ncomp-n90} are stubs"),
-        subtitle=("Left: systems ranked by length, cumulative share. Right: the same "
-                  "systems by count and by kilometre. A design cannot be built as "
-                  f"{n.ncomp} independent systems — this is the OPEN-S4-1 trunk "
-                  "mismatch made visible, not a settled outcome."),
+        title=(f"{n90} of the {n.ncomp} drainage systems carry 90 % of the pipe, and "
+               f"{int((n.comp['km'] <= 1.0).sum())} of the rest are under 1 km"),
+        subtitle=(f"Left: systems ranked by length, cumulative share. Right: the same "
+                  f"systems by count and by kilometre. A design cannot be built as "
+                  f"{n.ncomp} independent systems. " + _trunk_note()),
         figsize=(10.6, 4.3), ncols=2, ygrid=True)
     ax, ax2 = axes
     _headroom(fig, 0.34)
@@ -616,6 +651,7 @@ def FH05_systems_concentration():
 
 def FH06_flow_never_assembles():
     """The hydraulic consequence of 759 systems: no pipe sees the works flow."""
+    require_flows()
     n = net()
     tr = net().trunk
     works = _works_flow()
@@ -860,6 +896,7 @@ def FH09_run_lengths():
 
 def FH10_fingers_map():
     """Dead-end runs under 60 m that collect nothing."""
+    require_flows()
     n = net()
     f = n.fingers()
     dead_any = n.runs[n.runs.HEAD & (n.runs.Q_DS <= 0)]
@@ -874,15 +911,21 @@ def FH10_fingers_map():
                   "adoption standard requires it. CAVEAT: 'collects nothing' is stage "
                   f"5c's accumulated flow, and stage 5b still leaves {len(un):,} plots "
                   "unconnected — some of these will pick up load when that closes."))
-    n.sk.plot(ax=ax, color=fk.C.FAINT, linewidth=0.22, zorder=3)
+    n.sk.plot(ax=ax, color=fk.C.GREY, linewidth=0.20, alpha=0.5, zorder=3)
     dead = n.sk.iloc[dead_any["I0"].values]
-    dead.plot(ax=ax, color=fk.C.UNTESTED, linewidth=0.8, zorder=5)
+    dead.plot(ax=ax, color=MID_SEVERITY, linewidth=1.0, zorder=5)
     edges.plot(ax=ax, color=fk.C.FAIL, linewidth=1.4, zorder=6)
-    h = [Line2D([], [], color=fk.C.FAINT, lw=1.0, label="network"),
-         Line2D([], [], color=fk.C.UNTESTED, lw=1.4,
+    # a 30 m stub is invisible on a 45 km frame, so the head of each finger is
+    # also drawn as a dot -- the line carries the length, the dot carries the count
+    hx = [g.coords[0][0] for g in edges.geometry]
+    hy = [g.coords[0][1] for g in edges.geometry]
+    ax.scatter(hx, hy, s=5, marker="o", facecolor=fk.C.FAIL, edgecolor="none",
+               alpha=0.85, zorder=7)
+    h = [Line2D([], [], color=fk.C.GREY, lw=1.0, alpha=0.6, label="network"),
+         Line2D([], [], color=MID_SEVERITY, lw=1.6,
                 label=f"dead-end run with no load, any length "
                       f"({len(dead_any):,}; {dead_any['LEN_M'].sum()/1000:,.0f} km)"),
-         Line2D([], [], color=fk.C.FAIL, lw=2.0,
+         Line2D([], [], color=fk.C.FAIL, lw=2.0, marker="o", markersize=4,
                 label=f"FINGER — under 60 m and no load ({len(f):,}; "
                       f"{f['LEN_M'].sum()/1000:.1f} km)")]
     b = _boundary(ax)
@@ -940,21 +983,21 @@ def FH11_trunk_fanin():
         subtitle=("A join is a non-trunk reach whose downstream node is a trunk node. "
                   "The as-built rule is that only sub mains touch the trunk, plus the "
                   "few laterals in a sub-district too small to justify one. Package "
-                  "5A-3 was never given a sub-main tier, so it is shown separately. "
+                  "5A-3 was never given a sub-main tier, so it is shown separately; "
+                  "its trunk length is 10.2 km against the W11a trunk's 72.4 km. "
                   "Right: how far apart the joins sit."),
         figsize=(10.6, 4.3), ncols=2, ygrid=False, xgrid=True)
     ax, ax2 = axes
     _headroom(fig, 0.34)
 
-    rows = [(f"NAMA as-built, all packages\n{len(nj)} joins on "
-             f"{nama_trunk_km:.1f} km of trunk",
+    # short tick labels: long ones push the tight bbox out past the figure edge
+    rows = [(f"as-built, all\n{len(nj)} joins / {nama_trunk_km:.0f} km",
              {"sub main": int(njc.get("sub_main", 0)),
               "lateral": int(njc.get("lateral", 0))}),
-            (f"NAMA as-built without 5A-3\n{len(nj_lab)} joins, the packages with a "
-             f"sub-main tier",
+            (f"as-built, no 5A-3\n{len(nj_lab)} joins",
              {"sub main": int(njc_lab.get("sub_main", 0)),
               "lateral": int(njc_lab.get("lateral", 0))}),
-            (f"W11a stage 5\n{len(joins)} joins on {trunk_km:.1f} km of trunk",
+            (f"W11a stage 5\n{len(joins)} joins / {trunk_km:.0f} km",
              {"sub main": int(jc.get("sub main", 0)), "main": int(jc.get("main", 0)),
               "lateral": int(jc.get("lateral", 0))})]
     order = ["sub main", "main", "lateral"]
@@ -1076,6 +1119,121 @@ def FH12_chain_bound():
     return fk.save(fig, "FH12_chain_bound")
 
 
+# ================================================================== FIGURE 13
+
+#: PROJECT measures for a sub main, _BRAIN/08_DESIGN_PHILOSOPHY.md §4 — fitted to
+#: NAMA's as-built, not guideline values.  "Where they disagree, the outlet governs."
+PROJ_SM_SHARE_PCT = 21.0
+PROJ_SM_PER_KM = (4.0, 10.0)
+
+
+def FH13_submain_geometry():
+    """Are the sub mains the right size, by the two measures the philosophy gives?"""
+    n = net()
+    cat = fk.read_csv("s4_submain_catchments.csv")
+    s4_km = float(n.s4["LEN_M"].sum()) / 1000.0
+    per_sm = s4_km / len(cat)
+    med = float(cat["SHARE_PCT"].median())
+
+    fig, axes = fk.chart_frame(
+        title=(f"Right NUMBER of sub mains, wrong LENGTH: each is {med:.0f} % of its "
+               f"catchment, not 21 %"),
+        subtitle=("Philosophy §4 describes a sub main two ways — about 21 % of the "
+                  "length of the catchment it drains, and one per 4–10 km of network. "
+                  "Both are PROJECT measures fitted to NAMA's as-built, not guideline "
+                  "values, and where they disagree the outlet governs. Measured on the "
+                  "stage-4 catchments, the only place they are published."),
+        figsize=(10.6, 4.5), ncols=2, ygrid=True)
+    ax, ax2 = axes
+    _headroom(fig, 0.40)
+
+    bins = np.arange(0, 92, 2.5)
+    ax.hist(cat["SHARE_PCT"], bins=bins, color=fk.C.SUBMAIN, edgecolor="none",
+            zorder=3)
+    ax.axvline(PROJ_SM_SHARE_PCT, color=fk.C.FAIL, lw=1.2, ls="--", zorder=5)
+    ax.text(PROJ_SM_SHARE_PCT + 1.2, 0.97, "21 %  PROJECT target",
+            transform=ax.get_xaxis_transform(), rotation=90, va="top", fontsize=7.0,
+            color=fk.C.FAIL)
+    ax.axvline(med, color=fk.C.INK, lw=1.2, zorder=5)
+    ax.text(med - 1.2, 0.97, f"{med:.1f} %  our median", transform=ax.get_xaxis_transform(),
+            rotation=90, va="top", ha="right", fontsize=7.0, color=fk.C.INK)
+    ax.set_xlabel("sub-main length as a share of the catchment it drains (%)")
+    ax.set_ylabel("sub mains")
+    under = int((cat["SHARE_PCT"] < PROJ_SM_SHARE_PCT).sum())
+    ax.set_title(f"{under} of {len(cat)} sub mains are under the 21 % target",
+                 fontsize=8.0, color=fk.C.INK, pad=6)
+
+    ax2.axhspan(PROJ_SM_PER_KM[0], PROJ_SM_PER_KM[1], color=fk.C.PASS, alpha=0.45,
+                zorder=1)
+    ax2.text(0.5, 12.4,
+             "PROJECT band: one sub main per 4–10 km of network",
+             transform=ax2.get_yaxis_transform(), ha="center", va="top", fontsize=7.2,
+             color=fk.C.INK, zorder=4)
+    ax2.bar([0], [per_sm], width=0.42, color=fk.C.SUBMAIN, edgecolor=fk.C.INK,
+            linewidth=0.6, zorder=3)
+    ax2.text(0, per_sm + 0.25, f"{per_sm:.1f} km", ha="center", va="bottom",
+             fontsize=10, fontweight="bold", color=fk.C.INK)
+    ax2.set_xticks([0])
+    ax2.set_xticklabels([f"W11a stage 4\n{len(cat)} sub mains on {s4_km:,.0f} km"],
+                        fontsize=7.8)
+    ax2.set_xlim(-0.6, 0.6)
+    ax2.set_ylim(0, 13)
+    ax2.set_ylabel("km of network per sub main")
+    ax2.set_title("the count is inside the band; the individual routes are too short",
+                  fontsize=8.0, color=fk.C.INK, pad=6)
+    fk.finish_chart(fig, source=_src(
+        fig, cat, n.s4,
+        "_BRAIN/08_DESIGN_PHILOSOPHY.md §4 (21 % and 4–10 km — PROJECT measures)"))
+    return fk.save(fig, "FH13_submain_geometry")
+
+
+# ================================================================== FIGURE 14
+
+def FH14_tier_provenance():
+    """Which rule assigned each tier — the philosophy says the hierarchy is generated."""
+    n = net()
+    s4 = n.s4
+    g = (s4.groupby("TIER_BY")["LEN_M"].agg(n="size", km="sum")
+         .assign(km=lambda d: d["km"] / 1000.0).sort_values("km"))
+    why = {
+        "trunk_input": "the client's drawn alignment, not derived",
+        "stem": "a collector route defined by its outlet — the sub mains",
+        "chain_bound": "promoted because the lateral chain hit its bound",
+        "monotonic": "promoted to keep the tier non-decreasing downstream",
+        "residual": "a lateral because nothing else claimed it",
+    }
+    col = {"trunk_input": fk.C.TRUNK, "stem": fk.C.SUBMAIN,
+           "chain_bound": fk.C.MAIN, "monotonic": fk.C.LATERAL,
+           "residual": fk.C.FAINT}
+    res_pct = 100.0 * g.loc["residual", "km"] / g["km"].sum()
+
+    fig, ax = fk.chart_frame(
+        title=(f"{res_pct:.0f} % of the network is a lateral by ELIMINATION, not "
+               f"because a rule said so"),
+        subtitle=("Every reach records the rule that set its tier (TIER_BY). Only the "
+                  "trunk is asserted from an input; the sub mains are generated from "
+                  "outlets; the mains come from the chain bound or from keeping the "
+                  "tier non-decreasing downstream. Everything left over is a lateral — "
+                  "which is correct, but it means the lateral tier is where an error "
+                  "in any of the other four rules would land."),
+        figsize=(10.2, 4.2), ygrid=False, xgrid=True)
+    _headroom(fig, 0.10)
+    y = np.arange(len(g))
+    ax.barh(y, g["km"].values, height=0.6,
+            color=[col.get(i, fk.C.GREY) for i in g.index],
+            edgecolor=fk.C.INK, linewidth=0.6)
+    for yy, (i, row) in zip(y, g.iterrows()):
+        ax.text(row["km"] + 14, yy,
+                f"{row['km']:,.0f} km · {int(row['n']):,} reaches — {why.get(i, '')}",
+                va="center", fontsize=7.6, color=fk.C.INK)
+    ax.set_yticks(y)
+    ax.set_yticklabels(list(g.index), fontsize=8.2, family="monospace")
+    ax.set_xlim(0, g["km"].max() * 1.85)
+    ax.set_xlabel("network length assigned by that rule (km, stage-4 graph)")
+    fk.finish_chart(fig, source=_src(fig, s4))
+    return fk.save(fig, "FH14_tier_provenance")
+
+
 # ======================================================================== run
 
 FIGURES = {
@@ -1091,6 +1249,8 @@ FIGURES = {
     "FH10": FH10_fingers_map,
     "FH11": FH11_trunk_fanin,
     "FH12": FH12_chain_bound,
+    "FH13": FH13_submain_geometry,
+    "FH14": FH14_tier_provenance,
 }
 
 
@@ -1118,7 +1278,10 @@ def facts() -> list[tuple[str, str, str]]:
          f"{sk}: edges - (nodes - components)"),
         (f"{n.n_trunk_pieces}", "pieces the trunk arrives in (OPEN-S4-1)", sk),
         (f"{len(n.term):,}", "system ends", sk),
-        (f"{n.term['QADF_M3D'].max():,.0f} m3/d", "largest accumulated flow anywhere",
+        (f"{n.term['QADF_M3D'].max():,.0f} m3/d" if n.flow_cov >= 1.0 else "UNAVAILABLE",
+         "largest accumulated flow anywhere"
+         + ("" if n.flow_cov >= 1.0
+            else f" — s5c covers {100*n.flow_cov:.1f} % of the skeleton"),
          "W11a/run/s5c_reach_flows.csv"),
         (f"{_works_flow():,.0f} m3/d", "flow the trunk is sized for, at the works",
          "W11a/shp/W11a_trunk.gpkg [reaches].QADF_M3D max"),
@@ -1126,8 +1289,8 @@ def facts() -> list[tuple[str, str, str]]:
         (f"{len(r):,}", "runs between junctions", sk),
         (f"{r['LEN_M'].median():.1f} m / {r['LEN_M'].max():,.1f} m",
          "run length median / MAXIMUM", sk),
-        (f"{len(f):,} / {f['LEN_M'].sum()/1000:.1f} km",
-         "fingers (<60 m, dead end, no load)",
+        (f"{len(f):,} / {f['LEN_M'].sum()/1000:.1f} km" if n.flow_cov >= 1.0
+         else "UNAVAILABLE", "fingers (<60 m, dead end, no load)",
          f"{sk} + W11a/run/s5c_reach_flows.csv"),
         (f"{len(n.inlets):,}", "inlets under 90 deg (G203-p30)",
          "W11a/run/s5_sharp_inlets.csv"),
@@ -1135,6 +1298,11 @@ def facts() -> list[tuple[str, str, str]]:
          "W11a/run/s5_sharp_inlets.csv"),
         (f"{len(n.unassigned):,}", "plots stage 5b left unconnected (caveat on FH10)",
          "W11a/run/s5b_unassigned.csv"),
+        (f"{len(fk.read_csv('s4_submain_catchments.csv')):,}", "sub mains",
+         "W11a/run/s4_submain_catchments.csv"),
+        (f"{fk.read_csv('s4_submain_catchments.csv')['SHARE_PCT'].median():.2f} %",
+         "median sub main as a share of its catchment (PROJECT target 21 %)",
+         "W11a/run/s4_submain_catchments.csv"),
     ]
 
 
@@ -1144,9 +1312,13 @@ def main(argv: list[str]) -> None:
     if bad:
         raise SystemExit(f"unknown figure(s) {bad}; known: {list(FIGURES)}")
     print("figures ->")
+    skipped = []
     for k in want:
-        p = FIGURES[k]()
-        print(f"  {k}  {p}")
+        try:
+            print(f"  {k}  {FIGURES[k]()}")
+        except Stale as exc:
+            skipped.append(k)
+            print(f"  {k}  SKIPPED — {exc}")
     print("\nevery quoted value, and the artefact it came from:")
     for v, what, src in facts():
         print(f"  {v:>28}  {what:<52}  {src}")
@@ -1156,6 +1328,10 @@ def main(argv: list[str]) -> None:
     print("  'the as-built median run of 88 m' -> 88 m is W8's median LATERAL LENGTH.")
     print("     The as-built median lateral ZONE is 132 m and its median chamber")
     print("     SPACING is 29.2 m (HIERARCHY_RULES R2; PHILOSOPHY_REVIEW M11).")
+    if skipped:
+        raise SystemExit(f"\n{len(skipped)} figure(s) not rebuilt: {skipped}. "
+                         "The reason is printed above; it is an artefact mismatch, "
+                         "not a bug in this module.")
 
 
 if __name__ == "__main__":

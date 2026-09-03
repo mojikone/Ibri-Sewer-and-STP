@@ -1,0 +1,8 @@
+check,requirement,source,n_bad,status
+F6,every package has exactly one outlet chamber,DELIVERABLE_SPEC C.3 / D.6,0,pass
+F6b,every package is one connected tree,DELIVERABLE_SPEC C.3 / D.6,0,pass
+F6c,"every package discharges somewhere the design records - a package, a station, the works or a tie",philosophy H15 / contract nodes cross-field,0,pass
+F7,COMM_SEQ respects the dependency graph,DELIVERABLE_SPEC C.4 / D.6,0,pass
+F8,SEAM_PCT <= 15 % per package,DELIVERABLE_SPEC C.2 / D.6,211,FAIL
+B1,length within 3.5-40.0 km,"DELIVERABLE_SPEC C.1 (measured, not a guideline)",375,FAIL
+B2,plots within 180-2180,"DELIVERABLE_SPEC C.1 (measured, not a guideline)",429,FAIL

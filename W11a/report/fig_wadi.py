@@ -117,7 +117,7 @@ def wrap_note(s: str, width: int = 145) -> str:
 def _room(fig, src: str, note: str | None) -> None:
     """Make the bottom margin fit the source block, so it never lands on the x-label."""
     n = len(src.splitlines()) + (len(note.splitlines()) if note else 0)
-    need = 0.055 + (0.20 + 0.105 * n) / fig.get_size_inches()[1]
+    need = 0.055 + (0.34 + 0.108 * n) / fig.get_size_inches()[1]
     if fig.subplotpars.bottom < need:
         fig.subplots_adjust(bottom=need)
 
@@ -133,6 +133,15 @@ def finish_chart(fig, *, source, note=None):
     src = wrap_src(source); nt = wrap_note(note) if note else None
     _room(fig, src, nt)
     return fk.finish_chart(fig, source=src, note=nt)
+
+
+def drop_top(fig, d: float = 0.055) -> None:
+    """Lower the axes so a per-panel title does not sit on the figure subtitle.
+
+    ``chart_frame`` returns the axes flush under the subtitle, which is right for a
+    single unlabelled panel and wrong the moment a panel carries its own heading.
+    """
+    fig.subplots_adjust(top=max(0.30, fig.subplotpars.top - d))
 
 
 def sourceline(fig, source, note=None):
@@ -269,10 +278,16 @@ def _sig(*paths) -> str:
     return "|".join(out)
 
 
+#: Bump when a cached table's COLUMNS change -- the file signature alone will not
+#: invalidate a cache whose schema moved, and the figure then fails on a missing column.
+CACHE_V = "v2"
+
+
 def _cached(name: str, sig: str, build):
     """Rebuild ``name`` whenever the artefacts behind it move; otherwise re-read."""
     csv = fk.SCRATCH / f"wadi_{name}.csv"
     tag = fk.SCRATCH / f"wadi_{name}.sig"
+    sig = f"{CACHE_V}|{sig}"
     if csv.exists() and tag.exists() and tag.read_text() == sig:
         return pd.read_csv(csv)
     df = build()
@@ -282,28 +297,41 @@ def _cached(name: str, sig: str, build):
     return df
 
 
-def band_probe(cor) -> pd.DataFrame:
-    """audit._r4_classify's geometry, per on-wadi corridor, kept as a table.
+def probe_lines(gdf, idcol: str, tag: str) -> pd.DataFrame:
+    """Run ``audit._r4_classify``'s geometry over a line layer and keep the working.
 
-    For each corridor that touches wadi ground: the length of its longest
-    contiguous contact, and the WIDTH of the hazard band measured perpendicular
-    to the corridor at the middle of that contact.  ``capped`` marks the probes
-    that reached ``PROBE_M`` on a side without finding the far bank -- for those
-    the width is a floor, not a measurement, and the figure says so.
+    Per line: how much of it the hazard grid answers (``COV``), whether any of it
+    is on class 4/5/6 (``here``), the length of its longest contiguous contact,
+    the WIDTH of the hazard band measured perpendicular at the middle of that
+    contact, and the along/across verdict.  ``capped`` marks probes that reached
+    ``PROBE_M`` on a side without finding the far bank -- for those the width is a
+    floor, not a measurement, and the figures say so.
+
+    WHY THIS MODULE MEASURES RATHER THAN READS.  The first version took
+    ``WADI_HERE`` / ``WADI_ALONG`` / ``WADI_XING`` / ``WADI_COV`` off the published
+    reaches.  Half an hour later stage 5 replaced that layer with its own reach set
+    and those four columns were simply gone -- the figure did not go wrong, it
+    crashed, which is the good outcome.  Measuring here means the figures answer
+    for their own numbers and survive a stage rewriting its schema.
     """
-    ow = cor[cor["ON_WADI_M"].fillna(0) > 0]
-
     def build():
         rows = []
         ts = np.arange(0.0, PROBE_M, SAMPLE_M)
-        for cid, g, L in zip(ow.CORR_ID.values, ow.geometry.values, ow.LEN_M.values):
+        lo = min(WADI_CLASSES)
+        for uid, g, L in zip(gdf[idcol].values, gdf.geometry.values, gdf.LEN_M.values):
+            if g is None or g.is_empty or g.length <= 0:
+                rows.append((uid, L, 0.0, 0, 0.0, 0.0, np.nan, 0, 0, 0, 0, 0)); continue
             n = max(2, int(g.length / SAMPLE_M) + 1)
             ds = np.linspace(0, g.length, n)
             P = np.array([[p.x, p.y] for p in (g.interpolate(d) for d in ds)])
             v = code_at(P[:, 0], P[:, 1])
-            on = v >= min(WADI_CLASSES)
+            known = v > 0
+            cov = float(known.mean())
+            on = v >= lo
+            step = g.length / max(n - 1, 1)
+            on_m = float(on.sum()) * step
             if not on.any():
-                rows.append((cid, L, 0.0, np.nan, 0, 0, 0)); continue
+                rows.append((uid, L, cov, 0, 0.0, 0.0, np.nan, 0, 0, 0, 0, 0)); continue
             runs, a = [], None
             for k, f in enumerate(on):
                 if f and a is None:
@@ -325,20 +353,34 @@ def band_probe(cor) -> pd.DataFrame:
             width = 0.0; capped = 0; cap_is_wadi = 0
             for sgn in (1.0, -1.0):
                 pv = code_at(c.x + sgn * ts * nx_, c.y + sgn * ts * ny_)
-                off = np.where((pv > 0) & (pv < min(WADI_CLASSES)))[0]
+                off = np.where((pv > 0) & (pv < lo))[0]
                 if len(off):
                     width += float(off[0] * SAMPLE_M)
                 else:
                     width += PROBE_M; capped += 1
-                    cap_is_wadi += int((pv >= min(WADI_CLASSES)).mean() > 0.5)
-            rows.append((cid, L, contact, width, n_runs, capped, cap_is_wadi))
-        return pd.DataFrame(rows, columns=["CORR_ID", "LEN_M", "contact_m", "band_m",
-                                           "n_runs", "capped", "cap_is_wadi"])
+                    cap_is_wadi += int((pv >= lo).mean() > 0.5)
+            square = (n_runs == 1) and (contact <= SKEW * max(width, SAMPLE_M))
+            rows.append((uid, L, cov, 1, on_m, contact, width, n_runs, capped,
+                         cap_is_wadi, int(square), int(not square)))
+        return pd.DataFrame(rows, columns=[idcol, "LEN_M", "COV", "here", "on_m",
+                                           "contact_m", "band_m", "n_runs", "capped",
+                                           "cap_is_wadi", "xing", "along"])
 
-    df = _cached("band_probe", _sig(fk.SHP / "W11a.gpkg", fk.HAZARD), build)
+    src = fk.SHP / ("W11a.gpkg" if tag != "trunk" else "W11a_trunk.gpkg")
+    df = _cached(f"probe_{tag}", _sig(src, fk.HAZARD) + f"|{len(gdf)}", build)
     df["ratio"] = df.contact_m / df.band_m.clip(lower=SAMPLE_M)
     df["frac"] = df.contact_m / df.LEN_M.clip(lower=1.0)
     return df
+
+
+def band_probe(cor) -> pd.DataFrame:
+    """The along/across working for every corridor that touches wadi ground."""
+    return probe_lines(cor[cor["ON_WADI_M"].fillna(0) > 0], "CORR_ID", "corridor")
+
+
+def reach_probe(rch) -> pd.DataFrame:
+    """The same working for the published reaches, measured, never inherited."""
+    return probe_lines(rch, "EDGE_UID", "reach")
 
 
 def contact_by_class(cor) -> dict:
@@ -401,17 +443,27 @@ def load():
     d["xr"] = fk.read_layer("W11a.gpkg", "crossings")
     d["rm"] = fk.read_layer("W11a_corridors_removed.gpkg", "removed")
     d["rch"] = fk.read_layer("W11a.gpkg", "reaches",
-                             columns=["EDGE_UID", "TIER", "LEN_M", "WADI_HERE",
-                                      "WADI_ALONG", "WADI_XING", "WADI_COV"])
+                             columns=["EDGE_UID", "TIER", "LEN_M", "STAGE"])
     d["tr"] = fk.read_layer(str(fk.SHP / "W11a_trunk.gpkg"), "reaches")
     d["trn"] = fk.read_layer(str(fk.SHP / "W11a_trunk.gpkg"), "nodes")
     d["trx"] = fk.read_layer(str(fk.SHP / "W11a_trunk.gpkg"), "crossings")
-    d["mh"] = fk.read_layer(str(fk.SHP / "W11a_manholes.shp"),
-                            columns=["NODE_UID", "TIER", "X", "Y"])
+    # The PUBLISHED chamber layer, not the shapefile mirror: philosophy sec 8 audits what
+    # is published, and W11a_manholes.shp lags the GeoPackage by a stage.
+    d["mh"] = fk.read_layer("W11a.gpkg", "nodes",
+                            columns=["NODE_UID", "TIER", "X", "Y", "STAGE"])
     d["wch"] = fk.read_csv("s5_wadi_chambers.csv")
     d["bnd"] = fk.study_boundary()
     d["hz"] = (f"{fk.HAZARD.relative_to(fk.BASE).as_posix()}, 50-year flood-hazard grid, "
                f"3 m, EPSG:32640, nodata -9999.0")
+    # The stages are still running.  Two artefacts from the same stage can be minutes
+    # apart, and a count taken across them is then a count across two different designs.
+    # Say so on the figure rather than letting the reader assume they match.
+    mh_t = d["mh"].attrs["fk_source"].written
+    ch_t = d["wch"].attrs["fk_source"].written
+    d["clock"] = ("" if mh_t == ch_t else
+                  f" MIND THE CLOCK: the chamber layer was written {mh_t} and the "
+                  f"wadi-chamber register {ch_t}. Stage 5 was re-run between the two, so "
+                  f"any ratio taken across them is approximate until both carry one time.")
     return d
 
 
@@ -474,6 +526,8 @@ def fw02(d):
     cmid = cor.geometry.interpolate(0.5, normalized=True)
     ccode = code_at(cmid.x.values, cmid.y.values)
     mhcode = code_at(mh.X.values, mh.Y.values)
+    rp = reach_probe(rch)
+    rch_cov = float((rp.LEN_M * rp.COV).sum() / rp.LEN_M.sum())
     tr_cov_km = float((tr.LEN_M * tr.WADI_COV).sum()) / 1000.0
 
     rows = [
@@ -485,13 +539,13 @@ def fw02(d):
         (f"corridors\nby count, {len(cor):,}",
          float((ccode > 0).mean()), "midpoint test"),
         (f"network reaches\nby length, {rch.LEN_M.sum()/1000:,.0f} km",
-         float(rch.LEN_M[rch.WADI_COV == 1].sum() / rch.LEN_M.sum()), "stage 4"),
+         rch_cov, "sampled along"),
         (f"chambers\nby count, {len(mh):,}",
-         float((mhcode > 0).mean()), "stage 5"),
+         float((mhcode > 0).mean()), str(mh.STAGE.iloc[0])),
         (f"trunk main\nby length, {tr.LEN_M.sum()/1000:,.1f} km",
          tr_cov_km / (tr.LEN_M.sum() / 1000), "sampled along"),
         (f"trunk chambers\nby count, {len(trn):,}",
-         float((trn.WADI_COV == 1).mean()), "stage 3"),
+         float((trn.WADI_COV == 1).mean()), "s3_trunk"),
     ]
     worst = min(r[1] for r in rows)
     fig, ax = fk.chart_frame(
@@ -500,6 +554,7 @@ def fw02(d):
                   "hatched part carries no wadi answer either way — a clean wadi check on "
                   "it is silence, not a pass. "),
         figsize=(9.8, 5.4), ygrid=False, xgrid=True)
+    drop_top(fig, 0.075)
     y = np.arange(len(rows))[::-1]
     for yy, (lab, frac, tag) in zip(y, rows):
         ax.barh(yy, 100 * frac, height=0.62, facecolor=C_TESTED,
@@ -518,15 +573,20 @@ def fw02(d):
     ax.set_xticks([0, 25, 50, 75, 100])
     ax.set_xlabel("per cent")
     ax.axvline(50, color=fk.C.INK, lw=0.9, ls=":", zorder=5)
-    ax.text(50, len(rows) - 0.35, " half", fontsize=7, color=fk.C.INK, va="bottom")
-    fk.legend_below(ax, [Patch(label="inside the 50-year hazard grid — testable",
-                               facecolor=C_TESTED, edgecolor=fk.C.INK, lw=0.6),
-                         Patch(label="outside it — UNTESTED, no answer either way",
-                               **fk.status_style("untested"))], ncol=2, drop=0.45)
+    ax.text(50, len(rows) - 0.52, "half", fontsize=7, color=fk.C.INK,
+            va="bottom", ha="center")
+    # ABOVE the bars, not below: figkit's legend_below anchors to the axes, and the
+    # source block later pushes the axes up straight into it.
+    ax.legend(handles=[Patch(label="inside the 50-year hazard grid — testable",
+                             facecolor=C_TESTED, edgecolor=fk.C.INK, lw=0.6),
+                       Patch(label="outside it — UNTESTED, no answer either way",
+                             **fk.status_style("untested"))],
+              loc="lower left", bbox_to_anchor=(0.0, 1.015), ncol=2, frameon=False,
+              fontsize=7.6, handlelength=1.9, columnspacing=1.8)
     finish_chart(fig, source=fk.source_line(d["cor"], d["rch"], d["tr"], d["mh"], d["hz"]),
                     note=(f"Worst covered artefact: {100*worst:.0f} % testable. Corridor and "
                           "chamber coverage is a one-point test per feature; the trunk is "
-                          "sampled along its length by stage 3. " + ASSUME))
+                          "sampled along its length by stage 3. " + ASSUME + d["clock"]))
     return fk.save(fig, "FW02_coverage_by_artefact")
 
 
@@ -543,17 +603,26 @@ def fw03(d):
     cut_n = int(grp.loc["wadi (along)", "n"]); cut_km = float(grp.loc["wadi (along)", "km"])
     dual_n = int(grp.loc["dual carriageway", "n"]); dual_km = float(grp.loc["dual carriageway", "km"])
 
-    n_al = int((rch.WADI_ALONG == 1).sum()); km_al = float(rch.LEN_M[rch.WADI_ALONG == 1].sum() / 1000)
-    n_xg = int((rch.WADI_XING == 1).sum()); km_xg = float(rch.LEN_M[rch.WADI_XING == 1].sum() / 1000)
+    rp = reach_probe(rch)
+    al = rp[rp.along == 1]; xg = rp[rp.xing == 1]
+    n_al = len(al); km_al = float(al.on_m.sum() / 1000)
+    n_xg = len(xg); km_xg = float(xg.on_m.sum() / 1000)
+    weave = int((al.n_runs > 1).sum())
+    stage = str(rch.STAGE.iloc[0]) if "STAGE" in rch.columns else "published"
+    tiers = (rch[["EDGE_UID", "TIER"]].merge(al[["EDGE_UID", "on_m"]], on="EDGE_UID")
+             .groupby("TIER").on_m.agg(["size", "sum"]).sort_values("sum", ascending=False))
+    by_tier = ", ".join(f"{t} {int(r['size'])} ({r['sum']:,.0f} m)"
+                        for t, r in tiers.iterrows())
 
     fig, axes = fk.chart_frame(
         title=(f"Distinguishing ACROSS from ALONG kept {keep_n:,} crossings and still "
                f"deleted {cut_km:,.0f} km"),
         subtitle=("H1 forbids a pipe ALONG a wadi; G201 §9.3 sets out how to CROSS one. "
-                  "Left: what stage 2 kept and what it cut. Right: how stage 4 classifies "
-                  "its own reaches with the auditor's geometry. "),
+                  "Left: what stage 2 kept and what it cut. Right: what the published "
+                  "reaches look like when the auditor's own geometry is re-run on them. "),
         figsize=(10.4, 4.4), ncols=2, ygrid=False, xgrid=True)
     a1, a2 = axes
+    drop_top(fig)
 
     bars = [("kept — scheduled\nwadi crossings", keep_n, keep_km, C_KEPT, None),
             ("cut — ran ALONG\na wadi", cut_n, cut_km, C_CUT, "\\\\"),
@@ -574,32 +643,41 @@ def fw03(d):
     y2 = np.arange(len(bars2))[::-1]
     for yy, (lab, n, kmv, col, ht) in zip(y2, bars2):
         a2.barh(yy, n, height=0.5, facecolor=col, edgecolor=fk.C.INK, lw=0.6, hatch=ht)
-        a2.text(n + n_xg * 0.02, yy, f"{n:,} reaches   ({kmv:,.1f} km)", va="center",
-                fontsize=7.6, color=fk.C.INK)
+        a2.text(n + n_xg * 0.02, yy, f"{n:,} reaches   ({kmv:,.1f} km on wadi ground)",
+                va="center", fontsize=7.6, color=fk.C.INK)
     a2.set_yticks(y2); a2.set_yticklabels([b[0] for b in bars2], fontsize=7.4)
     a2.set_xlim(0, n_xg * 1.75)
     a2.set_xlabel("reaches")
-    a2.set_title("stage 4, the designed network", fontsize=8.6, color=fk.C.GREY, loc="left")
+    a2.set_title(f"the published reaches ({stage}), classified here",
+                 fontsize=8.6, color=fk.C.GREY, loc="left")
     fk.thousands(a2, "x")
 
     finish_chart(fig, source=fk.source_line(xr, rm, rch),
                     note=("The two panels are not comparable rows: a corridor is a route, a "
                           "reach is a chamber-to-chamber pipe, and a single crossing can "
-                          "carry several reaches. " + ASSUME))
+                          f"carry several reaches. Of the {n_al:,} running ALONG, {weave:,} "
+                          f"touch the wadi in MORE THAN ONE place along the same pipe, "
+                          f"which no single crossing can explain. By tier: {by_tier} — H1 "
+                          f"admits no tier exemption. " + ASSUME))
     return fk.save(fig, "FW03_along_vs_across")
 
 
 # ================================================== FW04 crossing length vs Tab 12
 
 def fw04(d):
-    xr = d["xr"]
+    # WADI only.  The register also carries dual-carriageway crossings, and Table 12 is
+    # not the governing rule for those.
+    xr = d["xr"][d["xr"].OBSTACLE.astype(str).str.lower() == "wadi"]
     L = xr.LEN_M.values
     n100 = int((L > 100).sum()); km100 = float(L[L > 100].sum() / 1000)
     n200 = int((L > 200).sum()); km200 = float(L[L > 200].sum() / 1000)
 
     fig, ax = fk.chart_frame(
         title=(f"{n100:,} of the {len(L):,} wadi crossings are longer than a chamber "
-               f"spacing — each must stand a chamber in the wadi"),
+               f"spacing — each must stand a chamber in the wadi"
+               if n100 else
+               f"Every one of the {len(L):,} scheduled wadi crossings is now shorter than "
+               f"a chamber spacing — the longest is {L.max():,.0f} m"),
         subtitle=("Length of every scheduled wadi crossing, smallest to largest. G203-p30 "
                   "Table 12 caps chamber spacing at 100 m for DN200–315 and at 200 m even "
                   "at DN>1400, so a crossing longer than that cannot be spanned without a "
@@ -626,13 +704,26 @@ def fw04(d):
                 f"G203-p30 Tab 12 — max chamber spacing {spacing} m ({dn})",
                 fontsize=7.2, color=C_CUT, va="bottom", fontweight="bold")
     k100 = len(s) - n100
-    ax.axvspan(k100, len(s), color=C_CUT, alpha=0.07, zorder=0)
-    ax.annotate(f"{n100:,} crossings over 100 m\n{km100:,.1f} km of contact\n"
-                f"— half of all the on-wadi\ncontact in the register",
-                xy=(k100, 105), xytext=(len(s) * 0.30, 1.3),
-                fontsize=7.6, color=fk.C.INK, ha="left",
-                arrowprops=dict(arrowstyle="->", color=fk.C.GREY, lw=0.9),
-                bbox=dict(boxstyle="round,pad=0.45", fc="white", ec="#8a8a8a", alpha=0.95))
+    if n100:
+        ax.axvspan(k100, len(s), color=C_CUT, alpha=0.07, zorder=0)
+        ax.annotate(f"{n100:,} crossings over 100 m\n{km100:,.1f} km of contact —\n"
+                    f"{100*km100/max(L.sum()/1000, 1e-9):.0f} % of all the on-wadi\n"
+                    f"contact in the register",
+                    xy=(k100, 105), xytext=(len(s) * 0.30, 1.3),
+                    fontsize=7.6, color=fk.C.INK, ha="left",
+                    arrowprops=dict(arrowstyle="->", color=fk.C.GREY, lw=0.9),
+                    bbox=dict(boxstyle="round,pad=0.45", fc="white", ec="#8a8a8a",
+                              alpha=0.95))
+    else:
+        ax.annotate(f"nothing reaches the 100 m line.\nThe longest crossing is "
+                    f"{s[-1]:,.0f} m, which leaves\n{100 - s[-1]:,.0f} m of headroom on the "
+                    f"tightest\nTable 12 spacing — so no scheduled\ncrossing forces a "
+                    f"chamber onto wadi ground.",
+                    xy=(len(s) * 0.985, s[-1]), xytext=(len(s) * 0.22, 1.5),
+                    fontsize=7.6, color=fk.C.INK, ha="left",
+                    arrowprops=dict(arrowstyle="->", color=fk.C.GREY, lw=0.9),
+                    bbox=dict(boxstyle="round,pad=0.45", fc="white", ec="#8a8a8a",
+                              alpha=0.95))
     ax.text(len(s) * 0.995, s[-1] * 1.15, f"longest {s[-1]:,.0f} m", ha="right",
             va="bottom", fontsize=7.4, fontweight="bold", color=C_CUT)
 
@@ -644,9 +735,18 @@ def fw04(d):
     ax.text(0.985, 0.03, box, transform=ax.transAxes, fontsize=7.0, family="monospace",
             va="bottom", ha="right", color=fk.C.INK,
             bbox=dict(boxstyle="round,pad=0.45", fc="white", ec="#8a8a8a", alpha=0.93))
+    sched = float(L.sum()) / 1000
+    owm = float(d["cor"].ON_WADI_M.fillna(0).sum()) / 1000
     finish_chart(fig, source=fk.source_line(xr,
-                    "G203-p30 Tab 12 via _BRAIN/02_DESIGN_CRITERIA.md (max chamber spacing "
-                    "DN200-315 100 m, 350-900 120 m, 1000-1400 150 m, >1400 200 m)", ASSUME))
+                 "G203-p30 Tab 12 via _BRAIN/02_DESIGN_CRITERIA.md (max chamber spacing "
+                 "DN200-315 100 m, 350-900 120 m, 1000-1400 150 m, >1400 200 m)"),
+                 note=(f"The {len(L):,} rows with OBSTACLE='wadi' only; the register also "
+                       f"carries dual-carriageway crossings, which Table 12 does not "
+                       f"govern. WORTH CHECKING: these crossings schedule {sched:,.1f} km "
+                       f"of contact, while the corridors' own ON_WADI_M field totals "
+                       f"{owm:,.1f} km — a {abs(owm - sched):,.1f} km difference between "
+                       f"what is scheduled and what the corridor layer says it touches. "
+                       + ASSUME))
     return fk.save(fig, "FW04_crossing_length_vs_spacing")
 
 
@@ -659,9 +759,13 @@ def fw05(d):
     capped = S.capped > 0
     whole = S.frac > 0.95
 
+    cap_share = float(capped.mean()); whole_share = float(whole.mean())
     fig, ax = fk.chart_frame(
         title=("The crossings pass the squareness test because the flood plains are wider "
-               "than the crossings are long"),
+               "than the crossings are long"
+               if cap_share > 0.15 and whole_share > 0.4 else
+               f"Contact against band width: {100*cap_share:.0f} % of the probes never "
+               f"found the far bank"),
         subtitle=("Every on-wadi corridor: the length of its contact against the width of "
                   "the hazard band measured perpendicular at the middle of that contact — "
                   "the auditor's own R4 geometry, re-run here. Anything under the "
@@ -685,8 +789,8 @@ def fw05(d):
     for a in (ax.xaxis, ax.yaxis):
         a.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:,.0f}"))
     ax.axvline(2 * PROBE_M, color=C_CUT, lw=0.9, ls=":", zorder=1)
-    ax.text(2 * PROBE_M * 0.96, 780, f"{2*PROBE_M:.0f} m = both probes at their limit",
-            rotation=90, ha="right", va="top", fontsize=6.8, color=C_CUT)
+    ax.text(2 * PROBE_M, 1180, f"{2*PROBE_M:.0f} m = both probes at their limit",
+            ha="right", va="bottom", fontsize=6.8, color=C_CUT, clip_on=False)
 
     n_cap_wadi = int(S.cap_is_wadi.sum())
     n_cap_sides = int(S.capped.sum())
@@ -713,6 +817,9 @@ def fw05(d):
 
 def fw06(d):
     cor, rm = d["cor"], d["rm"]
+    # MEASURED HERE, not read off the register.  The register's LEN_M is capped, so it
+    # no longer describes how far a corridor actually runs inside a wadi; FW04 reports the
+    # register and this map reports the ground, and the two are different questions.
     S = band_probe(cor)
     cor = cor.merge(S[["CORR_ID", "contact_m"]], on="CORR_ID", how="left")
     ow = cor[cor.ON_WADI_M.fillna(0) > 0]
@@ -756,8 +863,12 @@ def fw06(d):
            f"contact over 100 m      {n_long:>7,}\n"
            f"deleted for ALONG       {al.LEN_M.sum()/1000:>6,.1f} km")
     finish_map(fig, ax, legend_handles=handles, legend_loc="upper left", databox=box,
-                  note=f"{note}\n{ASSUME}",
-                  source=fk.source_line(d["cor"], rm, d["hz"]))
+               note=(f"{note}\nContact length measured by this module at {SAMPLE_M} m "
+                     f"along every on-wadi corridor, NOT read off the crossings register, "
+                     f"whose LEN_M is capped and therefore says how long a crossing is "
+                     f"allowed to be, not how far the corridor runs inside the wadi. "
+                     f"{ASSUME}"),
+               source=fk.source_line(d["cor"], rm, d["hz"]))
     return fk.save(fig, "FW06_wadi_geography")
 
 
@@ -887,6 +998,7 @@ def fw08(d):
                   "chamber cannot be re-sited onto a guess. "),
         figsize=(11.0, 4.9), ncols=2, ygrid=False, xgrid=True)
     a1, a2 = axes
+    drop_top(fig)
 
     cols = [C_CUT, "#b4682a", fk.C.UNTESTED]
     hats = ["\\\\", "..", "///"]
@@ -932,7 +1044,7 @@ def fw08(d):
                           "distance transform), so ±9 m. Stage 5's own nudge window is "
                           "±20 m ALONG the route, which is a stricter test than this one: "
                           "a chamber 15 m from clear ground across country may still have "
-                          "nowhere to go on its own pipe. " + ASSUME))
+                          "nowhere to go on its own pipe. " + ASSUME + d["clock"]))
     return fk.save(fig, "FW08_stuck_chambers")
 
 
@@ -951,7 +1063,7 @@ def fw09(d):
                   "hatched ground."))
     untested, uext = draw_classes(ax, ext, px=1700, alpha_wadi=0.50, alpha_dry=0.18)
     fk.hatch_untested(ax, untested, uext, zorder=2, face_alpha=0.10)
-    ax.scatter(mh.X.values, mh.Y.values, s=0.35, c="#8f8f8f", alpha=0.45, lw=0, zorder=4)
+    ax.scatter(mh.X.values, mh.Y.values, s=0.5, c="#6f6f6f", alpha=0.6, lw=0, zorder=4)
     for k, col, size in ((4, CL[4], 4.0), (5, CL[5], 5.0), (6, CL[6], 7.0)):
         m = D.CLASS == k
         if m.any():
@@ -973,7 +1085,7 @@ def fw09(d):
            f"on wadi ground   {len(ch):>8,}   {100*len(ch)/len(mh):.1f} %\n"
            f"class 6 alone    {int(counts.get(6,0)):>8,}")
     finish_map(fig, ax, legend_handles=handles, legend_loc="upper left", databox=box,
-                  note=f"{note}\n{ASSUME}",
+                  note=f"{note}\n{ASSUME}{d['clock']}",
                   source=fk.source_line(mh, ch, d["hz"]))
     return fk.save(fig, "FW09_stuck_chamber_map")
 
@@ -984,9 +1096,16 @@ def fw10(d):
     tr, trn, trx = d["tr"], d["trn"], d["trx"]
     al = tr[tr.WADI_ALONG == 1]
     xg = tr[(tr.WADI_XING == 1) & (tr.WADI_ALONG == 0)]
-    unt = tr[tr.WADI_COV < 0.5]
     onw_ch = trn[trn.IN_WADI == 1]
     unt_ch = trn[trn.WADI_COV == 0]
+    # THREE different "untested" numbers live in this layer and they are not the same
+    # thing.  WADI_COV is the FRACTION of a reach's samples that the grid answered, so:
+    #   unt_km   -- sample-weighted length with no answer.  The honest headline.
+    #   unt      -- the reaches with no answer ANYWHERE.  What can be drawn as a line.
+    # Quoting one and drawing the other is how a figure ends up disagreeing with itself.
+    unt_km = float((tr.LEN_M * (1.0 - tr.WADI_COV)).sum()) / 1000.0
+    unt_pct = 100.0 * unt_km / (tr.LEN_M.sum() / 1000.0)
+    unt = tr[tr.WADI_COV == 0]
 
     # the worst single stretch, found by clustering the along-wadi reaches
     from scipy.cluster.hierarchy import fcluster, linkage
@@ -1003,36 +1122,38 @@ def fw10(d):
     fig, ax, note = fk.map_frame(
         ext,
         title=(f"The client's own trunk alignment runs {al.LEN_M.sum()/1000:,.2f} km along "
-               f"a wadi, and {unt.LEN_M.sum()/1000:,.0f} km of it cannot be tested"),
+               f"a wadi, and {unt_pct:.0f} % of it has no flood answer"),
         subtitle=("The trunk is an INPUT — SHP/Main Pipe — so each of these is a decision "
                   "for the client, not a routing choice of ours. The worst single stretch "
                   f"is {worst.len_m:,.0f} m near E{worst.X:,.0f} N{worst.Y:,.0f}."))
     untested, uext = draw_classes(ax, ext, px=1700, alpha_wadi=0.50, alpha_dry=0.18)
     fk.hatch_untested(ax, untested, uext, zorder=2, face_alpha=0.10)
     d["bnd"].boundary.plot(ax=ax, color=fk.C.BOUNDARY, lw=1.0, ls="--", zorder=3)
-    tr.plot(ax=ax, color="#9fb3c4", lw=1.4, zorder=4)
-    unt.plot(ax=ax, color=fk.C.UNTESTED, lw=1.6, zorder=5)
+    tr.plot(ax=ax, color="#333333", lw=1.2, zorder=4)
+    unt.plot(ax=ax, color=fk.C.UNTESTED, lw=2.2, linestyle=(0, (4, 2)), zorder=5)
     if len(xg):
-        xg.plot(ax=ax, color=C_KEPT, lw=2.4, zorder=6)
+        xg.plot(ax=ax, color=C_KEPT, lw=2.6, zorder=6)
     if len(al):
-        al.plot(ax=ax, color=C_CUT, lw=3.0, zorder=7)
-    ax.scatter(onw_ch.geometry.x, onw_ch.geometry.y, s=13, marker="s",
-               facecolor=CL[6], edgecolor=fk.C.INK, lw=0.4, zorder=8)
-    ax.annotate("", xy=(worst.X, worst.Y), xytext=(worst.X - 6500, worst.Y + 5200),
+        al.plot(ax=ax, color=C_CUT, lw=3.2, zorder=9)
+    # under the ALONG lines, or a dense run of chambers hides the very defect it marks
+    ax.scatter(onw_ch.geometry.x, onw_ch.geometry.y, s=9, marker="s",
+               facecolor=CL[6], edgecolor=fk.C.INK, lw=0.35, zorder=8)
+    ax.annotate("", xy=(worst.X, worst.Y), xytext=(worst.X + 4200, worst.Y - 4200),
                 arrowprops=dict(arrowstyle="->", color=C_CUT, lw=1.6), zorder=9)
-    ax.text(worst.X - 6700, worst.Y + 5400,
-            f"{worst.len_m:,.0f} m along a wadi\n{worst.onw_m:,.0f} m of it on class 4–6\n"
-            f"E{worst.X:,.0f}  N{worst.Y:,.0f}",
-            fontsize=7.4, color=C_CUT, ha="right", va="bottom", fontweight="bold",
+    ax.text(worst.X + 4400, worst.Y - 4400,
+            f"the worst single stretch: {worst.len_m:,.0f} m along a wadi,\n"
+            f"{worst.onw_m:,.0f} m of it on class 4-6\nE{worst.X:,.0f}  N{worst.Y:,.0f}",
+            fontsize=7.4, color=C_CUT, ha="left", va="top", fontweight="bold", zorder=10,
             bbox=dict(boxstyle="round,pad=0.4", fc="white", ec=C_CUT, alpha=0.93))
 
-    handles = [Line2D([], [], color="#9fb3c4", lw=1.6,
+    handles = [Line2D([], [], color="#333333", lw=1.4,
                       label=f"trunk, tested and clear ({tr.LEN_M.sum()/1000:,.1f} km total)"),
-               Line2D([], [], color=fk.C.UNTESTED, lw=1.8,
-                      label=f"UNTESTED — no grid answer ({unt.LEN_M.sum()/1000:,.1f} km)"),
-               Line2D([], [], color=C_KEPT, lw=2.4,
+               Line2D([], [], color=fk.C.UNTESTED, lw=2.2, ls=(0, (4, 2)),
+                      label=(f"reach with NO grid answer anywhere on it ({len(unt):,} "
+                             f"reaches, {unt.LEN_M.sum()/1000:,.1f} km)")),
+               Line2D([], [], color=C_KEPT, lw=2.6,
                       label=f"crosses a wadi ({len(xg):,} reaches, {len(trx[trx.OBSTACLE=='wadi']):,} scheduled crossings)"),
-               Line2D([], [], color=C_CUT, lw=3.0,
+               Line2D([], [], color=C_CUT, lw=3.2,
                       label=f"runs ALONG a wadi ({len(al):,} reaches, {al.LEN_M.sum()/1000:,.2f} km)"),
                Line2D([], [], marker="s", ls="", ms=4, markerfacecolor=CL[6],
                       markeredgecolor=fk.C.INK,
@@ -1041,6 +1162,7 @@ def fw10(d):
                fk.untested_handle("no grid answer"),
                Line2D([], [], color=fk.C.BOUNDARY, lw=1.0, ls="--", label="study boundary")]
     box = (f"trunk            {tr.LEN_M.sum()/1000:>7,.2f} km\n"
+           f"no grid answer   {unt_km:>7,.2f} km  {unt_pct:.0f} %\n"
            f"on-wadi contact  {tr.ON_WADI_M.sum()/1000:>7,.2f} km\n"
            f"  of it ALONG    {al.ON_WADI_M.sum()/1000:>7,.2f} km\n"
            f"  of it ACROSS   {xg.ON_WADI_M.sum()/1000:>7,.2f} km\n"
@@ -1060,17 +1182,17 @@ def fw11(d):
     tr = d["tr"]
     trn = d["trn"]
 
+    n6 = int((D.CLASS == 6).sum())
     fig, axes = fk.chart_frame(
-        title=("Class 4 and class 6 are not the same problem — 13 km of corridor and 412 "
-               "chambers sit on the worst band"
-               if round(tally[6] / 1000) == 13 and int((D.CLASS == 6).sum()) == 412 else
-               "Class 4 and class 6 are not the same problem"),
-        subtitle=("Where the wadi contact actually falls in the hazard ladder. Class 4 is "
-                  "roughly 1.2 m of water; class 6 is the top of the AR&R scale. The "
-                  "guideline's criterion is scour, which this grid does not measure at "
-                  "all. "),
+        title=(f"Class 4 and class 6 are not the same problem — {tally[6]/1000:,.0f} km of "
+               f"corridor and {n6:,} chambers sit on the worst band"),
+        subtitle=("Where the wadi contact actually falls in the hazard ladder. Philosophy "
+                  "H1a describes class 4 as about 1.2 m of water; class 6 is the top of "
+                  "the AR&R scale. The guideline's own criterion is SCOUR, which this grid "
+                  "does not measure at all. "),
         figsize=(10.6, 4.4), ncols=3, ygrid=True, xgrid=False)
     a1, a2, a3 = axes
+    drop_top(fig)
 
     ks = list(WADI_CLASSES)
     v1 = [tally[k] / 1000 for k in ks]
@@ -1107,9 +1229,10 @@ def fw11(d):
 
 def fw12(d):
     rch = d["rch"]
-    tested_km = float(rch.LEN_M[rch.WADI_COV == 1].sum()) / 1000
-    unt_km = float(rch.LEN_M[rch.WADI_COV == 0].sum()) / 1000
-    on_km = float(rch.LEN_M[(rch.WADI_COV == 1) & (rch.WADI_HERE == 1)].sum()) / 1000
+    rp = reach_probe(rch)
+    tested_km = float((rp.LEN_M * rp.COV).sum()) / 1000
+    unt_km = float((rp.LEN_M * (1.0 - rp.COV)).sum()) / 1000
+    on_km = float(rp.on_m.sum()) / 1000
     rate = on_km / max(tested_km, 1e-9)
     implied = rate * unt_km
 
@@ -1128,6 +1251,7 @@ def fw12(d):
                   "data request, not a finding about the design. "),
         figsize=(10.2, 4.4), ncols=2, ygrid=True, xgrid=False)
     a1, a2 = axes
+    drop_top(fig)
 
     for ax, meas, imp, ylab, ttl, fmt in (
             (a1, on_km, implied, "km of network on wadi ground",
@@ -1150,16 +1274,11 @@ def fw12(d):
         ax.set_title(ttl, fontsize=8.4, color=fk.C.GREY, loc="left")
         fk.thousands(ax, "y")
 
-    fk.legend_below(a1, [Patch(facecolor=CL[5], edgecolor=fk.C.INK,
-                               label="measured against the 50-year grid"),
-                         Patch(facecolor="none", edgecolor=C_CUT, hatch="///",
-                               label="EXTRAPOLATION — same rate assumed, nothing measured")],
-                    ncol=2, drop=0.40)
     finish_chart(fig, source=fk.source_line(rch, mh, ch, d["hz"]),
                     note=("The extrapolation assumes the ungridded half has the same wadi "
                           "density as the gridded half. It has no evidence behind it and it "
                           "is drawn hatched for that reason: it says how much is unknown, "
-                          "not what is there. " + ASSUME))
+                          "not what is there. " + ASSUME + d["clock"]))
     return fk.save(fig, "FW12_untested_extrapolation")
 
 

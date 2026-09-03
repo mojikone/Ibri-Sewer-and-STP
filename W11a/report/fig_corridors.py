@@ -1,7 +1,7 @@
 """fig_corridors.py -- the corridor-network figures for the W11a report.
 
 Stage 2 is the biggest story in W11a and almost none of it is visible in a
-number.  Fourteen figures here, all drawn with ``figkit`` so they read as one
+number.  Fifteen figures here, all drawn with ``figkit`` so they read as one
 set, all measured off the PUBLISHED layers rather than off a run log.
 
 WHY THE PUBLISHED LAYER AND NOT THE LOG.  ``W11a/run/s2_corridors.log`` is the
@@ -34,7 +34,7 @@ were read back off the PDFs in ``Data/`` on 2026-09-02, not quoted from memory.
 Run:  python fig_corridors.py            (from W11a/report)
       python fig_corridors.py F_C04      (one figure, by stem)
 
-Idempotent: every run overwrites the same fourteen PNGs in ``report/img/``.
+Idempotent: every run overwrites the same fifteen PNGs in ``report/img/``.
 """
 
 from __future__ import annotations
@@ -168,6 +168,26 @@ def check_grade_palette(min_ratio: float = 1.35) -> list[str]:
     return out
 
 
+def check_takeup_palette(min_ratio: float = 1.35) -> list[str]:
+    """The take-up ladder, same rule: no pair may rest on colour alone."""
+    ks = list(TAKEUP)
+    out = []
+    for i, a in enumerate(ks):
+        for b in ks[i + 1:]:
+            sa, sb = TAKEUP[a], TAKEUP[b]
+            la, lb = fk._rel_luminance(sa["color"]), fk._rel_luminance(sb["color"])
+            r = (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
+            same_dash = str(sa["ls"]) == str(sb["ls"])
+            wr = max(sa["lw"], sb["lw"]) / min(sa["lw"], sb["lw"])
+            out.append(f"   {str(a):8s} vs {str(b):8s} grey {r:.2f}:1  "
+                       f"{'dash differs' if not same_dash else f'same dash, width x{wr:.1f}'}")
+            if same_dash and wr < 1.80:
+                assert r >= min_ratio, (
+                    f"take-up {a} vs {b}: same dash, width x{wr:.1f}, greyscale "
+                    f"{r:.2f}:1 -- no channel is left")
+    return out
+
+
 # ------------------------------------------------------------------- the data
 # Read once per process.  Nothing here opens a live GeoPackage -- figkit copies.
 
@@ -289,6 +309,18 @@ def map_frame(extent, **kw):
     return fig, ax, note
 
 
+def note_wrap(text: str, width: int = 150) -> str:
+    """Wrap a footnote.
+
+    ``figkit.save`` uses ``bbox_inches="tight"``, so one long unwrapped note
+    stretches the whole PNG and the figure stops matching its neighbours on the
+    page. F_C05's provenance note took the canvas from 2,245 px to 2,897 px
+    before this existed.
+    """
+    import textwrap
+    return "\n".join(textwrap.wrap(text, width=width))
+
+
 def box(rows, width: int = 34) -> str:
     """Monospace databox text with every line the same width.
 
@@ -373,10 +405,12 @@ def f_c02() -> tuple:
         fig,
         "The reserves are where the plots are; the road-derived corridors are where "
         "they are not",
-        "The same 26,450 corridors, one source per panel. Grey is the rest of the "
-        "network for context. Each panel gives its length and the load-bearing plots "
-        "for which one of its corridors is the nearest within 60 m (a PROJECT "
-        "distance, s2_corridors.py:255 -- not a guideline value).")
+        f"The same {len(cor):,} corridors, one source per panel. Grey is the rest of "
+        f"the network for context. Each panel gives its length and the load-bearing "
+        f"plots for which one of its corridors is the nearest within "
+        f"{PLOT_SERVED_M:.0f} m (a PROJECT distance, s2_corridors.py:255 -- not a "
+        f"guideline value). All six panels share one frame, one scale and EPSG:32640; "
+        f"the north arrow and scale bar on the first panel apply to all of them.")
     fig.subplots_adjust(left=0.010, right=0.990, bottom=0.045, top=top,
                         wspace=0.035, hspace=0.20)
 
@@ -393,6 +427,9 @@ def f_c02() -> tuple:
             s.set_color("#b8b8b8")
             s.set_linewidth(0.7)
         ppkm = sub["N_PLOT"].sum() / max(sub["LEN_M"].sum() / 1000.0, 1e-9)
+        if key is GRADES[0]:
+            fk._scalebar(axx, frac=0.26)
+            fk._north(axx, x=0.955, y=0.80)
         axx.set_title(f"{GRADE_SHORT[key]}   -   {sub['LEN_M'].sum()/1000:,.0f} km, "
                       f"{int(sub['N_PLOT'].sum()):,} plots  ({ppkm:,.0f} plots/km)",
                       fontsize=7.6, color=fk.C.INK, pad=3, loc="left")
@@ -546,7 +583,7 @@ def f_c05() -> tuple:
         ax.text(i, v + 26, f"{v:,}", ha="center", va="bottom", fontsize=10.5,
                 fontweight="bold", color=fk.C.INK)
     ax.set_xticks(range(len(bars)))
-    ax.set_xticklabels([f"{b[0]}\n{b[3]}" for b in bars], fontsize=6.4)
+    ax.set_xticklabels([b[0] for b in bars], fontsize=7.4)
     ax.set_ylabel("connected components")
     ax.set_ylim(0, 1760)
     for x0, x1, y, txt in (
@@ -582,15 +619,19 @@ def f_c05() -> tuple:
     fk.finish_chart(
         fig, source=fk.source_line(d["cor"], "W11a/run/s2_corridors.log, line 56 "
                                              "(10:21 run, superseded by the 14:05 layer)"),
-        note="The middle bar is a COUNTERFACTUAL computed here: the published layer with "
-             f"the {nconn} connector corridors deleted and the components recounted. It "
-             "is not a figure any run printed.")
+        note=note_wrap(
+            "Left panel, bar by bar:  1,381 = run/s2_corridors.log line 56, the "
+            "SUPERSEDED 10:21 run  |  "
+            f"{without} = a COUNTERFACTUAL computed here, today's published layer "
+            f"with the {nconn} connector corridors deleted and the components "
+            f"recounted, which no run printed  |  {len(cc)} = measured on "
+            "W11a.gpkg [corridors].", 118))
     p = fk.save(fig, "F_C05_component_ladder")
     return (p,
             "How the corridor component count moved, and how the 311 components are "
             "distributed by length.",
-            "The healing connectors are worth more than the whole H1a rewrite in "
-            "component terms per kilometre laid.")
+            f"2.845 km of connector removes {without-len(cc)} components; the whole "
+            f"H1a crossing rewrite removed {1381-without}.")
 
 
 # ============================================================= F_C06  connectors
@@ -691,8 +732,8 @@ def f_c07() -> tuple:
                   legend_loc="upper left", source=fk.source_line(cor))
     p = fk.save(fig, "F_C07_connector_detail")
     return (p,
-            "The cut hole and its connector at 600 m across - the mechanism behind "
-            "F_C06's number.",
+            f"The cut hole and its connector at {2*hx:,.0f} m across - the mechanism "
+            f"behind F_C06's number.",
             "A 4 m modelling artefact, not a ground condition, was the dominant "
             "defect in the corridor pipeline.")
 
@@ -744,10 +785,11 @@ def f_c08() -> tuple:
     fk.legend_below(ax, [Patch(facecolor=scol[s], hatch=shat[s], edgecolor=fk.C.INK,
                                linewidth=0.5, label=s) for s in srcs], ncol=3, drop=0.5)
     fk.finish_chart(fig, source=fk.source_line(rm),
-                    note="Review layer, outside the contract. 'along a dual carriageway' "
-                         "and 'dual crossing off square' are project rule 7; the 25 deg "
-                         f"squareness cap and the {SKEW:.3f} wadi skew tolerance are "
-                         f"{OURS}.")
+                    note=note_wrap(
+                        "Review layer, outside the contract. 'along a dual carriageway' "
+                        "and 'dual crossing off square' are project rule 7; the 25 deg "
+                        f"squareness cap and the {SKEW:.3f} wadi skew tolerance are "
+                        f"PROJECT tolerances, not guideline numbers.", 128))
     p = fk.save(fig, "F_C08_h1_removals")
     return (p,
             f"What H1 removed and why: {len(rm):,} pieces, {tot:.1f} km, "
@@ -772,8 +814,8 @@ def f_c09() -> tuple:
     }
     fig, ax, note = map_frame(
         fk.extent_of(cor, pad=0.02),
-        title=f"H1's cuts trace the wadi lines; the dual-carriageway rule costs "
-              f"{dual_km:.1f} km of the {tot:.0f}",
+        title=f"H1's cuts trace the wadi lines - the dual-carriageway rule costs "
+              f"only {dual_km:.1f} km of the {tot:.0f} km",
         subtitle=(f"The {len(rm):,} removed pieces over the surviving network. The "
                   f"wadi removals follow the drainage and are long; the "
                   f"dual-carriageway removals are short and scattered along the main "
@@ -800,10 +842,10 @@ def f_c09() -> tuple:
                   source=fk.source_line(rm, cor))
     p = fk.save(fig, "F_C09_h1_removals_map")
     return (p,
-            "Where H1 cut the corridor set. Wadi removals follow the drainage; dual "
-            "removals sit on one highway.",
-            "The exclusions are geographically concentrated, so the plots they strand "
-            "are too.")
+            f"Where H1 cut the corridor set: {wadi_km:.1f} km on wadi ground along the "
+            f"drainage, {dual_km:.2f} km on dual carriageways.",
+            f"The wadi rule costs {wadi_km/max(dual_km,1e-9):.0f} times more corridor "
+            f"than the dual-carriageway rule, and it costs it in long contiguous runs.")
 
 
 # =============================================================== F_C10  P7 map
@@ -937,60 +979,89 @@ def f_c11() -> tuple:
 
 # ============================================================ F_C12  crossings
 def f_c12() -> tuple:
+    """The wadi-crossing story, measured on the CORRIDORS, and the register audited.
+
+    The left panel deliberately measures ``ON_WADI_M`` on the corridors layer, not
+    ``LEN_M`` on the crossings layer.  The crossings layer is re-minted by later
+    stages -- it was the corridor-keyed register at 14:14 and the reach-keyed one
+    (STAGE ``s5c_flows``) by 14:49 -- so a corridor figure built on it goes stale
+    the moment a downstream stage runs.  ``ON_WADI_M`` is a property of the
+    corridor and does not move.  The right panel then audits whatever register is
+    on disk right now, including whether the corridors' own ``CROSS_ID`` values
+    still resolve into it (H1a item 4: an id with no row behind it schedules
+    nothing).
+    """
     d = data()
-    xr, cor = d["xr"], d["cor"]
-    tot = xr["LEN_M"].sum() / 1000.0
-    long70 = xr[xr["LEN_M"] > 70]
-    long200 = xr[xr["LEN_M"] > 200]
+    cor = d["cor"]
+    xr = fk.read_layer("W11a.gpkg", "crossings")       # re-read: it moves
+    onw = cor[cor["ON_WADI_M"] > 0]
+    tot = onw["ON_WADI_M"].sum() / 1000.0
+    long70 = onw[onw["ON_WADI_M"] > 70]
+    long200 = onw[onw["ON_WADI_M"] > 200]
+
+    have_id = cor.loc[cor["CROSS_ID"].astype(str).str.strip() != "", "CROSS_ID"]
+    resolved = int(have_id.isin(set(xr["CROSS_ID"])).sum())
+    edge_is_corr = int(xr["EDGE_UID"].isin(set(cor["CORR_ID"])).sum())
+    stages = ", ".join(sorted(set(xr["STAGE"].astype(str))))
 
     fig, axes = fk.chart_frame(
-        title=f"All {len(xr):,} wadi crossings are scheduled and not one is approved",
-        subtitle=(f"LEFT: on-wadi contact length per crossing. A crossing is legal only "
-                  f"if the contact is within {SKEW:.3f} x the wadi width measured "
-                  f"across the pipe ({OURS}, w11a/audit.py:56) -- so a long contact is "
-                  f"legal where the wadi is genuinely wide, and the perpendicular probe "
-                  f"stops looking at {PROBE_M:.0f} m. RIGHT: the G201 9.3 obligations "
-                  f"the register carries and what is still open."),
-        figsize=(10.8, 4.4), ncols=2, ygrid=True, xgrid=False)
+        title=f"{len(onw):,} corridors cross wadi ground for {tot:.1f} km, and not one "
+              f"crossing is approved",
+        subtitle=(f"LEFT: on-wadi contact per corridor, from ON_WADI_M on the corridors "
+                  f"layer. A crossing is legal only where the contact is within "
+                  f"{SKEW:.3f} x the wadi width measured across the pipe (a {OURS}, "
+                  f"w11a/audit.py:56), so a long contact is legal where the wadi really "
+                  f"is that wide -- but the perpendicular probe stops looking at "
+                  f"{PROBE_M:.0f} m, so a wadi wider than {2*PROBE_M:.0f} m cannot be "
+                  f"told from a run along one. RIGHT: the register as it stands on disk, "
+                  f"against the G201 9.3 obligations."),
+        figsize=(10.8, 4.6), ncols=2, ygrid=True, xgrid=False)
 
     ax = axes[0]
-    bins = np.logspace(np.log10(max(xr["LEN_M"].min(), 0.5)),
-                       np.log10(xr["LEN_M"].max() * 1.05), 34)
-    ax.hist(xr["LEN_M"], bins=bins, color=fk.C.WADI, edgecolor=fk.C.INK, linewidth=0.4)
+    bins = np.logspace(np.log10(max(onw["ON_WADI_M"].min(), 0.5)),
+                       np.log10(onw["ON_WADI_M"].max() * 1.05), 34)
+    ax.hist(onw["ON_WADI_M"], bins=bins, color=fk.C.WADI, edgecolor=fk.C.INK,
+            linewidth=0.4)
     ax.set_xscale("log")
-    ax.set_xlabel("on-wadi contact of the crossing (m, log)")
-    ax.set_ylabel("crossings")
+    ax.set_xlabel("on-wadi contact of the corridor (m, log)")
+    ax.set_ylabel("corridors")
     ax.axvline(70, color=fk.C.BOUNDARY, lw=1.1, ls="--")
-    ax.text(74, ax.get_ylim()[1] * 0.90,
-            f"{len(long70):,} crossings longer than 70 m\n"
-            f"= {long70['LEN_M'].sum()/1000:.1f} km of the {tot:.1f} km\n"
+    ax.text(78, ax.get_ylim()[1] * 0.94,
+            f"{len(long70):,} longer than 70 m\n"
+            f"= {long70['ON_WADI_M'].sum()/1000:.1f} km of the {tot:.1f} km\n"
             f"{len(long200):,} longer than 200 m "
-            f"({long200['LEN_M'].sum()/1000:.1f} km)",
-            fontsize=7.0, va="top", color=fk.C.INK)
+            f"({long200['ON_WADI_M'].sum()/1000:.1f} km)\n"
+            f"worst single contact {onw['ON_WADI_M'].max():,.0f} m",
+            fontsize=7.0, va="top", color=fk.C.INK,
+            bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="none", alpha=0.9))
 
     ax2 = axes[1]
     ax2.axis("off")
     lines = [
-        ("crossings on the register", f"{len(xr):,}"),
-        ("total on-wadi contact", f"{tot:,.1f} km"),
-        ("obstacle = wadi", f"{int((xr['OBSTACLE']=='wadi').sum()):,} of {len(xr):,}"),
-        ("every CROSS_ID resolves to a corridor",
-         "yes" if set(xr["EDGE_UID"]) ==
-                  set(cor.loc[cor["CROSS_ID"].astype(str).str.strip() != "", "CORR_ID"])
-         else "NO"),
-        ("METHOD - trenchless or open cut", "open_cut on every row (a default)"),
-        ("ANGLE_DEG - the measured skew", "90.0 on every row (nominal)"),
-        ("APPROVED = 1 (MoAFWR consent)", f"{int(xr['APPROVED'].sum())} of {len(xr):,}"),
+        ("rows on the register", f"{len(xr):,}", False),
+        ("written by stage", stages, False),
+        ("obstacle wadi / dual",
+         f"{int((xr['OBSTACLE']=='wadi').sum()):,} / "
+         f"{int((xr['OBSTACLE']=='dual').sum()):,}", False),
+        ("corridor CROSS_IDs that resolve to a row",
+         f"{resolved:,} of {len(have_id):,}", resolved < len(have_id)),
+        ("EDGE_UID keys on",
+         ("reaches, not corridors - correct at stage 5c"
+          if edge_is_corr == 0 else f"corridors, {edge_is_corr:,} of {len(xr):,}"),
+         False),
+        ("METHOD - trenchless or open cut",
+         f"open_cut on every row (a default)", True),
+        ("ANGLE_DEG - the measured skew", "90.0 on every row (nominal)", True),
+        ("APPROVED = 1, MoAFWR consent",
+         f"{int(xr['APPROVED'].sum())} of {len(xr):,}", True),
     ]
-    y = 0.97
-    for k, v in lines:
-        ax2.text(0.0, y, k, fontsize=8.0, va="top", color=fk.C.GREY)
-        bad = v.startswith("0 of") or v.startswith("NO") or "nominal" in v or \
-            "a default" in v
-        ax2.text(1.0, y, v, fontsize=8.4, va="top", ha="right",
+    y = 0.99
+    for k, v, bad in lines:
+        ax2.text(0.0, y, k, fontsize=7.8, va="top", color=fk.C.GREY)
+        ax2.text(1.0, y, v, fontsize=8.2, va="top", ha="right",
                  color=fk.C.FAIL if bad else fk.C.INK,
                  fontweight="bold" if bad else "normal")
-        y -= 0.098
+        y -= 0.088
     ax2.text(0.0, y - 0.02,
              "G201-p85: \"Approvals shall be obtained from MoAFWR and any other\n"
              "relevant agencies\", with bed profile and cross-sections, 1:20 / 1:50 /\n"
@@ -998,17 +1069,24 @@ def f_c12() -> tuple:
              "G201-p86: ductile iron over the crossing plus 15 m either side,\n"
              "anti-flotation, protection to PAM-STD-404, 2 m cover in soft soil.\n"
              "G203-p30 4.4.1 and p33 prohibit a CHAMBER on wadi ground outright.",
-             fontsize=7.0, va="top", color=fk.C.INK, linespacing=1.5,
+             fontsize=6.9, va="top", color=fk.C.INK, linespacing=1.45,
              bbox=dict(boxstyle="round,pad=0.5", fc="#f4f2ee", ec="#b8b8b8"))
-    fk.finish_chart(fig, source=fk.source_line(xr, cor),
-                    note="Guideline text read back from Data/PAM-GUD-201 and "
-                         "Data/PAM-GUD-203 on 2026-09-02, not quoted from memory.")
+    fk.finish_chart(
+        fig, source=fk.source_line(cor, xr),
+        note=note_wrap(
+            "The register is re-minted by every stage that mints new edges, so it is "
+            "read fresh here rather than cached; the left panel is measured on the "
+            "corridors' own ON_WADI_M, which does not move. Guideline text read back "
+            "from Data/PAM-GUD-201 and Data/PAM-GUD-203 on 2026-09-02, not quoted "
+            "from memory.", 132))
     p = fk.save(fig, "F_C12_wadi_crossings_register")
     return (p,
-            f"The {len(xr):,}-row wadi-crossing register: contact lengths, and the "
-            f"consents and fields still open.",
-            "The corridor set is only legal if 2,539 individually-approved crossings "
-            "are obtainable, and none has been sought.")
+            f"Wadi contact per corridor ({len(onw):,} corridors, {tot:.1f} km) and the "
+            f"state of the {len(xr):,}-row crossings register.",
+            f"The corridor set is only legal if thousands of individually-approved "
+            f"crossings are obtainable, and {int(xr['APPROVED'].sum())} have been "
+            f"sought; meanwhile {len(have_id)-resolved:,} corridor CROSS_IDs no longer "
+            f"resolve to a row.")
 
 
 # ========================================================= F_C13  flood answer
@@ -1114,13 +1192,81 @@ def f_c14() -> tuple:
             "question the TOR does not let us drop.")
 
 
+# ========================================================= F_C15  take-up vs P7
+#: USED x fronts-a-plot.  Colour separates the two USED classes only weakly in
+#: greyscale, so the dash pattern carries it -- same discipline as the grade ladder.
+TAKEUP = {
+    (1, 1): dict(color=fk.C.SUBMAIN, lw=0.75, ls="-",
+                 label="laid on, and fronts a plot"),
+    (1, 0): dict(color=fk.C.FAIL, lw=0.75, ls=(0, (3.0, 1.5)),
+                 label="laid on, and fronts NO load-bearing plot"),
+    (0, 1): dict(color=fk.C.FLAG, lw=0.55, ls="-",
+                 label="left unused, though it fronts a plot"),
+    (0, 0): dict(color=fk.C.FAINT, lw=0.30, ls="-",
+                 label="left unused, and fronts nothing"),
+}
+
+
+def f_c15() -> tuple:
+    """What the design actually took up, crossed with the P7 question.
+
+    ``USED`` is written by stages 4 and 5, which are running as this is drawn, so
+    the split moves between runs.  The source line carries the layer's write time;
+    re-run the module to refresh it.
+    """
+    d = data()
+    cor = d["cor"].copy()
+    cor["K"] = list(zip(cor["USED"].astype(int), (cor["N_PLOT"] > 0).astype(int)))
+    km = {k: cor.loc[[x == k for x in cor["K"]], "LEN_M"].sum() / 1000.0
+          for k in TAKEUP}
+    n = {k: int(sum(x == k for x in cor["K"])) for k in TAKEUP}
+    waste, missed = km[(1, 0)], km[(0, 1)]
+
+    fig, ax, note = map_frame(
+        fk.extent_of(cor, pad=0.02),
+        title=f"The design lays {waste:,.0f} km on corridors that front nothing, and "
+              f"leaves {missed:,.0f} km that fronts plots unused",
+        subtitle=(f"Corridor take-up (USED, written by stages 4-5) crossed with the P7 "
+                  f"test (N_PLOT = 0). Red dashed is pipe with no customer on it; amber "
+                  f"is a corridor with customers that the layout did not take. Neither "
+                  f"is automatically wrong -- a corridor with no frontage may still be "
+                  f"the only way through, and a fronting corridor may be served from "
+                  f"the other side -- but both are the length that has to justify "
+                  f"itself. USED moves while stages 4-5 run; the source line stamps "
+                  f"the version read."))
+    for k in [(0, 0), (0, 1), (1, 1), (1, 0)]:
+        sub = cor[[x == k for x in cor["K"]]]
+        draw(sub, ax, TAKEUP[k], zorder=3 + [(0, 0), (0, 1), (1, 1), (1, 0)].index(k))
+    hb = _boundary(ax)
+    handles = [Line2D([], [], color=TAKEUP[k]["color"],
+                      lw=max(TAKEUP[k]["lw"], 1.5), ls=TAKEUP[k]["ls"],
+                      label=f"{TAKEUP[k]['label']}  -  {n[k]:,}, {km[k]:,.0f} km")
+               for k in [(1, 1), (1, 0), (0, 1), (0, 0)]]
+    handles.append(hb)
+    dbox = box([("", "fronts a plot   fronts none"),
+                ("laid on (USED=1)",
+                 f"{km[(1,1)]:>8,.0f} km {km[(1,0)]:>9,.0f} km"),
+                ("left unused",
+                 f"{km[(0,1)]:>8,.0f} km {km[(0,0)]:>9,.0f} km"),
+                ("total", f"{d['km']:,.0f} km")], width=40)
+    fk.finish_map(fig, ax, note=note, legend_handles=handles, databox=dbox,
+                  source=fk.source_line(cor))
+    p = fk.save(fig, "F_C15_corridor_take_up")
+    return (p,
+            f"Corridor take-up against the P7 test: {waste:,.0f} km laid on corridors "
+            f"fronting nothing, {missed:,.0f} km fronting plots left unused.",
+            f"The layout's answer to P7 is to build most of it anyway - "
+            f"{100*waste/max(km[(1,0)]+km[(1,1)],1e-9):.0f} % of what it laid fronts no "
+            f"load-bearing plot.")
+
+
 # --------------------------------------------------------------------- runner
 
 FIGURES = {
     "F_C01": f_c01, "F_C02": f_c02, "F_C03": f_c03, "F_C04": f_c04,
     "F_C05": f_c05, "F_C06": f_c06, "F_C07": f_c07, "F_C08": f_c08,
     "F_C09": f_c09, "F_C10": f_c10, "F_C11": f_c11, "F_C12": f_c12,
-    "F_C13": f_c13, "F_C14": f_c14,
+    "F_C13": f_c13, "F_C14": f_c14, "F_C15": f_c15,
 }
 
 
@@ -1128,6 +1274,9 @@ def main(argv: list[str]) -> int:
     want = [a for a in argv[1:] if not a.startswith("-")]
     print("grade palette self-test:")
     for line in check_grade_palette():
+        print(line)
+    print("take-up palette self-test:")
+    for line in check_takeup_palette():
         print(line)
     print()
     keys = want or list(FIGURES)

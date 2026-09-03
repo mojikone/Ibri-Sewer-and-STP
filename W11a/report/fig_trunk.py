@@ -79,6 +79,9 @@ DOD_LIMIT_SMALL, DOD_LIMIT_BIG, DOD_DN_SPLIT = 0.65, 0.50, 350
 V_SELF_CLEANSE = 0.75
 #: The tractive-force route's tension.  OURS - GAP-9, G203-p27 4.2.2.1 gives none.
 TAU_ASSUMED_PA = 1.0
+#: Mara/Sleigh/Taylor: Smin = K * tau^1.23 * Q^-0.461 (G203-p27 4.2.2.1, quoted in
+#: _BRAIN/02_DESIGN_CRITERIA.md).  The exponent is what makes tau's value matter.
+TAU_EXP = 1.23
 
 #: Long-section furniture.  Not in figkit's palette because nothing else uses it:
 #: the earth fill has to sit UNDER the tier and status colours without competing.
@@ -279,10 +282,6 @@ def wrap(fig, txt: str) -> str:
 def title_room(fig, drop: float = 0.038) -> None:
     """Lower a chart_frame's axes so a per-panel set_title clears the subtitle."""
     fig.subplots_adjust(top=max(0.30, fig.subplotpars.top - drop))
-
-
-def km(v: float) -> str:
-    return f"{v/1000.0:,.2f} km"
 
 
 # ==================================================================== FT01
@@ -572,7 +571,8 @@ def ft03_plan_defects(T: Trunk) -> Path:
            f"DN range     {r.DN.min():>5,.0f}–{r.DN.max():,.0f} mm\n"
            f"Qadf works   {T.node.loc['N0000758'].Q_ADF_M3D:>8,.0f} m³/d\n"
            f"Qpeak works  {T.node.loc['N0000758'].Q_PK_LS:>8,.0f} L/s\n"
-           f"audit        17 PASS / 5 FAIL")
+           f"audit    {int((art('audit').status.str.upper() == 'PASS').sum()):>7,} "
+           f"PASS / {int((art('audit').status.str.upper() == 'FAIL').sum()):,} FAIL")
     leg = ax.legend(handles=handles, loc="upper left", ncol=2, framealpha=0.93,
                     edgecolor="#9a9a9a", fontsize=7.2, borderpad=0.6,
                     labelspacing=0.5, columnspacing=1.4)
@@ -724,7 +724,8 @@ def ft05_fragmentation(T: Trunk) -> Path:
                   "10 mm — the tolerance a GIS uses, and the one that showed W10's "
                   "'310 loops' were an artefact (W11a/run/EVIDENCE_snap_tolerance.md). "
                   "The corridor copy is what stages 4-5b hang laterals on, so its "
-                  "58 pieces are 58 places where a lateral cannot find the trunk."))
+                  f"{t.comps.iloc[2]:.0f} pieces are {t.comps.iloc[2]:.0f} places "
+                  f"where a lateral cannot find the trunk."))
     a1, a2 = axes
     y = np.arange(len(t))[::-1]
     cols = [fk.C.MAIN, fk.C.PASS, fk.C.FAIL]
@@ -903,8 +904,9 @@ def ft07_margin(T: Trunk) -> Path:
             f"at DN ≤ {DOD_DN_SPLIT} and {r.DOD_PK[r.DN > DOD_DN_SPLIT].max():.4f} "
             f"above it — both within a thousandth of the limit · maximum velocity "
             f"{r.V_PK_MS.max():,.2f} m/s against the 3.0 m/s ceiling of G203-p27 · "
-            f"at τ = 2.0 Pa the required gradient rises 2.35×, which is what GAP-9 "
-            f"is asking NWS")
+            f"at τ = 2.0 Pa the required gradient rises {2.0 ** TAU_EXP:.2f}× "
+            f"(Smin ∝ τ^{TAU_EXP:.2f}, G203-p27 §4.2.2.1), which is what GAP-9 is "
+            f"asking NWS")
     fk.finish_chart(fig, note=wrap(fig, note), source=wrap(fig, fk.source_line(art("reaches"))))
     return fk.save(fig, "FT07_trunk_margin")
 
@@ -1163,18 +1165,6 @@ def ft10_station_cascade(T: Trunk) -> Path:
     return fk.save(fig, "FT10_station_cascade")
 
 
-def _reaches_near(T: Trunk, nodes, radius_m: float) -> set:
-    n = T.node
-    pts = [(n.loc[u].X, n.loc[u].Y) for u in nodes]
-    out = set()
-    xs = T.r.geometry.centroid.x.to_numpy()
-    ys = T.r.geometry.centroid.y.to_numpy()
-    for px, py in pts:
-        hit = ((xs - px) ** 2 + (ys - py) ** 2) <= radius_m ** 2
-        out |= set(T.r.EDGE_UID[hit])
-    return out
-
-
 def _subsystem_reaches(T: Trunk, sinks) -> set:
     comps = T.components()
     keep = set()
@@ -1237,14 +1227,20 @@ def ft11_audit(T: Trunk) -> Path:
                          Patch(label="FAIL", **fk.status_style("fail")),
                          Patch(label="CANNOT RUN — counted as a failure, never blank",
                                **fk.status_style("untested"))], ncol=3, drop=0.20)
-    r = art("reaches")
+    r, nd = art("reaches"), art("nodes")
+    fnd = art("findings")
+    dual_bad = fnd[fnd.check == "H1/R3"].value.sum()
+    sharp = nd[nd.INLET_FLAG == 1].INLET_DEG
+    comps = T.components()
     note = (f"the four failing extents in one line: "
             f"{r.ON_DUAL_M[r.ON_DUAL_M > 0].sum():,.0f} m of the alignment enters "
-            f"the 6 m dual band and 439 m of it runs along one · "
+            f"the 6 m dual band and {dual_bad:,.0f} m of it runs along one · "
             f"{r.ON_WADI_M[r.WADI_ALONG == 1].sum()/1000:,.2f} km runs along a wadi · "
-            f"{int((art('nodes').INLET_FLAG == 1).sum())} inlets are under 90° "
-            f"(87.8–89.8°, a benching detail) · H15 fails on a MISSING FIELD, not a "
-            f"broken network — the four components each end at exactly one sink")
+            f"{len(sharp)} inlets are under 90° "
+            f"({sharp.min():.1f}–{sharp.max():.1f}°, a benching detail) · H15 fails "
+            f"on a MISSING FIELD, not a broken network — the {len(comps)} components "
+            f"each end at exactly one sink "
+            f"({', '.join(sorted({T.kind[s] for s in comps}))})")
     fk.finish_chart(fig, note=wrap(fig, note), source=wrap(fig, fk.source_line(art("audit"))))
     return fk.save(fig, "FT11_trunk_audit")
 

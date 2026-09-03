@@ -51,6 +51,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+import matplotlib.patheffects as pe
 from matplotlib.patches import Patch, Rectangle
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -78,6 +79,32 @@ TRACTIVE_QMIN_LS = 1.5
 
 #: G201-p71 §7.4.2 — Merrimack applies only above this many properties.
 MERRIMACK_MIN_PROPERTIES = 100
+
+#: PROJECT ASSUMPTION, not a guideline value.  AR&R flood-hazard classes standing in
+#: for G203-p30 §4.4.1's "areas subject to washout", which is a SCOUR criterion
+#: (philosophy H1a).  Same convention as ``figkit.hazard_coverage``; label it as ours
+#: on any figure that uses it.
+WADI_CLASSES = (4, 5, 6)
+
+NL = chr(10)          # used where an f-string needs a line break in a label
+
+
+def sample_hazard(xs, ys):
+    """Sample the 50-year grid at points, at FULL resolution -> (known, wadi).
+
+    The nodata is -9999.0, which IS finite, so ``np.isfinite`` alone reports it as
+    dry ground.  Handled here so no figure has to remember it.  Sampling the raster
+    directly means this does not depend on any stage publishing a WADI_* field.
+    """
+    import rasterio
+    with rasterio.open(fk.HAZARD) as src:
+        vals = np.array([v[0] for v in src.sample(zip(np.asarray(xs), np.asarray(ys)))],
+                        dtype="float64")
+        nod = src.nodata
+    known = np.isfinite(vals) & (vals > -9998.0)
+    if nod is not None:
+        known &= (vals != nod)
+    return known, known & (np.floor(vals) >= min(WADI_CLASSES))
 
 
 def smin_tractive_pct(q_ls, tau_pa=1.0):
@@ -110,6 +137,69 @@ def panel_room(fig, inches: float = 0.26) -> None:
 def wrap(s: str, width: int = 128) -> str:
     """Wrap a source or note line.  An unwrapped long line inflates the tight bbox."""
     return "\n".join(textwrap.fill(part, width) for part in str(s).split("\n"))
+
+
+def source_room(fig, *texts, per_line: float = 0.125) -> None:
+    """Make room under the axes for a multi-line source block.
+
+    ``figkit`` reserves 0.42 in for one source line; anything longer walks into the
+    x-axis label.  Call this with the same strings you are about to hand
+    :func:`figkit.finish_chart`.
+    """
+    n = sum(str(t).count("\n") for t in texts if t)
+    if n <= 0:
+        return
+    h = fig.get_size_inches()[1]
+    fig.subplots_adjust(bottom=min(0.55, fig.subplotpars.bottom + per_line * n / h))
+
+
+def run_manifest_note() -> str:
+    """What `W11a/run/manifest.json` says about the most recent pipeline run.
+
+    Never assert a stage's status from memory: the pipeline is being re-run while these
+    figures are drawn.  This reads the manifest and reports what it actually holds.
+    """
+    import json
+    p = fk.RUN / "manifest.json"
+    if not p.exists():
+        return "No run manifest was found."
+    try:
+        m = json.loads(p.read_text(encoding="utf-8"))
+    except Exception:                                    # noqa: BLE001
+        return "The run manifest could not be parsed."
+    bits = []
+    for st in m.get("stages", []):
+        why = str(st.get("no_change_reason") or "").strip()
+        bits.append(f"{st.get('stage')}" + (f" ({why[:60]})" if why else ""))
+    return (f"The run manifest of {m.get('written', 'unknown time')} records: "
+            + (", ".join(bits) if bits else "no stage") + ".")
+
+
+def finish(fig, source: str, note: str | None = None, per_line: float = 0.125) -> None:
+    """`figkit.finish_chart` plus the bottom margin a multi-line source block needs."""
+    source_room(fig, source, note, per_line=per_line)
+    fk.finish_chart(fig, source=source, note=note)
+
+
+_REG_RE = re.compile(r'@check\(\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*\n?\s*"((?:[^"\\]|\\.)*)"'
+                     r'\s*,?\s*\n?\s*"?((?:[^"\\]|\\.)*)"?', re.S)
+
+
+def auditor_registry() -> dict[str, tuple[str, str]]:
+    """``{check id: (requirement, source)}`` parsed from the auditor's own source.
+
+    The readiness sheets and the audit CSVs disagree about which checks exist, so
+    the registry is read from `W11a/py/w11a/audit.py` — the file that defines it —
+    rather than inferred from whichever CSV happens to be to hand.
+    """
+    p = fk.W11A / "py" / "w11a" / "audit.py"
+    if not p.exists():
+        return {}
+    out = {}
+    for m in _REG_RE.finditer(p.read_text(encoding="utf-8")):
+        cid, _grp, req, src = m.groups()
+        out[cid] = (req.replace('\\"', '"'), src.replace('\\"', '"'))
+    return out
 
 
 def ink_on(hexcol: str) -> str:
@@ -299,7 +389,7 @@ def FE01_snap_tolerance():
                textcoords="axes fraction", fontsize=7.4, color=C.INK,
                arrowprops=dict(arrowstyle="->", color=C.GREY, lw=0.9))
 
-    fk.finish_chart(fig, source=fk.source_line(
+    finish(fig, source=fk.source_line(
         md_cite(src, "— measured on W10/shp/W10_pipes.shp, 20,936 pipes")))
     p = fk.save(fig, "FE01_snap_tolerance")
     return p, ("Components and cycles in W10's published pipe layer against the snap "
@@ -361,7 +451,7 @@ def FE02_cut_hole_step():
     ax.text(2.88, top * 0.34, "NODE_MERGE_M = 3.0 m\nthe merge that was\n"
             "meant to close it", fontsize=7.4, color=C.INK, va="top", ha="right")
     ax.legend(loc="lower left", framealpha=0.94, edgecolor="#9a9a9a", fontsize=7.6)
-    fk.finish_chart(fig, source=fk.source_line(md_cite(src, "§4a — the 4 m cut hole")))
+    finish(fig, source=fk.source_line(md_cite(src, "§4a — the 4 m cut hole")))
     p = fk.save(fig, "FE02_cut_hole_step")
     return p, ("Corridor components against the distance endpoints are joined over. The "
                "step sits at exactly the 4.0 m cut width."), {
@@ -440,14 +530,15 @@ def FE03_components_through_fixes():
         if b[1] is None:
             continue
         ax.text(i, ax.get_ylim()[0] * 1.05, b[2], ha="center", va="bottom", fontsize=6.4,
-                color=C.GREY, style="italic")
+                color=C.GREY, style="italic",
+                bbox=dict(fc="white", ec="none", alpha=0.88, pad=1.4))
     fk.legend_below(ax, [
         Patch(label="W10, published pipes", **fk.status_style("untested")),
         Patch(label="the rule applied by deletion", **fk.status_style("fail")),
         Patch(label="the rule re-read (H1a)", **fk.status_style("flag")),
         Patch(label="today", **fk.status_style("pass")),
     ], ncol=4, drop=0.44)
-    fk.finish_chart(fig, source=wrap(fk.source_line(
+    finish(fig, source=wrap(fk.source_line(
         w10, md_cite(s2log), md_cite(cur), fk.cite(cor))))
     p = fk.save(fig, "FE03_components_through_fixes")
     return p, (f"Disconnected components at each fix. The published corridor network is now "
@@ -462,44 +553,68 @@ def FE04_audit_matrix():
     """The 22-check registry on three artefacts.  A blank cell is not a pass."""
     w10 = fk.read_csv("audit_W10.csv")
     trunk = fk.read_csv("audit_W11a_trunk.csv")
-    ready = fk.read_csv("s4_audit_readiness.csv")
+    # Prefer the real network audit; fall back to the stage-4 readiness sheet, which
+    # only says whether a check COULD run.
+    try:
+        net, ready = fk.read_csv("audit_W11a.csv"), None
+    except Exception:                                    # noqa: BLE001
+        net, ready = None, fk.read_csv("s4_audit_readiness.csv")
     sw10, strunk = audit_split(w10), audit_split(trunk)
-    can, cannot = (int(ready["can_run"].astype(bool).sum()),
-                   int((~ready["can_run"].astype(bool)).sum()))
 
-    def role(s):
-        return {"PASS": "pass", "FAIL": "fail"}.get(str(s).upper(), "untested")
+    def role(v):
+        return {"PASS": "pass", "FAIL": "fail"}.get(str(v).upper(), "untested")
+
+    if net is not None:
+        snet = audit_split(net)
+        third = (f"W11a network{NL}{snet['pass']} pass · {snet['fail']} fail{NL}"
+                 f"{snet['untested']} cannot run",
+                 dict(zip(net["id"], net["status"].map(role))))
+        third_ids, third_facts = list(net["id"]), snet
+        headline = (f"the full network answers {snet['pass']}, and {snet['untested']} "
+                    f"of 22 still cannot be asked")
+    else:
+        can = int(ready["can_run"].astype(bool).sum())
+        cannot = int((~ready["can_run"].astype(bool)).sum())
+        third = (f"W11a network, stage 4{NL}{can} can run{NL}{cannot} cannot",
+                 {r["check"]: ("flag" if bool(r["can_run"]) else "untested")
+                  for _, r in ready.iterrows()})
+        third_ids = list(ready["check"])
+        third_facts = {"can_run": can, "cannot_run": cannot}
+        headline = f"on the full network at stage 4, {cannot} of 22 cannot even be asked"
 
     cols = [
-        (f"W10 published\n{sw10['pass']} pass · {sw10['fail']} fail\n"
+        (f"W10 published{NL}{sw10['pass']} pass · {sw10['fail']} fail{NL}"
          f"{sw10['untested']} cannot run",
          dict(zip(w10["id"], w10["status"].map(role)))),
-        (f"W11a trunk\n{strunk['pass']} pass · {strunk['fail']} fail\n"
+        (f"W11a trunk{NL}{strunk['pass']} pass · {strunk['fail']} fail{NL}"
          f"{strunk['untested']} cannot run",
          dict(zip(trunk["id"], trunk["status"].map(role)))),
-        (f"W11a network, stage 4\n{can} can run\n{cannot} cannot",
-         {r["check"]: ("flag" if bool(r["can_run"]) else "untested")
-          for _, r in ready.iterrows()}),
+        third,
     ]
-    order = list(w10["id"]) + [i for i in ready["check"] if i not in set(w10["id"])]
+    reg = auditor_registry()
+    order = list(w10["id"]) + [i for i in third_ids if i not in set(w10["id"])]
     req = dict(zip(w10["id"], w10["requirement"]))
     req.update(dict(zip(trunk["id"], trunk["requirement"])))
     ref = dict(zip(w10["id"], w10["source"]))
     ref.update(dict(zip(trunk["id"], trunk["source"])))
+    for cid, (r, s) in reg.items():
+        req.setdefault(cid, r)
+        ref.setdefault(cid, s)
+    retired = [c for c in order if c not in reg]
 
     n = len(order)
     fig, ax = fk.chart_frame(
-        title=(f"Check by check: the trunk answers {strunk['pass']} of 22; on the full "
-               f"network at stage 4, {cannot} of 22 cannot even be asked"),
+        title=(f"Check by check: the trunk answers {strunk['pass']} of 22; " + headline),
         subtitle=("The same registry run against three artefacts. A check that CANNOT RUN "
                   "counts as a failure, not a blank — W10's seven unanswerable checks are "
                   "exactly why its published layers looked cleaner than they were."),
-        figsize=(11.2, 7.4), ygrid=False)
+        figsize=(11.2, 6.6), ygrid=False)
     ax.set_axis_off()
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
+    fig.subplots_adjust(bottom=0.10)
 
-    top, bot = 0.925, 0.02
+    top, bot = 0.925, 0.015
     rh = (top - bot) / n
     X_REQ, X_ID, X0, CW, GAP, X_REF = 0.0, 0.425, 0.445, 0.115, 0.008, 0.815
 
@@ -522,7 +637,9 @@ def FE04_audit_matrix():
                     {"pass": "PASS", "fail": "FAIL", "flag": "runs",
                      "untested": "cannot run"}[r],
                     ha="center", va="center", fontsize=7.0, fontweight="bold",
-                    color=fk.label_ink(r))
+                    color=fk.label_ink(r),
+                    path_effects=[pe.withStroke(linewidth=2.0, foreground=(
+                        "black" if fk.label_ink(r) == "white" else "white"), alpha=0.55)])
 
     ax.text(X_ID, top + 0.012, "check", ha="right", va="bottom", fontsize=7.0,
             color=C.GREY, style="italic")
@@ -533,28 +650,37 @@ def FE04_audit_matrix():
         if i % 2 == 0:
             ax.add_patch(Rectangle((X_REQ - 0.004, y + rh * 0.08), 1.004, rh * 0.84,
                                    facecolor="#f7f7f7", edgecolor="none", zorder=0))
-        t = str(req.get(cid, ""))
-        t = t if len(t) <= 78 else t[:75] + "…"
+        t = str(req.get(cid, "")) or "(not in the current auditor registry)"
+        t = t if len(t) <= 70 else t[:67] + "…"
         ax.text(X_REQ, y + rh / 2, t, ha="left", va="center", fontsize=6.8, color=C.INK)
         ax.text(X_ID, y + rh / 2, cid, ha="right", va="center", fontsize=8.0,
-                fontweight="bold", color=C.INK)
+                fontweight="bold", color=C.FAIL if cid in retired else C.INK)
         ax.text(X_REF, y + rh / 2, str(ref.get(cid, "")), ha="left", va="center",
                 fontsize=6.2, color=C.GREY)
 
-    fk.legend_below(ax, [
-        Patch(label="PASS", **fk.status_style("pass")),
-        Patch(label="the check runs; stage 4 publishes readiness, not an outcome",
-              **fk.status_style("flag")),
-        Patch(label="CANNOT RUN — counted as a failure", **fk.status_style("untested")),
-        Patch(label="FAIL", **fk.status_style("fail")),
-    ], ncol=4, drop=0.10)
-    fk.finish_chart(fig, source=wrap(fk.source_line(w10, trunk, ready)),
-                    note=("A cell marked “not in this registry” is a version difference — "
-                          "the readiness sheets carry G3 and not H16. It is not a pass."))
+    used = {r for _h, mp in cols for r in mp.values()}
+    labels = {"pass": "PASS", "fail": "FAIL",
+              "untested": "CANNOT RUN — counted as a failure",
+              "flag": "the check runs; readiness only, not an outcome"}
+    handles = [Patch(label=labels[k], **fk.status_style(k))
+               for k in ("pass", "flag", "untested", "fail") if k in used]
+    ax.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, -0.005),
+              ncol=len(handles), frameon=False, fontsize=7.6, columnspacing=1.8,
+              handlelength=2.0)
+    note = wrap("A cell marked “not in this registry” is a version difference, not a "
+                "pass. " + ("The source sheet still carries " + ", ".join(retired)
+                            + ", which `W11a/py/w11a/audit.py` no longer defines."
+                            if retired else
+                            "All three artefacts run the same 22 checks."))
+    src = wrap(fk.source_line(w10, trunk, net if net is not None else ready,
+                              md_cite(fk.W11A / "py" / "w11a" / "audit.py",
+                                      f"— {len(reg)} checks defined")))
+    finish(fig, src, note, per_line=0.10)
     p = fk.save(fig, "FE04_audit_matrix")
     return p, ("The 22-check audit registry on three artefacts, check by check. Grey hatch "
                "is a check that cannot run, and it counts against the design."), {
-        "w10": sw10, "trunk": strunk, "s4_can_run": can, "s4_cannot_run": cannot}
+        "w10": sw10, "trunk": strunk, "network": third_facts,
+        "auditor_defines": len(reg), "in_source_sheet_not_in_auditor": retired}
 
 
 # ============================================================ FE05  flow concentration
@@ -572,15 +698,27 @@ def FE05_flow_concentration():
     biggest = float(df["QADF_M3D"].max())
     conc = 100.0 * biggest / placed
 
+    # Stage 5c's own test: it prints "FRAGMENTED, see OPEN-S4-1" below 80 %.  The figure
+    # states whichever finding the artefact actually supports on the day it is built.
+    FRAG_PCT = 80.0
+    fragmented = conc < FRAG_PCT
+    if fragmented:
+        title = (f"The biggest pipe carries only {conc:.1f} % of the load — a network "
+                 f"draining to one works would carry nearly all of it")
+        sub = (f"Stage 5c accumulates {placed:,.0f} m³/d of placed load down the reach "
+               f"graph. It arrives at {len(q):,} separate outfall reaches, not one. Every "
+               f"diameter and level computed downstream of this is computed for a network "
+               f"in pieces — which is why OPEN-S4-1 is a blocker, not a tidy-up.")
+    else:
+        title = (f"The network now drains as one: the last reach carries {conc:.1f} % of "
+                 f"the placed load")
+        sub = (f"Stage 5c accumulates {placed:,.0f} m³/d of placed load down the reach "
+               f"graph. It arrives at {len(q):,} outfall reaches, and the largest single "
+               f"reach takes {conc:.1f} % of it — the shape a network draining to one "
+               f"works should have. The tail is the evidence for how many satellite "
+               f"systems remain: the top ten take {float(np.cumsum(q)[9] / q.sum() * 100) if len(q) > 9 else 100:.1f} %.")
     fig, axes = fk.chart_frame(
-        title=(f"The biggest pipe carries {conc:.1f} % of the load — a network draining "
-               f"to one works would carry nearly all of it"),
-        subtitle=(f"Stage 5c accumulates {placed:,.0f} m³/d of placed load down the reach "
-                  f"graph. It arrives at {len(q):,} separate outfall reaches, not one. "
-                  f"Every diameter and level computed downstream of this is computed for "
-                  f"a network in pieces — which is why OPEN-S4-1 is a blocker, not a "
-                  f"tidy-up."),
-        figsize=(10.0, 4.8), ncols=2, ygrid=True)
+        title=title, subtitle=sub, figsize=(10.0, 4.8), ncols=2, ygrid=True)
     a, b = axes
     panel_room(fig, 0.24)
 
@@ -605,26 +743,29 @@ def FE05_flow_concentration():
     ypos = np.arange(len(top))[::-1]
     for y, r in zip(ypos, top.itertuples()):
         role = "fail" if r.TIER == "trunk main" else "flag"
-        b.barh(y, r.QADF_M3D, height=0.66, **fk.status_style(role))
-        b.text(r.QADF_M3D * 1.02, y, f"{r.QADF_M3D:,.0f}", va="center", fontsize=6.8,
+        b.barh(y, r.QADF_M3D, height=0.66, left=1e-9, **fk.status_style(role))
+        b.text(r.QADF_M3D * 1.10, y, f"{r.QADF_M3D:,.0f}", va="center", fontsize=6.8,
                color=C.INK)
     b.set_yticks(ypos)
     b.set_yticklabels([f"{r.EDGE_UID}  ({r.TIER})" for r in top.itertuples()], fontsize=6.6)
-    b.set_xlabel("Q$_{adf}$ arriving (m³/d)")
-    b.set_xlim(0, float(top["QADF_M3D"].max()) * 1.24)
-    fk.thousands(b, "x")
+    b.set_xlabel("Q$_{adf}$ arriving (m³/d, log — the largest outfall dwarfs the rest)")
+    lo = max(1.0, float(top["QADF_M3D"].min()) * 0.55)
+    b.set_xscale("log")
+    b.set_xlim(lo, float(top["QADF_M3D"].max()) * 3.2)
+    b.xaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:,.0f}"))
     b.set_title("the fifteen largest outfalls", fontsize=8.6, color=C.GREY, pad=6)
     b.legend(handles=[Patch(label="trunk main", **fk.status_style("fail")),
                       Patch(label="other tiers", **fk.status_style("flag"))],
              loc="lower right", fontsize=6.8, framealpha=0.94, edgecolor="#9a9a9a")
 
-    fk.finish_chart(fig, source=wrap(fk.source_line(df, fk.cite(cn))),
+    finish(fig, source=wrap(fk.source_line(df, fk.cite(cn))),
                     note=("“Placed load” is stage 5c's own denominator: the sum of "
                           "Q_ADF_M3D over every stage-5b connection."))
     p = fk.save(fig, "FE05_flow_concentration")
     return p, (f"Load concentration in the accumulated network. {len(q):,} reaches end "
                f"without a downstream pipe; the largest carries {conc:.1f} % of the "
                f"placed load."), {
+        "fragmented_by_stage5c_test": fragmented,
         "placed_m3d": placed, "biggest_m3d": biggest, "conc_pct": conc,
         "outfall_reaches_with_load": int(len(q)),
         "top10_share_pct": float(cum[9]) if len(cum) > 9 else None}
@@ -666,7 +807,7 @@ def FE06_peak_factor():
     lo, hi = a.get_ylim()
     a.annotate(f"{MERRIMACK_MIN_PROPERTIES} properties\n{G201_PF}",
                xy=(MERRIMACK_MIN_PROPERTIES, lo + (hi - lo) * 0.10),
-               xytext=(0.06, 0.14), textcoords="axes fraction", fontsize=7.4,
+               xytext=(0.04, 0.36), textcoords="axes fraction", fontsize=7.4,
                color=C.FAIL, fontweight="bold",
                arrowprops=dict(arrowstyle="->", color=C.FAIL, lw=1.0))
     a.legend(loc="lower left", fontsize=7.0, framealpha=0.94, edgecolor="#9a9a9a",
@@ -690,7 +831,7 @@ def FE06_peak_factor():
     fk.thousands(b, "x")
     b.set_title("how many reaches each rule governs", fontsize=8.6, color=C.GREY, pad=6)
 
-    fk.finish_chart(fig, source=wrap(fk.source_line(
+    finish(fig, source=wrap(fk.source_line(
         df, "PAM-GUD-201 p71 §7.4.2, read from the source PDF 2026-09-02")))
     p = fk.save(fig, "FE06_peak_factor")
     return p, (f"Peak factor by rule. Merrimack governs {n_mer:,} reaches; the remaining "
@@ -715,15 +856,16 @@ def FE07_tau_sensitivity():
     ratio = 2.0 ** TRACTIVE_TAU_EXP
     qs = df.loc[df["QPK_LS"] > 0, "QPK_LS"].values
     q_works = float(ts["Qpeak (L/s)"].max())
+    q_net_max = float(qs.max())
 
     def pctile(v):
         return 100.0 * float((qs <= v).mean())
 
-    picks = [(TRACTIVE_QMIN_LS, f"{TRACTIVE_QMIN_LS} L/s — the design-flow floor"),
-             (10.0, f"10 L/s — p{pctile(10):.0f} of reaches"),
-             (50.0, f"50 L/s — p{pctile(50):.0f}"),
-             (250.0, f"250 L/s — p{pctile(250):.1f}"),
-             (q_works, f"{q_works:,.0f} L/s — at the works")]
+    picks = [(TRACTIVE_QMIN_LS, f"{TRACTIVE_QMIN_LS:g} L/s  the design-flow floor"),
+             (float(np.percentile(qs, 90)), f"{np.percentile(qs, 90):,.0f} L/s  p90"),
+             (float(np.percentile(qs, 99)), f"{np.percentile(qs, 99):,.0f} L/s  p99"),
+             (q_net_max, f"{q_net_max:,.0f} L/s  the network's largest reach"),
+             (q_works, f"{q_works:,.0f} L/s  at the works")]
 
     fig, axes = fk.chart_frame(
         title=(f"Double the tractive assumption and every gradient it sets gets "
@@ -732,28 +874,31 @@ def FE07_tau_sensitivity():
                   "defines τ as tractive tension in Pa, then never states a design "
                   "value. τ = 1.0 Pa is OURS (GAP-9) and is one question to one client. "
                   "Everything right of the red line is design we have not justified."),
-        figsize=(10.4, 5.0), ncols=2, ygrid=True)
+        figsize=(11.0, 5.2), ncols=2, ygrid=True)
     a, b = axes
-    panel_room(fig, 0.26)
+    panel_room(fig, 0.28)
 
     ramp = [C.RIDER, C.LATERAL, C.MAIN, C.SUBMAIN, C.TRUNK]
     styles = [(0, (1, 1.6)), "-.", "--", (0, (6, 1.5)), "-"]
     for (q_ls, lab), col, ls in zip(picks, ramp, styles):
-        a.plot(taus, smin_tractive_pct(q_ls, taus), lw=2.2, color=col, ls=ls, label=lab)
-    for dn, ha, xx in ((200, "left", 1.02), (900, "left", 1.02)):
+        y = smin_tractive_pct(q_ls, taus)
+        a.plot(taus, y, lw=2.2, color=col, ls=ls)
+        a.annotate(lab, (2.0, y[-1]), textcoords="offset points", xytext=(6, 0),
+                   va="center", fontsize=6.8, color=col, fontweight="bold")
+    for dn in (200, 900):
         g = TABLE11_MM_PER_M[dn] / 10.0
         a.axhline(g, color=C.GREY, lw=1.0, ls=(0, (1, 2)))
-        a.text(xx, g * 1.06, f"{G203_T11}, DN{dn}{'+' if dn == 900 else ''}: {g:.3f} %",
-               fontsize=6.6, color=C.GREY, va="bottom", ha=ha)
+        a.text(1.01, g, f"{G203_T11}, DN{dn}{'+' if dn == 900 else ''}: {g:.3f} %",
+               fontsize=6.6, color=C.GREY, va="center", ha="left",
+               bbox=dict(fc="white", ec="none", alpha=0.86, pad=1.2))
     a.axvline(1.0, color=C.FAIL, lw=1.6, ls="--")
     a.set_yscale("log")
     a.set_xlabel("tractive tension τ assumed (Pa)")
     a.set_ylabel("minimum gradient required (%, log)")
-    a.set_xlim(0.985, 2.015)
-    a.legend(loc="lower right", fontsize=6.8, framealpha=0.94, edgecolor="#9a9a9a",
-             title="peak flow on the reach", title_fontsize=6.8)
-    a.set_title("the requirement, at five real flows from this network", fontsize=8.6,
-                color=C.GREY, pad=6)
+    a.set_xlim(0.985, 2.62)
+    a.set_xticks([1.0, 1.2, 1.4, 1.6, 1.8, 2.0])
+    a.set_title("the requirement, at five real flows from this network — peak flow labelled",
+                fontsize=8.4, color=C.GREY, pad=6)
 
     dn200 = TABLE11_MM_PER_M[200] / 10.0                        # 0.500 %
     net_over = np.array([100.0 * np.mean(smin_tractive_pct(df["QPK_LS"].values, t) > dn200)
@@ -778,21 +923,29 @@ def FE07_tau_sensitivity():
                    fontweight="bold")
         b.annotate(f"{series[0]:.0f} %", (1.0, series[0]), textcoords="offset points",
                    xytext=(8, dy), fontsize=9.5, color=col, fontweight="bold")
+    at_floor = float(smin_tractive_pct(TRACTIVE_QMIN_LS, 1.0))
+    b.annotate(f"at τ = 1.0 the floor flow needs {at_floor:.3f} %,\n"
+               f"just under Table 11's {dn200:.3f} % — the whole\n"
+               f"design sits {100*(1 - at_floor/dn200):.0f} % below a cliff edge",
+               xy=(1.0, 0.0), xytext=(0.28, 0.26), textcoords="axes fraction",
+               fontsize=7.2, color=C.FAIL, fontweight="bold",
+               arrowprops=dict(arrowstyle="->", color=C.FAIL, lw=1.0))
     b.set_xlabel("tractive tension τ assumed (Pa)")
     b.set_ylabel("share of that population (%)")
     b.set_xlim(0.985, 2.015)
     b.set_ylim(-4, 108)
-    b.legend(loc="upper left", fontsize=6.4, framealpha=0.94, edgecolor="#9a9a9a",
-             bbox_to_anchor=(0.02, 0.98))
+    b.legend(loc="center left", fontsize=6.4, framealpha=0.94, edgecolor="#9a9a9a",
+             bbox_to_anchor=(0.015, 0.56))
     b.set_title("how much of the design moves with it", fontsize=8.6, color=C.GREY, pad=6)
 
-    fk.finish_chart(fig, source=wrap(fk.source_line(
+    src = wrap(fk.source_line(
         df, ts, "G203-p27 §4.2.2.1 (relation + K) and G203-p29 Tab 11, read from the "
                 "source PDF 2026-09-02; exponents 1.23 / −0.461 per "
                 "_BRAIN/02_DESIGN_CRITERIA.md (2026-08-17 correction — the equation is "
-                "an image in the PDF)")),
-        note=wrap("τ = 1.0 Pa and the 1.5 L/s flow floor are PROJECT ASSUMPTIONS, not "
-                  "guideline values.  W10's own audit, check H5: " + h5))
+                "an image in the PDF)"), 150)
+    note = wrap("τ = 1.0 Pa and the 1.5 L/s flow floor are PROJECT ASSUMPTIONS, not "
+                "guideline values.  W10's own audit, check H5: " + h5, 150)
+    finish(fig, src, note)
     p = fk.save(fig, "FE07_tau_sensitivity")
     return p, ("Required gradient against the assumed tractive tension, and how much of "
                "the design moves with it. At 2.0 Pa the requirement is 2.35× the value "
@@ -806,11 +959,13 @@ def FE07_tau_sensitivity():
 
 def FE08_load_waterfall():
     """Where all the ultimate load sits, and which parts are not a defect."""
-    cn = fk.read_layer("W11a.gpkg", "connections", columns=["Q_ADF_M3D", "CAN_DRAIN"])
+    cn = fk.read_layer("W11a.gpkg", "connections",
+                       columns=[c for c in ("Q_ADF_M3D", "CAN_DRAIN")])
     un = fk.read_csv("s5b_unassigned.csv")
     q = pd.to_numeric(cn["Q_ADF_M3D"], errors="coerce").fillna(0)
-    drain = float(q[cn["CAN_DRAIN"] == 1].sum())
-    nodrain = float(q[cn["CAN_DRAIN"] == 0].sum())
+    can = (pd.to_numeric(cn["CAN_DRAIN"], errors="coerce")
+           if "CAN_DRAIN" in cn.columns else pd.Series(np.nan, index=cn.index))
+    graded = bool(can.notna().any())          # does stage 5b still publish drainability?
 
     def bucket(w):
         w = str(w)
@@ -822,39 +977,52 @@ def FE08_load_waterfall():
             return "cannot drain — tested on PLACEHOLDER levels"
         if "right-of-way" in w or "offset 0.00" in w:
             return "carrier sits on the plot boundary"
-        if "45" in w:
-            return "connection would exceed 45 m (G203-p22 Tab 6)"
         if "outside the project boundary" in w:
             return "outside the study boundary"
-        return w[:40]
+        if "along the tertiary path" in w or re.search(r"over(?: the)? 45", w):
+            return "connection would exceed 45 m (G203-p22 Tab 6)"
+        return "other: " + w[:44]
 
     un = un.assign(B=un["WHY"].map(bucket))
     g = (un.groupby("B").agg(plots=("PLOT_ID", "size"), q=("Q_ADF_M3D", "sum"))
          .sort_values("q", ascending=False))
     nd_key = "cannot drain — tested on PLACEHOLDER levels"
-    others = g.drop(index=nd_key, errors="ignore")
-    total = drain + nodrain + float(others["q"].sum())
-    noload = int(g.loc["carries no load at all", "plots"])
+    # Plots in the "cannot drain" bucket DID get a connection drawn, so they sit inside
+    # the connections layer too.  Count them once: on the connections side when stage 5b
+    # graded them, and as their own bar otherwise.
+    overlap = graded and nd_key in g.index
+    others = g.drop(index=nd_key) if overlap else g
+    connected = float(q.sum())
+    total = connected + float(others["q"].sum())
 
-    rows = [("connected and drainable", drain, "pass",
-             f"{int((cn['CAN_DRAIN'] == 1).sum()):,} connections"),
-            (nd_key, nodrain, "fail",
-             f"{int(g.loc[nd_key, 'plots']):,} plots — every chamber is still "
-             f"seeded at one depth")]
+    if graded:
+        rows = [("connected and drainable", float(q[can == 1].sum()), "pass",
+                 f"{int((can == 1).sum()):,} connections"),
+                (nd_key, float(q[can == 0].sum()), "fail",
+                 (f"{int(g.loc[nd_key, 'plots']):,} plots — every chamber is still "
+                  f"seeded at one depth") if nd_key in g.index
+                 else f"{int((can == 0).sum()):,} connections")]
+    else:
+        rows = [("connected to the network", connected, "pass",
+                 f"{len(cn):,} connections")]
     for name, r in others.iterrows():
         rows.append((name, float(r["q"]),
                      "untested" if r["q"] == 0 else "flag", f"{int(r['plots']):,} plots"))
 
-    unconn = total - drain
+    noload = int(g.loc["carries no load at all", "plots"]) if         "carries no load at all" in g.index else 0
+    unconn = total - connected
+    real = [r for r in rows[1:] if r[2] == "flag"]
     fig, ax = fk.chart_frame(
-        title=(f"The {100*unconn/total:.0f} % of load not yet connected is four different "
-               f"problems — and one of them is not a problem"),
+        title=(f"{100*connected/total:.0f} % of the ultimate load is on the network; the "
+               f"rest is {len(real)} named causes, and one of them is not a shortfall"),
         subtitle=(f"All {total:,.0f} m³/d of ultimate saturated load, by what happened to "
-                  f"it in stage 5b. The largest shortfall is an artefact of an unfinished "
-                  f"pipeline, not of the layout — drainability was tested against "
-                  f"placeholder levels — and {noload:,} plots carry no wastewater by "
-                  f"construction, so removing them changes the load by zero."),
-        figsize=(10.2, 5.2), ygrid=False, xgrid=True)
+                  f"it in stage 5b. Nothing is rounded away and nothing is silently "
+                  f"dropped — that is the point of the figure. "
+                  + (f"{noload:,} plots carry no wastewater by construction, so removing "
+                     f"them changes the load by zero." if noload else "")
+                  + ("" if graded else "  Stage 5b no longer publishes CAN_DRAIN, so the "
+                     "connected bar is not split by drainability on this run.")),
+        figsize=(10.2, 4.4 + 0.34 * len(rows)), ygrid=False, xgrid=True)
 
     ypos = np.arange(len(rows))[::-1]
     for y, (name, v, role, note) in zip(ypos, rows):
@@ -867,21 +1035,23 @@ def FE08_load_waterfall():
     ax.set_xlim(0, total * 0.94)
     ax.set_xlabel("ultimate saturated Q$_{adf}$ (m³/d)")
     fk.thousands(ax, "x")
-    fk.legend_below(ax, [
-        Patch(label="on the network", **fk.status_style("pass")),
-        Patch(label="blocked by an unfinished stage", **fk.status_style("fail")),
-        Patch(label="a real layout question", **fk.status_style("flag")),
-        Patch(label="no load to place — not a shortfall", **fk.status_style("untested")),
-    ], ncol=4, drop=0.62)
-    fk.finish_chart(fig, source=wrap(fk.source_line(fk.cite(cn), un)),
-                    note=(f"The parts reconcile to {total:,.0f} m³/d with no residue; "
-                          f"CLAUDE.md carries the ultimate saturated Qadf as "
-                          f"≈ 74,700 m³/d."))
+    handles = [Patch(label="on the network", **fk.status_style("pass"))]
+    if any(r[2] == "fail" for r in rows):
+        handles.append(Patch(label="blocked by an unfinished stage",
+                             **fk.status_style("fail")))
+    handles += [Patch(label="a real layout question", **fk.status_style("flag")),
+                Patch(label="no load to place — not a shortfall",
+                      **fk.status_style("untested"))]
+    fk.legend_below(ax, handles, ncol=len(handles), drop=0.34)
+    finish(fig, source=wrap(fk.source_line(fk.cite(cn), un)),
+           note=(f"The parts reconcile to {total:,.0f} m³/d with no residue; CLAUDE.md "
+                 f"carries the ultimate saturated Qadf as ≈ 74,700 m³/d."))
     p = fk.save(fig, "FE08_load_waterfall")
     return p, (f"Every m³/d of ultimate load, by what stage 5b did with it. "
-               f"{drain:,.0f} m³/d is on the network; the rest decomposes into four "
-               f"named causes."), {
-        "total_m3d": total, "drainable_m3d": drain, "placeholder_blocked_m3d": nodrain,
+               f"{connected:,.0f} m³/d is on the network; the remaining "
+               f"{unconn:,.0f} m³/d decomposes into named causes."), {
+        "total_m3d": total, "connected_m3d": connected, "not_connected_m3d": unconn,
+        "drainability_published": graded,
         "buckets_m3d": {k: float(v) for k, v in others["q"].items()},
         "no_load_plots": noload}
 
@@ -946,7 +1116,7 @@ def FE09_break_sensitivity():
              loc="upper right", fontsize=7.2, framealpha=0.94, edgecolor="#9a9a9a")
     b.set_title("what it costs and what it saves", fontsize=8.6, color=C.GREY, pad=6)
 
-    fk.finish_chart(fig, source=fk.source_line(d),
+    finish(fig, source=fk.source_line(d),
                     note=("The TOR requires every plot to be SERVED (scope p4 item 3). "
                           "This chart is about WHICH SYSTEM serves it — never about "
                           "dropping it."))
@@ -1009,8 +1179,8 @@ def FE10_corridor_provenance():
     fk.thousands(ax, "x")
     fk.legend_below(ax, [Patch(facecolor=smap[s], edgecolor=C.INK, hatch=hmap[s],
                                linewidth=0.6, label=s) for s in srcs],
-                    ncol=min(6, len(srcs)), drop=0.56)
-    fk.finish_chart(fig, source=fk.source_line(cor),
+                    ncol=min(6, len(srcs)), drop=0.34)
+    finish(fig, source=fk.source_line(cor),
                     note=("CONFIDENCE is the contract's own enum: surveyed ‣ drafted ‣ "
                           "derived ‣ provisional. No corridor in this network carries "
                           "“surveyed”."))
@@ -1085,8 +1255,12 @@ def FE11_crossing_register():
              bbox_to_anchor=(0.0, 0.62))
     b.set_title("declared against measured", fontsize=8.6, color=C.GREY, pad=6)
 
-    fk.finish_chart(fig, source=wrap(fk.source_line(fk.cite(xs2), fk.cite(xs3))),
-                    note=wrap("H1a's skew tolerance is a PROJECT RULE, not a guideline "
+    finish(fig, source=wrap(fk.source_line(fk.cite(xs2), fk.cite(xs3))),
+                    note=wrap("The 70 m line is a DISPLAY threshold chosen here to separate short "
+                     "crossings from long runs — H1a sets NO length limit; its test is the "
+                     "contact length against the shortest crossing available at that "
+                     "point, which the register does not record.  "
+                     "H1a's skew tolerance is a PROJECT RULE, not a guideline "
                               "number (_BRAIN/08_DESIGN_PHILOSOPHY.md, H1a item 1). "
                               "G203-p30 §4.4.1 and p33 forbid pipes and chambers IN a "
                               "wadi; G201-p85–86 §9.3 sets out how to cross one."))
@@ -1102,46 +1276,59 @@ def FE11_crossing_register():
 
 def FE12_untested_share():
     """Clear ground is not a clean answer."""
-    nd = fk.read_layer("W11a.gpkg", "nodes",
-                       columns=["NODE_UID", "WADI_HERE", "WADI_COV"])
-    rc = fk.read_layer("W11a.gpkg", "reaches",
-                       columns=["EDGE_UID", "WADI_HERE", "WADI_COV", "LEN_M"])
-    w10 = fk.read_csv("audit_W10.csv")
-    tr = fk.read_csv("audit_W11a_trunk.csv")
+    known_pops, notes = [], []
+    for lyr, lab in (("nodes", "published chambers"), ("reaches", "published reaches"),
+                     ("corridors", "published corridors")):
+        try:
+            gdf = fk.read_layer("W11a.gpkg", lyr, columns=[])
+        except Exception as exc:                         # noqa: BLE001
+            notes.append(f"{lyr}: {type(exc).__name__}")
+            continue
+        gg = gdf.geometry
+        pts = (gg if gg.geom_type.iloc[0] == "Point"
+               else gg.interpolate(0.5, normalized=True))
+        known, wadi = sample_hazard(pts.x.values, pts.y.values)
+        known_pops.append((lab + NL + f"({len(gdf):,})", {
+            "untested": int((~known).sum()),
+            "fail": int((known & wadi).sum()),
+            "pass": int((known & ~wadi).sum())}, fk.cite(gdf)))
+    if not known_pops:
+        raise RuntimeError("no published layer could be read for the hazard sweep")
 
-    def split(df):
-        cov = df["WADI_COV"].astype(int) == 1
-        wad = df["WADI_HERE"].astype(int) == 1
-        return {"untested": int((~cov).sum()), "fail": int((cov & wad).sum()),
-                "pass": int((cov & ~wad).sum())}
+    audits = []
+    for name in ("audit_W11a.csv", "audit_W11a_trunk.csv", "audit_W10.csv"):
+        try:
+            audits.append(fk.read_csv(name))
+        except Exception:                                # noqa: BLE001
+            continue
 
-    rows = [(f"stage-4 chambers\n({len(nd):,} nodes)", split(nd)),
-            (f"stage-4 reaches\n({len(rc):,})", split(rc))]
-
-    def pct_from(s):
-        m = re.search(r"(\d+)\s*% of samples fall outside the hazard grid", str(s))
+    def pct_from(df):
+        row = df.loc[df["id"] == "R4", "summary"]
+        if not len(row):
+            return None
+        m = re.search(r"(\d+)\s*% of samples fall outside the hazard grid", str(row.iloc[0]))
         return int(m.group(1)) if m else None
 
-    w10_pct = pct_from(w10.loc[w10["id"] == "R4", "summary"].iloc[0])
-    tr_pct = pct_from(tr.loc[tr["id"] == "R4", "summary"].iloc[0])
-    untested_share = 100.0 * split(nd)["untested"] / len(nd)
+    first = known_pops[0][1]
+    untested_share = 100.0 * first["untested"] / max(sum(first.values()), 1)
 
     fig, ax = fk.chart_frame(
-        title=(f"Nearly half of every wadi answer does not exist: {untested_share:.0f} % "
-               f"of chambers sit where the 50-year grid has no value"),
-        subtitle=("The hazard grid does not cover the study area, and its nodata is "
-                  "−9999.0 — a FINITE number, so an is-finite guard reads it as dry "
-                  "ground. Every wadi result in this project is therefore a result on the "
-                  "tested half. Clear ground on our maps means TESTED AND CLEAN; hatched "
-                  "ground means no answer was available."),
-        figsize=(10.0, 4.6), ygrid=False, xgrid=True)
+        title=(f"Nearly half of every wadi answer does not exist: {untested_share:.0f} % of "
+               f"chambers sit where the 50-year grid has no value"),
+        subtitle=("Every published chamber, reach midpoint and corridor midpoint sampled "
+                  "against the 50-year hazard grid at full resolution. The grid does not "
+                  "cover the study area, and its nodata is −9999.0 — a FINITE number, so "
+                  "an is-finite guard reads it as dry ground. Every wadi result in this "
+                  "project is a result on the tested half. Clear ground on our maps means "
+                  "TESTED AND CLEAN; hatched ground means no answer was available."),
+        figsize=(10.0, 4.8), ygrid=False, xgrid=True)
 
     order = ["pass", "fail", "untested"]
     names = {"pass": "tested, clear of wadi ground", "fail": "tested, ON wadi ground",
              "untested": "UNTESTED — outside the grid"}
-    ypos = np.arange(len(rows))[::-1]
-    for y, (_lab, dct) in zip(ypos, rows):
-        tot, left = sum(dct.values()), 0.0
+    ypos = np.arange(len(known_pops))[::-1]
+    for y, (_lab, dct, _src) in zip(ypos, known_pops):
+        tot, left = max(sum(dct.values()), 1), 0.0
         for k in order:
             v = dct[k]
             if not v:
@@ -1149,36 +1336,42 @@ def FE12_untested_share():
             w = 100.0 * v / tot
             ax.barh(y, w, left=left, height=0.46, **fk.status_style(k))
             if w > 4.5:
-                ax.text(left + w / 2, y, f"{v:,}\n{w:.1f} %", ha="center", va="center",
+                ax.text(left + w / 2, y, f"{v:,}" + NL + f"{w:.1f} %",
+                        ha="center", va="center",
                         fontsize=7.6, fontweight="bold", color=fk.label_ink(k))
             else:
                 ax.annotate(f"{v:,} ({w:.1f} %)", (left + w / 2, y),
-                            textcoords="offset points", xytext=(0, 20), ha="center",
+                            textcoords="offset points", xytext=(0, 22), ha="center",
                             fontsize=7.0, color=C.INK,
                             arrowprops=dict(arrowstyle="-", color=C.GREY, lw=0.7))
             left += w
     ax.set_yticks(ypos)
-    ax.set_yticklabels([r[0] for r in rows], fontsize=8.0)
-    ax.set_ylim(-0.55, len(rows) - 0.25)
+    ax.set_yticklabels([r[0] for r in known_pops], fontsize=8.0)
+    ax.set_ylim(-0.55, len(known_pops) - 0.25)
     ax.set_xlim(0, 100)
     ax.set_xlabel("share of the population (%)")
 
-    tail = [t for t in (
-        f"W10's own audit, R4: {w10_pct} % of samples untested" if w10_pct else None,
-        f"the W11a trunk, R4: {tr_pct} %" if tr_pct else None) if t]
+    tail = []
+    for df in audits:
+        v = pct_from(df)
+        if v is not None:
+            tail.append(f"{Path(fk.cite(df).split(',')[0]).name} R4: {v} % untested")
     fk.legend_below(ax, [Patch(label=names[k], **fk.status_style(k)) for k in order],
-                    ncol=3, drop=0.50)
-    fk.finish_chart(fig, source=wrap(fk.source_line(fk.cite(nd), fk.cite(rc), w10, tr)),
-                    note=wrap("The wadi class threshold behind WADI_HERE is a PROJECT "
-                              "ASSUMPTION standing in for G203-p30 §4.4.1's washout "
-                              "criterion, not a guideline number."
-                              + ("  ·  " + "; ".join(tail) if tail else "")))
+                    ncol=3, drop=0.30)
+    finish(fig, source=wrap(fk.source_line(*[s_ for _l, _d, s_ in known_pops],
+                                           f"{fk.HAZARD.name}, 50-year hazard grid, "
+                                           f"nodata −9999.0, sampled at full resolution")),
+           note=wrap("Wadi ground is read as hazard class ≥ "
+                     f"{min(WADI_CLASSES)}, a PROJECT ASSUMPTION standing in for "
+                     "G203-p30 §4.4.1's washout criterion — not a guideline number."
+                     + ("  ·  " + "; ".join(tail) if tail else "")
+                     + ("  ·  " + "; ".join(notes) if notes else "")))
     p = fk.save(fig, "FE12_untested_share")
-    return p, ("Wadi test coverage on the published chamber and reach layers. The untested "
-               "share is not a pass."), {
-        "chambers": split(nd), "reaches": split(rc),
+    return p, ("Wadi test coverage on the published layers, sampled straight from the "
+               "hazard grid. The untested share is not a pass."), {
+        lab.replace(NL, " "): dct for lab, dct, _s in known_pops} | {
         "chamber_untested_pct": untested_share,
-        "w10_r4_untested_pct": w10_pct, "trunk_r4_untested_pct": tr_pct}
+        "audit_r4_untested_pct": tail}
 
 
 # ====================================================== FE13  trunk constraint provenance
@@ -1239,7 +1432,7 @@ def FE13_constraint_provenance():
         ax.set_title(title, fontsize=8.6, color=C.GREY, pad=6)
         ax.set_xlabel(f"pipes (of {len(ts):,})")
 
-    fk.finish_chart(fig, source=wrap(fk.source_line(ts, w10)),
+    finish(fig, source=wrap(fk.source_line(ts, w10)),
                     note=wrap("Table 11 is G203-p29; the d/D limits are G203-p27 Table 10; "
                               "the tier minimum sizes are G203-p22 Table 6. “the ground "
                               "profile” and “minimum cover” are the design following the "
@@ -1314,16 +1507,16 @@ def FE14_depth_without_stations():
     b.legend(handles=[Line2D([], [], marker="o", ls="", color=C.TRUNK,
                              markeredgecolor=C.INK,
                              label=f"a point needing a station ({len(sd):,})")],
-             loc="upper left", fontsize=7.2, framealpha=0.94, edgecolor="#9a9a9a")
+             loc="lower left", fontsize=7.2, framealpha=0.94, edgecolor="#9a9a9a")
     b.set_title(f"the {len(sd):,} that cannot — every one past both exits",
                 fontsize=8.6, color=C.GREY, pad=6)
 
-    fk.finish_chart(fig, source=wrap(fk.source_line(cb, sd)),
-                    note=wrap("PROVISIONAL — stage 6 completed this solve and then failed "
-                              "its own DROP_M contract, so these are the stage's own "
-                              "outputs from a run that did not certify; stages 7–9 have "
-                              "not run. Every station-demand row is tagged WHY = "
-                              + ", ".join(f"'{k}' ({v:,})" for k, v in why.items()) + "."))
+    finish(fig, source=wrap(fk.source_line(cb, sd)),
+           note=wrap("These are stage 6's OWN outputs, from the run stamped in the source "
+                     "line above — the pipeline is still moving, so read the timestamp "
+                     "before quoting them. " + run_manifest_note()
+                     + "  Every station-demand row is tagged WHY = "
+                     + ", ".join(f"'{k}' ({v:,})" for k, v in why.items()) + "."))
     p = fk.save(fig, "FE14_depth_without_stations")
     return p, (f"Depth breaches under the cap-and-veto ladder: {len(cb)} exit it, "
                f"{len(sd):,} cannot and would need a lifting station."), {
@@ -1337,6 +1530,14 @@ def FE14_depth_without_stations():
 def FE15_map_components():
     """The 311 pieces, on the ground."""
     cor = corridors()
+    h15 = ""
+    try:
+        na = fk.read_csv("audit_W11a.csv")
+        row = na.loc[na["id"] == "H15"].iloc[0]
+        if str(row["status"]).upper() == "PASS":
+            h15 = str(row["summary"])
+    except Exception:                                    # noqa: BLE001
+        pass
     n, comps, owner = components_of(cor)
     sizes = [len(c) for c in comps]
     tot = sum(sizes)
@@ -1351,7 +1552,9 @@ def FE15_map_components():
         subtitle=("The published corridor graph, coloured by connected component. A design "
                   "cannot be built as hundreds of separate drainage systems, so this is "
                   "the number that has to come down before levels mean anything. Line "
-                  "style carries the distinction as well as colour."))
+                  "style carries the distinction as well as colour." + (
+                      "  The PIPE graph laid inside it is a different object and is "
+                      "already clean: " + h15 if h15 else "")))
     ranks = [(0, C.TRUNK, 1.05, f"largest component ({sizes[0]:,} nodes)"),
              (1, C.SUBMAIN, 0.80, f"2nd ({sizes[1]:,})"),
              (2, C.MAIN, 0.62, f"3rd ({sizes[2]:,})")]
@@ -1426,8 +1629,10 @@ def FE16_map_crossings():
            f"median        {xs['LEN_M'].median():>8,.1f} m\n"
            f"longest       {xs['LEN_M'].max():>8,.0f} m\n"
            f"approved      {int(xs['APPROVED'].sum()):>9,}")
-    fk.finish_map(fig, ax, note=note, legend_handles=handles, databox=box,
-                  legend_loc="upper left", source=fk.source_line(cor, fk.cite(xs)))
+    fk.finish_map(fig, ax, note=note + "  ·  the 70 m line is a DISPLAY threshold, not a "
+                  "guideline or philosophy limit — H1a sets no length limit (see FE11)",
+                  legend_handles=handles, databox=box, legend_loc="upper left",
+                  source=fk.source_line(cor, fk.cite(xs)))
     p = fk.save(fig, "FE16_map_crossings")
     return p, (f"The scheduled wadi crossings on the corridor network; {len(long70):,} run "
                f"more than 70 m and none is approved."), {

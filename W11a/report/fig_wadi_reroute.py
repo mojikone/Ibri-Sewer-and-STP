@@ -26,6 +26,9 @@ appear are quoted with their page: G203-p29 Table 11 (DN200 = 5.00 mm/m), G203-p
 
 Run:  python fig_wadi_reroute.py            (draws FR01..FR04 into report/img)
       python fig_wadi_reroute.py --numbers  (prints the measurement table only)
+      python fig_wadi_reroute.py --patch    (also simulates the proposed s2 patch:
+                                             delete the ALONG set, heal the severances,
+                                             and report what is recovered)
 """
 from __future__ import annotations
 
@@ -210,6 +213,16 @@ def measure(force=False):
         dd = haz.d_dry(xs, ys)
         for k, (a, b, i0, i1) in enumerate(_runs(on, d)):
             contact = (b - a) + WADI_SAMPLE_M
+            # THE STATISTIC IS THE MAXIMUM, and this is not a taste.  On a perfect
+            # perpendicular crossing of a band of width W the distance to dry ground ramps
+            # 0 -> W/2 -> 0 along the pipe, so 2 x MEDIAN recovers W/2 and 2 x MAX recovers
+            # W.  With the median, skew = contact / (W/2) = 2.00 on a PERFECT crossing -
+            # over the 1.155 tolerance - and every square crossing in the network is
+            # condemned.  With the max, skew = 1/cos(deviation) exactly, so 1.155 means
+            # 30 deg off square, which is what audit.WADI_XING_SKEW is defined to be.
+            # Measured on the published layers, the choice is worth 24.64 km: median
+            # flags 1,008 runs / 71.78 km, max flags 561 / 47.27 km, and the max set is a
+            # strict subset of the median set.
             seg = dd[i0:i1 + 1]; seg = seg[np.isfinite(seg)]
             med = float(np.median(seg)) if seg.size else np.nan
             mx = float(seg.max()) if seg.size else np.nan
@@ -221,9 +234,11 @@ def measure(force=False):
                              W_PROBE_M=wpr, PROBE_CAPPED=cap,
                              SKEW_PROBE=contact / max(wpr, WADI_SAMPLE_M),
                              D_DRY_MED=med, D_DRY_MAX=mx,
-                             XING_M=2.0 * med if np.isfinite(med) else np.nan,
-                             SKEW_H1A=(contact / (2.0 * med)
-                                       if (np.isfinite(med) and med > 0) else np.inf)))
+                             XING_M=2.0 * mx if np.isfinite(mx) else np.nan,
+                             SKEW_MED=(contact / (2.0 * med)
+                                       if (np.isfinite(med) and med > 0) else np.inf),
+                             SKEW_H1A=(contact / (2.0 * mx)
+                                       if (np.isfinite(mx) and mx > 0) else np.inf)))
     R = pd.DataFrame(rows)
     R["ALONG"] = R.SKEW_H1A > WADI_XING_SKEW
     along_ids = set(R.loc[R.ALONG, "CORR_ID"])
@@ -266,17 +281,22 @@ def measure(force=False):
         ec = lab[u[mask]]
         good = set(ec[trunk_edge[mask]])
         keep = np.isin(ec, list(good))
-        return float(load_edge[mask][keep].sum()), nc, lab
+        # nc counts every node in the published node set, so a node left with no corridor
+        # at all counts as a component of one.  `live` counts only the pieces that still
+        # carry a corridor, which is the number a person means by "the network is in N
+        # pieces".  Both are reported; they differ and the difference is not a defect.
+        live = len(set(ec) | set(lab[v[mask]]))
+        return float(load_edge[mask][keep].sum()), nc, live, lab
 
-    base_q, base_nc, _ = trunk_load(np.ones(len(cor), bool))
+    base_q, base_nc, base_live, _ = trunk_load(np.ones(len(cor), bool))
     keep_mask = ~cor.ALONG.values
-    kept_q, kept_nc, kept_lab = trunk_load(keep_mask)
+    kept_q, kept_nc, kept_live, kept_lab = trunk_load(keep_mask)
 
     # ---- marginal cost of each chain --------------------------------------------------
     mrows = []
     for c in range(n_chain):
         m = ~(cor.CHAIN.values == c)
-        q, nc, _ = trunk_load(m)
+        q, nc, _lv, _ = trunk_load(m)
         e = cor[cor.CHAIN == c]
         cen = e.geometry.iloc[0].interpolate(0.5, normalized=True)
         mrows.append(dict(CHAIN=c, N_EDGES=len(e), KM=e.LEN_M.sum() / 1000,
@@ -293,7 +313,7 @@ def measure(force=False):
     hrows = []
     for r in M[M.MARGINAL_M3D > 0].itertuples():
         m = ~(cor.CHAIN.values == r.CHAIN)
-        _q, _nc, lab = trunk_load(m)
+        _q, _nc, _lv, lab = trunk_load(m)
         s = cor[m].copy(); s["CMP"] = lab[u[m]]
         good = set(s.loc[s.SRC == "main_pipe", "CMP"])
         s["TRUNKED"] = s.CMP.isin(good)
@@ -351,8 +371,30 @@ def measure(force=False):
     DET["EXTRA_M"] = DET.ALT_M - DET.LEN_M
     DET["EXTRA_DEPTH_M"] = DET.EXTRA_M * TABLE11_DN200
 
+    # hazard class under each ALONG contact, read from the raster itself
+    with rasterio.open(fk.HAZARD) as _src:
+        _v = np.array([w[0] for w in _src.sample(zip(R.MID_X.values, R.MID_Y.values))],
+                      float)
+    R["HAZ_CLASS"] = np.floor(_v)
+    haz_class = {int(c): (int((R.ALONG & (R.HAZ_CLASS == c)).sum()),
+                          float(R.loc[R.ALONG & (R.HAZ_CLASS == c), "CONTACT_M"].sum()))
+                 for c in sorted(R.loc[R.ALONG, "HAZ_CLASS"].dropna().unique())}
+
+    # frontage: what loses every corridor within PLOT_SERVED_M if the ALONG set goes
+    j2 = gpd.sjoin_nearest(lb, cor.loc[~cor.ALONG, ["CORR_ID", "geometry"]], how="left",
+                           max_distance=PLOT_SERVED_M, distance_col="D")
+    j2 = j2[~j2.index.duplicated(keep="first")]
+    b_ok = j.CORR_ID.notna(); a_ok = j2.CORR_ID.notna()
+    lost = b_ok & ~a_ok
+    front = b_ok & j.CORR_ID.isin(along_ids)
+
     out = dict(cor=cor, R=R, M=M, H=H, DET=DET, haz=haz, cover=cover,
-               base_q=base_q, base_nc=base_nc, kept_q=kept_q, kept_nc=kept_nc,
+               haz_class=haz_class, lb=lb, load_edge=load_edge,
+               lost_plots=int(lost.sum()), lost_q=float(j.loc[lost, "Q"].sum()),
+               front_plots=int(front.sum()),
+               front_p50=float(j2.loc[front, "D"].median()),
+               base_q=base_q, base_nc=base_nc, base_live=base_live,
+               kept_q=kept_q, kept_nc=kept_nc, kept_live=kept_live,
                q_total=q_total, src_cor=src_cor, src_pl=src_pl)
     return out
 
@@ -377,6 +419,10 @@ def numbers(D):
     p("  shortest crossing available (H1a item 1 as written): %d of %d runs fail, %.2f km"
       % (len(A), len(R), A.CONTACT_M.sum() / 1000))
     p("  probe hit its %.0f m cap on %d runs" % (WADI_PROBE_M, int(R.PROBE_CAPPED.sum())))
+    p("  the same clause with 2 x MEDIAN instead of 2 x MAX (WRONG - it scores a perfect "
+      "crossing at 2.00): %d runs, %.2f km"
+      % (int((R.SKEW_MED > WADI_XING_SKEW).sum()),
+         R.loc[R.SKEW_MED > WADI_XING_SKEW, "CONTACT_M"].sum() / 1000))
     p("  sensitivity of the ALONG set to the skew tolerance:")
     for t in (1.0, 1.155, 1.5, 2.0, 3.0, 4.0):
         m = R.SKEW_H1A > t
@@ -389,8 +435,9 @@ def numbers(D):
       % (int(cor.ALONG.sum()), cor.loc[cor.ALONG, "LEN_M"].sum() / 1000,
          int(cor.loc[cor.ALONG, "N_PLOT"].sum())))
     p("  they form %d chains" % len(M))
-    p("  corridor components  %d  ->  %d if every one is deleted"
-      % (D["base_nc"], D["kept_nc"]))
+    p("  corridor components  %d -> %d if every one is deleted (pieces still carrying a "
+      "corridor); %d -> %d counting every node in the published node set"
+      % (D["base_live"], D["kept_live"], D["base_nc"], D["kept_nc"]))
     p("  load with a route to the trunk  %.1f -> %.1f m3/d  (loss %.1f = %.2f %% of %.1f)"
       % (D["base_q"], D["kept_q"], D["base_q"] - D["kept_q"],
          100.0 * (D["base_q"] - D["kept_q"]) / D["q_total"], D["q_total"]))
@@ -411,6 +458,48 @@ def numbers(D):
           % (k, int(r["n"]), r["m3d"],
              ("%.1f m" % r["gap"]) if np.isfinite(r["gap"]) else "n/a"))
     p("")
+    p("WHAT THE FLAGGED GROUND IS")
+    haz_cls = D["haz_class"]
+    for c in sorted(haz_cls):
+        p("  hazard class %d : %5d ALONG runs  %7.2f km of contact"
+          % (c, haz_cls[c][0], haz_cls[c][1] / 1000))
+    p("  local wadi width where a corridor runs ALONG (2 x max distance to dry ground)")
+    wid = 2.0 * A.D_DRY_MAX
+    for lo, hi in ((0, 10), (10, 20), (20, 40), (40, 80), (80, 1e18)):
+        m = (wid >= lo) & (wid < hi)
+        p("     %4d - %-6s m : %4d runs  %7.2f km  contact p50 %5.0f m"
+          % (lo, hi, int(m.sum()), A.loc[m, "CONTACT_M"].sum() / 1000,
+             A.loc[m, "CONTACT_M"].median() if m.any() else 0))
+    p("  median local width %.1f m; median contact %.1f m"
+      % (float(wid.median()), float(A.CONTACT_M.median())))
+    p("")
+    p("THE CROSSINGS THAT SURVIVE BOTH TESTS")
+    K = R[~R.ALONG]
+    p("  %d runs, %.2f km of contact; contact p50 %.1f m  p90 %.1f m  max %.1f m"
+      % (len(K), K.CONTACT_M.sum() / 1000, K.CONTACT_M.quantile(.5),
+         K.CONTACT_M.quantile(.9), K.CONTACT_M.max()))
+    p("")
+    p("THE ALONG SET BY SOURCE")
+    t = cor[cor.ALONG].groupby(["SRC", "CONFIDENCE"]).agg(
+        n=("LEN_M", "size"), km=("LEN_M", lambda x: x.sum() / 1000),
+        plots=("N_PLOT", "sum"))
+    for (sc, cf), r in t.iterrows():
+        p("  %-10s %-12s %4d corridors  %7.2f km  %4d plots"
+          % (sc, cf, int(r["n"]), r["km"], int(r["plots"])))
+    p("  of which the trunk alignment (SRC=main_pipe, the user's own drawing): "
+      "%d corridors, %.2f km"
+      % (int(((cor.SRC == "main_pipe") & cor.ALONG).sum()),
+         cor.loc[(cor.SRC == "main_pipe") & cor.ALONG, "LEN_M"].sum() / 1000))
+    p("")
+    p("FRONTAGE LOST IF THE ALONG SET IS SIMPLY DELETED")
+    p("  %d plots lose every corridor within %.0f m: %.1f m3/d (%.2f %% of %.1f)"
+      % (D["lost_plots"], PLOT_SERVED_M, D["lost_q"],
+         100.0 * D["lost_q"] / D["q_total"], D["q_total"]))
+    p("  (%d plots front an along-wadi corridor; the other %d have another within "
+      "%.0f m, median %.1f m away)"
+      % (D["front_plots"], D["front_plots"] - D["lost_plots"], PLOT_SERVED_M,
+         D["front_p50"]))
+    p("")
     p("THE STREET-NETWORK DETOUR (rejected)")
     fin = np.isfinite(DET.ALT_M)
     p("  %d of %d along-corridors have any alternative path at all" % (int(fin.sum()), len(DET)))
@@ -422,6 +511,11 @@ def numbers(D):
 
 
 # ===================================================================== the figures
+
+def _wadi_cmap():
+    from matplotlib.colors import ListedColormap
+    return ListedColormap([fk.C.WADI])
+
 
 def _proj_note():
     return ("PROJECT ASSUMPTIONS, not guideline values: wadi = AR&R flood-hazard class "
@@ -439,17 +533,17 @@ def fr01(D):
     X = cor[(cor.ON_WADI_M > 0) & ~cor.ALONG]
     fig, ax, note = fk.map_frame(
         ext,
-        title="72 km of published corridor runs ALONG a wadi, and the audit passes it",
+        title="%.0f km of published corridor runs ALONG a wadi, and the audit passes it"
+              % (cor.loc[cor.ALONG, "LEN_M"].sum() / 1000),
         subtitle="Every corridor still touching hazard class 4/5/6 is scheduled as a "
                  "crossing. Tested the way H1a item 1 is written — contact against the "
                  "SHORTEST crossing available at that point — %d of %d contiguous "
                  "contacts are not crossings at all."
                  % (int(R.ALONG.sum()), len(R)))
     known, wadi, wext = fk.hazard_coverage(ext)
-    ax.imshow(np.where(wadi, 1.0, np.nan), extent=wext, cmap=None,
-              interpolation="nearest", zorder=1.5, alpha=0.45,
-              vmin=0, vmax=1, origin="upper")
-    cor.plot(ax=ax, color=fk.C.FAINT, linewidth=0.25, zorder=3)
+    ax.imshow(np.where(wadi, 1.0, np.nan), extent=wext, cmap=_wadi_cmap(),
+              interpolation="nearest", zorder=1.5, alpha=0.45, vmin=0, vmax=1)
+    cor.plot(ax=ax, color=fk.C.GREY, linewidth=0.3, alpha=0.55, zorder=3)
     X.plot(ax=ax, color=fk.C.FLAG, linewidth=0.9, zorder=4)
     A.plot(ax=ax, color=fk.C.FAIL, linewidth=1.7, zorder=5)
     fk.hatch_untested(ax, ~known, wext)
@@ -458,7 +552,7 @@ def fr01(D):
                                           zorder=6)
     except Exception:
         pass
-    h = [Line2D([], [], color=fk.C.FAINT, lw=1.2, label="corridor, clear of the hazard grid"),
+    h = [Line2D([], [], color=fk.C.GREY, lw=1.2, label="corridor, clear of the hazard grid"),
          Line2D([], [], color=fk.C.FLAG, lw=1.6,
                 label="on wadi, and a crossing on either test (%.1f km)"
                       % (R.loc[~R.ALONG, "CONTACT_M"].sum() / 1000)),
@@ -490,14 +584,22 @@ def fr02(D):
     fig, ax = fk.chart_frame(
         title="The test in the code measures the wrong width",
         subtitle="Kilometres of on-wadi corridor contact that each test calls "
-                 "\"running along a wadi\". The perpendicular probe finds 0.03 km of "
-                 "102.0 km; the same tolerance applied to the shortest crossing "
-                 "available finds 71.8 km.",
+                 "\"running along a wadi\", out of %.1f km in total. The perpendicular "
+                 "probe finds %.2f km; the same tolerance against the shortest crossing "
+                 "available finds %.2f km. The greyed bar is the same clause with the "
+                 "MEDIAN distance to dry ground instead of the maximum - it scores a "
+                 "PERFECT perpendicular crossing at 2.00 and is wrong by a factor of two."
+                 % (R.CONTACT_M.sum() / 1000,
+                    R.loc[R.SKEW_PROBE > WADI_XING_SKEW, "CONTACT_M"].sum() / 1000,
+                    R.loc[R.ALONG, "CONTACT_M"].sum() / 1000),
         figsize=(8.8, 5.0))
     labs, vals, cols = [], [], []
     labs.append("probe perpendicular to the pipe\n(s2._square_crossing / audit.r4)")
     vals.append(R.loc[R.SKEW_PROBE > WADI_XING_SKEW, "CONTACT_M"].sum() / 1000)
     cols.append(fk.C.PASS)
+    labs.append("same clause, 2 x MEDIAN not MAX\n(condemns a perfect crossing)")
+    vals.append(R.loc[R.SKEW_MED > WADI_XING_SKEW, "CONTACT_M"].sum() / 1000)
+    cols.append(fk.C.UNTESTED)
     for t in (4.0, 3.0, 2.0, 1.5, 1.155, 1.0):
         deg = 90 - math.degrees(math.asin(min(1.0, 1.0 / t)))
         labs.append("shortest crossing, tol %.3f\n(%.0f deg off square)" % (t, deg))
@@ -513,7 +615,7 @@ def fr02(D):
     ax.set_xlabel("kilometres of on-wadi corridor contact judged to run ALONG")
     ax.set_xlim(0, max(vals) * 1.22)
     fk.style_axes(ax, xgrid=True, ygrid=False)
-    ax.axhline(0.5, color=fk.C.GREY, lw=0.8, ls=":")
+    ax.axhline(1.5, color=fk.C.GREY, lw=0.8, ls=":")
     fk.finish_chart(fig, source=fk.source_line(D["src_cor"]) + "  ·  hazard grid "
                     "Data/04 Lekhuwair/Hazard_T50y.tif",
                     note="1.155 is the philosophy's own tolerance (audit.WADI_XING_SKEW, "
@@ -525,13 +627,17 @@ def fr03(D):
     """Chart — the cost is not frontage, it is the link; and 21 chains carry all of it."""
     M, H = D["M"], D["H"]
     fig, ax = fk.chart_frame(
-        title="740 along-wadi chains; 21 of them carry the whole problem",
+        title="%d along-wadi chains; %d of them carry the whole problem"
+              % (len(M), int((M.MARGINAL_M3D > 100).sum())),
         subtitle="Load that loses its route to the trunk when ONE chain is deleted and "
-                 "every other corridor is kept. 463 chains cost nothing at all; the "
-                 "joint loss when all 740 go is %.0f m3/d (%.1f %% of %.0f)."
-                 % (D["base_q"] - D["kept_q"],
-                    100.0 * (D["base_q"] - D["kept_q"]) / D["q_total"], D["q_total"]),
-        figsize=(9.0, 5.2))
+                 "every other corridor is kept. %d chains cost nothing. Marginal costs "
+                 "do NOT add - chains in " % int((M.MARGINAL_M3D <= 1e-9).sum()) +
+                 "series on one route each carry the same load - so the joint loss when "
+                 "all %d go is %.0f m3/d (%.1f %% of %.0f), less than the bands below "
+                 "sum to." % (len(M), D["base_q"] - D["kept_q"],
+                              100.0 * (D["base_q"] - D["kept_q"]) / D["q_total"],
+                              D["q_total"]),
+        figsize=(9.4, 6.4))
     bands = [(-1, 1e-9, "nothing"), (1e-9, 10, "under 10 m3/d"), (10, 100, "10 - 100"),
              (100, 500, "100 - 500"), (500, 1e18, "over 500 m3/d")]
     n = [int(((M.MARGINAL_M3D > lo) & (M.MARGINAL_M3D <= hi)).sum()) for lo, hi, _ in bands]
@@ -544,8 +650,10 @@ def fr03(D):
     for yy, nn, kk, qq, cc, lab in zip(y, n, km, q, cols, [b[2] for b in bands]):
         ax.barh(yy, nn, color=cc, edgecolor=fk.C.INK, linewidth=0.6, height=0.66,
                 hatch=("///" if cc == fk.C.FAIL else None))
-        ax.text(nn + 6, yy, "%d chains · %.1f km of contact · %.0f m3/d stranded"
-                % (nn, kk, qq), va="center", fontsize=8.2, color=fk.C.INK)
+        ax.text(nn + 6, yy, "%d chains · %.1f km of contact · %s"
+                % (nn, kk, ("nothing stranded" if qq < 0.5
+                            else "%.0f m3/d stranded" % qq)),
+                va="center", fontsize=8.2, color=fk.C.INK)
     ax.set_yticks(y)
     ax.set_yticklabels(["deleting the chain strands\n" + b[2] for b in bands], fontsize=8.4)
     ax.invert_yaxis()
@@ -573,12 +681,18 @@ def fr03(D):
 def fr04(D):
     """Map — the cluster that carries most of the stranded load, and its 4.5-21.6 m heals."""
     cor, H, M = D["cor"], D["H"], D["M"]
-    top = H[np.isfinite(H.GAP_M) & (H.MARGINAL_M3D >= 100)]
+    top = H[np.isfinite(H.GAP_M) & (H.MARGINAL_M3D >= 500)]
+    if not len(top):
+        top = H[np.isfinite(H.GAP_M) & (H.MARGINAL_M3D >= 100)]
     if not len(top):
         return None
-    # the extent that holds the worst cluster
-    x0, x1 = top.X.min() - 1400, top.X.max() + 1400
-    y0, y1 = top.Y.min() - 1000, top.Y.max() + 1000
+    # one cluster, not a study-area view: at 46 km wide a 13 m link is invisible, and the
+    # finding IS the size of the link.  The chains over 500 m3/d all fall in one place.
+    pad = 450.0
+    x0 = min(top.X.min(), top.LX0.min(), top.LX1.min()) - pad
+    x1 = max(top.X.max(), top.LX0.max(), top.LX1.max()) + pad
+    y0 = min(top.Y.min(), top.LY0.min(), top.LY1.min()) - pad
+    y1 = max(top.Y.max(), top.LY0.max(), top.LY1.max()) + pad
     ext = (x0, y0, x1, y1)
     win = cor.cx[x0:x1, y0:y1]
     fig, ax, note = fk.map_frame(
@@ -586,19 +700,24 @@ def fr04(D):
         title="The severance is metres wide, not kilometres — %d links of %.1f-%.1f m "
               "restore %.0f m3/d" % (len(top), top.GAP_M.min(), top.GAP_M.max(),
                                      top.MARGINAL_M3D.sum()),
-        subtitle="Every chain here strands more than 100 m3/d on its own. Deleting it "
+        subtitle="Every chain here strands more than 500 m3/d on its own. Deleting it "
                  "leaves a gap to corridor that is already in the set, and on this "
                  "cluster that gap is clear of the hazard grid.")
     known, wadi, wext = fk.hazard_coverage(ext)
-    ax.imshow(np.where(wadi, 1.0, np.nan), extent=wext, interpolation="nearest",
-              zorder=1.5, alpha=0.45, vmin=0, vmax=1)
-    win[~win.ALONG].plot(ax=ax, color=fk.C.FAINT, linewidth=0.5, zorder=3)
+    ax.imshow(np.where(wadi, 1.0, np.nan), extent=wext, cmap=_wadi_cmap(),
+              interpolation="nearest", zorder=1.5, alpha=0.45, vmin=0, vmax=1)
+    win[~win.ALONG].plot(ax=ax, color=fk.C.GREY, linewidth=0.7, zorder=3)
     win[win.ALONG].plot(ax=ax, color=fk.C.FAIL, linewidth=2.0, zorder=5)
     fk.hatch_untested(ax, ~known, wext)
     for r in top.itertuples():
-        ax.plot([r.LX0, r.LX1], [r.LY0, r.LY1], color=fk.C.SUBMAIN, lw=2.6,
+        ax.plot([r.LX0, r.LX1], [r.LY0, r.LY1], color=fk.C.SUBMAIN, lw=3.4,
                 zorder=7, solid_capstyle="round")
-        ax.plot(r.LX0, r.LX1 and r.LY0, marker="o", ms=3.5, color=fk.C.SUBMAIN, zorder=8)
+        mx, my = 0.5 * (r.LX0 + r.LX1), 0.5 * (r.LY0 + r.LY1)
+        ax.annotate("%.1f m" % r.GAP_M, (mx, my), textcoords="offset points",
+                    xytext=(6, 6), fontsize=7.0, color=fk.C.SUBMAIN, zorder=9,
+                    fontweight="bold")
+        ax.plot([r.LX0, r.LX1], [r.LY0, r.LY1], marker="o", ms=3.0, ls="none",
+                color=fk.C.SUBMAIN, zorder=8)
     h = [Line2D([], [], color=fk.C.FAINT, lw=1.2, label="corridor kept"),
          Line2D([], [], color=fk.C.FAIL, lw=2.4, label="corridor running ALONG a wadi"),
          Line2D([], [], color=fk.C.SUBMAIN, lw=2.6,
@@ -618,13 +737,193 @@ def fr04(D):
     return fk.save(fig, "FR04_severance_heal")
 
 
+
+# ============================================================ the proposed patch, simulated
+
+HEAL_CAP_M = 50.0          # PROJECT value, swept below.  s2.stitch already reaches 400 m
+                           # for a skeleton pocket; a severance heal is a much smaller job
+                           # and the cap is what keeps it one.
+
+
+def _link_legal(link, haz):
+    """Is a generated link itself legal under H1/H1a?  (clear, or a square crossing)
+
+    The shortest crossing is 2 x the MAXIMUM distance to dry ground over the link's ON-WADI
+    samples - the same statistic Change B uses for a corridor run, and for the same reason:
+    on a square crossing the distance ramps 0 -> W/2 -> 0, so the max recovers the band
+    width and the median recovers half of it.  Taking it at the link's midpoint instead is
+    worse again: on a 4 m link the midpoint often lands on a dry cell and returns 0.
+    """
+    d, xs, ys = _sample(link)
+    on, kn = haz.at(xs, ys)
+    ct = float(on.sum()) / max(len(on), 1) * link.length
+    if ct <= 1e-6:
+        return True, "clear of the wadi", ct
+    ct += WADI_SAMPLE_M                       # audit._r4_classify's contact definition
+    dd = haz.d_dry(xs[on], ys[on])
+    dd = dd[np.isfinite(dd)]
+    xing = 2.0 * float(dd.max()) if dd.size else np.inf
+    ok = ct <= WADI_XING_SKEW * max(xing, WADI_SAMPLE_M)
+    return ok, ("square crossing" if ok else "still along a wadi"), ct
+
+
+def _heal(D, cap):
+    """Delete the ALONG set, then join each severed piece to something that reaches the
+    trunk with a link that is itself legal and no longer than `cap`."""
+    from shapely.strtree import STRtree
+    cor, haz = D["cor"], D["haz"]
+    keep = cor[~cor.ALONG].copy().reset_index(drop=True)
+    G = nx.Graph()
+    for r in keep.itertuples():
+        G.add_edge(r.US_NODE, r.DS_NODE)
+    links, extra = [], []
+    for _ in range(60):
+        comp = {}
+        for k, cc in enumerate(nx.connected_components(G)):
+            for n in cc:
+                comp[n] = k
+        keep["CMP"] = keep.US_NODE.map(comp)
+        good = set(keep.loc[keep.SRC == "main_pipe", "CMP"])
+        keep["TR"] = keep.CMP.isin(good)
+        if keep.TR.all():
+            break
+        tr = keep[keep.TR]
+        if not len(tr):
+            break
+        tree = STRtree(tr.geometry.values)
+        made = 0
+        order = keep[~keep.TR].groupby("CMP").LEN_M.sum().sort_values(ascending=False)
+        for c in order.index:
+            g = unary_union(keep.loc[keep.CMP == c, "geometry"].values)
+            idx = np.atleast_1d(tree.query_nearest(g, all_matches=False))
+            if not idx.size:
+                continue
+            p_, q_ = nearest_points(g, tr.geometry.values[int(idx[0])])
+            link = LineString([(p_.x, p_.y), (q_.x, q_.y)])
+            if link.length < 1e-9 or link.length > cap:
+                continue
+            ok, why, ct = _link_legal(link, haz)
+            if not ok:
+                continue
+            na = keep.loc[keep.CMP == c, "US_NODE"].iloc[0]
+            nb = tr.US_NODE.iloc[int(idx[0])]
+            G.add_edge(na, nb)
+            extra.append((na, nb, float(link.length)))
+            links.append(dict(LEN_M=link.length, WHY=why, CONTACT_M=ct,
+                              X0=p_.x, Y0=p_.y, X1=q_.x, Y1=q_.y,
+                              ORPHAN_KM=float(order[c]) / 1000.0))
+            made += 1
+        if not made:
+            break
+    comp = {}
+    for k, cc in enumerate(nx.connected_components(G)):
+        for n in cc:
+            comp[n] = k
+    keep["CMP"] = keep.US_NODE.map(comp)
+    good = set(keep.loc[keep.SRC == "main_pipe", "CMP"])
+    keep["TR"] = keep.CMP.isin(good)
+    emap = pd.Series(np.arange(len(D["cor"])), index=D["cor"].CORR_ID)
+    ei = emap.reindex(keep.CORR_ID).values.astype(int)
+    q = float(D["load_edge"][ei][keep.TR.values].sum())
+    return q, int(keep.CMP.nunique()), pd.DataFrame(links), keep, extra
+
+
+def _dist_to_trunk(edges, extra=()):
+    G = nx.Graph()
+    for r in edges.itertuples():
+        w = float(r.LEN_M)
+        if G.has_edge(r.US_NODE, r.DS_NODE):
+            G[r.US_NODE][r.DS_NODE]["weight"] = min(G[r.US_NODE][r.DS_NODE]["weight"], w)
+        else:
+            G.add_edge(r.US_NODE, r.DS_NODE, weight=w)
+    for a, b, w in extra:
+        G.add_edge(a, b, weight=w)
+    roots = (set(edges.loc[edges.SRC == "main_pipe", "US_NODE"])
+             | set(edges.loc[edges.SRC == "main_pipe", "DS_NODE"]))
+    G.add_node("__T__")
+    for r in roots:
+        if G.has_node(r):
+            G.add_edge("__T__", r, weight=0.0)
+    d = nx.single_source_dijkstra_path_length(G, "__T__", weight="weight")
+    return {r.CORR_ID: min(d.get(r.US_NODE, np.inf), d.get(r.DS_NODE, np.inf))
+            for r in edges.itertuples()}
+
+
+def simulate_patch(D, caps=(10.0, 25.0, 50.0, 100.0, 200.0, 400.0)):
+    """What the patch would recover.  Returned as text."""
+    L = []; p = L.append
+    p("THE PATCH, SIMULATED - delete every ALONG corridor, then heal the severance")
+    p("  baseline: %d corridors, %.2f km, trunk-connected load %.1f m3/d, %d pieces"
+      % (len(D["cor"]), D["cor"].LEN_M.sum() / 1000, D["base_q"], D["base_live"]))
+    p("  %6s %7s %10s %8s %12s %10s" % ("cap m", "links", "link km", "pieces",
+                                        "trunk m3/d", "vs base"))
+    best = None
+    for cap in caps:
+        q, live, LK, keep, extra = _heal(D, cap)
+        p("  %6.0f %7d %10.3f %8d %12.1f %+10.1f"
+          % (cap, len(LK), LK.LEN_M.sum() / 1000 if len(LK) else 0.0, live, q,
+             q - D["base_q"]))
+        if abs(cap - HEAL_CAP_M) < 1e-9:
+            best = (LK, keep, extra)
+    if best is None:
+        return "\n".join(L)
+    LK, keep, extra = best
+    p("")
+    p("  at the %.0f m cap: %s; median link %.1f m"
+      % (HEAL_CAP_M, ", ".join("%d %s" % (v, k) for k, v in
+                               LK.WHY.value_counts().items()), LK.LEN_M.median()))
+    try:
+        plots = gpd.read_file(str(fk.MOH_PLOTS))
+        if plots.crs is not None and plots.crs.to_epsg() != fk.EPSG:
+            plots = plots.to_crs(fk.EPSG)
+        gl = gpd.GeoDataFrame(LK.copy(), crs="EPSG:%d" % fk.EPSG, geometry=[
+            LineString([(r.X0, r.Y0), (r.X1, r.Y1)]) for r in LK.itertuples()])
+        jj = gpd.sjoin(gl, plots[["geometry"]], how="left", predicate="intersects")
+        gl["N_PLOT_CROSS"] = jj.groupby(level=0).index_right.apply(
+            lambda x: x.notna().sum())
+        p("  right of way: %d of %d links cross no registered plot (%.3f km); "
+          "%d cross one (%.3f km, median %.1f m) and need a ROW answer"
+          % (int((gl.N_PLOT_CROSS == 0).sum()), len(gl),
+             gl.loc[gl.N_PLOT_CROSS == 0, "LEN_M"].sum() / 1000,
+             int((gl.N_PLOT_CROSS > 0).sum()),
+             gl.loc[gl.N_PLOT_CROSS > 0, "LEN_M"].sum() / 1000,
+             gl.loc[gl.N_PLOT_CROSS > 0, "LEN_M"].median()))
+    except Exception as e:                                   # noqa: BLE001
+        p("  right-of-way check could not run: %s" % e)
+    before = _dist_to_trunk(D["cor"])
+    after = _dist_to_trunk(keep, extra=extra)
+    T = pd.DataFrame(dict(Q=pd.Series(D["load_edge"], index=D["cor"].CORR_ID)))
+    T["B"] = pd.Series(before); T["A"] = pd.Series(after)
+    T = T[(T.Q > 0) & np.isfinite(T.B) & np.isfinite(T.A)].copy()
+    T["E"] = (T.A - T.B).clip(lower=0)
+    w = T.Q / T.Q.sum()
+    p("")
+    p("  DEPTH - screening only, stage 6 has not run.  Extra flow-path length to the")
+    p("  trunk x the minimum gradient for the diameter (G203-p29 Table 11):")
+    p("    extra path: p50 %.0f m  p90 %.0f m  max %.0f m; load-weighted mean %.0f m"
+      % (T.E.quantile(.5), T.E.quantile(.9), T.E.max(), float((T.E * w).sum())))
+    for g, lab in ((0.00500, "DN200  5.00 mm/m (steepest minimum, worst case)"),
+                   (0.00125, "DN600  1.25 mm/m"),
+                   (0.00075, "DN900+ 0.75 mm/m (Table 11 floor)")):
+        d = T.E * g
+        p("    %-42s mean %.2f m  p90 %.2f m  max %.2f m  load past the 12 m cap %.0f m3/d"
+          % (lab, float((d * w).sum()), d.quantile(.9), d.max(),
+             T.loc[d > 12.0, "Q"].sum()))
+    return "\n".join(L)
+
+
 def main(argv):
     fk.use_style()
     D = measure()
     txt = numbers(D)
     print(txt)
+    if "--patch" in argv:
+        pt = simulate_patch(D)
+        print(); print(pt)
+        txt = txt + "\n\n" + pt
+    CACHE.mkdir(parents=True, exist_ok=True)
     (CACHE / "numbers.txt").write_text(txt, encoding="utf-8")
-    if "--numbers" in argv:
+    if "--numbers" in argv or "--patch" in argv:
         return 0
     for f in (fr01, fr02, fr03, fr04):
         p = f(D)

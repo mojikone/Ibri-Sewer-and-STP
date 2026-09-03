@@ -362,6 +362,9 @@ def measure(verbose=True):
     dist_to(built, "D_BUILT_M")
     dist_to(plan_res, "D_PLANRES_M")
     dist_to(cls, "D_ANYPLOT_M")
+    # A planned residential plot is a receptor the site will ACQUIRE, not one it swaps for:
+    # at the saturation horizon the governing distance is whichever is nearer.
+    cand["D_HORIZON_M"] = cand[["D_RECEPT_M", "D_PLANRES_M"]].min(axis=1)
 
     # ---------------------------------------------------------------- free land
     from rasterio.features import rasterize
@@ -592,16 +595,20 @@ def fig_site_options(cand, meta, stem="F20_stp_site_options"):
 
     bnd = meta["boundary"]
     ext = fk.extent_of(bnd, pad=0.05)
-    n_large = int((cand.D_RECEPT_M < BUFFER_LARGE_HI).sum())
+    n_clear = int((cand.D_HORIZON_M >= BUFFER_LARGE_HI).sum())
+    n_below = int((cand.D_HORIZON_M < BUFFER_LARGE_LO).sum())
+    n_in = len(cand) - n_clear - n_below
     fig, ax, note = fk.map_frame(
         ext,
-        title=(f"{n_large} of {len(cand)} candidate STP sites sit inside the 1,000 m "
-               f"upper bound of the large-STP buffer band"),
-        subtitle=("Buffer band 300-1,000 m for a large STP, PAM-GUD-201 p43 Table 8, set "
-                  "by odour modelling to the 5 OU contour - no model exists yet, so the "
-                  "band cannot be closed. Hatched ground has no 50-year hazard answer. "
-                  "Wadi = hazard class 4-6, a PROJECT ASSUMPTION standing in for "
-                  "G203-p30 4.4.1 'areas subject to washout'."))
+        title=(f"Only {n_clear} of the {len(cand)} candidate STP sites clears the large-STP "
+               f"buffer band — {n_in} sit inside it and {n_below} below its 300 m floor"),
+        subtitle=("Band 300-1,000 m for a large STP, PAM-GUD-201 p43 Table 8, resolved by "
+                  "odour modelling to the 5 OU contour - no model exists yet, so the band "
+                  "cannot be closed and nothing inside it is settled. Distance measured to "
+                  "the nearer of a BUILT plot and a PLANNED residential plot: a planned "
+                  "plot is a receptor the site acquires, not one it swaps for. Hatched "
+                  "ground has no 50-year hazard answer. Wadi = hazard class 4-6, a PROJECT "
+                  "ASSUMPTION standing in for G203-p30 4.4.1 'areas subject to washout'."))
     known, wadi, rext = fk.hazard_coverage(ext)
     # The untested area is most of the frame, so it is drawn light: heavy shading over
     # two thirds of a map reads as "no data anywhere" and buries the receptors.
@@ -654,9 +661,10 @@ def fig_site_options(cand, meta, stem="F20_stp_site_options"):
         Line2D([], [], color=fk.C.BOUNDARY, lw=1.2, ls="--", label="study boundary"),
         fk.untested_handle("UNTESTED — no 50-year hazard answer"),
     ]
-    box = ("site   GL m  dwell m  free ha  grav %\n" + "\n".join(
-        f"{s.CID:<7}{s.GL_M:>5.1f}{s.D_RECEPT_M:>9,.0f}{s.FREE600_HA:>9.1f}"
-        f"{s.GRAV_PC:>8.1f}" for _, s in cand.iterrows()))
+    box = ("site   GL m  dwell m  free ha  grav %\n"
+           "             (horizon)  (825 m)\n" + "\n".join(
+               f"{s.CID:<7}{s.GL_M:>5.1f}{s.D_HORIZON_M:>9,.0f}{s.FREE800_HA:>9.1f}"
+               f"{s.GRAV_PC:>8.1f}" for _, s in cand.iterrows()))
     fk.finish_map(fig, ax, legend_handles=handles, legend_loc="upper left",
                   databox=box, note=note,
                   source=fk.source_line(
@@ -710,12 +718,16 @@ def fig_gravity(cand, meta, stem="F21_stp_gravity_reach"):
     a0.set_xlabel("share of the ultimate central load arriving by gravity, %")
     a0.text(0.0, 1.03, "How much of the load arrives by gravity", fontsize=9,
             transform=a0.transAxes, color=fk.C.GREY)
-    a0.legend(handles=[
+    # The legend sits in the figure margin: every in-axes position collides with a bar
+    # label, and a legend on top of a number is worse than no legend.
+    fig.subplots_adjust(bottom=fig.subplotpars.bottom + 0.075)
+    fig.legend(handles=[
         Patch(label="≥ 95 % — central-works candidate", **fk.status_style("pass")),
         Patch(label="50–95 %", **fk.status_style("flag")),
-        Patch(label="< 50 % — satellite catchment", **fk.status_style("fail"))],
-        loc="upper right", bbox_to_anchor=(1.0, 0.62), fontsize=6.8, framealpha=0.95,
-        edgecolor="#9a9a9a", handlelength=1.4)
+        Patch(label="< 50 % — a satellite catchment, not a central works",
+              **fk.status_style("fail"))],
+        loc="lower left", bbox_to_anchor=(0.055, 0.055), ncol=3, frameon=False,
+        fontsize=7.4, handlelength=1.6, columnspacing=1.8)
 
     # right panel: load-weighted distribution of SPARE HEAD.  A 100 % site with 1 m of
     # margin everywhere is not the same site as a 100 % site with 15 m.
@@ -777,7 +789,8 @@ def main(cache=True):
     pd.set_option("display.max_columns", 60)
     print("\n================ CANDIDATES ================")
     cols = ["CID", "NAME", "X", "Y", "GL_M", "IN_BOUND", "D_RECEPT_M", "D_BUILT_M",
-            "D_PLANRES_M", "FREE600_HA", "FREE800_HA", "D_WADI_M", "HAZ_CLASS",
+            "D_PLANRES_M", "D_HORIZON_M", "FREE600_HA", "FREE800_HA", "D_WADI_M",
+            "HAZ_CLASS",
             "UNTEST1K_PC", "GRAV_PC", "GRAV_PC_D9", "Q_GRAV_M3D", "HAUL_KM",
             "CONV_KM", "D_LOADC_KM", "EXT_KM", "SURPLUS_M", "COV_AT_SITE_M", "EXT_OK",
             "D_TRUNK_M", "D_AGRI_M", "AGRI5K_HA", "D_TE_M", "D_ROAD_M", "D_DUAL_M",

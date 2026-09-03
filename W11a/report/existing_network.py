@@ -332,18 +332,35 @@ def service_radius_sensitivity(g, plots) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def peak(qadf_m3d, nprop, upstream_km, q_per_prop):
-    """Peak flow L/s, exactly the stage-5c method: Merrimack + 720 L/d/km infiltration.
+#: Infiltration on an EXISTING inland network, as a share of the wastewater flow.
+#: G201-p72 7.4.3 gives THREE rates and the project pipeline only uses the third:
+#:   * existing network in a groundwater / coastal zone   up to 40 % of flow
+#:   * existing network inland or outside groundwater      10 % of flow
+#:   * newly designed network                              720 L/d/km
+#: Ibri is inland at about 330 m aOD, so the 10 % rule governs the BUILT network and the
+#: 720 L/d/km rule governs the new design.  ``s5c_flows.py`` applies 720 L/d/km, which is
+#: right for what it is sizing and wrong for anything asked of the 2006 asset.
+INFILT_EXISTING_INLAND = 0.10
 
-    G201-p71 gives no formula below 100 properties, so the factor is HELD at the value
-    100 properties would produce — the same rule ``s5c_flows.py`` applies.
+
+def peak(qadf_m3d, nprop, upstream_km, q_per_prop, *, existing: bool = True):
+    """Peak flow L/s: Merrimack (G201-p71) plus infiltration (G201-p72 7.4.3).
+
+    G201-p71 makes Merrimack mandatory over 100 properties and gives no formula below
+    it, so the factor is HELD at the value 100 properties would produce — the same rule
+    ``s5c_flows.py`` applies.  ``existing=True`` charges the 10 % inland rate the
+    guideline sets for an EXISTING network; ``existing=False`` charges the 720 L/d/km a
+    new design gets, for comparison.
     """
     held = C.pf_merrimack(C.PF_HOLD_PROPERTIES * q_per_prop / 1000.0)
     qadf = np.asarray(qadf_m3d, dtype=float)
     nprop = np.asarray(nprop, dtype=float)
     pf = np.array([C.pf_merrimack(q / 1000.0) if (n > C.PF_HOLD_PROPERTIES and q > 0)
                    else held for q, n in zip(qadf, nprop)])
-    qinf = (C.INFILT_L_D_KM / 86400.0) * np.asarray(upstream_km, dtype=float)
+    if existing:
+        qinf = INFILT_EXISTING_INLAND * qadf * 1000.0 / 86400.0
+    else:
+        qinf = (C.INFILT_L_D_KM / 86400.0) * np.asarray(upstream_km, dtype=float)
     return qadf * 1000.0 / 86400.0 * pf + qinf, pf
 
 
@@ -552,6 +569,97 @@ def table_trunk_coincidence(hit, tr) -> pd.DataFrame:
     return t
 
 
+DESIGNED = "W11a_reaches.shp"          # stages 6-9 output: DN, laid gradient, flows
+
+
+def design_demand(b):
+    """For every built pipe, what the FINISHED design asks of that street.
+
+    Stages 6-9 completed during this work, so ``W11a/shp/W11a_reaches.shp`` now carries a
+    diameter and a peak flow on every reach.  That makes the decisive reuse test possible:
+    not "can the built pipe carry the plots that front it" (section 6) but "can it carry
+    what the design routes down that street".  A built pipe is matched to the co-located
+    design reach with the LARGEST peak flow inside the same-street band, because a reuse
+    decision is governed by the worst thing the street has to carry.
+    """
+    import geopandas as gpd
+    from shapely import STRtree
+
+    d = gpd.read_file(fk.snapshot(str(fk.SHP / DESIGNED)), engine="pyogrio",
+                      columns=["EDGE_UID", "TIER", "DN", "QPK_LS", "QADF_M3D",
+                               "SLOPE_LAID", "V_PK_MS", "DOD_PK"])
+    d.attrs["fk_source"] = fk.Src(fk.SHP / DESIGNED, "", len(d),
+                                  fk._stamp(fk.SHP / DESIGNED))
+    tree = STRtree(d.geometry.values)
+    b = b.copy()
+    dn, qpk, tier, gap = [], [], [], []
+    for g in b.geometry:
+        hits = tree.query(g.buffer(SAME_STREET_M))
+        if len(hits) == 0:
+            dn.append(np.nan); qpk.append(np.nan); tier.append(None); gap.append(np.nan)
+            continue
+        sub = d.iloc[hits]
+        k = int(sub.QPK_LS.fillna(-1).values.argmax())
+        dn.append(sub.DN.iloc[k]); qpk.append(sub.QPK_LS.iloc[k])
+        tier.append(sub.TIER.iloc[k])
+        gap.append(float(g.distance(sub.geometry.iloc[k])))
+    b["D_DN"] = dn
+    b["D_QPK"] = qpk
+    b["D_TIER"] = tier
+    b["D_GAP_M"] = gap
+    b["RATIO"] = b.D_QPK / b.QCAP_LS
+    return b, d
+
+
+def table_design_demand(b) -> pd.DataFrame:
+    """Can the built pipe carry what the design routes down its street?"""
+    m = b.D_QPK.notna()
+    rows = []
+    for tier, sub in b[m].groupby("D_TIER"):
+        ok = sub[sub.ASSESSABLE & (sub.RATIO <= 1.0)]
+        no = sub[sub.ASSESSABLE & (sub.RATIO > 1.0)]
+        un = sub[~sub.ASSESSABLE]
+        rows.append(dict(
+            design_tier_on_that_street=tier, built_pipes=len(sub),
+            built_km=sub.LEN_M.sum() / 1000.0,
+            adequate_km=ok.LEN_M.sum() / 1000.0,
+            short_km=no.LEN_M.sum() / 1000.0,
+            untestable_km=un.LEN_M.sum() / 1000.0,
+            median_shortfall_x=(float(no.RATIO.median()) if len(no) else float("nan")),
+            worst_x=(float(no.RATIO.max()) if len(no) else float("nan"))))
+    t = pd.DataFrame(rows)
+    order = {"rider": 0, "lateral": 1, "main": 2, "sub main": 3, "trunk main": 4}
+    return t.sort_values("design_tier_on_that_street",
+                         key=lambda s: s.map(lambda v: order.get(v, 9)))
+
+
+def table_fail_by_tier(b) -> pd.DataFrame:
+    """Where the capacity failures sit.  The tier answer is the design answer."""
+    rows = []
+    for tier, sub in b.groupby("TIER"):
+        a = sub[sub.ASSESSABLE]
+        bad = a[a.ST_ULT != "pass"]
+        rows.append(dict(tier=tier, pipes=len(sub), km=sub.LEN_M.sum() / 1000.0,
+                         testable_km=a.LEN_M.sum() / 1000.0,
+                         fail_km_ult=bad.LEN_M.sum() / 1000.0,
+                         fail_pct_of_testable=(100 * bad.LEN_M.sum() / a.LEN_M.sum()
+                                               if len(a) else float("nan")),
+                         median_util_ult=(float((a.QPK_ULT / a.QCAP_LS).median())
+                                          if len(a) else float("nan"))))
+    return pd.DataFrame(rows).sort_values("km", ascending=False)
+
+
+def table_coverage_by_package(b) -> pd.DataFrame:
+    """Which built packages the design's corridor set actually reaches."""
+    rows = []
+    for pkg, sub in b.groupby("PROJECTCOD"):
+        far = sub[sub.D_TO_DESIGN_M > SAME_STREET_M]
+        rows.append(dict(package=pkg, km=sub.LEN_M.sum() / 1000.0,
+                         km_no_design_reach=far.LEN_M.sum() / 1000.0,
+                         pct=100 * far.LEN_M.sum() / sub.LEN_M.sum()))
+    return pd.DataFrame(rows).sort_values("pct", ascending=False)
+
+
 def table_disagreement(b) -> pd.DataFrame:
     bins = [0, 2, 5, SAME_STREET_M, 25, 50, 100, 1e9]
     lab = ["0-2 m (same line)", "2-5 m", f"5-{SAME_STREET_M:.0f} m",
@@ -581,10 +689,11 @@ def fig_overlay(b, design, nama, note_extra=""):
                f"network and misses the other {100*(bk-dup_m)/bk:.0f} %"),
         subtitle=(f"NAMA's 2006 network ({bk:,.1f} km of built pipe, STATUS='Ex', the "
                   f"schematic connectors removed) against the W11a stage-5 skeleton. "
-                  f"Red is built pipe with no design reach within "
-                  f"{SAME_STREET_M:.0f} m — either a street our corridor set does not "
-                  f"have, or a sewer that does not run down a street."))
-    design.plot(ax=ax, color=fk.C.FAINT, linewidth=0.25, zorder=3)
+                  f"Red is built pipe whose NEAREST design reach is further than "
+                  f"{SAME_STREET_M:.0f} m away — either a street our corridor set does "
+                  f"not have, or a sewer that does not run down a street."),
+        basemap_alpha=0.22)
+    design.plot(ax=ax, color="#9e9e9e", linewidth=0.35, zorder=3)
     inb = design[design.ON_BUILT_M > 0]
     if len(inb):
         inb.plot(ax=ax, color=fk.C.LATERAL, linewidth=0.6, zorder=4)
@@ -609,14 +718,15 @@ def fig_overlay(b, design, nama, note_extra=""):
         Line2D([], [], color=fk.C.INK, lw=1.4,
                label=f"built 2006 sewer ({bk:,.1f} km, {len(b):,} pipes)"),
         Line2D([], [], color=fk.C.FAIL, lw=1.8,
-               label=f"built, no design reach within {SAME_STREET_M:.0f} m "
-                     f"({far.LEN_M.sum()/1000:,.1f} km)"),
+               label=f"built, nearest design reach over {SAME_STREET_M:.0f} m away "
+                     f"({far.LEN_M.sum()/1000:,.1f} km, {len(far):,} pipes)"),
         Line2D([], [], color=fk.C.LATERAL, lw=1.0,
                label=f"W11a reach on a built alignment "
                      f"({design.ON_BUILT_M.sum()/1000:,.1f} km)"),
-        Line2D([], [], color=fk.C.FAINT, lw=1.0,
+        Line2D([], [], color="#9e9e9e", lw=1.0,
                label=f"W11a reach on new ground "
-                     f"({(design.LEN_M.sum()-design.ON_BUILT_M.sum())/1000:,.0f} km)"),
+                     f"({(design.LEN_M.sum()-design.ON_BUILT_M.sum())/1000:,.0f} km "
+                     f"in the study area)"),
         Line2D([], [], color=fk.C.FLAG, lw=1.2, ls=":",
                label=f"SUREKHA proposal, NOT approved "
                      f"({prop.geometry.length.sum()/1000:,.0f} km)"),
@@ -631,7 +741,10 @@ def fig_overlay(b, design, nama, note_extra=""):
            f"same-street tol.  {SAME_STREET_M:>8,.0f} m (ours)")
     fk.finish_map(fig, ax, legend_handles=handles, legend_loc="lower left",
                   databox=box, note=(note + note_extra),
-                  source=fk.source_line(nama["SEWERLINE"], design))
+                  source=fk.source_line(
+                      nama["SEWERLINE"],
+                      f"W11a/run/s5_reach_skeleton.gpkg [s5_reach_skeleton], "
+                      f"{len(design):,} rows"))
     return fk.save(fig, "FEX1_existing_vs_design")
 
 
@@ -649,17 +762,22 @@ def fig_capacity(b):
     tested = b.loc[b.ASSESSABLE, "LEN_M"].sum() / 1000
     today_fail = b.loc[b.ST_TODAY.isin(["over d/D", "surcharged"]), "LEN_M"].sum() / 1000
 
-    fig, ax = fk.chart_frame(
-        title=(f"{100*ult_fail/tested:.0f} % of the testable built network cannot pass "
-               f"the ultimate flow — and {100*today_fail/tested:.0f} % cannot pass "
-               f"today's"),
-        subtitle=("Kilometres of built 2006 sewer by outcome. Capacity is at the "
+    fig, axes = fk.chart_frame(
+        title=(f"Growth is not what breaks the built network: "
+               f"{100*today_fail/tested:.0f} % of the testable {tested:,.0f} km already "
+               f"fails today, {100*ult_fail/tested:.0f} % at saturation — and a third of "
+               f"it cannot be tested at all"),
+        subtitle=("LEFT, kilometres by outcome at three horizons. RIGHT, how much of "
+                  "each pipe's own capacity the ultimate flow uses. Capacity is at the "
                   "G203-p27 Tab 10 depth-of-flow limit (d/D 0.65 at these diameters), "
                   "Colebrook-White with ks = 1.5 mm (G203-p24, p28), on the gradient "
-                  "derived from NAMA's own inverts and the bore behind its own OD. "
-                  "UNTESTED is package 5A-1, which records no diameter and no level at "
-                  "all — the philosophy counts that as a failure, not a blank."),
-        figsize=(9.8, 4.4), ygrid=False, xgrid=True)
+                  "derived from NAMA's own inverts and the bore behind its own OD. Flow "
+                  "is Merrimack (G201-p71) plus the 10 % infiltration G201-p72 7.4.3 "
+                  "sets for an EXISTING inland network. UNTESTED is package 5A-1, which "
+                  "records no diameter and no level at all — the philosophy counts that "
+                  "as a failure, not a blank."),
+        figsize=(12.4, 4.6), ncols=2, ygrid=False, xgrid=True)
+    ax, ax2 = axes
 
     ypos = np.arange(len(rows))[::-1]
     for y, (_lab, tag) in zip(ypos, rows):
@@ -677,16 +795,37 @@ def fig_capacity(b):
     ax.set_yticklabels([r[0] for r in rows], fontsize=8)
     ax.set_xlabel("kilometres of built 2006 gravity sewer")
     ax.set_xlim(0, b.LEN_M.sum() / 1000.0 * 1.02)
+
+    # ---- right panel: how much of its own capacity each pipe is using
+    u = (b.QPK_ULT / b.QCAP_LS).where(b.ASSESSABLE)
+    bands = [(0, 0.25, "under 25 %", "pass"), (0.25, 0.50, "25-50 %", "pass"),
+             (0.50, 0.75, "50-75 %", "pass"), (0.75, 1.00, "75-100 %", "flag"),
+             (1.00, 1e9, "over the d/D limit", "fail")]
+    labs, kms, roles = [], [], []
+    for lo, hi, lab, r in bands:
+        m = (u >= lo) & (u < hi)
+        labs.append(lab); kms.append(b.loc[m.fillna(False), "LEN_M"].sum() / 1000.0)
+        roles.append(r)
+    labs.append("UNTESTED"); roles.append("untested")
+    kms.append(b.loc[~b.ASSESSABLE, "LEN_M"].sum() / 1000.0)
+    yp = np.arange(len(labs))[::-1]
+    for y, km, r in zip(yp, kms, roles):
+        ax2.barh(y, km, height=0.62, **fk.status_style(r))
+        ax2.text(km + 0.6, y, f"{km:,.1f}", va="center", fontsize=7.4, color=fk.C.INK)
+    ax2.set_yticks(yp)
+    ax2.set_yticklabels(labs, fontsize=8)
+    ax2.set_xlabel("km, by share of its own capacity used at saturation")
+    ax2.set_xlim(0, max(kms) * 1.18)
+
     names = {"pass": "passes — flow within the d/D limit",
              "over d/D": "over the d/D limit but not yet surcharged",
              "surcharged": "surcharged — flow exceeds the full bore",
              "untested": "UNTESTED — no diameter, no level (package 5A-1)"}
     fk.legend_below(ax, [Patch(label=names[s], **fk.status_style(role[s]))
                          for s in order], ncol=2)
-    fk.finish_chart(fig, source=fk.source_line(b.attrs["src_sewer"],
-                                               b.attrs["src_plots"],
-                                               "W10/docs/LOAD_ALLOCATION.md sec 6 "
-                                               "(the 2055 interpolation)"))
+    fk.finish_chart(fig, source=fk.source_line(
+        str(b.attrs["src_sewer"]), str(b.attrs["src_plots"]),
+        "W10/docs/LOAD_ALLOCATION.md sec 6 (the 2055 interpolation)"))
     return fk.save(fig, "FEX2_existing_capacity")
 
 
@@ -778,6 +917,10 @@ def main(tables_only: bool = False) -> None:
           f"diameter and levels:")
     print(tc.to_string(index=False))
 
+    print("\nWHERE THE CAPACITY FAILURES SIT, BY TIER (ultimate horizon):")
+    print(table_fail_by_tier(b).to_string(index=False,
+                                          float_format=lambda v: f"{v:,.2f}"))
+
     print("\nWHERE THE DIAMETER SITS AGAINST THE GUIDELINE MINIMUM (G203-p22 Tab 6):")
     dia = b[b.HAS_DIA]
     for od, sub in dia.groupby("OD_MM"):
@@ -790,30 +933,42 @@ def main(tables_only: bool = False) -> None:
           f"({100*small.LEN_M.sum()/dia.LEN_M.sum():.1f} % of the dimensioned network) "
           f"are laid at a size Tab 6 allows only for a rider or a property connection.")
 
-    print("\nSENSITIVITY on the peak factor and on the load reaching the network:")
+    print("\nSENSITIVITY — the load, and which infiltration rule (G201-p72 7.4.3):")
     q_per_prop = b.Q_ULT.max() / max(b.N_ULT.max(), 1.0)
-    for lab, mult in (("half the saturation load", 0.5), ("saturation", 1.0)):
-        qpk, _ = peak(b.Q_ULT * mult, b.N_ULT * mult, b.KM, q_per_prop)
-        bad = (qpk > b.QCAP_LS) & b.ASSESSABLE
-        print(f"  at {lab:<26s} {int(bad.sum()):>5,} pipes / "
-              f"{b.loc[bad,'LEN_M'].sum()/1000:>6.2f} km over the d/D limit")
+    for lab, mult in (("half saturation", 0.5), ("saturation", 1.0)):
+        for inf_lab, ex in (
+                (f"existing inland, {INFILT_EXISTING_INLAND:.0%} of flow  (used above)",
+                 True),
+                (f"new network, {C.INFILT_L_D_KM:.0f} L/d/km (what s5c applies)", False)):
+            qpk, _ = peak(b.Q_ULT * mult, b.N_ULT * mult, b.KM, q_per_prop, existing=ex)
+            bad = (qpk > b.QCAP_LS) & b.ASSESSABLE
+            print(f"  {lab:<16s} + {inf_lab:<52s} {int(bad.sum()):>5,} pipes / "
+                  f"{b.loc[bad,'LEN_M'].sum()/1000:>6.2f} km over the d/D limit")
 
     head("7  THE BUILT NETWORK AGAINST THE GREENFIELD DESIGN")
     design, flows = read_design()
     b, design = overlay(b, design)
     print(table_overlay(b, design).to_string(index=False,
                                              float_format=lambda v: f"{v:,.2f}"))
+    print("\nwhich built packages the design's corridors reach at all:")
+    print(table_coverage_by_package(b).to_string(index=False,
+                                                 float_format=lambda v: f"{v:,.2f}"))
     print("\nhow far the nearest W11a reach is from each built pipe:")
     print(table_disagreement(b).to_string(index=False,
                                           float_format=lambda v: f"{v:,.2f}"))
-    print(f"\nNOTE: stage 5c's largest reach carries {flows.QADF_M3D.max():,.0f} m3/d "
-          f"while the stage-3 trunk carries 73,442 m3/d. The design's flow field is "
-          f"fragmented, so it is NOT used above: every flow in section 6 is accumulated "
-          f"on NAMA's own manhole topology from the W10 plot loads.")
+    tr_q = 73442.0
+    print(f"\nNOTE on the design's own flow field, checked at run time: stage 5c's "
+          f"largest reach carries {flows.QADF_M3D.max():,.0f} m3/d against the stage-3 "
+          f"trunk's {tr_q:,.0f} m3/d — {100*flows.QADF_M3D.max()/tr_q:.0f} % of it. "
+          f"Section 6 does not use 5c at all: every flow there is accumulated on NAMA's "
+          f"own manhole topology from the W10 plot loads, so this assessment does not "
+          f"depend on whether 5c's accumulation is whole.")
 
     head("8  REUSE — HOW MUCH OF THE DUPLICATED PIPE COULD ACTUALLY BE KEPT")
     on = b[b.ON_DESIGN_M > 0]
-    print(f"built pipe the design re-lays          {on.LEN_M.sum()/1000:>8.2f} km")
+    print(f"built pipes that TOUCH a design reach   {len(on):,} pipes, "
+          f"{on.LEN_M.sum()/1000:>7.2f} km of pipe "
+          f"({on.ON_DESIGN_M.sum()/1000:.2f} km of it actually inside the band)")
     for tag, lab in (("TODAY", "today"), ("ULT", "at saturation")):
         ok = on[(on[f"ST_{tag}"] == "pass")]
         un = on[~on.ASSESSABLE]
@@ -821,6 +976,52 @@ def main(tables_only: bool = False) -> None:
               f"   ({100*ok.LEN_M.sum()/on.LEN_M.sum():.1f} %)")
     print(f"  of which untestable (no diameter/level) {un.LEN_M.sum()/1000:>7.2f} km"
           f"   ({100*un.LEN_M.sum()/on.LEN_M.sum():.1f} %)")
+
+    head("8b  THE DECISIVE REUSE TEST — CAN THE BUILT PIPE CARRY WHAT THE DESIGN ROUTES "
+         "DOWN ITS STREET?")
+    try:
+        b, dsg = design_demand(b)
+        print(f"finished design read from {DESIGNED}: {len(dsg):,} reaches, "
+              f"{dsg.geometry.length.sum()/1000:,.1f} km, DN{int(dsg.DN.min())}-"
+              f"{int(dsg.DN.max())}, {dsg.QPK_LS.max():,.0f} L/s peak")
+        m = b.D_QPK.notna()
+        print(f"built pipe with a design reach within {SAME_STREET_M:.0f} m: "
+              f"{int(m.sum()):,} pipes, {b.loc[m,'LEN_M'].sum()/1000:,.2f} km")
+        print(table_design_demand(b).to_string(index=False,
+                                               float_format=lambda v: f"{v:,.2f}"))
+        ok = b[b.ASSESSABLE & m & (b.RATIO <= 1.0)]
+        print(f"\nREUSABLE on this test: {len(ok):,} pipes, "
+              f"{ok.LEN_M.sum()/1000:,.2f} km "
+              f"({100*ok.LEN_M.sum()/b.LEN_M.sum():.1f} % of the built network, "
+              f"{100*ok.LEN_M.sum()/dsg.geometry.length.sum():.2f} % of the design)")
+        print(ok.groupby(["TIER", "PROJECTCOD"]).agg(
+            n=("LEN_M", "size"), km=("LEN_M", lambda s: s.sum() / 1000)).round(2)
+            .to_string())
+
+        # ---- the two published design layers do not agree, so say so on the page
+        import geopandas as gpd
+        tr2 = gpd.read_file(fk.snapshot("W11a_trunk.gpkg"), layer="reaches",
+                            engine="pyogrio", columns=["EDGE_UID", "DN", "QADF_M3D"])
+        j = dsg[["EDGE_UID", "DN", "QADF_M3D"]].merge(tr2, on="EDGE_UID",
+                                                      suffixes=("_net", "_trunk"))
+        if len(j):
+            dn_diff = int((j.DN_net != j.DN_trunk).sum())
+            q_diff = int((abs(j.QADF_M3D_net - j.QADF_M3D_trunk)
+                          > 0.01 * j.QADF_M3D_trunk.clip(lower=1)).sum())
+            print(f"\nCROSS-LAYER CHECK: {len(j):,} trunk edge ids appear in BOTH "
+                  f"{DESIGNED} and W11a_trunk.gpkg. {dn_diff:,} carry a different DN and "
+                  f"{q_diff:,} differ on QADF by more than 1 %. The demands in the table "
+                  f"above are the NETWORK layer's, which is the smaller of the two, so "
+                  f"every shortfall here is a lower bound. This is a stage-3/stage-6 "
+                  f"reconciliation for the pipeline owners — reported, not fixed.")
+            worst = j.nlargest(1, "QADF_M3D_trunk").iloc[0]
+            print(f"  worst example: {worst.EDGE_UID} is DN{int(worst.DN_trunk)} at "
+                  f"{worst.QADF_M3D_trunk:,.0f} m3/d in the trunk layer and "
+                  f"DN{int(worst.DN_net)} at {worst.QADF_M3D_net:,.0f} m3/d in "
+                  f"{DESIGNED}.")
+    except Exception as exc:                                     # noqa: BLE001
+        print(f"NOT RUN — {type(exc).__name__}: {exc}. The finished design layer "
+              f"{DESIGNED} was not readable; sections 7 and 9 stand on their own.")
 
     head("9  THE REUSE TEST THAT MATTERS — BUILT PIPE UNDER THE DESIGN'S TRUNK")
     b, hit, tr = trunk_coincidence(b)
@@ -833,7 +1034,7 @@ def main(tables_only: bool = False) -> None:
                                                      float_format=lambda v: f"{v:,.2f}"))
 
     if not tables_only:
-        head("8  FIGURES")
+        head("10  FIGURES")
         print("  ", fig_overlay(b, design, nama))
         print("  ", fig_capacity(b))
 
