@@ -28,6 +28,7 @@ Evidence, research and the history of how these rules were arrived at live in
 |---|---|---|
 | 0 | **The auditor** | Write the checks before the design |
 | 1 | **What is served** | Deciding scope after design is how you sewer empty desert |
+| 1a | **WHICH WAY THE GROUND DRAINS** | Before the corridors, not after. See below |
 | 2 | **The corridors** | Wadi and dual-carriageway exclusions apply HERE, not in the router |
 | 3 | **The trunk** | End to end, at main diameter, before anything drains to it |
 | 4 | **The hierarchy** | Sub mains on through-streets, then laterals chained into them |
@@ -36,6 +37,18 @@ Evidence, research and the history of how these rules were arrived at live in
 | 7 | **The packages** | Phases and contracts, seams at lifting stations |
 
 **Stage 3 before stage 6.** A trunk that emerges from accumulated flow is not a trunk.
+
+**Stage 1a before stage 2, and this is the one the design got wrong.** The ground decides
+which way a pipe drains. The roads decide only where a pipe may *go*. Put the corridors first
+and the layout is built on road connectivity, with the terrain used afterwards to *check* an
+answer it should have *given* — which is exactly how a design comes to drain 42.5 % of its
+length uphill and want 2,449 vortex shafts where the built network has 37.
+
+**The streams are the ground's own answer.** Water has already solved this problem everywhere
+in the study area. Derive the drainage direction from the terrain — filled surface, flow
+direction, accumulation — and check it against the stream lines and the flood grids, which are
+two independent answers to the same question. A design that disagrees with all three is
+telling you about itself, not about Ibri.
 
 ---
 
@@ -67,15 +80,10 @@ constraint; it yields only to its own stated exits, and every use is flagged.*
 | **H15** | The network is a **forest** — zero loops, and **each component ends at exactly one outfall**, checked on the published layer. Not *one* component: §8a allows satellite works. What is never legal is a piece that drains nowhere | project rule |
 | **H16** | Every pipe publishes `US_NODE` and `DS_NODE`. **Topology is written down, never inferred from geometry** | project rule |
 
-**On H1a, and why deleting every crossing is the wrong reading of H1.** The guideline forbids
-pipes and chambers **in** wadis because of washout (G203-p30 §4.4.1, p33). It does **not**
-forbid crossing one — G201 §9.3 sets out a whole procedure for doing it, and G203-p52 §8.2.4
-gives the cover to use. Treating any contact with wadi ground as prohibited reads a
-prohibition on *presence* as a prohibition on *passage*, and the cost of that misreading is
-enormous: applied literally it severed the W11a corridor network into **1,381 pieces** and the
-trunk into **108**, against **2** when the same alignment is noded on its own. The
-fragmentation was manufactured by the rule, not found in the ground. A design cannot be built
-as 1,257 separate drainage systems, so the rule has to distinguish *along* from *across*.
+**On H1a.** The guideline forbids pipes and chambers **in** a wadi (G203-p30 §4.4.1, p33). It
+does **not** forbid crossing one — G201 §9.3 gives the procedure. Reading a prohibition on
+*presence* as one on *passage* severed the network into 1,381 pieces where the same alignment
+nodes into 2. The rule must distinguish *along* from *across*.
 
 **A crossing is legal when all four hold:**
 
@@ -103,6 +111,20 @@ as 1,257 separate drainage systems, so the rule has to distinguish *along* from 
    and bed-level change, **MoAFWR approval** (G201-p85), DI over the crossing plus 15 m each
    side, anti-flotation check, and protection to **PAM-STD-404** (G201-p86).
 
+**Which flood event governs which decision.** Grids exist for the 10, 25, 50, 100 and
+500-year events, and using one for everything is how a design becomes both timid and unsafe at
+once. Verify each against the source before relying on it:
+
+| Decision | Event | Source |
+|---|---|---|
+| A pumping station's floor, transformers and generator sit above it | **1:100** | G203-p38 §7.2 |
+| Cover over a pipe crossing a wadi | **1:50** | G201-p85 §9.3 asks 1:20 / 1:50 / 1:100 |
+| Is this ground a channel at all | **1:25** | stands in for the 1:20 the guideline asks and we do not hold — *say so* |
+
+**No data means DRY HIGH GROUND, not "untested"** (engineer, 2026-09-03). Flow runs in the
+wadis; ground the model never wetted is ground above the flood. Say that on the output rather
+than reporting an untested share.
+
 **What "wadi ground" is measured by, and that it is a proxy.** The test is
 `criteria.HAZARD_WADI_CLASSES = (4, 5, 6)` of the 50-year grid. Those are **AR&R
 flood-hazard classes**, keyed on danger to people and vehicles — class 4 is about 1.2 m of
@@ -121,13 +143,10 @@ result**. Full coverage is a data request, not a modelling choice.
 
 **On H5, and why it matters more than it looks.** A DN200 carrying a few litres per second runs at a very small depth of flow, and no legal gradient will make it reach 0.75 m/s. Applied as an absolute test, the velocity route condemns almost every small sewer ever built, NAMA's own included. That is why the guideline offers the tractive route — and why **the share of the network relying on it is a reported number**, since the tractive minimum depends on a τ the guideline never gives (assumed 1.0 Pa, GAP-9; at 2.0 the requirement rises 2.35×).
 
-**On H16, and why it is a hard constraint rather than a housekeeping note.** Connectivity
-recovered by snapping endpoints is a guess about intent, and the answer moves with the
-tolerance. W10's published layer has 7,919 pieces and **zero** loops at 10 mm, and 105
-pieces and **311** loops at 2.5 m — the same file, squeezed harder. Every topological
-statement about that layer, including the loop count this document used to quote, is a
-statement about the tolerance. The design knows which chamber a pipe runs between; it
-must write it down. Evidence: `W11a/run/EVIDENCE_snap_tolerance.md`.
+**On H16.** Connectivity recovered by snapping endpoints is a guess, and the answer moves
+with the tolerance: the same file gives 7,919 pieces and zero loops at 10 mm, 105 pieces and
+311 loops at 2.5 m. The design knows which chamber a pipe runs between — write it down.
+Evidence: `W11a/run/EVIDENCE_snap_tolerance.md`.
 
 **Every reach records which constraint set its diameter and which set its gradient.**
 "Depth" is not an admissible answer for a diameter.
@@ -160,17 +179,41 @@ pumping station** — if rounding a gradient creates one, relax the rounding on 
   main, trunk main.
 - **Chamber spacing (H12) and run length (P3) are different rules.** A 500 m run has five
   chambers at 100 m centres. Report run length as a **maximum**, never a median.
+- **MEASURE THE FLATNESS FIRST, THEN THE DIRECTION.** What actually buys depth on this
+  ground is not that pipes point the wrong way — it is that the ground is too flat to lay them
+  on. **60 % of the corridor network, some 1,100 km, falls more gently than the minimum
+  gradient a DN200 may be laid at** (5.00 mm/m, G203-p29 Tab 11). There the pipe sinks below
+  the surface whichever way it points, and the debt accumulates: about **2,500 m of extra
+  depth** across the network. Report the share of length below the minimum gradient for its
+  own diameter, and the accumulated depth debt, **before** reporting anything about direction.
 - **The tree drains WITH the ground.** Flow follows the fall. A reach carrying flow uphill
-  buys its rise in depth, at the minimum gradient, for its whole length — and pays for it
-  twice, because the depth must then be given back on the far side or taken at a drop.
-  Uphill drainage is **not forbidden** — a spur into a cul-de-sac on rising ground has nowhere
-  else to go — but it is **bounded and reported**: the share of length draining against the
-  ground, the cumulative climb along the flow path, and the worst single rise.
+  buys its rise in depth, at the minimum gradient, for its whole length — and pays twice,
+  because the depth must be given back on the far side or taken at a drop. Uphill is **not
+  forbidden**: a spur into a cul-de-sac on rising ground has nowhere else to go, and **NAMA's
+  own built network runs uphill on 34 % of its length.** That figure is *context, not
+  permission* — it says uphill is normal, not that ours is acceptable. Report the share, the
+  cumulative climb, and the worst single rise.
   **The diagnostic is the drop-structure count.** A design generating vortex shafts by the
-  thousand where the as-built has tens is not describing the same ground; it is describing its
-  own tree. Measured 2026-09-02: **42.5 % of length draining uphill (737.7 km), 7,061 m of
-  cumulative climb against 10,177 m of descent, and 2,254 vortex shafts against 37 built.**
-  No levelling arithmetic fixes this; only re-orienting the tree does.
+  thousand where the built network has tens is describing its own tree, not the ground.
+  Measured 2026-09-02: **42.5 % of length uphill (737.7 km), 7,061 m of climb against
+  10,177 m of descent, and 2,449 vortex shafts against 37 built.**
+- **DIRECTION IS OFTEN UNDECIDABLE, AND THE DESIGN MUST SAY SO.** Measured against NAMA's
+  built pipes, the terrain decides the direction of a single short reach only about **one time
+  in five**, and is right about **71 %** of the time when it does decide; over a longer chain
+  it decides half the time at about 75 %. Even NAMA's own *surveyed* levels agree with the
+  direction their pipes actually run only **65 %** of the time, and the 0.5 m terrain scores no
+  better than the 5 m — **there is no accuracy left to buy.** So every reach publishes how its
+  direction was decided and how confident that is; where the ground cannot say, the answer
+  comes from keeping a run consistent with its neighbours, never from a silent default.
+- **AT A JUNCTION, EXACTLY ONE PIPE LEAVES.** Every other line meeting there is a **head** —
+  it starts at that point and drains away from it. This is what makes a network buildable
+  rather than merely connected, and it is the rule that *creates* the heads the next rule
+  places.
+- **A short street on a ridge stays in one piece.** Where a divide crosses a street, splitting
+  it to obey the terrain buys two stubs and an extra junction for nothing. Keep it whole and
+  drain it to the lower end. Split only where the street is long enough that the split saves
+  real depth — **the threshold comes from the built network's own median street run**, not
+  from a number someone picked.
 - **No fingers** — a dead-end reach under ~60 m serving nothing is pruned or absorbed. *Ours,
   on cost grounds; no adoption standard requires it.*
 - **A head starts at the gate** — on the road, at the foot of the perpendicular from the first
@@ -198,6 +241,13 @@ pumping station** — if rounding a gradient creates one, relax the rounding on 
   **Never a drop used to dodge a station.**
 - **Publish the LAID gradient**, with the minimum beside it. A layer carrying only the minimum
   cannot be checked.
+
+**BEFORE THE LADDER: ASK THE NEIGHBOURS.** When a subnetwork's outlet cannot reach the trunk
+by gravity, the first question is not how deep or whether to pump. It is **whether joining a
+NEIGHBOURING subnetwork keeps it on gravity, and at what cost**. That step is cheap, it is
+often available on flat ground where two catchments sit at similar levels, and skipping it
+straight to the pump ladder buys stations nobody needed. Only when there is **no gravity way
+out at all** does the ladder below begin.
 
 **The cap-and-veto ladder — the economics is third, never first:**
 
