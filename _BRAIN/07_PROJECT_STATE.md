@@ -13,11 +13,15 @@ minimality LAST**; the order of design with **the trunk designed end to end befo
 drains to it**; the hard constraints H1–H16 and preferences P1–P6; the **cap-and-veto ladder**
 for pumping; and the **two-pass strict-then-review** method.
 
-**W11a runs from stage 1 to stage 5b.** Stages 6–9 are blocked behind stage **5c**, a
-flow-accumulation step that was MISSING: nothing joined *"a load sits at every chamber"* to
-*"this pipe carries X"*, so no reach knew what it carried. The ten stages were built in
-parallel against the contract and this one fell between two of them — a fair warning about
-how a parallel build fails.
+**W11a RUNS END TO END and audits 18 pass / 4 FAIL / 0 cannot-run** (W10: 3 / 12 / 7). The
+zero is the harder half — every check can now be *evaluated*. The one stage that was missing,
+flow accumulation, is written: nothing had joined *"a load sits at every chamber"* to *"this
+pipe carries X"*. The ten stages were built in parallel against the contract and that step
+fell between two of them — a fair warning about how a parallel build fails.
+
+**The biggest defect is NOT in the audit table: 42.5 % of the length (737.7 km) drains
+UPHILL**, which is why the design wants 2,449 vortex drop shafts where the built network has
+37. Stage 4 tree orientation, and the next substantial job.
 
 | Stage | State | Headline |
 |---|---|---|
@@ -28,7 +32,11 @@ how a parallel build fails.
 | 5 chambers | runs | 50,033 chambers, 27.5/km, 36 m mean spacing; 2,788 inlets under 90° |
 | 5b tertiary | runs | 52,188 m³/d reaches a chamber; 22,513 m³/d over 24,554 plots does not |
 | **5c flows** | **new, being made to complete** | accumulates load, properties and upstream length down the graph; Merrimack above 100 properties, held below |
-| 6–9 | blocked | levels and sizes, stations, packages, export |
+| 5c flows | runs | accumulates load, properties and upstream length; Merrimack above 100 properties, held below |
+| 6 levels and sizes | runs | 49,377 reaches, DN200–1700, 226 stations, deepest chamber 31.30 m, 1,617 backdrops and **2,449 vortex shafts** |
+| 7 stations | runs | 98 published; **located, not designed** — zero duty flow, zero rising mains |
+| 8 packages | runs | 502 packages; seam, length and plot-count checks still failing |
+| 9 export | runs | shapefiles, DXF, KMZ, 19 profiles, 9 schedules, SewerGEMS |
 
 ### Three rules were wrong, and fixing them mattered more than any code change
 

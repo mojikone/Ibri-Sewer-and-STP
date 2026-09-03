@@ -1,53 +1,89 @@
-# What is current, and what is not — checked 2026-09-02 (evening)
+# What is current, and what is not — checked 2026-09-02, end of session
 
 **READ THIS FIRST, THEN `07_PROJECT_STATE.md`, THEN `08_DESIGN_PHILOSOPHY.md` BEFORE LAYING
 OUT ANY NETWORK.**
 
-## Where the project actually stands, in eight lines
+## The state in one paragraph
 
-1. **`_BRAIN/08_DESIGN_PHILOSOPHY.md` is binding** — rules only, no measurements. `02` says
-   whether a design is legal; `08` says how to make it good. Read it before any layout work.
-   It gained **H1a** (when a wadi crossing is legal), **H16** (topology is written down,
-   never inferred) and a corrected **H15** today.
-2. **W11a runs from stage 1 to stage 5b.** Stages 6–9 (levels and sizes, stations, packages,
-   export) are blocked behind stage **5c**, a flow-accumulation step that was MISSING — the
-   ten stages were built in parallel against the contract and nothing joined "a load sits at
-   every chamber" to "this pipe carries X".
-3. **Our own wadi rule was the largest constraint on the design, and it was wrong.** G203
-   forbids pipes and chambers IN a wadi; G201 §9.3 gives a full procedure for CROSSING one.
-   Deleting every crossing severed the corridor network into 1,381 pieces. H1a keeps a
-   square, scheduled, chamber-free crossing: **784 pieces, 2,428 crossings scheduled**.
-4. **W10 does NOT have 310 loops.** It has zero at any tolerance a GIS would use. The count
-   is an artefact of snapping — 7,919 pieces and 0 cycles at 10 mm, 105 and 311 at 2.5 m.
-   The figure is struck from `CLAUDE.md`; evidence in `W11a/run/EVIDENCE_snap_tolerance.md`.
-5. **The auditor had six defects of its own**, one a build-stopper: it demanded 50 mm more
-   cover than the criteria lay, at every diameter, failing a BLOCKING check on every reach.
-   Every one was found by two things DISAGREEING, never by review.
-6. **51 % of the network has no wadi answer at all.** The 50-year hazard grid does not cover
-   the study area, and its nodata is −9999.0 — finite, so a `np.isfinite` guard passed it as
-   "not a wadi". Now published beside every wadi result. Largest data gap in the layout.
-7. **97 % of self-cleansing rests on the tractive route**, whose τ the guideline never gives
-   (GAP-9, assumed 1.0 Pa; at 2.0 the required gradient rises 2.35×). Largest open
-   assumption in the hydraulic design, and one question to one client.
-8. **Waiting on two deliveries**: the draftsman's final treated lines, and the GIS expert's
-   clean land-use data. The scripts are being purified so both drop straight in.
+**W11a is a COMPLETE design that runs end to end** — scope, corridors, trunk, hierarchy,
+chambers, tertiary connections, flows, levels and sizes, stations, packages, and a full
+export (shapefiles, DXF, KMZ, profiles, nine schedules, SewerGEMS). Run it with
+`s1 → s2 → s3 → s4 → s5 → s5b → s5c → s6 → s7 → s8 → s9` from `W11a/py`, then
+`python run_audit.py W11a`. **It audits 18 pass / 4 FAIL / 0 cannot-run**, against W10's
+3 / 12 / 7. The zero is the point: every check can now be *evaluated*.
 
-## Open defects in W11a, measured and named
+| | W10 | W11a |
+|---|---|---|
+| Audit | 3 pass / 12 FAIL / **7 cannot run** | **18 / 4 / 0** |
+| Network | 1,883 km in 7,919 pieces | **1,731.7 km, 247 components, one outfall each** |
+| Chambers | — | 49,624, DN200–1700 |
+| Connected load | — | **89.9 %** |
+| Stations | 19–21 | 226 demanded by the depth cap |
 
-| # | What | Size | Note |
-|---|---|---|---|
-| **FIXED 2026-09-02** | **The 4 m cut hole — the dominant defect in the pipeline** | corridor components **1,381 → 784 → 311**; before the exclusion **509 → 68** | `rest = g.difference(draft_cut)` left a 4.0 m gap wherever a treated road met a drafted line, and `NODE_MERGE_M` is 3.0 m so nothing closed it. **490 of 560 pre-exclusion components were this one hole.** The code comment already knew the failure mode from W10's 25 m version — the cut was narrowed and never closed. Healed with 785 connectors, 3.140 km |
-| **CLOSED 2026-09-02** | **OPEN-S4-1 — the trunk welded into stage 4** | trunk **74 → 4 pieces**; graph roots/components 351/311 → 286/283, so **40 excess outfalls → 3**; drainage systems **323 → 261** | The trunk now enters as EDGES; only the 819 corridors it touches are re-noded, 3.1 % of stage 2's topology. **H15 and H16 both PASS**: 261 components, exactly one outfall each, declared topology matches drawn. **Nothing moved** — max deviation 2.918 m, zero past the 3 m merge radius, 100 % of stage 3's 85.547 km covered, `Main Pipe.shp` untouched |
-| OPEN-S2-2 | Stage 2 publishes its own DISPLACED copy of the trunk | 669 corridors, 80.27 km, 58 pieces, 5.2 km short | The entire reason the weld must strip 5.8 km of shadow cycles. A clean stage 2 would need ~200 corridors re-noded instead of 819 |
-| OPEN-S3-x | Stage 3's trunk has one 439 m excursion off the client's line | at (447464, 2567301) | Offsets are p50 0.026 m / p95 0.327 m otherwise, so it is a local displacement, not a re-route. Lengths match (85.547 vs 85.491 km) |
-| — | Chambers on wadi ground | **2,354** of 50,033 | H1a item 2 admits NO exemption (G203-p30 §4.4.1, p33). Only **48.2 %** of chambers sit on a valid hazard cell, so this is the tested half. The 1,051 previously quoted was a stage-4 figure taken BEFORE stage 5 minted the chamber set |
-| — | Chambers that cannot simply be slid clear | 587 have no non-wadi ground within 250 m | The corridors run DOWN the wadis — 100.4 km of on-wadi corridor, contiguous runs to 789 m. 1,272 need crossing redesign and 291 need corridor re-routing; sliding fixes only 319 |
-| — | Trunk-main chambers on wadi ground | 72 | The trunk is the CLIENT's drawn alignment; ~500 m of it runs down a class-5/6 wadi near E450 050 / N2 569 400. **One decision for the client, not 72** |
-| — | Plots not connected by stage 5b | 24,554 plots, 22,513 m³/d (30.1 %) | **Decomposed — the 45 m rule owns only 8.59 %.** 9.63 % is a drainability test run against PLACEHOLDER levels (every chamber is seeded at DEPTH_M 1.600 and stage 5b treats a seed as a level); 8.99 % have no carrier within 47.5 m; 8.59 % genuinely exceed 45 m; 2.89 % are a geometry artefact. Removing no-load plots changes the load by **zero** — they carry 0.0 m³/d by construction |
-| — | Inlets under 90° | 2,788 | H10 / G203-p30, each needs a swept channel |
-| — | Trunk on a dual carriageway | 535 m, 10 reaches | A defect of the INPUT alignment — the client's decision, not ours |
-| S3-3 | Existing works inlet invert unknown | — | Trunk laid to its own level, 319.94 m aOD, 8.78 m below ground at the works, published for confirmation |
-| S3-2 | `criteria.DN_SERIES` stops at DN1200, the trunk needs more | — | 1400/1700/1800/2000/2400 are what G203-p32 Tab 13, p35 Tab 15 and p30 Tab 12 print |
+## THE BIGGEST OPEN DEFECT — and it is not in the audit table
+
+**42.5 % of the network length (737.7 km) drains UPHILL.** 7,061 m of cumulative climb
+along the flow path against 10,177 m of descent. A reach carrying flow uphill buys its rise
+in depth at the minimum gradient for its whole length, then pays again giving the depth back.
+
+The diagnostic is the drop-structure count: **the design wants 2,449 vortex drop shafts
+where NAMA's built network has 37.** No levelling arithmetic fixes this. It is a **stage 4
+tree-orientation** problem and it is the next substantial job. Philosophy §4 now states the
+rule and requires the quantity to be reported.
+
+## The four audit failures, all real and all named
+
+| Check | What |
+|---|---|
+| H1 / R3 | 8 reaches run along a dual carriageway (0.36 km) |
+| H10 | 2,984 inlets below 90° — each needs a purpose-made chamber with a swept channel |
+| R4 | 295 reaches run ALONG a wadi; 11 cross one unscheduled; **1,170 cannot be decided** because the far bank lies outside the hazard grid |
+
+## Also open, not audited
+
+- **The 226 stations are located, not designed.** `Q_DUTY_LS = 0` on all of them, zero rising
+  mains published, `LAND_M2` a flat 100 m² constant. Nothing routes a rising main for a
+  station that is a gravity *terminal*.
+- **Two study-area boundaries are in use** — 439.8 km² (`MoHUP_DATA/Project_boundary.shp`)
+  and 531.4 km² (`Study area/Project Boundary.shp`). Eight figure modules normalise against
+  the smaller one; the pipeline scoped itself on the larger. **One must be chosen.**
+- **The trunk figures (FT01–FT11) draw stage 3's intermediate**, not the published trunk.
+- **The design review report's numbers are stale** — built before the last three fixes
+  (R4's probe, the measured crossing angle, DN_SERIES). Rebuild with
+  `python W11a/report/build_review.py`.
+- **OPEN-S2-2**: stage 2 publishes its own displaced copy of the trunk (669 corridors,
+  80.27 km, 58 pieces), which is why the weld must strip 5.8 km of shadow.
+
+## Waiting on a HUMAN — nothing else moves these
+
+**The engineer decides:**
+1. **72 trunk chambers sit in a class-5/6 wadi**, with ~500 m of the trunk running down it
+   near E450 050 / N2 569 400. It is the client's own drawn alignment and is an INPUT.
+2. **Which study boundary** is the project's.
+3. **Go / no-go on the stage-4 tree re-orientation.**
+
+**NWS must supply:**
+- **Full-coverage 50-year flood mapping.** 52 % of wadi samples fall outside the grid, so
+  every wadi statement is about the other half.
+- **The design tractive stress τ.** 91 % of self-cleansing rests on an assumed 1.0 Pa
+  (GAP-9); at 2.0 the required gradient rises **2.35×** and every depth changes.
+- **The existing works inlet invert.** The trunk is laid to its own 319.94 m aOD, 8.78 m
+  below ground, unconfirmed — at the deepest and most expensive end of the scheme.
+- **Confirmation of DN1400–2400** (their own tables print these sizes; extending the series
+  cleared 168 d/D failures).
+- Decision on the **236 plots whose only frontage is a dual carriageway**.
+
+## What was retracted today — do not re-quote these
+
+| Retracted | Truth |
+|---|---|
+| "W10 has 310 loops" | **Zero** at any tolerance a GIS would use. 311 appears only at a 2.5 m snap |
+| Infiltration 1,259 L/s | **14.5 L/s.** Summing per-reach values counts every upstream km once per downstream reach |
+| 1,051 chambers on wadi ground | **2,354** — the old figure predated stage 5 minting the chambers |
+| "30 % of load fails the 45 m rule" | The rule owns **8.59 %** |
+| `ANGLE_DEG = 90°` on 3,290 crossings | **Fabricated.** Measured: min 0.00°, 23 under 45° |
+| H1a cited G201-p86 for banning chambers | That is a **valve-chamber** clause on a force main. The authority is G203-p30 §4.4.1 / p33 |
+| H1a's 1.5 m cover as a guideline value | It is the **force-main** figure (G203-p52 §8.2.4). Adopted for gravity as OUR decision |
 
 ## Live — use these
 
