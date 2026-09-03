@@ -12,6 +12,7 @@ cannot see one reach anyway.
     python make_overview.py
 """
 import colorsys
+import math
 import os
 import sys
 import warnings
@@ -138,6 +139,85 @@ def unconnected_areas(r, plots):
     return gpd.GeoDataFrame(rows, crs=UTM), len(miss)
 
 
+
+def connections(r, trunk, nodes):
+    """Where each subnetwork discharges, which way the flow is going there, and how far it
+    still is from the main pipe.
+
+    The last part is the one worth seeing. A subnetwork whose outfall sits 800 m from the
+    trunk is not connected to it - it is a subnetwork with an unanswered question, and on a
+    drawing that reads exactly like one that IS connected unless the gap is drawn.
+    """
+    out = nodes[nodes.get("IS_OUTFALL", 0).astype(float) > 0].copy() \
+        if "IS_OUTFALL" in nodes.columns else \
+        nodes[nodes.get("NODE_KIND", "").astype(str) == "outfall"].copy()
+    if not len(out):
+        return gpd.GeoDataFrame(geometry=[], crs=UTM)
+
+    tline = trunk.geometry.union_all()
+    # the reach ARRIVING at each outfall gives the bearing - the direction flow is travelling
+    last = {}
+    for u, v, g in zip(r.US_NODE.astype(str), r.DS_NODE.astype(str), r.geometry):
+        last.setdefault(v, g)
+    qcol = "QPK_LS" if "QPK_LS" in r.columns else ("QADF_M3D" if "QADF_M3D" in r.columns else None)
+    qof = {}
+    if qcol is not None:
+        for v, q in zip(r.DS_NODE.astype(str), pd.to_numeric(r[qcol], errors="coerce")):
+            qof[v] = max(qof.get(v, 0.0), float(q or 0.0))
+    sub_of = dict(zip(r.DS_NODE.astype(str), r.get("SUBNET", pd.Series(dtype=object))))
+
+    rows = []
+    for _, nd in out.iterrows():
+        uid = str(nd.NODE_UID)
+        pt = nd.geometry
+        g = last.get(uid)
+        bearing = 0.0
+        if g is not None:
+            cs = list(g.coords)
+            if len(cs) >= 2:
+                (x0, y0), (x1, y1) = cs[-2][:2], cs[-1][:2]
+                bearing = math.atan2(y1 - y0, x1 - x0)
+        gap = float(pt.distance(tline))
+        rows.append(dict(NODE_UID=uid, SUBNET=str(sub_of.get(uid, "")),
+                         Q=round(qof.get(uid, 0.0), 1), BEARING=bearing,
+                         GAP_M=round(gap, 1), geometry=pt))
+    return gpd.GeoDataFrame(rows, crs=UTM)
+
+
+def arrowhead(x, y, bearing, size=28.0):
+    """Two short lines forming an open V pointing along `bearing`. Drawn as geometry rather
+    than a block so the DXF opens the same way in every CAD package."""
+    back = bearing + math.pi
+    a = (x + size * math.cos(back + 0.42), y + size * math.sin(back + 0.42))
+    b = (x + size * math.cos(back - 0.42), y + size * math.sin(back - 0.42))
+    return [[a, (x, y)], [(x, y), b]]
+
+
+def flow_arrows(r, every_m=600.0, size=22.0):
+    """One arrow every `every_m` along the bigger pipes, pointing the way the flow goes.
+
+    Only on main and sub-main tiers: an arrow on every lateral would be a grey smear at the
+    zoom anyone actually reads this at.
+    """
+    keep = r[r.get("TIER", pd.Series("", index=r.index)).astype(str)
+             .str.contains("main", case=False, na=False)] if "TIER" in r.columns else r
+    segs = []
+    run = 0.0
+    for g in keep.geometry:
+        parts = g.geoms if g.geom_type.startswith("Multi") else [g]
+        for part in parts:
+            cs = list(part.coords)
+            for i in range(len(cs) - 1):
+                (x0, y0), (x1, y1) = cs[i][:2], cs[i + 1][:2]
+                d = math.hypot(x1 - x0, y1 - y0)
+                run += d
+                if run >= every_m and d > 1.0:
+                    run = 0.0
+                    segs += arrowhead((x0 + x1) / 2, (y0 + y1) / 2,
+                                      math.atan2(y1 - y0, x1 - x0), size)
+    return segs
+
+
 def main():
     if not os.path.exists(EXPORT):
         raise SystemExit("no export yet: " + EXPORT)
@@ -163,8 +243,12 @@ def main():
     st["_UP"] = [upstream(str(x)) for x in
                  (st["ANCHOR_ND"] if "ANCHOR_ND" in st.columns else st["NODE_UID"])]
 
-    _kmz(sub, cols, trunk, st, rm, unserved)
-    _dxf(sub, cols, trunk, st, rm, unserved)
+    nodes = gpd.read_file(EXPORT, layer="nodes").to_crs(UTM)
+    conn = connections(r, trunk, nodes)
+    arrows = flow_arrows(r)
+
+    _kmz(sub, cols, trunk, st, rm, unserved, conn)
+    _dxf(sub, cols, trunk, st, rm, unserved, conn, arrows)
 
     q = pd.to_numeric(st.get("Q_DUTY_LS"), errors="coerce").fillna(0)
     print(f"{KMZ}\n{DXF}")
@@ -175,10 +259,17 @@ def main():
     print(f"  {len(rm):,} force mains, {rm.geometry.length.sum() / 1000:,.2f} km"
           if len(rm) else "  force mains: NONE published")
     print(f"  {len(unserved)} unconnected areas holding {n_miss:,} plots")
+    if len(conn):
+        gap = pd.to_numeric(conn.GAP_M, errors="coerce")
+        print(f"  {len(conn)} subnetwork outfalls; distance to the main pipe: "
+              f"median {gap.median():.0f} m, p90 {gap.quantile(0.9):,.0f} m, "
+              f"max {gap.max():,.0f} m")
+        print(f"     touching the main pipe (within 50 m): {int((gap <= 50).sum())} of {len(conn)}")
+    print(f"  {len(arrows) // 2} flow arrows")
     return 0
 
 
-def _kmz(sub, cols, trunk, st, rm, unserved):
+def _kmz(sub, cols, trunk, st, rm, unserved, conn=None):
     s4 = sub.to_crs(WGS); t4 = trunk.to_crs(WGS); p4 = st.to_crs(WGS)
     r4 = rm.to_crs(WGS) if len(rm) else rm
     u4 = unserved.to_crs(WGS) if len(unserved) else unserved
@@ -260,19 +351,41 @@ def _kmz(sub, cols, trunk, st, rm, unserved):
                      '</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark>')
         P.append('</Folder>')
 
+    if conn is not None and len(conn):
+        c4 = conn.to_crs(WGS)
+        P.append(f'<Style id="cx"><IconStyle><color>ffff9000</color><scale>1.1</scale>'
+                 f'<Icon><href>http://maps.google.com/mapfiles/kml/shapes/arrow.png</href>'
+                 f'</Icon><heading>0</heading></IconStyle></Style>')
+        P.append(f'<Folder><name>Subnetwork connections to the main pipe ({len(c4)})</name>'
+                 f'<open>1</open>')
+        for _, c in c4.iterrows():
+            hdg = (90.0 - math.degrees(c.BEARING)) % 360.0
+            gaptxt = (f' &#8212; NOT AT MAIN, {c.GAP_M:,.0f} m short'
+                      if c.GAP_M > 50 else '')
+            P.append(f'<Placemark><name>{escape(str(c.SUBNET))} &#183; {c.Q:.0f} L/s'
+                     f'{gaptxt}</name>'
+                     f'<Style><IconStyle><color>ffff9000</color><scale>1.1</scale>'
+                     f'<heading>{hdg:.0f}</heading><Icon><href>'
+                     f'http://maps.google.com/mapfiles/kml/shapes/arrow.png</href></Icon>'
+                     f'</IconStyle></Style>'
+                     f'<Point><coordinates>{c.geometry.x:.6f},{c.geometry.y:.6f},0'
+                     f'</coordinates></Point></Placemark>')
+        P.append('</Folder>')
+
     P.append('</Document></kml>')
     os.makedirs(os.path.dirname(KMZ), exist_ok=True)
     with zipfile.ZipFile(KMZ, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
         z.writestr("doc.kml", "\n".join(P))
 
 
-def _dxf(sub, cols, trunk, st, rm, unserved):
+def _dxf(sub, cols, trunk, st, rm, unserved, conn=None, arrows=None):
     """Minimal ASCII DXF - LWPOLYLINE and POINT on named layers. Written by hand rather than
     with a library so the file has exactly the layers asked for and nothing else."""
     out = ["0", "SECTION", "2", "TABLES", "0", "TABLE", "2", "LAYER"]
     layers = [(f"SUBNET_{i + 1:03d}", aci(c)) for i, c in enumerate(cols)]
     layers += [("MAIN_PIPE", 1), ("FORCE_MAIN", 30), ("PUMP_STATION", 2),
-               ("PUMP_REVIEW", 1), ("NOT_CONNECTED", 1)]
+               ("PUMP_REVIEW", 1), ("NOT_CONNECTED", 1),
+               ("CONNECTION", 5), ("CONNECTION_GAP", 6), ("FLOW_DIRECTION", 8)]
     for nm, c in layers:
         out += ["0", "LAYER", "2", nm, "70", "0", "62", str(c), "6", "CONTINUOUS"]
     out += ["0", "ENDTAB", "0", "ENDSEC", "0", "SECTION", "2", "ENTITIES"]
@@ -308,6 +421,31 @@ def _dxf(sub, cols, trunk, st, rm, unserved):
         c = row.geometry.centroid
         out.extend(["0", "TEXT", "8", "NOT_CONNECTED", "10", f"{c.x:.3f}", "20", f"{c.y:.3f}",
                     "40", "25.0", "1", f"{row.AREA_ID} {int(row.N_PLOT)} plots"])
+    # flow direction, on the bigger pipes only
+    for seg in (arrows or []):
+        poly(seg, "FLOW_DIRECTION")
+
+    # where each subnetwork discharges, and the gap to the main pipe if there is one
+    if conn is not None and len(conn):
+        for _, c in conn.iterrows():
+            x, y = c.geometry.x, c.geometry.y
+            # a circle marks the point ...
+            out.extend(["0", "CIRCLE", "8", "CONNECTION", "10", f"{x:.3f}", "20", f"{y:.3f}",
+                        "40", "18.0"])
+            # ... a big arrow says which way the flow leaves it ...
+            for seg in arrowhead(x, y, c.BEARING, 55.0):
+                poly(seg, "CONNECTION")
+            out.extend(["0", "TEXT", "8", "CONNECTION", "10", f"{x + 25:.3f}",
+                        "20", f"{y + 18:.3f}", "40", "16.0", "1",
+                        f"{c.SUBNET} -> MAIN  {c.Q:.0f} L/s"])
+            # ... and if it does not actually reach the main pipe, DRAW THE GAP. A subnetwork
+            # ending 800 m short reads exactly like a connected one unless the gap is on the
+            # drawing.
+            if c.GAP_M > 50:
+                out.extend(["0", "TEXT", "8", "CONNECTION_GAP", "10", f"{x + 25:.3f}",
+                            "20", f"{y - 12:.3f}", "40", "16.0", "1",
+                            f"NOT AT MAIN: {c.GAP_M:,.0f} m short"])
+
     out += ["0", "ENDSEC", "0", "EOF"]
     os.makedirs(os.path.dirname(DXF), exist_ok=True)
     with open(DXF, "w", encoding="ascii", errors="replace") as fh:
