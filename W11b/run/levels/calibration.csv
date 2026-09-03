@@ -1,24 +1,24 @@
 label,unit,as_built,band,design,verdict,basis
-median cover to crown,m,1.7245000000000028,1.337 .. 2.07425,2.3487005565625623,HIGH,MEASURED
-90th-percentile cover,m,4.38349999999999,2.8159 .. 4.47975,7.625509188499804,HIGH,MEASURED
+median cover to crown,m,1.7245000000000028,1.337 .. 2.07425,2.4529558578281865,HIGH,MEASURED
+90th-percentile cover,m,4.38349999999999,2.8159 .. 4.47975,8.136986210258005,HIGH,MEASURED
 deepest cover,m,8.193000000000008,<= 12,19.091851443453322,HIGH,GUIDELINE
-chambers per km,1/km,34.22743072176878,33.288 .. 36.7608,38.50607674923847,HIGH,MEASURED
-submain share of built length,%,16.607995700237836,10.8477 .. 17.1521,32.16967699224387,HIGH,MEASURED
-"share of vortex drops that sit at a junction, not on a straight run",%,100.0,>= 100,92.42424242424242,LOW,MEASURED
+chambers per km,1/km,34.22743072176878,33.288 .. 36.7608,38.216365703803845,HIGH,MEASURED
+submain share of built length,%,16.607995700237836,10.8477 .. 17.1521,32.122517802970165,HIGH,MEASURED
+"share of vortex drops that sit at a junction, not on a straight run",%,100.0,>= 100,85.29411764705883,LOW,MEASURED
 trunk share of built length,%,5.781088140508929,1.47596 .. 13.4491,0.0,LOW,MEASURED
 median laid gradient,mm/m,6.001305186687864,5.95732 .. 6.62643,5.0,LOW,MEASURED
-lateral share of built length,%,77.61091615925324,71.5709 .. 81.3719,67.83032300775614,LOW,MEASURED
-share of length whose GROUND rises in the direction of flow,%,34.09842231864316,<= 38.147,34.27612986259845,PASS,MEASURED
-backdrops per km (invert step 0.60-2.00 m),1/km,1.329023499291311,<= 1.70042,0.03111328878385683,PASS,MEASURED
-"vortex drop shafts per 1,000 chambers",1/1000,19.712306872669153,<= 21.0632,1.1593184612682241,PASS,MEASURED
+lateral share of built length,%,77.61091615925324,71.5709 .. 81.3719,67.87748219702983,LOW,MEASURED
+share of length whose GROUND rises in the direction of flow,%,34.09842231864316,<= 38.147,34.293024524800686,PASS,MEASURED
+backdrops per km (invert step 0.60-2.00 m),1/km,1.329023499291311,<= 1.70042,0.017453460535726332,PASS,MEASURED
+"vortex drop shafts per 1,000 chambers",1/1000,19.712306872669153,<= 21.0632,0.5972246618654488,PASS,MEASURED
 reaches laid against the flow (US invert below DS),count,0.0,<= 0,0.0,PASS,MEASURED
-vortex drop shafts per km (invert step > 2.00 m),1/km,0.5854032080211727,<= 0.605236,0.04464080564640328,PASS,MEASURED
-ground climb bought per km of sewer,m/km,4.060119325209994,<= 5.07515,2.658029561855154,PASS,MEASURED
+vortex drop shafts per km (invert step > 2.00 m),1/km,0.5854032080211727,<= 0.605236,0.022823756085180585,PASS,MEASURED
+ground climb bought per km of sewer,m/km,4.060119325209994,<= 5.07515,2.6626583510064763,PASS,MEASURED
 longest single reach between chambers,m,71.38055861162782,<= 100,31.02367057767504,PASS,GUIDELINE
-cumulative ground climb / cumulative ground descent along the flow path,-,0.4832893894308651,<= 0.647362,0.41483443970507816,PASS,MEASURED
+cumulative ground climb / cumulative ground descent along the flow path,-,0.4832893894308651,<= 0.647362,0.41620932356451196,PASS,MEASURED
 length below the guideline's OD 200 minimum for a lateral,%,61.47188974992173,<= 0,0.0,PASS,GUIDELINE
 length below the 1.30 m minimum cover,%,35.92689131006552,<= 0,0.0,PASS,GUIDELINE
-median chamber spacing,m,29.77281034423642,26.8467 .. 30.3002,27.18338399999999,PASS,MEASURED
+median chamber spacing,m,29.77281034423642,26.8467 .. 30.3002,27.182964,PASS,MEASURED
 "median laid gradient, OD200 (the trunk mains)",mm/m,5.18716057560968,-,5.0,INFO,MEASURED
-junction chambers per km,1/km,4.829766012468751,-,2.8130471315665337,INFO,MEASURED
+junction chambers per km,1/km,4.829766012468751,-,2.79523883349094,INFO,MEASURED
 design tractive stress,Pa,1.0,-,1.0,INFO,ASSUMPTION

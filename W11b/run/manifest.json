@@ -2,12 +2,12 @@
   "contract": "W11b-contract-1.0",
   "criteria": "w11b.criteria",
   "tau_pa": 1.0,
-  "written": "2026-09-03 14:19:40",
+  "written": "2026-09-03 15:41:15",
   "stages": [
     {
       "stage": "s6_levels",
       "order": 6,
-      "seconds": 290.48,
+      "seconds": 1790.94,
       "reads": [
         {
           "name": "chambers",
@@ -34,7 +34,7 @@
         {
           "name": "crossings",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b.gpkg",
-          "n": 527
+          "n": 511
         },
         {
           "name": "nodes",
@@ -44,57 +44,57 @@
         {
           "name": "reaches",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b.gpkg",
-          "n": 56227
+          "n": 56652
         },
         {
           "name": "pumped_links",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b_levels.gpkg",
-          "n": 508
+          "n": 83
         },
         {
           "name": "diagnostics",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b_levels.gpkg",
-          "n": 25
+          "n": 27
         },
         {
           "name": "kmz:depth",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b_levels_depth.kmz",
-          "n": 56227
+          "n": 56652
         },
         {
           "name": "kmz:diameter",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b_levels_diameter.kmz",
-          "n": 56227
+          "n": 56652
         },
         {
           "name": "kmz:drops",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b_levels_drops.kmz",
-          "n": 4199
+          "n": 4197
         },
         {
           "name": "LEVELS.md",
           "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\run\\levels\\LEVELS.md",
-          "n": 25
+          "n": 27
         }
       ],
       "metrics": {
         "held_peak_factor": 3.6213923,
-        "gravity network published": 1478.4679,
-        "chambers per km": 38.5061,
+        "gravity network published": 1489.6759,
+        "chambers per km": 38.2164,
         "ADWF levelled": 70405.4937,
         "largest peak flow on any gravity reach": 225.6302,
         "largest diameter": 900.0,
-        "cover, median (length-weighted)": 2.3611,
+        "cover, median (length-weighted)": 2.4647,
         "deepest excavation": 19.7784,
-        "VORTEX DROP SHAFTS": 73.0,
-        "vortex drop shafts per km": 0.0494,
-        "lifting stations the cap demands": 508.0,
-        "length draining against the ground": 26.3103,
-        "climb divided by descent": 0.4148,
+        "VORTEX DROP SHAFTS": 41.0,
+        "vortex drop shafts per km": 0.0275,
+        "lifting stations the cap demands": 83.0,
+        "length draining against the ground": 26.3314,
+        "climb divided by descent": 0.4162,
         "reaches below the 1.30 m minimum cover": 0.0,
         "reaches over the d/D limit": 0.0,
         "reaches over 3.0 m/s": 0.0,
-        "reaches laid at the 25 % publishing bound": 182.0,
+        "reaches laid at the 25 % publishing bound": 200.0,
         "chambers deepened for a cliff the pipe may not follow": 15.0
       },
       "notes": [

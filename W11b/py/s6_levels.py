@@ -48,11 +48,13 @@ Established 2026-09-02/03 against NAMA's own built pipes, and none of them is co
        is right 71 % of the time when it does.
     2  NAMA's own SURVEYED levels agree with the direction their pipes run 65 % of the time.
        The 0.5 m terrain scores no better than the 5 m.  THERE IS NO ACCURACY LEFT TO BUY.
-    3  61.8 % of THIS network's length - 921 km of the 1,491.9 km - lies on ground falling
-       more gently than 5.00 mm/m, the flattest gradient a DN200 may be laid at (G203-p29
-       Table 11).  There the pipe sinks whichever way it points.  MEASURED HERE, on the
+    3  61.69 % of THIS network's length - 912.1 km of the 1,478.5 km published - lies on
+       ground falling more gently than 5.00 mm/m, the flattest gradient a DN200 may be laid
+       at (G203-p29 Table 11).  There the pipe sinks whichever way it points, and the debt
+       it accrues is 7,267 m - 4.9 m for every kilometre of sewer.  MEASURED HERE, on the
        chamber graph, and it is the single fact that governs this stage: depth is bought by
-       flatness, not by direction.
+       flatness, not by direction, and 508 of the stations this design needs are bought by
+       it too.
     4  NAMA's built network drains uphill on 34.1 % of its length.  Context, not permission.
 
 So: THIS STAGE CANNOT FIX FLATNESS EITHER.  What it can do is spend the fall it has instead
@@ -990,10 +992,12 @@ def covers(net: Net, des: Design, crit: Criteria = CRIT) -> Tuple[np.ndarray, np
 # does instead is SPEND the fall along the run: lay the whole street at one steeper gradient
 # so the pipe ARRIVES at the level its junction needs.
 #
-# Measured on this network, that single move takes the vortex-shaft count from 1,573 to 167.
-# It costs nothing in depth at the junction - the junction invert does not move - and it
-# costs nothing upstream either, because the head stays at minimum cover.  The only thing it
-# changes is where between the two ends the fall is spent.
+# MEASURED ON THIS NETWORK, 2026-09-03, pass 1 against pass 1 + pass 2 with no stations in
+# either: the vortex-shaft count falls from 1,781 to 196 - 1.194/km to 0.131/km against
+# NAMA's built 0.585/km - and the backdrops from 1,101 to 25, by spending 17,127 m of fall
+# that pass 1 threw away.  It costs nothing in depth at the junction, because the junction
+# invert does not move; and nothing upstream, because the head stays at minimum cover.  The
+# only thing it changes is WHERE between the two ends the fall is spent.
 #
 # TWO ARMS, and the philosophy chooses between them per run:
 #   UNIFORM  one gradient for the whole run (P1, the preferred answer).  Deeper in the
@@ -1094,7 +1098,6 @@ def relay(net: Net, des: Design, qpk: np.ndarray, crit: Criteria = CRIT) -> Dict
             continue
         hi = [_hi_bound(int(des.dn[chain[t]]), float(qpk[chain[t]]) / 1000.0, crit)
               for t in range(m)]
-        lo = [float(des.smin[chain[t]]) for t in range(m)]
 
         # ---- arm UNIFORM (P1): one gradient, landing exactly on the junction invert -----
         adopted = None
@@ -1356,6 +1359,58 @@ def solve(net: Net, qpk: np.ndarray, crit: Criteria = CRIT, max_passes: int = 25
         sites_df = sdf if sites_df.empty else pd.concat([sites_df, sdf], ignore_index=True)
         station[np.asarray(sites, dtype=np.int64)] = True
     assert des is not None
+
+    # ---- PRUNE: take out every station the design no longer needs -------------------
+    #
+    # The loop above only ever ADDS. W8 cleared its pump flags at the top of every pass and
+    # left a comment saying exactly why: "a pump placed in an earlier pass may not be needed
+    # once diameters change, and a stale flag would double-count stations". W11b had no
+    # equivalent, so a station placed on pass 1 - before enforce_crowns, set_drops and relay
+    # have recovered any fall - survived even when the ground turned out to have enough fall
+    # all along.
+    #
+    # Measured in the W8 test area, where W8 needs none: three stations were published. One
+    # had 23.1 m of ground fall against 19.5 m of need and a deepest pipe of 3.92 m against
+    # the 12 m cap. Two had nothing draining into them.
+    #
+    # Cheapest first: try removing ALL of them. If the design still has no un-excused breach,
+    # none was needed. Otherwise fall back to dropping them one at a time, biggest doubt
+    # first, keeping only those whose removal actually reintroduces a breach.
+    def _breaches(st_mask):
+        d = pass1(net, qpk, st_mask, crit)
+        enforce_crowns(net, d)
+        set_drops(net, d)
+        relay(net, d, qpk, crit)
+        set_drops(net, d)
+        cd, _cs = covers(net, d, crit)
+        tk, _ds = cap_exits(net, d, cd, crit)
+        return int(((cd > crit.MAX_COVER) & (tk == "")).sum()), d
+
+    n_before = int(station.sum())
+    pruned = 0
+    if n_before:
+        none_at_all = np.zeros(net.n, dtype=bool)
+        n_bad, d_try = _breaches(none_at_all)
+        if n_bad == 0:
+            if verbose:
+                _log(f"prune: NONE of the {n_before} stations is needed - the design has no "
+                     f"un-excused breach without them")
+            station, des, pruned = none_at_all, d_try, n_before
+        else:
+            # one at a time, and a station only stays if taking it out brings a breach back
+            order = list(np.where(station)[0])
+            for i in order:
+                trial = station.copy()
+                trial[i] = False
+                n_bad, d_try = _breaches(trial)
+                if n_bad == 0:
+                    station, des, pruned = trial, d_try, pruned + 1
+            if verbose and pruned:
+                _log(f"prune: {pruned} of {n_before} stations removed - not needed once the "
+                     f"crowns, drops and relayed runs had settled")
+    des.notes["stations_pruned"] = pruned
+    des.notes["stations_before_prune"] = n_before
+
     des.passes = len(trace)
     des.station = station
     return des, pd.DataFrame(trace), sites_df
@@ -1636,6 +1691,20 @@ def build_crossings(net: Net, des: Design, on_dual: np.ndarray, live: np.ndarray
 # built so that the validation is a formality and not a negotiation.
 # ======================================================================================
 
+def _smallest_that_carries(S: float, q: float, crit: Criteria = CRIT) -> int:
+    """The smallest size in the series that would carry q at the LAID gradient.
+
+    A reach is SIZED at pass 1's gradient and pass 2 may then lay it steeper to land on the
+    level its downstream chamber needs.  The size is NOT revisited, deliberately: re-sizing
+    a pipe because a level changed is sizing on a level, and G203-p29 prohibits the move in
+    the other direction for the same reason.  Keeping the pass-1 size is conservative.  This
+    publishes what it costs, so the choice is a number and not a claim."""
+    for dn in _SERIES:
+        if carries(dn, S, q, crit):
+            return dn
+    return _SERIES[-1]
+
+
 def build_layers(net: Net, des: Design, acc: Dict[str, np.ndarray], held_pf: float,
                  crit: Criteria = CRIT) -> Dict[str, object]:
     """Assemble `nodes`, `reaches` and `crossings`, plus every diagnostic table."""
@@ -1775,8 +1844,7 @@ def build_layers(net: Net, des: Design, acc: Dict[str, np.ndarray], held_pf: flo
         US_NODE=net.uid[ui], DS_NODE=net.uid[vi],
         TIER=tier_e.astype(str), DN=d.astype(int),
         MATERIAL=[crit.material(str(t), int(x)) for t, x in zip(tier_e, d)],
-        CONSTR=np.where(np.array([str(cross_id[int(k)]) for k in kk]) != "",
-                        "open_trench", "open_trench"),
+        CONSTR=np.where(on_dual[kk] > 0, "trenchless", "open_trench"),
         LEN_M=L, SLOPE_LAID=S * 100.0, SLOPE_MIN=des.smin[ui] * 100.0,
         GRAD_BY=np.array([str(grad_by[i]) for i in ui], dtype=object),
         SIZED_BY=np.array([str(des.sized_by[i]) for i in ui], dtype=object),
@@ -1827,6 +1895,8 @@ def build_layers(net: Net, des: Design, acc: Dict[str, np.ndarray], held_pf: flo
                            for x, qq in zip(d, q_e[kk])]) * 100.0,
         GND_SLOPE=net.egnd_fall[kk] / L * 1000.0,
         HELD_PF=acc["HELD"][ui].astype(int),
+        DN_NOW=np.array([_smallest_that_carries(float(ss), float(qq), crit)
+                         for ss, qq in zip(s_e[kk], q_e[kk])]),
     ))
     lev_node = pd.DataFrame(dict(
         NODE_UID=net.uid, COV_DEEP=cov_deep, COV_SHALLOW=cov_shallow,
@@ -2024,6 +2094,30 @@ def findings(layers: Dict[str, object], tables: Dict[str, pd.DataFrame],
                  "chosen to satisfy a validator."),
     ]
     return pd.DataFrame(rows)
+
+
+def headroom_table(reaches: gpd.GeoDataFrame, lev: pd.DataFrame) -> pd.DataFrame:
+    """How many reaches carry a pipe larger than the LAID gradient now needs, and by how
+    much.  It is a cost of keeping pass 1's size, and it is published as one."""
+    j = lev.set_index("EDGE_UID").DN_NOW
+    now = reaches.EDGE_UID.map(j).values
+    dn = reaches.DN.values
+    L = reaches.LEN_M.values
+    bigger = now < dn
+    steps = pd.Series([_SERIES.index(int(a)) - _SERIES.index(int(b))
+                       for a, b in zip(dn[bigger], now[bigger])]) if bigger.any()         else pd.Series(dtype=int)
+    return pd.DataFrame([
+        dict(QUANTITY="reaches whose laid gradient would carry the flow in a SMALLER pipe",
+             VALUE=float(bigger.sum()), UNIT="-"),
+        dict(QUANTITY="length of those reaches", VALUE=float(L[bigger].sum() / 1000.0),
+             UNIT="km"),
+        dict(QUANTITY="share of the network", VALUE=float(L[bigger].sum() / L.sum() * 100.0),
+             UNIT="%"),
+        dict(QUANTITY="worst case, size steps larger than needed",
+             VALUE=float(steps.max()) if len(steps) else 0.0, UNIT="-"),
+        dict(QUANTITY="reaches at the series minimum DN200, where there is no smaller size",
+             VALUE=float((dn == _SERIES[0]).sum()), UNIT="-"),
+    ])
 
 
 def trunk_note() -> pd.DataFrame:
@@ -2480,6 +2574,12 @@ def report(layers: Dict[str, object], tables: Dict[str, pd.DataFrame],
             "is not in this graph at all (see The trunk main).*", "",
             _md(tables["diameter"]), "",
             "## What set the size and the gradient", "", _md(tables["reasons"]), "",
+            "## Sizing headroom - what pass 2's steeper gradients would allow", "",
+            "> *A reach is SIZED at pass 1's gradient. Where pass 2 then lays it steeper to "
+            "land on its junction invert, the size is NOT revisited - re-sizing a pipe "
+            "because a level moved is sizing on a level, which is the prohibited move "
+            "(G203-p29) run backwards. This is what that costs.*", "",
+            _md(tables["headroom"]), "",
             "## Stations the cap demands", "", _md(tables["stations"]), "",
             "## Past the cap - every excursion an exit lets stand", "",
             "> *An exit is bounded by DEPTH as well as by distance, and is withdrawn when "
@@ -2505,6 +2605,8 @@ def report(layers: Dict[str, object], tables: Dict[str, pd.DataFrame],
             "sensitivity cannot be mixed into one published layer. Run `--sweep` to "
             "refresh. Blank means it has not been run since the last build.*", "",
             _md(tables.get("sweep", pd.DataFrame())), "",
+            "## Every guideline value this stage used, and where it came from", "",
+            _md(tables["guideline"]), "",
             "## Assumptions", "", _md(pd.DataFrame(ASSUMPTIONS)[["ID", "KIND", "WHAT"]]), "",
             "## Conflicts found between live documents", "",
             _md(pd.DataFrame(CONFLICTS)[["ID", "WHAT", "WHO"]]), ""]
@@ -2654,6 +2756,7 @@ def build(crit: Criteria = CRIT, publish_it: bool = True, verbose: bool = True) 
                                     for k, v in sorted(G.items())]),
             excursions=excursion_table(net, des, layers, crit),
             trunk=trunk_note(),
+            headroom=headroom_table(reaches, layers["levels_reaches"]),
         )
         tables["findings"] = findings(layers, tables, crit)
         sw = RUN_DIR / "sweep.csv"

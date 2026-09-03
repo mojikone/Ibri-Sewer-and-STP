@@ -68,13 +68,29 @@ def lines_of(geom):
             if p.geom_type == "LineString" and len(p.coords) > 1]
 
 
+PUMPS = os.path.join(W11B, "shp", "W11b_pumps.gpkg")
+HIER = os.path.join(W11B, "shp", "W11b_hier.gpkg")
+LEVELS = os.path.join(W11B, "shp", "W11b_levels.gpkg")
+
+
 def load():
+    """Geometry and subnetworks from the export; stations and mains from the STAGE that
+    designed them.
+
+    The export can lag - it is the last thing to run and it fails outright if the file is
+    open in QGIS - so the stations come straight from the pump stage, which is the only
+    place they carry a duty flow and a head.
+    """
     r = gpd.read_file(EXPORT, layer="reaches").to_crs(UTM)
-    trunk = gpd.read_file(EXPORT, layer="trunk").to_crs(UTM)
-    st = gpd.read_file(EXPORT, layer="stations").to_crs(UTM)
     try:
-        rm = gpd.read_file(EXPORT, layer="rising_mains").to_crs(UTM)
+        trunk = gpd.read_file(HIER, layer="trunk").to_crs(UTM)
     except Exception:
+        trunk = gpd.read_file(EXPORT, layer="trunk").to_crs(UTM)
+    try:
+        st = gpd.read_file(PUMPS, layer="stations").to_crs(UTM)
+        rm = gpd.read_file(PUMPS, layer="rising_mains").to_crs(UTM)
+    except Exception:
+        st = gpd.read_file(EXPORT, layer="stations").to_crs(UTM)
         rm = gpd.GeoDataFrame(geometry=[], crs=UTM)
     return r, trunk, st, rm
 

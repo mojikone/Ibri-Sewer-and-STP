@@ -1,13 +1,13 @@
 QUANTITY,VALUE,UNIT
-length on wadi ground (hazard class 4-6 of the 50-year grid),75.23628276879874,km
-share of the published network on wadi ground,5.088800419151189,%
-separate on-wadi contacts (one contiguous run = one contact),466.0,-
-contacts that CROSS - within the 25 deg skew tolerance of square,129.0,-
-length in those crossings,16.4574,km
-contacts that RUN ALONG the wadi - H1 forbids these outright,337.0,-
-length running ALONG a wadi,58.77891,km
+length on wadi ground (hazard class 4-6 of the 50-year grid),75.75653780479875,km
+share of the published network on wadi ground,5.085437472689672,%
+separate on-wadi contacts (one contiguous run = one contact),450.0,-
+contacts that CROSS - within the 25 deg skew tolerance of square,126.0,-
+length in those crossings,15.60781,km
+contacts that RUN ALONG the wadi - H1 forbids these outright,324.0,-
+length running ALONG a wadi,60.14875,km
 longest single run along a wadi,1618.4,m
 "chambers standing on wadi ground - H1a condition 2 forbids ANY. DISTINCT chambers, off the node layer; summing the per-contact counts double-counts a junction two contacts share",3365.0,-
-contacts meeting our own 1.50 m wadi cover (A-LEV-14),244.0,-
+contacts meeting our own 1.50 m wadi cover (A-LEV-14),256.0,-
 contacts passing ALL FOUR of H1a's conditions,0.0,-
 "third-party consent obtained on any of them (MoAFWR, G201-p85)",0.0,-

@@ -1,20 +1,20 @@
 {
   "stage": "s7_pumps",
   "version": "W11b-s7_pumps-1.0",
-  "source_of_stations": "SCREEN (s7 stand-in - NOT a design)",
-  "seconds": 3.9,
-  "n_stations": 85,
-  "n_mains": 85,
-  "n_refused": 27,
+  "source_of_stations": "levels stage (W11b.gpkg nodes)",
+  "seconds": 3.3,
+  "n_stations": 47,
+  "n_mains": 47,
+  "n_refused": 36,
   "gpkg": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b_pumps.gpkg",
   "blocking": [
     {
       "LAYER": "stations",
-      "DETAIL": "CONTRACT VIOLATION - layer 'stations', 85 rows, written by s7_pumps\nLifting stations, each one a node in the same graph. A station is a COMMISSIONING device as much as a depth device: in NAMA's own network one station plus one force main is what let 60.8 km and about 5,963 properties be commissioned without first building 7 km of deep gravity trunk. WHY records which rung of the cap-and-veto ladder put it here, because economics is the third rung and never the first.\n\nNULL in required field FLOOD_LV: 85 of 85 rows (rows 0, 1, 2, 3, 4 ...). the 1:50-yr flood level here\n\nWELL_M3 != 0.25 x Q x (3600/starts) on 1 stations (G203-p48 sec 7.8). The volume, the duty and the start rate are ONE equation; publishing them so they disagree means one of the three was never computed.\n\nFix this in the stage that WRITES the layer. Relaxing a field a check needs is not a fix; it converts a visible failure into an invisible one."
+      "DETAIL": "CONTRACT VIOLATION - layer 'stations', 47 rows, written by s7_pumps\nLifting stations, each one a node in the same graph. A station is a COMMISSIONING device as much as a depth device: in NAMA's own network one station plus one force main is what let 60.8 km and about 5,963 properties be commissioned without first building 7 km of deep gravity trunk. WHY records which rung of the cap-and-veto ladder put it here, because economics is the third rung and never the first.\n\nNULL in required field FLOOD_LV: 47 of 47 rows (rows 0, 1, 2, 3, 4 ...). the 1:50-yr flood level here\n\nWELL_M3 != 0.25 x Q x (3600/starts) on 1 stations (G203-p48 sec 7.8). The volume, the duty and the start rate are ONE equation; publishing them so they disagree means one of the three was never computed.\n\nFix this in the stage that WRITES the layer. Relaxing a field a check needs is not a fix; it converts a visible failure into an invisible one."
     },
     {
       "LAYER": "rising_mains",
-      "DETAIL": "CONTRACT VIOLATION - layer 'rising_mains', 85 rows, written by s7_pumps\nPressure edges, kept OUT of `reaches` on purpose. A rising main is sized on PUMP DUTY and not on arriving flow, runs 0.75-2.5 m/s (G203-p50, not the gravity 3.0), and is anaerobic by definition - so its discharge chamber is a septicity problem, not a pipe end. Same node identity, same graph.\n\n85 rising mains fall below 0.75 m/s at the DESIGN MINIMUM flow (G203-p50 sec 8.1, with the p40 Table 16 factors). That is where the floor is held, not at duty - sizing on duty alone silts the main in year one.\n\nFix this in the stage that WRITES the layer. Relaxing a field a check needs is not a fix; it converts a visible failure into an invisible one."
+      "DETAIL": "CONTRACT VIOLATION - layer 'rising_mains', 47 rows, written by s7_pumps\nPressure edges, kept OUT of `reaches` on purpose. A rising main is sized on PUMP DUTY and not on arriving flow, runs 0.75-2.5 m/s (G203-p50, not the gravity 3.0), and is anaerobic by definition - so its discharge chamber is a septicity problem, not a pipe end. Same node identity, same graph.\n\n47 rising mains fall below 0.75 m/s at the DESIGN MINIMUM flow (G203-p50 sec 8.1, with the p40 Table 16 factors). That is where the floor is held, not at duty - sizing on duty alone silts the main in year one.\n\nFix this in the stage that WRITES the layer. Relaxing a field a check needs is not a fix; it converts a visible failure into an invisible one."
     }
   ]
 }

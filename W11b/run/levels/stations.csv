@@ -1,14 +1,14 @@
 QUANTITY,VALUE,UNIT
-stations demanded by the 12 m cap,508.0,-
-"duty (peak) flow, minimum",0.031524578055768526,L/s
-"duty (peak) flow, median",0.7322767110662693,L/s
-"duty (peak) flow, maximum",139.2003321013455,L/s
-total peak flow lifted,2456.421134299534,L/s
-"properties upstream of a station, counted ONCE per station - stations nest, so this SUMS TO MORE than the network's 93,320 and is not a count of properties served by pumping",101830.878,-
-deepest station chamber,12.593208759109416,m
-gravity reaches withdrawn to the rising main,508.0,-
-length withdrawn,13.480534682000002,km
-"static lift to the discharge chamber, median",0.7024970637968408,m
+stations demanded by the 12 m cap,83.0,-
+"duty (peak) flow, minimum",0.0494144531045323,L/s
+"duty (peak) flow, median",6.172097531720915,L/s
+"duty (peak) flow, maximum",111.49692006599668,L/s
+total peak flow lifted,1275.0931228433371,L/s
+"properties upstream of a station, counted ONCE per station - stations nest, so this SUMS TO MORE than the network's 93,320 and is not a count of properties served by pumping",55438.996000000014,-
+deepest station chamber,19.485807112734335,m
+gravity reaches withdrawn to the rising main,83.0,-
+length withdrawn,2.2725486560000006,km
+"static lift to the discharge chamber, median",10.83653136509389,m
 "static lift, maximum",21.91080735040606,m
 stations sited inside a contiguous UPHILL stretch - the ideal site is the FOOT of the climb and moving it there is a layout change (A-LEV-12),193.0,-
 "climb those stations sit on, total",270.21319580078125,m

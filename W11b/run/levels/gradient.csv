@@ -1,7 +1,7 @@
 QUANTITY,VALUE,UNIT,BUILT,BAND
 "laid gradient, median (length-weighted)",5.0,mm/m,6.0,5.96 - 6.63  MEASURED
-"laid gradient, mean",13.68857488395255,mm/m,8.89,-
-"laid gradient, length-weighted mean",13.384544898495394,mm/m,8.69,-
+"laid gradient, mean",14.043952552425333,mm/m,8.89,-
+"laid gradient, length-weighted mean",13.741689801388736,mm/m,8.69,-
 "laid gradient, DN200 median",5.0,mm/m,5.19,info
 steepest laid gradient,250.0,mm/m,160.9,-
 reaches laid against the flow (reverse gradient),0.0,-,0.0,0  G203-p29 4.3.1
