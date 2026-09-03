@@ -1,0 +1,289 @@
+{
+ "version": "w11b-present-1.0",
+ "built": "2026-09-03 04:25:34",
+ "banner": "tau = 1.0 Pa ASSUMED (A1; at 2.0 Pa gradients x2.35)  |  DN>1200 per G203-p32 T13 (A4)  |  72 trunk chambers in a class 5/6 wadi: risk ACCEPTED (A5)",
+ "kmz": [
+  {
+   "view": "constraint",
+   "file": "W11a_OLD_constraint.kmz",
+   "question": "Show me only the breaches, ranked, with everything compliant greyed out.",
+   "features": 49377,
+   "folders": 6,
+   "labels": 0,
+   "flags": [
+    "BREACH, DOD_UTIL, SPACE_UTIL was derived in this library earlier in this run, not published by a stage"
+   ],
+   "stats": {
+    "features": 49377,
+    "length_km": 1731.71
+   }
+  },
+  {
+   "view": "tier",
+   "file": "W11a_OLD_tier.kmz",
+   "question": "Is this a hierarchy, or a flat mat of pipe? How many things touch the trunk?",
+   "features": 49377,
+   "folders": 5,
+   "labels": 8565,
+   "flags": [],
+   "stats": {
+    "features": 49377,
+    "length_km": 1731.71
+   }
+  },
+  {
+   "view": "ground_fall",
+   "file": "W11a_OLD_ground_fall.kmz",
+   "question": "THE W11b QUESTION. How much of this network carries flow UPHILL?",
+   "features": 49377,
+   "folders": 1,
+   "labels": 0,
+   "flags": [
+    "GRD_SLOPE, GRD_FALL_M was derived in this library earlier in this run, not published by a stage"
+   ],
+   "stats": {
+    "features": 49377,
+    "length_km": 1731.71,
+    "length_km_measured": 1731.71,
+    "length_km_uphill": 767.62,
+    "pct_length_uphill": 44.3,
+    "cumulative_climb_m": 7337.0,
+    "cumulative_descent_m": 9826.0,
+    "w11a_pct_length_uphill": 42.5
+   }
+  },
+  {
+   "view": "depth",
+   "file": "W11a_OLD_depth.kmz",
+   "question": "Where does this design get expensive, and where does it pass the 12 m cap?",
+   "features": 49377,
+   "folders": 1,
+   "labels": 0,
+   "flags": [],
+   "stats": {
+    "features": 49377,
+    "length_km": 1731.71
+   }
+  },
+  {
+   "view": "subnet",
+   "file": "W11a_OLD_subnet.kmz",
+   "question": "How many separate systems is this really, and does each end at one outfall?",
+   "features": 49377,
+   "folders": 247,
+   "labels": 0,
+   "flags": [
+    "SUBNET was derived in this library earlier in this run, not published by a stage"
+   ],
+   "stats": {
+    "features": 49377,
+    "length_km": 1731.71,
+    "components": 247
+   }
+  },
+  {
+   "view": "diameter",
+   "file": "W11a_OLD_diameter.kmz",
+   "question": "Where are the big pipes, and how much of the scheme depends on DN above 1200?",
+   "features": 49377,
+   "folders": 13,
+   "labels": 0,
+   "flags": [],
+   "stats": {
+    "features": 49377,
+    "length_km": 1731.71
+   }
+  },
+  {
+   "view": "flow",
+   "file": "W11a_OLD_flow.kmz",
+   "question": "Does the flow grow the way a tree should \u2014 small at the tips, large at the trunk?",
+   "features": 49377,
+   "folders": 1,
+   "labels": 0,
+   "flags": [],
+   "stats": {
+    "features": 49377,
+    "length_km": 1731.71
+   }
+  },
+  {
+   "view": "velocity",
+   "file": "W11a_OLD_velocity.kmz",
+   "question": "Which pipes will silt up? Not the same question as: which pipes are legal?",
+   "features": 49377,
+   "folders": 1,
+   "labels": 0,
+   "flags": [],
+   "stats": {
+    "features": 49377,
+    "length_km": 1731.71
+   }
+  },
+  {
+   "view": "capacity",
+   "file": "W11a_OLD_capacity.kmz",
+   "question": "What is surcharged, or close to it?",
+   "features": 49377,
+   "folders": 1,
+   "labels": 0,
+   "flags": [
+    "DOD_UTIL, DOD_LIMIT was derived in this library earlier in this run, not published by a stage"
+   ],
+   "stats": {
+    "features": 49377,
+    "length_km": 1731.71
+   }
+  },
+  {
+   "view": "package",
+   "file": "W11a_OLD_package.kmz",
+   "question": "What does one contract actually contain, and can it be commissioned alone?",
+   "features": 49377,
+   "folders": 2,
+   "labels": 0,
+   "flags": [],
+   "stats": {
+    "features": 49377,
+    "length_km": 1731.71
+   }
+  },
+  {
+   "view": "phase",
+   "file": "W11a_OLD_phase.kmz",
+   "question": "What gets built first?",
+   "features": 49377,
+   "folders": 2,
+   "labels": 0,
+   "flags": [],
+   "stats": {
+    "features": 49377,
+    "length_km": 1731.71
+   }
+  },
+  {
+   "view": "material",
+   "file": "W11a_OLD_material.kmz",
+   "question": "Is the material consistent with the diameter and the laying method?",
+   "features": 49377,
+   "folders": 3,
+   "labels": 0,
+   "flags": [],
+   "stats": {
+    "features": 49377,
+    "length_km": 1731.71
+   }
+  },
+  {
+   "view": "drops",
+   "file": "W11a_OLD_drops.kmz",
+   "question": "How many vortex drop shafts does this layout demand? NAMA built 37.",
+   "features": 49624,
+   "folders": 4,
+   "labels": 2449,
+   "flags": [
+    "DROP_BAND was derived in this library earlier in this run, not published by a stage"
+   ],
+   "stats": {
+    "features": 49624,
+    "vortex_shafts": 2449,
+    "backdrops": 1617,
+    "nama_built_vortex_shafts": 37
+   }
+  },
+  {
+   "view": "chambers",
+   "file": "W11a_OLD_chambers.kmz",
+   "question": "Where are the deep chambers, and are they clustered or scattered?",
+   "features": 49624,
+   "folders": 2,
+   "labels": 6000,
+   "flags": [],
+   "stats": {
+    "features": 49624
+   }
+  },
+  {
+   "view": "stations",
+   "file": "W11a_OLD_stations.kmz",
+   "question": "How many stations, how big, and how hard are they working?",
+   "features": 98,
+   "folders": 2,
+   "labels": 98,
+   "flags": [
+    "ST_BAND, LAND_MIN_M2 was derived in this library earlier in this run, not published by a stage",
+    "'Q_DUTY_LS' carries no usable value and no fallback is available: every icon is the same size. Read nothing into their size until it is populated."
+   ],
+   "stats": {
+    "features": 98
+   }
+  },
+  {
+   "view": "packages_area",
+   "file": "W11a_OLD_packages_area.kmz",
+   "question": "What ground does each contract cover, and do the areas nest sensibly?",
+   "features": 502,
+   "folders": 3,
+   "labels": 502,
+   "flags": [],
+   "stats": {
+    "features": 502
+   }
+  },
+  {
+   "view": "servicing",
+   "file": "W11a_OLD_servicing.kmz",
+   "question": "Which settlements get a network, which get a satellite works, which get nothing?",
+   "features": 187,
+   "folders": 4,
+   "labels": 187,
+   "flags": [],
+   "stats": {
+    "features": 187
+   }
+  }
+ ],
+ "skipped": [
+  {
+   "view": "rising_mains",
+   "why": "the 'rising_mains' layer is empty (0 features)"
+  }
+ ],
+ "materialised": {
+  "reaches": "D:/Mojtaba/Renardet/2621 Ibri Sewer STP/Hydraulic/Claude/W11b/run/present_selftest/W11a_OLD_present.gpkg|reaches   (added by present.py: DOD_LIMIT, DOD_UTIL, MH_SPACE_MAX, SPACE_UTIL, BREACH, GRD_FALL_M, GRD_SLOPE, SUBNET)",
+  "nodes": "D:/Mojtaba/Renardet/2621 Ibri Sewer STP/Hydraulic/Claude/W11b/run/present_selftest/W11a_OLD_present.gpkg|nodes   (added by present.py: DROP_BAND)",
+  "stations": "D:/Mojtaba/Renardet/2621 Ibri Sewer STP/Hydraulic/Claude/W11b/run/present_selftest/W11a_OLD_present.gpkg|stations   (added by present.py: ST_BAND, LAND_MIN_M2)"
+ },
+ "assumptions": {
+  "A1": {
+   "headline": "tau = 1.0 Pa  (ASSUMED \u2014 G203 gives no numeric design tau)",
+   "detail": "G203-p27 4.2.2.1 gives Smin = K.tau^1.23.Q^-0.461 and no design value for tau. 1.0 Pa is the engineer's decision of 2026-09-03 and is GAP-9 with NWS.",
+   "consequence": "At tau = 2.0 Pa the required gradient rises by 2^1.23 = 2.346x. Every depth, every drop and every station count on these maps would change. 1.0 Pa is the SHALLOWER, cheaper end."
+  },
+  "A2": {
+   "headline": "'Wadi ground' = flood-hazard classes 4, 5, 6 of the 50-year grid",
+   "detail": "G203-p30 4.4.1 and p33 prohibit pipes and chambers in wadis and washout areas but define neither. The AR&R hazard classes stand in for the guideline's washout/scour criterion. A project assumption, recorded beside GAP-9.",
+   "consequence": "A scour-depth check would replace it. Until then, 'in a wadi' on these maps means 'in hazard class 4-6', not 'the guideline says so'."
+  },
+  "A3": {
+   "headline": "Flood no-data is DRY HIGH GROUND, not 'untested'",
+   "detail": "Engineer's decision 2026-09-03. The hazard grids cover part of the area; outside them the ground is treated as dry. Flow runs in the wadis.",
+   "consequence": "Reverses W11a, where 1,170 reaches were 'undecidable'. On these maps a reach outside the grid draws as clear, not as unknown."
+  },
+  "A4": {
+   "headline": "DN above 1200 uses the sizes the guideline tabulates",
+   "detail": "DN1400, 1700, 1800, 2000 and 2400 appear in the service-corridor width table, G203-p32 Tab 13 / p35 Tab 15. That table is the authority for the series; it is not a hydraulic endorsement of any of those sizes.",
+   "consequence": "Flagged on every diameter view. Awaiting written NWS confirmation of DN1400-2400."
+  },
+  "A5": {
+   "headline": "72 trunk chambers in a class 5/6 wadi: risk ACCEPTED",
+   "detail": "The trunk alignment is the client's own drawing and an INPUT, never re-routed. Engineer's decision 2026-09-03.",
+   "consequence": "Drawn, not hidden. The constraint view puts them in their own folder so the accepted risk is visible rather than filtered away."
+  },
+  "A6": {
+   "headline": "Map band edges that are not guideline values are marked with a degree sign",
+   "detail": "intermediate band edges chosen so the colour ramp separates evenly across the observed range; they carry no engineering meaning. The OUTER edges of every band set below are guideline values and are cited.",
+   "consequence": "A band edge without a page reference is a drawing choice. Do not quote one as a design criterion."
+  }
+ }
+}

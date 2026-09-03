@@ -1,0 +1,16 @@
+ITEM,VALUE,UNIT,WHAT,BENCHMARK,SOURCE
+TOP_PIPE_PCT,13.42,%,share of the PLACED load carried by the single biggest pipe,61.17,s5_flows health check; benchmark = the same accumulator over NAMA's built network
+TOP_PIPE_M3D,10024.9,m3/d,"that pipe is E0006194 (N005120->N005087), subnet S001",45693.9,"arcs.QADF_M3D. The benchmark's ABSOLUTE m3/d is not comparable - the nearest-pipe rule has no cap, so the built 95.4 km receives the whole study area's load. Its SHARE is what compares, and share is what this check measures"
+DELIVERED_PCT,98.98,%,share of the placed load that reaches an outfall at all,,conservation: delivered / placed
+LOST_M3D,762.6,m3/d,"load on pieces that drain nowhere - H15 forbids these, they are NOT dropped silently",,arcs where DELIVERED = 0
+N_OUTFALL,193.0,-,"separate discharge points. Each is a connection to the client's Main Pipe, which is an INPUT and is NOT in this graph",3,"nodes.KIND == 'outfall', written by s2_orient"
+BIGGEST_OUTFALL_PCT,13.42,%,share of the placed load arriving at the largest single outfall,,in_q at outfalls / placed
+TOP10_OUTFALL_PCT,63.24,%,the ten largest outfalls together,,in_q at outfalls / placed
+OUTFALL_HHI,0.0579,-,Herfindahl concentration of load over outfalls. 1.00 = one works; 1/N = perfectly split,,sum of squared outfall shares
+TRUNK_IF_JOINED_PCT,98.98,%,"what the client's Main Pipe would carry below the last connection, IF every outfall discharges into it. A STATED HYPOTHETICAL - the Main Pipe is not in this graph and this stage has not routed it",,"hypothetical, tagged"
+EMPTY_OUTFALL,16.0,-,outfalls with NOTHING draining to them - a connection to the client's Main Pipe that serves nobody. Not this stage's to fix: the flow arithmetic is what exposes them and the resolution is s2's,,in_q at outfalls == 0
+TRUNK_IF_JOINED_LS,1362.2,L/s,"and the PEAK flow that trunk would carry - Merrimack on the whole delivered load plus the system infiltration. A STATED HYPOTHETICAL, on the same footing as TRUNK_IF_JOINED_PCT: it is the number a trunk-sizing stage would start from, not a number this stage has designed",,G201-p71 7.4.2 on the delivered total
+MAX_PIPE_LS,234.65,L/s,"the largest PEAK flow any gravity pipe in this design carries. This is the number the sizing stage starts from, and it is small: nothing here needs a large-diameter sewer",,arcs.QPK_MONO
+ZERO_FLOW_KM,139.5,km,"989 reaches have NOTHING draining through them - no load of their own and none from above. Pruning candidates for the hierarchy stage (philosophy sec 4, 'no fingers'), not a defect of this one",,arcs.QADF_M3D <= 0
+INFIL_SYSTEM_LS,14.905,L/s,system infiltration = 720 L/d/km x delivered network length,,G201-p72 7.4.3
+INFIL_IF_SUMMED_LS,421.3,L/s,"THE WRONG ANSWER, printed on purpose: the same column summed over every reach instead of over the outfalls",,"the W11a defect, reproduced so it cannot recur unnoticed"

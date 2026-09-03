@@ -1,0 +1,25 @@
+{
+  "stage": "W11b-s6_levels-1.0",
+  "contract": "W11b-contract-1.0",
+  "tau_pa": 1.0,
+  "seconds": 290.5,
+  "headline": {
+    "gravity network published": 1478.4679408069248,
+    "chambers per km": 38.50607674923847,
+    "ADWF levelled": 70405.49373090705,
+    "largest peak flow on any gravity reach": 225.63020735829343,
+    "largest diameter": 900.0,
+    "cover, median (length-weighted)": 2.361056050000002,
+    "deepest excavation": 19.77843962712518,
+    "VORTEX DROP SHAFTS": 73.0,
+    "vortex drop shafts per km": 0.049375436548294536,
+    "lifting stations the cap demands": 508.0,
+    "length draining against the ground": 26.3102728915828,
+    "climb divided by descent": 0.41483443970507816,
+    "reaches below the 1.30 m minimum cover": 0.0,
+    "reaches over the d/D limit": 0.0,
+    "reaches over 3.0 m/s": 0.0,
+    "reaches laid at the 25 % publishing bound": 182.0,
+    "chambers deepened for a cliff the pipe may not follow": 15.0
+  }
+}

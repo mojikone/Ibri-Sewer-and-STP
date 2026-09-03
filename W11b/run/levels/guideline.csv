@@ -1,0 +1,22 @@
+NAME,VALUE,UNIT,SOURCE
+BACKDROP_MAX,2.0,m,"G203-p30, vortex drop shaft beyond 2 m"
+DN_MIN,200.0,mm,"G203-p22 Table 6, Lateral Sewer row"
+DOD_LARGE,0.5,-,"G203-p27 Table 10, above DN350"
+DOD_SMALL,0.65,-,"G203-p27 Table 10, up to DN350"
+DROP_CEILING,20.0,m,PROJECT ASSUMPTION - G203 gives no maximum
+DROP_TRIGGER,0.6,m,"G203-p30, backdrop above 600 mm"
+INFILT,720.0,L/d/km,G201-p72 7.4.3
+LAY_TOLERANCE,20.0,mm,G203-p29 4.3.1
+MAX_COVER,12.0,m,"G203-p33, read as a cap (philosophy sec 5)"
+MH_SPACING_200,100.0,m,G203-p30 Table 12
+MIN_COVER,1.3,m,G203-p33 4.6.3
+MIN_COVER_WADI,1.5,m,"G203-p52 8.2.4, PROJECT decision for gravity"
+PF_HOLD_N,100.0,properties,G201-p71 7.4.2
+SKEW_TOL,25.0,deg,PROJECT ASSUMPTION on H1's 'perpendicular'
+SLOPE_STEP,0.05,%,"PROJECT rule 2026-08-23, round gradients"
+SMIN_DN200,5.0,mm/m,G203-p29 Table 11
+SMIN_FLOOR,0.75,mm/m,"G203-p29 Table 11, '900 and above'"
+TAU_PA,1.0,Pa,"ENGINEER 2026-09-03, GAP-9 - NOT a guideline value"
+TRACTIVE_K,0.000233,-,"G203-p27 4.2.2.1, Q in m3/s"
+V_MAX,3.0,m/s,G203-p27 4.2.2.2
+V_SELF_CLEANSING,0.75,m/s,G203-p26

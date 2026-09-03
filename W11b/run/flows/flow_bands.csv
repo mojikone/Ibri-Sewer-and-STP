@@ -1,0 +1,11 @@
+BAND_LS,N,KM,PCT_KM,NOTE
+0 - 1,7669,1087.9,59.79,"presentation bands only - the diameter follows the flow and the gradient (G203-p29, H8), never a band"
+1 - 2,1479,244.59,13.44,"presentation bands only - the diameter follows the flow and the gradient (G203-p29, H8), never a band"
+2 - 5,1536,206.17,11.33,"presentation bands only - the diameter follows the flow and the gradient (G203-p29, H8), never a band"
+5 - 10,843,116.55,6.41,"presentation bands only - the diameter follows the flow and the gradient (G203-p29, H8), never a band"
+10 - 25,633,80.1,4.4,"presentation bands only - the diameter follows the flow and the gradient (G203-p29, H8), never a band"
+25 - 50,324,42.78,2.35,"presentation bands only - the diameter follows the flow and the gradient (G203-p29, H8), never a band"
+50 - 100,233,30.96,1.7,"presentation bands only - the diameter follows the flow and the gradient (G203-p29, H8), never a band"
+100 - 250,99,10.4,0.57,"presentation bands only - the diameter follows the flow and the gradient (G203-p29, H8), never a band"
+250 - 500,0,0.0,0.0,"presentation bands only - the diameter follows the flow and the gradient (G203-p29, H8), never a band"
+500 and above,0,0.0,0.0,"presentation bands only - the diameter follows the flow and the gradient (G203-p29, H8), never a band"

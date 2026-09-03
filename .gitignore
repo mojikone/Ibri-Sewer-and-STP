@@ -29,3 +29,24 @@ W10/shp/W10_plot_loads.cpg
 W11a/dxf/
 W11a/sewergems/
 W11a/img/
+
+# Terrain intermediates: raw numpy arrays of the filled DEM, flow accumulation and basin
+# ids - 2.8 GB in a single file. They regenerate from terrain.py in minutes, and a 1.4 GB
+# blob in git history is permanent even after deletion. The derived VECTORS (streams,
+# basins, catchments) ARE committed - those are the answers, these are the workings.
+W11b/run/terrain/*.npy
+W11b/run/terrain/*.tif
+
+# W11b design outputs. One reach layer alone is 104 MB, past GitHub's 100 MB HARD limit, so
+# a push carrying it can never succeed. Every one of these regenerates from W11b/py in
+# minutes. What IS committed is what someone reading remotely actually needs: the code, the
+# docs, the CSV schedules and the KMZ - which is 0.7 MB and is the thing you open to judge
+# the design.
+W11b/shp/*.gpkg
+W11b/shp/*.dbf
+W11b/shp/*.shp
+W11b/shp/*.shx
+W11b/shp/*.prj
+W11b/shp/*.cpg
+W11b/run/**/*.gpkg
+W11b/run/terrain/

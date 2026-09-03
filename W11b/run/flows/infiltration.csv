@@ -1,0 +1,10 @@
+ITEM,VALUE,UNIT,SOURCE,NOTE
+rate,720.0,L/d/km,"G201-p72 7.4.3, new networks",'Infiltration due to storm water is not considered' - same clause
+"network length, delivered",1788.57,km,"accumulated, checked against the arc lengths",arcs that reach an outfall
+"network length, published",1819.446,km,sum of arcs.LEN_M,includes the pieces that drain nowhere
+SYSTEM INFILTRATION,14.9048,L/s,THE definition: rate x network length,"one function, contract.published('infiltration_system_ls')"
+"system infiltration, published length",15.162,L/s,rate x published length,the upper bound if every piece is built
+SUM of the per-reach cumulative column,421.3,L/s,arcs.QINF_LS summed - THE WRONG ANSWER,printed on purpose
+overstatement factor,28.3,x,wrong / right on THIS network,"W11a shipped 1,259 L/s against 14.5 - 87x - the same mistake"
+sum of the per-reach LOCAL column,14.9048,L/s,arcs.QINF_LOC summed over delivered arcs,"THIS one is summable, and it lands on the definition"
+infiltration as a share of average dry weather flow,1.742,%,derived,"G201-p72 allows 10 % for an EXISTING inland network; a new one on this length is far below that, which is the point of the 720 L/d/km rule"

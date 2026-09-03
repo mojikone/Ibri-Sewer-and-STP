@@ -1,0 +1,11 @@
+CHECK,A,B,RESID,UNIT,TOL,PASS,NOTE
+plot load allocated == plot load available,74701.172409,74701.172409,0.0,m3/d,1e-06,1,"nearest arc, no cap (A-FLOW-4): nothing can fall outside a radius"
+properties allocated == properties available,98681.11,98681.11,0.0,-,1e-06,1,"same allocation, same basis - this is why the load is not read from s2"
+local load on arcs == plot load allocated,74701.172409,74701.172409,0.0,m3/d,1e-06,1,"the local column is the allocation, transposed onto arcs"
+delivered + undelivered == placed,74701.172409,74701.172409,0.0,m3/d,1e-06,1,load that reaches an outfall plus load that cannot; there is no third bucket
+delivered sewer length == length of arcs that reach an outfall,1788570.31775,1788570.31775,0.0,m,0.001,1,"every metre drains to exactly ONE outfall, so accumulating length cannot double-count it"
+infiltration: rate x length == sum of LOCAL values,14.904753,14.904753,0.0,L/s,1e-06,1,"G201-p72 7.4.3, 720 L/d/km. THE definition is rate x network length"
+infiltration: rate x length == cumulative value at the OUTFALLS ONLY,14.904753,14.904753,0.0,L/s,1e-06,1,"the cumulative column IS summable, but only over a partition - the outfalls"
+node Q at an outfall == what arrives there,73938.579965,73938.579965,0.0,m3/d,1e-06,1,"the node layer and the arc layer come from the same accumulation, not two solves"
+route local + branch local == placed,74701.172409,74701.172409,0.0,m3/d,1e-06,1,A-FLOW-5: every arc is one or the other and no arc is both
+"this stage's allocation == s2_orient's Q_M3D, in total",74701.172409,74701.582,-0.409591,m3/d,0.5,1,"per-arc agreement: 12,501 of 12,816 identical, largest single difference 10.0 m3/d, correlation 0.998766. Two allocations, one answer - the tolerance is s2's 3-dp rounding"

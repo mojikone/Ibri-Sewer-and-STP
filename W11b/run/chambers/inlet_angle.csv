@@ -1,0 +1,7 @@
+INLET_DEG,chambers,COMPLIANT,pct
+0 to 30,12,no - swept channel required,0.02
+30 to 60,76,no - swept channel required,0.14
+60 to 89.99,2709,no - swept channel required,4.97
+89.99 to 120,2690,yes,4.93
+120 to 150,263,yes,0.48
+150 to 180.01,48803,yes,89.46

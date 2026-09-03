@@ -1,0 +1,12 @@
+[s6_levels] sweep: design basis                                 stations  508  max cover  19.78 m  vortex    73
+[s6_levels] sweep: tau = 2.0 Pa - the NWS downside (GAP-9)      stations  898  max cover  19.44 m  vortex   131
+[s6_levels] sweep: cover cap 10 m instead of 12                 stations  604  max cover  19.78 m  vortex    53
+[s6_levels] sweep: cover cap 15 m instead of 12                 stations  369  max cover  19.78 m  vortex    94
+[s6_levels] sweep: drop / excursion ceiling 10 m instead of 20  stations  560  max cover  12.00 m  vortex    52
+
+                                       CASE  TAU_PA  MAX_COVER  DROP_CEILING  STATIONS  PASSES     KM  MEDIAN_GRAD_MM_M  MEDIAN_COVER_M  MAX_COVER_M  VORTEX  BACKDROP  DN_MAX  TRACTIVE_KM
+                               design basis     1.0       12.0          20.0       508       8 1478.5               5.0            2.39        19.78      73        46     900          0.0
+    tau = 2.0 Pa - the NWS downside (GAP-9)     2.0       12.0          20.0       898      14 1468.1              11.0            3.66        19.44     131        64     800       1358.6
+               cover cap 10 m instead of 12     1.0       10.0          20.0       604      10 1476.0               5.0            2.32        19.78      53        46     900          0.0
+               cover cap 15 m instead of 12     1.0       15.0          20.0       369       7 1482.1               5.0            2.44        19.78      94        40     900          0.0
+drop / excursion ceiling 10 m instead of 20     1.0       12.0          10.0       560       9 1477.1               5.0            2.35        12.00      52        44     900          0.0

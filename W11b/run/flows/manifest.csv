@@ -1,0 +1,44 @@
+ITEM,VALUE,UNIT,SOURCE
+stage,W11b-s5_flows-1.0,-,this file
+contract,W11b-contract-1.0,-,w11b.contract
+tau,1.0,Pa,"ASSUMED, GAP-9 - flagged on every row as TAU_FLAG"
+arcs,12816,-,"s2_orient arcs, read"
+nodes,9897,-,"s2_orient nodes, read"
+"network length, published",1819.45,km,sum LEN_M
+"network length, delivered",1788.57,km,accumulated to the outfalls
+plots read,64071,-,D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\Claude\W10\shp\W10_plot_loads.gpkg
+plots with saturated load,56414,-,Q_AVG_M3D > 0
+properties,98681.1,-,"plot_loads.N_PROP, allocated once each"
+placed load,74701.2,m3/d,"allocation, A-FLOW-4"
+delivered load,73938.6,m3/d,accumulated to the outfalls
+undelivered load,762.6,m3/d,arcs that reach no outfall - H15
+"load per property, measured",0.757,m3/d/property,placed / properties
+occupancy,5.32,people/property,"PROJECT, derived 2026-08-30"
+wastewater generation,171.3,L/c/d,"PROJECT, derived"
+peak factor formula,"Qpdf = 2.65 Qadf^0.879, both Ml/d",-,"G201-p71 7.4.2, read from the PDF 2026-09-03"
+peak factor threshold,100,properties,G201-p71 7.4.2 'having over 100 properties'
+held peak factor,3.6214,-,"A-FLOW-2, PROJECT DECISION - Merrimack AT the threshold"
+peak factor recommendation,5.0,-,"G201-p72 NOTE - a recommendation; reported, never truncated"
+infiltration rate,720.0,L/d/km,"G201-p72 7.4.3, new networks"
+SYSTEM infiltration,14.9048,L/s,contract.published('infiltration_system_ls') - rate x NETWORK length
+STP design margin,0.1,-,"G201-p73 7.4.5 - carried at the works, never on a pipe (A-FLOW-7)"
+"works inlet Qadf, delivered",73938.6,m3/d,"delivered load; add the margin at the works, not here"
+works inlet Qadf + 10 % margin,81332.4,m3/d,G201-p73 7.4.5
+"biggest pipe, Qadf",10024.9,m3/d,arcs.QADF_M3D
+trunk peak flow IF every outfall joins,1362.2,L/s,HYPOTHETICAL - Merrimack on the delivered load plus system infiltration. The Main Pipe is an INPUT and this stage has not routed it
+"biggest pipe, Qpeak",234.65,L/s,arcs.QPK_MONO
+biggest pipe share of placed load,13.42,%,contract.published('top_pipe_load_share_pct')
+outfalls,193,-,nodes.KIND
+arcs carrying no load,2723,-,corridors with no plot nearest to them - they still carry upstream flow
+arcs with zero accumulated flow,989,-,nothing at all drains through them - candidates for pruning at stage 4
+length carrying zero flow,139.5,km,arcs.QADF_M3D <= 0
+median accumulated Qadf,15.43,m3/d,arcs.QADF_M3D
+p95 accumulated Qadf,852.6,m3/d,arcs.QADF_M3D
+median peak flow,0.65,L/s,arcs.QPK_MONO
+p95 peak flow,26.83,L/s,arcs.QPK_MONO
+max upstream length on one reach,241.35,km,arcs.UPS_LEN_M - the flow path that reach sits at the bottom of
+max reaches draining through one reach,1693,-,arcs.UPS_ARCS
+as-built benchmark: biggest pipe share,61.17,%,"the SAME accumulator over NAMA's 3,265 built pipes and the same plot loads"
+as-built benchmark: built length,95.4,km,asbuilt.pipes
+as-built benchmark: terminals,3,-,asbuilt topology
+as-built benchmark: load placed on it,74701.2,m3/d,"nearest built pipe, no cap - the same rule, so the two are comparable"

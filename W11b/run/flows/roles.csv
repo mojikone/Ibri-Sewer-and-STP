@@ -1,0 +1,6 @@
+ROLE,N,KM,Q_LOC_M3D,PCT_LOAD,N_PROP,ROUTE,BRANCH,DELIVERED,TREATMENT
+head,3081,642.08,28183.4,37.73,37453.0,0,3081,3081,"SOURCE BRANCH (A-FLOW-5): its own local load only, delivered at its downstream node"
+island,184,30.88,762.6,1.02,989.0,0,184,0,"SOURCE BRANCH (A-FLOW-5): its own local load only, delivered at its downstream node"
+ring,1,0.13,3.6,0.0,5.0,0,1,1,"SOURCE BRANCH (A-FLOW-5): its own local load only, delivered at its downstream node"
+tree,9550,1146.36,45751.5,61.25,60235.0,9550,0,9550,"carries everything from upstream, plus its own load"
+"head, chained",743,139.89,5488.1,7.35,7223.0,0,743,743,"THE RISK IN A-FLOW-5: these head arcs START where another head arc ENDS. If they are really one street draining end to end, the lower segment is under-loaded by the upper one's load. It is not lost - it enters the tree at the shared node - but it is on the wrong pipe"

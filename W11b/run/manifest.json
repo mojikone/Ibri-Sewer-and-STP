@@ -1,0 +1,130 @@
+{
+  "contract": "W11b-contract-1.0",
+  "criteria": "w11b.criteria",
+  "tau_pa": 1.0,
+  "written": "2026-09-03 14:19:40",
+  "stages": [
+    {
+      "stage": "s6_levels",
+      "order": 6,
+      "seconds": 290.48,
+      "reads": [
+        {
+          "name": "chambers",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b_chambers.gpkg",
+          "n": 56935
+        },
+        {
+          "name": "segments",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b_chambers.gpkg",
+          "n": 56740
+        },
+        {
+          "name": "connections",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b_chambers.gpkg",
+          "n": 53018
+        },
+        {
+          "name": "hier reaches",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b_hier.gpkg",
+          "n": 12566
+        }
+      ],
+      "writes": [
+        {
+          "name": "crossings",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b.gpkg",
+          "n": 527
+        },
+        {
+          "name": "nodes",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b.gpkg",
+          "n": 56930
+        },
+        {
+          "name": "reaches",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b.gpkg",
+          "n": 56227
+        },
+        {
+          "name": "pumped_links",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b_levels.gpkg",
+          "n": 508
+        },
+        {
+          "name": "diagnostics",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b_levels.gpkg",
+          "n": 25
+        },
+        {
+          "name": "kmz:depth",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b_levels_depth.kmz",
+          "n": 56227
+        },
+        {
+          "name": "kmz:diameter",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b_levels_diameter.kmz",
+          "n": 56227
+        },
+        {
+          "name": "kmz:drops",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b_levels_drops.kmz",
+          "n": 4199
+        },
+        {
+          "name": "LEVELS.md",
+          "path": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\run\\levels\\LEVELS.md",
+          "n": 25
+        }
+      ],
+      "metrics": {
+        "held_peak_factor": 3.6213923,
+        "gravity network published": 1478.4679,
+        "chambers per km": 38.5061,
+        "ADWF levelled": 70405.4937,
+        "largest peak flow on any gravity reach": 225.6302,
+        "largest diameter": 900.0,
+        "cover, median (length-weighted)": 2.3611,
+        "deepest excavation": 19.7784,
+        "VORTEX DROP SHAFTS": 73.0,
+        "vortex drop shafts per km": 0.0494,
+        "lifting stations the cap demands": 508.0,
+        "length draining against the ground": 26.3103,
+        "climb divided by descent": 0.4148,
+        "reaches below the 1.30 m minimum cover": 0.0,
+        "reaches over the d/D limit": 0.0,
+        "reaches over 3.0 m/s": 0.0,
+        "reaches laid at the 25 % publishing bound": 182.0,
+        "chambers deepened for a cliff the pipe may not follow": 15.0
+      },
+      "notes": [
+        "held peak factor 3.62139 read from s5_flows `arcs`: PF where PF_METH == 'held' (A-LEV-2)",
+        "tau = 1 Pa (A-LEV-6, GAP-9) on every published row"
+      ],
+      "no_change_reason": "",
+      "funnels": [
+        {
+          "name": "chambers",
+          "n0": 56935,
+          "n": 56930,
+          "line": "chambers: 56,935 -> 56,930",
+          "steps": [
+            {
+              "reason": "contracted into their neighbour (closer than MH_SNAP_M)",
+              "n": 5,
+              "qty": 0.0,
+              "ids": [
+                "N0009407",
+                "N0008724",
+                "N0005925",
+                "N0004287",
+                "N0004767"
+              ],
+              "ids_truncated": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

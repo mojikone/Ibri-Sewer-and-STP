@@ -1,0 +1,11 @@
+CHECK,SOURCE,RESULT,PASS
+H12 chamber spacing within G203-p30 Table 12 (DN200-315 band),G203-p30 Tab 12,"0 of 56,740 segments over 100 m",pass
+chamber spacing within the shipped split length,"PROJECT, calibrated to the built median",0 over 30 m,pass
+H10 inlet angle at least 90 deg,G203-p30,"2,881 of 54,553 measurable inlets below 90 deg; worst 0.0 deg",FAIL
+no two chambers inside the 3 m minimum clearance,criteria.MH_SNAP_M (PROJECT - no minimum chamber spacing exists in G201/G202/G203),"5 pair(s), of which 5 are BOTH stage-2 graph nodes - a corridor-snapping artefact this stage inherits and must not silently merge, because merging changes stage 2's published topology",FAIL
+H1 no chamber on wadi ground,G203-p30 4.4.1 i.a; the CLASS test is a project assumption,"3,366 chambers on hazard class 4/5/6 of the 50-yr grid",FAIL
+tertiary run within 45 m,"G203-p22 Tab 6 lateral row + p17 3.2, taken on both","0 of 53,018 over 45 m",pass
+H15 every component ends at exactly one outfall,project rule / philosophy H15,"OK - 195 components, exactly one outfall each",pass
+H16 topology written down (US_NODE / DS_NODE on every segment),project rule / philosophy H16,"56,740 segments, 0 inferred from geometry",pass
+zero silent drops - every load-bearing plot accounted for,project doctrine,"53,018 connected + 3,396 named = 56,414 of 56,414",pass
+CAN_DRAIN - does the plot outlet sit above the sewer invert,contract.CONNECTIONS.CAN_DRAIN,CANNOT RUN - no designed invert exists at stage 4. NOT run against a seeded depth. DRAIN_SHALLOW published instead,cannot run

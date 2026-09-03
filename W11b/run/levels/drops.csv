@@ -1,0 +1,10 @@
+QUANTITY,VALUE,UNIT,BUILT,BAND
+vortex drop shafts (drop > 2.00 m),73.0,-,37.0,-
+vortex drop shafts per km,0.049375436548294536,/km,0.585,<= 0.605  MEASURED
+"vortex per 1,000 chambers",1.2822764798875812,-,19.71,<= 21.06  MEASURED
+vortex shafts sitting at a junction,93.15068493150685,%,100.0,>= 100  MEASURED
+"vortex shafts on a STRAIGHT RUN - NAMA has none, and a drop on a straight run is a design levelling its way out of a layout fault",5.0,-,0.0,0  MEASURED
+backdrops (0.60 - 2.00 m),46.0,-,84.0,-
+backdrops per km,0.03111328878385683,/km,1.329,<= 1.700  MEASURED
+deepest single drop,8.388999859687942,m,,<= 20  PROJECT CEILING
+total drop taken at structures,545.5559620510209,m,,-

@@ -1,0 +1,15 @@
+ITEM,VALUE,UNIT,SOURCE,NOTE
+held peak factor,3.6214,-,A-FLOW-2: Merrimack AT the 100-property threshold,evaluated at 100 x 0.7570 m3/d/property = 75.70 m3/d
+"load per property, measured",0.757,m3/d/property,"allocated load / allocated properties, ALL property types","criteria.PLOT_QADF_M3D is 0.9113 and it is NOT the same quantity: it is OCCUPANCY x WWG_LCD, and WWG_LCD already spreads the non-domestic and governmental volume over the DOMESTIC population, so it is a per-DOMESTIC-property figure. G201-p71's threshold counts properties without qualification, so the threshold is evaluated on all of them"
+"domestic load per property, measured",0.7416,m3/d/property,plot_loads Q_DOM_M3D / N_DOM,"reproduces OCCUPANCY x LPCD_WATER x RETURN_DOM / 1000 = 5.32 x 164 x 0.85 / 1000 = 0.74161 EXACTLY (G201-p59-60 Table 11 water, G201-p71 Table 19 return ratio) - the load basis and the criteria agree where they are measuring the same thing"
+held peak factor on the criteria per-property figure,3.541,-,sensitivity,"the alternative basis, published so the choice is visible"
+criteria.peak_factor() below the threshold,1.0,-,criteria.py,DISAGREES with this stage. See A-FLOW-2 - holding at 1.0 sizes every lateral at average flow
+reaches on the held factor,9976.0,-,PF_METH,"77.8 % of reaches, 1,450.3 km"
+reaches on Merrimack,2840.0,-,PF_METH,"369.1 km, carrying 92.6 % of the accumulated flow"
+"peak factor, min on a LOADED reach",2.005,-,arcs.PF where QADF_M3D > 0,"the largest catchment peaks least. 989 reaches carry nothing at all and are given PF = 1.0, which is arithmetic, not a factor"
+"peak factor, max",3.7185,-,arcs.PF,G201-p72 RECOMMENDS not exceeding 5.0
+reaches above the recommended 5.0,0.0,-,G201-p72 NOTE,"reported, NEVER truncated"
+reaches where the peak flow would FALL downstream,0.0,-,MONO_FIX,"it can happen at the held/Merrimack boundary, which is a step, because the switch is on property count and the curves meet only at the project-average load per property"
+largest monotonicity correction,0.0,L/s,QPK_MONO - QPK_LS,"a sizing stage must carry QPK_MONO, not QPK_LS, or a pipe is smaller than the one above it"
+whole-network peak factor,1.5744,-,Merrimack on the delivered load,what the works inlet would see if everything arrived together
+Peltier on the same total,1.5342,-,"G201-p72, the IMP2024 alternative",carried for comparison only. NOT applied anywhere

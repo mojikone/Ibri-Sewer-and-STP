@@ -1,0 +1,92 @@
+LAYER,FIELD,STATUS,WAITS_ON,AUDIT
+nodes,NODE_UID,filled,,G3
+nodes,IS_OUTFALL,filled,,H15
+nodes,NODE_REF,deferred,s8 packages (needs the tier and package),
+nodes,NODE_KIND,filled,,
+nodes,X,filled,,
+nodes,Y,filled,,
+nodes,GRD_M,filled,,
+nodes,INV_M,deferred,s6 levels,
+nodes,DEPTH_M,deferred,s6 levels,
+nodes,COVER_M,deferred,s6 levels,H3
+nodes,TIER,deferred,s3 hierarchy - NOT BUILT in W11b,H9
+nodes,DS_NODE,filled,,"H15,H16"
+nodes,N_IN,filled,,
+nodes,N_OUT,filled,,H15
+nodes,INLET_DEG,filled,,H10
+nodes,INLET_FLAG,filled,,H10
+nodes,MH_DIA,deferred,detail design (contractor's number),
+nodes,MH_MAT,deferred,detail design,
+nodes,DROP_M,deferred,s6 levels,
+nodes,DROP_TYPE,deferred,s6 levels,
+nodes,VORTEX,deferred,s6 levels,H4c
+nodes,Q_ADF_M3D,deferred,s5 flows,
+nodes,Q_PK_LS,deferred,s5 flows,
+nodes,N_PROP,filled,,
+nodes,PAST_CAP,deferred,s6 levels,H4
+nodes,CAP_EXIT,deferred,s6 levels,H4b
+nodes,SRC,deferred,a later stage,G5
+nodes,CONFIDENCE,deferred,a later stage,G5
+nodes,STAGE,deferred,a later stage,G4
+nodes,PACKAGE,deferred,s8 packages,
+nodes,PHASE,deferred,s8 packages,
+reaches,EDGE_UID,deferred,a later stage,
+reaches,US_NODE,filled,,"G3,H16"
+reaches,DS_NODE,filled,,"G3,H16"
+reaches,TIER,deferred,s3 hierarchy - NOT BUILT in W11b,H9
+reaches,DN,deferred,s6 sizing,"H2,H3,H4,H9,H12"
+reaches,MATERIAL,deferred,s6 sizing,H9
+reaches,CONSTR,deferred,s6 sizing,
+reaches,LEN_M,filled,,H12
+reaches,SLOPE_LAID,deferred,s6 sizing,"G1,H2,H5,H6,H7,H13"
+reaches,SLOPE_MIN,deferred,s6 sizing,"G1,H6"
+reaches,GRAD_BY,deferred,s6 sizing,G2
+reaches,SIZED_BY,deferred,s6 sizing,"H8,G2"
+reaches,CLEAN_BY,deferred,s6 sizing,H5
+reaches,TAU_PA,deferred,carried on the reach at sizing,
+reaches,INV_UP,deferred,s6 levels,H11
+reaches,INV_DN,deferred,s6 levels,H11
+reaches,US_DEPTH,deferred,s6 levels,"H3,H4"
+reaches,DS_DEPTH,deferred,s6 levels,"H3,H4"
+reaches,COVER_US,deferred,s6 levels,H3
+reaches,COVER_DN,deferred,s6 levels,H3
+reaches,QADF_M3D,deferred,s5 flows,
+reaches,QINF_LS,deferred,s5 flows,
+reaches,PF,deferred,s5 flows,
+reaches,PF_METH,deferred,s5 flows,
+reaches,QPK_LS,deferred,s5 flows,"H2,H5,H6,H7"
+reaches,V_PK_MS,deferred,s6 sizing,H7
+reaches,DOD_PK,deferred,s6 sizing,H2
+reaches,RET_MIN,deferred,s6 sizing,
+reaches,GND_FALL,filled,,
+reaches,AGN_GRADE,filled,,H17
+reaches,RISE_M,filled,,
+reaches,PAST_CAP,deferred,s6 levels,H4
+reaches,CAP_EXIT,deferred,s6 levels,"H4,H4b"
+reaches,CAP_LEN_M,deferred,s6 levels,H4b
+reaches,TIE_TYPE,deferred,s6 (existing-network tie-in),H14
+reaches,ON_DUAL_M,deferred,a later stage,"H1,R3"
+reaches,ON_WADI_M,deferred,a later stage,R4
+reaches,CROSS_ID,deferred,"a crossings register, not built in this stage","H1,H1a,R4"
+reaches,SRC,filled,,G5
+reaches,CONFIDENCE,filled,,G5
+reaches,STAGE,deferred,a later stage,G4
+reaches,PACKAGE,deferred,s8 packages,
+reaches,PHASE,deferred,s8 packages,
+connections,CONN_ID,filled,,
+connections,PLOT_ID,filled,,
+connections,OUT_NODE,filled,,
+connections,WHY,filled,,
+connections,SYSTEM,filled,,
+connections,CONN_TYPE,filled,,
+connections,Q_ADF_M3D,filled,,
+connections,N_PROP,filled,,
+connections,LEN_M,filled,,
+connections,SLOPE_LAID,deferred,s6 sizing,
+connections,COVER_M,deferred,s6 levels,
+connections,CAN_DRAIN,deferred,s6 levels - REFUSED here rather than seeded,
+connections,SRC,deferred,a later stage,G5
+connections,CONFIDENCE,deferred,a later stage,G5
+connections,STAGE,deferred,a later stage,G4
+connections,PACKAGE,deferred,s8 packages,
+connections,PHASE,deferred,s8 packages,

@@ -1,0 +1,5 @@
+QUANTITY,VALUE,UNIT,NOTE
+trunk main in this design's `reaches` layer,0.0,km,"the tier does not appear, and that is CORRECT, not a gap"
+trunk main published by s3 in its own layer,85.49132090553137,km,"54 features, SRC = main_pipe - the client's drawing, an INPUT"
+terminals discharging into it,195.0,-,their inverts were chosen freely; the level the trunk will accept is UNCONFIRMED and is a data request (A-LEV-7)
+trunk share of the levelled length,0.0,%,"NAMA's built network is 5.78 % trunk, band 1.48 - 13.45. The comparison does not apply: theirs includes their trunk, ours does not"

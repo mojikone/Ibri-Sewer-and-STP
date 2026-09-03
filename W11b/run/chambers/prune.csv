@@ -1,0 +1,8 @@
+WHAT,arcs,km
+corridors handed over by stage 2,12815.0,1819.3
+  less the 10 m fan-out at a chamber that already has an outlet,3135.0,-31.3
+"  less arcs that neither collect nor convey, WHOLLY pruned",1221.0,-184.6
+  less the upper part of arcs pruned only in PART,,-111.4
+= published,11594.0,1491.9
+   memo: pruned fingers under 60 m (philosophy sec 4),122.0,4.3
+   memo: pruned arcs carrying a chamber on wadi ground,116.0,

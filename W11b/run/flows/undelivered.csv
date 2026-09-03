@@ -1,0 +1,3 @@
+ROLE,N,KM,Q_M3D,N_PROP,NOTE
+island,184,30.875,762.6,989.0,H15: a piece that drains nowhere is never legal. This load is NOT dropped - it is published here and it is in the denominator of the health check
+TOTAL,184,30.875,762.6,989.0,"resolution is s2's, not this stage's: connect, or serve by another system (philosophy sec 8a)"

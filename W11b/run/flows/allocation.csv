@@ -1,0 +1,13 @@
+ITEM,VALUE
+plots_total,64071.0
+plots_with_load,56414.0
+q_total_m3d,74701.17240885197
+q_allocated_m3d,74701.17240885197
+prop_total,98681.10999999999
+prop_allocated,98681.10999999999
+arcs_with_load,10093.0
+arcs_without_load,2723.0
+dist_median_m,25.273965575257684
+dist_p90_m,54.10573961925593
+dist_max_m,2575.9214134879026
+q_per_property_m3d,0.7569956642041418

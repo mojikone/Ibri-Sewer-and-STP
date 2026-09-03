@@ -1,0 +1,6 @@
+FIELD,FROM,TO,WHY
+SRC,draft_base,dwg_road,"both s1 layers are road centre lines on a drawing; the evidence for one being a street lives in CONFIDENCE, not in the DXF layer name"
+SRC,draft_propo,dwg_road,"both s1 layers are road centre lines on a drawing; the evidence for one being a street lives in CONFIDENCE, not in the DXF layer name"
+CONFIDENCE,corroborated,drafted,"an independently recorded centreline within 12 m, or a plot with a built structure (s1) - drawn and corroborated"
+CONFIDENCE,drafted,provisional,"a platted plot with nothing built on it. Philosophy sec 4 calls that a provisional corridor, so the grade goes DOWN"
+CONFIDENCE,provisional,provisional,a reserve on bare ground

@@ -1,0 +1,71 @@
+ITEM,VALUE,UNIT,SOURCE
+stage,W11b-orient-1.0,,this file
+criteria,W11b-criteria-1.0,,w11b/criteria.py
+run_utc,2026-09-03T18:52:55Z,,
+corridors_sha1,ab7684b667cf6153,,D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\Claude\W11b\shp\W11b_roads.gpkg
+main_pipe_sha1,f3594c9bef33f843,,D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\SHP\Main Pipe\Main Pipe.shp
+terrain_grid,R5,,"w11b/terrain.py, 5 m working grid"
+SMIN_DN200,0.005,m/m,"G203-p29 Tab 11, DN200 row (5.00 mm/m)"
+SMIN_FLOOR,0.00075,m/m,"G203-p29 Tab 11, '900 and above' (0.75 mm/m)"
+MIN_COVER_M,1.3,m,G203-p33 sec 4.6.3
+MAX_COVER_M,12.0,m,G203-p33 sec 4.6.3 (recommended 10-12 m)
+DEPTH_BUDGET_M,10.7,m,"MAX_COVER - MIN_COVER, by subtraction"
+INLET_MIN_DEG,90.0,deg,"G203-p30, verbatim"
+FANOUT_OFFSET_M,10.0,m,"PROJECT rule, user 2026-08-18"
+ADVERSE_MIN_M,0.05,m,PROJECT ASSUMPTION - below this a rise is DEM noise
+RUN_MEDIAN_M,68.744,m,MEASURED asbuilt.m_runs() - the ridge-split threshold
+SIGMA_DZ_M,0.4769,m,MEASURED differential DEM error vs NAMA's surveyed levels
+RIDGE_PROM_MIN_M,1.431,m,3 x SIGMA_DZ_M
+BUILT_UPHILL_PCT,34.1,%,"MEASURED asbuilt.m_terrain() - CONTEXT, NOT PERMISSION"
+BUILT_JOINS,21,,MEASURED asbuilt joins onto the trunk
+BUILT_VORTEX,37,,MEASURED vortex drops in the built net
+W11A_UPHILL_PCT,42.5,%,criteria.BENCHMARKS - the defect W11b exists to fix
+LAMBDA_SLOPE,3.0,,"PROJECT, swept: sweep_lambda_slope"
+SLOPE_CAP,4.0,,PROJECT
+LAMBDA_DETOUR,1.0,,"PROJECT, forced by measurement, swept"
+LAMBDA_BEND,1.0,,PROJECT
+BEND_EQUIV_M,150.0,m,PROJECT
+BEND_PASSES,3,,PROJECT
+JOIN_COST_M,0.0,m,"PROJECT, swept: sweep_join_cost"
+MAIN_SNAP_M,5.0,m,"PROJECT, swept: sweep_main_snap"
+TAU_PA,1.0,Pa,"ENGINEER 2026-09-03, GAP-9 open - flagged on output"
+corridors_n,12815,,after the ridge pre-split
+corridor_km,1819.31,km,
+nodes_n,9897,,
+ridge_splits,151,,corridors cut at a crest
+outfalls_n,193,,corridor nodes within 5 m of the Main Pipe
+main_pipe_km,85.49,km,client INPUT
+closed_basins_n,59,,terrain.py
+closed_basins_forced,0,,basins deeper than the cover cap - roots if any
+flat_ground_pct,58.41,%,corridor length on ground flatter than SMIN_DN200 either way
+flat_ground_km,1062.7,km,"the same, in km"
+tree_arcs,9550,,the drainage tree
+tree_km,1146.36,km,
+joins_realised,193,,onto the Main Pipe; NAMA built 21
+subnetworks_n,193,,each ends at exactly one outfall
+heads_n,3081,,"dead-end runs: the corridors the tree could not use, all draining to their low end"
+heads_needing_setback,2887,,"heads starting at a chamber that already has an outlet, so the chamber stage must set them back 10 m (philosophy sec 4). A HAND-OVER NUMBER, counted here rather than discovered there"
+junctions_per_km,2.31,1/km,MEASURED built network 4.83 (asbuilt.m_runs)
+heads_per_km,2.67,1/km,MEASURED built network 5.09 (asbuilt.m_runs)
+UPHILL_PCT_PUBLISHED,23.15,%,"THE HEADLINE. W11a 42.5 %, built network 34.1 %"
+UPHILL_KM_PUBLISHED,414.0,km,
+uphill_pct_tree_only,36.11,%,"over the tree arcs alone, excluding dead-end heads"
+uphill_pct_naive,33.13,%,"THE SAME GRAPH with the method this replaces, on the SAME BASIS - the whole in-play corridor length, dead-end heads included, exactly as UPHILL_PCT_PUBLISHED is measured. This is the evidence"
+uphill_pct_naive_tree_only,46.62,%,"the same tree measured over its own arcs only, to compare with uphill_pct_tree_only"
+climb_m,2451.0,m,cumulative climb along the flow
+descent_m,9507.0,m,
+climb_per_km,1.37,m/km,built network 4.06
+worst_rise_m,20.73,m,worst single reach
+path_median_m,2735.0,m,flow path to the outfall
+path_p95_m,8996.0,m,
+path_max_m,15075.0,m,
+published_km,1819.45,km,every corridor
+island_km,30.88,km,cannot reach the Main Pipe at all
+island_q_m3d,763.0,m3/d,
+nodes_over_budget,3619,,"flow path demands more fall than the ground gives, by more than 10.70 m, charged at the DN200 minimum"
+nodes_over_budget_floor,999,,the same charged at G203-p29 Tab 11's flattest gradient (0.75 mm/m) - THE HARD NUMBER: it cannot be argued away by sizing
+nodes_total,9743,,nodes with a flow path to an outfall
+subnets_over_budget,27,,deficit beyond the 10.70 m depth budget
+breaching_nodes,3619,,"nodes whose flow path demands more fall than the ground gives, by more than the 10.70 m depth budget"
+breaching_with_a_neighbour,3156,,"of those, the ones with a different sub-network somewhere on their flow path, so the neighbour question can even be asked"
+neighbour_rescues,158,,"of those, the ones a NEIGHBOURING sub-network keeps on gravity. Philosophy sec 5's cheap step, run before anything is called a station"

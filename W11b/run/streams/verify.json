@@ -1,0 +1,64 @@
+{
+  "layer": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W11b\\shp\\W11b_streams.gpkg",
+  "links": 20464,
+  "km": 7533.0,
+  "checks": [
+    {
+      "check": "length agrees with geometry",
+      "result": "pass",
+      "detail": "worst 0.0000 m"
+    },
+    {
+      "check": "no stream runs uphill",
+      "result": "pass",
+      "detail": "0 negative GND_FALL"
+    },
+    {
+      "check": "no link below the threshold that created it",
+      "result": "pass",
+      "detail": "0 links; terrain's peak reading gave 0 here only because it over-reads"
+    },
+    {
+      "check": "every DS_STREAM resolves",
+      "result": "pass",
+      "detail": "0 dangling references"
+    },
+    {
+      "check": "no self reference",
+      "result": "pass",
+      "detail": ""
+    },
+    {
+      "check": "order is 1..n with no gaps",
+      "result": "pass",
+      "detail": "orders present [1, 2, 3, 4, 5, 6, 7, 8]"
+    },
+    {
+      "check": "IS_WADI agrees with HAZ_MAX",
+      "result": "pass",
+      "detail": ""
+    },
+    {
+      "check": "IS_WADI implies hazard coverage",
+      "result": "pass",
+      "detail": ""
+    },
+    {
+      "check": "CONFIRMED agrees with NSA_D_M",
+      "result": "pass",
+      "detail": "0 rows"
+    },
+    {
+      "check": "a point on a stream is ~0 m from a stream",
+      "result": "pass",
+      "detail": "median 0.0 m at 5 m resolution"
+    },
+    {
+      "check": "downhill_bearing answers on the channel",
+      "result": "pass",
+      "detail": "100.0 % finite"
+    }
+  ],
+  "pass": 11,
+  "fail": 0
+}

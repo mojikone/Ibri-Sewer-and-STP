@@ -1,0 +1,42 @@
+ITEM,VALUE,UNIT,SOURCE
+chambers,56935,-,this stage
+chambers per km,38.16,-,"built network 34.23 (asbuilt, measured)"
+network published,1491.9,km,"this stage, after pruning"
+corridors in,1819.3,km,stage 2
+pruned - neither collects nor conveys,184.6,km,this stage
+segments,56740,-,chamber to chamber
+spacing median,27.18,m,G203-p30 Tab 12 allows 100 m at DN200-315
+spacing max,30.0,m,G203-p30 Tab 12
+segments over Table 12,0,-,G203-p30 Tab 12
+junction chambers,2582,-,G203-p29 4.4 'Junction of two or more pipes'
+head chambers,2005,-,G203-p30 'End of each lateral sewer'
+bend chambers,3900,-,"PROJECT, calibrated to built straightness"
+spacing chambers,43520,-,G203-p29 4.4 regular spacing
+outfalls,195,-,philosophy H15
+inlets below 90 deg,2881,-,G203-p30
+chambers on wadi ground,3366,-,G203-p30 4.4.1 i.a; class test is a project assumption
+pipe with BOTH chambers on wadi ground,75.92,km,"G203-p30 4.4.1 i.a - running ALONG a wadi, not crossing it (H1)"
+components with no path to the Main Pipe,19,-,H15: a piece that drains nowhere is never legal. Stage 2's `island` arcs
+chambers in those components,507,-,H15
+plots connected,53018,-,this stage
+plots not connected,3396,-,each with a WHY
+load connected,70405.5,m3/d,"of 74,701.2 = 94.25 %"
+load connected,94.25,%,of the load-bearing plots
+properties connected,93320.0,-,"of 98,681"
+tertiary pipe,508.6,km,"HCC to chamber, each within 45 m"
+tertiary run median,7.2,m,G203-p22 Tab 6 lateral row caps it at 45 m
+connections crossing a third-party plot,1321,-,needs a wayleave
+connections crossing a dual carriageway,2,-,"legal as a crossing (H1a), priced as a structure"
+load not connected,4295.7,m3/d,5.75 % - every plot named
+"  of it, within a chained rider+lateral (2 x 45 m)",2569.0,m3/d,G203-p17 3.2 chain; needs a corridor the drawing does not have
+"  of it, beyond even that",1726.7,m3/d,"philosophy 8a: served by ANOTHER system, not by this network"
+chambers with more than 3 connections,220,-,G203-p17 3.2 'usually up to 3'
+DRAIN_SHALLOW,48177,-,"connections that drain into a sewer at MINIMUM cover; a bound, NOT CAN_DRAIN"
+CAN_DRAIN,cannot run,-,no designed invert exists at stage 4; NOT run against a seed
+uphill share of the published length,26.42,%,stage 2 published 23.15 % over ALL its arcs; this is over the pruned network
+tau,1.0,Pa,"ASSUMED (GAP-9), unused by this stage"
+split length,30.0,m,MEASURED from the built median
+sigma_dz,0.4769,m,"terrain manifest, differential"
+grade-break detection floor,67.4,mm/m,derived; below it a ground grade break is DEM noise
+runtime,45.9,s,
+stage version,W11b-chambers-1.0,-,

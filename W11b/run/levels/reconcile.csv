@@ -1,0 +1,11 @@
+QUANTITY,S6,S5,DIFF,NOTE
+"ADWF, m3/d - the project total",74701.17240885198,74701.1,-0.07240885197825264,
+"ADWF, m3/d - reaching a terminal HERE",70405.49373090705,73938.5,3533.006269092948,
+"ADWF, m3/d - s4 `unserved`: no chamber within 45 m",4295.678677944933,0.0,-4295.678677944933,"in neither network; a scope answer, not a levelling one"
+"ADWF, m3/d - s5 `undelivered`: 184 island arcs",0.0,762.6,762.6,s2's to connect; s4 never chambered them
+"ADWF, m3/d - RESIDUAL after both",74701.17240885198,74701.1,-0.07240885197825264,must be zero
+properties - the project total,98681.11000000003,98680.0,-1.110000000029686,
+properties - reaching a terminal HERE,93319.65400000002,97691.0,4371.345999999976,
+properties - s4 `unserved`: no chamber within 45 m,5361.456,0.0,-5361.456,"in neither network; a scope answer, not a levelling one"
+properties - s5 `undelivered`: 184 island arcs,0.0,989.0,989.0,s2's to connect; s4 never chambered them
+properties - RESIDUAL after both,98681.11000000003,98680.0,-1.110000000029686,must be zero

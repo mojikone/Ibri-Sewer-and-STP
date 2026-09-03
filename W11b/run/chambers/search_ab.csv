@@ -1,0 +1,4 @@
+SEARCH,connected_n,connected_pct,load_m3d,load_pct,tertiary_km,chambers_used,crosses_a_plot,crosses_a_dual,chamber_on_wadi,max_conn_per_chamber,load_pts_vs_A,km_vs_A,wayleaves_vs_A
+A nearest chamber only,53019,93.98,70406.6,94.25,489.9,33670,2889,6,1460,8,0.0,0.0,0
+B nearest corridor only,53015,93.97,70237.5,94.02,506.4,33567,1622,6,935,7,-0.23,16.5,-1267
+C every carrier ranked,53019,93.98,70406.6,94.25,508.6,33678,1321,2,779,6,0.0,18.7,-1568

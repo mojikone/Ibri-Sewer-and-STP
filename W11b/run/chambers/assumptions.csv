@@ -1,0 +1,16 @@
+ITEM,VALUE,UNIT,BASIS
+MH_SPLIT_M,30.0,m,"MEASURED. The built network's median chamber spacing (29.77 m) rounded to 10 m. G203-p29 4.4 hands regular spacing to 'maintenance equipment' and the operator's own 3,265 built pipes are the record of what that reaches - none of them exceeds Table 12's 100 m and their longest is 71.38 m."
+STRAIGHT_TOL_M,0.5,m,"PROJECT, CALIBRATED. 98.1 % of built pipes are a straight 2-point line; the polyline departs from its chord by a median 0.000 m and p99 0.020 m, and 99.36 % are inside 0.5 m. Replaces an invented bend angle with the physical rule a straight pipe obeys."
+TERT_MAX_M,45.0,m,"G203-p22 Table 6 prints 'Maximum Length 45 m' on the LATERAL SEWER ROW ONLY (read from the PDF 2026-09-03). G203-p17 3.2 writes 'Rider Sewers and Lateral Sewers (maximum Length 45 m)', attaching it to both. Conservative reading taken: 45 m on the whole tertiary run. PROJECT."
+HCC_OFFSET_M,2.5,m,"G203-p17 3.2, verbatim."
+PEN_CROSS_PLOT_M,45.0,m,"PROJECT. One full legal tertiary run, so a wayleave is always worth avoiding and never worth dropping a plot for."
+PEN_CROSS_DUAL_M,45.0,m,PROJECT. Same price. Crossing is legal (philosophy H1a); running ALONG is not (project rule 7).
+PEN_WADI_M,45.0,m,"PROJECT. A chamber on wadi ground is prohibited (G203-p30 4.4.1 i.a). A penalty and not a veto, because a veto drops load silently."
+CONGEST_M,15.0,m/connection,PROJECT. Charged beyond the free 3 of G203-p17 3.2 ('usually up to 3'). A third of a legal run. Swept - see congestion_sweep.
+CAND_TOPK,8,-,"PROJECT. How many candidates per plot carry the crossing tests. The cheap ones are always in, because the ranking is by bare length first."
+DUAL_BAND_M,6.0,m,"PROJECT, matching stage 1's own band half-width, whose `dual_band` table publishes the exposure at eight widths."
+FINGER_M,60.0,m,"PROJECT (philosophy sec 4, ours on cost grounds). REPORTED ONLY - the prune rule is 'neither collects nor conveys' and needs no length threshold."
+GRADE_BREAK_FLOOR,67.4,mm/m,"DERIVED. 3 * sqrt(2) * sigma_dz / window, sigma_dz = 0.4769 m (terrain manifest, the DIFFERENTIAL error) over the 30 m spacing. Below this a ground grade break is indistinguishable from DEM noise, which is why the gradient trigger is not fired from the terrain."
+HAZARD_WADI_CLASSES,"(4, 5, 6)",-,"PROJECT ASSUMPTION. AR&R flood-hazard classes 4/5/6 of the 50-yr grid stand in for G203's 'areas subject to washout', which is a SCOUR criterion. No-data is read as DRY HIGH GROUND (engineer, 2026-09-03)."
+MH_ROUND_STEP,10.0,m,NOT APPLIED. A straight piece is divided into EQUAL parts instead; rounding leaves a stub chamber a few metres from its neighbour. Declared departure.
+tau,1.0,Pa,ASSUMED (GAP-9). Not used by this stage - no gradient is set here - and carried on the outputs so the exposure travels.
