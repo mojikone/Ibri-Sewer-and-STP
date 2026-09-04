@@ -84,6 +84,8 @@ happened, including one that fails if a published column is constant where it sh
 And **pumps that are designed rather than located**: duty, lift, wet well, motor, life-cycle
 cost and 47 rising mains, from the Oman standards directly.
 
+**Already investigated, do not repeat** (`W11b/docs/UPSTREAM_METHODS.md`): two upstream sewer repositories. **Do NOT copy SWMManywhere's topology code** - its `tarjans_pq` is Prim's on a reversed graph, not Tarjan's branching, and measures 36-57 % worse than the correct algorithm. The IDEA is right and `networkx.minimum_spanning_arborescence` does it properly, but it buys about one uphill kilometre in twenty. `pysewer` is GPL - method only, never the code.
+
 **Settled by the engineer, do not re-open:** τ = 1.0 Pa, flagged everywhere · flood no-data is
 DRY HIGH GROUND · the 72 trunk chambers in a class-5/6 wadi are an ACCEPTED, flagged risk ·
 the road DXF is clean, use all lines · no crossings manufactured for now · **stay in W11b, do

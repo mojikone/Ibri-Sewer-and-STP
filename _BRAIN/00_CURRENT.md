@@ -73,6 +73,33 @@ length field that disagrees with its own geometry; and dead code with a runtime 
 and life-cycle cost, plus 47 rising mains. A survey of 839 sewer repositories found nothing
 upstream that sizes a wet well or selects a pump — it came from the Oman standards directly.
 
+## Already investigated — do not repeat, and do not copy
+
+**Two upstream sewer-design repositories were evaluated on 2026-09-03**
+(`W11b/docs/UPSTREAM_METHODS.md`, 37 kB, claim by claim against the source).
+
+**DO NOT COPY `SWMManywhere`'s topology code.** Its `tarjans_pq` is *named* for Tarjan's
+optimum branching and its docstring says so, but the code is **Prim's algorithm on a reversed
+graph** — there is no cycle contraction anywhere in the repository, and cycle contraction is
+the whole of Chu–Liu/Edmonds. Proved by running the function verbatim against
+`networkx.minimum_spanning_arborescence`: **36–57 % worse**, and on one graph it sends a
+branch straight to the outfall instead of letting it run downhill into a neighbour — the exact
+fault we are trying to cure. Its default path (`OutfallDerivation.method = "separate"`) is not
+a branching at all; it is nearest-outfall shortest path, which is what W10 and W11a already do.
+
+**The IDEA is still right** — a true slope-weighted optimum branching is the right instrument
+for the tree — and `networkx.minimum_spanning_arborescence` is correct and already a
+dependency. But the estimate is sober: about **one uphill kilometre in twenty**, taking
+climb ÷ descent from 0.747 to roughly 0.68–0.70 against the built network's 0.483. Worth
+having; not the fix the idea was billed as.
+
+`pysewer` (GPL-3.0, method only, never the code): its `needs_pump()` profile trace is clean
+and its claims check out, but its pump penalty is a cliff rather than a trade.
+
+**One idea worth recording because an independent team reached it too**: exclusions are
+applied by DELETING the corridor before routing, never by pricing it. A penalty can always be
+outvoted by a big enough number; a deletion cannot. We already do this.
+
 ## Waiting on a human
 
 **The engineer decides:**
