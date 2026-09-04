@@ -256,7 +256,23 @@ out at all** does the ladder below begin.
    rescue route, under a live carriageway) → station. Not a term in a sum
 3. **ECONOMICS** — only now: is a station cheaper over 25 years than digging on?
 
-Layers 1 and 2 can only ever **add** a station. The economics can only make you pump
+**AND EVERY STATION MUST BE RE-EXAMINED BEFORE IT IS PUBLISHED.** A solver that works in
+passes will place a station on an early pass, before the crown sweeps, the drop chambers and
+the relaid runs have recovered any fall — and if it only ever ADDS, that station survives to
+the deliverable even where the ground turned out to have enough fall all along.
+
+Measured 2026-09-03, on ground where the BUILT network has no station and W8's design of it
+has none: three were published. One had **23.1 m of ground fall against 19.5 m of need and a
+deepest pipe of 3.92 m against the 12 m cap**; the other two had **nothing draining into
+them**. Pruning took the network from **83 stations to 14 demanded, and to zero in that area**.
+
+**The general rule, and it is not only about stations: anything a pass can ADD, a later pass
+must be able to TAKE AWAY, and the stage publishes how many it removed.** A design decision
+that is only ever added is a decision that is never re-examined. W8 knew this and cleared its
+pump flags at the top of every pass, saying so in a comment; the lesson was two weeks old when
+a rewrite lost it, which is the argument for writing it here rather than in code.
+
+Layers 1 and 2 can only ever **add** a station within a pass. The economics can only make you pump
 **earlier**, never later.
 
 **Past the cap, two exits — either alone is sufficient, and BOTH are bounded twice:**

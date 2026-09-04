@@ -33,66 +33,69 @@ Concept→detailed design + supervision of wastewater network, treated-effluent 
 | `W5/` | The run before the trunk was placed and before the 12 m limit was enforced. **Superseded by W6** — its depth and pumping numbers are wrong; `docs/CRITERIA_UPDATE_R1.md` is still the live rule register |
 | `W6/` | The run with a GUESSED trunk: 4 pumping stations, chambers to 11.9 m. **Superseded by W7** |
 | `W7/` | Main pipe placed correctly and zero pumping stations, but NO sub-main tier — 30 things touched the trunk. **Superseded by W8**; `docs/CALIBRATION_vs_EXISTING.md` still valid |
-| **`W8/`** | **CURRENT design.** `py/sewnet/` (one class per step), `report/` (Word + PDF, rebuilt on every run), `docs/LEARNING_FROM_ASBUILT.md`, `shp/ dxf/ img/ sewergems/ run/`, `W8_sewer_design.kmz` for Google Earth |
+| `W8/` | **SUPERSEDED as a design, but the most valuable reference in the repo.** It is the only iteration that got the TEST AREA right - 71.6 km with ZERO pumping stations - and it is what every later iteration is measured against. `py/sewnet/stages/hydraulic.py` in particular: its `_lay` clears every pump flag at the top of each pass, and losing that one line cost W11b three phantom stations |
+| `W10/`, `W11a/` | Superseded. W11a still holds `shp/W10_plot_loads.gpkg` (the load data W11b reads) and 100 figures |
+| **`W11b/`** | **THE LIVE DESIGN.** Borrows nothing. `py/w11b/` (terrain, streams, hazard, criteria, hydra, contract, asbuilt, pumping, present), `py/s1..s8`, `py/tests/` (the project's first), `kmz/ dxf/ shp/ run/ docs/` |
 | `../QGIS/QGIS 2621 ibri sewer stp.qgz` | Live QGIS project (layers + saved layouts W2 M1–M6) |
 | `../../Data/` | Client documents (scope.pdf, PAM-GUD-203, PAM-GUD-201, sample report, figures) — NOT in repo |
 
-## Current state (2026-09-02, end of session) — read `_BRAIN/00_CURRENT.md` first, then `07_PROJECT_STATE.md`, then `08_DESIGN_PHILOSOPHY.md`
+## Current state (2026-09-03) — read `_BRAIN/00_CURRENT.md` first, then `07_PROJECT_STATE.md`, then `08_DESIGN_PHILOSOPHY.md`
 
-**W11a IS A COMPLETE DESIGN THAT RUNS END TO END.** Ten stages from scope to export, run in
-order from `W11a/py`: `s1_scope → s2_corridors → s3_trunk → s4_hierarchy → s5_chambers →
-s5b_tertiary → s5c_flows → s6_levels → s7_stations → s8_packages → s9_export`, then
-`python run_audit.py W11a`.
+**W11b IS THE LIVE DESIGN. W11a AND EVERYTHING BEFORE IT ARE SUPERSEDED.** W11b borrows
+nothing — every module is under `W11b/`. Run from `W11b/py`: `s1_roads → s2_orient →
+s3_hierarchy → s4_chambers → s5_flows → s6_levels → s7_pumps → s8_export`, then
+`make_overview.py` for the KMZ and DXF.
 
-**It audits 18 pass / 4 FAIL / 0 cannot-run**, against W10's 3 / 12 / 7. **1,731.7 km ·
-49,624 chambers · 247 components each with exactly one outfall · DN200–1700 · 89.9 % of the
-load connected · 226 stations.** Full export: shapefiles, DXF, KMZ, 19 profiles, 9 schedules,
-SewerGEMS. **W10 is superseded.**
+**1,489.7 km · 56,930 chambers · 195 subnetworks · 47 pumping stations designed · 41 vortex
+drop shafts.** Nothing below minimum cover, nothing over the depth-of-flow limit, nothing over
+3.0 m/s.
 
-**THE BIGGEST OPEN DEFECT IS NOT IN THE AUDIT: 42.5 % of the length (737.7 km) drains
-UPHILL**, and the design therefore wants **2,449 vortex drop shafts where NAMA's built
-network has 37**. That is a stage-4 tree-orientation problem, no levelling arithmetic fixes
-it, and it is the next substantial job. Philosophy §4 now states the rule and requires the
-quantity to be reported.
+**On the two measures that show whether a layout follows the ground, W11b beats the network
+NAMA actually built**: 0.028 drop shafts per km against 0.585, and 26.3 % of length draining
+against the ground against 34.1 %. W11a was 1.475/km and 42.5 %.
 
-**The four audit failures** — 8 reaches along a dual carriageway; 2,984 inlets under 90°; and
-R4's wadi exposure, of which the largest part (1,170 reaches) is *undecidable* rather than
-wrong, because the far bank lies outside a hazard grid covering 47 % of the area.
+**THE FIX THAT GOT IT THERE CAME FROM THE ENGINEER'S EYE, NOT FROM A CHECK.** He saw that the
+built network needs no pump in the test area, that W8's design of the same ground needs none,
+and that W11b published three. They were **leftovers** — the solver only ever ADDED a station,
+so one placed before the crown sweeps and relaid runs had recovered any fall survived to the
+deliverable. **W8 had learned this two weeks earlier and cleared its pump flags every pass,
+with the reason in a comment.** The rewrite lost it. Pruning: **83 → 14 demanded, 0 in the
+test area.**
 
-**Not audited but open**: the 226 stations are LOCATED, NOT DESIGNED (zero duty flow, zero
-rising mains); two study-area boundaries are in use (439.8 vs 531.4 km²); the trunk figures
-draw stage 3's intermediate rather than the published trunk; and the design review report's
-numbers predate the last three fixes.
+**The philosophy gained the general rule**: anything a pass can ADD, a later pass must be able
+to TAKE AWAY, and the stage publishes how many it removed.
 
-**The philosophy gained four rules today**, all forced by measurement: **H1a** (when a wadi
-crossing is legal — reading the prohibition on *presence* as one on *passage* had severed the
-network into 1,381 pieces), **H16** (topology is written down, never inferred from geometry),
-a corrected **H15** (each component ends at exactly one outfall — not one network, because
-satellite works are legal), and **depth-bounded exits** past the 12 m cap, after a
-distance-only exit produced a 36.81 m chamber with a 35.06 m drop into it.
+**TWO OF MY OWN DIAGNOSES WERE WRONG and were killed by measurement.** That 42.5 % drained
+uphill is not a verdict — the BUILT network does it on 34 % of its length. And the claim that
+W11b pinned every pipe at the minimum slope while W8 used the ground's fall came from looking
+only at the median and the tenth percentile; across the full distribution they are
+near-identical and W11b is steeper above the median.
 
-**Seven numbers were retracted** — including "W10 has 310 loops" (it has none; 311 appears
-only at a 2.5 m snap), an infiltration total 87× too high, and a fabricated `ANGLE_DEG = 90°`
-on 3,290 crossings. Full list in `_BRAIN/00_CURRENT.md`; do not re-quote the old values.
+**Open and named, all of it drawn on the KMZ and DXF rather than described**: the two station
+counts disagree (14 demanded, 47 designed — s7 reads a pre-prune list); 15 of the 47 have
+nothing upstream; **42 components discharge with more than half their catchment BELOW the
+outlet — 389.5 km, worst outlet 22.8 m above its own low point**; 18 subnetworks stop short of
+the main pipe, worst by 1,873 m; 5,521 plots cannot reach their chamber on gravity; 31 areas
+holding 7,355 plots are not reached; and `s8_export` fails its own contract and cannot write
+while QGIS holds the GeoPackage.
 
-**Waiting on a human, and nothing else moves them:** the engineer decides on 72 trunk
-chambers sitting in a class-5/6 wadi (the client's own alignment, an INPUT), which study
-boundary is the project's, and go/no-go on the tree re-orientation. NWS must supply
-full-coverage flood mapping, the design tractive stress τ, the existing works inlet invert,
-and confirmation of DN1400–2400.
+**W11b has the project's first tests** — six files written against the bugs that actually
+happened, including one that fails if a published column is constant where it should vary.
+And **pumps that are designed rather than located**: duty, lift, wet well, motor, life-cycle
+cost and 47 rising mains, from the Oman standards directly.
 
-**Seven engineering analyses** in `W11a/docs/`: STP site options, force-main routes, west
-connectivity, the brownfield assessment of the existing network, the wadi corridor re-route,
-the trunk-integration diagnosis and the tertiary/wadi-chamber study. **100 figures** in
-`W11a/report/img_doc/` and **8 flowcharts**, all in the design review report.
+**Settled by the engineer, do not re-open:** τ = 1.0 Pa, flagged everywhere · flood no-data is
+DRY HIGH GROUND · the 72 trunk chambers in a class-5/6 wadi are an ACCEPTED, flagged risk ·
+the road DXF is clean, use all lines · no crossings manufactured for now · **stay in W11b, do
+not start a W12** — four restarts have each lost something that worked.
 
 ### Superseded state (2026-08-23)
 **W8 is the live design.** The main pipe is an INPUT (`SHP/Main Pipe/Main Pipe.shp`), both legs draining to their meeting point at (449125, 2567769) — 792 m outside the boundary — then on to the existing STP. **A sewer network is a hierarchy**, learned from NAMA's own manhole IDs (`5A-2-TM-MH185` = trunk main, `5A-2-SM.2-MH391` = sub main): in the built network 91% of laterals drain into another lateral and only ~16 things touch the trunk. W7 had no sub-main tier and 30 things touched the main pipe; W8 has **20 joins and ZERO pumping stations** (14 or fewer costs a pump, below 8 it starts crossing dual carriageways). Every pipe carries a `TIER` field. Gradients are laid at **round 0.05 % steps** so the drawing matches the levels, with `SLOPE_PCT` in every output. Test area: **1,415 chambers / 71.6 km / Qadf 3,620 m3/d / peak 96 L/s / deepest 10.45 m / ZERO pumping stations** / 3 checks failing. W7 and earlier are superseded.
 
-**Learned from the built network** (`W8/docs/LEARNING_FROM_ASBUILT.md`, and the earlier `W7/docs/CALIBRATION_vs_EXISTING.md`): gradients (5.00 vs 4.98 mm/m) and depths match NAMA's 188.6 km as-built. Three lessons: tighter manhole spacing does NOT keep trenches shallower (tested, rejected); the built network almost never runs along a dual carriageway (0.1%), which confirms the rule; and the hierarchy is invisible in gradient/depth/spacing statistics — matching averages says the hydraulics are right and nothing about whether the layout is buildable.
+**Learned from the built network** (`W8/docs/LEARNING_FROM_ASBUILT.md`, `W7/docs/CALIBRATION_vs_EXISTING.md`, and re-measured in `W11b/py/w11b/asbuilt.py`). **RETRACTED 2026-09-03: the claim that our gradients match the as-built at 5.00 against 4.98 mm/m does not hold.** Re-measured after filtering the status field, the built network's laid gradient is **mean 8.89 mm/m, median 6.00**, and it is **95.45 km built (63.20 km levelled), not 188.6 km** - the larger figure counted proposals, including two schematic records at over 300 m per vertex. Three lessons: tighter manhole spacing does NOT keep trenches shallower (tested, rejected); the built network almost never runs along a dual carriageway (0.1%), which confirms the rule; and the hierarchy is invisible in gradient/depth/spacing statistics — matching averages says the hydraulics are right and nothing about whether the layout is buildable.
 
 **Guideline values are quoted from the source, never from memory** (user 2026-08-23). `TUTORIALS/T02` carries every design constraint with the page it came from. Verification corrected three loose quotes: the depth rule is a RECOMMENDATION of "approximately 10-12 m" COVER triggered by excavation COST; G203 Table 6 sets a 45 m maximum lateral length that the code declares but never enforces; Merrimack is stated only for catchments over 100 properties.
 
 Settled since 2026-08-18 (all in `W5/docs/CRITERIA_UPDATE_R1.md`): terrain = 0.5 m VRT (rule 6) · dual carriageways excluded, not collapsed (rule 7) · farms narrowed — the farming carries no load, the houses on it do · load basis land-use driven, not blanket per-capita · Tab 12 drivers derived until the treated land-use data arrives.
 
-**Next:** run the pipeline over the full study area, then three concept options, the SewerGEMS referee run, and F2 georeferencing. Open items: 4 pipes crossing a dual carriageway with no underpass, 22 chambers that cannot be freed from a plot because the road centreline runs through it, 236 plots whose only frontage is a dual carriageway (user decision), and a coordinate for the surviving roundabout. The user works remotely — deliverables must be committed AND pushed.
+**Next (2026-09-03):** fix the 42 badly-placed outfalls (389.5 km discharging with more than half their catchment below the outlet), reconcile the two station counts, and run the end-to-end test. Then the three concept options and the SewerGEMS referee run. **Do not start a W12** - four restarts have each lost something that worked. The user works remotely, so deliverables are committed AND pushed.

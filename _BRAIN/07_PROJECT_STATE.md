@@ -4,109 +4,52 @@
 ## 1. Project in three lines
 Concept→detailed design + supervision of sewer network, TE network and STP capacity for Ibri Wilayat, Oman (Client NWS, Tender T/2719110/2025, Renardet job 2621). Horizons: start / 2030 / 2055 / ultimate-saturated; ≥3 options each for sewer, TE, STP. Existing STP at E444387 N2563352 (ground ≈327.5 m); ultimate flows ≫ 20,000 m³/d ⇒ STP phasing is the pivotal decision.
 
-## 1b. WHERE THE PROJECT STANDS — 2026-09-02 evening (read this before anything else)
+## 1b. WHERE THE PROJECT STANDS — 2026-09-03
 
-**A new source exists and it is binding: `_BRAIN/08_DESIGN_PHILOSOPHY.md`.** Rules only, no
-measurements. `02` says whether a design is LEGAL; `08` says how to make it GOOD. Read it
-before laying out any network. It carries: six objectives in priority order with **hydraulic
-minimality LAST**; the order of design with **the trunk designed end to end before anything
-drains to it**; the hard constraints H1–H16 and preferences P1–P6; the **cap-and-veto ladder**
-for pumping; and the **two-pass strict-then-review** method.
+**W11b IS THE LIVE DESIGN. W11a is superseded.** W11b borrows nothing: every module is under
+`W11b/`. Run from `W11b/py`: `s1_roads → s2_orient → s3_hierarchy → s4_chambers → s5_flows →
+s6_levels → s7_pumps → s8_export`, then `make_overview.py`.
 
-**W11a RUNS END TO END and audits 18 pass / 4 FAIL / 0 cannot-run** (W10: 3 / 12 / 7). The
-zero is the harder half — every check can now be *evaluated*. The one stage that was missing,
-flow accumulation, is written: nothing had joined *"a load sits at every chamber"* to *"this
-pipe carries X"*. The ten stages were built in parallel against the contract and that step
-fell between two of them — a fair warning about how a parallel build fails.
+**1,489.7 km · 56,930 chambers · 195 subnetworks · 41 vortex drop shafts · 26.3 % draining
+against the ground.** Nothing below minimum cover, nothing over the depth-of-flow limit,
+nothing over 3.0 m/s.
 
-**The biggest defect is NOT in the audit table: 42.5 % of the length (737.7 km) drains
-UPHILL**, which is why the design wants 2,449 vortex drop shafts where the built network has
-37. Stage 4 tree orientation, and the next substantial job.
+**On the two measures that show whether a layout follows the ground, W11b beats the built
+network**: 0.028 drop shafts per km against NAMA's 0.585, and 26.3 % uphill against 34.1 %.
+W11a was 1.475/km and 42.5 %.
 
-| Stage | State | Headline |
-|---|---|---|
-| 1 scope | runs | 187 settlements, all central. The G201-p80 25 km fall-back never fires — the furthest zero-load settlement is 6.34 km from the core |
-| 2 corridors | runs | 26,450 corridors, 2,234.8 km, **311 components** (was 1,381 before H1a, 784 after, 311 after the cut hole was healed); **2,539 crossings in a published register**, not just ids; R4 PASSES on the published corridors |
-| 3 trunk | runs | 85.55 km gravity, 758 chambers, DN200–1700, **73,442 m³/d and 1,350 L/s at the works**, 3 stations, deepest cover 11.86 m, nothing past the 12 m cap |
-| 4 hierarchy | runs | **261 drainage systems, trunk in 4 pieces. H15 and H16 both PASS** — 261 components, exactly one outfall each, declared topology matches drawn. First time W11a has satisfied the topology rules |
-| 5 chambers | runs | 50,033 chambers, 27.5/km, 36 m mean spacing; 2,788 inlets under 90° |
-| 5b tertiary | runs | 52,188 m³/d reaches a chamber; 22,513 m³/d over 24,554 plots does not |
-| **5c flows** | **new, being made to complete** | accumulates load, properties and upstream length down the graph; Merrimack above 100 properties, held below |
-| 5c flows | runs | accumulates load, properties and upstream length; Merrimack above 100 properties, held below |
-| 6 levels and sizes | runs | 49,377 reaches, DN200–1700, 226 stations, deepest chamber 31.30 m, 1,617 backdrops and **2,449 vortex shafts** |
-| 7 stations | runs | 98 published; **located, not designed** — zero duty flow, zero rising mains |
-| 8 packages | runs | 502 packages; seam, length and plot-count checks still failing |
-| 9 export | runs | shapefiles, DXF, KMZ, 19 profiles, 9 schedules, SewerGEMS |
+### The fix that got it there, and the lesson
 
-### Three rules were wrong, and fixing them mattered more than any code change
+The engineer noticed the built network needs no pump in the test area, W8's design of the same
+ground needs none, and W11b published three. **They were leftovers.** The solver only ever
+ADDED stations — one placed on an early pass survived even after later passes recovered the
+fall that made it necessary. **W8 had already learned this and cleared its pump flags at the
+top of every pass, with the reason in a comment.** W11b did not carry it.
 
-**H1a — a wadi crossing is legal.** G203-p30 §4.4.1 and p33 forbid pipes and chambers **in**
-a wadi because of washout. **G201 §9.3 prints a full procedure for crossing one** and
-G203-p52 §8.2.4 gives the cover, 1.5 m to crown against 1.3 m normally. We were reading a
-prohibition on *presence* as a prohibition on *passage*. Deleting every crossing severed the
-corridor network into **1,381 pieces** and the trunk into 108, against **2** when the same
-alignment is noded on its own — the fragmentation was manufactured by the rule, not found in
-the ground. A crossing is now legal when the contact is one contiguous run, square within a
-stated skew tolerance, carries **no chamber** on wadi ground, has 1.5 m cover, and is
-scheduled with a `CROSS_ID`. The along/across test is geometric — probe perpendicular to the
-pipe until both banks are found — so **no length threshold is invented**; the skew tolerance
-is the one number and it is declared as **ours**, not a guideline's.
+Traced: PS006 had 23.1 m of ground fall against 19.5 m of need and a deepest pipe of 3.92 m;
+the other two had nothing draining into them. `solve()` now prunes — **83 stations → 14
+demanded, 0 in the test area.**
 
-**H16 — topology is written down, never inferred.** Every pipe publishes `US_NODE` and
-`DS_NODE`, and the declared graph must match the drawn geometry. **W10 never had 310 loops**:
-it has zero at any tolerance a GIS would use, and 311 only at a 2.5 m snap. Same file,
-squeezed harder. Disconnection and loops were one defect, not two.
+### The rule this produced
 
-**H15 — corrected.** It required a single connected component, which no design with a
-satellite works can be, so a compliant design failed a blocking check. It now reads: zero
-loops, and **each component terminates at exactly one outfall**.
+**A design decision that is only ever ADDED is a design decision that is never re-examined.**
+Anything a pass can add, a later pass must be able to take away, and the stage must publish
+how many it removed. This belongs beside the cap-and-veto ladder in the philosophy.
 
-### The auditor had six defects of its own
+### Open, and named
 
-One was a build-stopper: it demanded **50 mm more cover than the criteria function lays**, at
-every diameter, so a correctly built design failed a BLOCKING check on every reach. It also
-sampled wadi ground at the **midpoint only** and missed 40 % of the contact; scored the hazard
-grid's nodata as a pass (**nodata is −9999.0, which IS finite**, so the finiteness guard let
-it through); named a field 11 characters long where a shapefile truncates at 10; keyed its
-diameter floors with spaces so a dictionary miss silently skipped the pipe; and dropped every
-part of a MultiLineString but the first.
+Two station counts disagree (14 demanded, 47 designed — s7 reads a pre-prune list) · 15 of the
+47 have nothing upstream · **42 components discharge with more than half their catchment BELOW
+the outlet, 389.5 km, worst 22.8 m above its own low point** · 18 subnetworks stop short of the
+main pipe, worst by 1,873 m · 5,521 plots cannot reach their chamber on gravity · 31 areas
+holding 7,355 plots are not reached at all · `s8_export` fails its own contract and cannot
+write while QGIS holds the file.
 
-**Every one was found by two things DISAGREEING, never by review** — the auditor against the
-criteria, a stage against the auditor, the declared graph against the drawn one. Where a stage
-needs the auditor's answer it now **calls** the auditor; where two samplers still differed at
-the boundary, the stage asks the auditor which rows fail and removes exactly those. That is
-the method to keep when the final data arrives and the pressure is to ship a network.
+### First tests in the project's history
 
-**W10 remains NOT ISSUABLE** — 3 pass, 12 FAIL, 7 cannot run against the corrected auditor.
-Its **findings stand**; its **design does not**.
-
-### The data gaps that decide more than we can
-
-**51 % of the network has no wadi answer at all.** The 50-year hazard grid does not cover the
-study area. Every wadi statement is a statement about the tested half, and that share is now
-published beside every result. Full-coverage flood mapping is a **data request**, not a
-modelling choice.
-
-**97 % of self-cleansing rests on the tractive route**, whose τ the guideline never gives
-(GAP-9, assumed 1.0 Pa; at 2.0 the required gradient rises **2.35×**). Largest open assumption
-in the hydraulic design, and one question to one client.
-
-**The existing works inlet invert is unknown.** H14 says an existing structure's invert is
-fixed and the design yields to it, soffit to soffit. The trunk is laid to its own level —
-**319.94 m aOD, 8.78 m below ground at the works** — and that level is published for
-confirmation rather than agreed.
-
-**THE TOR REQUIRES EVERY PLOT TO BE SERVED.** Scope p4 item 3. An earlier assumption that 31
-marginal settlements would be dropped is **WITHDRAWN**. But *serviced* is not *connected to
-one network* — the question is which **system** serves each, decided on life-cycle cost. Scope
-p12 also makes pumping minimisation a **client requirement**.
-
-**Waiting on:** the draftsman's final treated lines, and the GIS expert's clean land-use data.
-
-**`W11a/report/W11a_Design_Review_R1.docx`** carries the review and the recommendations,
-ranked. On **BAT**: carry conveyance *and* a satellite works into the appraisal rather than
-deciding now — manning is 86 % of a station's life-cycle cost and energy 0.4 %, so any
-comparison ranking on energy or capital alone gets that question wrong.
+Six files, written against the bugs that actually happened rather than against the code as
+written — including one that fails if a published column is constant where it should vary,
+which would have caught a fabricated crossing angle the moment it was written.
 
 ## 2. Settled engineering doctrine (user-agreed, binding for design work)
 1. **Load allocation** (agreed 2026-08-15): *plots at saturation size the pipes; capped-and-spilled zone totals at dated years size the STP phases; the two meet only at trunk nodes.*

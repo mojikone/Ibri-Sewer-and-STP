@@ -1,89 +1,93 @@
-# What is current, and what is not — checked 2026-09-02, end of session
+# What is current, and what is not — checked 2026-09-03
 
 **READ THIS FIRST, THEN `07_PROJECT_STATE.md`, THEN `08_DESIGN_PHILOSOPHY.md` BEFORE LAYING
 OUT ANY NETWORK.**
 
-## The state in one paragraph
+## W11b IS THE LIVE DESIGN. W11a IS SUPERSEDED.
 
-**W11a is a COMPLETE design that runs end to end** — scope, corridors, trunk, hierarchy,
-chambers, tertiary connections, flows, levels and sizes, stations, packages, and a full
-export (shapefiles, DXF, KMZ, profiles, nine schedules, SewerGEMS). Run it with
-`s1 → s2 → s3 → s4 → s5 → s5b → s5c → s6 → s7 → s8 → s9` from `W11a/py`, then
-`python run_audit.py W11a`. **It audits 18 pass / 4 FAIL / 0 cannot-run**, against W10's
-3 / 12 / 7. The zero is the point: every check can now be *evaluated*.
+W11b borrows nothing — every module lives under `W11b/`. Run it from `W11b/py`:
+`s1_roads → s2_orient → s3_hierarchy → s4_chambers → s5_flows → s6_levels → s7_pumps →
+s8_export`, then `make_overview.py` for the KMZ and DXF.
 
-| | W10 | W11a |
-|---|---|---|
-| Audit | 3 pass / 12 FAIL / **7 cannot run** | **18 / 4 / 0** |
-| Network | 1,883 km in 7,919 pieces | **1,731.7 km, 247 components, one outfall each** |
-| Chambers | — | 49,624, DN200–1700 |
-| Connected load | — | **89.9 %** |
-| Stations | 19–21 | 226 demanded by the depth cap |
+| | W10 | W11a | **W11b** | NAMA built |
+|---|---|---|---|---|
+| Gravity network | 1,883 km | 1,731.7 km | **1,489.7 km** | 95.4 km |
+| Chambers | — | 49,624 | **56,930** (38.2/km) | 34.2/km |
+| **Vortex drop shafts** | — | **2,449** | **41** (0.028/km) | **37** (0.585/km) |
+| **Draining against the ground** | — | **42.5 %** | **26.3 %** | **34.1 %** |
+| Climb ÷ descent | — | 0.747 | **0.416** | 0.483 |
+| Below minimum cover | 45.9 km | 0 | **0** | 35.9 % of its length |
+| Over the d/D limit | 66 | 168 | **0** | — |
+| Over 3.0 m/s | — | 0 | **0** | — |
 
-## THE BIGGEST OPEN DEFECT — and it is not in the audit table
+**On the two measures that say whether a layout follows the ground — drop shafts and uphill
+drainage — W11b is better than the built network.** That is the first time any iteration has
+managed it.
 
-**42.5 % of the network length (737.7 km) drains UPHILL.** 7,061 m of cumulative climb
-along the flow path against 10,177 m of descent. A reach carrying flow uphill buys its rise
-in depth at the minimum gradient for its whole length, then pays again giving the depth back.
+## THE FIX THAT MATTERED, and the lesson behind it
 
-The diagnostic is the drop-structure count: **the design wants 2,449 vortex drop shafts
-where NAMA's built network has 37.** No levelling arithmetic fixes this. It is a **stage 4
-tree-orientation** problem and it is the next substantial job. Philosophy §4 now states the
-rule and requires the quantity to be reported.
+The engineer spotted it by eye: the built network has **no pumping station in the test area**,
+W8's design of the same ground has none, and W11b published **three**.
 
-## The four audit failures, all real and all named
+They were **leftovers**. The solver works in passes — level, sweep the crowns, set the drops,
+relay the runs to recover fall, then test the depth cap and add a station where it is
+breached. **It only ever ADDED.** A station placed on pass 1, before any of that recovery,
+survived to the end even where the ground turned out to have enough fall all along.
 
-| Check | What |
+**W8 already knew**, and said so in a comment two weeks earlier: *"a pump placed in an earlier
+pass may not be needed once diameters change, and a stale flag would double-count stations."*
+It cleared every flag at the top of every pass. W11b did not carry the lesson.
+
+Traced along the worst path into each test-area station:
+
+| | verdict |
 |---|---|
-| H1 / R3 | 8 reaches run along a dual carriageway (0.36 km) |
-| H10 | 2,984 inlets below 90° — each needs a purpose-made chamber with a swept channel |
-| R4 | 295 reaches run ALONG a wadi; 11 cross one unscheduled; **1,170 cannot be decided** because the far bank lies outside the hazard grid |
+| PS006 | ground gives **23.1 m** of fall, the pipe needs **19.5 m**. Gravity works. Deepest pipe on the run **3.92 m** against a 12 m cap |
+| PS030 | **nothing** draining into it |
+| PS086 | **nothing** draining into it |
 
-## Also open, not audited
+`solve()` now prunes. Stations **83 → 14 demanded**, and **0 in the test area**.
 
-- **The 226 stations are located, not designed.** `Q_DUTY_LS = 0` on all of them, zero rising
-  mains published, `LAND_M2` a flat 100 m² constant. Nothing routes a rising main for a
-  station that is a gravity *terminal*.
-- **Two study-area boundaries are in use** — 439.8 km² (`MoHUP_DATA/Project_boundary.shp`)
-  and 531.4 km² (`Study area/Project Boundary.shp`). Eight figure modules normalise against
-  the smaller one; the pipeline scoped itself on the larger. **One must be chosen.**
-- **The trunk figures (FT01–FT11) draw stage 3's intermediate**, not the published trunk.
-- **The design review report's numbers are stale** — built before the last three fixes
-  (R4's probe, the measured crossing angle, DN_SERIES). Rebuild with
-  `python W11a/report/build_review.py`.
-- **OPEN-S2-2**: stage 2 publishes its own displaced copy of the trunk (669 corridors,
-  80.27 km, 58 pieces), which is why the weld must strip 5.8 km of shadow.
+## Open defects, measured and named
 
-## Waiting on a HUMAN — nothing else moves these
+| What | Size | Whose |
+|---|---|---|
+| **The two station counts disagree** — levelling demands 14, the pump stage designed 47 | 33 | s7 reads a list from before the prune |
+| **15 of those 47 have nothing draining into them** | 15 | marked on both drawings |
+| **42 components discharge with more than half their catchment BELOW the outlet** | 389.5 km, worst outlet 22.8 m above its own low point | s2/s3 — an outfall in the wrong place |
+| 18 subnetworks do not reach the main pipe | worst 1,873 m short | drawn on the DXF with the distance in words |
+| Plots that cannot drain to their chamber on gravity | 5,521 of 53,018 | G203-p18 Tab 5 |
+| Areas the network does not reach | 31 areas, 7,355 plots | boundaries drawn on both files |
+| Deepest excavation past the 12 m cover cap | 19.78 m | exits excuse it; needs review |
+| Chambers per km slightly above the built band | 38.2 against 33.3–36.8 | more chambers than NAMA builds |
+| `s8_export` fails its own contract, and cannot write while QGIS holds the file | — | drawings are built from the stage layers instead |
+
+## What W11b has that no earlier iteration did
+
+**Tests.** Six files, written against the bugs that actually happened — two constants for one
+quantity; no-data read as safe ground; **a published column that is constant where it should
+vary**, which would have caught a fabricated crossing angle the moment it was written; a
+length field that disagrees with its own geometry; and dead code with a runtime bound.
+
+**Pumps that are designed** rather than located: duty flow, lift, wet-well volume, motor size
+and life-cycle cost, plus 47 rising mains. A survey of 839 sewer repositories found nothing
+upstream that sizes a wet well or selects a pump — it came from the Oman standards directly.
+
+## Waiting on a human
 
 **The engineer decides:**
-1. **72 trunk chambers sit in a class-5/6 wadi**, with ~500 m of the trunk running down it
-   near E450 050 / N2 569 400. It is the client's own drawn alignment and is an INPUT.
-2. **Which study boundary** is the project's.
-3. **Go / no-go on the stage-4 tree re-orientation.**
+1. The **42 badly-placed outfalls** (389.5 km) — an outlet above its own catchment is a layout
+   decision, not an arithmetic one.
+2. The **18 subnetworks** that stop short of the main pipe.
+3. The **31 unconnected areas** — serve them another way, or not at all.
 
-**NWS must supply:**
-- **Full-coverage 50-year flood mapping.** 52 % of wadi samples fall outside the grid, so
-  every wadi statement is about the other half.
-- **The design tractive stress τ.** 91 % of self-cleansing rests on an assumed 1.0 Pa
-  (GAP-9); at 2.0 the required gradient rises **2.35×** and every depth changes.
-- **The existing works inlet invert.** The trunk is laid to its own 319.94 m aOD, 8.78 m
-  below ground, unconfirmed — at the deepest and most expensive end of the scheme.
-- **Confirmation of DN1400–2400** (their own tables print these sizes; extending the series
-  cleared 168 d/D failures).
-- Decision on the **236 plots whose only frontage is a dual carriageway**.
+**NWS must supply:** the design tractive stress τ (we hold 1.0 Pa, the engineer's decision,
+flagged everywhere — at 2.0 the required gradients roughly double); the existing works inlet
+invert; and confirmation of DN1400–2400.
 
-## What was retracted today — do not re-quote these
-
-| Retracted | Truth |
-|---|---|
-| "W10 has 310 loops" | **Zero** at any tolerance a GIS would use. 311 appears only at a 2.5 m snap |
-| Infiltration 1,259 L/s | **14.5 L/s.** Summing per-reach values counts every upstream km once per downstream reach |
-| 1,051 chambers on wadi ground | **2,354** — the old figure predated stage 5 minting the chambers |
-| "30 % of load fails the 45 m rule" | The rule owns **8.59 %** |
-| `ANGLE_DEG = 90°` on 3,290 crossings | **Fabricated.** Measured: min 0.00°, 23 under 45° |
-| H1a cited G201-p86 for banning chambers | That is a **valve-chamber** clause on a force main. The authority is G203-p30 §4.4.1 / p33 |
-| H1a's 1.5 m cover as a guideline value | It is the **force-main** figure (G203-p52 §8.2.4). Adopted for gravity as OUR decision |
+**Settled by the engineer, do not re-open:** τ = 1.0 · flood no-data is DRY HIGH GROUND ·
+the 72 trunk chambers in a class-5/6 wadi are an ACCEPTED risk, flagged · the road DXF is
+clean, use all lines · no crossings manufactured for now.
 
 ## Live — use these
 
