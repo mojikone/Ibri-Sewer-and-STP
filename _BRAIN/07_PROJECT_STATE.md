@@ -1,10 +1,57 @@
 # PROJECT-STATE — single-file orientation for any new session
-**Companion page: `_BRAIN/00_CURRENT.md` lists which files are live and which are superseded. LIVE DOCUMENT (user-mandated): update with every substantive commit, alongside README.md — see CLAUDE.md rule 12. Last updated 2026-08-15. Read this FIRST, then 02_DESIGN_CRITERIA before writing any number.**
+**Companion page: `_BRAIN/00_CURRENT.md` lists which files are live and which are superseded. LIVE DOCUMENT (user-mandated): update with every substantive commit, alongside README.md — see CLAUDE.md rule 12. Last updated 2026-09-06. Read this FIRST, then 02_DESIGN_CRITERIA before writing any number.**
 
 ## 1. Project in three lines
 Concept→detailed design + supervision of sewer network, TE network and STP capacity for Ibri Wilayat, Oman (Client NWS, Tender T/2719110/2025, Renardet job 2621). Horizons: start / 2030 / 2055 / ultimate-saturated; ≥3 options each for sewer, TE, STP. Existing STP at E444387 N2563352 (ground ≈327.5 m); ultimate flows ≫ 20,000 m³/d ⇒ STP phasing is the pivotal decision.
 
-## 1b. WHERE THE PROJECT STANDS — 2026-09-03
+## 1b. WHERE THE PROJECT STANDS — 2026-09-06
+
+**W12 IS THE LIVE DESIGN. W11b is superseded.** **W12 is a COPY of W11b, revised** — 28 files
+inherited plus W11a's auditor, package renamed `w11b` → `w12`, all compile and import. Run from
+`W12/py`. The rule was settled by the engineer on 2026-09-06: *"where did I say do not carry the
+scripts from the previous working folder to the next? It is obvious the work is growing, not
+starting from scratch."* Reading rule 1 as "inherit nothing" cost two iterations — W10 kept one
+string from W8 across 36 scripts and lost its auditor; W11b lost W8's pump-flag rule. Sixteen
+inherited docstrings still said "W12 BORROWS NOTHING" and were rewritten.
+
+**Two new `_BRAIN` sources, both binding:**
+- **`09_INHERITANCE.md`** — the ledger a new `W#` ticks off. 28 findings, each with what it cost
+  when it was lost. **Five are enforced by nothing**, and one is failing now: the levelling stage
+  demands 14 stations while the pump stage designed 47.
+- **`10_ASBUILT_CALIBRATION.md`** — 20 gates measured from the built 2006 network, six
+  corrections to numbers in our own live documents, and three data requests. Method and full
+  record in `W12/docs/ASBUILT_STUDY.md`: six independent studies, every claim re-measured by a
+  second engineer told to refute it — **73 claims, 25 survived, 44 corrected, 4 refuted.**
+
+**W12 IS A CONCEPT-STAGE DESIGN.** Everything stays pure hydraulic until the layout is fixed;
+`08_DESIGN_PHILOSOPHY.md` §9 carries the rules and the list of what is switched off. The layout
+rules that changed: follow the ground, clamped between the guideline minimum and the
+max-velocity slope, with **every drop flagged with the reason it exists**; an outfall at the
+**lowest point where a subnetwork MEETS the main pipe**, and **none crossing it and growing
+past** — W11b had two subnetworks holding a quarter of the network, both touching the trunk at
+1.1 m and 3.1 m and discharging elsewhere; plot connectability rather than designed house
+connections; and naming as `I-S03-SM-M012`.
+
+**On pumping, two rules the philosophy did not have.** A station's position is **chosen, not
+triggered** — candidate sites scored by how much catchment each captures, because station cost
+correlates 0.99 with power and **86 % of life-cycle cost is manning against 0.4 % energy**; the
+2006 designer put **one station in 95.45 km**. And **a rising main lifts to the nearest point
+where gravity resumes, not to the works** — the built 10.0 km main is explained by there being
+no gravity network to receive it in 2006. **None of W11b's 47 pump locations are inherited.**
+
+**What the built network teaches, in one line:** copy the plan geometry — 30 m set-out, 98.13 %
+straight two-point reaches, square branch inlets, ~160× dual-carriageway avoidance, the valley
+followed and the severe channel avoided 5.3× — and **copy nothing about size or level**: tier
+explains 100.0000 % of diameter variance, sub-mains are flatter than their own laterals, 43 % of
+levelled length is below minimum cover, and 63.5 % of the trunk fails at saturation.
+
+**Also fixed:** `_SETUP/check_live_docs.py` had a hardcoded folder list ending at `W11`, so it
+reported "live documents are current" on the day W12 was created while comparing against a
+four-day-old commit. It now discovers the folders.
+
+---
+
+## 1c. SUPERSEDED — WHERE IT STOOD 2026-09-03
 
 **W11b IS THE LIVE DESIGN. W11a is superseded.** W11b borrows nothing: every module is under
 `W11b/`. Run from `W11b/py`: `s1_roads → s2_orient → s3_hierarchy → s4_chambers → s5_flows →

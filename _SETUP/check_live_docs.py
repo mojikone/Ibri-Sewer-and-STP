@@ -17,9 +17,26 @@ a live-document row on account of it.
 import subprocess
 import sys
 
-WORK = ["W1", "W2", "W3", "W4", "W5", "W6", "W7", "W8", "W9", "W10", "W11",
-        "TUTORIALS"]
-LIVE = ["_BRAIN/07_PROJECT_STATE.md", "README.md"]
+def _work_folders():
+    """Every iteration folder that exists, found rather than listed.
+
+    This was a hardcoded list ending at "W11". W12 was created on 2026-09-06 and
+    the check went blind to it the same day — it reported "live documents are
+    current" while comparing against a commit four days old. A list of folders
+    goes stale exactly when a new folder appears, which is the one moment the
+    check matters.
+    """
+    import os
+    import re
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    found = sorted(d for d in os.listdir(here)
+                   if re.fullmatch(r"W\d+[a-z]?", d)
+                   and os.path.isdir(os.path.join(here, d)))
+    return found + ["TUTORIALS"]
+
+
+WORK = _work_folders()
+LIVE = ["_BRAIN/00_CURRENT.md", "_BRAIN/07_PROJECT_STATE.md", "README.md"]
 
 
 def last_commit(paths, skip_minor=False):

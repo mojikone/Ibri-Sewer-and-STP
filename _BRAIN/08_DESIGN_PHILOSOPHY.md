@@ -297,6 +297,15 @@ chambers**. It is never clipped: clipping satisfies a validator by lying.
 **And the station goes at the FOOT of the climb, not at the junction.** A drop is flow going
 down; a station lifts it up. One where they meet is physically incoherent.
 
+**AND ITS POSITION IS CHOSEN, NOT TRIGGERED.** A station placed where a pipe happened to cross
+the depth cap is an accident of terrain, not a decision. Candidate sites are scored by **how
+much catchment each can capture** against the lift and the main it needs — because station cost
+correlates **0.99 with power and 0.72 with head**, and **86 % of life-cycle cost is manning, 0.4 %
+is energy**. Twenty small stations cost about twenty times one large station however little each
+lifts. The 2006 designer put **one station in 95.45 km** and took a third of the town through it.
+Ours must be searched for the same way: find where gravity genuinely fails, then cover as much of
+it as possible with as few stations as possible.
+
 **Everything past 12 m is flagged**, with its depth, its length, which exit allowed it, and
 what it waits on: a **manufacturer's rating** for that cover, and **NWS's station
 establishment cost**. G203 gives no depth because that is a pipe question, and defines
@@ -322,6 +331,16 @@ produced a 35 m drop that every rule in this document permitted.*
 - **Rising mains** are sized on **pump duty**, not arriving flow; duty comes from the wet-well
   cycle. 0.75–2.5 m/s, air valves at summits, washouts at low points. A rising main is
   **anaerobic by definition**, so its discharge chamber is a septicity problem, not a pipe end.
+- **A RISING MAIN LIFTS TO THE NEAREST POINT WHERE GRAVITY RESUMES — NOT TO THE WORKS.** The
+  discharge point is the nearest chamber from which gravity can carry the flow onward; from
+  there it is a gravity sewer again. **Long force mains are not a model to copy.** The built
+  network's **10.0 km** rising main straight to the works is explained by there being no gravity
+  network to receive it in 2006, not by it being right: retention time makes it anaerobic (§6
+  already names septicity a design driver), it needs an air valve at every summit and a washout
+  at every low point, and it is a single point of failure for everything upstream of it.
+  **So the two objectives are: the FEWEST stations, each with the SHORTEST main the receiving
+  gravity network allows.** Where they conflict — a big catchment whose nearest gravity point is
+  far — state the trade with both numbers rather than resolving it silently.
 - **A station is also a commissioning device.** One that makes a package independently
   buildable earns its place even when the trench would be cheaper — the only case where
   objective 4 beats objective 5.
@@ -396,7 +415,30 @@ kind of question it exists to answer. Deciding it here would pre-empt the apprai
 
 ---
 
-## 9. Where the evidence is
+## 9. Concept stage — what applies now, and what is switched off
+
+**Settled with the engineer 2026-09-05/06.** Everything stays **pure hydraulic** until the
+layout is fixed. We are comparing scenarios, so a cheap comparable run beats a polished one.
+
+| | Concept-stage rule |
+|---|---|
+| **Levels** | **Follow the ground.** The laid slope is a clamp: never flatter than the guideline minimum for its own bore, never steeper than the slope that meets maximum velocity, otherwise the ground's own fall. It is best practice to break the slope to hold the velocity — so where the ground outruns the pipe, compute the slope that meets the cap, place chambers to it, and take the surplus as a drop. **Every such drop is flagged with the reason it exists.** |
+| **Spacing** | Divide a run into equal parts — 230 m is 80/80/70, never 100/100/30 |
+| **Outfalls** | A subnetwork joins the main pipe at the **lowest point where it MEETS** it. **No subnetwork crosses the main pipe and grows past it** — that produced two subnetworks holding a quarter of the whole network, both touching the trunk at 1.1 m and 3.1 m and discharging elsewhere. More, smaller subnetworks is the right answer. Where there is no street at the low point, connect at the nearest usable place and **record the distance from the true low point** |
+| **Main-pipe chambers** | May be nudged to the nearest road crossing, within the spacing band, so connections arrive square instead of oblique. A constructability rule, not a hydraulic one |
+| **Plot connections** | **Not designed.** One simple gravity check per plot: the connection leaves **below** ground, runs to a **chamber**, and loses fall over its own length — not a level comparison at the plot centroid. Flag every plot that cannot connect, with a short note on what it would take |
+| **Flag, do not solve** | Anything that cannot be resolved at concept is named with its reason and its size, never dropped |
+| **Naming** | Town letter (articles dropped; on a clash **both** towns extend to two letters, then three), subnetwork, tier, element, zero-padded: `I-S03-SM-M012`. Manholes `M`, pumps `PMP`, gravity conduits `C`, force mains `P`. A conduit is named for its **upstream** manhole. Elements outside a town take the letter of the first town **downstream** of them |
+| **Outputs** | DXF and GeoPackage carrying the same five layers and the same colours: gravity conduits, manholes, pumps, force mains, and subnetwork polygons over the plots they serve — with unserved areas flagged and reasoned. Subnetworks in distinct colours, pipe weight increasing with size, flow direction, drop manholes, and the chamber where each subnetwork meets the main pipe |
+
+**Switched OFF until the concept is fixed and the option is approved** — not abandoned:
+house connection design (riders, laterals, property and house connection chambers), motor
+selection, life-cycle costing, the excavation-versus-pumping break-even, phasing and packaging,
+the SewerGEMS referee export, and swept-channel chamber detail.
+
+---
+
+## 10. Where the evidence is
 
 `W10/docs/research/` — the hierarchy rules measured from the as-built, the corridor quality
 assessment, what to sewer, the depth-versus-pumping economics, the solver comparison, the
