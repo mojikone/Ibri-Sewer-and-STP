@@ -389,7 +389,7 @@ def build_stages(stages: Sequence[Stage], verify_only: bool) -> int:
                     f"  A stage that returns 0 and writes nothing is a stage silently "
                     f"doing nothing (philosophy sec 8, provenance check 3).")
             RESULTS.append(Result(f"stage {s.n} published {g}", True, 0.0,
-                                  f"{p.stat().st_size / 1e6:,.1f} MB"))
+                                  f"{p.stat().st_size / 1e6:,.1f} MB" if p.exists() else "NOT WRITTEN"))
 
         va = s.verify_argv
         if va is None:

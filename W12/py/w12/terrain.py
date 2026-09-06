@@ -67,7 +67,58 @@ CLAUDE = W12.parent                        # .../Hydraulic/Claude
 HYDRAULIC = CLAUDE.parent                   # .../Hydraulic
 PROJECT = HYDRAULIC.parent                  # .../2621 Ibri Sewer STP
 
-RUN = W12 / "run" / "terrain"
+def _resolve_run_dir() -> Path:
+    """Where the terrain products live.
+
+    Terrain products are DERIVED FROM THE DEM, not from any design. The DEM has not
+    changed since W11b built them, so the grids are byte-identical whichever iteration
+    computes them - and they cost HOURS and ~25 GB. Hard-coding them inside one
+    iteration folder is the "start from scratch" problem in data form: it makes every
+    new W# pay again for a product that did not change.
+
+    Order:
+      1. $IBRI_TERRAIN_RUN            an explicit override, wins outright
+      2. W12/run/terrain              this iteration's own, if the set is COMPLETE
+      3. the newest sibling W*/run/terrain holding a COMPLETE set - BORROWED, and it
+         says so on stderr every time, with the path. Never silent (philosophy sec 8).
+      4. W12/run/terrain              so a build writes here, not into a superseded folder
+
+    A PARTIAL set never wins. Half-built grids are how a run reads one product from one
+    iteration and its neighbour from another.
+    """
+    import os, sys
+    env = os.environ.get("IBRI_TERRAIN_RUN", "").strip()
+    if env:
+        return Path(env)
+
+    own = W12 / "run" / "terrain"
+    must = ("R5_d8.tif", "R5_acc.tif", "R5_dem.tif")
+
+    def complete(d: Path) -> bool:
+        return d.is_dir() and all((d / m).exists() for m in must)
+
+    if complete(own):
+        return own
+
+    sibs = sorted((c / "run" / "terrain" for c in CLAUDE.glob("W*")
+                   if c.is_dir() and c != W12),
+                  key=lambda d: (d / "R5_d8.tif").stat().st_mtime if (d / "R5_d8.tif").exists() else 0,
+                  reverse=True)
+    for d in sibs:
+            print("", file=sys.stderr)
+            for _m in (
+                f"[terrain] BORROWING terrain products from {d}",
+                "[terrain] they derive from the DEM, not from a design, and the DEM has",
+                "[terrain] not changed - rebuilding costs hours and ~25 GB.",
+                "[terrain] Set IBRI_TERRAIN_RUN to override, or run",
+                "[terrain]   python -m w12.terrain build --grid R5   to own them.",
+            ):
+                print(_m, file=sys.stderr)
+            return d
+    return own
+
+
+RUN = _resolve_run_dir()
 
 # INPUTS -------------------------------------------------------------------------------
 # Rule 6 of Hydraulic/Claude/CLAUDE.md: this VRT is the authoritative elevation source.
