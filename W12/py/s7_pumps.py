@@ -2120,6 +2120,16 @@ def _provenance(source, g, gf, stations, mains, refused,
 
 def _report(stations, mains, refused, blocking, source, funnel=None, trades=(),
             sens=(), cascades=()) -> None:
+
+    # COMPUTED FROM THE PUBLISHED MAINS, never typed. See finding 3.
+    def _below(col, lim=0.75):
+        return int((mains[col].astype(float) < lim).sum()) if col in getattr(mains, "columns", []) else -1
+    n_mains = len(mains)
+    n_1pump = _below("V_1PUMP")
+    n_vmin  = _below("V_MIN_MS")
+    n_duty  = (int(((mains["V_DUTY_MS"].astype(float) < 0.75) |
+                    (mains["V_DUTY_MS"].astype(float) > 2.5)).sum())
+               if "V_DUTY_MS" in getattr(mains, "columns", []) else -1)
     print("\n" + "=" * 86)
     print(f"  STAGE 7 - PUMPING STATIONS AND FORCE MAINS   (stations from: {source})")
     print("=" * 86)
@@ -2197,17 +2207,36 @@ def _report(stations, mains, refused, blocking, source, funnel=None, trades=(),
      a Type 3 three times. The check needs Q_DUTY_LS / N_DUTY. Reported, not worked around;
      s7 does not own contract.py.
 
-  3. "99 rising mains fall below 0.75 m/s at the DESIGN MINIMUM flow". REAL, STRUCTURAL, AND
-     NO DIAMETER FIXES IT. One main can only span a flow ratio of 2.5 / 0.75 = 3.33; on this
-     project peak / design-minimum runs 8 to 13, because the Merrimack peak factor is 2-3 and
-     G203-p40 Table 16 puts the initial minimum at a quarter of average. The three
-     resolutions are the guideline's own and none of them is a size: staged mains (G203-p50
-     sec 8.1, "two or more rising mains may be warranted"), twin mains with a dedicated
-     hydraulic study (G203-p52 sec 8.2.3), or a scheduled flush. Note also that at ONE DUTY
-     PUMP RUNNING - the lowest flow a fixed-speed station ever actually delivers - every one
-     of these mains IS inside the band; `V_1PUMP` on the rising-main layer carries that
-     figure beside `V_MIN_MS`. G203 does not settle which reading governs, so both are
-     published and the ENGINEER decides.""")
+  3. SELF-CLEANSING IN THE RISING MAINS - SETTLED BY THE ENGINEER, 2026-09-06.
+
+     THE GOVERNING CASE IS ONE DUTY PUMP RUNNING, not the design-minimum inflow. The
+     engineer's reasoning, and it is the physics: *"of course for when a pump is running -
+     if the sewage is not enough, no flow can run in force pipes."* A fixed-speed pump
+     delivers its duty or it delivers nothing. The wet well accumulates and the pump starts;
+     the velocity in the main is set by PUMP DUTY and can never be set by inflow. A
+     "velocity at the design-minimum inflow" is therefore a flow that never exists in the
+     pipe - it is an arrival rate, not a pumped rate, and checking a main against it
+     manufactures a failure out of a quantity the main never sees.
+
+     Measured on the PUBLISHED mains, not typed:
+""" + f"""       {n_mains} rising mains, one per station.
+       below 0.75 m/s at ONE DUTY PUMP  (V_1PUMP,   the governing case): {n_1pump}
+       below 0.75 m/s at design-minimum (V_MIN_MS,  published beside it): {n_vmin}
+       duty velocity outside 0.75-2.5 m/s (V_DUTY_MS, G203-p26 / p50):    {n_duty}
+""" + """
+     BOTH COLUMNS STAY ON THE LAYER. V_MIN_MS is kept so the arrival-rate reading is
+     visible and auditable, not deleted because it is inconvenient - but it does not gate.
+
+     A PREVIOUS VERSION OF THIS BLOCK PRINTED "99 rising mains" AS A TYPED CONSTANT. There
+     are 43 mains. The 99 was a stale count from before the prune, reported at the point of
+     writing rather than computed from what was published - which is inheritance-ledger row
+     10 and the same defect that put seven different station counts into circulation. The
+     engineer caught it by noticing that a force main count cannot exceed the pump count.
+
+     If a main ever DOES fall below the band at one duty pump, no diameter fixes it: a single
+     main spans a flow ratio of only 2.5 / 0.75 = 3.33. The guideline's own answers are
+     staged mains (G203-p50 sec 8.1, "two or more rising mains may be warranted"), twin mains
+     with a dedicated hydraulic study (G203-p52 sec 8.2.3), or a scheduled flush.""")
     else:
         print("  none")
     print()

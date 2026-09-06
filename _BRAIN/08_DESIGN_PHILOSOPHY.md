@@ -338,6 +338,20 @@ produced a 35 m drop that every rule in this document permitted.*
   network to receive it in 2006, not by it being right: retention time makes it anaerobic (§6
   already names septicity a design driver), it needs an air valve at every summit and a washout
   at every low point, and it is a single point of failure for everything upstream of it.
+- **SELF-CLEANSING IN A RISING MAIN IS JUDGED AT ONE DUTY PUMP RUNNING, never at the
+  design-minimum inflow.** Engineer, 2026-09-06: *"of course for when a pump is running - if
+  the sewage is not enough, no flow can run in force pipes."* A fixed-speed pump delivers its
+  duty or it delivers nothing. The wet well accumulates and the pump starts, so **the velocity
+  in the main is set by pump duty and can never be set by inflow.** A velocity computed at the
+  design-minimum *arrival rate* is a flow the pipe never sees, and testing against it
+  manufactures failures: on the first W12 run it condemned **all 43 mains**, where at one duty
+  pump **none** of them is below 0.75 m/s. Publish both — `V_1PUMP` governs, `V_MIN_MS` sits
+  beside it so the arrival-rate reading stays visible and auditable — but only one of them
+  gates. *If a main ever does fall below the band at one duty pump, no diameter fixes it: a
+  single main spans a flow ratio of only 2.5 / 0.75 = 3.33. The guideline's own answers are
+  staged mains (G203-p50 §8.1), twin mains with a hydraulic study (G203-p52 §8.2.3), or a
+  scheduled flush.*
+
 - **A STATION NEVER PUMPS INTO ANOTHER STATION. It discharges to a gravity manhole or to the
   works.** The engineer's argument, 2026-09-06, and it closes the question from both ends:
   *"if the pump is close, the number of pumps is not optimised"* — two stations near each other
