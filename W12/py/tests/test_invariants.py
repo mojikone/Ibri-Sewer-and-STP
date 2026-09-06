@@ -485,10 +485,20 @@ def test_which_audit_checks_can_run_at_all_is_reported(contract):
     # on one layer". Columns are unioned across the reach-like and node-like layers.
     import pandas as pd
     r_cols, n_cols = set(), set()
-    for key, lyr in (("hier", "reaches"), ("flows", "arcs"), ("chambers", "segments")):
+    # EVERY PUBLISHED LAYER, NOT ONLY STAGES 3-5. This list used to stop at `chambers`,
+    # so the probe could not see the levels, pump or export layers EVEN AFTER THEY EXISTED
+    # - it reported "waiting on stage 6" forever and the assertion below then locked that
+    # blindness in as the expected answer. On the first full run it declared 29 of 34
+    # checks unanswerable and PASSED, which is philosophy sec 8's own failure mode one
+    # level down: a check that cannot run is a FAILURE, not a blank.
+    for key, lyr in (("hier", "reaches"), ("flows", "arcs"), ("chambers", "segments"),
+                     ("w12", "reaches"), ("export", "reaches"), ("export", "conduits"),
+                     ("levels", "reaches")):
         if lyr in layer_names(key):
             r_cols |= set(layer(key, lyr).columns)
-    for key, lyr in (("hier", "nodes"), ("flows", "nodes"), ("chambers", "chambers")):
+    for key, lyr in (("hier", "nodes"), ("flows", "nodes"), ("chambers", "chambers"),
+                     ("w12", "nodes"), ("export", "nodes"), ("export", "manholes"),
+                     ("levels", "nodes")):
         if lyr in layer_names(key):
             n_cols |= set(layer(key, lyr).columns)
     r = pd.DataFrame(columns=sorted(r_cols))
@@ -504,9 +514,34 @@ def test_which_audit_checks_can_run_at_all_is_reported(contract):
     print(f"        {len(cannot)} of {len(tab)} cannot run. Most wait on stage 6 (levels "
           f"and sizes): DN, SLOPE_LAID, US_DEPTH, DS_DEPTH, INV_UP, INV_DN, COVER_*.")
 
-    # These need nothing stage 6 owns, so they must be answerable now.
+    # THE FLOOR: these need nothing stage 6 owns, so they must be answerable at any time.
     now = {"H15", "H16", "G3"}
     blocked = sorted(now & set(cannot.check))
     assert not blocked, (
         f"checks that depend on nothing stage 6 owns still cannot run: {blocked}. "
         f"{cannot[cannot.check.isin(blocked)].to_string(index=False)}")
+
+    # THE RATCHET. A floor of three passed while 29 checks stayed blind, because it asked
+    # only whether those three ran - never whether the number was going up. Readiness is
+    # recorded and may never FALL: a stage that stops publishing a column silently removes
+    # an audit check, and nothing else in the suite would say so.
+    import json as _json, pathlib as _pl
+    mark = _pl.Path(__file__).resolve().parents[2] / "run" / "audit_readiness_high_water.json"
+    best = 0
+    if mark.exists():
+        try:
+            best = int(_json.loads(mark.read_text(encoding="utf-8")).get("can_run", 0))
+        except Exception:
+            best = 0
+    if len(can) > best:
+        mark.parent.mkdir(parents=True, exist_ok=True)
+        mark.write_text(_json.dumps(
+            {"can_run": int(len(can)), "of": int(len(tab)),
+             "checks": sorted(can.check.tolist()),
+             "note": "high-water mark. Readiness may never fall below this."},
+            indent=1), encoding="utf-8")
+    assert len(can) >= best, (
+        f"AUDIT READINESS WENT BACKWARDS: {len(can)} of {len(tab)} checks can run, against a "
+        f"high-water mark of {best}. A stage has stopped publishing something an audit check "
+        f"needs, which deletes that check silently. Missing now: "
+        f"{cannot[['check', 'missing']].to_string(index=False)}")

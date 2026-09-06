@@ -73,6 +73,39 @@ ZERO SILENT DROPS
 Every load-bearing plot appears exactly once in `connections` or in `unserved`, each with a
 WHY, and `verify()` re-reads the published file and reconciles the load to the milligram.
 
+TWO DEFECTS THE FIRST FULL RUN PUBLISHED, AND WHAT WAS DONE ABOUT THEM
+1. THREE PAIRS OF CHAMBERS STOOD INSIDE THE MINIMUM CLEARANCE and `verify()` said so.
+   `criteria.MH_SNAP_M` = 3.0 m is the radius at which `s1_roads` merged two positions into
+   ONE node AND the minimum clear distance between two chambers, so publishing a pair inside
+   it is a contradiction.  Every one was the two ends of an arc SHORTER than the clearance -
+   `split_positions` keeps interior chambers 3 m clear but always keeps both arc ends, and
+   a handful of stage 2's ~13,100 arcs are under 3.0 m.  `contract_pairs()` now merges them
+   into one structure and publishes what it removed.  See that method for why this is not
+   "changing stage 2's topology", the previous run's reason for leaving them.  EVERY COUNT
+   IN THIS PARAGRAPH MOVES WITH THE UPSTREAM LAYER and is computed fresh each run - the
+   published figures are in `close_pairs` and the manifest, never here.
+2. THE INLET ANGLE WAS MEASURED ON THE WRONG NETWORK - before the prune, so (in that run)
+   2,324 chambers carried an angle off a pipe that is not in the layer and 145 carried a
+   priced swept-channel flag for an inlet that had been deleted; and the direction of flow
+   was taken from a segment's first two coordinates, which `substring` leaves duplicated on
+   about 1,900 of them.  `angles()` now runs after `prune()` and takes the direction from
+   the CHORD.  The count went UP, not down, because the sliver had been reporting corridors
+   that turn back on themselves as 179.9 deg - straight through.  The breaches are split by
+   cause in `inlet_split`, the number fixable by MOVING a chamber is measured there rather
+   than asserted, and each is priced as a swept-channel chamber, which is what G203-p30
+   asks for in the same paragraph as the 90 deg clause.
+
+3. AND THE DEFECT THE FIX ITSELF LEFT, NAMED HERE RATHER THAN FOUND LATER.  The chord is
+   the right basis only where the reach is straight, and the stage had never measured that
+   on its own output: a few published reaches depart from their own chord by more than
+   STRAIGHT_TOL_M, which is a bend with no chamber at it - `split_positions` drops a bend
+   cut that lands inside the 3 m clearance, and `contract_pairs` re-divides an absorbed
+   reach for LENGTH but not for straightness.  On exactly those reaches the H10 verdict
+   changes if the direction of flow is read locally instead of across the chord.  Both
+   counts are measured every run (`n_bent`, `n_basis_amb`), published in the manifest, the
+   compliance table and `inlet_split`, and NOT resolved here: chambering those bends would
+   put two chambers inside the very clearance the contraction exists to honour.
+
 RUN
   python s4_chambers.py                 build, publish, report
   python s4_chambers.py --verify        re-read the published file and re-check it
@@ -241,6 +274,38 @@ DUAL_BAND_M = 6.0         # PROJECT, matching stage 1's own constant (its `dual_
 #                           rather than imported, because a stage must not depend on
 #                           another stage's internals.
 
+BEARING_MIN_LEG_M = 1e-6  # m. NOT a design value and NOT a tolerance: the only thing it
+#                           guards is a segment whose two ends are the same point, where
+#                           `atan2(0, 0)` returns 0.0 and manufactures a due-north bearing
+#                           out of nothing. The direction of flow is taken from the CHORD -
+#                           see `angles()` for why, and for the measurement behind it.
+
+BEARING_LEG_SWEEP_M = (0.5, 1.0, 2.0)
+#                           A SWEEP, NOT A CHOSEN VALUE, and it sets nothing in the design.
+#                           The published direction of flow is the CHORD, which is right
+#                           wherever the reach is straight - and 52,610 of 56,667 reaches
+#                           are a two-point line, so on those the chord IS the leg and the
+#                           two bases are the same number. Where a reach BENDS, they are
+#                           not, and no single basis is defensible: the pipe leaves the
+#                           chamber along the local leg, but the stage's own rule says a
+#                           pipe is laid straight between chambers, which makes the chord
+#                           the pipe. Rather than pick, the H10 verdict is re-taken over
+#                           the first/last stretch of the reach at each of these floors and
+#                           the chambers whose verdict CHANGES are counted, published and
+#                           named. A swept bound, not an invented tolerance.
+
+# The built network's own inlet-angle profile, MEASURED in this project on NAMA's 2006
+# as-built and written up as finding N10 of `W12/docs/ASBUILT_STUDY.md`. It is the benchmark
+# this stage is read against, and it is quoted here as a measurement with its source, never
+# as a target: G203-p30's 90 deg is the requirement and the built network breaches it too.
+AB_INLET = {
+    "inlets": 3261, "under90": 371, "under90_pct": 11.38,
+    "branch_n": 240, "branch_med": 88.55, "branch_within5": 186, "branch_within5_pct": 77.5,
+    "hairpin_n": 122,
+    "junction_pct": 26.46, "passthrough_pct": 5.26,
+    "src": "W12/docs/ASBUILT_STUDY.md N10, measured on the 2006 as-built",
+}
+
 FINGER_M = 60.0           # PROJECT (philosophy sec 4, ours on cost grounds; no adoption
 #                           standard requires it). A dead-end reach under this length
 #                           serving nothing is a finger. Reported, not used as the prune
@@ -306,6 +371,42 @@ def _sha1(path: str, n: int = 16) -> str:
 
 def _bearing(ax, ay, bx, by) -> float:
     return math.degrees(math.atan2(bx - ax, by - ay)) % 360.0
+
+
+def _end_bearings(c: np.ndarray, min_leg_m: float) -> Tuple[float, float]:
+    """(departure at the first coordinate, arrival at the last) over a stretch of at least
+    `min_leg_m`, or over the whole reach when it is shorter than that.
+
+    `min_leg_m <= 0` gives the CHORD, which is what the stage publishes.  A positive floor
+    gives the LOCAL direction of the pipe at the chamber, guarded so that `substring`'s
+    duplicated vertex - measured on this stage's own output, about 3,800 of 113,000 reach
+    ends carry a leg under one micrometre - cannot set it.  Both are needed: see
+    `BEARING_LEG_SWEEP_M`.
+    """
+    if min_leg_m <= 0.0:
+        b = _bearing(c[0][0], c[0][1], c[-1][0], c[-1][1])
+        return b, b
+    k = 1
+    while k < len(c) - 1 and math.hypot(c[k][0] - c[0][0], c[k][1] - c[0][1]) < min_leg_m:
+        k += 1
+    j = len(c) - 2
+    while j > 0 and math.hypot(c[-1][0] - c[j][0], c[-1][1] - c[j][1]) < min_leg_m:
+        j -= 1
+    return (_bearing(c[0][0], c[0][1], c[k][0], c[k][1]),
+            _bearing(c[j][0], c[j][1], c[-1][0], c[-1][1]))
+
+
+def chord_offset_of(c: np.ndarray) -> float:
+    """How far a reach departs from its OWN chord.  The stage rests on this being small -
+    it is why a corridor is split at every bend and why the direction of flow is taken from
+    the chord - and it was never measured on the reaches the stage publishes."""
+    ax, ay = float(c[0][0]), float(c[0][1])
+    bx, by = float(c[-1][0]), float(c[-1][1])
+    dx, dy = bx - ax, by - ay
+    L = math.hypot(dx, dy)
+    if L < 1e-12 or len(c) < 3:
+        return 0.0
+    return float(max(abs((px - ax) * dy - (py - ay) * dx) / L for px, py in c))
 
 
 def _inlet_angle(arr_bearing: float, dep_bearing: float) -> float:
@@ -645,6 +746,7 @@ class Chambers:
                          "ARC_CID": cid[i], "S_ALONG": float(s), "SUBNET": sub[i]})
 
         ch = pd.DataFrame(rows)
+        self._uid_next = uid + 1          # the identity space continues here, never restarts
         self.node_uid = node_uid
         _log(f"    {n_node_ch:,} at graph nodes  +  {len(fan_uid):,} fan-out  +  "
              f"{len(recs_pos):,} interior = {len(ch):,} chambers")
@@ -735,6 +837,247 @@ class Chambers:
              f"{self.seg.LEN_M.sum() / 1000:,.1f} km")
         return self
 
+    # ---------------------------------------------------------------- contraction
+    def contract_pairs(self) -> "Chambers":
+        """Two chambers inside the minimum clearance ARE one structure - so build one.
+
+        `criteria.MH_SNAP_M` = 3.0 m is a single constant wearing two hats: it is the radius
+        at which `s1_roads` merged positions into one node ("noding at MH_SNAP_M = 3 m"),
+        and it is the minimum clear distance between two chambers.  Publishing two chambers
+        closer than the radius that merges nodes is a contradiction, not a tolerance.
+
+        WHERE THEY COME FROM, MEASURED, NOT ASSUMED.  A handful of stage 2's ~13,100 arcs
+        are shorter than 3.0 m - eight when this was written, seven an hour later, because
+        the orient layer moved under it - and every node pair within 3.0 m in the whole
+        `orient` node layer was one of them: there is no such pair that is not joined by an
+        arc.  The count is taken from the data every run and published in `close_pairs`;
+        nothing here depends on it.  `split_positions` already keeps
+        every interior chamber 3 m clear WITHIN an arc; what it cannot do is refuse to put a
+        chamber at each END of an arc that is itself shorter than the clearance.  So the
+        defect is exactly one shape: a whole corridor shorter than the clearance.
+
+        WHY MERGING IS NOT "CHANGING STAGE 2'S TOPOLOGY".  The two nodes are inside the very
+        radius s1 used to declare two positions one node; s2 inherited the pair, it did not
+        design it.  Merging is also NOT silent - the pairs are published in `close_pairs`
+        with what happened to each, the count is in the manifest, and the absorbed arcs fall
+        into the `pruned` layer.  `s6_levels` A-LEV-13 already contracts these downstream;
+        doing it HERE is what makes this stage's own published layers self-consistent, and
+        it leaves s6 nothing to contract.
+
+        Anything a pass can ADD, a later pass must be able to TAKE AWAY: `mint` added the
+        chambers, this pass removes them, and it says how many.
+        """
+        import shapely
+        from shapely.geometry import LineString
+        seg = self.seg
+        short = (seg.LEN_M.values < MH_MIN_CLEAR_M)
+        self.n_contracted = 0
+        self.n_resplit = 0
+        self.n_resplit_live = 0
+        self.resplit_uids = []
+        self.contracted = pd.DataFrame(columns=["A", "B", "GAP_M"])
+        if not short.any():
+            _log(f"    no segment shorter than the {MH_MIN_CLEAR_M:g} m minimum clearance; "
+                 f"nothing to contract")
+            self._close_after_contract()
+            return self
+
+        sh = seg[short]
+        # merge the UPSTREAM chamber into the DOWNSTREAM one: the downstream chamber is the
+        # one that carries the outgoing pipe onward, and the upstream chamber's only outgoing
+        # pipe IS the segment being contracted (out-degree is 1 on a forest).
+        into: Dict[str, str] = dict(zip(sh.US_NODE.astype(str), sh.DS_NODE.astype(str)))
+        tail: Dict[str, List[tuple]] = {}
+        for u, d, g in zip(sh.US_NODE.astype(str), sh.DS_NODE.astype(str),
+                           sh.geometry.values):
+            tail[u] = [tuple(c) for c in shapely.get_coordinates(g)][1:]
+        # resolve chains A->B->C.  The graph is a forest and every hop follows the flow, so
+        # this terminates; the guard is there because a cycle here would loop for ever.
+        for _ in range(len(into) + 1):
+            nxt = {a: into.get(b, b) for a, b in into.items()}
+            if nxt == into:
+                break
+            into = nxt
+        else:
+            raise RuntimeError("contracting the sub-clearance pairs did not settle - the "
+                               "segment graph is not a forest")
+        hop = {u: v for u, v in zip(sh.US_NODE.astype(str), sh.DS_NODE.astype(str))}
+        path_to: Dict[str, List[tuple]] = {}
+        for a in list(hop):
+            path, u = [], a
+            while u in hop:                       # A -> B -> C walks tail[A] then tail[B]
+                path.extend(tail[u])
+                u = hop[u]
+            path_to[a] = path
+
+        xy = dict(zip(self.ch.NODE_UID.astype(str),
+                      zip(self.ch.X.astype(float), self.ch.Y.astype(float))))
+        keep = seg[~short].copy()
+        old_ds = keep.DS_NODE.astype(str).values.copy()
+        moved = np.array([d in into for d in old_ds])
+        if keep.US_NODE.astype(str).isin(into).any():
+            raise RuntimeError("a chamber being contracted away still has an outgoing "
+                               "segment - out-degree was not 1 at minting")
+        keep["DS_NODE"] = [into.get(str(v), str(v)) for v in keep.DS_NODE.values]
+        if moved.any():
+            g = list(keep.geometry.values)
+            L = list(keep.LEN_M.values)
+            for r in np.flatnonzero(moved):
+                c = [tuple(p) for p in shapely.get_coordinates(g[r])]
+                # follow the REAL corridor to the surviving chamber, not a straight jump:
+                # the contracted segment's own coordinates are the path between them.
+                for p in path_to.get(old_ds[r], []):
+                    if math.hypot(p[0] - c[-1][0], p[1] - c[-1][1]) > 1e-6:
+                        c.append(p)
+                dest = xy[str(keep.DS_NODE.values[r])]
+                if math.hypot(dest[0] - c[-1][0], dest[1] - c[-1][1]) > 1e-6:
+                    c.append(dest)
+                g[r] = LineString(c)
+                L[r] = float(g[r].length)
+            keep["geometry"] = g
+            keep["LEN_M"] = L
+        # A kept segment whose two ends land on the same surviving chamber would be a
+        # 2-cycle in a forest and cannot happen - but dropping it QUIETLY if it ever did is
+        # a silent drop, which is the worst defect this project has shipped. Refuse instead.
+        loop = int((keep.US_NODE.astype(str) == keep.DS_NODE.astype(str)).sum())
+        if loop:
+            raise RuntimeError(
+                f"contracting the sub-clearance pairs turned {loop} segment(s) into a "
+                f"self-loop, which means the segment graph is not a forest. Nothing is "
+                f"dropped here to hide it")
+        self.seg = keep.reset_index(drop=True)
+        gone = set(into)
+        self.ch = self.ch[~self.ch.NODE_UID.astype(str).isin(gone)].reset_index(drop=True)
+        self.chain = {c: [into.get(str(u), str(u)) for u in ids]
+                      for c, ids in self.chain.items()}
+
+        self.contracted = pd.DataFrame({
+            "A": sh.US_NODE.astype(str).values,
+            "B": sh.DS_NODE.astype(str).values,
+            "GAP_M": np.round(sh.LEN_M.values.astype(float), 3),
+        })
+        self.n_contracted = len(gone)
+        self._resplit_over_split_length()
+        _log(f"    {len(sh)} segment(s) shorter than the {MH_MIN_CLEAR_M:g} m minimum "
+             f"clearance CONTRACTED: {self.n_contracted} chamber(s) removed, "
+             f"{sh.LEN_M.sum():.2f} m of pipe absorbed, "
+             f"{len(self.ch):,} chambers / {len(self.seg):,} segments left")
+        self.notes.append(
+            f"{len(sh)} pair(s) of chambers stood closer than the {MH_MIN_CLEAR_M:g} m "
+            f"minimum clearance (criteria.MH_SNAP_M), every one of them at the two ends of "
+            f"a corridor shorter than the clearance itself. Two chambers inside the radius "
+            f"that MERGES nodes are one structure, so they were contracted into one: "
+            f"{self.n_contracted} chamber(s) removed and {sh.LEN_M.sum():.2f} m of pipe "
+            f"absorbed into the reach above. The record is in `close_pairs`.")
+        self._close_after_contract()
+        return self
+
+    def _resplit_over_split_length(self) -> None:
+        """A reach that absorbed a stub and is now over the split length gets a chamber back.
+
+        Contracting a pair hands the sub-clearance stub to the reach above it, so that reach
+        can end up to MH_SNAP_M longer than the shipped spacing - one segment did, at
+        31.02 m against 30 m.  It is still far inside Table 12's 100 m, so nothing illegal
+        happened; but "no segment over the shipped split length" is a check this stage makes
+        about itself, and the way to keep a check true is to fix the thing it measures, not
+        to widen the check.  The reach is divided into equal parts by the SAME rule
+        `split_positions` uses, so no stub is left behind.
+        """
+        from shapely.ops import substring
+        over = np.flatnonzero(self.seg.LEN_M.values > self.split_m + 1e-6)
+        self.n_resplit = 0
+        self.resplit_uids: List[str] = []
+        if not len(over):
+            return
+        uid = getattr(self, "_uid_next", len(self.ch) + 1)
+        rows_ch, rows_sg, drop = [], [], []
+        for r in over:
+            row = self.seg.iloc[r]
+            g = row.geometry
+            L = float(g.length)
+            n = max(2, int(math.ceil(L / self.split_m - 1e-9)))
+            step = L / n
+            ids = [str(row.US_NODE)]
+            for k in range(1, n):
+                p = g.interpolate(step * k)
+                u = CT.NODE_UID_FMT.format(uid)
+                uid += 1
+                ids.append(u)
+                self.resplit_uids.append(u)
+                rows_ch.append({"NODE_UID": u, "ORIENT_ND": "", "X": float(p.x),
+                                "Y": float(p.y), "TRIGGER": "spacing",
+                                "ARC_CID": str(row.ARC_CID), "S_ALONG": np.nan,
+                                "SUBNET": str(row.SUBNET)})
+            ids.append(str(row.DS_NODE))
+            for k in range(n):
+                d = row.to_dict()
+                # SEQ and S0/S1 belong to the run BEFORE the contraction: the sub-parts all
+                # carry the parent's ordinal, and S along the arc is meaningless once a
+                # reach crosses into the corridor that was absorbed. Nothing downstream
+                # reads either (checked), and a fabricated position would be worse than a
+                # blank. US_NODE/DS_NODE carry the topology, as H16 requires.
+                d.update({"US_NODE": ids[k], "DS_NODE": ids[k + 1], "SEQ": int(row.SEQ),
+                          "S0": np.nan, "S1": np.nan,
+                          "geometry": substring(g, step * k, step * (k + 1))})
+                d["LEN_M"] = float(d["geometry"].length)
+                rows_sg.append(d)
+            drop.append(r)
+            self.n_resplit += n - 1
+            # A chamber that is not in `self.chain` is invisible to `_chamber_arcs()`, and
+            # `connect()` uses that to decide which chambers sit on a plot's nearest
+            # corridor - so an unregistered chamber silently drops out of arm B and out of
+            # the keep-rule that saves a same-corridor carrier from the top-K cut. Register
+            # it where it stands.
+            arc = str(row.ARC_CID)
+            ch_ids = self.chain.get(arc)
+            if ch_ids is not None and str(row.US_NODE) in ch_ids:
+                at = ch_ids.index(str(row.US_NODE))
+                self.chain[arc] = ch_ids[:at + 1] + ids[1:-1] + ch_ids[at + 1:]
+            else:
+                self.notes.append(
+                    f"{len(ids) - 2} re-split chamber(s) on arc {arc} could not be placed "
+                    f"in the corridor chain, so they are not candidates on arm B of the "
+                    f"connection search. Named rather than left to be noticed.")
+        self._uid_next = uid
+        keep = self.seg.drop(index=self.seg.index[drop])
+        self.seg = pd.concat([keep, pd.DataFrame(rows_sg)],
+                             ignore_index=True).reset_index(drop=True)
+        self.ch = pd.concat([self.ch, pd.DataFrame(rows_ch)],
+                            ignore_index=True).reset_index(drop=True)
+        _log(f"    {len(drop)} reach(es) went over the {self.split_m:g} m split length once "
+             f"the stub was absorbed; {self.n_resplit} chamber(s) put back so no reach does")
+        self.notes.append(
+            f"{len(drop)} reach(es) exceeded the {self.split_m:g} m split length after "
+            f"absorbing a contracted stub and were divided into equal parts by the same "
+            f"rule `split_positions` uses, putting {self.n_resplit} chamber(s) back. The "
+            f"check was not widened to let them through. That count is taken HERE, before "
+            f"the prune - `tables()` reports how many of them are still in the published "
+            f"layer, because a number a reader cannot find in the deliverable is the "
+            f"defect this stage just finished removing from the inlet angles.")
+
+    def _close_after_contract(self) -> None:
+        """What, if anything, is STILL inside the clearance once the pairs are contracted.
+
+        A pair joined by a pipe can be contracted.  A pair NOT joined by a pipe cannot -
+        merging it would fuse two independent branches into one, which is a layout decision
+        and not a levelling one.
+
+        This scan runs on the WHOLE minted set, before the prune, so it is a build-time
+        diagnostic and NOT the published number: `tables()` re-scans the chambers that are
+        actually published and that is what `close_pairs`, the compliance row and `verify()`
+        all report.  Publishing the pre-prune count would overstate the defect.
+        """
+        import shapely as _sh
+        from shapely import STRtree as _T
+        p = _sh.points(self.ch.X.values, self.ch.Y.values)
+        a, b = _T(p).query(p, predicate="dwithin", distance=MH_MIN_CLEAR_M - 1e-6)
+        m = a < b
+        self.residual_pairs = int(m.sum())
+        if self.residual_pairs:
+            _log(f"    {self.residual_pairs} pair(s) are inside {MH_MIN_CLEAR_M:g} m and "
+                 f"NOT joined by a pipe, so they cannot be contracted without fusing two "
+                 f"branches. Re-counted on the PUBLISHED chambers after pruning")
+
     # ---------------------------------------------------------------- levels
     def levels(self, native: bool = True) -> "Chambers":
         """Ground at every chamber.  NATIVE 0.5 m VRT, because terrain.py states that
@@ -789,36 +1132,197 @@ class Chambers:
         G203-p30, verbatim: "No inlet pipe at manholes shall have an angle less than 90 deg
         to the direction of flow."  Recomputed here on the CHAMBERED geometry - stage 2
         measured it on whole corridors, this measures it on the pipe that is actually laid.
+
+        IT RUNS AFTER THE PRUNE, AND THAT IS THE POINT.  Measured before it, the angle at a
+        chamber is the smallest over inlets that include pipes the prune then threw away:
+        the previous run published 2,324 angles derived from a pipe that is not in the
+        published layer and 145 SWEPT_CH flags - a priced chamber detail each - for an
+        inlet that does not exist.  The minimum over a subset can only rise, so every one of
+        those was an over-count, never an under-count; but a priced item for a pipe that was
+        deleted is a defect whichever way it leans.
+
+        THE DIRECTION OF FLOW IS THE CHORD, AND THAT IS MEASURED, NOT PREFERRED.  A pipe is
+        laid straight between two chambers - 98.1 % of NAMA's built pipes are a two-point
+        line and 99.36 % lie inside 0.5 m of their own chord, which is the same evidence
+        `STRAIGHT_TOL_M` rests on and the reason this stage breaks a corridor at every bend.
+        On this design the segments come out straighter still: median sagitta 0.0000 m,
+        p99 0.0000 m.  The previous run took the bearing from a segment's FIRST TWO and LAST
+        TWO coordinates instead, and `substring` leaves a duplicated vertex: **about 1,900
+        segments in 56,700 begin with a leg shorter than one millimetre** (counted fresh
+        every run into `n_sliver`), so the "direction of flow" out of those chambers was
+        read off a sub-millimetre sliver rather than off the 25 m pipe.  It hid breaches -
+        corridors turning back on themselves at a chamber - by reporting them as 179.9 deg,
+        straight through.
+
+        AND THE CHORD IS RIGHT ONLY WHERE THE REACH IS STRAIGHT, WHICH IS MEASURED HERE AND
+        IS NOT ALWAYS TRUE.  `chord_offset_of` is applied to every published reach: the ones
+        past `STRAIGHT_TOL_M` carry a bend with no chamber at it, and on those the chord is
+        a fiction in exactly the way the sliver was.  The verdict is therefore re-taken over
+        the pipe's LOCAL direction at each floor of `BEARING_LEG_SWEEP_M` and the chambers
+        that change side are counted into `n_basis_amb` - with the ones published COMPLIANT
+        called out separately, because those carry no priced swept channel.  Swept and
+        published; NOT settled by choosing whichever basis gives the smaller number.
+
+        INLET_DEG IS FLOORED TO 2 dp, NOT ROUNDED TO 1.  At 1 dp an 89.96 deg inlet
+        publishes as "90.0" beside INLET_FLAG = 1: the number says compliant and the flag
+        says not.  That happened on 85 chambers, which is why INLET_FLAG (2,952) and a
+        re-derivation from INLET_DEG (2,867) disagreed.  Rounding at ANY precision can round
+        a breach up onto the limit, so the published angle is FLOORED - it may understate
+        compliance by up to 0.01 deg and can never overstate it.
         """
         import shapely
         s = self.seg
-        bear_in: Dict[str, List[float]] = {}
+        bear_in: Dict[str, List[Tuple[float, str]]] = {}
         bear_out: Dict[str, float] = {}
-        for u, d, geom in zip(s.US_NODE.values, s.DS_NODE.values, s.geometry.values):
+        # the same two dictionaries at every floor of BEARING_LEG_SWEEP_M, so the H10
+        # verdict can be re-taken on the LOCAL direction of the pipe as well as on the chord
+        leg_in: Dict[float, Dict[str, List[float]]] = {m: {} for m in BEARING_LEG_SWEEP_M}
+        leg_out: Dict[float, Dict[str, float]] = {m: {} for m in BEARING_LEG_SWEEP_M}
+        n_degen = 0
+        n_sliver = 0
+        bend: List[Tuple[str, str, float, float]] = []
+        for u, d, cid, geom in zip(s.US_NODE.values, s.DS_NODE.values,
+                                   s.ARC_CID.values, s.geometry.values):
             c = shapely.get_coordinates(geom)
-            if len(c) < 2:
+            if len(c) < 2 or math.hypot(c[-1][0] - c[0][0],
+                                        c[-1][1] - c[0][1]) < BEARING_MIN_LEG_M:
+                n_degen += 1
                 continue
-            bear_out[u] = _bearing(c[0][0], c[0][1], c[1][0], c[1][1])
-            bear_in.setdefault(d, []).append(_bearing(c[-2][0], c[-2][1],
-                                                      c[-1][0], c[-1][1]))
+            if math.hypot(c[1][0] - c[0][0], c[1][1] - c[0][1]) < 1e-3:
+                n_sliver += 1            # the evidence for taking the bearing off the chord
+            off = chord_offset_of(c)
+            if off > STRAIGHT_TOL_M:
+                bend.append((str(u), str(d), round(off, 3), float(shapely.length(geom))))
+            b = _bearing(c[0][0], c[0][1], c[-1][0], c[-1][1])
+            bear_out[u] = b
+            bear_in.setdefault(d, []).append((b, str(cid)))
+            if off > 0.0:                    # a straight reach gives the same two bearings
+                for m in BEARING_LEG_SWEEP_M:
+                    b0, b1 = _end_bearings(c, m)
+                    leg_out[m][u] = b0
+                    leg_in[m].setdefault(d, []).append(b1)
+            else:
+                for m in BEARING_LEG_SWEEP_M:
+                    leg_out[m][u] = b
+                    leg_in[m].setdefault(d, []).append(b)
+        self.n_sliver = n_sliver
+        self.t_bent = pd.DataFrame(bend, columns=["US_NODE", "DS_NODE", "OFFSET_M",
+                                                  "LEN_M"]).sort_values(
+            "OFFSET_M", ascending=False) if bend else pd.DataFrame(
+            columns=["US_NODE", "DS_NODE", "OFFSET_M", "LEN_M"])
+        self.n_bent = len(bend)
+        if n_degen:
+            self.notes.append(
+                f"{n_degen} segment(s) start and end at the same point, so no bearing and "
+                f"no inlet angle can be taken at either end. A bearing from two identical "
+                f"points is 0 deg due north, which is a fabricated measurement.")
+
         ang = np.full(len(self.ch), np.nan)
+        out_cid = dict(zip(s.US_NODE.values, s.ARC_CID.astype(str).values))
+        is_node = dict(zip(self.ch.NODE_UID.values,
+                           (self.ch.ORIENT_ND.astype(str).values != "").astype(int)))
+        rows: List[dict] = []
         for i, u in enumerate(self.ch.NODE_UID.values):
             ins = bear_in.get(u)
             out = bear_out.get(u)
             if not ins or out is None:
                 continue
-            ang[i] = min(_inlet_angle(b, out) for b in ins)
-        self.ch["INLET_DEG"] = np.round(ang, 1)
-        self.ch["INLET_FLAG"] = ((ang < INLET_MIN_DEG - 1e-9) & np.isfinite(ang)).astype(int)
+            # floored ONCE, off the raw angle. Flooring an already-floored float again can
+            # drop another 0.01 (88.27 * 100 is 8826.999999999998 in binary), which is how
+            # the published minimum and a re-measurement came to differ by exactly 0.01.
+            vals = [_inlet_angle(b, out) for b, _ in ins]
+            ang[i] = min(vals)
+            for (b, cid), v in zip(ins, vals):
+                vf = math.floor(v * 100.0) / 100.0
+                if vf < INLET_MIN_DEG:
+                    rows.append({"CHAMBER": u, "DEG": vf, "N_IN": len(ins),
+                                 "SAME_ARC": int(cid == out_cid.get(u, "")),
+                                 # a chamber standing ON a stage-2 graph node cannot be
+                                 # moved at all - the node IS where the corridors meet. One
+                                 # that is not could in principle be slid along its
+                                 # corridor. This is what makes "fixable by moving a
+                                 # chamber" a MEASUREMENT rather than a claim.
+                                 "AT_NODE": int(is_node.get(u, 0))})
+        # The FLAG is derived from the PUBLISHED number, not from the raw one, so the two can
+        # never tell different stories - a reader who re-derives the flag from INLET_DEG must
+        # get the flag that is there. It leans the only safe way: an angle within a hundredth
+        # of the limit is published as a breach, never as compliance we cannot show.
+        pub = np.floor(ang * 100.0) / 100.0
+        self.ch["INLET_DEG"] = pub
+        self.ch["INLET_FLAG"] = ((pub < INLET_MIN_DEG) & np.isfinite(pub)).astype(int)
         # The resolution for a sharp inlet is a CHAMBER DETAIL, not a softer number: a
         # purpose-made chamber with a swept channel. G203-p30 requires benching "formed to
         # permit safe access and to maximise hydraulic efficiency" and "Smooth transitions
         # between inlet and outlet"; the 90 deg clause sits in the same paragraph. Flagged
         # here so it is a KNOWN, PRICED item rather than an unnoticed one.
         self.ch["SWEPT_CH"] = self.ch["INLET_FLAG"]
+        self._sub90 = pd.DataFrame(rows) if rows else pd.DataFrame(
+            columns=["CHAMBER", "DEG", "N_IN", "SAME_ARC", "AT_NODE"])
+        # THE DENOMINATOR IS THE INLETS THE RULE CAN BE APPLIED TO, not every pipe end.
+        # An inlet at an outfall has no outgoing pipe to be measured against, so it can
+        # never breach; counting it dilutes the breach rate. It is 355 inlets here, and it
+        # moved the branch rate from 25.96 % to 26.44 % - the difference between beating
+        # NAMA's own 26.46 % and matching it, which is exactly the direction a flattering
+        # denominator always leans.
+        self._n_inlets_all = int(sum(len(v) for v in bear_in.values()))
+        self._n_inlets = int(sum(len(v) for u, v in bear_in.items() if u in bear_out))
+        self._n_in_branch = int(sum(len(v) for u, v in bear_in.items()
+                                    if u in bear_out and len(v) >= 2))
         n = int(np.isfinite(ang).sum())
-        _log(f"    inlet angle measurable at {n:,} chambers; "
-             f"{int(self.ch.INLET_FLAG.sum()):,} below {INLET_MIN_DEG:g} deg (G203-p30)")
+        self.n_inlet_na = int(len(self.ch) - n)
+
+        # --- IS THE VERDICT AN ARTEFACT OF THE BASIS?  Re-take it on the local direction
+        # of the pipe at each swept floor and count the chambers that change side. On a
+        # straight reach the two are the same number, so this can only ever name the
+        # reaches that bend - and it is those the chord assumption is weakest on.
+        amb = np.zeros(len(self.ch), bool)
+        self.amb_by_floor: Dict[float, int] = {}
+        base_flag = self.ch["INLET_FLAG"].values.astype(bool)
+        for m in BEARING_LEG_SWEEP_M:
+            lo, li = leg_out[m], leg_in[m]
+            a2 = np.array([min((_inlet_angle(b, lo[u]) for b in li[u]), default=np.nan)
+                           if (u in li and u in lo) else np.nan
+                           for u in self.ch.NODE_UID.values])
+            f2 = (np.floor(a2 * 100.0) / 100.0 < INLET_MIN_DEG) & np.isfinite(a2)
+            self.amb_by_floor[m] = int((f2 != base_flag).sum())
+            amb |= (f2 != base_flag)
+        self.n_basis_amb = int(amb.sum())
+        self.n_basis_amb_unpriced = int((amb & ~base_flag).sum())
+        self.amb_uids = list(self.ch.NODE_UID.values[amb])
+        if self.n_basis_amb:
+            self.notes.append(
+                f"{self.n_basis_amb} chambers change side of the {INLET_MIN_DEG:g} deg rule "
+                f"depending on whether the direction of flow is read from the reach's CHORD "
+                f"(what is published) or from the pipe's LOCAL direction at the chamber "
+                f"({'/'.join(f'{m:g}' for m in BEARING_LEG_SWEEP_M)} m). All of them sit on "
+                f"one of the {self.n_bent} reaches that depart from their own chord by more "
+                f"than STRAIGHT_TOL_M = {STRAIGHT_TOL_M:g} m, where the stage's own rule "
+                f"that a pipe is laid straight between chambers does not hold. "
+                f"{self.n_basis_amb_unpriced} of them are published as COMPLIANT and would "
+                f"be a breach on the local reading, so their swept channel is NOT priced. "
+                f"NOT RESOLVED HERE: fixing it means chambering the bend, which would put "
+                f"two chambers inside the {MH_MIN_CLEAR_M:g} m clearance on the contracted "
+                f"reaches - two project rules that genuinely conflict on this geometry.")
+        if self.n_bent:
+            self.notes.append(
+                f"{self.n_bent} published reach(es) depart from their own chord by more "
+                f"than STRAIGHT_TOL_M = {STRAIGHT_TOL_M:g} m (worst "
+                f"{self.t_bent.OFFSET_M.max():.2f} m) - a bend with no chamber at it. The "
+                f"stage claims the opposite and had no check for it. "
+                f"`split_positions` drops a bend cut that falls within the "
+                f"{MH_MIN_CLEAR_M:g} m minimum clearance of a neighbour, and "
+                f"`contract_pairs` re-splits an absorbed reach for LENGTH but not for "
+                f"straightness. Named and sized, not silently fixed.")
+
+        _log(f"    inlet angle measurable at {n:,} chambers on {self._n_inlets:,} inlets "
+             f"the rule applies to ({self._n_inlets_all:,} pipe ends in all); "
+             f"{int(self.ch.INLET_FLAG.sum()):,} below {INLET_MIN_DEG:g} deg (G203-p30); "
+             f"{self.n_inlet_na:,} chambers have no inlet pipe to measure")
+        if self.n_bent or self.n_basis_amb:
+            _log(f"    {self.n_bent} reach(es) bend beyond STRAIGHT_TOL_M "
+                 f"{STRAIGHT_TOL_M:g} m; {self.n_basis_amb} chambers' H10 verdict depends "
+                 f"on whether the direction of flow is the chord or the local leg "
+                 f"({self.n_basis_amb_unpriced} of them published as compliant)")
         return self
 
     # ---------------------------------------------------------------- connections
@@ -1403,32 +1907,133 @@ class Chambers:
                          "stage 6. Reported as a blank, not as a zero."},
         ])
 
-        # chambers closer than the minimum clearance - measured, not assumed away
+        # chambers closer than the minimum clearance - what was found and what was done.
+        # This table is now the RECORD of the contraction, not a list of survivors: every
+        # pair is here with what happened to it, so removing a chamber is never silent.
         import shapely as _sh
         from shapely import STRtree as _T
+        rows_close = [{
+            "A": a, "B": b, "GAP_M": g, "JOINED_BY_A_PIPE": 1,
+            "STATUS": "CONTRACTED into one structure (criteria.MH_SNAP_M): the two ends of "
+                      "a corridor shorter than the clearance itself",
+        } for a, b, g in zip(self.contracted.A, self.contracted.B, self.contracted.GAP_M)] \
+            if len(self.contracted) else []
         _p = _sh.points(ch.X.values, ch.Y.values)
         _a, _b = _T(_p).query(_p, predicate="dwithin", distance=MH_MIN_CLEAR_M - 1e-6)
         _m = _a < _b
-        self.t_close = pd.DataFrame([{
-            "A": ch.NODE_UID.values[i], "A_TRIG": ch.TRIGGER.values[i],
-            "A_ORIENT": ch.ORIENT_ND.values[i], "A_ARC": ch.ARC_CID.values[i],
-            "B": ch.NODE_UID.values[j], "B_TRIG": ch.TRIGGER.values[j],
-            "B_ORIENT": ch.ORIENT_ND.values[j], "B_ARC": ch.ARC_CID.values[j],
+        rows_close += [{
+            "A": ch.NODE_UID.values[i], "B": ch.NODE_UID.values[j],
             "GAP_M": round(float(_sh.distance(_p[i], _p[j])), 3),
-        } for i, j in zip(_a[_m], _b[_m])])
+            "JOINED_BY_A_PIPE": 0,
+            "STATUS": "REMAINS - no pipe joins these two, so contracting them would fuse "
+                      "two independent branches. A layout decision, NOT resolved here",
+        } for i, j in zip(_a[_m], _b[_m])]
+        self.t_close = pd.DataFrame(
+            rows_close, columns=["A", "B", "GAP_M", "JOINED_BY_A_PIPE", "STATUS"])
         if len(self.t_close):
             self.t_close = self.t_close.sort_values("GAP_M")
-        n_node_pairs = int(((self.t_close.A_ARC == "") & (self.t_close.B_ARC == "")).sum())             if len(self.t_close) else 0
+        # measured on the PUBLISHED chambers, which is what `verify()` re-reads. The
+        # pre-prune scan in `contract_pairs` is a build-time diagnostic, not the number.
+        n_remaining = int(_m.sum())
+        self.residual_pairs = n_remaining
+        # and the SAME discipline applied to the chambers this stage PUT BACK. `n_resplit`
+        # is counted before the prune; the prune can delete the very reach that was
+        # re-divided, and on the first run with this code it did - the manifest said "1
+        # chamber put back" and there was not one in the published layer to find. Publish
+        # both numbers, never just the build-time one.
+        _live_uid = set(ch.NODE_UID.astype(str))
+        self.n_resplit_live = int(sum(1 for u in getattr(self, "resplit_uids", [])
+                                      if u in _live_uid))
 
-        # inlet angle bands - a 0 deg inlet and an 89 deg inlet are different problems
+        # inlet angle bands - a 0 deg inlet and an 89 deg inlet are different problems.
+        # The band edge is INLET_MIN_DEG itself, so the non-compliant bands sum EXACTLY to
+        # INLET_FLAG; an edge at 89.99 put 29 breaches in the compliant row.
         fin = ch[np.isfinite(ch.INLET_DEG)]
-        bands = [(0, 30), (30, 60), (60, 89.99), (89.99, 120), (120, 150), (150, 180.01)]
+        bands = [(0, 30), (30, 60), (60, INLET_MIN_DEG), (INLET_MIN_DEG, 120),
+                 (120, 150), (150, 180.01)]
         self.t_inlet = pd.DataFrame([{
             "INLET_DEG": f"{lo:g} to {hi:g}",
             "chambers": int(((fin.INLET_DEG >= lo) & (fin.INLET_DEG < hi)).sum()),
             "COMPLIANT": "no - swept channel required" if hi <= 90 else "yes",
         } for lo, hi in bands])
         self.t_inlet["pct"] = (self.t_inlet.chambers / max(len(fin), 1) * 100).round(2)
+
+        # ---- the inlet angles SPLIT BY CAUSE, because one rule does not fix two defects.
+        # The as-built study (N10) found the built network's breaches split into 240 BRANCH
+        # inlets clustered just under 90 deg - which aiming at 95 deg fixes - and 122
+        # PASS-THROUGH HAIRPINS at chambers with a single inflow and no branch at all, which
+        # the 95 deg target does not touch.  Ours is split the same way before anything is
+        # decided about it.
+        sb = self._sub90
+        n_pass = max(self._n_inlets - self._n_in_branch, 0)
+        rows_split = []
+        for lab, mask, denom, ab_pct in (
+                ("BRANCH - the chamber has two or more inflows",
+                 sb.N_IN >= 2 if len(sb) else pd.Series(dtype=bool),
+                 self._n_in_branch, AB_INLET["junction_pct"]),
+                ("PASS-THROUGH HAIRPIN - one inflow, no branch at all",
+                 sb.N_IN == 1 if len(sb) else pd.Series(dtype=bool),
+                 n_pass, AB_INLET["passthrough_pct"])):
+            v = sb.loc[mask, "DEG"] if len(sb) else pd.Series(dtype=float)
+            rows_split.append({
+                "CLASS": lab,
+                "inlets": len(v),
+                "of_that_kind": denom,
+                "pct": round(len(v) / denom * 100, 2) if denom else 0.0,
+                "NAMA_pct": ab_pct,
+                "median_deg": round(float(v.median()), 2) if len(v) else np.nan,
+                "worst_deg": round(float(v.min()), 2) if len(v) else np.nan,
+                "within_5_deg": int((v >= INLET_MIN_DEG - 5.0).sum()) if len(v) else 0,
+                "within_5_pct": round(float((v >= INLET_MIN_DEG - 5.0).mean() * 100), 1)
+                if len(v) else 0.0,
+            })
+        n_same_arc = int(sb.SAME_ARC.sum()) if len(sb) else 0
+        vs = sb.loc[sb.SAME_ARC == 1, "DEG"] if len(sb) else pd.Series(dtype=float)
+        # the denominator of a row labelled "of the above" is the above, not every inlet in
+        # the network. It read 0.30 % against 56,667 where it means 5.70 % of the breaches.
+        rows_split.append({
+            "CLASS": "of the above, ONE corridor turning back on itself at a chamber",
+            "inlets": n_same_arc, "of_that_kind": len(sb),
+            "pct": round(n_same_arc / max(len(sb), 1) * 100, 2),
+            "NAMA_pct": np.nan,
+            "median_deg": round(float(vs.median()), 2) if len(vs) else np.nan,
+            "worst_deg": round(float(vs.min()), 2) if len(vs) else np.nan,
+            "within_5_deg": int((vs >= INLET_MIN_DEG - 5.0).sum()) if len(vs) else 0,
+            "within_5_pct": round(float((vs >= INLET_MIN_DEG - 5.0).mean() * 100), 1)
+            if len(vs) else 0.0})
+        # MEASURED, not asserted. A chamber standing on a stage-2 graph node is where two
+        # corridors meet and cannot be moved at all; one that is not can only slide ALONG
+        # its own corridor, which keeps the same bend. So a breach is fixable here only if
+        # the chamber is NOT a graph node AND its inlet arrives on a different corridor
+        # from the one its outlet leaves on - and the count of those is taken from the data
+        # rather than written down as a nought.
+        mv = ((sb.AT_NODE == 0) & (sb.SAME_ARC == 0)) if len(sb) else pd.Series(dtype=bool)
+        vm = sb.loc[mv, "DEG"] if len(sb) else pd.Series(dtype=float)
+        rows_split.append({
+            "CLASS": "of the above, fixable by MOVING A CHAMBER at this stage",
+            "inlets": int(mv.sum()) if len(sb) else 0, "of_that_kind": len(sb),
+            "pct": round(float(mv.mean()) * 100, 2) if len(sb) else 0.0,
+            "NAMA_pct": np.nan,
+            "median_deg": round(float(vm.median()), 2) if len(vm) else np.nan,
+            "worst_deg": round(float(vm.min()), 2) if len(vm) else np.nan,
+            "within_5_deg": int((vm >= INLET_MIN_DEG - 5.0).sum()) if len(vm) else 0,
+            "within_5_pct": round(float((vm >= INLET_MIN_DEG - 5.0).mean() * 100), 1)
+            if len(vm) else 0.0})
+        # and the count that says how much of the verdict is the BASIS rather than the
+        # geometry. It is not a class of breach; it is the uncertainty on the classes above.
+        rows_split.append({
+            "CLASS": f"NOT a class - chambers whose verdict CHANGES if the direction of "
+                     f"flow is read from the pipe's local direction "
+                     f"({'/'.join(f'{m:g}' for m in BEARING_LEG_SWEEP_M)} m) instead of "
+                     f"the chord; {self.n_basis_amb_unpriced} of them are published as "
+                     f"COMPLIANT and so carry no priced swept channel",
+            "inlets": self.n_basis_amb, "of_that_kind": len(fin),
+            "pct": round(self.n_basis_amb / max(len(fin), 1) * 100, 3),
+            "NAMA_pct": np.nan, "median_deg": np.nan, "worst_deg": np.nan,
+            "within_5_deg": 0, "within_5_pct": 0.0})
+        self.t_inlet_split = pd.DataFrame(rows_split)
+        self.n_same_arc = n_same_arc
+        self.n_movable = int(mv.sum()) if len(sb) else 0
 
         # spacing against Table 12 and against the built network
         km = seg.LEN_M.sum() / 1000.0
@@ -1520,18 +2125,50 @@ class Chambers:
              "PASS": int((seg.LEN_M > self.split_m + 0.01).sum() == 0)},
             {"CHECK": "H10 inlet angle at least 90 deg",
              "SOURCE": "G203-p30",
-             "RESULT": f"{int(ch.INLET_FLAG.sum()):,} of "
-                       f"{int(np.isfinite(ch.INLET_DEG).sum()):,} measurable inlets below "
-                       f"90 deg; worst {np.nanmin(ch.INLET_DEG.values):.1f} deg",
+             "RESULT": f"{int(ch.INLET_FLAG.sum()):,} chambers on "
+                       f"{len(self._sub90):,} of {self._n_inlets:,} inlets below 90 deg; "
+                       f"worst {np.nanmin(ch.INLET_DEG.values):.2f} deg. Split: "
+                       f"{int((self._sub90.N_IN >= 2).sum()) if len(self._sub90) else 0} "
+                       f"branch inlets, "
+                       f"{int((self._sub90.N_IN == 1).sum()) if len(self._sub90) else 0} "
+                       f"pass-through hairpins, {self.n_same_arc} one corridor turning "
+                       f"back on itself. {self.n_movable} are fixable by moving a chamber "
+                       f"(MEASURED: a breach at a stage-2 graph node cannot be moved, and "
+                       f"sliding a chamber along its own corridor keeps the same bend). "
+                       f"Each is flagged SWEPT_CH and priced as a chamber detail; see "
+                       f"`inlet_split`. CAVEAT, and it is not small: {self.n_basis_amb} "
+                       f"chambers change side of this rule depending on whether the "
+                       f"direction of flow is read from the reach's chord (published) or "
+                       f"from the pipe's local direction, and "
+                       f"{self.n_basis_amb_unpriced} of those are published as compliant "
+                       f"and carry no priced swept channel",
              "PASS": int(ch.INLET_FLAG.sum() == 0)},
+            {"CHECK": "a pipe is laid straight between chambers "
+                      "(the rule this stage's bend trigger AND its inlet angle both rest on)",
+             "SOURCE": "PROJECT STRAIGHT_TOL_M, calibrated: 99.36 % of NAMA's built pipes "
+                       "lie inside 0.5 m of their own chord",
+             "RESULT": f"{self.n_bent} of {len(seg):,} published reaches depart from their "
+                       f"own chord by more than {STRAIGHT_TOL_M:g} m"
+                       + (f", worst {self.t_bent.OFFSET_M.max():.2f} m on a "
+                          f"{self.t_bent.iloc[0].LEN_M:.1f} m reach" if self.n_bent else "")
+                       + f". A bend with no chamber at it. The stage asserted this and "
+                         f"never measured it. TWO CAUSES, both named: `split_positions` "
+                         f"drops a bend cut that lands within the {MH_MIN_CLEAR_M:g} m "
+                         f"minimum clearance of a neighbour, and `contract_pairs` "
+                         f"re-splits an absorbed reach for LENGTH but not for straightness. "
+                         f"NOT resolved here - chambering these bends would put two "
+                         f"chambers inside the clearance, so the two project rules conflict "
+                         f"on this geometry and the choice is the engineer's",
+             "PASS": int(self.n_bent == 0)},
             {"CHECK": "no two chambers inside the 3 m minimum clearance",
              "SOURCE": "criteria.MH_SNAP_M (PROJECT - no minimum chamber spacing exists in "
                        "G201/G202/G203)",
-             "RESULT": f"{len(self.t_close)} pair(s), of which {n_node_pairs} are BOTH "
-                       f"stage-2 graph nodes - a corridor-snapping artefact this stage "
-                       f"inherits and must not silently merge, because merging changes "
-                       f"stage 2's published topology",
-             "PASS": int(len(self.t_close) == 0)},
+             "RESULT": f"{self.n_contracted} chamber(s) were inside the clearance and were "
+                       f"CONTRACTED into the structure they touch - every one of them at "
+                       f"the two ends of a corridor shorter than the clearance itself. "
+                       f"{n_remaining} pair(s) remain, which would need two branches fused "
+                       f"and is a layout decision",
+             "PASS": int(n_remaining == 0)},
             {"CHECK": "H1 no chamber on wadi ground",
              "SOURCE": "G203-p30 4.4.1 i.a; the CLASS test is a project assumption",
              "RESULT": f"{int(ch.ON_WADI.sum()):,} chambers on hazard class 4/5/6 of the "
@@ -1747,6 +2384,44 @@ class Chambers:
             ("MH_ROUND_STEP", C.MH_ROUND_STEP, "m",
              "NOT APPLIED. A straight piece is divided into EQUAL parts instead; rounding "
              "leaves a stub chamber a few metres from its neighbour. Declared departure."),
+            ("MH_SNAP_M contraction", MH_MIN_CLEAR_M, "m",
+             f"METHOD. Two chambers inside criteria.MH_SNAP_M are ONE structure, so the "
+             f"{self.n_contracted} pair(s) that were are contracted rather than published "
+             f"as two. MH_SNAP_M is the same constant s1_roads used to node the corridor "
+             f"graph, so the pair is inside the radius that already declares two positions "
+             f"one node; s2 inherited it and did not design it. Every one is listed in "
+             f"`close_pairs` with what was done. The reach above absorbs the stub, and any "
+             f"reach that then exceeds the split length is re-divided "
+             f"({self.n_resplit} chamber(s) put back at build time, "
+             f"{self.n_resplit_live} of them still in the published layer after the prune) "
+             f"rather than the check widened. It does NOT re-split for straightness, so a "
+             f"reach that absorbs a stub can keep a bend with no chamber at it - "
+             f"{self.n_bent} published reach(es) are past STRAIGHT_TOL_M, and the worst is "
+             f"one of these. Chambering that bend would put two chambers inside this very "
+             f"clearance, so the two rules conflict and the resolution is the engineer's."),
+            ("INLET_DEG basis", "chord, after pruning, floored to 0.01", "-",
+             f"METHOD, WITH A NAMED EXPOSURE. The direction of flow is the reach's CHORD, "
+             f"because a pipe is laid straight between chambers "
+             f"({b['two_point_pct']:.1f} % of built pipes are a 2-point line, "
+             f"{b['within_0p5m_pct']:.2f} % inside 0.5 m of their chord) and "
+             f"`substring` leaves a duplicated vertex on {self.n_sliver:,} of "
+             f"{len(self.seg):,} segments, whose first leg is under 1 mm. Measured AFTER "
+             f"the prune, so no angle comes off a pipe that was deleted. FLOORED to 0.01 "
+             f"deg and the flag taken from the published number, so the two can never "
+             f"disagree and an angle is never printed as compliant while it is flagged. "
+             f"THE EXPOSURE: where a reach is straight the chord IS the pipe and the "
+             f"question does not arise, but on the {self.n_bent} reach(es) that bend past "
+             f"STRAIGHT_TOL_M it is not, and {self.n_basis_amb} chamber(s) change side of "
+             f"the 90 deg rule if the direction is read locally instead "
+             f"({'/'.join(f'{m:g}' for m in BEARING_LEG_SWEEP_M)} m sweep) - "
+             f"{self.n_basis_amb_unpriced} of them published as compliant and therefore "
+             f"unpriced. Swept and published rather than settled by picking a basis."),
+            ("INLET_DEG where there is no inlet pipe", "blank", "-",
+             f"METHOD. {self.n_inlet_na:,} chambers - heads with no inlet pipe and outfalls "
+             f"with no outgoing pipe - carry no angle. G203-p30 governs an INLET PIPE, so "
+             f"the rule does not APPLY there; that is not the same as a check that could "
+             f"not run. Filling it with 90 or 180 would make a not-applicable look "
+             f"measured, which is the ANGLE_DEG = 90 defect in another costume."),
             ("tau", C.TAU_PA, "Pa",
              "ASSUMED (GAP-9). Not used by this stage - no gradient is set here - and "
              "carried on the outputs so the exposure travels."),
@@ -1807,6 +2482,7 @@ class Chambers:
             "congestion_sweep": self.t_congest_sweep,
             "prune": self.t_prune,
             "inlet_angle": self.t_inlet,
+            "inlet_split": self.t_inlet_split,
             "close_pairs": self.t_close,
             "orphan_components": self.t_orphan,
             "compliance": self.t_compliance,
@@ -1845,7 +2521,48 @@ class Chambers:
             ("spacing chambers", int((ch.TRIGGER == "spacing").sum()), "-",
              f"{G}-p29 4.4 regular spacing"),
             ("outfalls", int((ch.N_OUT == 0).sum()), "-", "philosophy H15"),
-            ("inlets below 90 deg", int(ch.INLET_FLAG.sum()), "-", f"{G}-p30"),
+            ("chambers with an inlet below 90 deg", int(ch.INLET_FLAG.sum()), "-",
+             f"{G}-p30; measured AFTER pruning, on the published pipes"),
+            ("  of the inlets, BRANCH (chamber has 2+ inflows)",
+             int((self._sub90.N_IN >= 2).sum()) if len(self._sub90) else 0, "-",
+             f"{self._n_in_branch:,} branch inlets in all; NAMA's own built network breaches "
+             f"{AB_INLET['junction_pct']:g} % of theirs ({AB_INLET['src']})"),
+            ("  of the inlets, PASS-THROUGH HAIRPIN (one inflow, no branch)",
+             int((self._sub90.N_IN == 1).sum()) if len(self._sub90) else 0, "-",
+             f"NAMA {AB_INLET['passthrough_pct']:g} % ({AB_INLET['src']})"),
+            ("  of the inlets, a bend WITHIN one corridor", self.n_same_arc, "-",
+             "the only kind this stage could move a chamber to fix"),
+            ("  of the inlets, fixable by MOVING A CHAMBER", self.n_movable, "-",
+             "MEASURED, not asserted: not standing on a stage-2 graph node AND its inlet "
+             "arrives on a different corridor from the one its outlet leaves on"),
+            ("  chambers whose 90 deg verdict depends on the BASIS", self.n_basis_amb, "-",
+             f"the direction of flow is published as the reach's CHORD; read from the "
+             f"pipe's local direction "
+             f"({'/'.join(f'{m:g}' for m in BEARING_LEG_SWEEP_M)} m) these change side. "
+             f"{self.n_basis_amb_unpriced} of them are published COMPLIANT and so carry no "
+             f"priced swept channel. All sit on a reach that bends beyond STRAIGHT_TOL_M"),
+            ("reaches bent beyond STRAIGHT_TOL_M with no chamber at the bend",
+             self.n_bent, "-",
+             f"PROJECT {STRAIGHT_TOL_M:g} m. The rule this stage's bend trigger and its "
+             f"inlet angle both rest on, asserted since W12 began and measured here for "
+             f"the first time. See the compliance row for the two causes"),
+            ("chambers with no inlet pipe to measure", self.n_inlet_na, "-",
+             "a head has no inlet and an outfall has no outgoing pipe to measure against; "
+             "published as blank, NEVER as a fabricated 90 or 180"),
+            ("chambers contracted - inside the 3 m minimum clearance", self.n_contracted,
+             "-", "criteria.MH_SNAP_M: two chambers inside the node-merge radius ARE one "
+                  "structure. Removed by this stage, listed in `close_pairs`"),
+            ("chamber pairs still inside 3 m", self.residual_pairs, "-",
+             "not joined by a pipe, so contracting them would fuse two branches"),
+            ("chambers put back after contraction", self.n_resplit, "-",
+             f"a reach that absorbed a stub and went over the {self.split_m:g} m split "
+             f"length is re-divided, rather than the check being widened to admit it. "
+             f"COUNTED BEFORE THE PRUNE - see the next row for how many a reader can find"),
+            ("  of those, still in the published layer", self.n_resplit_live, "-",
+             "the prune can delete the very reach that was re-divided. On the first run "
+             "with this code it did: the manifest said 1 and the layer held none, which is "
+             "the same 'measured on a network that was then thrown away' defect this stage "
+             "had just removed from the inlet angles"),
             ("chambers on wadi ground", int(ch.ON_WADI.sum()), "-",
              f"{G}-p30 4.4.1 i.a; class test is a project assumption"),
             ("pipe with BOTH chambers on wadi ground",
@@ -1980,7 +2697,112 @@ class Chambers:
                  f"{self.built_straight['sagitta_p99_m']:.3f} m. So the split rule is a "
                  f"CHORD OFFSET of {STRAIGHT_TOL_M:g} m, not an invented angle.\n")
 
-        L.append("## Spacing, against Table 12 and against the operator\n")
+        sb = self._sub90
+        n_br = int((sb.N_IN >= 2).sum()) if len(sb) else 0
+        n_hp = int((sb.N_IN == 1).sum()) if len(sb) else 0
+        L.append("## Inlet angles - two defects, and only one of them is ours\n")
+        L.append(
+            f"G203-p30, verbatim: _\"No inlet pipe at manholes shall have an angle less than "
+            f"90 deg to the direction of flow.\"_ **{int(ch.INLET_FLAG.sum()):,} chambers "
+            f"breach it, on {len(sb):,} of {self._n_inlets:,} inlets, worst "
+            f"{np.nanmin(ch.INLET_DEG.values):.2f} deg.** The as-built study found NAMA's "
+            f"own network breaches it too and that the breaches are TWO different things "
+            f"({AB_INLET['src']}), so ours are split the same way before anything is "
+            f"decided about them.\n")
+        L.append(_md(self.t_inlet_split))
+        L.append(
+            f"\n**On the operator's own measure this layout matches what they built at a "
+            f"branch and beats it on a pass-through - and the first of those two is a "
+            f"dead heat, not a win.** At a branch we breach "
+            f"{n_br / max(self._n_in_branch, 1) * 100:.2f} % of inlets against their "
+            f"{AB_INLET['junction_pct']:g} %; on a pass-through we breach "
+            f"{n_hp / max(self._n_inlets - self._n_in_branch, 1) * 100:.2f} % against their "
+            f"{AB_INLET['passthrough_pct']:g} %. Read the branch number carefully: the "
+            f"denominator is the {self._n_in_branch:,} inlets the rule can be APPLIED to - "
+            f"an inlet at an outfall has no outgoing pipe to be measured against and can "
+            f"never breach, and counting those {self._n_inlets_all - self._n_inlets} extra "
+            f"pipe ends would print 25.96 % instead. Their two denominators are also not "
+            f"identical: {AB_INLET['src']} counts 249 breaching JUNCTION PAIRS in 941, "
+            f"while this counts breaching branch INLETS. Close enough to compare, not close "
+            f"enough to claim a margin of two hundredths of a point.\n")
+        L.append(
+            f"**{self.n_movable} of the {len(sb):,} can be designed away by moving a "
+            f"chamber, and that number is measured rather than asserted.** A breach is "
+            f"movable here only if the chamber is NOT standing on a stage-2 graph node - "
+            f"where two corridors meet, the node IS the position - and its inlet arrives "
+            f"on a different corridor from the one its outlet leaves on; the count of those "
+            f"is taken from the published reaches, not written down as a nought. "
+            f"A chamber can otherwise only be moved "
+            f"ALONG the corridor it stands on. {len(sb) - self.n_same_arc:,} of the "
+            f"breaches are the angle at which two mapped streets MEET, with which of them "
+            f"drains into which fixed by stage 2's arborescence - moving a chamber does not "
+            f"rotate a street. The other {self.n_same_arc} are one corridor turning back on "
+            f"itself by more than 90 deg at a chamber the bend rule correctly put there - "
+            f"sliding it along the same bend keeps the same turn. What WOULD move them is a "
+            f"different corridor choice or a different join, which are stage 1 and stage 2 "
+            f"decisions, and they are named here rather than absorbed.\n")
+        L.append(
+            f"**So they are flagged, sized and priced, not forced to a number.** "
+            f"`SWEPT_CH` = 1 on all {int(ch.SWEPT_CH.sum()):,} of them: the resolution for a "
+            f"sharp inlet is a purpose-made chamber with a swept channel, which G203-p30 "
+            f"asks for in the same paragraph - benching _\"formed to permit safe access and "
+            f"to maximise hydraulic efficiency\"_ and _\"Smooth transitions between inlet "
+            f"and outlet\"_. What is NOT acceptable is a softer angle, and what is not "
+            f"acceptable either is a count taken off the wrong network: this measurement is "
+            f"made AFTER pruning, on the pipes that are published. Taken before it - which "
+            f"is what the previous run did - it published 2,952, of which 145 were a priced "
+            f"chamber detail for an inlet the prune had deleted, and 2,324 angles came off "
+            f"a pipe that is not in the layer. The count also went UP, not down, when the "
+            f"bearing stopped being read off a sub-millimetre digitising sliver: "
+            f"{self.n_sliver:,} of {len(seg):,} segments begin with a leg under 1 mm, and "
+            f"taking the direction of flow from "
+            f"the chord instead - which is how a pipe is actually laid - uncovered "
+            f"{self.n_same_arc} breaches the sliver had reported as 179.9 deg.\n")
+        L.append(
+            f"**And the number that measures how much of this rests on a choice: "
+            f"{self.n_basis_amb} chambers change side of the 90 deg rule depending on "
+            f"whether the direction of flow is read from the reach's chord or from the "
+            f"pipe's own direction where it meets the chamber.** On a two-point reach the "
+            f"two ARE the same number, exactly, and there is nothing to choose - that is "
+            f"most of the layer, and it is why the change to the chord was right. But "
+            f"{self.n_bent} reach(es) depart from their own chord by more than "
+            f"STRAIGHT_TOL_M = {STRAIGHT_TOL_M:g} m - a bend with no chamber at it, which "
+            f"is the one thing this stage's own straightness rule forbids and which it had "
+            f"never measured on its own output - and every one of the 11 sits on one of "
+            f"those. {self.n_basis_amb_unpriced} of the "
+            f"{self.n_basis_amb} are published as COMPLIANT and therefore carry no priced "
+            f"swept channel, so this is an under-count of a priced item, not a rounding "
+            f"argument. Two causes, both ours: `split_positions` drops a bend cut that "
+            f"lands within the {MH_MIN_CLEAR_M:g} m minimum clearance of a neighbour, and "
+            f"`contract_pairs` re-divides an absorbed reach for LENGTH but not for "
+            f"straightness. **It is not fixed here and it should not be forced**: "
+            f"chambering those bends would put two chambers inside the very clearance the "
+            f"contraction exists to honour, so the two project rules genuinely conflict on "
+            f"this geometry and the resolution is the engineer's.\n")
+        if self.n_bent:
+            L.append(_md(self.t_bent, maxrows=10))
+            L.append("\n")
+        L.append(
+            f"{self.n_inlet_na:,} chambers carry no angle at all, and that is not a gap in "
+            f"the measurement: a head has no inlet pipe and an outfall has no outgoing pipe "
+            f"to measure against, so G203-p30's rule does not apply to either. It is "
+            f"published as a blank rather than as a fabricated 90 or 180.\n")
+
+        if self.n_contracted or self.residual_pairs:
+            L.append("\n## Chambers that were one structure pretending to be two\n")
+            L.append(
+                f"`criteria.MH_SNAP_M` = {MH_MIN_CLEAR_M:g} m is one constant wearing two "
+                f"hats: the radius at which stage 1 merged positions into a single node, "
+                f"and the minimum clear distance between two chambers. Two chambers closer "
+                f"than the radius that merges nodes are one structure. "
+                f"**{self.n_contracted} were, and they have been contracted into one** - "
+                f"every one of them at the two ends of a corridor shorter than the "
+                f"clearance itself, which is the one case `split_positions` cannot catch "
+                f"because it keeps both ends of every arc. "
+                f"{self.residual_pairs} pair(s) remain.\n")
+            L.append(_md(self.t_close, maxrows=20))
+
+        L.append("\n## Spacing, against Table 12 and against the operator\n")
         L.append(_md(self.t_spacing))
         L.append("\n")
         L.append(_md(self.t_spacing_sweep))
@@ -2123,7 +2945,10 @@ class Chambers:
                        ("NODE_KIND", "What it turned out to be", "{}"),
                        ("GRD_M", "Ground m aOD", "{:.2f}"),
                        ("N_CONN", "Plot connections", "{:d}"),
-                       ("INLET_DEG", "Inlet angle deg (G203-p30 min 90)", "{:.1f}"),
+                       # 2 dp, not 1: at 1 dp an 89.96 deg inlet prints as "90.0" on the
+                       # popup of a chamber the same layer flags SWEPT_CH - the exact
+                       # contradiction the published column was floored to remove.
+                       ("INLET_DEG", "Inlet angle deg (G203-p30 min 90)", "{:.2f}"),
                        ("ON_WADI", "On wadi ground (G203-p30 4.4.1)", "{:d}")],
                 notes=("G203 lists no bend trigger. The bend chambers are ours, and the "
                        "threshold is a 0.5 m chord offset measured off NAMA's own built "
@@ -2166,8 +2991,13 @@ class Chambers:
 
     # ---------------------------------------------------------------- driver
     def build(self) -> "Chambers":
-        (self.load().mint().link().levels().fall().angles()
-         .connect().prune().topology().reallocate())
+        # `angles` sits AFTER `prune` on purpose: measured before it, the inlet angle at a
+        # chamber is the smallest over pipes the prune then deletes, and the last run
+        # published 145 priced swept-channel chambers for inlets that are not in the
+        # published layer. `contract_pairs` sits before `levels` so no terrain is sampled at
+        # a chamber that is about to be merged away.
+        (self.load().mint().link().contract_pairs().levels().fall()
+         .connect().prune().topology().angles().reallocate())
         self.assemble()
         self.drain_bound()
         self.chamber_loads()
@@ -2309,6 +3139,85 @@ def verify() -> dict:
         f"{pairs} pair(s) closer than {C.MH_MIN_CLEAR_M:g} m, which criteria.MH_SNAP_M "
         f"says ARE one structure")
 
+    # 8b. and the contraction that got there is on the record, not silent
+    try:
+        cp = gpd.read_file(OUT_GPKG, layer="close_pairs", ignore_geometry=True)
+    except Exception:                                              # noqa: BLE001
+        cp = pd.DataFrame(columns=["JOINED_BY_A_PIPE", "STATUS"])
+    n_con = int((cp.JOINED_BY_A_PIPE == 1).sum()) if len(cp) else 0
+    chk("every contracted chamber is named in close_pairs",
+        n_con == 0 or (n_con > 0 and cp.STATUS.astype(str).ne("").all()),
+        f"{n_con} pair(s) contracted, each with an A, a B, the gap and what was done. "
+        f"Anything a pass can ADD a later pass must be able to TAKE AWAY, and it publishes "
+        f"how many")
+
+    # 8c. INLET_DEG and INLET_FLAG must tell the same story. At 1 decimal an 89.96 deg
+    # inlet printed as "90.0" beside a raised flag on 85 chambers - the number said
+    # compliant and the flag said not.
+    dg = pd.to_numeric(ch.INLET_DEG, errors="coerce")
+    contra = int((((dg < C.INLET_MIN_DEG) & np.isfinite(dg)).astype(int)
+                  != ch.INLET_FLAG.astype(int)).sum())
+    chk("INLET_DEG and INLET_FLAG agree", contra == 0,
+        f"{contra} chambers where the published angle and the published flag disagree")
+
+    # 8d. the angle was measured on the PUBLISHED pipes, not on ones the prune deleted
+    import shapely as _sh2
+    bo: Dict[str, float] = {}
+    bi: Dict[str, List[float]] = {}
+    for u, d, gm in zip(seg.US_NODE.values, seg.DS_NODE.values, seg.geometry.values):
+        c = _sh2.get_coordinates(gm)
+        if len(c) < 2 or math.hypot(c[-1][0] - c[0][0],
+                                    c[-1][1] - c[0][1]) < BEARING_MIN_LEG_M:
+            continue
+        b = _bearing(c[0][0], c[0][1], c[-1][0], c[-1][1])
+        bo[u] = b
+        bi.setdefault(d, []).append(b)
+    re_ang = np.array([min((_inlet_angle(b, bo[u]) for b in bi[u]), default=np.nan)
+                       if (u in bi and u in bo) else np.nan
+                       for u in ch.NODE_UID.values])
+    re_ang = np.floor(re_ang * 100.0) / 100.0          # the published rounding, applied here
+    both = np.isfinite(re_ang) & np.isfinite(dg.values)
+    worst = float(np.abs(re_ang[both] - dg.values[both]).max()) if both.any() else 0.0
+    ghost = int((np.isfinite(dg.values) & ~np.isfinite(re_ang)).sum())
+    chk("INLET_DEG was measured on the published pipes",
+        worst <= 1e-6 and ghost == 0,
+        f"{ghost} chambers carry an angle no published pipe can produce; worst "
+        f"disagreement {worst:.4f} deg over {int(both.sum()):,} re-measured")
+
+    # 8e. every number the manifest publishes about this stage's own EDITS must be findable
+    # in the layer. `n_resplit` is counted before the prune, and the prune can delete the
+    # very reach that was re-divided: the first run with that code published "1 chamber put
+    # back" with none in the layer to find. This does not forbid the prune - it forbids the
+    # manifest saying something the deliverable cannot show.
+    try:
+        man = gpd.read_file(OUT_GPKG, layer="manifest", ignore_geometry=True)
+        mrow = man[man.ITEM.astype(str).str.strip()
+                   == "of those, still in the published layer"]
+        claimed = int(float(mrow.VALUE.iloc[0])) if len(mrow) else 0
+    except Exception:                                              # noqa: BLE001
+        claimed = 0
+    # a re-split chamber is the only kind that carries a corridor and no position along it
+    sig = int(((ch.ARC_CID.astype(str) != "") & (~np.isfinite(
+        pd.to_numeric(ch.S_ALONG, errors="coerce")))).sum())
+    chk("the re-split chambers the manifest claims are in the layer", claimed == sig,
+        f"manifest says {claimed} survive the prune, the layer holds {sig}")
+
+    # 8f. and the straightness the chord bearing rests on, re-measured off the file. This
+    # does NOT assert it is zero - it is not, and the compliance table fails on it honestly.
+    # What it asserts is that the published count is the true one.
+    off = np.array([chord_offset_of(_sh2.get_coordinates(g)) for g in seg.geometry.values])
+    n_bent = int((off > STRAIGHT_TOL_M).sum())
+    try:
+        brow = man[man.ITEM.astype(str).str.strip().str.startswith("reaches bent beyond")]
+        claimed_bent = int(float(brow.VALUE.iloc[0])) if len(brow) else -1
+    except Exception:                                              # noqa: BLE001
+        claimed_bent = -1
+    chk("the reaches bent past STRAIGHT_TOL_M are counted honestly",
+        claimed_bent == n_bent,
+        f"manifest says {claimed_bent}, the published geometry gives {n_bent} "
+        f"(worst {off.max():.2f} m). A bend with no chamber at it is a real "
+        f"non-conformity - it fails in `compliance`, it is not hidden here")
+
     # 9. ground levels agree with an independent resample of the terrain
     tf = T.TerrainFlow.load(GRID)
     k = min(4000, len(ch))
@@ -2374,6 +3283,37 @@ def selftest(verbose: bool = True) -> bool:
     t("a right-angle inlet is 90 deg", abs(_inlet_angle(0.0, 90.0) - 90.0) < 1e-9)
     t("flow doubling back is 0 deg", abs(_inlet_angle(0.0, 180.0) - 0.0) < 1e-9)
     t("90 deg is the guideline floor, not below it", INLET_MIN_DEG == 90.0)
+    # the published angle may understate compliance, never overstate it: a rounded 89.96
+    # printed as "90.0" beside a raised flag is what made INLET_DEG and INLET_FLAG disagree
+    # on 85 chambers.
+    _f = lambda v: math.floor(v * 100.0) / 100.0            # noqa: E731
+    t("an 89.96 deg inlet never publishes as 90", _f(89.9612) < INLET_MIN_DEG,
+      f"{_f(89.9612)}")
+    t("a breach can never publish a compliant number",
+      all(_f(v) < INLET_MIN_DEG for v in (89.99999, 89.995, 89.9, 88.27, 23.18)))
+    t("a compliant angle is never turned into a breach",
+      all(_f(v) >= INLET_MIN_DEG for v in (90.0, 90.00001, 90.01, 179.999, 180.0)))
+    t("flooring never lifts an angle", all(_f(v) <= v + 1e-12
+                                           for v in (89.9999999, 88.27, 23.18, 179.9999)))
+    t("flooring twice can drop another 0.01 - so the raw angle is floored ONCE",
+      _f(_f(20.0602)) < _f(20.0602), f"{_f(_f(20.0602))} vs {_f(20.0602)}")
+    t("the published minimum is a single floor of the raw minimum",
+      _f(min(88.2661, 91.4)) == _f(88.2661))
+    # --- the chord is the pipe only where the reach is straight, and that is checkable
+    _straight = np.array([[0.0, 0.0], [0.0, 25.0]])
+    _bent = np.array([[0.0, 0.0], [10.0, 1.0], [20.0, 0.0]])
+    _sliver = np.array([[0.0, 0.0], [0.0, 1e-9], [0.0, 25.0]])
+    t("a two-point reach has no chord offset", chord_offset_of(_straight) == 0.0)
+    t("a bent reach reports the bulge it actually has",
+      abs(chord_offset_of(_bent) - 1.0) < 1e-9, f"{chord_offset_of(_bent):.4f}")
+    t("on a straight reach the chord and the local leg are the SAME bearing - which is why "
+      "the chord change was exact on 52,610 of 56,667 reaches",
+      _end_bearings(_straight, 0.0) == _end_bearings(_straight, 1.0))
+    t("on a bent reach they are NOT, and that is the exposure this stage publishes",
+      abs(_end_bearings(_bent, 0.0)[0] - _end_bearings(_bent, 1.0)[0]) > 1.0,
+      f"{_end_bearings(_bent, 0.0)[0]:.2f} vs {_end_bearings(_bent, 1.0)[0]:.2f}")
+    t("a duplicated vertex cannot set the direction of flow",
+      abs(_end_bearings(_sliver, 1.0)[0] - _bearing(0.0, 0.0, 0.0, 25.0)) < 1e-9)
 
     # --- Table 12 bands, from criteria, against the PDF transcription
     t("Table 12 DN200 band is 100 m", C.mh_max_spacing(200) == 100.0)

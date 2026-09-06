@@ -76,13 +76,31 @@ published tables are the authority, this text is a summary of them
                       status Existing (101.7 km Modified, 2.9 km New).  0.13 % of it lies
                       within 1 m of a drawn line, median distance 24.9 m: THE DRAFTSMAN DID
                       NOT DRAW THE CARRIAGEWAYS.  What survives inside the +/-6 m band is
-                      1,051 m of 1,819 km; of that, 831.3 m in 10 lines runs ALONG a
-                      carriageway (0.0457 % of the network, against 0.1 % in NAMA's own
-                      built network).  FLAGGED, NOT DELETED.
-    the price of it   excluding all 10 would strand 328.5 km carrying 12,052 m3/d - 16.1 %
-                      of the load.  One 23.1 m line alone carries 285.9 km / 10,168 m3/d,
-                      and the "carriageway" it sits beside is an UNNAMED 107 m record with
-                      status New.  That is why nothing is deleted here.
+                      1,051 m of 1,819 km; of that, 916.1 m in 22 lines runs ALONG a
+                      carriageway.  12 of those / 84.8 m were published as CROSSINGS until
+                      2026-09-06 by a length shortcut that never read their bearing.
+    rule 7 applied    16 lines / 613.2 m EXCLUDED: PIPE_OK = 0, each with the reason, the
+                      angle and the carriageway written on its own row.  6 lines / 302.9 m
+                      RETAINED as an OPEN H1 BREACH, because each is the only drawn link to
+                      what sits behind it.  The exclusion changes NO connectivity: 13
+                      components before and after, off-main load 762.6 m3/d either way.
+    the price of it   excluding all 22 would strand 329.6 km carrying 12,105 m3/d - 16.2 %
+                      of the load - and 268.8 km of the pipe the run published.  One 23.1 m
+                      line is the ONLY drawn link between the eastern town (285.9 km, 1,632
+                      corridors over a 24 x 12 km area, 10,168 m3/d) and the rest; the gap
+                      either side of it is the length of the line itself.  A 6.8 m line and
+                      a 175.6 m line hold 43.5 km in the west the same way.
+    what is left      0.0057 % of the routable length lies inside a 4 m buffer of a tagged
+                      carriageway, against the as-built gate of <= 0.2 % there and the built
+                      2006 network's own 0.0820 %.  THAT is the gate's quantity: NAMA's
+                      network is measured the same way, overlap length with NO bearing test,
+                      so a crossing counts on both sides.  Bearing-filtered, the ALONG share
+                      is 0.0010 % at 4 m, 0.0167 % at 6 m and 0.1981 % at 10 m.  Until
+                      2026-09-06 this line read "0.0000 % - ZERO corridors" at 4 m and
+                      0.0433 % at 10 m, because the measurement charged whole lines and
+                      refused to judge any line less than 99 % inside the band - true at the
+                      6 m split width and at no other.  THE BUFFER IS PART OF THE NUMBER
+                      (`dual_exposure`), and so is which of the two quantities is quoted.
     load reach        every plot allocated to its nearest corridor with no cap, so component
                       shares are shares of the whole 74,701 m3/d.  Plot-to-corridor distance
                       median 25.3 m, p90 54.1 m; 80.5 % of the load within 40 m and 99.4 %
@@ -90,14 +108,21 @@ published tables are the authority, this text is a summary of them
 
 WHAT IS PUBLISHED
     roads         every drawn line, noded, nothing deleted
-    corridors     the ROUTABLE set.  TODAY IT IS IDENTICAL TO `roads` - the engineer has
-                  ruled that every line is usable - and `verify()` asserts that identity so
-                  the day something IS excluded, the difference is deliberate and visible.
-                  It stays a separate layer because reaching for the wrong one is how a pipe
-                  ended up on a dual carriageway in W10.
+    corridors     the ROUTABLE set: the PIPE_OK = 1 rows of `roads`.  `verify()`
+                  reconciles the two off the reloaded file - corridors must be EXACTLY those
+                  rows, every excluded row must carry a reason, and no row may be excluded
+                  that the measurement did not flag.  It stays a separate layer because
+                  reaching for the wrong one is how a pipe ended up on a dual carriageway in
+                  W10.
     nodes         node identity: NODE_ID -> point, with degree and how the node was made
-    dual_review   lines the measurement says still run ALONG a tagged dual carriageway,
-                  each priced with what excluding it would strand.  FLAGGED, NOT DELETED.
+    dual_review   every line the measurement says runs ALONG a tagged dual carriageway,
+                  priced with what excluding it would strand and carrying its disposition
+    dual_exclusion  the rule 7 decision, line by line: excluded or retained, with the angle,
+                  the carriageway, the strand and the sentence behind it
+    dual_exposure   the surviving routable layer's exposure at 4, 6 and 10 m, measured on the
+                  IN-BAND RUN: ALONG_* is bearing-filtered (the H1 quantity), OVERLAP_* is
+                  every metre inside the buffer with no bearing test (the quantity
+                  `asbuilt.dual_overlap_m` states the <= 0.2 % gate in)
     twins         geometric dual-carriageway candidates the road file never tagged.
                   FLAGGED, NOT DELETED.
     boundary      the study boundary.  NOT in this DXF - see BOUNDARY below.
@@ -141,20 +166,64 @@ creates carries `MADE_BY = 'cross'` so a later stage can check for a grade separ
 flyover drawn as two crossing centrelines would be noded here wrongly - the DXF carries no
 elevation - so the count is published rather than buried.
 
-DUAL CARRIAGEWAYS - MEASURED, REPORTED, NOT ENFORCED
-Project rule 7 says no pipe runs ALONG a dual carriageway because it cannot be dug up, and
-NAMA's own built network obeys it on 99.9 % of its length (`criteria.BENCHMARKS
-['DUAL_SHARE_BUILT']`).  The engineer has ruled that the draftsman has already resolved this
-in the drawing, so nothing is deleted here.  What is measured, and published:
+DUAL CARRIAGEWAYS - MEASURED, AND SINCE 2026-09-06 ENFORCED AT THE CORRIDOR
+Project rule 7 says no pipe of any kind runs ALONG a dual carriageway, trunk included,
+because it cannot be dug up; a crossing is legal, running along one is not (engineer,
+2026-08-19; H1, philosophy sec 3).  NAMA's own built network obeys it on 99.9 % of its
+length (`criteria.BENCHMARKS['DUAL_SHARE_BUILT']`), and `_BRAIN/10_ASBUILT_CALIBRATION.md`
+measures that as 0.0820 % running along, with a 4 m buffer, and sets the gate at <= 0.2 %
+there.  THE BUFFER IS PART OF THE NUMBER and is published beside it.
+
+WHAT CHANGED ON 2026-09-06.  Until then this stage measured the breach and left it in the
+routable layer, and rule 7 lived in the schema (`PIPE_OK` was 1 on all 12,665 rows,
+`EXCL_RSN` blank on all of them) instead of in the data.  Philosophy sec 2 stage 2 is
+explicit that the exclusion belongs HERE, not in the router, so `corridors` is now the
+PIPE_OK = 1 rows and a line that runs along a carriageway is out of it.  Two things had to
+be true before that could be done honestly:
+
+  1. THE MEASUREMENT WAS UNDER-REPORTING.  `tag_dual` called any in-band piece shorter than
+     XING_CONTACT_MAX_M a crossing WITHOUT reading its bearing.  The argument behind that
+     shortcut is sound only for a piece that actually TRAVERSES the band; a piece that
+     clips the band edge has a short contact at ANY bearing.  It published 12 pieces /
+     84.8 m as XING = 1 - a column whose field meaning says "measured, not assumed" - at
+     bearings from 0.1 to 63.4 deg, the worst being 6.78 m at 0.1 deg whose offset to the
+     carriageway varied by 0.16 m over its whole length.  The shortcut is gone; the
+     measured bearing decides.  ALONG went 10 lines / 831.3 m -> 22 / 916.1 m.
+  2. A BLANKET EXCLUSION WOULD HAVE SEVERED THE TOWN.  Excluding all 22 strands 329.62 km
+     carrying 12,105 m3/d - 16.2 % of the project load - and 268.8 km of the pipe the run
+     actually published.  Two of them are the reason: a 23.1 m piece is the ONLY drawn link
+     between the eastern town (285.87 km, 1,632 corridors, a 24 x 12 km area) and the rest,
+     and a 6.8 m piece is the only link to 43.50 km in the west.  The gap either side is
+     the length of the piece itself.
+
+So the rule is applied by what the GRAPH says, with no invented threshold: a flagged line
+whose removal strands NOTHING is excluded; one whose removal strands anything at all is
+RETAINED, marked H1_KEEP = 1 and published in `dual_exclusion` with the km and the load it
+holds.  Concept rule "flag, do not solve" (philosophy sec 9): what cannot be resolved at
+concept is named with its reason and its size, NEVER DROPPED.  A retained line is an OPEN H1
+BREACH, not a pass - the fix is a designed carriageway crossing, and that is switched off by
+the standing instruction of 2026-09-03 ("no crossings for now").  It needs the engineer.
+
+What is measured, and published:
 
   * how much of the tagged dual-carriageway network (`dual = 1` in `SHP/Road centerline 2`,
     146.9 km) the drawing represents at all - sampled along the tagged centrelines
   * the drawing's exposure inside a band around those centrelines, at eight band widths, so
     the answer's sensitivity to the one assumed number is visible
-  * every in-band run classified ALONG / ACROSS / GRAZE on measured bearing and length
+  * every in-band run classified ALONG / ACROSS / GRAZE on MEASURED BEARING ONLY.  There is
+    no length shortcut in front of the bearing: one used to sit there and it published 12
+    pieces / 84.8 m as square crossings at 0.1 to 63.4 degrees (see XING_CONTACT_MAX_M).
   * for every ALONG run, WHAT EXCLUDING IT WOULD COST: the km and the load it would strand.
-    That is the number the decision actually turns on, and it is why the review list is
-    priced rather than merely listed.
+    That is the number the decision actually turns on - it is priced BEFORE it is applied,
+    and it is what decides exclusion against retention.
+  * the surviving routable layer re-measured from the geometry at 4, 6 and 10 m buffers
+    (`dual_exposure`), never read back off the ALONG_DUAL column, so the published number is
+    an independent check on the exclusion and not a restatement of it.  Measured ON THE
+    IN-BAND RUN at every width: charging the whole line and skipping any line under 99 %
+    in-band is right only at the 6 m split width, and it was pinning the 4 m answer at zero.
+    Two quantities, because the calibration gate uses one and H1 uses the other: OVERLAP_*
+    is every metre inside the buffer (the gate's, no bearing test) and ALONG_* is
+    bearing-filtered (H1's).
   * a geometric scan for carriageways the road file never tagged, with the discriminator
     published beside each candidate (the share of the strip between the pair occupied by
     cadastral plots: a median holds none, a street grid holds plots)
@@ -301,11 +370,17 @@ DUAL_XING_SKEW_DEG = 25.0
 
 XING_CONTACT_MAX_M = 2.0 * DUAL_BAND_M / math.sin(math.radians(90.0 - DUAL_XING_SKEW_DEG))
 # [DERIVED] 13.24 m.  A straight line crossing a band of width 2 x DUAL_BAND_M at angle
-# theta to the band axis has an in-band contact of width / sin(theta).  Turn that round: an
+# theta to the band axis has an in-band contact of width / sin(theta).
+#
+# RETRACTED 2026-09-06 AS A CLASSIFIER.  The inversion this constant was used for - "an
 # in-band contact no longer than this IS a crossing at at least (90 - skew) degrees, by
-# geometry, with no bearing to measure.  It matters because a bearing measured over a few
-# metres is noise, and because "runs along a dual carriageway" is not a claim geometry
-# supports for a 3 m line when the carriageway pair is ~14 m wide.
+# geometry, with no bearing to measure" - is only valid for a piece that TRAVERSES the band.
+# A piece that clips the band edge, or that ends inside it, has a short contact at ANY
+# bearing, so the implication runs one way only and it was applied in the other.  On the
+# 03/09 drawing it published 12 pieces / 84.8 m as XING = 1 at bearings of 0.1 to 63.4 deg -
+# the worst 6.78 m at 0.1 deg, i.e. exactly parallel, whose offset to the carriageway varied
+# 0.16 m over its whole length.  `tag_dual` now decides on the measured bearing and nothing
+# else; this constant survives only as a published diagnostic on the manifest.
 
 IN_BAND_MIN_FRAC = 0.99
 # [ASSUME] the share of a line that must lie inside the band before the line is judged
@@ -424,10 +499,43 @@ FIELDS: Dict[str, str] = {
     "XING": "1 this line crosses a tagged dual carriageway squarely - measured, not assumed",
     "DUAL_ANG": "measured angle between this line and the carriageway beneath it, deg. "
                 "0 = parallel, 90 = square. -1 where not inside a band",
-    "PIPE_OK": "1 a pipe may be laid along this line. 1 EVERYWHERE today: the engineer has "
-               "ruled that the clean DXF is usable throughout. Kept as a field so a future "
-               "exclusion is a data change, not a code change",
-    "EXCL_RSN": "why PIPE_OK is 0; empty everywhere today",
+    "PIPE_OK": "1 a pipe may be laid ALONG this line, 0 it is excluded. `corridors` IS "
+               "the rows with PIPE_OK = 1, so a 0 here is the exclusion - philosophy sec 2 "
+               "stage 2 puts it at the corridor and not in the router. Until 2026-09-06 it "
+               "was 1 on all 12,665 rows and project rule 7 lived in this schema instead of "
+               "in the data",
+    "EXCL_RSN": "why PIPE_OK is 0: the rule, the measured angle, the length and the "
+                "carriageway. Blank where PIPE_OK is 1",
+    "H1_KEEP": "1 this line runs ALONG a tagged dual carriageway and was RETAINED ANYWAY, "
+               "because it is the only drawn link to what sits behind it and excluding it "
+               "would sever that. It is an OPEN H1 BREACH carrying its price in "
+               "`dual_exclusion`, not an oversight and not a pass. Concept rule 'flag, do "
+               "not solve': named and sized, never dropped. The fix is a designed "
+               "carriageway crossing",
+    "BUFFER_M": "dual_exposure: the buffer half-width every number on the row was measured "
+                "at. The calibration document orders the buffer published WITH the number "
+                "because the answer moves with it",
+    "ALONG_N": "dual_exposure: in-band RUNS running ALONG the carriageway at this buffer - "
+               "runs, not lines. A line is cut at the 6 m band and at nothing else, so at "
+               "any other buffer only part of it is inside and only that part is counted",
+    "ALONG_M": "dual_exposure: the length of those runs. THE H1 QUANTITY - bearing filtered",
+    "ALONG_PCT": "dual_exposure: ALONG_M over the routable length. Do NOT quote it against "
+                 "the as-built 0.0820 % or the <= 0.2 % gate; those are OVERLAP_PCT",
+    "XING_N": "dual_exposure: in-band runs crossing within DUAL_XING_SKEW_DEG of square",
+    "XING_M": "dual_exposure: and their length. Legal under rule 7 - a crossing is allowed",
+    "OVERLAP_M": "dual_exposure: EVERY metre of the routable layer inside the buffer, with "
+                 "NO bearing test, so a crossing counts. This is what "
+                 "`asbuilt.dual_overlap_m` measures NAMA's built network with",
+    "OVERLAP_PCT": "dual_exposure: OVERLAP_M over the routable length. THE CALIBRATION "
+                   "GATE'S QUANTITY: _BRAIN/10_ASBUILT_CALIBRATION.md puts the built 2006 "
+                   "network at 0.0820 % and the gate at <= 0.2 %, both at a 4 m buffer",
+    "GRAZE_N": "dual_exposure: in-band runs shorter than the writing tolerance - the band "
+               "edge touching a split point, not geometry. Counted, never silently ignored",
+    "GRAZE_M": "dual_exposure: and their length, which is microns",
+    "DISPOSITION": "dual_review / dual_exclusion: `excluded` (PIPE_OK set to 0, strands "
+                   "nothing) or `retained` (H1_KEEP = 1, an open breach with a price)",
+    "REASON": "dual_exclusion: the full sentence behind the disposition, so the row is "
+              "readable without this file",
     "D_REC_M": "distance from this line's midpoint to the nearest recorded road centreline",
     "N_PLOT": "load-bearing plots whose representative point is within FRONTAGE_M",
     "N_BUILT": "of those, plots whose properties were COUNTED from electricity accounts",
@@ -469,8 +577,9 @@ FIELDS: Dict[str, str] = {
     "Y": "northing (nodes layer)",
 }
 
-LAYERS = ("roads", "corridors", "nodes", "dual_review", "twins", "boundary",
-          "layers", "gaps", "sweep", "dual_band", "dual_status", "dual_cover",
+LAYERS = ("roads", "corridors", "nodes", "dual_review", "dual_exclusion", "twins",
+          "boundary", "layers", "gaps", "sweep", "dual_exposure",
+          "dual_band", "dual_status", "dual_cover",
           "provenance", "load_reach", "components", "manifest")
 
 
@@ -1148,9 +1257,9 @@ def tag_dual(segs: Sequence, rec_dual) -> Tuple[Dict, pd.DataFrame, Dict]:
 
     The classification is measured, not assumed.  For every run inside the +/-DUAL_BAND_M
     band we take the bearing of the run and the bearing of the carriageway beneath it and
-    compare.  Within DUAL_XING_SKEW_DEG of perpendicular - or shorter than
-    XING_CONTACT_MAX_M, where the geometry settles it without a bearing - the line CROSSES.
-    Otherwise it runs ALONG, and is flagged.
+    compare.  Within DUAL_XING_SKEW_DEG of perpendicular the line CROSSES; otherwise it runs
+    ALONG, and is flagged.  THE MEASURED BEARING IS THE WHOLE TEST - there is no length
+    shortcut in front of it any more, and the retraction is written at XING_CONTACT_MAX_M.
 
     NOTHING IS DELETED.  The engineer has ruled the drawing usable throughout; his
     instruction is to check the result and report anything that still looks like it runs
@@ -1205,7 +1314,20 @@ def tag_dual(segs: Sequence, rec_dual) -> Tuple[Dict, pd.DataFrame, Dict]:
         th2 = _bearing(g, g.project(mid), half=5.0)
         ang = abs((th - th2 + 90.0) % 180.0 - 90.0)       # 0 parallel, 90 square
         angle[i] = round(ang, 1)
-        if s.length <= XING_CONTACT_MAX_M or ang >= (90.0 - DUAL_XING_SKEW_DEG):
+        # THE MEASURED BEARING DECIDES, AND NOTHING ELSE.  Until 2026-09-06 a second
+        # clause sat in front of this one - `s.length <= XING_CONTACT_MAX_M` - which
+        # called any short in-band piece a crossing WITHOUT looking at its bearing.  Its
+        # stated argument was sound but it was applied in the wrong direction: a contact
+        # no longer than XING_CONTACT_MAX_M is a square crossing ONLY IF the piece
+        # actually traverses the band.  A piece that clips the band edge, or that ends
+        # inside it, has a short contact at ANY bearing.  Measured on the 03/09 drawing it
+        # published 12 pieces / 84.8 m as XING = 1 - a column whose own field meaning says
+        # "crosses ... squarely - measured, not assumed" - at bearings of 0.1, 3.7, 3.7,
+        # 5.7, 17.3, 23.0, 23.3, 23.3, 39.4, 59.6, 61.5 and 63.4 deg.  The worst was
+        # A310.1: 6.78 m at 0.1 deg, i.e. exactly parallel, whose offset to the carriageway
+        # centreline varied by 0.16 m over its whole length.  That is the fabricated-column
+        # defect (tests/test_columns.py) in a new place, and it hid 84.8 m from H1.
+        if ang >= (90.0 - DUAL_XING_SKEW_DEG):
             xing[i] = 1
             xing_m += s.length
             n_xing += 1
@@ -1218,9 +1340,18 @@ def tag_dual(segs: Sequence, rec_dual) -> Tuple[Dict, pd.DataFrame, Dict]:
                        f">= {90 - DUAL_XING_SKEW_DEG:g} deg). FLAGGED FOR THE ENGINEER - "
                        f"not excluded")
 
+    # how much of the ALONG set the removed shortcut used to hide - published, so the
+    # correction is a number on the manifest and not a claim in a comment
+    short_along_n = int(sum(1 for i in np.where(along == 1)[0]
+                            if segs[i].length <= XING_CONTACT_MAX_M))
+    short_along_m = round(float(sum(segs[i].length for i in np.where(along == 1)[0]
+                                    if segs[i].length <= XING_CONTACT_MAX_M)), 1)
+
     rep = {"tagged_dual1_km": round(sum(g.length for g in d1) / 1000.0, 2),
            "tagged_dual2_km": round(sum(g.length for g in d2) / 1000.0, 2),
            "band_m": DUAL_BAND_M,
+           "recovered_by_dropping_shortcut_n": short_along_n,
+           "recovered_by_dropping_shortcut_m": short_along_m,
            "in_band_km": round((along_m + xing_m + graze_m) / 1000.0, 4),
            "along_runs": n_along, "along_m": round(along_m, 1),
            "along_pct_of_network": round(100.0 * along_m / tot, 4),
@@ -1569,6 +1700,355 @@ def price_dual_review(cor, flagged: np.ndarray, rec_dual) -> Tuple[pd.DataFrame,
 
 
 # --------------------------------------------------------------------------------------
+# STEP 7a - ENFORCE PROJECT RULE 7 / H1 AT THE CORRIDOR
+# --------------------------------------------------------------------------------------
+
+def _off_main_mask(us, ds, ln, drop) -> np.ndarray:
+    """Boolean per line: is this line OFF the largest component, with `drop` removed.
+
+    The same definition `price_dual_review` uses, lifted out so the joint check below can
+    reuse it. Componented from the node id STRINGS, never from geometry.
+    """
+    import networkx as nx
+
+    n = len(us)
+    keep = [i for i in range(n) if i not in drop]
+    g = nx.Graph()
+    g.add_nodes_from(us)
+    g.add_nodes_from(ds)
+    g.add_edges_from((us[i], ds[i]) for i in keep)
+    lab = {}
+    for k, cc in enumerate(nx.connected_components(g)):
+        for x in cc:
+            lab[x] = k
+    tot = defaultdict(float)
+    for i in keep:
+        tot[lab[us[i]]] += ln[i]
+    out = np.zeros(n, bool)
+    if not tot:
+        return out
+    m = max(tot, key=tot.get)
+    for i in keep:
+        out[i] = (lab[us[i]] != m)
+    return out
+
+
+def enforce_rule_7(roads, dreview, q_total_m3d: float):
+    """Take every line the measurement says runs ALONG a tagged dual carriageway out of the
+    routable set - EXCEPT the ones the network cannot survive losing, which are kept, named
+    and priced instead of being dropped in silence.
+
+    WHY THIS IS HERE AND NOT IN THE ROUTER.  Philosophy sec 2 stage 2: "wadi and
+    dual-carriageway exclusions apply HERE, not in the router".  `corridors` is the routable
+    set; a line left in it is a line a pipe may be laid along, whatever a later stage
+    intends.  Rule 7, settled by the engineer on 2026-08-19: no pipe of any kind runs ALONG
+    a dual carriageway, trunk included, because it cannot be dug up.  A crossing is legal;
+    running along one is not (H1, philosophy sec 3).
+
+    WHY IT IS NOT A BLANKET EXCLUSION.  The engineer's instruction of 2026-09-03 - "the
+    draftsman has resolved the dual-carriageway problem ... do not apply a blanket
+    exclusion" - forbids throwing out the band, or the tagged network, or every graze and
+    crossing near one.  It asks for the survivors to be checked and reported.  What is
+    excluded here is the MEASURED ALONG set only - line by line, each carrying the angle and
+    the carriageway it was judged against.  That is the surgical outcome `split_at_band` was
+    built to make possible, not a blanket.
+
+    THE ONE THING THAT MAY NOT HAPPEN IS A SILENT DROP.  Some of these lines are the ONLY
+    drawn link across a carriageway reserve, and cutting one severs a town.  Concept rule
+    "flag, do not solve" (philosophy sec 9) is explicit that what cannot be resolved at
+    concept is "named with its reason and its size, NEVER DROPPED".  So the test is the
+    graph's own: a flagged line whose removal strands nothing is excluded, full stop; a
+    flagged line whose removal strands anything at all is RETAINED, marked H1_KEEP = 1, and
+    published as an OPEN H1 breach with the km, the load and the decision it needs.  The
+    threshold is zero - no invented number - and it is the same line philosophy H15 draws:
+    "what is never legal is a piece that drains nowhere".
+
+    Returns (n_excluded, table, report).  Mutates PIPE_OK / EXCL_RSN / H1_KEEP in place.
+    """
+    along = np.asarray(roads["ALONG_DUAL"], int) == 1
+    roads["H1_KEEP"] = np.zeros(len(roads), int)
+    cols = ["CID", "LEN_M", "DUAL_ANG", "DUAL_ROAD", "DUAL_STATUS", "DUAL_REC_M",
+            "STRANDS_KM", "STRANDS_Q_M3D", "DISPOSITION", "REASON"]
+    rep = {"flagged_n": int(along.sum()),
+           "flagged_m": round(float(roads.loc[along, "LEN_M"].sum()), 1),
+           "excluded_n": 0, "excluded_m": 0.0,
+           "retained_n": 0, "retained_m": 0.0,
+           "retained_strands_km": 0.0, "retained_strands_q": 0.0,
+           "retained_strands_pct_q": 0.0}
+    if not along.any():
+        return 0, pd.DataFrame(columns=cols), rep
+
+    price = dreview.set_index("CID") if len(dreview) else None
+    i_pipe = roads.columns.get_loc("PIPE_OK")
+    i_rsn = roads.columns.get_loc("EXCL_RSN")
+    i_keep = roads.columns.get_loc("H1_KEEP")
+    rows = []
+    excluded_idx: set = set()
+    for i in np.where(along)[0]:
+        i = int(i)
+        cid = roads["CID"].iloc[i]
+        pr = price.loc[cid] if (price is not None and cid in price.index) else None
+        km = float(pr["STRANDS_KM"]) if pr is not None else 0.0
+        q = float(pr["STRANDS_Q_M3D"]) if pr is not None else 0.0
+        road = str(pr["DUAL_ROAD"]) if pr is not None else "?"
+        stat = str(pr["DUAL_STATUS"]) if pr is not None else "?"
+        recm = float(pr["DUAL_REC_M"]) if pr is not None else float("nan")
+        ang = float(roads["DUAL_ANG"].iloc[i])
+        ln = float(roads["LEN_M"].iloc[i])
+        if km <= 0.0:
+            reason = (f"H1 / project rule 7: {ln:.0f} m running ALONG a tagged dual "
+                      f"carriageway at {ang:.1f} deg (square would be "
+                      f">= {90 - DUAL_XING_SKEW_DEG:g} deg), inside the "
+                      f"+/-{DUAL_BAND_M:g} m band of {road}. EXCLUDED at the corridor - it "
+                      f"strands nothing")
+            roads.iloc[i, i_pipe] = 0
+            roads.iloc[i, i_rsn] = reason
+            excluded_idx.add(i)
+            disp = "excluded"
+            rep["excluded_n"] += 1
+            rep["excluded_m"] += ln
+        else:
+            reason = (f"H1 BREACH, OPEN: {ln:.0f} m running ALONG {road} at {ang:.1f} deg "
+                      f"(that record is status {stat}, {recm:.0f} m long). RETAINED because "
+                      f"it is the only drawn link to {km:,.2f} km carrying {q:,.1f} m3/d; "
+                      f"excluding it would sever that, and concept rule 'flag, do not solve' "
+                      f"says what cannot be resolved now is named and sized, NEVER dropped. "
+                      f"The fix is a designed carriageway crossing, which the standing "
+                      f"instruction of 2026-09-03 ('no crossings for now') switches off")
+            roads.iloc[i, i_keep] = 1
+            disp = "retained"
+            rep["retained_n"] += 1
+            rep["retained_m"] += ln
+            rep["retained_strands_km"] += km
+            rep["retained_strands_q"] += q
+        rows.append({"CID": cid, "LEN_M": round(ln, 2), "DUAL_ANG": round(ang, 1),
+                     "DUAL_ROAD": road, "DUAL_STATUS": stat, "DUAL_REC_M": round(recm, 1),
+                     "STRANDS_KM": round(km, 3), "STRANDS_Q_M3D": round(q, 1),
+                     "DISPOSITION": disp, "REASON": reason})
+    # ---- THE JOINT CHECK.  The strand above was priced ONE LINE AT A TIME, and that is
+    # not the question actually being asked: the lines are excluded TOGETHER, and three of
+    # them can form a cut set where no one of them does.  Measured on the 03/09 drawing the
+    # per-line pricing said 18 lines strand nothing and the joint exclusion islanded
+    # 0.433 km carrying 47.2 m3/d - small, and still a piece that drains nowhere, which
+    # philosophy H15 says is never legal.
+    #
+    # So the exclusion is made able to TAKE ITSELF BACK, which is the project's own rule
+    # ("anything a pass can ADD, a later pass must be able to TAKE AWAY, and the stage
+    # publishes how many it removed") pointed the other way.  Greedy, and it terminates
+    # because every restore strictly shrinks the newly-islanded set: while the joint
+    # exclusion islands anything that was on the main component before it, put back the ONE
+    # line whose return recovers the most load, and re-measure.  A line put back is not
+    # quietly forgiven - it becomes a retained, flagged, priced H1 breach like any other.
+    us_ = list(roads["US_NODE"])
+    ds_ = list(roads["DS_NODE"])
+    ln_ = np.asarray(roads["LEN_M"], float)
+    qn_ = np.asarray(roads["Q_NEAR_M3D"], float)
+    base_off = _off_main_mask(us_, ds_, ln_, set())
+    # ONLY the rows THIS function excluded are candidates to put back.  Reading the candidate
+    # set off `PIPE_OK == 0` instead would let the restore hand a row back that some other
+    # rule had excluded for some other reason, silently reverse it, and then decrement
+    # `excluded_n` for an exclusion this function never made.  Today rule 7 is the only thing
+    # that writes a zero into PIPE_OK, so the two sets are identical and nothing changes; the
+    # point is that they stay identical when the second exclusion arrives.
+    dropped = set(excluded_idx)
+    assert dropped == {int(i) for i in np.where(np.asarray(roads["PIPE_OK"], int) == 0)[0]}, (
+        "something other than rule 7 has written PIPE_OK = 0 before this point. The restore "
+        "pass below may only put back what THIS function took out")
+    rep["joint_islanded_km_before_restore"] = 0.0
+    rep["joint_islanded_q_before_restore"] = 0.0
+    rep["left_islanded_km"] = 0.0
+    rep["left_islanded_q"] = 0.0
+    rep["restored_n"] = 0
+    rep["restored_m"] = 0.0
+    restored: List[str] = []
+    for _round in range(len(dropped) + 1):
+        off = _off_main_mask(us_, ds_, ln_, dropped)
+        new = off & ~base_off
+        for i in dropped:
+            new[i] = False
+        if not new.any():
+            break
+        if _round == 0:
+            rep["joint_islanded_km_before_restore"] = round(float(ln_[new].sum()) / 1000.0, 3)
+            rep["joint_islanded_q_before_restore"] = round(float(qn_[new].sum()), 1)
+        best, best_q, best_km = None, 0.0, -1.0
+        for i in sorted(dropped):
+            off_i = _off_main_mask(us_, ds_, ln_, dropped - {i})
+            rec = new & ~off_i
+            rec[i] = False
+            if not rec.any():
+                continue
+            q = float(qn_[rec].sum())
+            km = float(ln_[rec].sum()) / 1000.0
+            # WHAT IS RECOVERED HAS TO CARRY SOMETHING.  H15 forbids "a piece that drains
+            # nowhere"; an island with NO LOAD ON IT drains nothing in the first place, so
+            # the rule does not bite and there is nothing to weigh against a hard-constraint
+            # breach.  Without this the greedy bought 18.2 m of H1 breach (A195.1, 41.5 deg
+            # to the Al Khaburah-Ibri Road) to protect a 16 m stub carrying 0.0 m3/d.  It is
+            # not a threshold - it is the absence of a reason - and the length it leaves
+            # islanded is published below rather than dropped quietly.
+            if q <= 0.0:
+                continue
+            if (q, km) > (best_q, best_km):
+                best, best_q, best_km = i, q, km
+        if best is None:
+            # nothing excluded can recover what is left, or what is left carries no load.
+            # Either way it is published, never swallowed.  "No load" means no load was
+            # ALLOCATED to it (Q_NEAR_M3D - every plot goes to its nearest corridor, and
+            # these are not it).  Plots may still FRONT it, so the frontage is published
+            # beside the allocation rather than rounded to the same zero: the components
+            # table names the piece with its own N_PLOT.
+            rep["left_islanded_km"] = round(float(ln_[new].sum()) / 1000.0, 3)
+            rep["left_islanded_q"] = round(float(qn_[new].sum()), 1)
+            if "N_PLOT" in roads.columns:
+                rep["left_islanded_frontage_plots"] = int(
+                    np.asarray(roads["N_PLOT"], float)[new].sum())
+            if "Q_M3D" in roads.columns:
+                rep["left_islanded_frontage_q"] = round(
+                    float(np.asarray(roads["Q_M3D"], float)[new].sum()), 2)
+            break
+        dropped.discard(best)
+        excluded_idx.discard(best)
+        cid = roads["CID"].iloc[best]
+        ln_b = float(roads["LEN_M"].iloc[best])
+        ang_b = float(roads["DUAL_ANG"].iloc[best])
+        roads.iloc[best, i_pipe] = 1
+        roads.iloc[best, i_keep] = 1
+        roads.iloc[best, i_rsn] = ""
+        reason = (f"H1 BREACH, OPEN: {ln_b:.0f} m running ALONG a tagged dual carriageway at "
+                  f"{ang_b:.1f} deg. It strands nothing ON ITS OWN, which is why the "
+                  f"per-line price reads zero, but excluding it TOGETHER with the rest of "
+                  f"the ALONG set islands {best_km:,.3f} km carrying {best_q:,.1f} m3/d - a "
+                  f"piece that drains nowhere, which H15 never allows. RESTORED and flagged "
+                  f"rather than dropped")
+        restored.append(str(cid))
+        rep["restored_n"] += 1
+        rep["restored_m"] += ln_b
+        rep["excluded_n"] -= 1
+        rep["excluded_m"] -= ln_b
+        rep["retained_n"] += 1
+        rep["retained_m"] += ln_b
+        hit = [r for r in rows if r["CID"] == cid]
+        if not hit:
+            raise RoadStageError(
+                f"the restore pass put back {cid}, which has no row in the rule 7 review "
+                f"table. Every disposition must be published on its own row - a restore "
+                f"that leaves no trace is the silent change this stage exists to prevent")
+        r = hit[0]
+        r["DISPOSITION"] = "retained"
+        r["REASON"] = reason
+        r["STRANDS_KM"] = round(best_km, 3)
+        r["STRANDS_Q_M3D"] = round(best_q, 1)
+        rep["retained_strands_km"] += best_km
+        rep["retained_strands_q"] += best_q
+    rep["restored_cids"] = ",".join(restored)
+    # THE EXCLUSION MAY NOT DROP LOAD.  `corridors` is the PIPE_OK = 1 rows, so a plot whose
+    # nearest corridor was excluded leaves the routable layer with it, and nothing downstream
+    # would say so - the load would simply be smaller than the town.  Measured, published,
+    # and checked in verify() rather than assumed to be zero because it happens to be today.
+    ex_now = np.asarray(roads["PIPE_OK"], int) == 0
+    rep["excluded_q_near"] = round(float(np.asarray(roads["Q_NEAR_M3D"], float)[ex_now].sum()), 3)
+    rep["excluded_frontage_plots"] = int(np.asarray(roads["N_PLOT"], float)[ex_now].sum())
+
+    tab = (pd.DataFrame(rows)[cols]
+           .sort_values(["DISPOSITION", "STRANDS_KM", "LEN_M"],
+                        ascending=[True, False, False]).reset_index(drop=True))
+    for k in ("excluded_m", "retained_m", "retained_strands_km", "retained_strands_q",
+              "restored_m"):
+        rep[k] = round(rep[k], 2)
+    rep["retained_strands_pct_q"] = round(
+        100.0 * rep["retained_strands_q"] / max(q_total_m3d, 1e-9), 2)
+    return rep["excluded_n"], tab, rep
+
+
+def measure_dual_exposure(lines: Sequence, rec_dual, widths=(4.0, 6.0, 10.0)) -> pd.DataFrame:
+    """The as-built gate is stated WITH ITS BUFFER, and so is this.
+
+    `_BRAIN/10_ASBUILT_CALIBRATION.md`: the built 2006 network runs along a dual carriageway
+    on 0.0820 % of its length and puts 1 chamber of 3,267 within 4 m - and the gate is
+    "<= 0.2 % at a 4 m buffer; PUBLISH THE BUFFER (1 chamber at 4 m becomes 12 at 10 m)".
+    The answer moves with the buffer, so a number quoted without one says nothing.
+
+    EVERY WIDTH IS MEASURED ON THE IN-BAND RUN, NOT ON THE WHOLE LINE.  Until 2026-09-06
+    this function judged a line only when at least IN_BAND_MIN_FRAC of it lay inside the
+    band, and then charged the WHOLE line to the answer.  That rule is correct at exactly one
+    width - 6 m - because `split_at_band` cuts every line at the 6 m band before it is
+    judged, so an in-band piece scores 1.0 there and nowhere else.  At any OTHER width the
+    filter silently refused to judge, and the table stopped moving with the buffer, which is
+    the one thing it exists to show:
+
+        published 2026-09-06     4 m:  0 runs,     0.0 m, 0.0000 %   |  10 m: 13 / 788.3 m
+        the same geometry,       4 m:  1 run,     17.8 m, 0.0010 %   |  10 m: 69 / 3,602.5 m
+        measured on the run                                          |        = 0.1981 %
+
+    The 4 m zero was not "no corridor runs along a carriageway at 4 m".  It was 9DF3.1 - the
+    single largest retained H1 breach in the project, the 23.1 m line holding 285.87 km -
+    lying 17.75 m inside the 4 m band at 9.9 deg and being skipped because the OTHER 5.3 m
+    of it was outside.  A filter that decides without measuring is the same defect
+    `tag_dual` was corrected for on the same day, and this one was reporting a clean pass
+    against the project's own calibration gate.
+
+    OVERLAP_M IS THE AS-BUILT'S OWN QUANTITY, published beside ours so the comparison is
+    like for like.  `asbuilt.dual_overlap_m` measures NAMA's built network as metres of pipe
+    inside a 4 m buffer of a `dual` = 1 centreline divided by total length, WITH NO BEARING
+    TEST - a crossing counts.  0.0820 % is that number.  ALONG_PCT is stricter (bearing
+    filtered) and is the H1 quantity; OVERLAP_PCT is the calibration quantity.  Quoting
+    ALONG_PCT against the 0.0820 % benchmark compares two different measurements.
+
+    Nothing here reads the ALONG_DUAL column, so at 6 m it is an INDEPENDENT check on the
+    exclusion rather than a restatement of it.
+    """
+    from shapely.ops import unary_union
+    from shapely.strtree import STRtree
+
+    d1 = [g for g in rec_dual[rec_dual["dual"] == 1].geometry.values if g is not None]
+    cols = ["BUFFER_M", "ALONG_N", "ALONG_M", "ALONG_PCT", "XING_N", "XING_M",
+            "OVERLAP_M", "OVERLAP_PCT", "GRAZE_N", "GRAZE_M"]
+    if not d1:
+        return pd.DataFrame(columns=cols)
+    t1 = STRtree(d1)
+    segs = list(lines)
+    tot = sum(s.length for s in segs) or 1.0
+    rows = []
+    for w in widths:
+        band = unary_union([g.buffer(w) for g in d1])
+        an = xn = gn = 0
+        am = xm = gm = ov = 0.0
+        for s in segs:
+            if not s.intersects(band):
+                continue
+            inter = s.intersection(band)
+            parts = [inter] if inter.geom_type == "LineString" else [
+                p for p in getattr(inter, "geoms", []) if p.geom_type == "LineString"]
+            for p in parts:
+                ov += p.length
+                # Below the WRITING tolerance a "run" is not geometry, it is the band edge
+                # touching a split point - measured at 1e-6 m and 1e-7 m on this drawing.
+                # Counted and published as a graze, never silently ignored.
+                if p.length <= ENDPOINT_TOL_M:
+                    gn += 1
+                    gm += p.length
+                    continue
+                mid = p.interpolate(0.5, normalized=True)
+                g = d1[t1.nearest(mid)]
+                ang = abs((_bearing(p, p.length * 0.5)
+                           - _bearing(g, g.project(mid), half=5.0) + 90.0) % 180.0 - 90.0)
+                if ang >= (90.0 - DUAL_XING_SKEW_DEG):
+                    xn += 1
+                    xm += p.length
+                else:
+                    an += 1
+                    am += p.length
+        rows.append({"BUFFER_M": w, "ALONG_N": an, "ALONG_M": round(am, 1),
+                     "ALONG_PCT": round(100.0 * am / tot, 4),
+                     "XING_N": xn, "XING_M": round(xm, 1),
+                     "OVERLAP_M": round(ov, 1),
+                     "OVERLAP_PCT": round(100.0 * ov / tot, 4),
+                     "GRAZE_N": gn, "GRAZE_M": round(gm, 6)})
+    return pd.DataFrame(rows)[cols]
+
+
+# --------------------------------------------------------------------------------------
 # STEP 8 - VERIFY, ON THE FILE RELOADED FROM DISK
 # --------------------------------------------------------------------------------------
 
@@ -1624,15 +2104,66 @@ def verify(gpkg: Path = ROADS_GPKG) -> Dict:
     if int((np.asarray(cor["ON_MAIN"], int) == 1).sum()) != int((comp == 0).sum()):
         fails.append("ON_MAIN disagrees with component 0")
 
-    # 3. no exclusion today - corridors must BE roads
-    if len(cor) != len(roads):
-        fails.append(f"corridors ({len(cor)}) is not the whole road layer ({len(roads)}) - "
-                     f"an exclusion has been applied without being declared")
-    if (roads["PIPE_OK"] != 1).any():
-        fails.append("a road carries PIPE_OK = 0, but no exclusion is declared in this "
-                     "stage")
-    if roads["EXCL_RSN"].fillna("").str.len().gt(0).any():
-        fails.append("a road carries an exclusion reason, but nothing is excluded")
+    # 3. THE EXCLUSION RECONCILES.  Not "corridors must BE roads" - that assertion was
+    #    true only while rule 7 was unenforced, and it would have to be deleted the moment
+    #    it started mattering, which is the wrong shape for a check.  What must hold now:
+    #    `corridors` is EXACTLY the rows of `roads` carrying PIPE_OK = 1; every excluded row
+    #    carries a reason and is one the measurement flagged; and the counts agree with the
+    #    manifest, recomputed from the file rather than carried in memory.
+    excl = roads[roads["PIPE_OK"] != 1]
+    if set(np.asarray(roads.loc[roads["PIPE_OK"] == 1, "CID"])) != set(np.asarray(cor["CID"])):
+        fails.append("`corridors` is not exactly the PIPE_OK = 1 rows of `roads`")
+    if len(cor) != len(roads) - len(excl):
+        fails.append(f"corridors ({len(cor)}) != roads ({len(roads)}) minus the "
+                     f"{len(excl)} excluded rows")
+    if not set(np.asarray(roads["PIPE_OK"], int)) <= {0, 1}:
+        fails.append("PIPE_OK holds a value that is not 0 or 1")
+    if len(excl):
+        if excl["EXCL_RSN"].fillna("").str.strip().eq("").any():
+            n = int(excl["EXCL_RSN"].fillna("").str.strip().eq("").sum())
+            fails.append(f"{n} rows are excluded with no reason written on them - a silent "
+                         f"drop is the defect this stage exists to prevent")
+        if (np.asarray(excl["ALONG_DUAL"], int) != 1).any():
+            n = int((np.asarray(excl["ALONG_DUAL"], int) != 1).sum())
+            fails.append(f"{n} rows are excluded without being flagged ALONG_DUAL - this "
+                         f"stage excludes on that measurement and on nothing else")
+    if roads["EXCL_RSN"].fillna("").str.len().gt(0).ne(roads["PIPE_OK"] == 0).any():
+        fails.append("EXCL_RSN and PIPE_OK disagree: a reason without an exclusion, or an "
+                     "exclusion without a reason")
+    # 3b. THE EXCLUSION MAY NOT TAKE LOAD OUT WITH IT.  Q_NEAR_M3D is every plot's load put
+    #     on its NEAREST line, and it is allocated over the whole drawn network BEFORE the
+    #     exclusion runs. If an excluded line carried any of it, that load leaves `corridors`
+    #     and nothing downstream reports a smaller town - which is a silent drop, the worst
+    #     defect in this project's history. It is zero on this drawing; it is checked because
+    #     "it is zero today" is not a reason.
+    q_roads = float(np.asarray(roads["Q_NEAR_M3D"], float).sum())
+    q_cor = float(np.asarray(cor["Q_NEAR_M3D"], float).sum())
+    if abs(q_roads - q_cor) > 1e-6:
+        fails.append(
+            f"the exclusion dropped {q_roads - q_cor:,.3f} m3/d of allocated load: `roads` "
+            f"carries {q_roads:,.1f} m3/d of Q_NEAR_M3D and `corridors` {q_cor:,.1f}. "
+            f"Q_NEAR is allocated to the NEAREST line before rule 7 runs, so an excluded "
+            f"line that carried load takes it out of the routable layer with it. The load "
+            f"must be re-allocated to the nearest SURVIVING corridor before the exclusion, "
+            f"or published as a funnel row - never left to vanish")
+    for item, got in (("rule7_excluded_n", len(excl)),
+                      ("rule7_retained_n", int(np.asarray(roads.get(
+                          "H1_KEEP", pd.Series(np.zeros(len(roads)))), int).sum()))):
+        if item in man.index and int(float(man[item])) != got:
+            fails.append(f"{item} on disk ({got}) disagrees with the manifest "
+                         f"({man[item]})")
+
+    # 3a. H1 ON THE PUBLISHED ROUTABLE LAYER, recomputed from the file.  Any survivor is an
+    #     OPEN BREACH and must say so on its own row - it may never be a blank.
+    still = cor[np.asarray(cor["ALONG_DUAL"], int) == 1]
+    if len(still):
+        if "H1_KEEP" not in cor.columns:
+            fails.append(f"{len(still)} corridors run ALONG a dual carriageway and the "
+                         f"layer carries no H1_KEEP column to declare them")
+        elif (np.asarray(still["H1_KEEP"], int) != 1).any():
+            n = int((np.asarray(still["H1_KEEP"], int) != 1).sum())
+            fails.append(f"{n} corridors run ALONG a dual carriageway and are NOT declared "
+                         f"H1_KEEP = 1 - an undeclared H1 breach in the routable layer")
 
     # 4. geometry sanity
     if (roads.geometry.geom_type != "LineString").any():
@@ -1674,10 +2205,10 @@ def load(layer: Optional[str] = None, gpkg: Path = ROADS_GPKG):
         cor = load("corridors")          # the routable set only
         comp, rep = components_of(cor)   # topology from the WRITTEN node ids
 
-    `corridors` is what a router may see.  `roads` is everything as drawn.  Today they hold
-    the same lines - the engineer has ruled the clean DXF usable throughout - but they stay
-    separate layers because reaching for the wrong one is how a pipe ended up on a dual
-    carriageway in W10, and because the day an exclusion IS applied the difference must be
+    `corridors` is what a router may see.  `roads` is everything as drawn.  They differ by
+    the rule 7 exclusion applied in step 8a, and they stay separate layers because reaching
+    for the wrong one is how a pipe ended up on a dual carriageway in W10, and because the
+    difference must be
     visible without reading code.
     """
     import geopandas as gpd
@@ -1927,10 +2458,12 @@ def build() -> Dict:
         "DEG_DS": [int(deg[inv[2 * i + 1]]) for i in range(len(segs))],
         "DUAL": dual, "ALONG_DUAL": dtags["ALONG_DUAL"], "XING": dtags["XING"],
         "DUAL_ANG": dtags["DUAL_ANG"],
-        # THE ENGINEER HAS RULED THE CLEAN DXF USABLE THROUGHOUT.  Nothing is excluded.
-        # The columns stay so that a future exclusion is a data change, not a code change.
+        # Set to 1 here and decided in step 8a, where every ALONG run is priced against the
+        # graph before it is excluded.  Until 2026-09-06 these two columns were 1 and blank
+        # on every row and rule 7 lived in the schema instead of in the data.
         "PIPE_OK": np.ones(len(segs), int),
         "EXCL_RSN": [""] * len(segs),
+        "H1_KEEP": np.zeros(len(segs), int),
         "D_REC_M": ptags["D_REC_M"],
         "N_PLOT": ptags["N_PLOT"], "N_BUILT": ptags["N_BUILT"],
         "Q_M3D": ptags["Q_M3D"], "Q_NEAR_M3D": ptags["Q_NEAR_M3D"],
@@ -1938,6 +2471,63 @@ def build() -> Dict:
         "TWIN_PLOT": ttags["TWIN_PLOT"],
         "TAU_PA": np.full(len(segs), CRIT.TAU_PA),
     }, geometry=list(segs), crs=CRS)
+
+    # ---- 8a PROJECT RULE 7 / H1 - THE EXCLUSION, APPLIED AT THE CORRIDOR -----------------
+    # Philosophy sec 2 stage 2: "wadi and dual-carriageway exclusions apply HERE, not in the
+    # router".  Priced FIRST on the whole drawn network, so the decision on each line is
+    # taken against what the graph would lose, and only then applied.
+    print("=" * 90)
+    print("[8a] PROJECT RULE 7 / H1 - no pipe runs ALONG a dual carriageway")
+    dreview, prep2 = price_dual_review(roads, roads["ALONG_DUAL"].to_numpy(), rec)
+    R["dual_review"] = prep2
+    n_excl, dexcl, erep = enforce_rule_7(roads, dreview, R["provenance"]["q_total_m3d"])
+    R["rule7"] = erep
+    print(f"    {erep['flagged_n']} lines / {erep['flagged_m']:,.1f} m measured as running "
+          f"ALONG a tagged dual carriageway inside the +/-{DUAL_BAND_M:g} m band")
+    print(f"    EXCLUDED {erep['excluded_n']} lines / {erep['excluded_m']:,.1f} m - each "
+          f"strands nothing on its own AND nothing when they go together, so the exclusion "
+          f"costs the network nothing")
+    if erep.get("left_islanded_km"):
+        print(f"    LEFT ISLANDED {erep['left_islanded_km']:,.3f} km carrying "
+              f"{erep['left_islanded_q']:,.1f} m3/d of ALLOCATED load. Nothing excluded can "
+              f"recover it, or nothing is allocated to it - H15 forbids a piece that DRAINS "
+              f"nowhere, and a piece with nothing allocated to it drains nothing to begin "
+              f"with. SAID PRECISELY, because 'no load' is a statement about Q_NEAR_M3D and "
+              f"not about the ground: {erep.get('left_islanded_frontage_plots', 0)} plot(s) "
+              f"carrying {erep.get('left_islanded_frontage_q', 0.0):,.2f} m3/d still FRONT "
+              f"it, and each is served from the corridor it is actually allocated to. It is "
+              f"named in `components` with its length, its plot count and its gap to the "
+              f"main component.")
+    if erep.get("restored_n"):
+        print(f"    RESTORED {erep['restored_n']} of them ({erep['restored_m']:,.1f} m): "
+              f"{erep['restored_cids']}. Each priced at ZERO on its own, but excluded "
+              f"TOGETHER the set islanded "
+              f"{erep['joint_islanded_km_before_restore']:,.3f} km carrying "
+              f"{erep['joint_islanded_q_before_restore']:,.1f} m3/d - a piece that drains "
+              f"nowhere, which H15 never allows. A per-line price cannot see a cut set, so "
+              f"the exclusion is made able to take itself back and says how much it did.")
+    if erep["retained_n"]:
+        print(f"    RETAINED {erep['retained_n']} lines / {erep['retained_m']:,.1f} m as an "
+              f"OPEN H1 BREACH. They are the only drawn link to "
+              f"{erep['retained_strands_km']:,.2f} km carrying "
+              f"{erep['retained_strands_q']:,.1f} m3/d "
+              f"({erep['retained_strands_pct_q']:.2f} % of the project load); excluding "
+              f"them severs it. Concept rule 'flag, do not solve': named and sized, never "
+              f"dropped.")
+        for _, r in dexcl[dexcl.DISPOSITION == "retained"].iterrows():
+            print(f"      {r.CID:12s} {r.LEN_M:7.1f} m at {r.DUAL_ANG:5.1f} deg beside "
+                  f"{r.DUAL_ROAD} ({r.DUAL_STATUS}, that record {r.DUAL_REC_M:.0f} m) "
+                  f"-> severing it strands {r.STRANDS_KM:,.2f} km / "
+                  f"{r.STRANDS_Q_M3D:,.1f} m3/d")
+        print(f"      EACH NEEDS A DESIGNED CARRIAGEWAY CROSSING. That is switched off by "
+              f"the standing instruction of 2026-09-03 ('no crossings for now'), so it is "
+              f"the ENGINEER's decision to lift it at these {erep['retained_n']} places.")
+    if R["dual"].get("recovered_by_dropping_shortcut_n"):
+        print(f"    of the {erep['flagged_n']} flagged, "
+              f"{R['dual']['recovered_by_dropping_shortcut_n']} / "
+              f"{R['dual']['recovered_by_dropping_shortcut_m']:.1f} m were published as "
+              f"XING = 1 until 2026-09-06 by a length shortcut that never read their "
+              f"bearing - see tag_dual()")
 
     # ---- 9 THE HEADLINE: components of the ROUTABLE layer, from its OWN written ids ------
     corridors = roads[roads["PIPE_OK"] == 1].copy().reset_index(drop=True)
@@ -1973,28 +2563,35 @@ def build() -> Dict:
     if len(ctab) > 20:
         print(f"      ... {len(ctab) - 20} more, all in the `components` table")
 
-    # ---- 10 price the dual review -------------------------------------------------------
-    print("[10] pricing the dual-carriageway review list")
-    dreview, prep2 = price_dual_review(corridors, corridors["ALONG_DUAL"].to_numpy(), rec)
-    R["dual_review"] = prep2
-    if prep2["flagged"]:
-        qtot = R["provenance"]["q_total_m3d"]
-        print(f"    {prep2['flagged']} lines / {prep2['flagged_m']:.0f} m flagged as running "
-              f"ALONG a tagged dual carriageway.")
-        print(f"    If ALL of them were excluded it would strand "
-              f"{prep2['all_strands_km']:,.2f} km carrying {prep2['all_strands_q']:,.1f} "
-              f"m3/d ({100 * prep2['all_strands_q'] / max(qtot, 1e-9):.1f} % of the load).")
-        print(f"    {prep2['bridges']} of them are the ONLY link to what sits behind them:")
-        for _, r in dreview[dreview.STRANDS_KM > 0].head(8).iterrows():
-            print(f"      {r.CID:12s} {r.LEN_M:7.1f} m at {r.DUAL_ANG:5.1f} deg strands "
-                  f"{r.STRANDS_KM:9.2f} km / {r.STRANDS_Q_M3D:9.1f} m3/d")
-            print(f"          beside {r.DUAL_ROAD} (status {r.DUAL_STATUS}, that record is "
-                  f"{r.DUAL_REC_M:.0f} m long)")
-        print("    THE ENGINEER DECIDES. Nothing has been deleted. The four answers the "
-              "philosophy allows are a designed crossing, a station, a re-route, or plots "
-              "served by another system.")
-    else:
-        print("    nothing is flagged: no line runs along a tagged dual carriageway.")
+    # ---- 10 the exposure that is left, at three buffers ---------------------------------
+    # `_BRAIN/10_ASBUILT_CALIBRATION.md` states its gate WITH its buffer and so does this:
+    # "<= 0.2 % at a 4 m buffer; publish the buffer (1 chamber at 4 m becomes 12 at 10 m)".
+    # Measured from the geometry of the SURVIVING corridors, never from the ALONG_DUAL
+    # column, so it is an independent check on the exclusion rather than a restatement.
+    print("[10] what is left, measured again from the geometry at three buffers")
+    expo = measure_dual_exposure(list(corridors.geometry.values), rec)
+    R["dual_exposure"] = {f"along_pct_{int(r.BUFFER_M)}m": float(r.ALONG_PCT)
+                          for _, r in expo.iterrows()}
+    R["dual_exposure"].update({f"overlap_pct_{int(r.BUFFER_M)}m": float(r.OVERLAP_PCT)
+                               for _, r in expo.iterrows()})
+    built = 100 * CRIT.BENCHMARKS["DUAL_SHARE_BUILT"][0]
+    for _, r in expo.iterrows():
+        print(f"      buffer +/-{r.BUFFER_M:4.1f} m : ALONG {int(r.ALONG_N):3d} in-band runs "
+              f"{r.ALONG_M:8.1f} m = {r.ALONG_PCT:7.4f} % of the routable length | "
+              f"ACROSS {int(r.XING_N):3d} / {r.XING_M:7.1f} m | OVERLAP (as-built's own "
+              f"quantity, no bearing test) {r.OVERLAP_M:8.1f} m = {r.OVERLAP_PCT:7.4f} %")
+    print(f"      MEASURED ON THE IN-BAND RUN, NOT ON THE WHOLE LINE. Until 2026-09-06 a line "
+          f"was judged only when >= {IN_BAND_MIN_FRAC:g} of it lay inside the band, which is "
+          f"true at 6 m ONLY - split_at_band cuts at the 6 m band - so the table published "
+          f"0.0000 % at 4 m and 0.0433 % at 10 m and did not move with the buffer, which is "
+          f"the one thing it exists to show. See measure_dual_exposure().")
+    print(f"      the built 2006 network: {built:.4f} % of its length runs along a dual "
+          f"(criteria.BENCHMARKS['DUAL_SHARE_BUILT']); _BRAIN/10_ASBUILT_CALIBRATION.md "
+          f"measures it at 0.0820 % with a 4 m buffer and sets the gate at <= 0.2 % there. "
+          f"THAT IS THE OVERLAP COLUMN, not the ALONG column: asbuilt.dual_overlap_m applies "
+          f"NO bearing test, so a crossing counts in the 0.0820 %. Compare like with like. "
+          f"A benchmark and a gate. H1 itself is ABSOLUTE, and what remains above zero here "
+          f"is the retained set named in step 8a - an open breach, not a pass.")
 
     # ---- 11 assemble the remaining layers ------------------------------------------------
     node_comp = {}
@@ -2008,14 +2605,20 @@ def build() -> Dict:
         "TAU_PA": np.full(len(nxy), CRIT.TAU_PA),
     }, geometry=[Point(x, y) for x, y in nxy], crs=CRS)
 
-    review = corridors[corridors["ALONG_DUAL"] == 1].copy().reset_index(drop=True)
+    # built from `roads`, not from `corridors`: the whole point of this layer is that the
+    # EXCLUDED lines are visible, and they are no longer in `corridors`
+    review = roads[roads["ALONG_DUAL"] == 1].copy().reset_index(drop=True)
     if len(review):
         review["NOTE"] = [dtags["NOTE"][i] for i in
-                          np.where(np.asarray(corridors["ALONG_DUAL"]) == 1)[0]]
+                          np.where(np.asarray(roads["ALONG_DUAL"]) == 1)[0]]
         review = review.merge(
             dreview[["CID", "DUAL_ROAD", "DUAL_CAT", "DUAL_STATUS", "DUAL_REC_M",
                      "STRANDS_KM", "STRANDS_Q_M3D"]], on="CID", how="left")
-    twins = corridors[np.asarray(ttags["IS_CAND"])].copy().reset_index(drop=True)
+        review = review.merge(dexcl[["CID", "DISPOSITION", "REASON"]], on="CID", how="left")
+    # from `roads`, not `corridors`: ttags is indexed in the DRAWN order and `corridors` is
+    # now shorter than that by the rule 7 exclusion. A boolean mask cut for one frame and
+    # applied to the other is exactly the class of silent misalignment this stage tests for.
+    twins = roads[np.asarray(ttags["IS_CAND"])].copy().reset_index(drop=True)
     if len(twins):
         twins["EMPTY_STRIP"] = ttags["EMPTY"][ttags["IS_CAND"]].astype(int)
 
@@ -2052,6 +2655,8 @@ def build() -> Dict:
     _write_table(ltab, "layers")
     _write_table(gaps, "gaps")
     _write_table(sweep, "sweep")
+    _write_table(dexcl, "dual_exclusion")
+    _write_table(expo, "dual_exposure")
     _write_table(dsens, "dual_band")
     _write_table(dstat, "dual_status")
     _write_table(cover, "dual_cover")
@@ -2201,10 +2806,81 @@ def _manifest(R: Dict, CRIT) -> pd.DataFrame:
          "[MEASURED] of those components, how many sit within 10 m of the main component - "
          "drafting gaps rather than islands, and cheap to close"),
 
-        ("PIPE_OK", 1, "",
-         "ENGINEER 2026-09-03: the clean DXF is usable throughout, so NOTHING IS EXCLUDED "
-         "and `corridors` IS `roads`. `verify()` asserts that identity, so the day an "
-         "exclusion is applied it is deliberate and visible"),
+        ("rule7_flagged_n", R["rule7"]["flagged_n"], "",
+         "[MEASURED] lines running ALONG a tagged dual carriageway - project rule 7 / H1"),
+        ("rule7_flagged_m", R["rule7"]["flagged_m"], "m",
+         "[MEASURED] their length. Until 2026-09-06 this was 831.3 m in 10 lines; the rest "
+         "was hidden by a length shortcut in tag_dual() that called a short in-band piece a "
+         "crossing without reading its bearing"),
+        ("rule7_restored_n", R["rule7"].get("restored_n", 0), "",
+         "lines this stage excluded and then PUT BACK. The strand is priced one line at a "
+         "time, which cannot see a CUT SET: three lines that each strand nothing can strand "
+         "0.433 km between them. So the exclusion is applied, the joint damage measured, "
+         "and the minimum set restored - the project's own rule ('anything a pass can ADD, "
+         "a later pass must be able to TAKE AWAY, and the stage publishes how many it "
+         "removed') pointed the other way. A restored line is a retained, flagged, priced "
+         "H1 breach, not a quiet forgiveness"),
+        ("rule7_restored_cids", R["rule7"].get("restored_cids", ""), "",
+         "which lines, by CID"),
+        ("rule7_joint_islanded_km", R["rule7"].get("joint_islanded_km_before_restore", 0.0),
+         "km", "[MEASURED] what the exclusion set islanded TOGETHER before those lines were "
+               "restored"),
+        ("rule7_left_islanded_km", R["rule7"].get("left_islanded_km", 0.0), "km",
+         "[MEASURED] what is STILL islanded after the restore, and it is published rather "
+         "than restored because it carries no load: H15 forbids a piece that DRAINS "
+         "nowhere, and a piece with nothing on it drains nothing. Buying a hard-constraint "
+         "breach to protect it would be the worse trade. It is named in `components`"),
+        ("rule7_left_islanded_q", R["rule7"].get("left_islanded_q", 0.0), "m3/d",
+         "[MEASURED] the load ALLOCATED to it (Q_NEAR_M3D) - zero, which is the whole "
+         "argument. Allocated, not fronting: see the next two rows"),
+        ("rule7_left_islanded_frontage_plots",
+         R["rule7"].get("left_islanded_frontage_plots", 0), "",
+         "[MEASURED] plots that FRONT the islanded piece even though none of them is "
+         "allocated to it. Published because 'it carries no load' is a statement about "
+         "Q_NEAR_M3D and somebody reading it will hear 'nothing is there'"),
+        ("rule7_left_islanded_frontage_q",
+         R["rule7"].get("left_islanded_frontage_q", 0.0), "m3/d",
+         "[MEASURED] and their load, which is served from the corridor each plot is actually "
+         "allocated to"),
+        ("rule7_excluded_q_near", R["rule7"].get("excluded_q_near", 0.0), "m3/d",
+         "[MEASURED] load ALLOCATED to the excluded lines. It must be ZERO: Q_NEAR_M3D is "
+         "assigned to the nearest line over the whole drawn network BEFORE rule 7 runs, so "
+         "an excluded line carrying load would take it out of `corridors` and no downstream "
+         "stage would report a smaller town. verify() FAILS if `roads` and `corridors` do "
+         "not carry the same Q_NEAR total - it is zero on this drawing, and 'it is zero "
+         "today' is not a reason to leave it unchecked"),
+        ("rule7_excluded_frontage_plots", R["rule7"].get("excluded_frontage_plots", 0), "",
+         "[MEASURED] plots fronting an excluded line. They are served from the corridor they "
+         "are allocated to; the number is here so the exclusion's footprint is visible"),
+        ("rule7_excluded_n", R["rule7"]["excluded_n"], "",
+         "lines taken OUT of `corridors` - PIPE_OK = 0, each with EXCL_RSN written on it. "
+         "Philosophy sec 2 stage 2 puts the dual-carriageway exclusion at the corridor and "
+         "not in the router. Every one of them strands nothing, so the exclusion costs the "
+         "network nothing - it is the surgical outcome the engineer's 2026-09-03 'do not "
+         "apply a BLANKET exclusion' leaves open, not a blanket"),
+        ("rule7_excluded_m", R["rule7"]["excluded_m"], "m",
+         "[MEASURED] the length excluded"),
+        ("rule7_retained_n", R["rule7"]["retained_n"], "",
+         "OPEN H1 BREACHES. Lines running ALONG a carriageway that are RETAINED because "
+         "each is the only drawn link to what sits behind it. Concept rule 'flag, do not "
+         "solve' (philosophy sec 9): what cannot be resolved at concept is named with its "
+         "reason and its size, NEVER DROPPED. Each carries H1_KEEP = 1 and a row in "
+         "`dual_exclusion`. THIS IS NOT A PASS"),
+        ("rule7_retained_m", R["rule7"]["retained_m"], "m",
+         "[MEASURED] the length of that open breach"),
+        ("rule7_retained_strands_km", R["rule7"]["retained_strands_km"], "km",
+         "[MEASURED] what excluding the retained lines instead would sever. This is the "
+         "number the decision turns on, and it is why they were not simply deleted"),
+        ("rule7_retained_strands_q", R["rule7"]["retained_strands_q"], "m3/d",
+         f"[MEASURED] the load on that length - "
+         f"{R['rule7']['retained_strands_pct_q']:.2f} % of the project total. THE ENGINEER "
+         f"DECIDES: each of these needs a designed carriageway crossing, which the standing "
+         f"instruction of 2026-09-03 ('no crossings for now') switches off"),
+        ("PIPE_OK", R["rule7"]["excluded_n"], "",
+         "count of PIPE_OK = 0 rows on `roads`. `corridors` is the PIPE_OK = 1 rows and "
+         "`verify()` reconciles the two against this number, recomputed from the file. It "
+         "was 0 until 2026-09-06, when rule 7 stopped living in the schema and started "
+         "living in the data"),
         ("DUAL_BAND_M", DUAL_BAND_M, "m",
          "[ASSUME] half-width of the band around a tagged dual centreline inside which a "
          "line is judged. Grounded on the measured ~14 m separation of the tagged "
@@ -2213,11 +2889,48 @@ def _manifest(R: Dict, CRIT) -> pd.DataFrame:
          "[ASSUME] the tolerance on 'square'. Same value criteria uses for a wadi crossing "
          "- one project, one meaning for the word"),
         ("XING_CONTACT_MAX_M", round(XING_CONTACT_MAX_M, 2), "m",
-         "[DERIVED] 2 x DUAL_BAND_M / sin(90 - skew). An in-band contact no longer than "
-         "this IS a crossing within tolerance, by geometry, with no bearing to measure"),
+         "[DERIVED] 2 x DUAL_BAND_M / sin(90 - skew) - the in-band contact a square crossing "
+         "makes. PUBLISHED AS A DIAGNOSTIC AND NO LONGER USED TO CLASSIFY. Until 2026-09-06 "
+         "any in-band piece shorter than this was called a crossing WITHOUT reading its "
+         "bearing; the inversion is only valid for a piece that actually traverses the band, "
+         "and a piece that clips the band edge has a short contact at ANY bearing. It "
+         "published 12 pieces / 84.8 m as XING = 1 at 0.1 to 63.4 deg - the worst 6.8 m at "
+         "0.1 deg, exactly parallel. The measured bearing now decides, and nothing else"),
+        ("dual_along_recovered_n", R["dual"].get("recovered_by_dropping_shortcut_n", 0), "",
+         "[MEASURED] of the flagged lines, how many that shortcut used to hide"),
+        ("dual_along_recovered_m", R["dual"].get("recovered_by_dropping_shortcut_m", 0.0),
+         "m", "[MEASURED] and their length"),
+        ("dual_along_pct_4m", R["dual_exposure"].get("along_pct_4m", ""), "%",
+         "[MEASURED] ALONG share of the PUBLISHED routable layer at a 4 m buffer, "
+         "re-measured from the geometry rather than read off ALONG_DUAL, and measured ON THE "
+         "IN-BAND RUN. Until 2026-09-06 this read 0.0000 % because a line was judged only "
+         "when >= IN_BAND_MIN_FRAC of it lay inside the band, which holds at 6 m ONLY: it "
+         "skipped 9DF3.1 lying 17.75 m inside the 4 m band at 9.9 deg. IT IS NOT THE GATE "
+         "QUANTITY - see dual_overlap_pct_4m"),
+        ("dual_along_pct_6m", R["dual_exposure"].get("along_pct_6m", ""), "%",
+         "[MEASURED] the same at the band half-width this stage judges on"),
+        ("dual_along_pct_10m", R["dual_exposure"].get("along_pct_10m", ""), "%",
+         "[MEASURED] the same at 10 m - the width at which the built network's 1 chamber "
+         "within 4 m becomes 12. Was published as 0.0433 % until 2026-09-06 by the same "
+         "whole-line filter; measured on the run it is ~4.6x that"),
+        ("dual_overlap_pct_4m", R["dual_exposure"].get("overlap_pct_4m", ""), "%",
+         "[MEASURED] THIS IS THE CALIBRATION GATE'S OWN QUANTITY, and the only one of these "
+         "that may be quoted against it. `asbuilt.dual_overlap_m` measures NAMA's built "
+         "network as metres of pipe inside a 4 m buffer of a `dual` = 1 centreline over "
+         "total length WITH NO BEARING TEST - a crossing counts. That is the 0.0820 % in "
+         "_BRAIN/10_ASBUILT_CALIBRATION.md and the <= 0.2 % gate beside it. ALONG_PCT is "
+         "bearing-filtered and therefore a different measurement"),
+        ("dual_overlap_pct_6m", R["dual_exposure"].get("overlap_pct_6m", ""), "%",
+         "[MEASURED] the same at the band half-width this stage judges on"),
+        ("dual_overlap_pct_10m", R["dual_exposure"].get("overlap_pct_10m", ""), "%",
+         "[MEASURED] the same at 10 m. THE ANSWER MOVES WITH THE BUFFER, which is why the "
+         "calibration document orders the buffer published with the number"),
         ("IN_BAND_MIN_FRAC", IN_BAND_MIN_FRAC, "",
          "[ASSUME] a line is judged against a carriageway only when this much of it is "
-         "inside the band. Below it the contact is a graze with no measurable bearing"),
+         "inside the band. Below it the contact is a graze with no measurable bearing. IT IS "
+         "VALID ONLY BECAUSE split_at_band CUTS EVERY LINE AT THE SAME BAND FIRST: applied "
+         "at any other width it is a filter that decides without measuring, which is what "
+         "made dual_along_pct_4m read zero until 2026-09-06"),
         ("dual1_tagged_km", R["dual"]["tagged_dual1_km"], "km",
          "[MEASURED] dual carriageway tagged `dual = 1` in the recorded centrelines. IT IS "
          "NOT ALL BUILT: by record status it splits "
@@ -2236,9 +2949,14 @@ def _manifest(R: Dict, CRIT) -> pd.DataFrame:
          "[MEASURED] length still running ALONG a tagged dual carriageway. FLAGGED, NOT "
          "DELETED - the engineer's instruction of 2026-09-03. See `dual_review`"),
         ("dual_along_pct", R["dual"]["along_pct_of_network"], "%",
-         f"[MEASURED] as a share of the network. NAMA's own built network runs along a dual "
-         f"on {100 * CRIT.BENCHMARKS['DUAL_SHARE_BUILT'][0]:.1f} % of its length "
-         f"(criteria.BENCHMARKS) - a benchmark, never a limit"),
+         f"[MEASURED] the FLAGGED share of the WHOLE DRAWN network, at the 6 m band, BEFORE "
+         f"rule 7 excludes anything. It is not the exposure of what is published (that is "
+         f"dual_along_pct_6m, on `corridors`) and it is NOT the quantity the as-built gate "
+         f"is written in (that is dual_overlap_pct_4m, which counts every metre in the "
+         f"buffer with no bearing test, the way asbuilt.dual_overlap_m does). NAMA's built "
+         f"network is {100 * CRIT.BENCHMARKS['DUAL_SHARE_BUILT'][0]:.1f} % on that third "
+         f"definition (criteria.BENCHMARKS) - a benchmark, never a limit, and only "
+         f"comparable with the item measured the same way"),
         ("dual_xing_m", R["dual"]["xing_m"], "m",
          "[MEASURED] length crossing a tagged dual squarely - measured bearing, not assumed"),
         ("dual_graze_m", R["dual"]["graze_m"], "m",
@@ -2307,7 +3025,8 @@ def report(gpkg: Path = ROADS_GPKG) -> None:
     import sqlite3
     con = sqlite3.connect(gpkg)
     try:
-        for t in ("layers", "gaps", "sweep", "dual_band", "dual_status", "dual_cover",
+        for t in ("layers", "gaps", "sweep", "dual_band", "dual_exposure", "dual_exclusion",
+                  "dual_status", "dual_cover",
                   "provenance", "load_reach", "components", "manifest"):
             print(f"\n=== {t} ===")
             print(pd.read_sql(f"SELECT * FROM {t}", con).to_string(index=False))

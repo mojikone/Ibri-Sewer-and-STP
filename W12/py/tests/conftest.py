@@ -87,12 +87,22 @@ GPKGS: Dict[str, str] = {
     "flows": "W12_flows.gpkg",         # s5_flows.py
     "pumps": "W12_pumps.gpkg",         # s7_pumps.py
     "streams": "W12_streams.gpkg",     # w12.streams
+    # ADDED 2026-09-06. THESE TWO WERE MISSING, AND THEY ARE THE DESIGN AND THE DELIVERABLE.
+    # Without them the whole suite was blind to stages 6 and 8: the readiness probe reported
+    # 29 of 34 audit checks "waiting on stage 6" AFTER stage 6 had run and published, because
+    # no fixture could open what it published. That is not a check failing - it is 29 checks
+    # never being asked, while the run produced a full set of drawings. Philosophy sec 8:
+    # a check that cannot run is a FAILURE, not a blank.
+    "w12": "W12.gpkg",                 # s6_levels.py - THE DESIGN: nodes, reaches, crossings
+    "levels": "W12_levels.gpkg",       # s6_levels.py - its own working layers
+    "export": "W12_export.gpkg",       # s8_export.py - THE DELIVERABLE
 }
 
 STAGE_FOR: Dict[str, str] = {
     "roads": "s1_roads.py", "orient": "s2_orient.py build", "hier": "s3_hierarchy.py build",
     "chambers": "s4_chambers.py", "flows": "s5_flows.py", "pumps": "s7_pumps.py",
     "streams": "python -m w12.streams",
+    "w12": "s6_levels.py", "levels": "s6_levels.py", "export": "s8_export.py",
 }
 
 

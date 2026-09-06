@@ -69,6 +69,17 @@ NEEDS = {
     "stations_rejected": (),
 }
 
+# Layers the EXCEPTIONS theme draws when the export produced them, and that are simply
+# ABSENT when it did not - a clean run has no unlevelled route and no withdrawn crossing.
+# Kept apart from NEEDS so a missing one is not reported as a defect: theme_exceptions()
+# omits an empty folder on purpose, and "we checked and it is fine" has to stay tellable
+# apart from "the layer was never written".
+OPTIONAL = {
+    "reaches_unlevelled": ("EDGE_UID", "US_NODE", "DS_NODE", "LEN_M", "QADF_M3D",
+                           "LIFT_M", "GAP_KIND", "WHY"),
+    "crossings_withdrawn": ("CROSS_ID", "WD_WHY"),
+}
+
 
 def load() -> "tuple[dict, list[str]]":
     """Read the published layers. Report what is absent; never quietly draw less."""
@@ -92,6 +103,17 @@ def load() -> "tuple[dict, list[str]]":
         if gone:
             missing.append(f"'{name}' has no {gone} - the themes that read them will be "
                            f"wrong or empty. Re-run s8_export.py build.")
+        layers[name] = g
+    for name, cols in OPTIONAL.items():
+        if name not in have:
+            continue
+        g = gpd.read_file(EX.GPKG_OUT, layer=name)
+        if g.crs is not None and g.crs.to_epsg() != CT.CRS_EPSG:
+            g = g.to_crs(CT.CRS_EPSG)
+        gone = [c for c in cols if c not in g.columns]
+        if gone:
+            missing.append(f"'{name}' has no {gone} - it is on the EXCEPTIONS theme and "
+                           f"its folder will be unreadable. Re-run s8_export.py build.")
         layers[name] = g
     return layers, missing
 
@@ -119,6 +141,24 @@ def summary(layers: dict) -> None:
         print(f"  {label:<46} {value:>14}   {note}")
 
     print(f"\n{C.concept_banner()}\n")
+    # WHERE THE LEVELS ON THIS DRAWING CAME FROM, read off the row and not off a constant
+    # in this file. Two solvers published inverts for the same chambers until 2026-09-06;
+    # a drawing that does not say which one it drew is how a stale depth gets quoted.
+    if r is not None and "LEVELS_BY" in r.columns:
+        by = r.LEVELS_BY.astype(str).value_counts()
+        line("LEVELS ON THIS DRAWING", (by.index[0] if len(by) else "(blank)"),
+             "LEVELS_BY, carried per row" if len(by) == 1 else
+             "MIXED: " + ", ".join(f"{k} {v:,}" for k, v in by.items()))
+        # and the same string the DXF title block and the KMZ description will carry, so
+        # the print-out and the drawing cannot disagree about who levelled the network
+        line("  ... banner written into the drawings", str(EX.LEVELS_SOURCE)[:60],
+             "s8_export.LEVELS_SOURCE, set from the rows above")
+    elif r is not None:
+        # NOT a refusal to draw - the map is still true - but a drawing that cannot say
+        # which solver produced its depths is how a stale depth gets quoted, and that has
+        # to be on the print-out rather than in a comment.
+        line("LEVELS ON THIS DRAWING", "NOT STATED",
+             "the reaches layer carries no LEVELS_BY - re-run s8_export.py build")
     if r is not None:
         line("gravity sewer", f"{r.LEN_M.sum() / 1000:,.1f} km", "LEN_M, published")
     if nd is not None:
@@ -166,6 +206,15 @@ def summary(layers: dict) -> None:
              if len(drops) else "")
         line("chambers past the cover cap", f"{_n(nd, nd.PAST_CAP == 1):,}",
              f"G203-p33, {C.MAX_COVER:g} m")
+    ul = layers.get("reaches_unlevelled")
+    if ul is not None and len(ul):
+        line("routes NOBODY LEVELLED", f"{len(ul):,}",
+             f"{ul.LEN_M.sum() / 1000:,.2f} km, OFF the reaches layer - "
+             + ", ".join(f"{k}={v:,}" for k, v in ul.GAP_KIND.value_counts().items()))
+    cw = layers.get("crossings_withdrawn")
+    if cw is not None and len(cw):
+        line("crossings WITHDRAWN", f"{len(cw):,}",
+             "nothing crosses there any more - inheritance row 4")
     if cn is not None and "CAN_CONN" in cn.columns:
         bad = cn[cn.CAN_CONN == 0]
         line("plots that CANNOT connect", f"{len(bad):,}",
@@ -182,16 +231,70 @@ def main(argv=None) -> int:
                     help="say what is on disk and what the themes would miss")
     ap.add_argument("--plain", action="store_true",
                     help="skip the annotated drawing - geometry only, opens instantly")
+    ap.add_argument("--stale-ok", action="store_true",
+                    help="draw anyway from an export that failed its own `levels "
+                         "coverage` gate. The banner still says so, on every drawing.")
     a = ap.parse_args(argv)
 
     layers, missing = load()
     for m in missing:
         print("  ! " + m)
+
+    # ---- WHAT THE EXPORT ALREADY SAID ABOUT ITSELF, READ RATHER THAN RE-DERIVED --------
+    # s8_export publishes a `levels coverage` row on `contract_check` and fails its own
+    # verify() on it: below the alarm the two upstream files describe different chambers
+    # and nothing in the export is quotable. This file drew a full, complete-looking KMZ
+    # and DXF set from exactly that export without ever reading the row - a map of less
+    # than half a network looks exactly like a map of all of it, which is the class of
+    # defect this file's own header says it refuses to produce. Nothing is computed here;
+    # the row is s8's, published, and read.
+    blocking: list = []
+    import fiona
+    if "contract_check" in set(fiona.listlayers(EX.GPKG_OUT)):
+        _chk = gpd.read_file(EX.GPKG_OUT, layer="contract_check", ignore_geometry=True)
+        _cov = _chk[_chk.LAYER.astype(str) == "levels coverage"]
+        if len(_cov) and int(_cov.PASS.iloc[0]) == 0:
+            blocking.append(f"{_cov.RESULT.iloc[0]} - {_cov.DETAIL.iloc[0]}")
+    else:
+        # NOT a refusal: a layer set assembled by hand has no contract_check and is a
+        # legitimate thing to draw. But the drawing then carries no verdict at all, and
+        # that has to be said rather than assumed clean.
+        print("  ! the export carries no `contract_check` layer, so nothing here can say "
+              "whether it is quotable - run s8_export.py build for a judged one")
+    for b in blocking:
+        print("  !! " + b)
+
+    # ---- THE BANNER THE DRAWINGS WILL CARRY, TAKEN OFF THE ROWS THEY DRAW --------------
+    # `s8_export.LEVELS_SOURCE` is a module global that only `build()` sets. This file
+    # calls write_dxf() and write_themes() directly, so on the fast path it was still the
+    # import-time default - the RETIRED stand-in's tag - and every DXF title block and KMZ
+    # description written from here named the wrong solver as the source of levels that in
+    # fact came from s6. That banner exists to stop precisely that lie.
+    _r = layers.get("reaches")
+    if _r is None or "LEVELS_BY" not in _r.columns or not len(_r):
+        EX.LEVELS_SOURCE = "UNSTATED - the published reaches carry no LEVELS_BY"
+    else:
+        _by = _r.LEVELS_BY.astype(str).value_counts()
+        EX.LEVELS_SOURCE = (str(_by.index[0]) if len(_by) == 1 else
+                            "MIXED: " + ", ".join(f"{k} {v:,}" for k, v in _by.items()))
+    src = EX.LEVELS_SOURCE
     if a.check:
         for name, g in layers.items():
             print(f"  {name:<20} {len(g):>8,} features, {len(g.columns) - 1} fields")
         summary(layers)
-        return 1 if missing else 0
+        return 1 if (missing or blocking) else 0
+    if blocking and not a.stale_ok:
+        raise SystemExit(
+            "\nREFUSING TO DRAW:\n  " + "\n  ".join(blocking)
+            + "\n\nThe export says so itself, on its own `contract_check` layer, and "
+              "`python s8_export.py verify` exits 1 on the same row. A drawing of less "
+              "than the whole network looks exactly like a drawing of all of it.\n"
+              "  fix:      python s6_levels.py   then   python s8_export.py build\n"
+              "  or force: python make_overview.py --stale-ok")
+    if blocking:
+        EX.LEVELS_SOURCE = src + " - EXPORT FAILED ITS OWN levels coverage GATE"
+        print("  !! drawing anyway (--stale-ok). The title block and the KMZ description "
+              "carry the warning.")
     if missing:
         raise SystemExit(
             "\nREFUSING TO DRAW:\n  " + "\n  ".join(missing)

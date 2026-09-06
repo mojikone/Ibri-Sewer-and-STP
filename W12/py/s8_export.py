@@ -40,24 +40,52 @@ THREE themes, each a saved QGIS style (.qml) and one KMZ whose folders are the l
 LEVELS: WHERE THEY COME FROM, AND THE ONE THING THAT MUST NOT HAPPEN
 ======================================================================================
 
-W12 HAS an `s6_levels.py`, and it publishes `W12/shp/W12.gpkg` - the contract file.
-This stage ALSO carries a levels-and-sizes pass in section 4, inherited from W11b where
-there genuinely was no stage 6.  Two passes that both compute an invert is inheritance
-row 10 ("one published quantity, one function") waiting to fail: W10 put seven station
-counts into circulation exactly this way.
+THE LEVELS ARE `s6_levels`' AND NOTHING HERE COMPUTES A SECOND SET.  `read_s6_levels()`
+reads `W12/shp/W12.gpkg` and maps every invert, gradient, diameter, velocity, depth of
+flow, cover and drop onto this stage's graph, matched on the WRITTEN topology -
+(US_NODE, DS_NODE) for a reach, NODE_UID for a chamber (H16).  NEVER on EDGE_UID: s6
+numbers its reaches from E0000001 and this stage from E0000000, so that join is off by
+one on every row and would look like it worked.
 
-So `build()` now LOOKS for s6's published file and, when it finds one, says so on the
-console, in the manifest, on the DXF banner and in EXPORT.md - loudly, by name, with the
-size of the disagreement.  It does NOT silently publish a second set of levels as if it
-were the only one.  Wiring this stage to READ s6's inverts instead of computing its own
-is the right end state and is written up in EXPORT.md; it was not done blind.
+Until 2026-09-06 this stage computed its own inverts with a pass inherited from W11b -
+where there genuinely was no stage 6 - and published them while s6 published different
+ones for the same chambers.  Two passes, one question: inheritance row 10, the defect
+class that has cost this project more than any other.  MEASURED on the 003 run before the
+swap, the two disagreed on 45,115 of 56,973 chamber inverts, 23,941 of them by over a
+metre, worst 77.33 m; on 29,633 of 56,522 laid gradients; on 1,824 diameters; and on the
+peak factor itself.  The stand-in also produced an 85.96 m chamber against s6's deepest of
+20.23 m.
 
-Everything the stand-in produces is tagged `STAGE = "s8_export/levels-standin"` on the
-row and printed on every legend that depends on it.  It is a single strict pass
-(philosophy sec 7 asks for two and then an audit); it never places, moves or removes a
-pumping station; and where the 12 m cover cap is passed with no philosophy-sec-5 exit it
-publishes PAST_CAP = 1 with a BLANK CAP_EXIT and counts it.  It does not clip the depth
-and it does not invent an exit - clipping satisfies a validator by lying.
+The stand-in still RUNS, exactly once, and publishes NOTHING.  It exists only so the size
+of that disagreement is a measured number: it lands on the `levels_delta` layer, in the
+`levels_arms` table and in EXPORT.md.  Every published row carries `LEVELS_BY` naming the
+solver that answered for it, so provenance is checkable per row and not per file.
+
+EVERY level column is s6's, not the three that were easiest to check (adversarial review,
+2026-09-06).  Until that review this stage read s6's INV_UP, SLOPE_LAID and DN and then
+REBUILT INV_DN, US_DEPTH, DS_DEPTH, COVER_US and COVER_DN from them against its OWN ground
+and its OWN segment length - the same two-solvers defect, on five more columns, and the
+one verify() could not see.  It published covers from -151.74 m to +178.48 m where s6's own
+ran 1.30 to 19.63 m, and 3,668 reaches carried a cover past the 12 m cap beside their own
+PAST_CAP = 0.  The same review found the CHAMBER flow being answered twice: s6 publishes NO
+PF column on its node layer, so `NC("PF", 1.0)` published the DEFAULT - PF = 1.0 and
+PF_METH = 'held' on all 56,943 chambers - while the reach leaving the same chamber carried
+s6's merrimack 3.62.  Both are fixed; `verify()` now proves all EIGHT level columns against
+s6's own file and checks that a chamber's peak flow is the peak flow of the pipe leaving it.
+
+TWO PUBLICATION GATES, and either one stops the run being quotable: `levels coverage` (the
+leveller answered for less than LEVELS_COVERAGE_ALARM of the reaches) and `levels ground`
+(the leveller's GRD_M and this stage's disagree at a chamber they share - both are sampled
+from the same VRT at the same X/Y, so any difference means s4 re-minted the chamber).
+`make_overview.py` reads both and REFUSES to draw, rather than producing a complete-looking
+map of half a design.
+
+WHAT s6 DID NOT LEVEL IS NOT FILLED IN.  s6 publishes 56,525 reaches against s4's 56,699
+segments - the rest are the gravity reaches it replaced with its own pumped links, plus a
+handful where it short-circuited a chamber.  Those routes come OFF the reaches layer and
+are published whole on `reaches_unlevelled` with s6's own reason on every row and the
+count in REMOVED_COUNTS (inheritance row 4).  Giving them the retired stand-in's gradient
+between two of s6's inverts would describe no pipe at all.
 
 ======================================================================================
 WHAT IS MISSING, NAMED RATHER THAN PAPERED OVER
@@ -139,8 +167,10 @@ import geopandas as gpd
 from shapely.geometry import LineString, MultiPoint, Point, Polygon, MultiPolygon
 from shapely.ops import unary_union
 
+from w12 import connectivity as CN
 from w12 import contract as CT
 from w12 import criteria as CR
+from w12 import naming as NM
 from w12 import hydra as HY
 from w12 import present as PR
 
@@ -150,6 +180,13 @@ STAGE = "s8_export"
 STAGE_ORDER = 8
 VERSION = "W12-s8_export-1.0"
 LEVELS_TAG = "s8_export/levels-standin"
+
+# WHICH SOLVER ACTUALLY LEVELLED THE ROWS THIS RUN PUBLISHED. Set once by build() and
+# read by every banner - the DXF title, the KMZ description, the schedule cover sheet
+# and the manifest. It is a variable rather than a constant because it is a FACT ABOUT
+# THE RUN: a banner that says "levels by s6" on a run where s6 had not published would
+# be the same lie as a level that came from nowhere.
+LEVELS_SOURCE = LEVELS_TAG
 
 # ======================================================================================
 # PATHS
@@ -227,6 +264,14 @@ def _mkdirs() -> None:
 
 EXPORT_NUMBERS: List[Tuple[str, Any, str, str]] = [
     # name, value, source, why
+    ("LEVELS_COVERAGE_ALARM", 0.98, "PROJECT ASSUMPTION (s8_export, 2026-09-06)",
+     "the share of reaches the LEVELLER must have answered for before this export is a "
+     "design rather than a fragment. Not a design value and not from any guideline: it "
+     "separates 'stage 6 withdrew a few reaches to pumped links', which is legitimate and "
+     "was 171 reaches on the 003 run, from 'stage 4 has been re-run since stage 6 wrote "
+     "its file', which on the first afternoon of this rewire left 26,579 of 56,667 "
+     "reaches levelled and every published number internally consistent and less than "
+     "half a design"),
     ("MIN_COVER_CROWN", C.MIN_COVER_CROWN, "G203-p33 4.6.3",
      "minimum cover to crown; sets the shallowest invert a reach may be laid at"),
     ("MAX_COVER", C.MAX_COVER, "G203-p33",
@@ -1132,6 +1177,412 @@ def _cap_exits(g: Graph, cover: np.ndarray, drop: np.ndarray):
 
 
 # ======================================================================================
+# 4b.  THE LEVELS THAT GET PUBLISHED ARE s6_levels' OWN.  ONE QUANTITY, ONE FUNCTION.
+#
+#      Until 2026-09-06 this stage COMPUTED its own inverts with the section-4 stand-in and
+#      published them, while `s6_levels.py` published a different set of inverts for the
+#      same chambers into `W12.gpkg`. Two passes, one question. That is inheritance row 10,
+#      and it is the defect class that has cost this project more than any other (0.05 vs
+#      0.10 m of wall allowance failed a BLOCKING cover check on every reach while the
+#      design was correct; seven station counts reached circulation in W10).
+#
+#      MEASURED before the swap, on the 003 run's own published files: the two solvers
+#      disagreed on 45,115 of 56,973 chamber inverts, 23,941 of them by more than a metre,
+#      worst 77.33 m; on 29,633 of 56,522 laid gradients; on 1,824 diameters; and on the
+#      peak factor itself, s6 applying Merrimack to every reach where the stand-in held
+#      PF = 1.0 below 100 properties. The stand-in also produced an 85.96 m chamber, which
+#      is not a level, it is an arithmetic escape.
+#
+#      So the stand-in is RETIRED as a publication source. It still RUNS, once, because the
+#      size of the disagreement is a number the engineer needs and it can only be had by
+#      computing both - it lands on the `levels_delta` layer and in EXPORT.md. Nothing on
+#      the deliverable carries it.
+#
+#      WHAT s6 DOES NOT LEVEL IS NOT FILLED IN.  s6 publishes 56,525 reaches against s4's
+#      56,699 segments. The ones it does not carry are named, sized and published on their
+#      own layer rather than quietly given a stand-in gradient, because a gradient from one
+#      solver laid between two inverts from another describes no pipe.
+# ======================================================================================
+
+S6_TAG = "s6_levels"
+GPKG_S6_DETAIL = os.path.join(SHP, "W12_levels.gpkg")   # s6's own working layers
+
+
+@dataclass
+class S6Levels:
+    """s6's published answer, aligned to THIS stage's graph index order."""
+    lv: Levels
+    e_ok: np.ndarray            # per edge: s6 published this reach
+    n_ok: np.ndarray            # per node: s6 published this chamber
+    e_qadf: np.ndarray
+    e_qinf: np.ndarray
+    e_pf: np.ndarray
+    e_pfm: List[str]
+    e_qpk: np.ndarray
+    n_pf: np.ndarray            # NaN where s6 gave no factor for this chamber
+    n_pfm: List[str]            # "" where s6 gave no factor for this chamber
+    n_qpk: np.ndarray           # NaN where s6 published no chamber here
+    n_qadf: np.ndarray          # NaN where s6 published no chamber here
+    n_flow_ok: np.ndarray       # per node: s6's OWN peak factor is on this row
+    gaps: pd.DataFrame          # one row per reach s6 did not level, with the reason
+    notes: List[str]
+    stats: Dict[str, Any]
+
+
+def _s6_pumped_links() -> Dict[Tuple[str, str], Dict[str, Any]]:
+    """s6's own register of the gravity reaches it REPLACED with a pumped link.
+
+    Read from `W12_levels.gpkg|pumped_links` - s6's words, s6's lift, s6's reason. Nothing
+    here re-derives why a reach is missing; it asks the stage that removed it."""
+    try:
+        pl = gpd.read_file(GPKG_S6_DETAIL, layer="pumped_links", ignore_geometry=True)
+    except Exception:
+        return {}
+    out: Dict[Tuple[str, str], Dict[str, Any]] = {}
+    for r in pl.itertuples():
+        out[(str(r.STATION), str(r.DISCHARGE))] = dict(
+            LIFT_M=float(getattr(r, "LIFT_M", float("nan"))),
+            WHY=str(getattr(r, "WHY", "")),
+            Q_PK_LS=float(getattr(r, "Q_PK_LS", float("nan"))))
+    return out
+
+
+def read_s6_levels(a: Assembly, g: Graph, f: Flows) -> Optional[S6Levels]:
+    """Read s6_levels' published inverts, gradients, diameters and flows onto THIS graph.
+
+    Matched on the WRITTEN topology, never on row order and never on EDGE_UID: s6 numbers
+    its reaches from E0000001 and this stage from E0000000, so an EDGE_UID join is off by
+    one on every row and would look like it worked. The key is (US_NODE, DS_NODE) for a
+    reach and NODE_UID for a chamber - H16, topology is written down.
+
+    Returns None when s6 has not published, and says so; the caller then falls back to the
+    stand-in with the tag on every row. It does NOT refuse the whole swap over a partial
+    match - refusing would leave the two-solver defect standing, which is the larger fault.
+    What it does instead is publish exactly which rows s6 did not answer for."""
+    if not os.path.exists(GPKG_S6):
+        _log(f"   s6 has NOT published {os.path.basename(GPKG_S6)} - the levels below are "
+             f"the RETIRED stand-in and every row says so")
+        return None
+    try:
+        n6 = gpd.read_file(GPKG_S6, layer="nodes", ignore_geometry=True)
+        r6 = gpd.read_file(GPKG_S6, layer="reaches", ignore_geometry=True)
+    except Exception as e:
+        _log(f"   {os.path.basename(GPKG_S6)} EXISTS BUT WOULD NOT READ "
+             f"({type(e).__name__}: {e}) - falling back to the stand-in, tagged")
+        return None
+
+    n, m = len(g.uid), len(g.e_len)
+    notes: List[str] = []
+
+    # ---- align s6's chambers onto this graph -------------------------------------------
+    ni = pd.Series(np.arange(len(n6)), index=n6.NODE_UID.astype(str))
+    if ni.index.has_duplicates:
+        raise CT.ContractError(
+            f"{int(ni.index.duplicated().sum()):,} duplicate NODE_UID in "
+            f"{os.path.basename(GPKG_S6)}|nodes. contract.NODES keys on NODE_UID; picking "
+            "one of two inverts silently is how a chamber ends up with two depths.")
+    ni_map = {k: int(v) for k, v in ni.items()}
+    npos = np.array([ni_map.get(u, -1) for u in g.uid], dtype=np.int64)
+    n_ok = npos >= 0
+    src_n = np.maximum(npos, 0)
+
+    def NC(col: str, default=np.nan) -> np.ndarray:
+        if col not in n6.columns:
+            return np.full(n, default, dtype=float)
+        v = pd.to_numeric(pd.Series(n6[col].to_numpy()[src_n]),
+                          errors="coerce").to_numpy(dtype=float)
+        return np.where(n_ok, v, default)
+
+    def NS(col: str) -> List[str]:
+        v = (n6[col].astype(str).to_numpy()[src_n] if col in n6.columns
+             else np.array([""] * n, dtype=object))
+        return ["" if not ok else str(x) for ok, x in zip(n_ok, v)]
+
+    # ---- align s6's reaches onto this graph's edges -------------------------------------
+    key6 = pd.MultiIndex.from_arrays([r6.US_NODE.astype(str), r6.DS_NODE.astype(str)])
+    if key6.has_duplicates:
+        raise CT.ContractError(
+            f"{int(key6.duplicated().sum()):,} reaches in "
+            f"{os.path.basename(GPKG_S6)}|reaches share one (US_NODE, DS_NODE). In a "
+            "forest that cannot happen and the join would take an arbitrary one of two "
+            "gradients.")
+    k6 = {k: i for i, k in enumerate(key6)}
+    us_uid = [g.uid[int(i)] for i in g.e_us]
+    ds_uid = [g.uid[int(i)] for i in g.e_ds]
+    epos = np.array([k6.get((u, w), -1) for u, w in zip(us_uid, ds_uid)], dtype=np.int64)
+    e_ok = epos >= 0
+    src_e = np.maximum(epos, 0)
+
+    def EC(col: str, default=np.nan) -> np.ndarray:
+        if col not in r6.columns:
+            return np.full(m, default, dtype=float)
+        v = pd.to_numeric(pd.Series(r6[col].to_numpy()[src_e]),
+                          errors="coerce").to_numpy(dtype=float)
+        return np.where(e_ok, v, default)
+
+    def ES(col: str, default: str = "") -> List[str]:
+        v = (r6[col].astype(str).to_numpy()[src_e] if col in r6.columns
+             else np.array([default] * m, dtype=object))
+        return [str(x) if ok else default for ok, x in zip(e_ok, v)]
+
+    # ---- per reach. Where s6 published nothing the row keeps a NEUTRAL placeholder and is
+    # ---- taken off the reaches layer entirely by build(); it is never given a gradient.
+    dn = np.where(e_ok, EC("DN", float(C.DN_MIN_MAIN)),
+                  float(C.DN_MIN_MAIN)).astype(np.int64)
+    s_laid = EC("SLOPE_LAID", 0.0) / 100.0
+    s_min = EC("SLOPE_MIN", 0.0) / 100.0
+    inv_up = EC("INV_UP")
+    inv_dn = EC("INV_DN")
+    us_depth = EC("US_DEPTH")
+    ds_depth = EC("DS_DEPTH")
+    cover_us = EC("COVER_US")
+    cover_dn = EC("COVER_DN")
+
+    # ---- per chamber --------------------------------------------------------------------
+    inv = NC("INV_M")
+    depth = NC("DEPTH_M")
+    cover = NC("COVER_M")
+    drop = np.nan_to_num(NC("DROP_M", 0.0), nan=0.0)
+    drop_type = [t if t in CT.DROP_TYPE else "none" for t in NS("DROP_TYPE")]
+    drop_why = [w if w in CT.DROP_WHY else "" for w in NS("DROP_WHY")]
+    vortex = np.array([1 if t == "vortex" else 0 for t in drop_type], dtype=np.int8)
+    past_cap = np.nan_to_num(NC("PAST_CAP", 0.0), nan=0.0).astype(np.int8)
+    cap_exit = [x if x in CT.CAP_EXIT else "" for x in NS("CAP_EXIT")]
+
+    # the bore AT a chamber, for cover(): its outgoing reach's, else the largest arriving
+    node_dn = np.zeros(n, dtype=np.int64)
+    in_dn_max = np.zeros(n, dtype=np.int64)
+    np.maximum.at(in_dn_max, g.e_ds, dn)
+    for v in range(n):
+        e = int(g.e_of[v])
+        node_dn[v] = int(dn[e]) if e >= 0 else (int(in_dn_max[v]) or int(C.DN_MIN_MAIN))
+
+    tiers_seg = a.segments.TIER.astype(str).tolist()
+    lv = Levels(
+        dn=dn, slope_laid=s_laid, slope_min=s_min,
+        grad_by=[x if x in CT.GRAD_BY else "table11" for x in ES("GRAD_BY", "table11")],
+        sized_by=[x if x in CT.SIZED_BY else "minimum" for x in ES("SIZED_BY", "minimum")],
+        clean_by=[x if x in CT.CLEAN_BY else "neither" for x in ES("CLEAN_BY", "neither")],
+        v_pk=np.nan_to_num(EC("V_PK_MS", 0.0), nan=0.0),
+        dod=np.nan_to_num(EC("DOD_PK", 0.0), nan=0.0),
+        ret_min=np.nan_to_num(EC("RET_MIN", 0.0), nan=0.0),
+        inv_up=inv_up, inv_dn=inv_dn, us_depth=us_depth, ds_depth=ds_depth,
+        cover_us=cover_us, cover_dn=cover_dn,
+        material=[x if x in CT.MATERIAL else C.material(t, int(d))
+                  for x, t, d in zip(ES("MATERIAL"), tiers_seg, dn)],
+        inv=inv, depth=depth, cover=cover, drop=drop, drop_type=drop_type, vortex=vortex,
+        past_cap=past_cap, cap_exit=cap_exit,
+        cap_len=np.zeros(n), node_dn=node_dn, st_reset=np.zeros(n, dtype=np.int8),
+        drop_why=drop_why)
+
+    # CAP_LEN_M is this stage's own measurement - how far along the graph to a recovery or
+    # to an outfall - and s6 does not publish it. Recomputed from s6's covers: it is a
+    # distance on the tree, not a second answer to a level.
+    _p, _x, lv.cap_len = _cap_exits(g, np.nan_to_num(cover, nan=0.0), drop)
+
+    cl = np.array(lv.clean_by, dtype=object)
+    fin = np.isfinite(cover)
+    lv.stats = dict(
+        n_uniform=int(sum(1 for x in lv.grad_by if x == "uniform")),
+        n_infeasible=int(sum(1 for x in lv.sized_by if x == "infeasible")),
+        past_cap_nodes=int(past_cap.sum()),
+        past_cap_no_exit=int(sum(1 for i in range(n) if past_cap[i] and not cap_exit[i])),
+        vortex=int(vortex.sum()),
+        backdrop=int(sum(1 for t in drop_type if t == "backdrop")),
+        deepest_cover=float(np.nanmax(cover)) if fin.any() else 0.0,
+        median_cover=float(np.nanmedian(cover[fin])) if fin.any() else 0.0,
+        km_past_cap=float(g.e_len[np.nan_to_num(np.maximum(cover_us, cover_dn), nan=0.0)
+                                  > C.MAX_COVER].sum() / 1000.0),
+        km_below_min_cover=float(
+            g.e_len[e_ok & (np.nan_to_num(np.minimum(cover_us, cover_dn), nan=99.0)
+                            < C.MIN_COVER_CROWN - 1e-6)].sum() / 1000.0),
+        km_tractive=float(g.e_len[e_ok & (cl == "tractive")].sum() / 1000.0),
+        km_neither=float(g.e_len[e_ok & (cl == "neither")].sum() / 1000.0),
+        km_velocity=float(g.e_len[e_ok & (cl == "velocity")].sum() / 1000.0),
+        n_over_vmax=int((lv.v_pk > C.V_MAX + 1e-9).sum()),
+        n_over_dod=int(sum(1 for k in range(m)
+                           if e_ok[k] and lv.dod[k] > C.dod_limit(int(dn[k])) + 1e-9)),
+        stations_used=0,
+        km_total=float(g.e_len[e_ok].sum() / 1000.0),
+    )
+
+    # ---- THE FLOW THE DESIGN WAS SOLVED AT TRAVELS WITH THE DESIGN ---------------------
+    # V_PK_MS and DOD_PK above were solved by s6 at s6's OWN peak flow. Publishing them
+    # beside a peak flow this stage computed a second way would put a velocity on the row
+    # that the row's own Q cannot reproduce - the same defect one level down. So PF, QINF
+    # and QPK come from s6 too, on both layers. Q_ADF is not in dispute: the two
+    # accumulations agree to the last decimal, which is itself the check that the graph is
+    # the same graph.
+    e_qadf = np.where(e_ok, EC("QADF_M3D"), f.e_qadf)
+    e_qinf = np.where(e_ok, EC("QINF_LS"), f.e_qinf)
+    e_pf = np.where(e_ok, EC("PF"), f.e_pf)
+    s6_pfm = ES("PF_METH", "")
+    e_pfm = [p if (ok and p in CT.PF_METH) else f.e_pfm[k]
+             for k, (ok, p) in enumerate(zip(e_ok, s6_pfm))]
+    e_qpk = e_qadf * 1000.0 / 86400.0 * e_pf + e_qinf
+
+    # THE FLOW AT A CHAMBER IS THE FLOW IN THE PIPE LEAVING IT.
+    #
+    # s6's NODE layer publishes Q_ADF_M3D and Q_PK_LS and NO PEAK FACTOR AT ALL - there is
+    # no PF and no PF_METH column on it. Until 2026-09-06 this function read
+    # `NC("PF", 1.0)`, which does not read s6's answer: it returns the DEFAULT on every
+    # row. The export therefore published PF = 1.0 and PF_METH = 'held' on all 56,943
+    # chambers - a constant column, dressed as the leveller's - while the reach leaving the
+    # same chamber carried s6's merrimack factor of about 3.62. MEASURED on the 12:00
+    # export: the outgoing reach's QPK_LS disagreed with its own chamber's Q_PK_LS on
+    # 26,482 of 26,579 pairs, median ratio 3.50, and 21,221 chambers published a Q_PK_LS
+    # SMALLER than their own QADF x PF, which no non-negative infiltration can produce.
+    #
+    # Q_ADF_M3D and Q_PK_LS now come from s6's own node layer, and the factor comes from
+    # s6's OWN OUTGOING REACH - which is what contract.NODES means by Q_PK_LS, "the number
+    # the outgoing reach is sized on", and on s6's file the two agree on all 56,525
+    # chambers that have one. Where s6 published a chamber but NO reach leaves it (an
+    # outfall), there is no factor of s6's to publish and NONE IS SUBSTITUTED: PF is NULL
+    # and PF_METH is blank. A NULL is checkable; the factor off a neighbouring pipe is not.
+    r6_pf = (pd.to_numeric(r6.PF, errors="coerce").to_numpy(dtype=float)
+             if "PF" in r6.columns else None)
+    r6_pfm = (r6.PF_METH.astype(str).to_numpy() if "PF_METH" in r6.columns else None)
+    n_pf = np.full(n, np.nan, dtype=float)
+    n_pfm: List[str] = [""] * n
+    n_flow_ok = np.zeros(n, dtype=bool)
+    if r6_pf is not None:
+        for v in range(n):
+            e = int(g.e_of[v])
+            if e < 0 or not e_ok[e]:
+                continue
+            j = int(epos[e])
+            if not np.isfinite(r6_pf[j]):
+                continue
+            n_pf[v] = float(r6_pf[j])
+            n_pfm[v] = (str(r6_pfm[j]) if r6_pfm is not None
+                        and str(r6_pfm[j]) in CT.PF_METH else "")
+            n_flow_ok[v] = True
+    n_qadf = NC("Q_ADF_M3D")            # NaN where s6 published no chamber here
+    n_qpk = NC("Q_PK_LS")               # s6's OWN chamber peak flow, never recomputed
+    n_nofac = int(n_ok.sum() - n_flow_ok.sum())
+    if n_nofac:
+        notes.append(
+            f"{n_nofac:,} chambers {S6_TAG} DID publish carry NO peak factor: it publishes "
+            f"no PF column on its node layer, and these have no outgoing reach of its own "
+            f"to take one from. PF and PF_METH are NULL on those rows rather than filled "
+            f"from a neighbouring pipe. Their Q_PK_LS is still s6's own published chamber "
+            f"flow.")
+        _log("   note: " + notes[-1])
+
+    # ---- what s6 did NOT level, named and sized ----------------------------------------
+    pumped = _s6_pumped_links()
+    gaps: List[Dict[str, Any]] = []
+    for k in np.flatnonzero(~e_ok):
+        k = int(k)
+        u, w = us_uid[k], ds_uid[k]
+        hit = pumped.get((u, w))
+        if hit is not None:
+            kind = "pumped_link"
+            why = (f"s6_levels REPLACED this gravity reach with a PUMPED link, lift "
+                   f"{hit['LIFT_M']:.2f} m - {hit['WHY']}")
+        elif not n_ok[int(g.e_us[k])] or not n_ok[int(g.e_ds[k])]:
+            kind = "chamber_missing"
+            why = ("s6_levels did not publish one of this reach's two chambers, so there "
+                   "is no invert at either end to lay a gradient between")
+        else:
+            kind = "reach_missing"
+            why = ("s6_levels published both chambers but no reach between them - it "
+                   "short-circuited an intermediate chamber that s4 minted")
+        gaps.append(dict(
+            EDGE_UID=CT.EDGE_UID_FMT.format(k), US_NODE=u, DS_NODE=w,
+            TIER=str(tiers_seg[k]), LEN_M=round(float(g.e_len[k]), 3),
+            QADF_M3D=round(float(f.e_qadf[k]), 3),
+            LIFT_M=round(float(hit["LIFT_M"]), 3) if hit else 0.0,
+            GAP_KIND=kind, WHY=why))
+    gaps_df = pd.DataFrame(gaps, columns=["EDGE_UID", "US_NODE", "DS_NODE", "TIER",
+                                          "LEN_M", "QADF_M3D", "LIFT_M", "GAP_KIND", "WHY"])
+
+    n_miss_e, n_miss_n = int((~e_ok).sum()), int((~n_ok).sum())
+    _log(f"   LEVELS READ FROM {os.path.basename(GPKG_S6)} (s6_levels): "
+         f"{int(e_ok.sum()):,} of {m:,} reaches and {int(n_ok.sum()):,} of {n:,} chambers")
+    if n_miss_e or n_miss_n:
+        by_kind = gaps_df.GAP_KIND.value_counts().to_dict() if len(gaps_df) else {}
+        notes.append(
+            f"s6_levels did not level {n_miss_e:,} of this stage's {m:,} reaches "
+            f"({gaps_df.LEN_M.sum() / 1000.0:.2f} km) or {n_miss_n} of its {n:,} chambers. "
+            f"By reason: " + (", ".join(f"{k} {v:,}" for k, v in sorted(by_kind.items()))
+                              or "none recorded")
+            + ". They are NOT given a stand-in gradient - a gradient from one solver laid "
+              "between two inverts from another describes no pipe. They come OFF the "
+              "reaches layer and are published whole on `reaches_unlevelled`, which is "
+              "inheritance row 4: a later pass may TAKE AWAY what an earlier one added, "
+              "and it publishes how many.")
+        _log("   note: " + notes[-1])
+
+    return S6Levels(lv=lv, e_ok=e_ok, n_ok=n_ok, e_qadf=e_qadf, e_qinf=e_qinf, e_pf=e_pf,
+                    e_pfm=e_pfm, e_qpk=e_qpk, n_pf=n_pf, n_pfm=n_pfm, n_qpk=n_qpk,
+                    n_qadf=n_qadf, n_flow_ok=n_flow_ok,
+                    gaps=gaps_df, notes=notes,
+                    stats=dict(reaches_matched=int(e_ok.sum()), reaches_missing=n_miss_e,
+                               nodes_matched=int(n_ok.sum()), nodes_missing=n_miss_n,
+                               km_missing=round(float(gaps_df.LEN_M.sum()) / 1000.0, 3)))
+
+
+def levels_delta(g: Graph, s6: S6Levels, standin: Levels) -> pd.DataFrame:
+    """HOW FAR APART THE TWO SOLVERS WERE, on the rows both of them answered.
+
+    Not a diagnostic that lives in a log line. It is a published table, because "s8 now
+    reads s6" is a claim and the size of what changed is the only evidence for it."""
+    ok_n, ok_e = s6.n_ok, s6.e_ok
+    rows: List[Dict[str, Any]] = []
+
+    def add(what: str, unit: str, a6, a8, mask, tol: float) -> None:
+        v6 = np.asarray(a6, dtype=float)[mask]
+        v8 = np.asarray(a8, dtype=float)[mask]
+        keep = np.isfinite(v6) & np.isfinite(v8)
+        if not keep.any():
+            return
+        d = v8[keep] - v6[keep]
+        rows.append(dict(
+            QUANTITY=what, UNIT=unit, N=int(keep.sum()),
+            N_DIFFER=int((np.abs(d) > tol).sum()),
+            PCT_DIFFER=round(100.0 * float((np.abs(d) > tol).sum())
+                             / max(1, int(keep.sum())), 2),
+            MEDIAN_DIFF=round(float(np.median(d)), 4),
+            MEAN_DIFF=round(float(np.mean(d)), 4),
+            MIN_DIFF=round(float(np.min(d)), 4), MAX_DIFF=round(float(np.max(d)), 4),
+            S6_PUBLISHED=f"{float(np.median(v6[keep])):.4g} (median)",
+            S8_STANDIN=f"{float(np.median(v8[keep])):.4g} (median)"))
+
+    add("chamber invert", "m aOD", s6.lv.inv, standin.inv, ok_n, 0.01)
+    add("chamber depth", "m", s6.lv.depth, standin.depth, ok_n, 0.01)
+    add("chamber cover", "m", s6.lv.cover, standin.cover, ok_n, 0.01)
+    add("chamber drop", "m", s6.lv.drop, standin.drop, ok_n, 0.01)
+    add("reach diameter", "mm", s6.lv.dn, standin.dn, ok_e, 0.5)
+    add("laid gradient", "%", s6.lv.slope_laid * 100.0, standin.slope_laid * 100.0,
+        ok_e, 1e-6)
+    add("upstream invert", "m aOD", s6.lv.inv_up, standin.inv_up, ok_e, 0.01)
+    add("velocity at peak", "m/s", s6.lv.v_pk, standin.v_pk, ok_e, 0.001)
+    add("depth of flow at peak", "-", s6.lv.dod, standin.dod, ok_e, 0.001)
+
+    # the categorical answers, counted rather than differenced
+    for name, a6, a8 in (("GRAD_BY", s6.lv.grad_by, standin.grad_by),
+                         ("SIZED_BY", s6.lv.sized_by, standin.sized_by),
+                         ("CLEAN_BY", s6.lv.clean_by, standin.clean_by)):
+        v6 = np.array(a6, dtype=object)[ok_e]
+        v8 = np.array(a8, dtype=object)[ok_e]
+        rows.append(dict(
+            QUANTITY=f"{name} (token)", UNIT="-", N=int(len(v6)),
+            N_DIFFER=int((v6 != v8).sum()),
+            PCT_DIFFER=round(100.0 * float((v6 != v8).sum()) / max(1, len(v6)), 2),
+            MEDIAN_DIFF=0.0, MEAN_DIFF=0.0, MIN_DIFF=0.0, MAX_DIFF=0.0,
+            S6_PUBLISHED=", ".join(f"{k} {v:,}"
+                                   for k, v in pd.Series(v6).value_counts().items()),
+            S8_STANDIN=", ".join(f"{k} {v:,}"
+                                 for k, v in pd.Series(v8).value_counts().items())))
+    df = pd.DataFrame(rows)
+    df["SOURCE_PUBLISHED"] = S6_TAG
+    df["SOURCE_RETIRED"] = LEVELS_TAG
+    return df
+
+
+
+# ======================================================================================
 # 5.  WHAT EACH REACH TOUCHES, MEASURED - and the crossings REGISTER
 #
 #     W11a published ANGLE_DEG = 90 on 3,290 crossings. It was fabricated; the measured
@@ -1419,6 +1870,35 @@ def node_refs(a: Assembly, g: Graph, node_pkg: np.ndarray, tier_out: List[str]) 
 #      NAME is referenced by NOTHING. Identity is NODE_UID and stays NODE_UID.
 # ======================================================================================
 
+def node_tiers(a: Assembly, g: Graph) -> List[str]:
+    """THE TIER OF A CHAMBER - one function, because two produce two answers.
+
+    A chamber takes the tier of its OUTGOING reach. At a terminal there is no outgoing
+    reach, so it takes the HIGHEST-ranked tier arriving at it - highest, not last, because
+    "last" is row order and row order is not an engineering decision. Computed in two places
+    with two different terminal rules until 2026-09-06, which put `I-S19-L-M001` on a
+    chamber the same file published as TIER = 'sub main' on three outfalls: the name says
+    lateral, the column says sub main, and contract.validate() catches it because the tier
+    token rides inside the name."""
+    m = len(g.e_len)
+    tiers_e = a.segments.TIER.astype(str).to_numpy()
+    out: List[str] = ["lateral"] * len(g.uid)
+    rank = {t: i for i, t in enumerate(("rider", "lateral", "main", "sub main",
+                                        "trunk main"))}
+    best_in = np.full(len(g.uid), -1)
+    for k in range(m):
+        w = int(g.e_ds[k])
+        r = rank.get(tiers_e[k], 1)
+        if r > best_in[w]:
+            best_in[w] = r
+            out[w] = tiers_e[k]
+    for v in range(len(g.uid)):
+        e = int(g.e_of[v])
+        if e >= 0:
+            out[v] = tiers_e[e]
+    return out
+
+
 @dataclass
 class Naming:
     node_name: List[str]
@@ -1484,176 +1964,171 @@ def _read_towns() -> Optional[gpd.GeoDataFrame]:
 
 
 def build_names(a: Assembly, g: Graph, f: Flows) -> Naming:
-    """NAME / TOWN / SUBNET for every chamber and every conduit."""
+    """NAME / TOWN / SUBNET for every chamber and every conduit - `w12.naming`'s answer.
+
+    THE ASSIGNMENT IS THE MODULE'S, CALLED, NOT REIMPLEMENTED.  Until 2026-09-06 this
+    function carried its own: subnetworks numbered by descending load, manholes by
+    descending distance to the outfall, one town per subnetwork taken from the outfall.
+    `w12.naming` was written for exactly this job, is covered by
+    `tests/test_naming_scheme.py` - including a test that shuffles rows and columns and
+    demands the same names back - and was imported by NOTHING in the pipeline.  Two naming
+    schemes for one network is the same defect as two level solvers, one layer down.
+
+    What changes, and it is visible on the deliverable:
+
+      * SUBNETWORK NUMBER.  The main pipe's runs first, then branches ordered by their
+        OUTFALL north to south, with coordinates quantised so a float wobble cannot flip
+        two neighbours.  The old key was descending served load, which reorders the whole
+        set whenever one plot moves.
+      * MANHOLE NUMBER.  A depth-first walk UPSTREAM from the outfall, largest subtree
+        first, ties north to south - so M001 is the OUTFALL and the numbers walk the spine
+        before the branches.  The old key made M001 the head of the longest chain.
+      * TOWN.  The engineer's rule (b) applied per element - an element outside every town
+        takes the letter of the first town DOWNSTREAM of it - rather than one town per
+        subnetwork taken from the outfall.  `res.node_towns` publishes both the town a
+        chamber SITS in and the town its NAME carries, so the two can be compared.
+
+    Neither scheme was wrong.  One of them is now the only one."""
     n, m = len(g.uid), len(g.e_len)
     blank_n, blank_e = [""] * n, [""] * m
-    towns = _read_towns()
     notes: List[str] = []
-    if towns is None or len(towns) == 0:
+
+    tier_node = node_tiers(a, g)
+
+    nd_in = pd.DataFrame({
+        "NODE_UID": g.uid,
+        "DS_NODE": [g.uid[int(d)] if d >= 0 else "" for d in g.ds],
+        "X": a.chambers.X.to_numpy(dtype=float),
+        "Y": a.chambers.Y.to_numpy(dtype=float),
+        "TIER": tier_node,
+    })
+    r_in = pd.DataFrame({
+        "EDGE_UID": [CT.EDGE_UID_FMT.format(k) for k in range(m)],
+        "US_NODE": [g.uid[int(i)] for i in g.e_us],
+    })
+
+    # The gazetteer is read through this stage's own `_read_towns()` - the same client
+    # layer `w12.naming` would open itself - so the settlement source stays one function
+    # and the point-in-polygon locate happens once, here, on the frame this stage already
+    # validates. `name_network` then owns the ASSIGNMENT and nothing else.
+    towns_gdf = _read_towns()
+    if towns_gdf is None or not len(towns_gdf):
         return Naming(blank_n, list(blank_n), list(blank_n), blank_e, {}, {}, {}, {},
                       ["the settlement layer could not be read, so nothing is named"],
                       {"named_nodes": 0, "towns_used": 0,
                        "names_refused_no_tier_token": 0, "names_refused_by_tier": {}})
-
-    outfalls = [int(i) for i in np.unique(f.subnet)]
+    # sorted by name so a chamber sitting exactly on a shared boundary takes the same town
+    # every run - the dedup below keeps the FIRST hit, and unsorted that is row order.
+    towns_gdf = towns_gdf.sort_values("TOWN_NAME").reset_index(drop=True)
+    towns = NM.TownIndex.from_names(towns_gdf.TOWN_NAME.tolist(), source=TOWNS_SHP)
     pts = gpd.GeoDataFrame(
-        {"i": outfalls},
-        geometry=[Point(float(a.chambers.X.iloc[i]), float(a.chambers.Y.iloc[i]))
-                  for i in outfalls],
+        {"v": np.arange(n)},
+        geometry=[Point(float(x), float(y))
+                  for x, y in zip(nd_in.X.to_numpy(), nd_in.Y.to_numpy())],
         crs=f"EPSG:{CT.CRS_EPSG}")
-    inside = gpd.sjoin(pts, towns, how="left", predicate="within")
-    inside = inside[~inside.index.duplicated(keep="first")]     # a point on a shared edge
+    jn_t = gpd.sjoin(pts, towns_gdf[["TOWN_NAME", "geometry"]], how="left",
+                     predicate="within")
+    jn_t = jn_t[~jn_t.index.duplicated(keep="first")].sort_index()
+    node_town_name = jn_t.TOWN_NAME.fillna("").astype(str).to_numpy()
 
-    # the outfalls that fell in NO settlement take the NEAREST one, and the distance is
-    # published rather than assumed away.
-    town_of: Dict[int, str] = {}
-    how: Dict[int, str] = {}
-    dist_of: Dict[int, float] = {}
-    tgeom = towns.geometry.values
-    tname = towns.TOWN_NAME.tolist()
-    # indexed by the LEFT frame's own index, not by position: sjoin can return more rows
-    # than it was given, and after the dedup a positional walk would silently pair an
-    # outfall with another outfall's town.
-    for ridx, row in inside.iterrows():
-        i = int(row.i)
-        nmv = row.TOWN_NAME
-        if isinstance(nmv, str) and nmv:
-            town_of[i], how[i], dist_of[i] = nmv, "within", 0.0
-        else:
-            pt = pts.geometry.loc[ridx]
-            d = np.array([pt.distance(gm) for gm in tgeom], dtype=float)
-            k = int(np.argmin(d))
-            town_of[i], how[i], dist_of[i] = tname[k], "nearest", float(d[k])
-    n_near = sum(1 for v in how.values() if v == "nearest")
-    if n_near:
-        worst = max((dist_of[i] for i in how if how[i] == "nearest"), default=0.0)
-        notes.append(
-            f"{n_near} of {len(outfalls)} subnetwork outfalls sit in NO mapped settlement "
-            f"and took the NEAREST one (worst {worst:,.0f} m away). The engineer's rule is "
-            f"'the first town downstream'; downstream of an outfall is the client's Main "
-            f"Pipe, which carries no direction in this data, so the nearest settlement is "
-            f"the stand-in and the distance is published on the subnetwork polygon "
-            f"(TOWN_D_M) so it can be overruled by eye.")
+    res = NM.name_network(nd_in, reaches=r_in, towns=towns,
+                          node_town=node_town_name,
+                          main_tier=CT.TIER_ALIASES.get("trunk_main", "trunk main"))
+    c = res.counts
 
-    codes = dict(zip(towns.TOWN_NAME, towns.TOWN_CODE))
-    # subnetworks numbered WITHIN their town, by descending served load
-    by_town: Dict[str, List[int]] = defaultdict(list)
-    for i in outfalls:
-        by_town[town_of[i]].append(i)
+    node_name = res.nodes.NAME.astype(str).tolist()
+    node_town = res.nodes.TOWN.astype(str).tolist()
+    node_sub = res.nodes.SUBNET.astype(str).tolist()
+    edge_name = (res.reaches.NAME.astype(str).tolist() if res.reaches is not None
+                 else list(blank_e))
+
+    # ---- the module's per-SUBNETWORK answer, keyed the way this stage keys one: by the
+    # ---- index of the component's own outfall node (f.subnet). "S03" is not unique across
+    # ---- towns, so the machine key stays the outfall and the display key is the full name.
+    sub_by_outfall = {str(r.OUTFALL): r for r in res.subnets.itertuples()}
     subnet_name: Dict[int, str] = {}
     subnet_town: Dict[int, str] = {}
     subnet_code: Dict[int, str] = {}
-    for tn, members in by_town.items():
-        code = codes[tn]
-        for r, i in enumerate(sorted(members, key=lambda j: (-float(f.q_adf[j]), g.uid[j])),
-                              start=1):
-            sc = f"S{r:02d}"
-            subnet_code[i] = sc
-            subnet_town[i] = code
-            subnet_name[i] = CT.concept_name(code, "subnet", subnet=sc)
+    town_of: Dict[int, str] = {}
+    tn_by_uid = dict(zip(res.node_towns.NODE_UID.astype(str),
+                         res.node_towns.TOWN_NAME.astype(str)))
+    for i in (int(x) for x in np.unique(f.subnet)):
+        hit = sub_by_outfall.get(g.uid[i])
+        if hit is not None:
+            subnet_name[i] = str(hit.NAME)
+            subnet_town[i] = str(hit.TOWN)
+            subnet_code[i] = str(hit.SUBNET)
+        else:
+            # this stage's components and the module's differ only where a DS_NODE dangles;
+            # the module flags that as node_ds_missing rather than inventing an outfall.
+            subnet_name[i] = ""
+            subnet_town[i] = node_town[i]
+            subnet_code[i] = node_sub[i]
+        town_of[i] = tn_by_uid.get(g.uid[i], "")
 
-    # manhole numbers: descending distance to the subnetwork's own outfall, ties on uid
-    dist = _dist_to_outfall(g)
-    seq = np.zeros(n, dtype=np.int64)
-    order_by_sub: Dict[int, List[int]] = defaultdict(list)
-    for v in range(n):
-        order_by_sub[int(f.subnet[v])].append(v)
-    for s, members in order_by_sub.items():
-        members.sort(key=lambda v: (-float(dist[v]), g.uid[v]))
-        for r, v in enumerate(members, start=1):
-            seq[v] = r
+    n_refused = 0
+    refused_by_tier: Dict[str, int] = {}
+    if len(res.flags):
+        for kind, cnt in res.flags_by_kind().items():
+            ex = res.flags[res.flags.KIND == kind].iloc[0]
+            notes.append(f"naming flagged {int(cnt):,} x {kind} - e.g. {ex.REF}: {ex.WHY}")
+        tier_flags = res.flags[res.flags.KIND.isin(
+            ("node_no_tier", "node_tier_ungrammatical"))]
+        n_refused = int(len(tier_flags))
+        if n_refused:
+            hits = [g.ix[str(r)] for r in tier_flags.REF if str(r) in g.ix]
+            got = pd.Series([str(tier_node[i]) for i in hits])
+            refused_by_tier = {str(k): int(v) for k, v in got.value_counts().items()}
+            notes.append(
+                f"{n_refused:,} of {n:,} chambers are on a tier the concept NAME grammar "
+                f"has no token for and are therefore NOT NAMED: "
+                + (", ".join(f"{t} {v:,}" for t, v in sorted(refused_by_tier.items()))
+                   or "tier not recoverable")
+                + ". Concept rule 8 declares THREE tier codes (TM / SM / L) and "
+                  "contract.NAME_RE enforces exactly those; this design's governing tier "
+                  "set is FIVE (philosophy sec 4), and contract.TIER_TOKEN maps the extra "
+                  "two to 'R' and 'M', which the grammar refuses. Nothing is invented - "
+                  "calling a main a sub main would put one tier's label on another tier's "
+                  "chamber. THE DECISION IS THE ENGINEER'S: either the grammar gains R and "
+                  "M, or s3 stops emitting those tiers. Until then assert_named() refuses "
+                  "these layers and the objection is on the contract_check layer with this "
+                  "count.")
 
-    tier_e = a.segments.TIER.astype(str).to_numpy()
-    tier_node: List[str] = ["lateral"] * n
-    for k in range(m):
-        w = int(g.e_ds[k])
-        tier_node[w] = tier_e[k]
-    for v in range(n):
-        e = int(g.e_of[v])
-        if e >= 0:
-            tier_node[v] = tier_e[e]
-
-    node_name: List[str] = [""] * n
-    node_town: List[str] = [""] * n
-    node_sub: List[str] = [""] * n
-    refused_by_tier: Dict[str, int] = defaultdict(int)
-    for v in range(n):
-        s = int(f.subnet[v])
-        code, sc = subnet_town.get(s, ""), subnet_code.get(s, "")
-        if not code:
-            continue
-        node_town[v], node_sub[v] = code, sc
-        t = str(tier_node[v])
-        if t not in TIERS_NAMEABLE:
-            # NO NAME IS MINTED. The grammar has no token for this tier, and a string it
-            # cannot parse is a label, not an identifier (contract._name_problems). Blank is
-            # the channel the contract designed for "not named yet": the LayerSpec allows it
-            # and `assert_named()` then refuses the layer at publication, loudly, which is
-            # the correct outcome and not a workaround.
-            refused_by_tier[t] += 1
-            continue
-        node_name[v] = CT.concept_name(code, "manhole", subnet=sc, tier=t, seq=int(seq[v]))
-    # a conduit is named for its UPSTREAM manhole, and carries its number. Where that manhole
-    # could not be named, the conduit is not named either: a conduit name is only useful
-    # because it points at a chamber a reader can then find, and half a pair is worse than
-    # none - it looks like a complete naming that has simply lost one row.
-    edge_name: List[str] = [""] * m
-    for k in range(m):
-        u = int(g.e_us[k])
-        if node_town[u] and node_name[u]:
-            edge_name[k] = CT.concept_name(node_town[u], "conduit",
-                                           subnet=node_sub[u], seq=int(seq[u]))
-    n_refused = int(sum(refused_by_tier.values()))
-    if n_refused:
-        notes.append(
-            f"{n_refused:,} of {n:,} chambers are on a tier the concept NAME grammar has no "
-            f"token for and are therefore NOT NAMED: "
-            + ", ".join(f"{t} {c:,}" for t, c in sorted(refused_by_tier.items()))
-            + f". Concept rule 8 declares THREE tier codes (TM / SM / L) and "
-              f"contract.NAME_RE enforces exactly those; this design's governing tier set is "
-              f"FIVE (philosophy sec 4), and contract.TIER_TOKEN maps the extra two to 'R' "
-              f"and 'M', which the grammar refuses. Nothing is invented here - calling a "
-              f"main a sub main would put one tier's label on another tier's chamber. THE "
-              f"DECISION IS THE ENGINEER'S: either the grammar gains R and M, or s3 stops "
-              f"emitting those tiers. Until then assert_named() refuses these layers and the "
-              f"objection is on the contract_check layer with this count.")
-
-    # how many elements sit physically in a settlement OTHER than the one in their name -
-    # measured, because "one town per subnetwork" is a decision and its cost is a number.
-    cross = 0
-    try:
-        chpts = gpd.GeoDataFrame(
-            {"v": np.arange(n)},
-            geometry=[Point(float(x), float(y))
-                      for x, y in zip(a.chambers.X.to_numpy(), a.chambers.Y.to_numpy())],
-            crs=f"EPSG:{CT.CRS_EPSG}")
-        j = gpd.sjoin(chpts, towns, how="left", predicate="within")
-        j = j[~j.index.duplicated(keep="first")]
-        got = j.TOWN_CODE.fillna("").astype(str).to_numpy()
-        cross = int(sum(1 for v in range(n)
-                        if got[v] and node_town[v] and got[v] != node_town[v]))
-    except Exception as e:                                     # pragma: no cover
-        notes.append(f"the in-town cross-check could not run: {type(e).__name__}: {e}")
+    # how many chambers sit physically in a settlement OTHER than the one in their name.
+    # The module measures it: TOWN is where the chamber IS, TOWN_NAMED is what its name
+    # carries, and the two differ on every chamber of a subnetwork that straddles a border.
+    nt = res.node_towns
+    cross = int(((nt.TOWN.astype(str) != "") & (nt.TOWN_NAMED.astype(str) != "")
+                 & (nt.TOWN.astype(str) != nt.TOWN_NAMED.astype(str))).sum())
     if cross:
         notes.append(
             f"{cross:,} of {n:,} chambers sit physically inside a settlement other than "
-            f"the one whose letter their NAME carries. That is the price of 'one town per "
-            f"subnetwork' (decision 1 above) and it is stated rather than hidden - a "
-            f"per-element town would remove it and would make S## mean two subnetworks.")
+            f"the one whose letter their NAME carries. A subnetwork has ONE letter - its "
+            f"members' plurality - so a subnetwork that straddles a boundary produces "
+            f"this, and it is measured rather than hidden.")
+    notes.append(
+        f"town resolution (engineer's rule b): {c['town_inside']:,} chambers took the "
+        f"letter of the polygon they sit in, {c['town_downstream']:,} took the first town "
+        f"DOWNSTREAM of them, {c['town_none']:,} resolved to none.")
 
-    _log(f"   named {sum(1 for x in node_name if x):,} chambers and "
-         f"{sum(1 for x in edge_name if x):,} conduits across "
-         f"{len(set(subnet_town.values()))} settlements, "
-         f"{len(subnet_name)} subnetworks")
+    _log(f"   named {c['nodes_named']:,} of {c['nodes_total']:,} chambers and "
+         f"{c['reaches_named']:,} of {c['reaches_total']:,} conduits across "
+         f"{c['towns_used']} settlements in {c['subnets']:,} subnetworks "
+         f"({c['subnets_main']} of them main-pipe runs), by w12.naming. Against the names "
+         f"the frames arrived with: kept {c['unchanged']:,}, renamed {c['renamed']:,}, "
+         f"WITHDRAWN {c['withdrawn']:,}")
     return Naming(node_name, node_town, node_sub, edge_name, subnet_name, subnet_town,
                   subnet_code, town_of, notes,
-                  {"named_nodes": int(sum(1 for x in node_name if x)),
-                   "towns_used": len(set(subnet_town.values())),
-                   "outfalls_nearest_town": n_near,
+                  {"named_nodes": int(c["nodes_named"]),
+                   "towns_used": int(c["towns_used"]),
+                   "outfalls_nearest_town": 0,
                    "chambers_in_another_town": cross,
                    "names_refused_no_tier_token": n_refused,
-                   "names_refused_by_tier": dict(refused_by_tier),
-                   "town_dist": dist_of})
+                   "names_refused_by_tier": refused_by_tier,
+                   "naming_counts": {str(k): v for k, v in c.items()},
+                   "naming_flags": {str(k): int(v)
+                                    for k, v in res.flags_by_kind().items()},
+                   "town_dist": {}})
 
 
 # ======================================================================================
@@ -1805,38 +2280,36 @@ def measure_joins(a: Assembly, g: Graph, f: Flows) -> Joins:
 
 def build_layers(a: Assembly, g: Graph, f: Flows, lv: Levels, contacts: pd.DataFrame,
                  cross_id: np.ndarray, node_pkg: np.ndarray, edge_pkg: np.ndarray,
-                 nm: Naming, jn: Joins) -> Dict[str, gpd.GeoDataFrame]:
+                 nm: Naming, jn: Joins,
+                 s6: Optional["S6Levels"] = None) -> Dict[str, gpd.GeoDataFrame]:
     n, m = len(g.uid), len(g.e_len)
     seg = a.segments
     ch = a.chambers
 
-    # ---- tier of the OUTGOING reach at every node --------------------------------------
+    # ---- tier of the OUTGOING reach at every node, from the ONE function that decides it
     tiers_e = seg.TIER.astype(str).to_numpy()
-    tier_node: List[str] = ["lateral"] * n
-    rank = {t: i for i, t in enumerate(("rider", "lateral", "main", "sub main", "trunk main"))}
-    best_in = np.full(n, -1)
-    for k in range(m):
-        w = int(g.e_ds[k])
-        r = rank.get(tiers_e[k], 1)
-        if r > best_in[w]:
-            best_in[w] = r
-            tier_node[w] = tiers_e[k]
-    for v in range(n):
-        e = int(g.e_of[v])
-        if e >= 0:
-            tier_node[v] = tiers_e[e]
+    tier_node = node_tiers(a, g)
 
     src_e = seg.SRC.astype(str).to_numpy()
     conf_e = seg.CONFIDENCE.astype(str).to_numpy()
+    # THE RAW CORRIDOR SOURCE, CARRIED TO THE DELIVERABLE. `assemble()` maps
+    # draft_base/draft_propo -> dwg_road and FLOORS the confidence of anything off the
+    # PROPOSED road layer to 'provisional' (philosophy P6). Publishing only the mapped
+    # value left nothing on the client's package to test that floor against: every row
+    # reads dwg_road whether it came from the base road set or the draftsman's proposed
+    # streets, so contract.SRC_CONFIDENCE_FLOOR became uncheckable - and philosophy sec 8
+    # makes a check that cannot run a failure, not a blank.
+    raw_e = (seg.SRC_RAW.astype(str).to_numpy() if "SRC_RAW" in seg.columns else src_e)
     src_node = np.array(["terrain"] * n, dtype=object)
     conf_node = np.array(["derived"] * n, dtype=object)
+    raw_node = np.array(["terrain"] * n, dtype=object)
     for k in range(m):
         w = int(g.e_ds[k])
-        src_node[w], conf_node[w] = src_e[k], conf_e[k]
+        src_node[w], conf_node[w], raw_node[w] = src_e[k], conf_e[k], raw_e[k]
     for v in range(n):
         e = int(g.e_of[v])
         if e >= 0:
-            src_node[v], conf_node[v] = src_e[e], conf_e[e]
+            src_node[v], conf_node[v], raw_node[v] = src_e[e], conf_e[e], raw_e[e]
 
     # ---- node-level flow ---------------------------------------------------------------
     pf_n = np.ones(n)
@@ -1852,6 +2325,47 @@ def build_layers(a: Assembly, g: Graph, f: Flows, lv: Levels, contacts: pd.DataF
     len_out = np.where(g.e_of >= 0, g.e_len[np.maximum(g.e_of, 0)], 0.0)
     qinf_n = C.INFILT_L_D_KM * ((f.ups_len + len_out) / 1000.0) / 86400.0
     qpk_n = f.q_adf * 1000.0 / 86400.0 * pf_n + qinf_n
+
+    # ---- WHERE THE LEVELS ON THIS ROW CAME FROM ---------------------------------------
+    # Published as a column, not as a stage-wide banner, because it is not stage-wide: s6
+    # levelled 56,522 of 56,699 reaches on the 003 run and the rest are its own pumped
+    # links. A reader looking at ONE chamber has to be able to see which solver answered
+    # for it, or the file carries a provenance nobody can check per row.
+    if s6 is not None:
+        lv_node = np.where(s6.n_ok, S6_TAG, "NOT LEVELLED - " + S6_TAG + " published no "
+                                            "chamber here")
+        lv_edge = np.where(s6.e_ok, S6_TAG, "NOT LEVELLED - see reaches_unlevelled")
+        # s6's ANSWER WHERE IT GAVE ONE, this stage's own where it did not - never the
+        # DEFAULT of a column s6 does not publish. `n_flow_ok` is the mask of chambers whose
+        # factor is s6's; elsewhere the row keeps criteria.peak_factor()'s answer (a chamber
+        # s6 never levelled) or carries NULL (a chamber with no outgoing reach of s6's).
+        pf_n = np.where(s6.n_flow_ok, s6.n_pf,
+                        np.where(s6.n_ok, np.nan, pf_n))
+        pfm_n = [b if ok else ("" if in6 else a)
+                 for ok, in6, a, b in zip(s6.n_flow_ok, s6.n_ok, pfm_n, s6.n_pfm)]
+        qpk_n = np.where(np.isfinite(s6.n_qpk), s6.n_qpk, qpk_n)
+        # THE ACCUMULATION TRAVELS WITH THE FLOW IT PRODUCED. Publishing this stage's
+        # Q_ADF beside s6's Q_PK put a peak on the row that the row's own average could
+        # not reproduce - 21,221 chambers on the 12:00 export published a Q_PK_LS below
+        # their own QADF x PF. Where s6 answered, both come from s6.
+        qadf_n = np.where(np.isfinite(s6.n_qadf), s6.n_qadf, f.q_adf)
+        _n_disagree = int((np.isfinite(s6.n_qadf)
+                           & (np.abs(s6.n_qadf - f.q_adf) > 0.001)).sum())
+        if _n_disagree:
+            _log(f"   NOTE: this stage's own accumulation and {S6_TAG}'s disagree on "
+                 f"Q_ADF at {_n_disagree:,} of {int(s6.n_ok.sum()):,} shared chambers "
+                 f"(worst {float(np.nanmax(np.abs(s6.n_qadf - f.q_adf))):.3f} m3/d). Two "
+                 f"accumulations over the SAME graph agree exactly, so a disagreement here "
+                 f"means the two files are not describing the same graph - see the `levels "
+                 f"coverage` row on contract_check. s6's is published.")
+        stage_node = np.where(s6.n_ok, S6_TAG, LEVELS_TAG)
+        stage_edge = np.where(s6.e_ok, S6_TAG, LEVELS_TAG)
+    else:
+        qadf_n = f.q_adf
+        lv_node = np.array([LEVELS_TAG] * n, dtype=object)
+        lv_edge = np.array([LEVELS_TAG] * m, dtype=object)
+        stage_node = np.array([LEVELS_TAG] * n, dtype=object)
+        stage_edge = np.array([LEVELS_TAG] * m, dtype=object)
 
     ds_uid = np.array([g.uid[int(d)] if d >= 0 else "" for d in g.ds], dtype=object)
     n_out = (g.e_of >= 0).astype(np.int8)
@@ -1895,7 +2409,7 @@ def build_layers(a: Assembly, g: Graph, f: Flows, lv: Levels, contacts: pd.DataF
         JOIN_OFF_M=np.round(jn.off_m, 1),
         JOIN_WHY=jn.why,
         VORTEX=lv.vortex.astype(np.int8),
-        Q_ADF_M3D=np.round(f.q_adf, 3),
+        Q_ADF_M3D=np.round(qadf_n, 3),
         Q_PK_LS=np.round(qpk_n, 4),
         N_PROP=np.round(f.n_prop, 2),
         PAST_CAP=lv.past_cap.astype(np.int8),
@@ -1920,20 +2434,113 @@ def build_layers(a: Assembly, g: Graph, f: Flows, lv: Levels, contacts: pd.DataF
         TRIGGER=ch.TRIGGER.astype(str).to_numpy(),
         ON_WADI=ch.ON_WADI.to_numpy(),
         TAU_PA=float(C.TAU_PA),
-        SRC=src_node, CONFIDENCE=conf_node, STAGE=LEVELS_TAG,
+        SRC=src_node, SRC_RAW=raw_node, CONFIDENCE=conf_node, STAGE=stage_node,
+        LEVELS_BY=lv_node,
+        PF=np.round(pf_n, 6), PF_METH=pfm_n,
         PACKAGE=node_pkg, PHASE=np.zeros(n, dtype=np.int64),
     ), geometry=[Point(float(x), float(y)) for x, y in zip(ch.X.to_numpy(), ch.Y.to_numpy())],
         crs=f"EPSG:{CT.CRS_EPSG}")
     # DEPTH_M must reproduce GRD_M - INV_M to 1 mm on the PUBLISHED, rounded values, or the
     # chamber schedule and the pipe layer describe different chambers (contract, nodes).
+    # A REASON FOR A DROP THAT IS NOT THERE. s6 carries a DROP_WHY on chambers whose drop
+    # is a fraction of a millimetre - 107 of them on the 003 run, the largest 0.50 mm - and
+    # at the published precision of 1 mm that drop is 0.000. G203-p30 does not call
+    # anything under 0.60 m a drop at all. The reason is blanked HERE, at publication, and
+    # COUNTED: the contract refuses a reason with no drop, and a 0.5 mm step is not a
+    # drop. The count is s6's to act on and it is in EXPORT.md, not swallowed.
+    _no_drop = (nodes.DROP_M.to_numpy(dtype=float) <= 0.0) & (
+        nodes.DROP_WHY.astype(str).str.strip().to_numpy() != "")
+    if _no_drop.any():
+        REMOVED_COUNTS["drop_reasons_with_no_drop"] = int(_no_drop.sum())
+        _log(f"   blanked DROP_WHY on {int(_no_drop.sum()):,} chambers whose PUBLISHED "
+             f"drop is 0.000 m - {LEVELS_SOURCE} gave them a reason for a step of under "
+             f"1 mm (largest {np.max(lv.drop[_no_drop]) * 1000:.2f} mm). Counted, not "
+             f"swallowed: G203-p30 calls nothing under 0.60 m a drop.")
+        nodes.loc[_no_drop, "DROP_WHY"] = ""
     nodes["DEPTH_M"] = (nodes.GRD_M - nodes.INV_M).round(3)
-    nodes["COVER_M"] = [round(C.cover(int(d), float(z)), 3)
-                        for d, z in zip(lv.node_dn, nodes.DEPTH_M)]
+    # COVER IS THE LEVELLER'S ANSWER WHERE THE LEVELLER GAVE ONE. Recomputing it here from
+    # the published depth would put a second cover beside s6's, and the whole point of
+    # reading s6 is that there is one. criteria.cover() fills only the rows s6 did not
+    # answer for - which are then taken off this layer anyway.
+    cov_own = np.array([round(C.cover(int(d), float(z)), 3)
+                        for d, z in zip(lv.node_dn, nodes.DEPTH_M)], dtype=float)
+    if s6 is not None:
+        nodes["COVER_M"] = np.where(s6.n_ok & np.isfinite(lv.cover),
+                                    np.round(lv.cover, 3), cov_own)
+    else:
+        nodes["COVER_M"] = cov_own
 
-    inv_up = np.round(lv.inv_up, 3)
-    inv_dn = np.round(inv_up - lv.slope_laid * g.e_len, 3)
-    us_depth = np.round(g.grd[g.e_us], 3) - inv_up
-    ds_depth = np.round(g.grd[g.e_ds], 3) - inv_dn
+    # ---- THE DEPTHS AND THE COVERS ARE THE LEVELLER'S TOO ------------------------------
+    # s6 publishes INV_DN, US_DEPTH, DS_DEPTH, COVER_US and COVER_DN on its own reach
+    # layer. Until 2026-09-06 this stage IGNORED all five and rebuilt them from s6's
+    # INV_UP against THIS stage's ground and THIS stage's segment length - which is the
+    # same two-solvers defect as the levels themselves, on five more columns, and it is
+    # the one that verify()'s "every gradient, DN and invert IS s6s" cannot see because it
+    # only compares SLOPE_LAID, DN and INV_UP.
+    #
+    # MEASURED on the 12:25 export: COVER_US differed from s6's on 26,050 of 26,579
+    # matched reaches, worst 173.0 m; the published cover ran from -151.74 m to +178.48 m
+    # where s6's own ran 1.30 m to 19.63 m; and 3,668 reaches published a cover past the
+    # 12 m cap while their own PAST_CAP flag - which IS s6's - read 0. A row that
+    # contradicts itself is worse than a row that is wrong, because nothing flags it.
+    #
+    # Where s6 answered, all five are s6's. Where it did not, the recomputation stands and
+    # those rows go to `reaches_unlevelled` anyway. When the two files disagree about the
+    # ground or the length, the row is now INCONSISTENT and verify() says so - which is
+    # the whole point: a stale pair must be loud, not smoothed over.
+    _iu = np.round(lv.inv_up, 3)
+    _id_own = np.round(_iu - lv.slope_laid * g.e_len, 3)
+    _us_own = np.round(g.grd[g.e_us], 3) - _iu
+    _ds_own = np.round(g.grd[g.e_ds], 3) - _id_own
+    _bore = lv.dn / 1000.0 + C.WALL_ALLOW
+    if s6 is not None:
+        _k = s6.e_ok & np.isfinite(lv.inv_dn)
+        inv_up = _iu
+        inv_dn = np.where(_k, np.round(lv.inv_dn, 3), _id_own)
+        us_depth = np.where(s6.e_ok & np.isfinite(lv.us_depth),
+                            np.round(lv.us_depth, 3), _us_own)
+        ds_depth = np.where(s6.e_ok & np.isfinite(lv.ds_depth),
+                            np.round(lv.ds_depth, 3), _ds_own)
+        cover_us = np.where(s6.e_ok & np.isfinite(lv.cover_us),
+                            np.round(lv.cover_us, 3), np.round(_us_own - _bore, 3))
+        cover_dn = np.where(s6.e_ok & np.isfinite(lv.cover_dn),
+                            np.round(lv.cover_dn, 3), np.round(_ds_own - _bore, 3))
+        _off = int((s6.e_ok & (np.abs(np.nan_to_num(lv.cover_us, nan=0.0)
+                                      - (_us_own - _bore)) > 0.01)).sum())
+        if _off:
+            _log(f"   NOTE: {_off:,} of {int(s6.e_ok.sum()):,} levelled reaches would have "
+                 f"got a DIFFERENT cover had this stage recomputed one from its own ground "
+                 f"and length instead of reading {S6_TAG}'s. {S6_TAG}'s is published; the "
+                 f"gap is the two files disagreeing about the ground, not about the design "
+                 f"- see the `levels ground` row on contract_check.")
+    else:
+        inv_up, inv_dn = _iu, _id_own
+        us_depth, ds_depth = _us_own, _ds_own
+        cover_us = np.round(_us_own - _bore, 3)
+        cover_dn = np.round(_ds_own - _bore, 3)
+    # THE FLOW THE PIPE WAS SOLVED AT, from whichever solver laid it. Mixing s6's velocity
+    # with a peak flow recomputed here would publish a row whose own Q cannot reproduce its
+    # own V - the two-answers defect one level down from the levels themselves.
+    if s6 is not None:
+        r6c = gpd.read_file(GPKG_S6, layer="reaches", ignore_geometry=True)
+        k6 = {(u, w): i for i, (u, w) in enumerate(
+            zip(r6c.US_NODE.astype(str), r6c.DS_NODE.astype(str)))}
+        pos = np.array([k6.get((g.uid[int(u)], g.uid[int(w)]), -1)
+                        for u, w in zip(g.e_us, g.e_ds)], dtype=np.int64)
+        ok6 = pos >= 0
+        src6 = np.maximum(pos, 0)
+        s6_past_cap = np.where(
+            ok6, pd.to_numeric(pd.Series(r6c.PAST_CAP.to_numpy()[src6]),
+                               errors="coerce").fillna(0).to_numpy(), 0).astype(np.int8)
+        s6_cap_exit = [str(x) if ok else ""
+                       for ok, x in zip(ok6, r6c.CAP_EXIT.astype(str).to_numpy()[src6])]
+        s6_cap_exit = [x if x in CT.CAP_EXIT else "" for x in s6_cap_exit]
+    else:
+        s6_past_cap, s6_cap_exit = None, None
+    e_qadf = s6.e_qadf if s6 is not None else f.e_qadf
+    e_qinf = s6.e_qinf if s6 is not None else f.e_qinf
+    e_pf = s6.e_pf if s6 is not None else f.e_pf
+    e_pfm = list(s6.e_pfm) if s6 is not None else list(f.e_pfm)
     reaches = gpd.GeoDataFrame(dict(
         EDGE_UID=[CT.EDGE_UID_FMT.format(k) for k in range(m)],
         US_NODE=[g.uid[int(i)] for i in g.e_us],
@@ -1951,13 +2558,13 @@ def build_layers(a: Assembly, g: Graph, f: Flows, lv: Levels, contacts: pd.DataF
         TAU_PA=float(C.TAU_PA),
         INV_UP=inv_up, INV_DN=inv_dn,
         US_DEPTH=us_depth, DS_DEPTH=ds_depth,
-        COVER_US=np.round(us_depth - (lv.dn / 1000.0 + C.WALL_ALLOW), 3),
-        COVER_DN=np.round(ds_depth - (lv.dn / 1000.0 + C.WALL_ALLOW), 3),
-        QADF_M3D=np.round(f.e_qadf, 3),
-        QINF_LS=np.round(f.e_qinf, 6),
-        PF=np.round(f.e_pf, 6),
-        PF_METH=f.e_pfm,
-        QPK_LS=np.round(f.e_qpk, 6),
+        COVER_US=cover_us,
+        COVER_DN=cover_dn,
+        QADF_M3D=np.round(e_qadf, 3),
+        QINF_LS=np.round(e_qinf, 6),
+        PF=np.round(e_pf, 6),
+        PF_METH=e_pfm,
+        QPK_LS=np.round(s6.e_qpk if s6 is not None else f.e_qpk, 6),
         V_PK_MS=np.round(lv.v_pk, 3),
         DOD_PK=np.round(lv.dod, 4),
         RET_MIN=np.round(lv.ret_min, 3),
@@ -1969,8 +2576,16 @@ def build_layers(a: Assembly, g: Graph, f: Flows, lv: Levels, contacts: pd.DataF
         GND_FALL=np.round(g.grd[g.e_us] - g.grd[g.e_ds], 3),
         AGN_GRADE=(np.round(g.grd[g.e_us] - g.grd[g.e_ds], 3) < -C.ADVERSE_MIN_M).astype(np.int8),
         RISE_M=np.round(np.maximum(0.0, g.grd[g.e_ds] - g.grd[g.e_us]), 3),
-        PAST_CAP=(np.maximum(lv.cover_us, lv.cover_dn) > C.MAX_COVER).astype(np.int8),
-        CAP_EXIT=[lv.cap_exit[int(i)] for i in g.e_us],
+        # PAST_CAP AND CAP_EXIT ARE THE LEVELLER'S, NOT A SECOND OPINION. Recomputing
+        # "is this reach past the 12 m cap" here from the published covers gave 205
+        # reaches PAST_CAP = 1 with a blank CAP_EXIT while s6, which decided the depths,
+        # published 1,598 past the cap and NONE unexcused. Two answers to one question,
+        # and the recomputed one is the one with no authority: the exit is bounded by a
+        # distance ALONG THE RUN (philosophy sec 5), which is a property of the solve.
+        PAST_CAP=(s6_past_cap if s6 is not None
+                  else (np.maximum(lv.cover_us, lv.cover_dn) > C.MAX_COVER).astype(np.int8)),
+        CAP_EXIT=(s6_cap_exit if s6 is not None
+                  else [lv.cap_exit[int(i)] for i in g.e_us]),
         CAP_LEN_M=np.round(lv.cap_len[g.e_us], 1),
         TIE_TYPE="none",
         ON_DUAL_M=contacts.ON_DUAL_M.to_numpy(),
@@ -1988,7 +2603,8 @@ def build_layers(a: Assembly, g: Graph, f: Flows, lv: Levels, contacts: pd.DataF
         US_NAME=[nm.node_name[int(i)] for i in g.e_us],
         DS_NAME=[nm.node_name[int(i)] for i in g.e_ds],
         RUN_LEN_M=np.round(f.e_upslen, 1),
-        SRC=src_e, CONFIDENCE=conf_e, STAGE=LEVELS_TAG,
+        SRC=src_e, SRC_RAW=raw_e, CONFIDENCE=conf_e, STAGE=stage_edge,
+        LEVELS_BY=lv_edge,
         PACKAGE=edge_pkg, PHASE=np.zeros(m, dtype=np.int64),
     ), geometry=seg.geometry.values, crs=f"EPSG:{CT.CRS_EPSG}")
     # QPK_LS must be reproducible from the PUBLISHED row (contract cross-field check).
@@ -2022,7 +2638,23 @@ def build_connections(a: Assembly, g: Graph, nodes: gpd.GeoDataFrame,
     sewer 0.84 m deeper" is a decision.
 
     CAN_DRAIN is written FROM CAN_CONN, never computed twice: the contract refuses two
-    answers to one question, and that defect has cost this project more than any other."""
+    answers to one question, and that defect has cost this project more than any other.
+
+    THE CHECK ITSELF IS `w12.connectivity`'S, CALLED - NOT REIMPLEMENTED HERE.  Until
+    2026-09-06 this function carried its own inline version of the same test, which is the
+    two-answers defect one more time; `w12.connectivity` existed, was tested, and was
+    imported by nothing in the pipeline.  Three things the module does that the inline
+    version could not:
+
+      * the run is SPLIT - the 2.5 m property connection at its own 3 % minimum (G203-p18
+        Table 5, PCS) and the rest of the route at the 1 % lateral minimum - instead of
+        charging 3 % over the whole length, which failed long routes for the wrong reason;
+      * the connection has to arrive ABOVE THE DESIGN FLOW SURFACE of the sewer it joins,
+        not merely at its invert.  The allowance is the guideline's own depth of flow,
+        d/D x internal bore (G203-p27 Table 10), so it varies with the receiving bore;
+      * CONN_WHY comes from a CLOSED VOCABULARY, so a missing input ("chamber level
+        unknown") can never be published as an engineering verdict ("route loses the
+        fall").  The long human sentence is kept beside it as CONN_TXT."""
     cn = a.connections.copy()
     inv = dict(zip(nodes.NODE_UID.astype(str), nodes.INV_M.astype(float)))
     ci = cn.OUT_NODE.astype(str).map(inv).to_numpy(dtype=float)
@@ -2035,31 +2667,69 @@ def build_connections(a: Assembly, g: Graph, nodes: gpd.GeoDataFrame,
     # what the drawing shows and what the DXF measures.
     len_pub = np.round(cn.geometry.length.to_numpy(dtype=float), 3)
     L = np.maximum(len_pub, 0.5)
-    # the outlet of the property, at the minimum HCC depth (G203-p19 3.4: 1.2-2.0 m)
-    out_lvl = grd_plot - C.HCC_DEPTH_MIN
-    fall_avail = out_lvl - ci
-    s_need = fall_avail / L
-    can = ((fall_avail > 0) & (s_need >= C.PCS_MIN_SLOPE)).astype(np.int8)
-    s_laid = np.clip(np.where(s_need > 0, s_need, C.PCS_MIN_SLOPE),
+
+    # THE ARRIVAL RULE DEPENDS ON HAVING A BORE, AND THAT IS NOT ALWAYS TRUE. The default
+    # rule makes the connection arrive above the sewer's design flow surface, which needs
+    # the receiving diameter at every chamber. `dn_at_node()` reads it off the reach layer
+    # and REFUSES to substitute a default - "a default bore makes the allowance constant
+    # across every row, which is inheritance row 22's fabrication arrived at politely".
+    # So where the reach layer cannot supply one, the check falls back to the LOOSER
+    # 'invert' rule and the layer SAYS SO on every row, rather than the stage inventing a
+    # diameter or the check silently not running.
+    has_bore = (reaches is not None and len(reaches)
+                and {"US_NODE", "DS_NODE", "DN"} <= set(reaches.columns))
+    rule = "flow_depth" if has_bore else "invert"
+    if not has_bore:
+        _log("   NO RECEIVING BORE available to the connectability check (the reach layer "
+             "carries no US_NODE/DS_NODE/DN), so it falls back to the LOOSER 'invert' "
+             "arrival rule: a connection need only reach the chamber's invert, not clear "
+             "the sewer's design flow surface. Published on the row as CONN_RULE.")
+    res = CN.check_connections(cn, nodes=nodes, reaches=reaches if has_bore else None,
+                               crit=C, basis=CN.basis_hcc(C, arrival_rule=rule),
+                               route_m=L)
+    can = res.CAN_CONN.to_numpy(dtype=np.int8)
+    why_tok = res.CONN_WHY.astype(str).to_numpy()
+    need = res.CONN_NEED.to_numpy(dtype=float)
+    fall_avail = (res.OUT_INV_M - res.REQ_INV_M).to_numpy(dtype=float)
+    s_avl = res.S_AVL_PCT.to_numpy(dtype=float) / 100.0
+    # the gradient the connection would actually be laid at: what the fall allows, held
+    # between the G203-p18 Table 5 minimum and maximum for a property connection.
+    s_laid = np.clip(np.where(np.isfinite(s_avl) & (s_avl > 0), s_avl, C.PCS_MIN_SLOPE),
                      C.PCS_MIN_SLOPE, C.PCS_MAX_SLOPE)
     cover = np.maximum(C.PCS_MIN_COVER, C.HCC_DEPTH_MIN - C.DN_TERTIARY / 1000.0)
 
-    # WHAT IT WOULD TAKE, in metres: the chamber invert has to fall by the shortfall
-    # between the fall available and the fall the 3 % minimum needs over this length.
-    need = np.where(can == 1, 0.0,
-                    np.maximum(0.0, C.PCS_MIN_SLOPE * L - fall_avail))
-    why = np.where(
-        can == 1, "",
-        np.where(fall_avail <= 0.0,
-                 np.array([f"the property outlet sits {abs(fa):.2f} m BELOW the sewer "
-                           f"invert at its chamber - sewer {nd:.2f} m deeper on this run, "
-                           f"or a local collector"
-                           for fa, nd in zip(fall_avail, need)], dtype=object),
-                 np.array([f"only {fa:.2f} m of fall over {ln:,.0f} m, and "
-                           f"{C.PCS_MIN_SLOPE * 100:g} % needs "
-                           f"{C.PCS_MIN_SLOPE * ln:.2f} m (G203-p18 Tab 5) - sewer "
-                           f"{nd:.2f} m deeper on this run"
-                           for fa, ln, nd in zip(fall_avail, L, need)], dtype=object)))
+    # TWO COLUMNS, BECAUSE THE TWO READERS ARE DIFFERENT AND BOTH ARE REQUIRED.
+    #
+    #   CONN_CODE  the module's CLOSED VOCABULARY. It is the machine key: a schedule groups
+    #              on it, and because the set is closed a MISSING INPUT ("chamber level
+    #              unknown") can never be filed as an engineering verdict ("route loses the
+    #              fall"). That distinction is the module's, and it is worth a column.
+    #   CONN_WHY   the reason WITH ITS SIZE, which is what the contract's own field note
+    #              asks for and what validate() enforces: it refuses a CONN_WHY that is
+    #              constant across the failing rows, because a reason identical on every
+    #              plot was not computed for any of them (inheritance row 22).
+    #
+    # The sentence is built from the module's own numbers. It is not a second verdict - it
+    # is the same one, in words, with the metre figure a reader can act on.
+    say = {
+        CN.WHY_LEVEL: "the property outlet sits {short:.2f} m BELOW the sewer invert it "
+                      "must reach at its chamber - sewer {need:.2f} m deeper on this run, "
+                      "or a local collector",
+        CN.WHY_ROUTE: "it clears the chamber and then spends the clearance over {ln:,.0f} m "
+                      "of route at the G203-p18 Tab 5 minimums - sewer {need:.2f} m deeper",
+        CN.WHY_NO_NODE: "no chamber assigned to this plot, so there is nothing to connect to",
+        CN.WHY_NO_INV: "the chamber has no designed invert, so the check CANNOT RUN here - "
+                       "that is a failure, not a blank",
+        CN.WHY_NO_GRD: "no ground level at the plot, so the check CANNOT RUN here",
+        CN.WHY_NO_LEN: "no route length, so the fall it spends cannot be measured",
+        CN.WHY_NO_DN: "the receiving chamber has no bore, so the arrival allowance cannot "
+                      "be computed - no default is substituted",
+    }
+    short = np.maximum(0.0, -fall_avail)
+    why = np.array(
+        ["" if c == 1 else w + " - " + say.get(w, w).format(need=nd, ln=ln, short=sh)
+         for c, w, nd, ln, sh in zip(can, why_tok, need, L, short)], dtype=object)
+    code = np.where(can == 1, "", why_tok)
 
     ndx = nodes.set_index(nodes.NODE_UID.astype(str))
     key = cn.OUT_NODE.astype(str)
@@ -2076,11 +2746,26 @@ def build_connections(a: Assembly, g: Graph, nodes: gpd.GeoDataFrame,
         SLOPE_LAID=np.round(s_laid * 100.0, 3),
         COVER_M=round(float(cover), 3),
         CAN_CONN=can,
+        # the closed vocabulary, for grouping and for filtering
+        CONN_CODE=code.astype(object),
+        # the same verdict WITH ITS SIZE - what the contract's field note asks for
         CONN_WHY=why.astype(object),
         CONN_NEED=np.round(need, 3),
         # written FROM CAN_CONN, not computed a second time (contract cross-field check)
         CAN_DRAIN=can,
         FALL_AV_M=np.round(fall_avail, 3),
+        # w12.connectivity's own working, published so the verdict can be re-derived by
+        # hand: where the property outlet sits, where the connection arrives, what the
+        # chamber requires, and the arrival allowance that made the difference.
+        OUT_INV_M=res.OUT_INV_M.to_numpy(dtype=float),
+        ARR_INV_M=res.ARR_INV_M.to_numpy(dtype=float),
+        REQ_INV_M=res.REQ_INV_M.to_numpy(dtype=float),
+        ALLOW_M=res.ALLOW_M.to_numpy(dtype=float),
+        MARGIN_M=res.MARGIN_M.to_numpy(dtype=float),
+        CONN_LONG=res.CONN_LONG.to_numpy(dtype=np.int8),
+        CONN_STEEP=res.CONN_STEEP.to_numpy(dtype=np.int8),
+        CONN_VER=CN.CONNECTIVITY_VERSION,
+        CONN_RULE=str(res.attrs.get("arrival_rule", "")),
         XPLOT=cn.XPLOT.to_numpy(), XDUAL=cn.XDUAL.to_numpy(),
         CH_WADI=cn.CH_WADI.to_numpy(),
         # A CONNECTION HAS NO NAME, DELIBERATELY. Concept rule 8's grammar covers a
@@ -2094,15 +2779,23 @@ def build_connections(a: Assembly, g: Graph, nodes: gpd.GeoDataFrame,
         TOWN=key.map(ndx.TOWN.astype(str)).fillna(""),
         SUBNET=key.map(ndx.SUBNET.astype(str)).fillna(""),
         SUB_NAME=key.map(ndx.SUB_NAME.astype(str)).fillna(""),
-        SRC="dwg_road", CONFIDENCE="derived", STAGE=LEVELS_TAG,
+        SRC="dwg_road", CONFIDENCE="derived", STAGE=LEVELS_SOURCE,
         PACKAGE=key.map(ndx.PACKAGE.astype(str)).fillna(""),
         PHASE=0,
     ), geometry=cn.geometry.values, crs=f"EPSG:{CT.CRS_EPSG}")
-    _log(f"   connections (concept rule 5): {int(can.sum()):,} of {len(can):,} plots "
-         f"reach their chamber on gravity at the {C.PCS_MIN_SLOPE*100:g} % minimum "
-         f"(G203-p18 Tab 5). {int((can == 0).sum()):,} cannot, and each says what it "
-         f"would take - median {np.median(need[can == 0]) if int((can == 0).sum()) else 0.0:.2f} m "
-         f"deeper, worst {need.max():.2f} m")
+    n_bad = int((can == 0).sum())
+    by_why = pd.Series(why_tok[can == 0]).value_counts().to_dict() if n_bad else {}
+    _log(f"   connections (concept rule 5, w12.connectivity "
+         f"{CN.CONNECTIVITY_VERSION}, basis {res.attrs['basis'].name}, arrival rule "
+         f"'{res.attrs['arrival_rule']}'"
+         + ("" if has_bore else " - FALLBACK, no receiving bore was available")
+         + f"): {int(can.sum()):,} of {len(can):,} plots reach "
+         f"their chamber on gravity. {n_bad:,} cannot"
+         + (" - " + ", ".join(f"{k} {v:,}" for k, v in sorted(by_why.items())) if by_why
+            else "")
+         + (f". Each says what it would take: median "
+            f"{np.median(need[can == 0]):.2f} m deeper, worst {need.max():.2f} m"
+            if n_bad else ""))
     return out
 
 
@@ -2344,6 +3037,108 @@ def build_trunk(a: Assembly) -> gpd.GeoDataFrame:
 NAMED_LAYERS = ("nodes", "reaches", "stations", "rising_mains")
 
 
+#: How much of the network the LEVELLER must have answered for before this export is a
+#: design rather than a fragment. NOT a tolerance on a design value and not from any
+#: guideline - it is the line between "s6 withdrew a few reaches to pumped links" and "s6
+#: is looking at a different network from s4". PROJECT ASSUMPTION, declared here and in
+#: EXPORT_NUMBERS: below it the run is almost certainly a STALE PAIR - s4 re-run after s6 -
+#: and every length, quantity and schedule below is a fragment of the design.
+LEVELS_COVERAGE_ALARM = 0.98
+
+
+def levels_coverage_row(layers: Dict[str, gpd.GeoDataFrame]) -> Optional[Dict[str, Any]]:
+    """Did the leveller answer for enough of this network for the export to be a design?
+
+    The failure this catches happened the first afternoon the rewire existed: stage 4 was
+    re-run while stage 6's file stayed where it was, and the export then read levels for
+    26,579 of 56,667 reaches. Every published number was internally consistent and less
+    than half a design. Nothing in the file said so, because "s6 did not level this reach"
+    is exactly what a legitimate pumped link looks like - one row at a time."""
+    unl = layers.get("reaches_unlevelled")
+    r = layers.get("reaches")
+    if r is None:
+        return None
+    n_unl = 0 if unl is None else len(unl)
+    total = len(r) + n_unl
+    if not total:
+        return None
+    frac = len(r) / total
+    if n_unl == 0:
+        return dict(LAYER="levels coverage", PASS=1,
+                    RESULT=f"{LEVELS_SOURCE} levelled every reach",
+                    DETAIL=f"{len(r):,} of {total:,}")
+    pumped = 0
+    if unl is not None and "GAP_KIND" in unl.columns:
+        pumped = int((unl.GAP_KIND.astype(str) == "pumped_link").sum())
+    ok = frac >= LEVELS_COVERAGE_ALARM
+    return dict(
+        LAYER="levels coverage", PASS=int(ok),
+        RESULT=(f"{frac * 100:.1f} % of the network is levelled"
+                if ok else "THE LEVELLER ANSWERED FOR LESS THAN THE NETWORK"),
+        DETAIL=(f"{len(r):,} of {total:,} reaches carry levels from {LEVELS_SOURCE}; "
+                f"{n_unl:,} do not, {pumped:,} of them because {LEVELS_SOURCE} replaced "
+                f"the gravity reach with a pumped link - which is legitimate and is what "
+                f"`reaches_unlevelled` is for. "
+                + ("" if ok else
+                   f"BELOW THE {LEVELS_COVERAGE_ALARM * 100:.0f} % ALARM: on this scale it "
+                   f"is not withdrawals, it is a STALE PAIR - stage 4 has almost certainly "
+                   f"been re-run since {os.path.basename(GPKG_S6)} was written, so the two "
+                   f"files describe different chambers. NOTHING IN THIS EXPORT IS "
+                   f"QUOTABLE. Run s6_levels.py against the current chamber layer and "
+                   f"re-export.")))
+
+
+#: How far the leveller's ground and this stage's may drift before the two files are not
+#: describing the same chambers. NOT a survey tolerance and not from any guideline: both
+#: numbers are sampled from the SAME 0.5 m VRT at the SAME published X/Y, so on one pair of
+#: files the difference is exactly zero. Anything above the 1 mm the layers are rounded to
+#: means s4 re-minted the chamber under the same NODE_UID. PROJECT ASSUMPTION.
+GROUND_DRIFT_TOL_M = 0.002
+
+
+def levels_ground_row(layers: Dict[str, gpd.GeoDataFrame]) -> Optional[Dict[str, Any]]:
+    """Do the two files agree about the GROUND at the chambers they share?
+
+    An independent detector of the stale pair, and a sharper one than the reach count: a
+    depth is ground minus invert, so if the leveller was looking at different ground then
+    every depth, cover and drop on the file is measured from somewhere else. It found
+    47,303 of 51,470 shared chambers disagreeing by up to 173.2 m on the 12:25 export -
+    which is what put a -151.74 m cover on a client layer."""
+    nd = layers.get("nodes")
+    if nd is None or not len(nd) or not os.path.exists(GPKG_S6):
+        return None
+    try:
+        n6 = gpd.read_file(GPKG_S6, layer="nodes", ignore_geometry=True)
+    except Exception:                                          # pragma: no cover - IO
+        return None
+    if "GRD_M" not in n6.columns:
+        return None
+    lut = pd.Series(pd.to_numeric(n6.GRD_M, errors="coerce").values,
+                    index=n6.NODE_UID.astype(str).values)
+    want = nd.NODE_UID.astype(str).map(lut)
+    got = pd.to_numeric(nd.GRD_M, errors="coerce")
+    both = want.notna() & got.notna()
+    if not int(both.sum()):
+        return None
+    d = (want[both] - got[both]).abs()
+    n_off = int((d > GROUND_DRIFT_TOL_M).sum())
+    return dict(
+        LAYER="levels ground", PASS=int(n_off == 0),
+        RESULT=(f"{LEVELS_SOURCE} and this stage sampled the same ground"
+                if n_off == 0 else
+                "THE LEVELLER WAS LOOKING AT DIFFERENT GROUND"),
+        DETAIL=(f"{int(both.sum()) - n_off:,} of {int(both.sum()):,} shared chambers agree "
+                f"on GRD_M to {GROUND_DRIFT_TOL_M * 1000:.0f} mm"
+                + ("." if n_off == 0 else
+                   f"; {n_off:,} DO NOT, worst {float(d.max()):.2f} m. Both are sampled "
+                   f"from the same 0.5 m VRT at the same published X/Y, so a difference "
+                   f"means s4 has re-minted the chamber under this NODE_UID since "
+                   f"{os.path.basename(GPKG_S6)} was written. A depth is ground minus "
+                   f"invert: every depth, cover and drop on this file is then measured "
+                   f"from somewhere else. NOTHING IN THIS EXPORT IS QUOTABLE - run "
+                   f"s6_levels.py against the current chamber layer and re-export.")))
+
+
 def check_contract(layers: Dict[str, gpd.GeoDataFrame]) -> pd.DataFrame:
     """Validate every contract layer and PUBLISH the result - one row per PROBLEM, not one
     row per layer.
@@ -2405,6 +3200,16 @@ def check_contract(layers: Dict[str, gpd.GeoDataFrame]) -> pd.DataFrame:
                          DETAIL=f"{err}. Its KMZ and its QGIS styles were NOT written. An "
                                 f"absent theme is not a clean one - do not read the two "
                                 f"that were written as the whole picture."))
+    cov = levels_coverage_row(layers)
+    if cov is not None:
+        rows.append(cov)
+        if not cov["PASS"]:
+            _log("   *** " + cov["RESULT"] + ": " + cov["DETAIL"])
+    gnd = levels_ground_row(layers)
+    if gnd is not None:
+        rows.append(gnd)
+        if not gnd["PASS"]:
+            _log("   *** " + gnd["RESULT"] + ": " + gnd["DETAIL"])
     try:
         CT.assert_crossings_resolve(reaches=layers.get("reaches"),
                                     crossings=layers.get("crossings"))
@@ -2624,6 +3429,28 @@ def _unserved_areas(un: gpd.GeoDataFrame) -> List[Dict[str, Any]]:
             SRC="terrain", CONFIDENCE="derived", STAGE=STAGE,
             geometry=hull))
     return rows
+
+
+def carry_src_raw(layers: Dict[str, gpd.GeoDataFrame]) -> List[str]:
+    """Every layer carrying SRC also carries SRC_RAW, so the P6 confidence floor is
+    auditable on the package the client actually receives.
+
+    Where a layer's SRC was written as a literal by this stage - a connection, a station,
+    the trunk - nothing was mapped, so the raw value IS the mapped one and saying so is the
+    honest answer. Where it came through `assemble()`'s vocabulary map, the raw token is the
+    corridor's own and is already on the row. Neither case invents anything; both make the
+    floor testable."""
+    filled = []
+    for name, gdf in layers.items():
+        if "SRC" not in gdf.columns or "SRC_RAW" in gdf.columns:
+            continue
+        gdf["SRC_RAW"] = gdf["SRC"].astype(str)
+        filled.append(name)
+    if filled:
+        _log("   SRC_RAW written from SRC on " + ", ".join(sorted(filled))
+             + " - those layers' SRC was minted here, not mapped, so raw and mapped are "
+               "the same token and the P6 floor can now be checked on the deliverable")
+    return filled
 
 
 def _extra_columns(layers: Dict[str, gpd.GeoDataFrame]) -> None:
@@ -3124,6 +3951,8 @@ EXC_KINDS: List[Tuple[str, str, Tuple[int, int, int], int]] = [
     ("station_rejected", "Pumping stations REMOVED - nothing drained into them",
      (37, 37, 37), 1),
     ("area_unserved", "Areas the network does not reach", (152, 0, 67), 3),
+    ("reach_unlevelled", "Routes NOBODY LEVELLED - s6 published no reach here",
+     (0, 0, 0), 3),
 ]
 EXC_SIZE = {1: 1.0, 2: 1.5, 3: 2.2}       # symbol scale / line width by severity rank
 
@@ -3204,6 +4033,20 @@ def theme_exceptions(layers: Dict[str, gpd.GeoDataFrame]) -> List[ThemeLayer]:
         (("FLAG", "Area", "{}"), ("N_PLOT", "Plots", "{:.0f}"),
          ("N_PROP", "Properties", "{:.1f}"), ("Q_ADF_M3D", "Load", "{:.1f} m3/d"),
          ("WHY", "Why", "{}")), label="FLAG")
+    unlev = layers.get("reaches_unlevelled")
+    if unlev is not None and len(unlev):
+        add("reach_unlevelled", unlev, "line",
+            (("EDGE_UID", "Reach", "{}"), ("US_NODE", "From", "{}"),
+             ("DS_NODE", "To", "{}"), ("LEN_M", "Length", "{:.1f} m"),
+             ("QADF_M3D", "Load it carries", "{:.1f} m3/d"),
+             ("LIFT_M", "s6 lift, where it made this a pumped link", "{:.2f} m"),
+             ("GAP_KIND", "Kind", "{}"), ("WHY", "Why", "{}")),
+            "these routes carry NO invert, NO gradient and NO diameter, because the stage "
+            "that levels the network published nothing for them. They are OFF the reaches "
+            "layer and out of every length, quantity and schedule - the alternative was to "
+            "give them the retired stand-in's gradient between two of s6's inverts, which "
+            "describes no pipe",
+            label="EDGE_UID")
 
     return [t for t in out if t.n > 0]
 
@@ -3343,7 +4186,7 @@ def theme_kmz(theme: str, tls: Sequence[ThemeLayer], trunk: Optional[gpd.GeoData
          f'{time.strftime("%Y-%m-%d %H:%M")}. EPSG:{CT.CRS_EPSG} reprojected to WGS84.</p>'
          f'<p><b>{_esc(C.concept_banner())}</b></p>'
          f'<p>{_esc(C.tau_banner())}</p>'
-         f'<p>Levels: {_esc(LEVELS_TAG)}.</p>]]></description>']
+         f'<p>Levels: {_esc(LEVELS_SOURCE)}.</p>]]></description>']
 
     n_written = 0
     for tl in tls:
@@ -3585,6 +4428,78 @@ def flow_arrows(reaches: gpd.GeoDataFrame, every_m: float = 600.0, size: float =
 #      the stage that first had the levels to see it.
 # ======================================================================================
 
+def flow_orphans() -> pd.DataFrame:
+    """H15 AGAINST s5's OWN PUBLISHED LAYERS: every node with nowhere to send its flow.
+
+    `tests/test_columns.py::test_every_node_without_an_outlet_is_an_outfall` fails on the
+    003 run and the failure is real. MEASURED here off `W12_flows.gpkg`, so the answer is
+    on the deliverable instead of in a pytest line nobody keeps:
+
+      * 154 of 10,183 corridor nodes have no outgoing arc that s5 marks IS_ROUTE = 1 and
+        are not marked IS_OUTFALL. Every one of them is KIND = 'head' with DEAD_END = 1,
+        sitting on one of the 184 arcs s5 itself labels ROLE = 'island', DELIVERED = 0 -
+        30.88 km carrying 762.6 m3/d.
+      * THEY ARE REAL DEAD ENDS, not a wiring bug: s5 found no route from them to any
+        outfall and said so on the ARC layer.
+      * WHAT IS A PUBLICATION DEFECT IS THE NODE LAYER. It publishes DELIVERED = 1 on all
+        10,183 rows - a constant column - so the same GeoPackage says the arc is
+        undelivered and the node on it is delivered. One of the two is wrong, and it is
+        the constant one. That is the second failing audit check
+        (test_node_delivered_agrees_with_arc_delivered) and it is the SAME defect.
+      * It is s5_flows.py's to fix, not this stage's: s5 owns both columns. Published here
+        rather than repaired here, because repairing a column this stage does not own is
+        how two answers to one question get made.
+
+    Nothing is asserted below - every number is read off the file each run."""
+    cols = ["NODE_UID", "X", "Y", "GRD_M", "KIND", "IS_OUTFALL", "DEAD_END", "DELIVERED",
+            "Q_ADF_M3D", "N_PROP", "WHY"]
+    try:
+        arcs = gpd.read_file(GPKG_FLOWS, layer="arcs", ignore_geometry=True)
+        nds = gpd.read_file(GPKG_FLOWS, layer="nodes", ignore_geometry=True)
+    except Exception as e:                                     # pragma: no cover - IO
+        return pd.DataFrame([dict(NODE_UID="", X=0.0, Y=0.0, GRD_M=0.0, KIND="",
+                                  IS_OUTFALL=0, DEAD_END=0, DELIVERED=0, Q_ADF_M3D=0.0,
+                                  N_PROP=0.0,
+                                  WHY=f"the check COULD NOT RUN: {type(e).__name__}: {e}. "
+                                      f"A check that cannot run is a failure, not a blank "
+                                      f"(philosophy sec 8)")], columns=cols)
+    has_out = set(arcs.loc[arcs.IS_ROUTE.astype(int) == 1, "US_NODE"].astype(str))
+    st = nds[~nds.NODE_UID.astype(str).isin(has_out)
+             & (nds.IS_OUTFALL.astype(int) == 0)].copy()
+    isl = arcs[arcs.DELIVERED.astype(int) == 0]
+    on_isl = set(isl.US_NODE.astype(str)) | set(isl.DS_NODE.astype(str))
+    n_const = int(nds.DELIVERED.astype(int).nunique() == 1)
+    out = []
+    for r in st.itertuples():
+        u = str(r.NODE_UID)
+        island = u in on_isl
+        out.append(dict(
+            NODE_UID=u, X=round(float(r.X), 3), Y=round(float(r.Y), 3),
+            GRD_M=round(float(r.GRD_M), 3), KIND=str(r.KIND),
+            IS_OUTFALL=int(r.IS_OUTFALL), DEAD_END=int(getattr(r, "DEAD_END", 0)),
+            DELIVERED=int(getattr(r, "DELIVERED", 0)),
+            Q_ADF_M3D=round(float(getattr(r, "Q_ADF_M3D", 0.0)), 3),
+            N_PROP=round(float(getattr(r, "N_PROP", 0.0)), 2),
+            WHY=("a REAL dead end: it sits on an arc s5 itself marks ROLE = 'island', "
+                 "DELIVERED = 0, so s5 found no route from here to any outfall - yet the "
+                 "node layer publishes DELIVERED = 1"
+                 + (" on EVERY one of its rows, which is a constant column, not a "
+                    "measurement" if n_const else "")
+                 + ". s5_flows.py owns both columns; this is published, not repaired here")
+            if island else
+            ("no outgoing arc with IS_ROUTE = 1 and IS_OUTFALL = 0, and it is not on any "
+             "arc s5 marks undelivered either - so nothing in the file says where its "
+             "flow goes")))
+    df = pd.DataFrame(out, columns=cols)
+    if len(df):
+        _log(f"   H15 against s5: {len(df):,} of {len(nds):,} corridor nodes have no "
+             f"outgoing route arc and are not outfalls, carrying "
+             f"{df.Q_ADF_M3D.sum():,.1f} m3/d on {len(isl):,} island arcs "
+             f"({isl.LEN_M.sum() / 1000.0:.2f} km). s5's NODE layer publishes DELIVERED = 1 "
+             f"on {'all' if n_const else 'some'} of them.")
+    return df
+
+
 def outfall_check(g: Graph, f: Flows, layers: Dict[str, gpd.GeoDataFrame]) -> pd.DataFrame:
     nd = layers["nodes"]
     grd = g.grd
@@ -3595,6 +4510,7 @@ def outfall_check(g: Graph, f: Flows, layers: Dict[str, gpd.GeoDataFrame]) -> pd
         z = float(grd[out_i])
         pct = float((gs < z).sum()) / max(1, len(gs)) * 100.0
         esel = sel[g.e_us]
+        dsel = pd.to_numeric(nd.DEPTH_M, errors="coerce").to_numpy(dtype=float)[sel]
         rows.append(dict(
             OUTFALL=g.uid[int(out_i)],
             PACKAGE=str(nd.PACKAGE.iloc[int(out_i)]),
@@ -3606,9 +4522,20 @@ def outfall_check(g: Graph, f: Flows, layers: Dict[str, gpd.GeoDataFrame]) -> pd
             ABOVE_LOW=round(z - float(gs.min()), 2),
             PCT_BELOW=round(pct, 1),
             LOWEST=int(pct < 1.0),
-            DEEPEST_M=round(float(nd.DEPTH_M.to_numpy()[sel].max()), 2),
+            # nan-AWARE, AND THE BLANKS COUNTED. A chamber the leveller did not level
+            # carries DEPTH_M = NULL, and a plain .max() over one of them returns nan for
+            # the whole component - 219 of 276 rows on the 12:00 export were blank for
+            # that reason, with nothing on the row saying the check could not run.
+            DEEPEST_M=(round(float(np.nanmax(dsel)), 2) if np.isfinite(dsel).any()
+                       else float("nan")),
+            NO_LEVEL=int((~np.isfinite(dsel)).sum()),
             Q_ADF_M3D=round(float(f.q_adf[out_i]), 1)))
     df = pd.DataFrame(rows).sort_values("LEN_KM", ascending=False).reset_index(drop=True)
+    if int(df.NO_LEVEL.sum()):
+        _log(f"   outfall check: {int((df.NO_LEVEL > 0).sum())} of {len(df)} components "
+             f"contain a chamber with NO LEVEL ({int(df.NO_LEVEL.sum()):,} chambers); "
+             f"DEEPEST_M is over the levelled ones only and NO_LEVEL says how many were "
+             f"left out. A blank is a check that could not run (philosophy sec 8).")
     bad = df[(df.PCT_BELOW > 50.0) & (df.N_CHAMBER >= 20)]
     _log(f"   outfall check: {int(df.LOWEST.sum())} of {len(df)} components discharge at "
          f"their OWN lowest chamber; {len(bad)} components of 20+ chambers "
@@ -4268,7 +5195,7 @@ def write_dxf(layers: Dict[str, gpd.GeoDataFrame], annotated: bool = True) -> Li
         y0 = float(nd.Y.max()) + 400.0
         x0 = float(nd.X.min())
         _dxf_text(msp, "W12 sewer network - %s.  %s, %s.  EPSG:%d.  LEVELS: %s.  %s"
-                  % (tag, VERSION, time.strftime("%Y-%m-%d"), CT.CRS_EPSG, LEVELS_TAG,
+                  % (tag, VERSION, time.strftime("%Y-%m-%d"), CT.CRS_EPSG, LEVELS_SOURCE,
                      C.tau_banner()[:110]),
                   x0, y0 + 44.0, "W12-TITLE", DXF_TITLE_H)
         _dxf_text(msp, C.concept_banner()[:240], x0, y0 + 26.0, "W12-TITLE", 9.0)
@@ -4441,10 +5368,14 @@ def write_schedules(a: Assembly, layers: Dict[str, gpd.GeoDataFrame],
         dict(Item="Stage", Value=VERSION),
         dict(Item="Built", Value=time.strftime("%Y-%m-%d %H:%M")),
         dict(Item="LEVELS AND SIZES", Value=(
-            "produced by the STAGE-6 STAND-IN inside s8_export.py. W12 has no s6_levels "
-            "module. Every invert, diameter, gradient, velocity, depth of flow, cover and "
-            "drop in these schedules comes from that stand-in, tagged "
-            f"STAGE = '{LEVELS_TAG}' on every row.")),
+            f"every invert, diameter, gradient, velocity, depth of flow, cover and drop "
+            f"in these schedules came from '{LEVELS_SOURCE}' and is tagged with it on "
+            f"every row. The levels stand-in this stage used to carry is RETIRED; it runs "
+            f"once so the disagreement can be measured and it publishes nothing."
+            if LEVELS_SOURCE == S6_TAG else
+            f"s6_levels HAS NOT PUBLISHED, so these schedules carry the RETIRED stand-in "
+            f"inside s8_export.py, tagged STAGE = '{LEVELS_TAG}' on every row. Run "
+            f"s6_levels.py and re-export before quoting a depth.")),
         dict(Item="TRACTIVE STRESS", Value=C.tau_banner()),
         dict(Item="DIAMETERS ABOVE DN1200", Value=(
             "the series is the one G203 itself tabulates in the service-corridor width "
@@ -4646,8 +5577,8 @@ def write_profiles(g: Graph, layers: Dict[str, gpd.GeoDataFrame], node_pkg: np.n
                 f"{ch[-1] / 1000.0:.2f} km, {len(uids):,} chambers, "
                 f"DN{int(dn.min()) if len(dn) else 0}-{int(dn.max()) if len(dn) else 0}, "
                 f"gradient {slope.min():.2f}-{slope.max():.2f} %, "
-                f"deepest {cover.max():.2f} m to invert   |   "
-                f"LEVELS BY THE s8 STAGE-6 STAND-IN   |   tau = {C.TAU_PA:g} Pa ASSUMED",
+                f"deepest {np.nanmax(grd - inv) if np.isfinite(grd - inv).any() else 0.0:.2f} m to invert   |   "
+                f"LEVELS BY {LEVELS_SOURCE}   |   tau = {C.TAU_PA:g} Pa ASSUMED",
                 fontsize=9)
             ax.set_xlabel("Chamber (chainage increases downstream)", fontsize=8)
             ax.set_ylabel("Level, m aOD", fontsize=8)
@@ -4729,10 +5660,19 @@ def _pct(x, of):
 def write_report(a: Assembly, g: Graph, f: Flows, lv: Levels, lv_st: Levels,
                  layers: Dict[str, gpd.GeoDataFrame], chk: pd.DataFrame,
                  cross_stats: Dict[str, Any], kmz: "PR.RenderResult",
-                 files: Dict[str, List[str]], ofc: pd.DataFrame) -> str:
+                 files: Dict[str, List[str]], ofc: pd.DataFrame,
+                 delta: Optional[pd.DataFrame] = None,
+                 orphans: Optional[pd.DataFrame] = None,
+                 nm: Optional[Naming] = None) -> str:
     nd, r = layers["nodes"], layers["reaches"]
     km = float(r.LEN_M.sum()) / 1000.0
     cover = nd.COVER_M.to_numpy(dtype=float)
+    # COVER_M is NULL where the leveller published no chamber. A plain max over it is nan,
+    # and six rows out of 56,972 destroyed the headline depth on the first run after the
+    # levels were rewired. nan-aware, with the count of unlevelled chambers stated.
+    n_nolvl = int(np.isnan(cover).sum())
+    cov_max = float(np.nanmax(cover)) if np.isfinite(cover).any() else float("nan")
+    cov_med = float(np.nanmedian(cover)) if np.isfinite(cover).any() else float("nan")
     st = layers["stations"]
     cn = layers["connections"]
     L: List[str] = []
@@ -4746,15 +5686,19 @@ def write_report(a: Assembly, g: Graph, f: Flows, lv: Levels, lv_st: Levels,
     A("")
     A("## The uncomfortable answer first")
     A("")
-    conflict = levels_source_conflict()
-    if conflict:
-        A(f"**TWO SETS OF LEVELS EXIST IN THIS FOLDER, and this export publishes one of "
-          f"them.** {conflict}")
+    if LEVELS_SOURCE == S6_TAG:
+        A(f"**There is now ONE set of levels in this folder and this export publishes it.** "
+          f"Every invert, diameter, gradient, velocity, depth of flow, cover and drop on "
+          f"every layer below came from `{S6_TAG}` and is tagged `LEVELS_BY = '{S6_TAG}'` "
+          f"on the row. The levels-and-sizes pass this stage used to carry is retired: it "
+          f"still runs once, so the size of what the two solvers disagreed about is a "
+          f"MEASURED number on the `levels_delta` layer, and it publishes nothing.")
     else:
-        A(f"**Every invert, diameter, gradient, velocity, depth of flow, cover and drop in "
-          f"this export came out of a levels-and-sizes pass written inside "
-          f"`s8_export.py`**, tagged `STAGE = '{LEVELS_TAG}'` on every published row. It is "
-          f"a single strict pass; philosophy sec 7 asks for two and then an audit.")
+        A(f"**`s6_levels` HAS NOT PUBLISHED, so this export fell back to the retired "
+          f"stand-in inside `s8_export.py`**, tagged `STAGE = '{LEVELS_TAG}'` on every "
+          f"row. It is a single strict pass; philosophy sec 7 asks for two and then an "
+          f"audit. Do not quote a depth from this run - run `python s6_levels.py` and "
+          f"re-export.")
     A("")
     A(f"**And what it measures is not a tree problem. It is flatness.** "
       f"**{int((nd.PAST_CAP == 1).sum()):,} of {len(nd):,} chambers "
@@ -4764,7 +5708,7 @@ def write_report(a: Assembly, g: Graph, f: Flows, lv: Levels, lv_st: Levels,
       f"under philosophy sec 5 - neither a recovery within 500 m nor an outfall within "
       f"1,000 m, or the excursion forces a drop past "
       f"{C.DROP_CEILING_M:g} m and the exit is withdrawn. The deepest chamber carries "
-      f"**{cover.max():.1f} m of cover**. That is not a levelling error and it is not the "
+      f"**{cov_max:.1f} m of cover**. That is not a levelling error and it is not the "
       f"tree: **{_pct(float(r.LEN_M[r.DN == 200].sum()), float(r.LEN_M.sum())):.1f} % of "
       f"the length is DN200**, whose Table 11 minimum is 5.00 mm/m (G203-p29), and "
       f"**{_pct(float(r.LEN_M[r.GRAD_BY.isin(['table11', 'tractive', 'uniform'])].sum()), float(r.LEN_M.sum())):.1f} % "
@@ -4772,15 +5716,19 @@ def write_report(a: Assembly, g: Graph, f: Flows, lv: Levels, lv_st: Levels,
       f"ground's own fall** - which is what it means to say the ground is flatter than the "
       f"pipe may be laid. There the pipe sinks whichever way it points.")
     A("")
-    A(f"**The {len(a.stations):,} stations s7 located are worth {lv.stats['past_cap_nodes'] - lv_st.stats['past_cap_nodes']:,} "
-      f"chambers.** Run the same levels with each station resetting the depth at its "
-      f"anchor chamber and the breach count falls "
-      f"{lv.stats['past_cap_nodes']:,} -> {lv_st.stats['past_cap_nodes']:,} and the "
-      f"no-exit count {lv.stats['past_cap_no_exit']:,} -> {lv_st.stats['past_cap_no_exit']:,}. "
-      f"**The published layers are the GRAVITY-ONLY arm**, because the stations are not in "
-      f"the written topology (H16) and their rising mains discharge to nodes this graph "
-      f"does not contain. Putting them in the levels but not in the graph would publish a "
-      f"network that carries its own flow twice.")
+    A(f"**THE LEVELS ON EVERY LAYER ARE `{S6_TAG}`'s.** Until 2026-09-06 this stage "
+      f"computed its own inverts with a stand-in inherited from W11b - where there "
+      f"genuinely was no stage 6 - and published them beside s6's own file. Two solvers, "
+      f"one question. The stand-in still runs once so the size of the disagreement can be "
+      f"measured, and it is published on `levels_delta`; **nothing on any deliverable "
+      f"carries it any more.** On the headline counts the two arms read: chambers past "
+      f"the 12 m cap {lv.stats['past_cap_nodes']:,} against "
+      f"{lv_st.stats['past_cap_nodes']:,}, of those with no exit "
+      f"{lv.stats['past_cap_no_exit']:,} against {lv_st.stats['past_cap_no_exit']:,}, "
+      f"deepest cover {lv.stats['deepest_cover']:.2f} m against "
+      f"{lv_st.stats['deepest_cover']:.2f} m, vortex shafts {lv.stats['vortex']:,} against "
+      f"{lv_st.stats['vortex']:,}. The full row-by-row comparison is the `levels_delta` "
+      f"layer.")
     A("")
 
     big = ofc[ofc.N_CHAMBER >= 20]
@@ -4811,6 +5759,115 @@ def write_report(a: Assembly, g: Graph, f: Flows, lv: Levels, lv_st: Levels,
           f"the other, and the ranking is the useful part: fixing the tree helps most "
           f"where the run is longest.")
         A("")
+    A("## The four things that used to be answered twice")
+    A("")
+    A("Each of these was a second implementation of a question another module already "
+      "answered. Inheritance row 10 - one published quantity, one function.")
+    A("")
+    A("### 1. The levels")
+    A("")
+    if delta is not None and len(delta):
+        A(f"Read from `{S6_TAG}` and matched on the written topology. Where the retired "
+          f"stand-in disagreed, row by row:")
+        A("")
+        A("| Quantity | Rows both answered | Differed | % | Median diff | Worst |")
+        A("|---|---:|---:|---:|---:|---:|")
+        # NOT `for r in ...`: `r` is the reaches frame in this function, and shadowing it
+        # here cost the whole report - every line after this loop read the last delta row.
+        for d_ in delta.itertuples():
+            worst = max(abs(float(d_.MIN_DIFF)), abs(float(d_.MAX_DIFF)))
+            A(f"| {d_.QUANTITY} ({d_.UNIT}) | {int(d_.N):,} | {int(d_.N_DIFFER):,} | "
+              f"{float(d_.PCT_DIFFER):.1f} | {float(d_.MEDIAN_DIFF):+.3f} | {worst:.3f} |")
+        A("")
+        A(f"The stand-in is retired. It still runs once so this table can exist and it "
+          f"publishes nothing. {int(REMOVED_COUNTS.get('reaches_unlevelled', 0)):,} routes "
+          f"({REMOVED_COUNTS.get('reaches_unlevelled_km', 0.0):.2f} km) that `{S6_TAG}` "
+          f"did not level are OFF the reaches layer and on `reaches_unlevelled` with the "
+          f"reason on every row.")
+    else:
+        A(f"**`{S6_TAG}` HAS NOT PUBLISHED and the retired stand-in shipped.** There is no "
+          f"delta to report because there is only one answer, and it is the wrong one to "
+          f"quote. Run `python s6_levels.py` and re-export.")
+    A("")
+    A("### 2. The names")
+    A("")
+    ncts = (nm.stats.get("naming_counts") or {}) if nm is not None else {}
+    if ncts:
+        A(f"`w12.naming.name_network()` - the module that was written for this and that "
+          f"nothing in the pipeline called. {int(ncts.get('nodes_named', 0)):,} of "
+          f"{int(ncts.get('nodes_total', 0)):,} chambers and "
+          f"{int(ncts.get('reaches_named', 0)):,} of "
+          f"{int(ncts.get('reaches_total', 0)):,} conduits are named, across "
+          f"{int(ncts.get('towns_used', 0))} settlements and "
+          f"{int(ncts.get('subnets', 0)):,} subnetworks. Town resolution follows the "
+          f"engineer's rule (b): {int(ncts.get('town_inside', 0)):,} took the letter of "
+          f"the polygon they sit in, {int(ncts.get('town_downstream', 0)):,} took the "
+          f"first town DOWNSTREAM, {int(ncts.get('town_none', 0)):,} resolved to none.")
+        A("")
+        flg = (nm.stats.get("naming_flags") or {}) if nm is not None else {}
+        if flg:
+            A("What it REFUSED to name, rather than guessing (concept rule 7):")
+            A("")
+            A("| Flag | Count |")
+            A("|---|---:|")
+            for k, v in sorted(flg.items(), key=lambda t: -t[1]):
+                A(f"| `{k}` | {int(v):,} |")
+            A("")
+        A(f"`contract.assert_named()` is called on nodes, reaches, stations and rising "
+          f"mains at publication and its verdict is a row on `contract_check` - which is "
+          f"how the {int(ncts.get('nodes_total', 0)) - int(ncts.get('nodes_named', 0)):,} "
+          f"unnamed chambers are visible at all.")
+    else:
+        A("The settlement gazetteer could not be read, so nothing is named and "
+          "`assert_named()` refuses every layer. That is the correct outcome.")
+    A("")
+    A("### 3. The plot connectability check")
+    A("")
+    cn_ = layers.get("connections")
+    if cn_ is not None and len(cn_):
+        bad = cn_[cn_.CAN_CONN == 0]
+        A(f"`w12.connectivity.check_connections()`, basis `hcc`, arrival rule "
+          f"`flow_depth`. **{int((cn_.CAN_CONN == 1).sum()):,} of {len(cn_):,} plots "
+          f"reach their chamber on gravity; {len(bad):,} cannot.** The inline version this "
+          f"replaces charged the 3 % property-connection minimum over the WHOLE route and "
+          f"let a connection arrive at the chamber's bare invert. The module splits the "
+          f"run - 2.5 m of property connection at 3 %, the rest at the 1 % lateral minimum "
+          f"(G203-p18 Table 5) - and requires the connection to arrive above the sewer's "
+          f"own design flow surface, d/D x bore (G203-p27 Table 10).")
+        A("")
+        A("| Why it cannot connect | Plots | Median depth needed | Worst |")
+        A("|---|---:|---:|---:|")
+        for w, sub in bad.groupby(bad.CONN_CODE.astype(str) if "CONN_CODE" in bad.columns
+                                  else bad.CONN_WHY.astype(str)):
+            nd_ = pd.to_numeric(sub.CONN_NEED, errors="coerce")
+            A(f"| {w} | {len(sub):,} | {float(nd_.median()):.2f} m | "
+              f"{float(nd_.max()):.2f} m |")
+        A("")
+        A("A verdict and a missing input are different rows in that table on purpose: "
+          "`chamber level unknown` is a check that could not run, and CONN_NEED is 0.00 m "
+          "on it because there is no remedy to size - not because the plot is fine.")
+    A("")
+    A("### 4. H15 against stage 5's own layers")
+    A("")
+    if orphans is not None and len(orphans):
+        isl = orphans[orphans.WHY.astype(str).str.startswith("a REAL dead end")]
+        A(f"**{len(orphans):,} corridor nodes in `W12_flows.gpkg` have no outgoing arc "
+          f"marked `IS_ROUTE = 1` and are not marked `IS_OUTFALL`**, carrying "
+          f"{float(orphans.Q_ADF_M3D.sum()):,.1f} m3/d. "
+          f"{len(isl):,} of them sit on arcs stage 5 itself labels `ROLE = 'island'`, "
+          f"`DELIVERED = 0` - so they are REAL dead ends and stage 5 knows it.")
+        A("")
+        A(f"**The defect is the node layer's `DELIVERED` column**: it publishes 1 on every "
+          f"row, so the same GeoPackage says the arc is undelivered and the node standing "
+          f"on it is delivered. That is the second failing audit check "
+          f"(`test_node_delivered_agrees_with_arc_delivered`) and it is the same defect, "
+          f"not a separate one. `s5_flows.py` owns both columns; this stage publishes the "
+          f"list as `flow_orphans` rather than repairing a column it does not own.")
+    else:
+        A("Nothing to report: every node in the flows layer either has an outgoing route "
+          "arc or is marked as an outfall.")
+    A("")
+
     A("## What was built")
     A("")
     A("| Path | What |")
@@ -4856,7 +5913,11 @@ def write_report(a: Assembly, g: Graph, f: Flows, lv: Levels, lv_st: Levels,
       f"**0 over the 3.0 m/s maximum** | G203-p27 |")
     A(f"| d/D at peak | max {r.DOD_PK.max():.3f}, **0 reaches over the Table 10 limit** | "
       f"G203-p27 Tab 10 |")
-    A(f"| Cover | median {np.median(cover):.2f} m, deepest **{cover.max():.2f} m** | G203-p33 |")
+    A(f"| Cover | median {cov_med:.2f} m, deepest **{cov_max:.2f} m** | G203-p33 |")
+    if n_nolvl:
+        A(f"| Chambers with NO LEVEL AT ALL | **{n_nolvl}** | {LEVELS_SOURCE} published "
+          f"no invert for them, so COVER_M and DEPTH_M are NULL on those rows and the "
+          f"figures above are taken over the rest - see `reaches_unlevelled` |")
     A(f"| Below the 1.30 m minimum cover | **{lv.stats['km_below_min_cover']:.2f} km** | G203-p33 |")
     A(f"| Backdrops (0.60-2.00 m) | {int((nd.DROP_TYPE == 'backdrop').sum()):,} | G203-p30 |")
     A(f"| **Vortex drop shafts (> 2.00 m)** | **{int((nd.DROP_TYPE == 'vortex').sum()):,}** | "
@@ -4924,11 +5985,16 @@ def write_report(a: Assembly, g: Graph, f: Flows, lv: Levels, lv_st: Levels,
     A("")
     A(f"**{int((cn.CAN_CONN == 1).sum()):,} of {len(cn):,} connected plots reach their "
       f"chamber on gravity**; **{int((cn.CAN_CONN == 0).sum()):,} cannot.** The test is "
-      f"the engineer's, and each half of it matters: the connection leaves BELOW ground "
-      f"at the G203-p19 3.4 minimum HCC depth of {C.HCC_DEPTH_MIN:g} m (not at the "
-      f"surface), it runs to a CHAMBER (not to the nearest point on a pipe), and it loses "
-      f"fall over its OWN route length at the {C.PCS_MIN_SLOPE * 100:g} % minimum of "
-      f"G203-p18 Table 5.")
+      f"the engineer's and it is `w12.connectivity`'s, called - not a copy of it kept "
+      f"here. Each half of it matters: the connection leaves BELOW ground at the "
+      f"G203-p19 3.4 minimum HCC depth of {C.HCC_DEPTH_MIN:g} m (not at the surface), it "
+      f"runs to a CHAMBER (not to the nearest point on a pipe), and it loses fall over "
+      f"its OWN route - {C.HCC_OFFSET_M:g} m of property connection at the "
+      f"{C.PCS_MIN_SLOPE * 100:g} % minimum and the rest at the "
+      f"{C.LATERAL_MIN_SLOPE * 100:g} % lateral minimum, both G203-p18 Table 5. It must "
+      f"then arrive ABOVE the sewer's own design flow surface, d/D x internal bore "
+      f"(G203-p27 Table 10), not merely at the chamber's invert - the rule is this "
+      f"project's assumption, the number is the guideline's.")
     A("")
     A(f"Rule 7 is why the number is usable: **every failure carries `CONN_NEED`, how many "
       f"metres deeper the sewer would have to be on that run** - median "
@@ -5119,13 +6185,11 @@ def levels_source_conflict() -> Optional[str]:
     both compute an invert is inheritance row 10 - "one published quantity, one function" -
     and that row is the one that put seven station counts into circulation in W10.
 
-    This does NOT silently prefer one. Rewiring the export to read s6's inverts is the
-    right end state, but it is a change that has to be made against real layers and
-    verified reach by reach, and a blind swap of the levels source is exactly the class of
-    change that has cost this project two iterations. So the conflict is DETECTED, printed,
-    written into the manifest, stamped on the DXF banner and written up in EXPORT.md with
-    the size of the disagreement - and the decision is left to a human with the data in
-    front of them."""
+    KEPT AFTER THE REWIRE, and it now reports a state that should not occur. `build()`
+    reads s6's inverts through `read_s6_levels()` and the section-4 stand-in publishes
+    nothing, so a non-None answer here means the stand-in shipped - which only happens when
+    s6's file could not be read at all. `tests/test_export_themes.py` exercises this
+    function directly, so its signature and its message are part of the interface."""
     if not os.path.exists(GPKG_S6):
         return None
     try:
@@ -5158,6 +6222,70 @@ def levels_source_conflict() -> Optional[str]:
         "depth from the other.")
 
 
+def _split_unlevelled(layers: Dict[str, gpd.GeoDataFrame],
+                      s6: Optional[S6Levels]) -> gpd.GeoDataFrame:
+    """Take the reaches nobody levelled OFF the reaches layer and publish them whole.
+
+    Returns the removed rows, joined to s6's own reason for each. The count and the length
+    go into REMOVED_COUNTS, which the manifest reads: this stage says what it removed."""
+    r = layers["reaches"]
+    if s6 is None or int((~s6.e_ok).sum()) == 0:
+        return r.iloc[0:0].copy()
+    keep = np.asarray(s6.e_ok, dtype=bool)
+    out = r.loc[~keep].copy()
+    layers["reaches"] = r.loc[keep].reset_index(drop=True)
+    why = s6.gaps.set_index("EDGE_UID")
+    out["GAP_KIND"] = out.EDGE_UID.astype(str).map(why.GAP_KIND).fillna("unknown")
+    out["WHY"] = out.EDGE_UID.astype(str).map(why.WHY).fillna(
+        "no reach at this (US_NODE, DS_NODE) in " + os.path.basename(GPKG_S6))
+    out["LIFT_M"] = pd.to_numeric(out.EDGE_UID.astype(str).map(why.LIFT_M),
+                                  errors="coerce").fillna(0.0)
+    # every level field on these rows is NOT AN ANSWER. Blank them rather than ship a
+    # number that came from nowhere - a NULL is checkable, a plausible float is not.
+    for c in ("DN", "SLOPE_LAID", "SLOPE_MIN", "INV_UP", "INV_DN", "US_DEPTH", "DS_DEPTH",
+              "COVER_US", "COVER_DN", "V_PK_MS", "DOD_PK", "RET_MIN"):
+        if c in out.columns:
+            out[c] = np.nan
+    for c in ("GRAD_BY", "SIZED_BY", "CLEAN_BY", "MATERIAL"):
+        if c in out.columns:
+            out[c] = ""
+    out = out.reset_index(drop=True)
+    layers["reaches_unlevelled"] = out
+    REMOVED_COUNTS["reaches_unlevelled"] = int(len(out))
+    REMOVED_COUNTS["reaches_unlevelled_km"] = round(float(out.LEN_M.sum()) / 1000.0, 3)
+    _log(f"   REMOVED from the reaches layer: {len(out):,} reaches "
+         f"({out.LEN_M.sum() / 1000.0:.2f} km) that {S6_TAG} did not level - published on "
+         f"`reaches_unlevelled` with the reason on every row. By reason: "
+         + ", ".join(f"{k} {v:,}" for k, v in out.GAP_KIND.value_counts().items()))
+    return out
+
+
+def withdraw_orphan_crossings(layers: Dict[str, gpd.GeoDataFrame]) -> int:
+    """A crossing register row that no published reach references any more.
+
+    `contract.assert_crossings_resolve()` refuses one, and it is right to: the register
+    says a pipe crosses an obstacle here, and after the unlevelled routes come off the
+    reaches layer no pipe does. Withdrawn to its own layer with the reason, counted in
+    REMOVED_COUNTS - never left dangling, and never left in to make a count look bigger."""
+    cx = layers.get("crossings")
+    if cx is None or not len(cx) or "CROSS_ID" not in cx.columns:
+        return 0
+    still = set(layers["reaches"].CROSS_ID.astype(str))
+    gone = ~cx.CROSS_ID.astype(str).isin(still)
+    if not gone.any():
+        return 0
+    layers["crossings_withdrawn"] = cx.loc[gone].assign(
+        WD_WHY="the only reach that crossed here is a route " + S6_TAG + " did not level "
+               "(see reaches_unlevelled), so no gravity pipe crosses this obstacle any "
+               "more").reset_index(drop=True)
+    layers["crossings"] = cx.loc[~gone].reset_index(drop=True)
+    REMOVED_COUNTS["crossings_withdrawn"] = int(gone.sum())
+    _log(f"   WITHDREW {int(gone.sum())} crossing register row(s) "
+         f"({', '.join(cx.loc[gone].CROSS_ID.astype(str)[:6])}) - nothing crosses there "
+         f"now that the reach is off the reaches layer")
+    return int(gone.sum())
+
+
 def build(do_dxf: bool = True, do_profiles: bool = True, do_kmz: bool = True) -> Dict[str, Any]:
     _mkdirs()
     print(C.concept_banner())
@@ -5168,18 +6296,42 @@ def build(do_dxf: bool = True, do_profiles: bool = True, do_kmz: bool = True) ->
         g = build_graph(a)
         f = accumulate(a, g)
 
-        conflict = levels_source_conflict()
-        if conflict:
-            _log("   *** " + conflict)
-            a.note(conflict)
-
-        # the two arms. The GRAVITY-ONLY arm is what gets published; the with-stations arm
-        # is run so the relief the s7 stations buy is a MEASURED number and not a claim.
-        lv = design_levels(a, g, f, label="gravity only - PUBLISHED")
-        anchors = [g.ix[u] for u in a.stations.ANCHOR_ND.astype(str) if u in g.ix]
-        lv_st = design_levels(a, g, f, station_nodes=anchors,
-                              label=f"with the {len(a.stations)} s7 stations - measured, "
-                                    f"NOT published")
+        # ---- THE LEVELS. One question, one answer, and it is s6_levels'. ---------------
+        # The section-4 stand-in still runs, ONCE, and is published NOWHERE: the size of
+        # what it disagreed with s6 about is a number the engineer asked for, and the only
+        # way to have it is to compute both. `levels_delta` carries it.
+        global LEVELS_SOURCE
+        s6 = read_s6_levels(a, g, f)
+        LEVELS_SOURCE = S6_TAG if s6 is not None else LEVELS_TAG
+        lv_standin = design_levels(
+            a, g, f, label="the RETIRED s8 stand-in - measured for the delta, NOT published")
+        if s6 is not None:
+            lv = s6.lv
+            for note in s6.notes:
+                a.note(note)
+            delta = levels_delta(g, s6, lv_standin)
+            worst = delta[delta.QUANTITY == "chamber invert"]
+            conflict = (
+                f"LEVELS NOW COME FROM {S6_TAG} ({os.path.basename(GPKG_S6)}), matched on "
+                f"the WRITTEN topology: {s6.stats['reaches_matched']:,} of "
+                f"{len(g.e_len):,} reaches and {s6.stats['nodes_matched']:,} of "
+                f"{len(g.uid):,} chambers. The stand-in tagged '{LEVELS_TAG}' is RETIRED "
+                f"as a publication source and survives only as the measurement on the "
+                f"`levels_delta` layer"
+                + (f" - it disagreed with s6 on {int(worst.N_DIFFER.iloc[0]):,} of "
+                   f"{int(worst.N.iloc[0]):,} chamber inverts, worst "
+                   f"{max(abs(float(worst.MIN_DIFF.iloc[0])), abs(float(worst.MAX_DIFF.iloc[0]))):.2f} m"
+                   if len(worst) else "") + ".")
+        else:
+            lv = lv_standin
+            delta = pd.DataFrame(columns=["QUANTITY", "UNIT", "N", "N_DIFFER"])
+            conflict = (
+                f"{os.path.basename(GPKG_S6)} IS NOT THERE, so the levels on every layer "
+                f"below are the RETIRED s8 stand-in tagged '{LEVELS_TAG}'. Run "
+                f"`python s6_levels.py` and re-export; do not quote a depth from this run.")
+        _log("   *** " + conflict)
+        a.note(conflict)
+        lv_st = lv_standin
 
         contacts = measure_contacts(a, g)
         cx, cross_id, cross_stats = build_crossings(a, g, contacts)
@@ -5189,14 +6341,23 @@ def build(do_dxf: bool = True, do_profiles: bool = True, do_kmz: bool = True) ->
             a.note(note)
         jn = measure_joins(a, g, f)
 
-        layers = build_layers(a, g, f, lv, contacts, cross_id, node_pkg, edge_pkg, nm_, jn)
+        layers = build_layers(a, g, f, lv, contacts, cross_id, node_pkg, edge_pkg, nm_, jn,
+                              s6=s6)
+        # ---- WHAT s6 DID NOT LEVEL COMES OFF THE REACHES LAYER ------------------------
+        # Inheritance row 4: a later pass may TAKE AWAY what an earlier one added, and it
+        # publishes how many. These segments are real routes - they are not deleted - but
+        # they carry no invert, no gradient and no diameter that anyone solved, so they are
+        # not gravity reaches and must not be counted, drawn or scheduled as if they were.
+        unlev = _split_unlevelled(layers, s6)
         layers["connections"] = build_connections(a, g, layers["nodes"], layers["reaches"])
         (layers["stations"], layers["rising_mains"],
          layers["stations_rejected"]) = build_stations(a, layers["nodes"], g, f, nm_)
         layers["crossings"] = cx
+        withdraw_orphan_crossings(layers)
         layers["packages"] = pk
         layers["trunk"] = build_trunk(a)
         layers["subnetworks"] = build_subnetworks(layers, a, g, f, nm_, jn)
+        carry_src_raw(layers)
         _extra_columns(layers)
         register_extra_views()
         tune_views()
@@ -5220,6 +6381,10 @@ def build(do_dxf: bool = True, do_profiles: bool = True, do_kmz: bool = True) ->
             "manifest": _manifest_table(a, g, f, lv, lv_st, layers, cross_stats),
             "assumptions": _assumptions_table(),
             "levels_arms": _arms_table(lv, lv_st),
+            "levels_delta": delta,
+            "levels_gaps": (s6.gaps if s6 is not None
+                            else pd.DataFrame(columns=["EDGE_UID", "WHY"])),
+            "flow_orphans": flow_orphans(),
             "outfall_check": ofc,
         }
         pub = {k: v for k, v in layers.items()}
@@ -5248,7 +6413,8 @@ def build(do_dxf: bool = True, do_profiles: bool = True, do_kmz: bool = True) ->
         if kmz is not None:
             qgis_script(kmz)
         rep = write_report(a, g, f, lv, lv_st, layers, chk, cross_stats,
-                           kmz or _empty_render(), files, ofc)
+                           kmz or _empty_render(), files, ofc,
+                           delta=delta, orphans=extra["flow_orphans"], nm=nm_)
         _log(f"report -> {rep}")
         rec.metric("network_km", round(float(layers['reaches'].LEN_M.sum()) / 1000.0, 3))
         rec.metric("chambers", len(layers["nodes"]))
@@ -5265,8 +6431,9 @@ def build(do_dxf: bool = True, do_profiles: bool = True, do_kmz: bool = True) ->
         rec.metric("subnetworks_not_at_main", jn.stats["short"])
         rec.metric("plots_that_cannot_connect",
                    int((layers["connections"].CAN_CONN == 0).sum()))
-        rec.note(f"levels by {LEVELS_TAG}"
-                 + ("; A SECOND SET OF LEVELS EXISTS - see EXPORT.md" if conflict else ""))
+        rec.metric("reaches_unlevelled", int(REMOVED_COUNTS.get("reaches_unlevelled", 0)))
+        rec.metric("s5_nodes_with_nowhere_to_send_their_flow", len(extra["flow_orphans"]))
+        rec.note(f"levels by {S6_TAG if s6 is not None else LEVELS_TAG}. " + conflict)
     return dict(layers=layers, levels=lv, levels_stations=lv_st, check=chk, files=files,
                 report=rep, graph=g, flows=f, naming=nm_, joins=jn,
                 gpkg=written_to, conflict=conflict)
@@ -5305,20 +6472,31 @@ def build_kmz_from_gpkg(gpkg: Optional[str] = None) -> "PR.RenderResult":
 def _manifest_table(a, g, f, lv, lv_st, layers, cross_stats) -> pd.DataFrame:
     nd, r = layers["nodes"], layers["reaches"]
     km = float(r.LEN_M.sum()) / 1000.0
+    _unl = layers.get("reaches_unlevelled")
+    _km_unlev = 0.0 if _unl is None or not len(_unl) else float(_unl.LEN_M.sum()) / 1000.0
     rows = [
         ("stage", VERSION, "-", "this module"),
         ("run", time.strftime("%Y-%m-%d %H:%M"), "-", ""),
-        ("LEVELS_SRC", LEVELS_TAG, "-",
-         "every invert, DN, gradient, velocity, d/D, cover and drop below came from the "
-         "levels stand-in in s8_export.py section 4, inherited from W11b"),
-        ("SECOND SET OF LEVELS", "yes - see EXPORT.md" if levels_source_conflict()
-         else "no", "-",
-         "s6_levels publishes W12.gpkg. Two passes that both compute an invert is "
-         "inheritance row 10, and it is DETECTED here rather than resolved blind"),
+        ("LEVELS_SRC", LEVELS_SOURCE, "-",
+         "every invert, DN, gradient, velocity, d/D, cover and drop below came from this "
+         "one solver, matched onto this stage's graph on the WRITTEN topology "
+         "(US_NODE/DS_NODE, NODE_UID) and never on row order or EDGE_UID"),
+        ("SECOND SET OF LEVELS",
+         "no - the stand-in is RETIRED and publishes nothing" if LEVELS_SOURCE == S6_TAG
+         else "YES, AND THE RETIRED ONE IS WHAT SHIPPED - see EXPORT.md", "-",
+         "inheritance row 10, one published quantity and one function. The size of what "
+         "the two solvers disagreed about is on the `levels_delta` layer"),
         ("CONCEPT_STAGE", C.CONCEPT_STAGE, "-", C.concept_banner()),
         ("network", round(km, 3), "km", "LEN_M over the published reach layer"),
         ("chambers", len(nd), "-", "the published node layer"),
-        ("chambers per km", round(len(nd) / km, 2), "-", "built network 34.23 (s4/asbuilt)"),
+        # OVER THE WHOLE ROUTE, not over the levelled part of it. Every chamber is on this
+        # layer, including the ones standing on a route the leveller did not answer for, so
+        # dividing by the reaches layer alone counted all the chambers against half the
+        # pipe - 80.0 per km on the 12:00 export against a built network at 34.23.
+        ("chambers per km", round(len(nd) / max(1e-9, km + _km_unlev), 2), "-",
+         f"built network 34.23 (s4/asbuilt). Over the WHOLE route this stage published: "
+         f"{km:,.1f} km of levelled reaches plus {_km_unlev:,.1f} km on "
+         f"`reaches_unlevelled`"),
         ("outfalls", int((nd.IS_OUTFALL == 1).sum()), "-",
          "H15: one per component. NOT the works - the trunk is not in this graph"),
         ("load connected", round(float(layers['connections'].Q_ADF_M3D.sum()), 1), "m3/d",
@@ -5328,15 +6506,34 @@ def _manifest_table(a, g, f, lv, lv_st, layers, cross_stats) -> pd.DataFrame:
          "s5 published 234.7 over its corridor arcs"),
         ("max velocity", round(float(r.V_PK_MS.max()), 3), "m/s", "G203-p27 max 3.0"),
         ("max d/D", round(float(r.DOD_PK.max()), 4), "-", "G203-p27 Tab 10"),
-        ("median cover", round(float(np.median(nd.COVER_M)), 3), "m", "G203-p33 min 1.30"),
+        # nan-AWARE, AND THE BLANKS COUNTED BESIDE IT. np.median over a column with one
+        # NULL returns nan, and the 12:00 export shipped "median cover | nan | m" as a
+        # headline on the manifest, the manifest CSV and the DXF/KMZ banner that read it.
+        # A headline destroyed by a blank is the same defect as a headline that is wrong.
+        ("median cover", round(float(np.nanmedian(
+            pd.to_numeric(nd.COVER_M, errors="coerce"))), 3)
+            if int(pd.to_numeric(nd.COVER_M, errors="coerce").notna().sum()) else "NONE",
+         "m", "G203-p33 min 1.30, over the chambers that HAVE a level"),
+        ("chambers with NO LEVEL AT ALL",
+         int(pd.to_numeric(nd.COVER_M, errors="coerce").isna().sum()), "chambers",
+         f"{LEVELS_SOURCE} published no chamber at this NODE_UID, so INV_M, DEPTH_M and "
+         f"COVER_M are NULL and every depth statistic above is over the rest"),
         ("deepest cover", round(float(nd.COVER_M.max()), 3), "m", "G203-p33 cap 12"),
         ("past the 12 m cap", int((nd.PAST_CAP == 1).sum()), "chambers", "G203-p33"),
         ("past the cap WITH NO EXIT", lv.stats["past_cap_no_exit"], "chambers",
          "philosophy sec 5 - each is a station demand handed back to stage 7"),
-        ("relief from the s7 stations",
-         lv.stats["past_cap_nodes"] - lv_st.stats["past_cap_nodes"], "chambers",
-         "MEASURED by re-running the levels with each station resetting depth. NOT "
-         "published - the stations are not in the written topology"),
+        ("levels source", S6_TAG, "-",
+         "one published quantity, one function (inheritance row 10). The stand-in tagged "
+         f"'{LEVELS_TAG}' is RETIRED and publishes nothing"),
+        ("chambers the retired stand-in put past the cap",
+         lv_st.stats["past_cap_nodes"], "chambers",
+         f"NOT PUBLISHED. Against {lv.stats['past_cap_nodes']:,} from {S6_TAG}. The full "
+         "row-by-row disagreement is the `levels_delta` layer"),
+        ("reaches nobody levelled", int(REMOVED_COUNTS.get("reaches_unlevelled", 0)),
+         "reaches",
+         f"{REMOVED_COUNTS.get('reaches_unlevelled_km', 0.0):.2f} km taken OFF the "
+         "reaches layer and published whole on `reaches_unlevelled` with the reason on "
+         "every row (inheritance row 4)"),
         ("backdrops", int((nd.DROP_TYPE == "backdrop").sum()), "-", "G203-p30, 0.60-2.00 m"),
         ("VORTEX DROP SHAFTS", int((nd.DROP_TYPE == "vortex").sum()), "-",
          "G203-p30. NAMA's built network has 37 - philosophy sec 4 diagnostic"),
@@ -5352,7 +6549,28 @@ def _manifest_table(a, g, f, lv, lv_st, layers, cross_stats) -> pd.DataFrame:
         ("wadi ground", round(cross_stats["km_wadi"], 2), "km",
          f"MEASURED, {C.HAZARD_RETURN_YR}-yr grid classes {C.HAZARD_WADI_CLASSES}, "
          f"sampled every {WADI_SAMPLE_M:g} m"),
-        ("registered crossings", cross_stats["n_rows"], "-", "H1a register"),
+        # THE PUBLISHED COUNT FIRST, THEN THE LEDGER. The manifest used to quote the
+        # register as BUILT (828 on the 12:00 export) while the published `crossings`
+        # layer held 512, because withdraw_orphan_crossings() had taken 316 off it. A
+        # headline that disagrees with the layer under it is how a stale figure gets
+        # quoted - and inheritance row 4 says the stage publishes how many it removed.
+        ("registered crossings",
+         len(layers.get("crossings", [])) if "crossings" in layers
+         else cross_stats["n_rows"], "-",
+         f"H1a register, as PUBLISHED. {cross_stats['n_rows']:,} rows were registered and "
+         f"{int(REMOVED_COUNTS.get('crossings_withdrawn', 0)):,} were withdrawn - see the "
+         f"row below"),
+        ("crossings WITHDRAWN - no pipe crosses there any more",
+         int(REMOVED_COUNTS.get("crossings_withdrawn", 0)), "-",
+         "INHERITANCE ROW 4. The only reach that crossed the obstacle is a route the "
+         "leveller did not level, so it is on `reaches_unlevelled` and the register row "
+         "is on `crossings_withdrawn` with its reason - never silently left in to make a "
+         "count look bigger, and never silently dropped"),
+        ("drop reasons blanked - the drop was under 1 mm",
+         int(REMOVED_COUNTS.get("drop_reasons_with_no_drop", 0)), "chambers",
+         f"{LEVELS_SOURCE} wrote a DROP_WHY on chambers whose published DROP_M rounds to "
+         f"0.000 m. G203-p30 calls nothing under 0.60 m a drop. The reason is blanked at "
+         f"publication and counted here; the underlying test belongs to the leveller"),
         ("crossings within the skew tolerance", cross_stats["n_square"], "-",
          f"criteria.WADI_XING_SKEW_DEG = {C.WADI_XING_SKEW_DEG:g} deg. The rest run ALONG"),
         ("measured crossing angle, median", round(cross_stats["angle_median"], 1), "deg",
@@ -5433,16 +6651,24 @@ def _assumptions_table() -> pd.DataFrame:
 
 
 def _arms_table(lv: Levels, lv_st: Levels) -> pd.DataFrame:
+    """THE TWO LEVEL SOLVERS SIDE BY SIDE, on the headline counts.
+
+    Until 2026-09-06 the two columns were 'gravity only' and 'with the s7 stations', both
+    from the stand-in this stage carried. That comparison measured the RETIRED solver's
+    relief and is no longer a statement about anything published, so the arms are now the
+    two SOURCES: what s6_levels published and what the stand-in would have. `levels_delta`
+    carries the same comparison row by row."""
     keys = ["past_cap_nodes", "past_cap_no_exit", "vortex", "backdrop", "deepest_cover",
             "median_cover", "km_past_cap", "km_below_min_cover", "km_tractive",
             "km_velocity", "n_over_vmax", "n_over_dod"]
     return pd.DataFrame([
         dict(MEASURE=k,
-             GRAVITY_ONLY=round(float(lv.stats[k]), 4),
-             WITH_85_STATIONS=round(float(lv_st.stats[k]), 4),
-             PUBLISHED="gravity only",
-             NOTE="the stations are s7's and are NOT in the written topology (H16); "
-                  "their rising mains discharge to nodes this graph does not contain")
+             PUBLISHED_S6=round(float(lv.stats.get(k, float("nan"))), 4),
+             RETIRED_STANDIN=round(float(lv_st.stats.get(k, float("nan"))), 4),
+             PUBLISHED=S6_TAG,
+             NOTE="one published quantity, one function (inheritance row 10). The "
+                  "stand-in column is what THIS stage used to publish and is kept only so "
+                  "the size of the change is on the deliverable")
         for k in keys])
 
 
@@ -5575,7 +6801,168 @@ def verify() -> int:
     if dn_bad:
         bad.append("DN outside the series")
 
+    # ---- THE LEVELS ON THE FILE ARE THE LEVELLER'S, PROVED AGAINST ITS OWN FILE -------
+    # The check that stops this stage growing a second level solver again. It does not ask
+    # whether the numbers are plausible; it opens s6's GeoPackage and demands that every
+    # published invert, gradient and diameter is the one s6 wrote, matched on the WRITTEN
+    # topology. If s8 ever computes a level of its own again, this fails on the first row.
+    if "LEVELS_BY" not in r.columns or "LEVELS_BY" not in nd.columns:
+        print("  BAD  LEVELS_BY is not on the published layers - the row cannot say which "
+              "solver answered for it")
+        bad.append("no LEVELS_BY column")
+    elif os.path.exists(GPKG_S6):
+        n6 = gpd.read_file(GPKG_S6, layer="nodes", ignore_geometry=True)
+        r6 = gpd.read_file(GPKG_S6, layer="reaches", ignore_geometry=True)
+        i6 = pd.Series(pd.to_numeric(n6.INV_M, errors="coerce").values,
+                       index=n6.NODE_UID.astype(str).values)
+        want = nd.NODE_UID.astype(str).map(i6)
+        got = pd.to_numeric(nd.INV_M, errors="coerce")
+        # COMPARED, NOT ASSUMED. `want - got` is nan wherever s6 has no chamber, and
+        # `nan > 0.0015` is False - so the old form counted every UNMATCHED row as a pass
+        # and printed "56,943 of 56,943" while it had actually compared 51,470. Worse, the
+        # rows it skipped are the ones most at risk: if this stage ever fills a level for a
+        # chamber s6 never published, that is exactly where it would appear. So the count
+        # is now the count of rows COMPARED, and the skipped rows must carry a NULL.
+        shared = want.notna()
+        off_n = int(((want[shared] - got[shared]).abs() > 0.0015).sum())
+        print(f"  {'OK ' if off_n == 0 else 'BAD'}  "
+              f"{'every chamber invert IS s6s':<38} "
+              f"{int(shared.sum()) - off_n} of {int(shared.sum())} compared "
+              f"({int((~shared).sum())} not in {os.path.basename(GPKG_S6)})")
+        if off_n:
+            bad.append(f"{off_n} published inverts differ from {S6_TAG}'s own file")
+        made_up = int((~shared & got.notna()).sum())
+        print(f"  {'OK ' if made_up == 0 else 'BAD'}  "
+              f"{'no invert invented where s6 has none':<38} "
+              f"{int((~shared).sum()) - made_up} of {int((~shared).sum())} are NULL")
+        if made_up:
+            bad.append(f"{made_up} chambers carry an invert that {S6_TAG} never published")
+        # EVERY LEVEL COLUMN, not the three it is easiest to check. INV_DN, US_DEPTH,
+        # DS_DEPTH, COVER_US and COVER_DN were rebuilt here from s6's INV_UP against this
+        # stage's ground until 2026-09-06, and this check compared none of them - so a
+        # published cover ran to -151.74 m while the three columns it did compare passed.
+        _cols = ["SLOPE_LAID", "DN", "INV_UP", "INV_DN", "US_DEPTH", "DS_DEPTH",
+                 "COVER_US", "COVER_DN"]
+        _tol = {"SLOPE_LAID": 1e-6, "DN": 0.0, "INV_UP": 0.0015, "INV_DN": 0.0015,
+                "US_DEPTH": 0.0015, "DS_DEPTH": 0.0015, "COVER_US": 0.0015,
+                "COVER_DN": 0.0015}
+        k6 = pd.DataFrame({"K": r6.US_NODE.astype(str) + ">" + r6.DS_NODE.astype(str)})
+        j = pd.DataFrame({"K": r.US_NODE.astype(str) + ">" + r.DS_NODE.astype(str)})
+        for _c in _cols:
+            k6["S6_" + _c] = pd.to_numeric(r6[_c], errors="coerce") \
+                if _c in r6.columns else np.nan
+            j[_c] = pd.to_numeric(r[_c], errors="coerce") if _c in r.columns else np.nan
+        j = j.merge(k6, on="K", how="left")
+        off_e, _worst = 0, []
+        for _c in _cols:
+            _d = (j[_c] - j["S6_" + _c]).abs()
+            _n = int((_d > _tol[_c]).sum())
+            off_e += _n
+            if _n:
+                _worst.append(f"{_c} on {_n:,} (worst {float(_d.max()):.3f})")
+        print(f"  {'OK ' if off_e == 0 else 'BAD'}  "
+              f"{'every level column IS s6s':<38} "
+              f"{len(j) * len(_cols) - off_e} of {len(j) * len(_cols)}"
+              + ("" if not _worst else "   " + "; ".join(_worst)))
+        if off_e:
+            bad.append(f"{off_e} published reach values differ from {S6_TAG}'s own file "
+                       f"({'; '.join(_worst)})")
+        # AND THE ROW MUST NOT CONTRADICT ITSELF. PAST_CAP is s6's; the cover beside it was
+        # this stage's, and 3,668 reaches published a cover past the 12 m cap with
+        # PAST_CAP = 0.
+        _mx = pd.concat([pd.to_numeric(r.COVER_US, errors="coerce"),
+                         pd.to_numeric(r.COVER_DN, errors="coerce")], axis=1).max(axis=1)
+        _self = int(((_mx > C.MAX_COVER + 1e-6)
+                     & (pd.to_numeric(r.PAST_CAP, errors="coerce").fillna(0) == 0)).sum())
+        print(f"  {'OK ' if _self == 0 else 'BAD'}  "
+              f"{'cover and PAST_CAP agree on the row':<38} {len(r) - _self} of {len(r)}")
+        if _self:
+            bad.append(f"{_self} reaches publish a cover past the {C.MAX_COVER:g} m cap "
+                       f"beside their own PAST_CAP = 0")
+        # and nothing s6 did not level may sit on the reaches layer pretending it was
+        unl = (gpd.read_file(GPKG_OUT, layer="reaches_unlevelled", ignore_geometry=True)
+               if "reaches_unlevelled" in have else pd.DataFrame())
+        # EVERY SEGMENT s4 MINTED IS ON ONE OF THE TWO LAYERS - compared by the WRITTEN
+        # topology, not by a row count. A count alone cannot tell "the export dropped 29
+        # segments" from "s4 has been re-run since this export was built", and those two
+        # need opposite responses: fix the export, or re-run it.
+        seg = gpd.read_file(GPKG_CHAMB, layer="segments", ignore_geometry=True)
+        k_seg = set(zip(seg.US_NODE.astype(str), seg.DS_NODE.astype(str)))
+        k_pub = set(zip(r.US_NODE.astype(str), r.DS_NODE.astype(str)))
+        if len(unl):
+            k_pub |= set(zip(unl.US_NODE.astype(str), unl.DS_NODE.astype(str)))
+        lost = k_seg - k_pub
+        extra = k_pub - k_seg
+        if extra:
+            print(f"  BAD  {'THE EXPORT IS STALE':<38} it publishes {len(extra):,} "
+                  f"segments s4 no longer has ({len(k_seg):,} in the chamber layer now, "
+                  f"{len(k_pub):,} published) - s4 has been re-run since. Re-run "
+                  f"s8_export.py build; nothing on this file is quotable until then")
+            bad.append("the export was built against an older chamber layer")
+        else:
+            print(f"  {'OK ' if not lost else 'BAD'}  "
+                  f"{'every segment is on one layer or the other':<38} "
+                  f"{len(r):,} levelled + {len(unl):,} not = {len(k_pub):,} of "
+                  f"{len(k_seg):,}")
+            if lost:
+                bad.append(f"{len(lost):,} segments s4 minted are on neither the reaches "
+                           f"layer nor reaches_unlevelled - a silent drop")
+    else:
+        print(f"  BAD  {os.path.basename(GPKG_S6)} is not on disk, so the levels on this "
+              f"file cannot be checked against the stage that made them")
+        bad.append("no s6 file to check the published levels against")
+
+    # ---- THE FLOW AT A CHAMBER IS THE FLOW IN THE PIPE LEAVING IT --------------------
+    # contract.NODES defines Q_PK_LS as "the number the outgoing reach is sized on". The
+    # 12:00 export broke that on 26,482 of 26,579 chamber/reach pairs - median ratio 3.50 -
+    # because the node layer took its peak factor from the DEFAULT of a column s6 does not
+    # publish. Checked here on the file, against the reach that actually leaves the chamber.
+    jn_ = nd[["NODE_UID", "Q_PK_LS", "Q_ADF_M3D"]].merge(
+        r[["US_NODE", "QPK_LS", "QADF_M3D"]], left_on="NODE_UID", right_on="US_NODE",
+        how="inner")
+    dq = (pd.to_numeric(jn_.Q_PK_LS, errors="coerce")
+          - pd.to_numeric(jn_.QPK_LS, errors="coerce")).abs()
+    off_q = int((dq > 0.01 * pd.to_numeric(jn_.QPK_LS, errors="coerce").abs() + 0.01).sum())
+    print(f"  {'OK ' if off_q == 0 else 'BAD'}  "
+          f"{'chamber QPK = the QPK of the pipe leaving it':<38} "
+          f"{len(jn_) - off_q} of {len(jn_)}")
+    if off_q:
+        bad.append(f"{off_q} chambers publish a peak flow their own outgoing reach "
+                   f"contradicts")
+    # A FABRICATED CONSTANT, ON THE DELIVERABLE ITSELF. tests/test_columns.py runs this
+    # rule over every OTHER stage's GeoPackage - conftest.GPKGS does not list
+    # W12_export.gpkg or W12.gpkg - so the published file was the one place it could not
+    # fire, and PF = 1.0 on 56,943 rows is how that showed up.
+    for lname, gg, cols in (("nodes", nd, ("PF", "Q_PK_LS", "DEPTH_M", "COVER_M", "GRD_M",
+                                           "INV_M", "DROP_M")),
+                            ("reaches", r, ("PF", "QPK_LS", "SLOPE_LAID", "DN", "LEN_M",
+                                            "V_PK_MS", "DOD_PK"))):
+        for c_ in cols:
+            if c_ not in gg.columns:
+                continue
+            s_ = pd.to_numeric(gg[c_], errors="coerce").dropna()
+            if len(s_) >= CT.VARY_MIN_ROWS and s_.nunique() == 1:
+                print(f"  BAD  {(lname + '.' + c_ + ' is CONSTANT'):<38} "
+                      f"{s_.iloc[0]!r} on all {len(s_):,} rows")
+                bad.append(f"{lname}.{c_} is constant on {len(s_):,} rows - a measured "
+                           f"column that holds one value is a fabrication until the "
+                           f"reason is written down (inheritance row 22)")
+
     chk = gpd.read_file(GPKG_OUT, layer="contract_check")
+    # BOTH publication gates, not just the one. `levels ground` is the sharper of the two -
+    # a depth is ground minus invert, so a leveller looking at different ground makes every
+    # depth on the file a measurement from somewhere else - and it fires on pairs the reach
+    # count alone would pass.
+    for _lyr, _why in (("levels coverage",
+                        "less than the whole network is levelled - see the levels "
+                        "coverage row"),
+                       ("levels ground",
+                        "the leveller and this stage are looking at different ground - "
+                        "see the levels ground row")):
+        cov = chk[chk.LAYER.astype(str) == _lyr]
+        if len(cov) and int(cov.PASS.iloc[0]) == 0:
+            print(f"  BAD  {_lyr:<38} {str(cov.RESULT.iloc[0])}")
+            bad.append(_why)
     n_fail = int((chk["PASS"] == 0).sum())
     print(f"\n  contract.validate(): {len(chk) - n_fail} of {len(chk)} layers pass. "
           f"{n_fail} carry named, published violations - see the `contract_check` layer.")

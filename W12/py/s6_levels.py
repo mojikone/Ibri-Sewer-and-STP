@@ -738,7 +738,8 @@ _DN0 = _SERIES[0]
 def _rebuild_tables(crit: Criteria) -> None:
     """Re-derive the lookup tables for a sensitivity run.  Called only by `--sweep`, which
     passes a different Criteria object; the design basis is never edited in place."""
-    global _SERIES, _OD, _ID, _DMIN, _T11, _DODL, _STEP, _DN0, _SMAX_CACHE, _VCAP_CACHE
+    global _SERIES, _OD, _ID, _DMIN, _T11, _DODL, _STEP, _DN0
+    global _SMAX_CACHE, _VCAP_CACHE, _STATE_CACHE
     # BEFORE the tables are built, not after: `criteria.table11()` raises on a bore under
     # 200 in its own words, and the reader needs THIS stage's words - which floor would have
     # to be declared, and that it would be an assumption rather than a citation (A-LEV-16).
@@ -753,6 +754,9 @@ def _rebuild_tables(crit: Criteria) -> None:
     _DN0 = _SERIES[0]
     _SMAX_CACHE = {}
     _VCAP_CACHE = {}
+    # the memo is keyed on numbers, not on the Criteria object, so a sensitivity run with a
+    # different ks, nu or bore table MUST NOT read the base run's answers back.
+    _STATE_CACHE = {}
 
 
 def assert_bore_floor_declared(crit: Criteria = CRIT) -> None:
@@ -800,16 +804,56 @@ def carries(dn: int, S: float, q: float, crit: Criteria = CRIT) -> bool:
     return HY.q_partial(_ID[dn], S, _DODL[dn], crit) >= q
 
 
+_STATE_CACHE: Dict[Tuple[int, float, float], Tuple[Optional[float], Optional[float]]] = {}
+_STATE_CACHE_MAX = 2_000_000
+
+
+def pstate(dn: int, S: float, q: float, crit: Criteria = CRIT
+           ) -> Tuple[Optional[float], Optional[float]]:
+    """`hydra.pipe_state` memoised on the EXACT (bore, gradient, flow).
+
+    NO ROUNDING ANYWHERE IN THE KEY, so what comes back is what hydra returns, bit for bit -
+    the value is a pure function of the three numbers and `--selftest` proves the memo
+    against the uncached call on the grid the design actually uses.  This is deliberately
+    unlike the flow-bucketed caches below it, which is the defect this memo exists to let us
+    fix: a cache that ROUNDS its key answers a question nobody asked.
+
+    WHY IT EXISTS.  `pipe_state` is an 80-step bisection and every step is a Colebrook
+    evaluation, so one call costs about 115 us.  Measured with cProfile on this network on
+    2026-09-06, ONE design evaluation makes 88,878 of them and they account for 10.2 s of an
+    11.7 s profiled evaluation - 87 %.  The stage then evaluates the design 915 times: 11
+    cap passes, one all-at-once prune trial, and 903 leave-one-out prune trials.  The peak
+    flows come from `accumulate` once and never move afterwards, and the gradients live on a
+    0.05 % grid, so trial after trial asks for the same triple.
+
+    MEASURED ON THE 2026-09-06 RUN: the memo settles at 129,910 distinct states, about 21 MB,
+    and a prune trial that moves one station adds about fifty more - because the flows never
+    change and the gradients live on a grid, the working set is bounded by the design and not
+    by the number of trials.  The bound below is a guard at fifteen times that, not a policy:
+    if a run ever generates more states than this the memo is dropped rather than left to
+    grow into the machine's memory."""
+    key = (dn, S, q)
+    hit = _STATE_CACHE.get(key)
+    if hit is not None:
+        return hit
+    val = HY.pipe_state(dn, S, q, crit)
+    if len(_STATE_CACHE) >= _STATE_CACHE_MAX:
+        _STATE_CACHE.clear()
+    _STATE_CACHE[key] = val
+    return val
+
+
 _SMAX_CACHE: Dict[Tuple[int, int], Optional[float]] = {}
 
 
 def smax(dn: int, q: float, crit: Criteria = CRIT) -> Optional[float]:
-    """The gradient at which velocity reaches G203-p27's 3.0 m/s, or None if it never does.
+    """A SEED for `vmax_slope`: roughly the gradient at which velocity reaches G203-p27's
+    3.0 m/s, or None if it never does.
 
-    Cached on (dn, flow rounded to 0.1 L/s).  The cap is smooth in flow and 0.1 L/s moves it
-    by far less than one 0.05 % gradient step, while the cache turns a 120-iteration
-    two-stage search into a dictionary lookup on a 56,700-reach network levelled ten times
-    over.  `--selftest` checks the cache against the uncached function."""
+    Cached on (dn, flow rounded to 0.1 L/s), which costs a 120-bisection two-stage search
+    once per bucket instead of once per reach.  IT IS NOT AN ANSWER AND MUST NOT BE USED AS
+    ONE - see `vmax_slope`, which walks it to the exact grid value for the reach's own flow.
+    `--selftest` checks the cache against the uncached function."""
     key = (dn, int(round(q * 10000.0)))
     hit = _SMAX_CACHE.get(key, "miss")
     if hit != "miss":
@@ -821,34 +865,94 @@ def smax(dn: int, q: float, crit: Criteria = CRIT) -> Optional[float]:
     return s
 
 
-_VCAP_CACHE: Dict[Tuple[int, int], Optional[float]] = {}
+_VCAP_CACHE: Dict[Tuple[int, float], Optional[float]] = {}
 
 
 def vmax_slope(dn: int, q: float, crit: Criteria = CRIT) -> Optional[float]:
     """The steepest gradient ON THE 0.05 % GRID at which this reach is still inside G203-p27's
-    3.0 m/s, or None where the cap never bites.
+    3.0 m/s AT ITS OWN FLOW, bounded above by the contract's 25 % publishing bound.
 
-    `hydra.smax_for` solves for the continuous gradient; rounding that DOWN to the grid is
-    not enough, because the answer is cached against a flow rounded to 0.1 L/s and the two
-    roundings can put the laid gradient a whisker over.  H7 is a HARD constraint, so the
-    grid value is VERIFIED with `pipe_state` and stepped down until it holds - 3.004 m/s is
-    not 3.0 m/s."""
-    key = (dn, int(round(q * 10000.0)))
+    IT ALWAYS RETURNS A NUMBER.  Where the cap never bites the answer is that bound, which
+    is what the walk below returns anyway; `None` used to mean the same thing on one branch
+    only and is no longer produced.  Callers that still test for it are harmless and are
+    left alone - `_hi_bound` mins the result with the same bound either way.
+
+    KEYED ON THE EXACT FLOW, AND IT HAS TO BE.  Until 2026-09-06 this was keyed on the flow
+    rounded to 0.1 L/s, on the written ground that "0.1 L/s moves the cap by far less than
+    one 0.05 % gradient step".  MEASURED ON THIS NETWORK, THAT IS FALSE.  Of 471 sampled
+    (bore, 0.1 L/s) keys holding more than one flow, 133 - 28.2 % - give a DIFFERENT grid cap
+    at the two ends of the same key, the widest by 8.50 mm/m, seventeen steps.  In the key
+    that actually failed, DN200 over 11.45-11.55 L/s, the grid cap runs from 237.00 down to
+    235.00 mm/m, so what the key held depended on WHICH REACH ASKED FIRST - and the build
+    process and the `--verify` process walk the reaches in different orders.  That is how one
+    reach came to be laid at 236.00 mm/m and then fail its own stage's check against a 235.50
+    mm/m ceiling: the design and its check were reading two different numbers out of one key.
+    Neither number was unsafe - the reach runs at 2.9992 m/s - but a ceiling that moves with
+    the call order is not a ceiling.
+
+    HOW THE EXACT ANSWER IS CHEAP.  `smax` is kept as a SEED, because the bisection behind it
+    is wanted once per bucket and not once per reach.  Velocity is monotone increasing in
+    gradient at a fixed bore and flow, so from the seed the true grid value is reached by
+    stepping in ONE direction until the 3.0 m/s test flips, and each test is a `pstate` call
+    that is memoised.  The walk is a step or two: the seed is wrong only by the bucket's own
+    width, which is under 1 % of the cap wherever the cap is the binding constraint.
+
+    BOUNDED ABOVE BY SLOPE_HARD_MAX, the contract's 25 % publishing bound.  Every caller
+    takes the smaller of the two anyway (`_hi_bound`, and `choose_size` which applies the
+    hard bound first), so resolving a cap above it would be work with no consequence.
+
+    H7 IS A HARD CONSTRAINT AND 3.004 m/s IS NOT 3.0 m/s: the value returned is verified at
+    this reach's own flow, never inferred from a neighbour's."""
+    key = (dn, float(q))
     hit = _VCAP_CACHE.get(key, "miss")
     if hit != "miss":
         return hit                                                  # type: ignore
+    # counted in whole 0.05 % steps, so the grid value is exact rather than accumulated
+    top = int(round(SLOPE_HARD_MAX / _STEP))
     sc = smax(dn, q, crit)
     if sc is None:
-        _VCAP_CACHE[key] = None
-        return None
-    S = floor_step(sc)
-    for _ in range(8):
-        if S <= 0:
-            break
-        _y, v = HY.pipe_state(dn, S, q, crit)
+        # A None FROM THE SEED IS STILL A NEIGHBOUR'S ANSWER.  The 2026-09-06 fix took the
+        # order-dependence out of the value branch and left it in this one: `smax` is keyed
+        # on the flow rounded to 0.1 L/s, so a None can have been put in the bucket by a
+        # LOWER flow than this reach's, and 45,729 of the 56,523 distinct (bore, flow) keys
+        # on this network - 81 % - come down this branch.  MEASURED 2026-09-06: one live
+        # bucket (DN200, 4.85-4.95 L/s, 109 reaches) holds a None at one end and a real cap
+        # at the other, so which answer those reaches got depended on who asked first.
+        # It is verified here at THIS reach's own flow instead: None means "no cap bites at
+        # or below the publishing bound", so the test is the velocity AT that bound.  Inside
+        # it, None is right and cheap; outside it, fall through to the walk rather than
+        # return "no cap".  On this network the fall-through fires 0 times - the None
+        # boundary sits at S = 50 %, twice the publishing bound - so the design is unchanged
+        # and what is bought is that the guarantee in this docstring is now true.
+        #
+        # AND THE ANSWER IS THE BOUND, NOT None.  The other branch already returns
+        # `top * _STEP` when the cap sits at or above the publishing bound (the walk simply
+        # never leaves the top step), so returning None here for the same situation made the
+        # RETURN VALUE depend on the call order even where the BOUND did not: cold, DN200 at
+        # 4.8503 L/s gave None; primed by its bucket neighbour at 4.9479 L/s it gave 0.25.
+        # `_hi_bound` and `choose_size` map the two onto the same 25 %, so nothing moved -
+        # but two answers for one question is how the 0.1 L/s key got here in the first
+        # place.  One answer: the largest grid step this reach may be laid at.
+        _y, v_top = pstate(dn, top * _STEP, q, crit)
+        if v_top is None or v_top <= crit.V_MAX + 1e-9:
+            _VCAP_CACHE[key] = top * _STEP
+            return top * _STEP
+        sc = top * _STEP
+    n = min(int(math.floor(sc / _STEP + 1e-9)), top)
+    # DOWN while this reach's own flow is over the cap ...
+    while n > 0:
+        _y, v = pstate(dn, n * _STEP, q, crit)
         if v is None or v <= crit.V_MAX + 1e-9:
             break
-        S = floor_step(S - _STEP / 2)
+        n -= 1
+    # ... and UP while the next step is still inside it. At most one of the two ever runs,
+    # and both stop at the publishing bound.
+    while n < top:
+        _y, v = pstate(dn, (n + 1) * _STEP, q, crit)
+        if v is not None and v > crit.V_MAX + 1e-9:
+            break
+        n += 1
+    S = n * _STEP
     _VCAP_CACHE[key] = S
     return S
 
@@ -921,11 +1025,13 @@ def choose_size(q: float, inv_up: Optional[float], grd_up: float, grd_dn: float,
             S = sc
             capped = True
             clamp_by = "vmax"
-        # H7 is a HARD constraint and 3.004 m/s is not 3.0 m/s.  vmax_slope caches against a
-        # flow rounded to 0.1 L/s, so the cap it returns is verified HERE at this reach's own
-        # flow before the gradient is accepted.
+        # H7 is a HARD constraint and 3.004 m/s is not 3.0 m/s, so the gradient is tested at
+        # THIS reach's own flow before it is accepted.  Since 2026-09-06 `vmax_slope` is
+        # itself exact at this flow, so this loop no longer has anything to correct - it is
+        # kept because it is the braces to that belt, and because it is what makes the
+        # guarantee a property of the code rather than of one function being right.
         while S > 0:
-            _y, _v = HY.pipe_state(dn, S, q, crit)
+            _y, _v = pstate(dn, S, q, crit)
             if _v is None or _v <= crit.V_MAX + 1e-9:
                 break
             S = floor_step(S - _STEP / 2)
@@ -1397,7 +1503,7 @@ def relay(net: Net, des: Design, qpk: np.ndarray, crit: Criteria = CRIT) -> Dict
                         elif not carries(d, S, qt, crit):
                             ok = False
                         else:
-                            _y, _v = HY.pipe_state(d, S, qt, crit)
+                            _y, _v = pstate(d, S, qt, crit)
                             if _v is not None and _v > crit.V_MAX + 1e-9:
                                 ok = False
                                 stat["fallback_vmax"] += 1
@@ -1415,7 +1521,7 @@ def relay(net: Net, des: Design, qpk: np.ndarray, crit: Criteria = CRIT) -> Dict
                 qt = float(qpk[chain[t]]) / 1000.0
                 dt = int(des.dn[chain[t]])
                 while want > s2[t]:
-                    _y, _v = HY.pipe_state(dt, want, qt, crit)
+                    _y, _v = pstate(dt, want, qt, crit)
                     if _v is None or _v <= crit.V_MAX + 1e-9:
                         break
                     want = floor_step(want - _STEP / 2)
@@ -1695,7 +1801,28 @@ def solve(net: Net, qpk: np.ndarray, crit: Criteria = CRIT, max_passes: int = 25
                      f"un-excused breach without them")
             station, des, pruned = none_at_all, d_try, n_before
         else:
-            # one at a time, and a station only stays if taking it out brings a breach back
+            # one at a time, and a station only stays if taking it out brings a breach back.
+            #
+            # THIS LOOP IS THE WHOLE OF THE STAGE'S RUNTIME, and it is worth knowing that
+            # before anyone tries to speed the levelling up.  MEASURED 2026-09-06: the stage
+            # evaluates the design 915 times - 11 cap passes, one all-at-once trial, and 903
+            # leave-one-out trials, one per station the passes added - and an evaluation is a
+            # full `pass1` + `enforce_crowns` + `set_drops` + `relay` + `covers` +
+            # `cap_exits` over all 56,973 chambers.  At 3.4 s an evaluation that was 2,921 s.
+            # Memoising `pipe_state` (see `pstate`) took the evaluation to about 1.2 s and the
+            # stage to 917.6 s with EVERY PUBLISHED NUMBER UNCHANGED, and after that no single
+            # function dominates: cap_exits 0.42 s, pass1 0.26, _walk 0.19, enforce_crowns
+            # 0.18, covers 0.15, relay 0.15, all of them plain loops over the chambers.
+            #
+            # The next factor of ten is not in the arithmetic, it is HERE: removing a station
+            # deepens only the path from that station down to its outfall, so a trial does not
+            # need the whole network re-levelled.  That is an exact optimisation and it is NOT
+            # taken today, because it means teaching `pass1` and `relay` to re-level a subtree
+            # and this stage's history says a levelling rewrite loses something that worked.
+            # It wants its own change, with the tests written first.  A search that is merely
+            # FASTER - bisecting on groups instead of one at a time - is not the same thing:
+            # this loop is greedy and sequential, so a different order keeps a different set of
+            # stations, and that is a design change dressed as a speed-up.
             order = list(np.where(station)[0])
             for i in order:
                 trial = station.copy()
@@ -3720,11 +3847,27 @@ def verify(crit: Criteria = CRIT) -> pd.DataFrame:
     chk("DROP_WHY is not one word repeated (inheritance row 22)",
         K.constant_column_problem(nodes, "DROP_WHY", d > 0) is None,
         f"{sorted(set(why[d > 0]))}", "more than one, on a network this size")
-    # 28 a drop on a straight run, which is the as-built's own hard failure
-    nj = (d > crit.DROP_TRIGGER) & (nodes.N_IN < 2) & (~why.isin(("velocity_cap",
-                                                                 "tier_step")))
-    chk("no drop over 0.60 m on a straight run without the velocity-cap exemption",
-        not bool(nj.any()), f"{int(nj.sum())} chambers", "0  MEASURED (NAMA 1 of 121)")
+    # 28 a drop on a straight run, which is the as-built's own hard failure.
+    # THE CHECK NAMES BOTH ITS EXEMPTIONS AND COUNTS WHAT THEY EXCUSE.  Until 2026-09-06 the
+    # title said "without the velocity-cap exemption" while the code ALSO excused
+    # 'tier_step', and the GOT column printed "0 chambers" beside a WANT of "NAMA 1 of 121" -
+    # which reads as parity with the built network on a line where 5 chambers had been
+    # excused out of the count.  An exemption a reader cannot see is the same defect as a
+    # skipped row (memory: no exemptions in compliance checks).  The exemptions themselves
+    # stand: a velocity-cap drop is the surplus fall the 3.0 m/s cap will not let the pipe
+    # spend (G203-p27), and a tier_step is the crown step at a bore change, neither of which
+    # is a layout fault.  The count of both is now on the line, and drops.csv carries the
+    # 3 vortex shafts on a straight run against the built network's 0.
+    straight = (d > crit.DROP_TRIGGER) & (nodes.N_IN < 2)
+    excused = straight & why.isin(("velocity_cap", "tier_step"))
+    nj = straight & ~excused
+    by = ", ".join(f"{k} {v}" for k, v in
+                   sorted(why[excused].value_counts().to_dict().items()))
+    chk("no drop over 0.60 m on a straight run, except a velocity cap or a bore step",
+        not bool(nj.any()),
+        f"{int(nj.sum())} chambers, {int(excused.sum())} excused"
+        f"{' (' + by + ')' if by else ''}",
+        "0 unexcused  (NAMA 1 of 121 on a straight run)")
     return pd.DataFrame(checks)
 
 
@@ -3776,6 +3919,50 @@ def _self_test(verbose: bool = True) -> None:
         b = None if b == HY.INFEASIBLE else b
         ok((a is None) == (b is None) and (a is None or abs(a - b) < 1e-12),
            f"smax cache disagrees at DN{dn}, q={q}")
+
+    # ---- 3a. the pipe_state memo returns hydra's own answer, bit for bit --------------
+    # It is keyed on the exact triple and rounds nothing, so this is an equality test and
+    # not a tolerance test.  A memo that is "close enough" is the defect below.
+    _STATE_CACHE.clear()
+    for dn in (200, 315, 500, 800):
+        for k in (2, 10, 40, 200, 460):
+            for q in (0.0015, 0.011, 0.05, 0.25):
+                S = k * _STEP
+                got, want = pstate(dn, S, q, C), HY.pipe_state(dn, S, q, C)
+                ok(got == want, f"pstate memo != hydra.pipe_state at DN{dn}, S={S}, q={q}")
+                ok(pstate(dn, S, q, C) == want, f"pstate memo second read moved at DN{dn}")
+
+    # ---- 3b. THE VELOCITY CAP IS THE REACH'S OWN, AND IT DOES NOT DEPEND ON WHO ASKED --
+    # The regression of 2026-09-06, in one test.  `smax` is bucketed on the flow rounded to
+    # 0.1 L/s and the cap moves within a bucket by up to seventeen grid steps, so the old
+    # `vmax_slope` returned whatever the FIRST caller in the bucket got.  One reach was laid
+    # at 236.00 mm/m by the build and then failed --verify against a 235.50 mm/m ceiling.
+    # Two things must hold: the answer is the same whoever asks first, and it is the true
+    # grid cap for the flow asked about.
+    probe = 0.0115001836024654                    # the reach that failed: DN200, 11.50 L/s
+    neighbours = (0.011450, 0.011470, 0.011520, 0.011549)
+    answers = set()
+    for first in neighbours:
+        _SMAX_CACHE.clear()
+        _VCAP_CACHE.clear()
+        vmax_slope(200, first, C)                 # populate the bucket from a NEIGHBOUR
+        answers.add(vmax_slope(200, probe, C))
+    ok(len(answers) == 1,
+       f"vmax_slope depends on which flow populated the 0.1 L/s bucket first: {sorted(answers)}")
+    for dn, q in ((200, probe), (200, 0.0060), (250, 0.030), (400, 0.12)):
+        _SMAX_CACHE.clear()
+        _VCAP_CACHE.clear()
+        S = vmax_slope(dn, q, C)
+        if S is None or S <= 0:
+            continue
+        _y, v_at = HY.pipe_state(dn, S, q, C)
+        ok(v_at is None or v_at <= C.V_MAX + 1e-9,
+           f"vmax_slope(DN{dn}, {q}) = {S} runs at {v_at} m/s, past the {C.V_MAX} cap")
+        if S < SLOPE_HARD_MAX - 1e-12:            # a cap held by the bound is not the cap
+            _y, v_up = HY.pipe_state(dn, S + _STEP, q, C)
+            ok(v_up is not None and v_up > C.V_MAX + 1e-9,
+               f"vmax_slope(DN{dn}, {q}) = {S} is a step BELOW the true cap - the next step "
+               f"up runs at {v_up} m/s, still inside {C.V_MAX}")
 
     # ---- 4. the gradient step, both ways ---------------------------------------------
     ok(abs(ceil_step(0.00051) - 0.0010) < 1e-15, "ceil_step")

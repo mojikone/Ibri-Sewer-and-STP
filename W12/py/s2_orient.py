@@ -263,6 +263,9 @@ HYDRAULIC = os.path.dirname(CLAUDE)
 
 ROADS_GPKG = os.path.join(W12, "shp", "W12_roads.gpkg")
 MAIN_PIPE = os.path.join(HYDRAULIC, "SHP", "Main Pipe", "Main Pipe.shp")
+ROAD_REC = os.path.join(HYDRAULIC, "SHP", "Road centerline 2", "Road_Centercline.shp")
+# the recorded road centrelines, read here for ONE purpose: to re-measure H1 on the pieces
+# this stage CUTS. See _remeasure_dual() for why inheriting the flag is not enough.
 OUT_GPKG = os.path.join(W12, "shp", "W12_orient.gpkg")
 RUN = os.path.join(W12, "run", "orient")
 REPORT_MD = os.path.join(RUN, "ORIENTATION.md")
@@ -382,6 +385,37 @@ GRID = "R5"               # the 5 m working grid. terrain.py measured native 0.5
 #                           identical drain direction on every decidable test line.
 
 TAU_FLAG = f"tau={C.TAU_PA:g} Pa ASSUMED (GAP-9)"
+
+# ---- H1 / project rule 7 on the arcs this stage cuts ----------------------------------
+H1_CONSTANTS = ("DUAL_BAND_M", "DUAL_XING_SKEW_DEG", "IN_BAND_MIN_FRAC")
+# The three numbers that decide whether a line runs ALONG a tagged dual carriageway: the band
+# half-width, the tolerance on the word "square", and the share of a line that must be inside
+# the band before it is judged at all.
+#
+# THEY ARE NOT DEFINED HERE.  They are stage 1's, declared and derived in `s1_roads.py`, and
+# this stage READS them off the published `W12_roads.gpkg` manifest at run time - see
+# `_h1_constants()`.  Copying the values would put two definitions of one quantity in the
+# repo, which is the defect `tests/test_constants.py` exists for: a wall/bedding allowance
+# was 0.10 in one module and 0.05 in another and every reach failed a BLOCKING cover check by
+# exactly 50 mm.  Reading them means the two stages cannot drift, and the values actually
+# used are re-published on this stage's own manifest so the run is self-describing.
+
+
+def _h1_constants() -> dict:
+    """The three H1 constants, read from stage 1's published manifest. One definition."""
+    import sqlite3
+
+    con = sqlite3.connect(ROADS_GPKG)
+    try:
+        m = pd.read_sql("SELECT * FROM manifest", con).set_index("ITEM")["VALUE"]
+    finally:
+        con.close()
+    missing = [k for k in H1_CONSTANTS if k not in m.index]
+    if missing:
+        raise ValueError(
+            f"stage 1's manifest does not publish {missing}, so this stage cannot re-measure "
+            f"H1 on the pieces it cuts. A check that cannot run is a FAILURE, not a blank")
+    return {k: float(m[k]) for k in H1_CONSTANTS}
 
 
 def _log(msg: str) -> None:
@@ -798,6 +832,16 @@ class Orient:
         if cor.crs is None or cor.crs.to_epsg() != CRS_EPSG:
             raise ValueError(f"corridors are {cor.crs}, expected EPSG:{CRS_EPSG}")
         nodes = gpd.read_file(ROADS_GPKG, layer="nodes")
+
+        # the CIDs AS READ, so `_remeasure_dual` can tell a piece this stage cut from one
+        # it did not. A cut renames the piece (`9DF3.1` -> `9DF3.1/m0`), which is exactly how
+        # an inherited flag ends up describing geometry that no longer exists.
+        self.cor0_cids = set(cor.CID.astype(str))
+        self.h1_in = {
+            "corridors_along": int((cor.get("ALONG_DUAL", pd.Series(
+                np.zeros(len(cor)))).astype(int) == 1).sum()),
+            "corridors_h1_keep": int((cor.get("H1_KEEP", pd.Series(
+                np.zeros(len(cor)))).astype(int) == 1).sum())}
 
         self.selfloop = cor[cor.US_NODE == cor.DS_NODE].copy()
         cor = cor[cor.US_NODE != cor.DS_NODE].reset_index(drop=True)
@@ -2333,6 +2377,12 @@ class Orient:
                 Q_M3D=float(cor.Q_NEAR_M3D.iloc[i]) * frac,
                 SUBNET=self.subnet_of.get(int(self.v[i] if fwd else self.u[i]), ""),
                 SRC=str(cor.SRC.iloc[i]), CONFIDENCE=str(cor.CONFIDENCE.iloc[i]),
+                # H1 / project rule 7, carried from the corridor this arc came from.  It is
+                # RE-MEASURED below on every arc this stage cut, because a cut renames the
+                # piece and an inherited flag on a renamed piece is a guess.
+                ALONG_DUAL=int(cor.ALONG_DUAL.iloc[i]) if "ALONG_DUAL" in cor.columns else 0,
+                DUAL_ANG=float(cor.DUAL_ANG.iloc[i]) if "DUAL_ANG" in cor.columns else -1.0,
+                H1_KEEP=int(cor.H1_KEEP.iloc[i]) if "H1_KEEP" in cor.columns else 0,
                 TAU_FLAG=TAU_FLAG))
             geoms.append(geom if fwd else
                          geom.reverse() if hasattr(geom, "reverse") else geom)
@@ -2372,9 +2422,13 @@ class Orient:
                              W_DOM="", INLET_DEG=np.nan, CREST_M=np.nan,
                              N_PLOT=float(r.N_PLOT), Q_M3D=float(r.Q_NEAR_M3D), SUBNET="",
                              SRC=str(r.SRC), CONFIDENCE=str(r.CONFIDENCE),
+                             ALONG_DUAL=int(getattr(r, "ALONG_DUAL", 0)),
+                             DUAL_ANG=float(getattr(r, "DUAL_ANG", -1.0)),
+                             H1_KEEP=int(getattr(r, "H1_KEEP", 0)),
                              TAU_FLAG=TAU_FLAG))
             geoms.append(r.geometry)
         gdf = gpd.GeoDataFrame(recs, geometry=geoms, crs=f"EPSG:{CRS_EPSG}")
+        self._remeasure_dual(gdf)
 
         # THE OUTFALL RULE, CHECKED ON THE GEOMETRY ABOUT TO BE PUBLISHED.  `X_MAIN` counts
         # the places the arc meets the client's Main Pipe with NO node of its own on the
@@ -2478,6 +2532,54 @@ class Orient:
             ("criteria", CR.CRITERIA_VERSION, "", "w12/criteria.py"),
             ("run_utc", time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "", ""),
             ("corridors_sha1", _sha1(ROADS_GPKG), "", ROADS_GPKG),
+            ("h1_corridors_along_in", self.h1_in["corridors_along"], "",
+             "corridors arriving from stage 1 still flagged ALONG a dual carriageway. Stage "
+             "1 excludes every ALONG run it can; what is left is what excluding would sever, "
+             "each carrying H1_KEEP = 1 and a price - an OPEN H1 breach, not a pass"),
+            ("h1_cut_arcs", getattr(self, "dual_remeasure", {}).get("cut_arcs", -1), "",
+             "arcs this stage CUT, i.e. carrying a CID `corridors` does not hold. Their dual "
+             "flag is not inherited, it is RE-MEASURED - an inherited flag describes the "
+             "PARENT's geometry, and `s8_export` recovers the flag by a CID lookup whose miss "
+             "used to fill in as 0"),
+            ("h1_remeasured", getattr(self, "dual_remeasure", {}).get("remeasured", -1), "",
+             "of those, how many were re-measured against the tagged dual = 1 centrelines"),
+            ("h1_cut_newly_along", getattr(self, "dual_remeasure", {}).get(
+                "changed_to_along", -1), "",
+             "CUTS THAT PUT A PIECE ALONG A CARRIAGEWAY the whole corridor was not. This is "
+             "the question 'did the outfall cut re-introduce a dual run', answered by "
+             "measurement on every run rather than checked once. Above zero it is an H1 "
+             "breach THIS STAGE CREATED and it belongs back in stage 1's exclusion"),
+            ("h1_cut_cleared", getattr(self, "dual_remeasure", {}).get(
+                "changed_to_clear", -1), "",
+             "cuts whose piece left the band the parent was in"),
+            ("h1_arcs_along_n", getattr(self, "dual_remeasure", {}).get("along_n", -1), "",
+             "arcs published ALONG a dual carriageway, after the re-measure"),
+            ("h1_arcs_along_m", getattr(self, "dual_remeasure", {}).get("along_m", -1.0),
+             "m", "and their length"),
+            ("h1_remeasure_note", getattr(self, "dual_remeasure", {}).get("note", ""), "",
+             "blank when the re-measure ran; otherwise why it did not"),
+            ("h1_band_m", getattr(self, "dual_remeasure", {}).get("band_m", -1.0), "m",
+             "the band half-width this stage re-measured on. READ from stage 1's manifest, "
+             "never defined here - two values for one quantity is the defect "
+             "tests/test_constants.py exists for. Re-published so the run says what it "
+             "actually used, and verify() checks it still agrees with the file it came from"),
+            ("h1_skew_deg", getattr(self, "dual_remeasure", {}).get("skew_deg", -1.0), "deg",
+             "the tolerance on 'square', read the same way"),
+            ("h1_min_frac", getattr(self, "dual_remeasure", {}).get("min_frac", -1.0), "",
+             "stage 1's share-of-a-line-inside-the-band rule, read the same way. IT IS NOT "
+             "APPLIED HERE. It is valid in stage 1 only because split_at_band cuts every "
+             "line at that same band first; this stage cuts at crests and at the Main Pipe, "
+             "so a cut piece can straddle the band edge and the rule would refuse to judge "
+             "it and publish a zero that reads as 'clear of a carriageway'. Read and "
+             "re-published purely so verify() can check the two stages still agree on it"),
+            ("h1_skipped_by_frac_rule", getattr(self, "dual_remeasure", {}).get(
+                "skipped_by_frac_rule", -1), "",
+             "cut arcs the whole-line fraction rule would have refused to judge. The size of "
+             "the trap, measured every run"),
+            ("h1_frac_rule_would_have_hidden", getattr(self, "dual_remeasure", {}).get(
+                "frac_rule_would_have_hidden", -1), "",
+             "of those, how many DO run along a carriageway on the in-band run. Above zero, "
+             "that many H1 breaches were being published as zeros"),
             ("main_pipe_sha1", _sha1(os.path.splitext(MAIN_PIPE)[0] + ".shp"), "", MAIN_PIPE),
             ("terrain_grid", GRID, "", "w12/terrain.py, 5 m working grid"),
             # --- guideline constants
@@ -2673,6 +2775,149 @@ class Orient:
              "sec 5's cheap step, run before anything is called a station"),
         ]
         return pd.DataFrame(rows, columns=["ITEM", "VALUE", "UNIT", "SOURCE"])
+
+    def _remeasure_dual(self, gdf) -> None:
+        """RE-MEASURE H1 on every arc this stage CUT, instead of trusting the flag it
+        inherited from the corridor it was cut out of.
+
+        WHY.  This stage does not move a metre of geometry, but it does CUT: 151 corridors
+        at a crest and 229 where they meet the client's Main Pipe, and each cut piece gets a
+        NEW CID - `9DF3.1` becomes `9DF3.1/m0`, `9DF3.1/m1`.  Measured on the run of
+        2026-09-06 that is 814 arcs and 109.67 km whose CID exists nowhere in `corridors`.
+        Two things follow and both are defects:
+
+          * `s8_export` recovers the dual flag with `seg_cid.map(corr.ALONG_DUAL).fillna(0)`,
+            so on every one of those 814 arcs the published flag is a FILLNA, not a
+            measurement.  A zero that means "the lookup missed" is indistinguishable from a
+            zero that means "this pipe is nowhere near a carriageway" - which is the
+            no-data-treated-as-safe defect (tests/test_nodata.py) in a new place.
+          * an inherited flag is a claim about the PARENT's geometry.  Halving a line that
+            grazed a band leaves one half inside it and one half out, and the flag is wrong
+            on both.
+
+        So the flag is carried through the cut for the arcs that were NOT cut, and MEASURED
+        from the geometry for the ones that were, against the same tagged `dual = 1`
+        centrelines and the same three constants stage 1 uses.  Both counts are published.
+
+        Measured on 2026-09-06 the re-measure changed NO arc: none of the 814 cut pieces
+        lands along a tagged carriageway, and the four that touch a band touch it for less
+        than a micrometre at the band edge.  That is the answer to "did the outfall cut
+        re-introduce a dual run" - and it is now an answer this stage RE-DERIVES every run
+        rather than a fact someone checked once.
+
+        If the recorded centrelines cannot be read the arcs keep their inherited flag and
+        the manifest says the re-measure did not run.  A skip that says so is honest; a
+        silent zero is not.
+        """
+        import math
+
+        K = _h1_constants()
+        band_m = K["DUAL_BAND_M"]
+        skew_deg = K["DUAL_XING_SKEW_DEG"]
+        min_frac = K["IN_BAND_MIN_FRAC"]
+
+        gdf["DUAL_SRC"] = "inherited from the corridor, uncut"
+        self.dual_remeasure = {"read": 0, "cut_arcs": 0, "remeasured": 0,
+                               "band_m": band_m, "skew_deg": skew_deg,
+                               "min_frac": min_frac,
+                               "changed_to_along": 0, "changed_to_clear": 0,
+                               "skipped_by_frac_rule": 0,
+                               "frac_rule_would_have_hidden": 0,
+                               "along_n": int((gdf.ALONG_DUAL.astype(int) == 1).sum()),
+                               "along_m": round(float(
+                                   gdf.loc[gdf.ALONG_DUAL.astype(int) == 1, "LEN_M"].sum()), 1),
+                               "note": ""}
+        cut = ~gdf.CID.isin(set(self.cor0_cids))
+        self.dual_remeasure["cut_arcs"] = int(cut.sum())
+        if not cut.any():
+            self.dual_remeasure["note"] = "this stage cut nothing; nothing to re-measure"
+            return
+        if not os.path.exists(ROAD_REC):
+            self.dual_remeasure["note"] = (
+                f"NOT RUN: {ROAD_REC} is missing, so {int(cut.sum())} cut arcs keep the flag "
+                f"they inherited. That is a claim about their PARENT geometry, not about "
+                f"them")
+            gdf.loc[cut, "DUAL_SRC"] = "inherited onto a CUT piece - NOT re-measured"
+            return
+
+        from shapely.ops import unary_union
+        from shapely.strtree import STRtree
+
+        rec = self.gpd.read_file(ROAD_REC)
+        d1 = [g for g in rec[rec["dual"] == 1].geometry.values if g is not None]
+        self.dual_remeasure["read"] = len(d1)
+        if not d1:
+            self.dual_remeasure["note"] = "the recorded centrelines tag no dual carriageway"
+            return
+        band = unary_union([g.buffer(band_m) for g in d1])
+        t1 = STRtree(d1)
+
+        def bearing(line, at, half=2.0):
+            a = line.interpolate(max(0.0, at - half))
+            b = line.interpolate(min(line.length, at + half))
+            return math.degrees(math.atan2(b.y - a.y, b.x - a.x))
+
+        # MEASURED ON THE IN-BAND RUN, NOT ON THE WHOLE ARC.  `min_frac` asks how much of a
+        # line is inside the band before it is judged, and stage 1 may use it because
+        # `split_at_band` cuts every line AT that band first, so an in-band piece scores 1.0.
+        # THIS stage cuts at crests and at the Main Pipe, which the band knows nothing about,
+        # so a cut piece can straddle the band edge and score 0.4 - and a filter that then
+        # refuses to judge publishes ALONG_DUAL = 0, a zero meaning "not measured" that reads
+        # as "clear of a carriageway".  That is the same defect this function exists to close
+        # in s8's `.fillna(0)`, and it was live in s1's own `measure_dual_exposure` until
+        # 2026-09-06, where it pinned the 4 m exposure at zero.  So the run is measured on
+        # its own terms and the fraction is published as a diagnostic rather than a gate.
+        floor = 1e-3      # below the writing tolerance a "run" is the band edge, not geometry
+        idx = np.nonzero(cut.to_numpy())[0]
+        for i in idx:
+            i = int(i)
+            g = gdf.geometry.iloc[i]
+            was = int(gdf.ALONG_DUAL.iloc[i])
+            now, ang = 0, -1.0
+            if g is not None and g.length > 0 and g.intersects(band):
+                inter = g.intersection(band)
+                runs = ([inter] if inter.geom_type == "LineString"
+                        else [p for p in getattr(inter, "geoms", [])
+                              if p.geom_type == "LineString"])
+                for p in sorted(runs, key=lambda q: -q.length):
+                    if p.length <= floor:
+                        break
+                    mid = p.interpolate(0.5, normalized=True)
+                    c = d1[t1.nearest(mid)]
+                    a = abs((bearing(p, p.length * 0.5)
+                             - bearing(c, c.project(mid), half=5.0) + 90.0) % 180.0 - 90.0)
+                    if ang < 0.0:
+                        ang = a
+                    if a < (90.0 - skew_deg):
+                        now, ang = 1, a
+                        break
+            gdf.iloc[i, gdf.columns.get_loc("ALONG_DUAL")] = now
+            gdf.iloc[i, gdf.columns.get_loc("DUAL_ANG")] = round(float(ang), 1)
+            gdf.iloc[i, gdf.columns.get_loc("DUAL_SRC")] = "MEASURED on the cut piece"
+            if now and not was:
+                self.dual_remeasure["changed_to_along"] += 1
+            elif was and not now:
+                self.dual_remeasure["changed_to_clear"] += 1
+            # what the whole-line fraction rule would have refused to judge here. Published
+            # so the trap is visible as a number rather than as an argument in a comment.
+            if g is not None and g.length > 0 and g.intersects(band):
+                if g.intersection(band).length / g.length < min_frac:
+                    self.dual_remeasure["skipped_by_frac_rule"] += 1
+                    if now:
+                        self.dual_remeasure["frac_rule_would_have_hidden"] += 1
+        self.dual_remeasure["remeasured"] = len(idx)
+        self.dual_remeasure["along_n"] = int((gdf.ALONG_DUAL.astype(int) == 1).sum())
+        self.dual_remeasure["along_m"] = round(float(
+            gdf.loc[gdf.ALONG_DUAL.astype(int) == 1, "LEN_M"].sum()), 1)
+        r = self.dual_remeasure
+        _log(f"  H1 re-measured on {r['remeasured']:,} arcs this stage CUT "
+             f"({r['cut_arcs']:,} carry a CID `corridors` does not hold): "
+             f"{r['changed_to_along']} newly ALONG, {r['changed_to_clear']} cleared. "
+             f"Published ALONG total {r['along_n']} arcs / {r['along_m']:,.1f} m")
+        if r["changed_to_along"]:
+            _log(f"    THE CUT PUT {r['changed_to_along']} PIECE(S) ALONG A DUAL "
+                 f"CARRIAGEWAY that the whole corridor was not. That is an H1 breach this "
+                 f"stage CREATED and it belongs back in stage 1's exclusion.")
 
     def _write(self, arcs, nodes, sn, nb, cmp_df, sw, man):
         os.makedirs(RUN, exist_ok=True)
@@ -3022,8 +3267,62 @@ def verify() -> dict:
         fails.append("the below-outlet check CANNOT RUN on the published layers - a check "
                      "that cannot run is a FAILURE, not a blank (inheritance row 2)")
 
+    # ---- H1 / project rule 7 on the PUBLISHED arcs, re-read from disk -------------------
+    # Three things, and each has cost this project a day at some point:
+    #   1. ONE VALUE FOR ONE QUANTITY. The band half-width and the skew tolerance are stage
+    #      1's; if this stage re-measured on a different band the two layers would disagree
+    #      about which pipes are legal and nothing would say so. That is the two-constants
+    #      defect (tests/test_constants.py), and it is checked against stage 1's own
+    #      manifest rather than against a number typed here twice.
+    #   2. NO UNDECLARED BREACH. An arc that runs along a carriageway must carry H1_KEEP = 1,
+    #      which is stage 1's declaration that it was retained deliberately and priced. A
+    #      breach without that flag is one nobody decided.
+    #   3. THE FLAG MUST EXIST AT ALL. `s8_export` recovers it by a CID lookup; a missing
+    #      column there fills in as 0 on every row and reads as a clean pass.
+    n_along = -1
+    if "ALONG_DUAL" not in arcs.columns:
+        fails.append("`arcs` publishes no ALONG_DUAL column - s8 recovers the dual flag by "
+                     "a CID lookup whose miss fills in as 0, so a missing column here reads "
+                     "downstream as 'no pipe is near a carriageway'")
+    else:
+        al = arcs[arcs.ALONG_DUAL.astype(int) == 1]
+        n_along = int(len(al))
+        if "H1_KEEP" not in arcs.columns:
+            fails.append(f"{n_along} arcs run ALONG a dual carriageway and `arcs` carries no "
+                         f"H1_KEEP column to declare them")
+        elif len(al) and (al.H1_KEEP.astype(int) != 1).any():
+            n = int((al.H1_KEEP.astype(int) != 1).sum())
+            fails.append(f"{n} arc(s) run ALONG a dual carriageway without H1_KEEP = 1 - an "
+                         f"H1 breach nobody declared. If this stage's CUT created them they "
+                         f"belong back in stage 1's exclusion (manifest h1_cut_newly_along)")
+    try:
+        import sqlite3
+        con = sqlite3.connect(ROADS_GPKG)
+        try:
+            s1man = pd.read_sql("SELECT * FROM manifest", con).set_index("ITEM")["VALUE"]
+        finally:
+            con.close()
+        for item, mine in (("DUAL_BAND_M", "h1_band_m"),
+                           ("DUAL_XING_SKEW_DEG", "h1_skew_deg"),
+                           ("IN_BAND_MIN_FRAC", "h1_min_frac")):
+            if item not in s1man.index or mine not in mv:
+                fails.append(f"the H1 constant {item} is not published by both stages, so "
+                             f"the two cannot be checked to agree - a check that cannot run "
+                             f"is a FAILURE, not a blank")
+                continue
+            if abs(float(s1man[item]) - float(mv[mine])) > 1e-9:
+                fails.append(f"{item} is {mv[mine]} on this stage's manifest and "
+                             f"{s1man[item]} on stage 1's - the roads layer changed under "
+                             f"this run, or two values exist for one quantity, which is how "
+                             f"a 50 mm bedding allowance failed every cover check here")
+    except Exception as e:                                   # pragma: no cover - IO
+        fails.append(f"could not read stage 1's manifest to check the H1 constants agree "
+                     f"({type(e).__name__}: {e}) - a check that cannot run is a FAILURE, "
+                     f"not a blank")
+
     out = dict(ok=not fails, fails=fails, uphill_pct=got, published_km=km,
                arcs_crossing_main=xn, subnets_below_half=nbad,
+               arcs_along_dual=n_along,
                arcs=int(len(arcs)), nodes=int(len(nodes)))
     print(json.dumps(out, indent=1))
     return out

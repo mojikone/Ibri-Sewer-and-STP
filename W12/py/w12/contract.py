@@ -212,6 +212,52 @@ VARY_MIN_ROWS = 30               # a STRUCTURAL threshold, not a design value. B
 
 
 # ======================================================================================
+# DECLARED_CONSTANT - a measured-looking column that legitimately holds one value
+# ======================================================================================
+#
+# The register behind VARY_MIN_ROWS, and it lives HERE rather than in the test that reads it
+# because "what does this column mean and why can it be constant" is contract knowledge -
+# the same knowledge as a Field's `why`. A register kept inside a test file is a second
+# vocabulary nothing else can consult, and the contract has paid for a second vocabulary
+# twice already (the wall allowance, the flood thresholds).
+#
+# THIS IS A RATCHET, NOT AN AMNESTY, and the difference is the whole point. Every entry
+# below says WHY the column is constant and how that was established. A column that is
+# constant because nobody computed it does NOT belong here - it belongs in the producer's
+# defect list. On the run of 2026-09-05 five columns were flagged and only three are in
+# here; the two that are not are `pumps/sites.lift_m` and `pumps/pruned.lift_m`, which are
+# 0.0 on all 63 and all 108 rows because `s7_pumps.Site` is constructed with a literal 0.0
+# at s7_pumps.py:755 and :1356. The SAME field on `pumps/search_sites` takes 90 distinct
+# values from 0.0 to 20.73 m over its 112 rows (RE-MEASURED 2026-09-06; the 0.17-12.96
+# first recorded here was read off a partial value list and was wrong), which is the
+# proof that the column can hold a measurement and on those two layers does not.
+# Declaring them would have shipped the fabrication.
+DECLARED_CONSTANT: Dict[Tuple[str, str, str], str] = {
+    ("orient", "arcs", "X_MAIN"):
+        "MEASURED, and constant because the design achieved the invariant. X_MAIN counts the "
+        "places an arc meets the client's Main Pipe with no node of its own on the meeting "
+        "point - a flow path that reaches the trunk, ignores it and grows out the other "
+        "side. s2_orient.meets_off_node() recomputes it per arc from the geometry about to "
+        "be PUBLISHED, through a spatial index, never carried from the pass that made it. "
+        "Zero on all 13,102 arcs is the headline result 'ZERO arcs crossing the Main Pipe', "
+        "not an unwritten column - and W11b, where two subnetworks holding a quarter of the "
+        "network touched the main pipe and discharged somewhere else, is what it measures.",
+    ("chambers", "pruned", "X_MAIN"):
+        "the same measured column carried onto the arcs stage 4 pruned, same reason. If it "
+        "were ever non-zero here it would be the more interesting of the two: an arc that "
+        "crossed the main pipe and was then dropped for not collecting or conveying.",
+    ("pumps", "trades", "cover_tol"):
+        "a DECLARED PARAMETER stamped on every row of the trade-off register, which is how a "
+        "parameter should be published - the same pattern as TAU_PA and the stream layer's "
+        "THRESH_M2. It is s7_pumps.COVER_TOL (0.90): candidate sites within 90 % of the best "
+        "capture are treated as equivalent, so the choice can fall to the cheaper main. It is "
+        "constant WITHIN one run by construction, and the sensitivity across other values is "
+        "published separately by cover_tol_sensitivity() on the `sensitivity` layer - so the "
+        "reader can move it rather than argue about it.",
+}
+
+
+# ======================================================================================
 # Depth. Thin wrappers over the criteria - THE fix, and the reason they are wrappers.
 # ======================================================================================
 
@@ -292,16 +338,180 @@ NODE_KIND: Tuple[str, ...] = (
 )
 
 # Philosophy P6: corridor provenance is carried to the end and never laundered.
-SRC: Tuple[str, ...] = ("dwg_road", "dwg_block", "dwg_link", "main_pipe", "existing",
-                        "terrain", "manual")
-CONFIDENCE: Tuple[str, ...] = ("surveyed", "drafted", "derived", "provisional")
+#
+# TWO VOCABULARIES LIVED HERE UNTIL 2026-09-06, AND ONLY ONE OF THEM WAS DECLARED.
+# The tuple below was written for the EXPORT layers, but validate() runs on every published
+# layer - and the upstream stages publish a FINER vocabulary that only collapses into this
+# one at export. Measured on the run of 2026-09-05: `roads/corridors` (12,665) and
+# `hier/reaches` (12,694) carry SRC in {draft_base, draft_propo} and CONFIDENCE including
+# `corroborated`, none of which this contract named. Four columns therefore failed
+# test_categorical_columns_only_hold_values_the_contract_allows, and the contract's own
+# warning about TIER applies to every one of them: an unrecognised value is a SILENT SKIP in
+# whatever check reads it.
+#
+# The fix is NOT an exclusion. A token that is actually published gets named here with its
+# meaning, or it stops being published. All three are named below.
+#
+# NAMING THEM WIDENS THIS ENUM, AND A WIDER ENUM MAKES EVERY GUARD WRITTEN AS
+# `<= set(contract.SRC)` WEAKER - s8_export's own self-check is written exactly that way, so
+# an identity map with no collapse at all now satisfies it. That is why SRC_DELIVERABLE and
+# CONFIDENCE_DELIVERABLE exist below: they are the set those guards should be pointed at,
+# and until they are, tests/test_contract_review.py holds the line from outside s8.
+# The collapse itself is recorded in SRC_EXPORT / CONFIDENCE_EXPORT / SRC_CONFIDENCE_FLOOR -
+# THREE tables, not two, and the two stages that own private copies do not agree on them
+# (STAGE_VOCABULARY_CONFLICT, measured). Do not delete either copy until that is settled.
+SRC: Tuple[str, ...] = (
+    # ---- the export vocabulary: what a deliverable layer may carry -------------------
+    "dwg_road",      # a road centreline from the draftsman's clean DXF
+    "dwg_block",     # a platted block reserve - a legal corridor, nothing built on it
+    "dwg_link",      # a link generated to connect two drawn corridors
+    "main_pipe",     # the client's own Main Pipe alignment, an INPUT
+    "existing",      # the built 2006 network
+    "terrain",       # derived from the DEM - streams, basins, station siting
+    "manual",        # placed by hand, and it says so
+    # ---- the upstream vocabulary: stage 1's two DXF road layers ----------------------
+    # Stage 1 reads exactly two layers of one drawing and grades them apart, because they
+    # are not the same evidence. Both collapse to `dwg_road` at export (SRC_EXPORT), and
+    # both are legal on an intermediate layer so the distinction survives to the stage that
+    # needs it.
+    "draft_base",    # DXF layer "piping center line", 6,419 entities - the draftsman's line
+                     # on the BASE road set. This is `dwg_road` under its upstream spelling;
+                     # it carries no meaning `dwg_road` lacks, and it is named here only
+                     # because it is published. See EXCLUDED: the right end state is stage 1
+                     # writing `dwg_road` and this token retiring.
+    "draft_propo",   # DXF layer "piping center line-propo-01", 6,195 entities - the
+                     # draftsman's OWN PROPOSED streets. A DIFFERENT KIND OF EVIDENCE from a
+                     # base centreline and the reason this pair cannot simply be merged: a
+                     # proposed street may or may not exist on the ground, and s8 floors it
+                     # at `provisional` on export for exactly that reason. Measured, it is
+                     # not uniformly speculative - 2,550 of 6,191 corridors on it are graded
+                     # `corroborated` by independent evidence, which is s1 grading by
+                     # evidence and never by layer name, as it says it does.
+)
+CONFIDENCE: Tuple[str, ...] = (
+    "surveyed",      # a survey. Nothing in W12 is this yet.
+    "corroborated",  # DRAWN AND INDEPENDENTLY CONFIRMED: a recorded NAMA centreline within
+                     # 5 m (s1.CORROB_M, published per line as D_REC_M), or a plot with
+                     # COUNTED electricity accounts fronting it. Something is on the ground.
+                     # A GENUINE RUNG THIS CONTRACT DID NOT HAVE - strictly more evidence
+                     # than `drafted` (drawn, unconfirmed) and strictly less than a survey -
+                     # and it ranks between them below. s8 collapses it to `drafted` at
+                     # export, which under-claims rather than launders, so the export stays
+                     # P6-safe; but the rung is real on 8,618 of 12,665 corridors and a
+                     # contract that cannot name it forces every intermediate layer to lie.
+    "drafted",       # drawn, uncorroborated
+    "derived",       # computed by a stage from something else (terrain, a load model)
+    "provisional",   # a reserve on bare ground. Never reported as existing.
+)
 
 # A platted reserve on bare desert is a legal corridor at a saturation horizon and is NEVER
 # an observed street. It can never be graded better than provisional, and the contract
 # enforces it so a later stage cannot quietly promote hundreds of km of desert to "drafted".
+#
+# `draft_propo` IS DELIBERATELY NOT CEILINGED HERE, and the omission is a decision, not a
+# gap. s8 floors it at `provisional` when it EXPORTS, which is the right place: on the
+# intermediate layer s1 grades it by measured evidence (D_REC_M, N_BUILT, N_PLOT), and
+# capping it here would overrule 2,550 corridors that a recorded centreline or a metered
+# building says are real. A ceiling belongs on a source whose evidence is absent by
+# definition - a block reserve, a generated link - not on one that merely might be.
 SRC_CONFIDENCE_CEILING = {"dwg_block": "provisional", "dwg_link": "provisional",
                           "terrain": "derived"}
-_CONF_RANK = {c: i for i, c in enumerate(CONFIDENCE)}       # surveyed 0 ... provisional 3
+_CONF_RANK = {c: i for i, c in enumerate(CONFIDENCE)}   # surveyed 0 ... provisional 4
+
+# THE COLLAPSE TO THE DELIVERABLE VOCABULARY. Two tables and a FLOOR - it is not a single
+# dict, and saying it was is how this register nearly became the third wrong copy.
+#
+# s6_levels and s8_export each carry a private copy today (s6_levels.SRC_MAP/CONF_MAP,
+# s8_export.SRC_MAP/CONF_MAP + SRC_CONF_FLOOR), and two declarations of one mapping is how
+# the wall allowance came to be 0.05 in one file and 0.10 in another. But the two copies are
+# NOT THE SAME MAPPING, so "both should read these" would have been a change of behaviour
+# dressed as a de-duplication - see STAGE_VOCABULARY_CONFLICT below, measured.
+#
+# The floor is the half that a token-for-token table cannot express: the grade a corridor
+# may not beat GIVEN ITS SOURCE. It is the export-time twin of SRC_CONFIDENCE_CEILING and it
+# is P6 itself (philosophy sec 4: "a platted reserve with nothing built on it ... is never
+# reported as existing"). Dropping it while adopting the two tables would promote every
+# proposed street on the deliverable.
+SRC_EXPORT: Dict[str, str] = {"draft_base": "dwg_road", "draft_propo": "dwg_road"}
+CONFIDENCE_EXPORT: Dict[str, str] = {"corroborated": "drafted"}
+SRC_CONFIDENCE_FLOOR: Dict[str, str] = {"draft_propo": "provisional"}
+
+# THE TWO STAGES DISAGREE, AND BOTH ANSWERS ARE PUBLISHED. Measured 2026-09-06 by joining
+# W12.gpkg/reaches (s6's collapse) to W12_export.gpkg/reaches (s8's) on US/DS node: 56,518
+# reaches match and 14,536 of them - 25.7 % - carry a DIFFERENT CONFIDENCE in the two
+# published layers. They are strict on different rungs, and NEITHER improves on the grade s1
+# measured, so this is not laundering; it is two answers to one question:
+#   13,008  `drafted` in s6, `provisional` in s8   - s8 floors the whole PROPOSED layer
+#    1,528  `provisional` in s6, `drafted` in s8   - s6 demotes `drafted` a further rung
+# Recorded rather than resolved: which stage is right is the engineer's call, and a contract
+# that silently picked one would have moved 14,536 rows with nobody deciding.
+STAGE_VOCABULARY_CONFLICT: str = (
+    "s6_levels and s8_export collapse s1's provenance vocabulary DIFFERENTLY. s6: "
+    "{corroborated->drafted, drafted->provisional, provisional->provisional} and no source "
+    "floor. s8: {corroborated->drafted, drafted->drafted, provisional->provisional} plus "
+    "SRC_CONF_FLOOR {draft_propo->provisional}. Neither ever grades a corridor BETTER than "
+    "s1 measured it, so neither launders; they are strict on different rungs. Measured on "
+    "the run of 2026-09-06: of the 56,518 reaches that appear in both W12.gpkg and "
+    "W12_export.gpkg, 14,536 (25.7 %) carry a different CONFIDENCE - 13,008 that s6 calls "
+    "`drafted` and s8 calls `provisional`, and 1,528 the other way round. A reader who "
+    "quotes 'how much of this network is on an observed street' gets two answers depending "
+    "on which published layer they open. SRC_EXPORT / CONFIDENCE_EXPORT / "
+    "SRC_CONFIDENCE_FLOOR above are the s8 rule, because s8 writes the client deliverable. "
+    "UNRESOLVED - the engineer decides which collapse is the project's, and only then may "
+    "either stage delete its own copy.")
+
+# What a DELIVERABLE layer may carry: the upstream tokens must be gone by then. This is the
+# tightening that stops the enum widening above from weakening the export.
+SRC_DELIVERABLE: Tuple[str, ...] = tuple(s for s in SRC if s not in SRC_EXPORT)
+CONFIDENCE_DELIVERABLE: Tuple[str, ...] = tuple(
+    c for c in CONFIDENCE if c not in CONFIDENCE_EXPORT)
+
+
+def assert_export_vocabulary(gdf, layer: str = "") -> None:
+    """Every SRC / CONFIDENCE on a DELIVERABLE layer is in the export vocabulary.
+
+    The counterpart to widening SRC and CONFIDENCE above. Naming the upstream tokens stops
+    validate() failing an intermediate layer for telling the truth; this stops the widening
+    from letting an unmapped token reach a deliverable. The export stage calls it AFTER
+    mapping - `SRC_EXPORT` and `CONFIDENCE_EXPORT` say what the mapping is - and it raises,
+    because a deliverable carrying a stage's private spelling is a layer the client's own
+    checks cannot read.
+
+    THE FLOOR IS CHECKED ONLY IF THE LAYER STILL CARRIES `SRC_RAW`. Renaming the token is
+    the easy half of the collapse; the half that matters to P6 is `SRC_CONFIDENCE_FLOOR` -
+    a proposed street may not be graded better than provisional - and once SRC has been
+    rewritten to `dwg_road` there is nothing left on the row to test it against. On the run
+    of 2026-09-06 no export layer carries SRC_RAW, so the floor is UNAUDITABLE on the
+    deliverable: s8_export sets `segments['SRC_RAW']` and then does not publish it. That is
+    a finding for s8, not a reason to skip quietly, and this docstring is where it is
+    written down until s8 publishes the column."""
+    bad = []
+    for col, allowed, table in (("SRC", SRC_DELIVERABLE, SRC_EXPORT),
+                                ("CONFIDENCE", CONFIDENCE_DELIVERABLE, CONFIDENCE_EXPORT)):
+        if col not in getattr(gdf, "columns", ()):
+            continue
+        vals = gdf[col].astype(str).str.strip()
+        extra = sorted(set(vals[~vals.isin(allowed) & (vals != "")]))
+        if extra:
+            fix = {v: table[v] for v in extra if v in table}
+            bad.append(f"{col} carries {extra} on a deliverable layer; the export "
+                       f"vocabulary is {list(allowed)}."
+                       + (f" Map them: {fix}." if fix else
+                          " These are in NO mapping - the stage invented them."))
+    cols = getattr(gdf, "columns", ())
+    if "SRC_RAW" in cols and "CONFIDENCE" in cols:
+        conf = gdf["CONFIDENCE"].astype(str).str.strip()
+        raw = gdf["SRC_RAW"].astype(str).str.strip()
+        for src, floor in SRC_CONFIDENCE_FLOOR.items():
+            m = (raw == src) & conf.map(
+                lambda c: _CONF_RANK.get(c, 99) < _CONF_RANK[floor])
+            if m.any():
+                bad.append(f"{int(m.sum()):,} rows came from '{src}' and are graded better "
+                           f"than '{floor}'. The collapse renamed the token and dropped the "
+                           "FLOOR, which is the half P6 is about.")
+    if bad:
+        raise ContractError(
+            f"export vocabulary not applied on {layer or 'this layer'}: " + " ".join(bad))
 
 EDGE_KIND: Tuple[str, ...] = ("gravity", "rising", "crossing")
 
@@ -563,8 +773,9 @@ BANNED_FIELDS: Dict[str, str] = {
     "Q_LS": ("flow at what? Use Q_DUTY_LS on a station and its rising main (pump duty, from "
              "the wet-well cycle), QPK_LS on a gravity reach (peak design flow), Q_PK_LS on "
              "a node. A bare Q_LS is the ambiguity SLOPE_PCT already cost us once"),
-    "STOR_M3": "wet-well live volume is WELL_M3, and it is tied to Q_DUTY_LS and WW_STARTS "
-               "by G203-p48 sec 7.8 (V = 0.25 Q T). A second volume field would not be",
+    "STOR_M3": "wet-well live volume is WELL_M3, and it is tied to WW_STARTS and to the "
+               "SINGLE-PUMP share of Q_DUTY_LS by G203-p48 sec 7.8 (V = 0.25 Q T, 'Q = "
+               "single pump capacity'). A second volume field would not be",
     "DIA_MM": "the sizing function and every check read DN, on the reach AND the rising main",
     "V_MS": "velocity at what flow? A rising main carries V_DUTY_MS (at duty) and V_MIN_MS "
             "(at the design MINIMUM flow, where G203-p50 holds the 0.75 m/s floor). The "
@@ -662,6 +873,34 @@ EXCLUDED: Tuple[Excluded, ...] = (
              "and admitted CAN_DRAIN 'cannot run', which is a check that cannot run and "
              "therefore a FAILURE (inheritance row 2).",
              "detailed design. The riders, laterals, PCC and HCC fields belong to it"),
+    Excluded("Q_DUTY_LS as the Q in G203-p48's V = 0.25 Q T",
+             "the clause scopes itself to 'a single constant-speed pump' and names its "
+             "variable 'Q = single pump capacity in m3/sec' (re-read from the PDF "
+             "2026-09-06). Q_DUTY_LS is what ALL the duty pumps carry, so using it asks for "
+             "a wet well twice the clause's size on a Type 2 and three times on a Type 3 "
+             "(G203-p40 Table 17). validate() did exactly that and failed both published "
+             "Type 2 stations against a design that was already correct - it demanded 11.58 "
+             "m3 where 5.79 was published, and 13.65 where 6.83 was.",
+             "never. criteria.q_single_pump_ls() is the one division and it has a name so "
+             "no caller has to remember to do it"),
+    Excluded("a 'declared constant' list kept inside the test that reads it",
+             "the reason a column may legitimately hold one value is the same knowledge as "
+             "the Field's `why`, and a register in a test file is a second vocabulary "
+             "nothing else can consult. This project has paid for a second vocabulary twice "
+             "- the 0.05/0.10 wall allowance, and the flood thresholds declared in both "
+             "criteria and hazard with different answers.",
+             "never. DECLARED_CONSTANT is here, beside VARY_MIN_ROWS, and the test imports "
+             "it. Adding an entry is a contract change and reads like one"),
+    Excluded("declaring pumps/sites.lift_m and pumps/pruned.lift_m constant",
+             "PROPOSED AND REFUSED 2026-09-06. Both are 0.0 on every row (63 and 108), and "
+             "the temptation is to call a pruned station's lift 'not applicable'. It is not: "
+             "s7_pumps.Site is constructed with a literal 0.0 at s7_pumps.py:755 and :1356, "
+             "and the SAME field on `pumps/search_sites` takes 90 distinct values from 0.0 to "
+             "20.73 m over 112 rows (re-measured 2026-09-06). The "
+             "column can hold a measurement and on those two layers does not. An exclusion "
+             "list is how a fabricated column ships, and lift is half the evidence that a "
+             "station's position was CHOSEN - the half that says what it costs.",
+             "s7_pumps measuring the lift on those sites. Then it varies and needs no entry"),
     Excluded("an 'uphill is acceptable here' exemption flag",
              "philosophy sec 4 does not forbid uphill drainage - it BOUNDS AND REPORTS it. "
              "A per-reach exemption converts a reported quantity into a hidden one, which "
@@ -1132,8 +1371,13 @@ STATIONS = LayerSpec(
           "station COUNT, because distance-clustering only measures breach density", lo=0.0),
         F("N_PROP", "float", "-", "properties upstream", lo=0.0),
         F("Q_ADF_M3D", "float", "m3/d", "average flow through it", lo=0.0),
-        F("WELL_M3", "float", "m3", "wet-well live volume. G203-p48 sec 7.8: V = 0.25 Q T, "
-          "T = 3600 / starts per hour", lo=0.0),
+        F("WELL_M3", "float", "m3", "wet-well LIVE volume - the volume between the start and "
+          "stop levels. G203-p48 sec 7.8: V = 0.25 Q T, T = 3600 / starts per hour, and "
+          "'Q = single pump capacity', which is Q_DUTY_LS divided by the duty-pump count of "
+          "the station's type (G203-p40 Table 17: 1 / 2 / 3). NOT the station duty: feeding "
+          "that in asks for a well twice the clause's size on a Type 2 and three times on a "
+          "Type 3, and validate() checked it that way until 2026-09-06",
+          lo=0.0),
         F("WW_STARTS", "float", "1/h", "the assumed starts per hour, DECLARED. G203-p48 sets "
           "a minimum of 10/h for motors up to 30 kW, and it is the only thing that turns "
           "WELL_M3 into a number - a wet-well volume with no start rate behind it cannot be "
@@ -2254,17 +2498,55 @@ def _cross_field(gdf, spec: LayerSpec, cols) -> List[str]:
                            "Table 21 minimum for their type (50 / 200 / 900 m2, plus a 6 m "
                            "turning circle). A reservation the client cannot build in is "
                            "worse than none.")
-        if has("WELL_M3", "WW_STARTS", "Q_DUTY_LS"):
-            q = pd.to_numeric(gdf.Q_DUTY_LS, errors="coerce") / 1000.0
+        if has("WELL_M3", "WW_STARTS", "Q_DUTY_LS", "ST_TYPE"):
+            # G203-p48 sec 7.8's Q IS THE SINGLE PUMP, NOT THE STATION. The clause is scoped
+            # in its own preamble - "The active sump volume required for a single constant-
+            # speed pump" - and names its variable "Q = single pump capacity in m3/sec".
+            #
+            # THIS CHECK USED TO FEED Q_DUTY_LS STRAIGHT IN, and Q_DUTY_LS is the flow ALL
+            # the duty pumps carry together. On a Type 2 that demanded a wet well twice the
+            # size the clause asks for and on a Type 3 three times (G203-p40 Table 17: 1 / 2
+            # / 3 duty pumps). It was reported by s7_pumps, which could not fix it because it
+            # does not own this file, and verified against the PDF on 2026-09-06 before the
+            # change. The design was already right: `pumping.wet_well()` takes
+            # `q_single_pump_ls`. Measured on the 43 published stations, the old check failed
+            # both Type 2s - it demanded 11.58 m3 where 5.79 was published, and 13.65 where
+            # 6.83 was - and the corrected check fails none. NO STATION CHANGES SIZE; what
+            # changes is that the check now asks for the volume the guideline specifies.
+            #
+            # The pump count comes from ST_TYPE through criteria.ps_duty_pumps() and NOT from
+            # any column the stage happens to add, so the check reads only fields this
+            # contract declares. N_DUTY is cross-checked separately below where it is present.
+            n_duty = gdf.ST_TYPE.astype(str).map(
+                lambda t: C.ps_duty_pumps(t) if t in ST_TYPE else None)
+            q_station = pd.to_numeric(gdf.Q_DUTY_LS, errors="coerce")
+            q = (q_station / pd.to_numeric(n_duty, errors="coerce")) / 1000.0
             st = pd.to_numeric(gdf.WW_STARTS, errors="coerce")
             want = C.WELL_K * q * (3600.0 / st)
             got = pd.to_numeric(gdf.WELL_M3, errors="coerce")
             bad = ((got - want).abs() > (0.05 * want.abs() + 0.05)) & got.notna() & want.notna()
             if bad.any():
-                out.append(f"WELL_M3 != 0.25 x Q x (3600/starts) on {int(bad.sum()):,} "
-                           "stations (G203-p48 sec 7.8). The volume, the duty and the start "
-                           "rate are ONE equation; publishing them so they disagree means one "
-                           "of the three was never computed.")
+                out.append(
+                    f"WELL_M3 != 0.25 x Q x (3600/starts) on {int(bad.sum()):,} stations "
+                    "(G203-p48 sec 7.8), where Q is the SINGLE PUMP capacity - Q_DUTY_LS "
+                    "divided by the duty-pump count of its type (G203-p40 Table 17: Type 1 "
+                    "one pump, Type 2 two, Type 3 three). The volume, the per-pump duty and "
+                    "the start rate are ONE equation; publishing them so they disagree means "
+                    "one of the three was never computed. If the volume was sized on the "
+                    "whole station duty it is n_duty times too large, which is a cost, not a "
+                    "safety margin.")
+            # N_DUTY is not a contract field, but where a stage publishes one it must agree
+            # with the type - otherwise the wet well and the pump schedule are sized off two
+            # different pump counts and only one of them is checkable.
+            if "N_DUTY" in gdf.columns:
+                pub = pd.to_numeric(gdf.N_DUTY, errors="coerce")
+                mism = pub.notna() & n_duty.notna() & (pub != pd.to_numeric(n_duty))
+                if mism.any():
+                    out.append(
+                        f"N_DUTY contradicts ST_TYPE on {int(mism.sum()):,} stations "
+                        "(G203-p40 Table 17 fixes 1 / 2 / 3 duty pumps by type). The wet-well "
+                        "cycle rule divides by this count, so two answers to 'how many pumps' "
+                        "is two answers to 'how big is the well'.")
         if has("WW_STARTS"):
             st = pd.to_numeric(gdf.WW_STARTS, errors="coerce")
             bad = st.notna() & (st < C.WELL_STARTS_MIN)
@@ -3023,7 +3305,22 @@ class Manifest:
     """The run's record. One JSON, appended by every stage, read by the report and the audit.
 
     Answers mechanically: what did stage 5 read? did stage 3 change anything? where did the
-    131 missing plots go? which number came from which function?"""
+    131 missing plots go? which number came from which function?
+
+    IT DID NOT ACTUALLY APPEND UNTIL 2026-09-06, and the docstring said it did. `records` is
+    a CLASS attribute holding only the records made in THIS python process, and `save()`
+    wrote `stages=[...cls.records]` over the whole file with mode "w". run_all.py launches
+    every stage as a SEPARATE subprocess, so `records` started empty each time and the file
+    was TRUNCATED to the one stage that had just finished: after a full eight-stage run,
+    run/manifest.json held `['s8_export']`. Audit check G4 - "no stage silently does
+    nothing" - therefore could never be answered by the ledger that exists to answer it, and
+    it was a reviewer's test, not this file, that noticed. `save()` now MERGES with what is
+    on disk, keyed by stage name, and every record carries its own `written` timestamp so a
+    record left over from an older run is VISIBLE rather than silently passing for fresh -
+    which is the whole reason the merge is keyed and stamped instead of just concatenated.
+
+    One process at a time: stages run sequentially under run_all.py. Two stages writing
+    concurrently would still race, and nothing here pretends otherwise."""
     path = os.path.join(W12_ROOT, "run", "manifest.json")
     records: List[StageRecord] = []
 
@@ -3044,14 +3341,46 @@ class Manifest:
             cls.save(path or cls.path)
 
     @classmethod
+    def load(cls, path: Optional[str] = None) -> List[Dict]:
+        """The stage records ON DISK, whoever wrote them. Returns [] if there is no
+        readable manifest - a missing ledger is an empty one, not an exception, because the
+        first stage of a run legitimately finds nothing there."""
+        p = path or cls.path
+        try:
+            with open(p, encoding="utf-8") as fh:
+                doc = json.load(fh)
+        except (OSError, ValueError):
+            return []
+        st = doc.get("stages")
+        return [s for s in st if isinstance(s, dict)] if isinstance(st, list) else []
+
+    @classmethod
     def save(cls, path: Optional[str] = None) -> str:
+        """Merge this process's records into the manifest on disk and rewrite it.
+
+        Keyed by stage NAME so re-running one stage replaces that stage's record and leaves
+        the other seven alone; stamped with `written` per stage so a record from an older
+        run cannot pass for part of this one. Ordered by `order`, then by name, so the file
+        reads as the pipeline runs."""
         p = path or cls.path
         os.makedirs(os.path.dirname(p), exist_ok=True)
+        now = time.strftime("%Y-%m-%d %H:%M:%S")
+        merged: Dict[str, Dict] = {}
+        for s in cls.load(p):
+            name = str(s.get("stage", ""))
+            if name:
+                merged[name] = s
+        for r in cls.records:
+            d = r.to_dict()
+            d["written"] = now
+            merged[str(d.get("stage", ""))] = d
+        stages = sorted(merged.values(),
+                        key=lambda s: (s.get("order", 99), str(s.get("stage", ""))))
         with open(p, "w", encoding="utf-8") as fh:
             json.dump(dict(contract=CONTRACT_VERSION, criteria=C.__class__.__module__,
                            tau_pa=C.TAU_PA,
-                           written=time.strftime("%Y-%m-%d %H:%M:%S"),
-                           stages=[r.to_dict() for r in cls.records]), fh, indent=2)
+                           written=now,
+                           stages=stages), fh, indent=2)
         return p
 
     @classmethod
@@ -3943,6 +4272,99 @@ def _self_test(verbose: bool = True) -> None:
     bad["V_DUTY_MS"] = 2.9                                  # legal for GRAVITY, not for this
     _raises(lambda: validate(bad, "rising_mains"), "G203-p50",
             "the gravity 3.0 m/s applied to a rising main")
+
+    # ---- G203-p48: the wet-well Q is the SINGLE PUMP, not the station -------------------
+    # The regression that failed both published Type 2 stations. A Type 2 sized correctly -
+    # V = 0.25 x (Q/2) x T - must PASS, and one sized on the whole station duty must FAIL.
+    t2 = stns.copy()
+    t2["Q_DUTY_LS"] = 128.664
+    t2["ST_TYPE"] = C.ps_type(128.664)
+    assert t2.ST_TYPE.iloc[0] == "Type 2", t2.ST_TYPE.iloc[0]
+    t2["LAND_M2"] = C.ps_land_m2("Type 2")[0]
+    t2["WELL_M3"] = C.well_volume_m3(
+        C.q_single_pump_ls(128.664, "Type 2") / 1000.0, 10.0)
+    assert abs(float(t2.WELL_M3.iloc[0]) - 5.78988) < 1e-5, float(t2.WELL_M3.iloc[0])
+    validate(t2, "stations")            # the published design: must not raise
+    bad = t2.copy()                      # sized on the STATION duty - twice the clause
+    bad["WELL_M3"] = C.well_volume_m3(128.664 / 1000.0, 10.0)
+    _raises(lambda: validate(bad, "stations"), "single pump",
+            "a Type 2 wet well sized on the whole station duty")
+    bad = t2.copy()                      # a published pump count that fights its own type
+    bad["N_DUTY"] = 1
+    _raises(lambda: validate(bad, "stations"), "N_DUTY contradicts ST_TYPE",
+            "a duty-pump count that disagrees with G203-p40 Table 17")
+
+    # ---- the vocabulary names every token that is actually published -------------------
+    # Four columns on `roads/corridors` and `hier/reaches` failed the audit for carrying
+    # tokens this contract did not name. Naming them must not let an unmapped token reach a
+    # DELIVERABLE, so the two halves are asserted together.
+    assert {"draft_base", "draft_propo"} <= set(SRC)
+    assert "corroborated" in CONFIDENCE
+    assert set(SRC_EXPORT) <= set(SRC) and set(CONFIDENCE_EXPORT) <= set(CONFIDENCE)
+    assert set(SRC_EXPORT.values()) <= set(SRC_DELIVERABLE)
+    assert set(CONFIDENCE_EXPORT.values()) <= set(CONFIDENCE_DELIVERABLE)
+    # corroborated outranks drafted - it is MORE evidence, so the P6 ceiling still bites
+    assert _CONF_RANK["surveyed"] < _CONF_RANK["corroborated"] < _CONF_RANK["drafted"]
+    for src, ceiling in SRC_CONFIDENCE_CEILING.items():
+        assert src in SRC and ceiling in CONFIDENCE
+    _up = gpd.GeoDataFrame([dict(SRC="draft_propo", CONFIDENCE="corroborated")],
+                           geometry=[Point(0.0, 0.0)], crs=CRS_EPSG)
+    assert_export_vocabulary(_up.drop(columns=["SRC", "CONFIDENCE"]), "empty")   # no-op
+    _raises(lambda: assert_export_vocabulary(_up, "corridors"), "draft_propo",
+            "an upstream SRC token reaching a deliverable layer")
+    assert_export_vocabulary(
+        gpd.GeoDataFrame([dict(SRC="dwg_road", CONFIDENCE="drafted")],
+                         geometry=[Point(0.0, 0.0)], crs=CRS_EPSG), "exported")
+    # the FLOOR, which the token tables cannot express: a row whose raw source was the
+    # PROPOSED road layer may not be graded better than provisional even after SRC has been
+    # rewritten to `dwg_road`. Renaming the token is the easy half of the collapse.
+    _fl = gpd.GeoDataFrame([dict(SRC="dwg_road", SRC_RAW="draft_propo",
+                                 CONFIDENCE="drafted")],
+                           geometry=[Point(0.0, 0.0)], crs=CRS_EPSG)
+    _raises(lambda: assert_export_vocabulary(_fl, "exported"), "FLOOR",
+            "a proposed-layer corridor graded better than provisional on the deliverable")
+    _fl["CONFIDENCE"] = "provisional"
+    assert_export_vocabulary(_fl, "exported")               # floored: legal
+    assert set(SRC_CONFIDENCE_FLOOR) <= set(SRC)
+    assert set(SRC_CONFIDENCE_FLOOR.values()) <= set(CONFIDENCE)
+    assert "14,536" in STAGE_VOCABULARY_CONFLICT and "UNRESOLVED" in STAGE_VOCABULARY_CONFLICT
+
+    # ---- the manifest APPENDS, which it did not until 2026-09-06 ------------------------
+    # Every stage runs in its own subprocess, so a save that writes only `cls.records`
+    # truncates the ledger to the last stage to finish. Simulated here by clearing the class
+    # attribute between writes, which is exactly what a new process does.
+    import tempfile
+    _keep = Manifest.records
+    try:
+        _mp = os.path.join(tempfile.mkdtemp(), "manifest.json")
+        for _nm, _od in (("s1_roads", 1), ("s8_export", 8), ("s5_flows", 5)):
+            Manifest.records = []
+            with Manifest.stage(_nm, _od, path=_mp) as _r:
+                _r.wrote("demo", _mp, 1)
+        _st = Manifest.load(_mp)
+        assert [s["stage"] for s in _st] == ["s1_roads", "s5_flows", "s8_export"], (
+            f"the manifest truncated to {[s['stage'] for s in _st]} - this is the defect "
+            "that left run/manifest.json holding one of eight stages and made audit check "
+            "G4 unanswerable")
+        assert all(s.get("written") for s in _st), (
+            "every record must carry its own timestamp, or a stage left over from an older "
+            "run passes for part of this one - which is the risk the merge introduces")
+        Manifest.records = []                                # a re-run REPLACES its record
+        with Manifest.stage("s1_roads", 1, path=_mp) as _r:
+            _r.wrote("demo", _mp, 2)
+        _st = Manifest.load(_mp)
+        assert len(_st) == 3 and _st[0]["writes"][0]["n"] == 2
+        assert Manifest.load(os.path.join(_mp, "does-not-exist")) == []
+    finally:
+        Manifest.records = _keep
+
+    # ---- DECLARED_CONSTANT is a ratchet with a reason on every entry --------------------
+    for k, why in DECLARED_CONSTANT.items():
+        assert len(k) == 3 and all(k), k
+        assert len(why) > 80, f"{k} has no real reason recorded"
+    assert ("pumps", "sites", "lift_m") not in DECLARED_CONSTANT, (
+        "lift_m is 0.0 on every row because s7_pumps.Site is built with a literal 0.0, not "
+        "because a pruned station has no lift. Declaring it would ship the fabrication.")
 
     # ---- the banned synonyms bite before they become a second column --------------------
     for col, needle in (("HEAD_M", "LIFT_M"), ("Q_LS", "Q_DUTY_LS"), ("STOR_M3", "WELL_M3")):

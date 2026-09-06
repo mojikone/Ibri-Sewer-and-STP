@@ -786,6 +786,46 @@ class Criteria:
             raise CriteriaError(f"unknown pumping station type {ps_type!r}")
         return self.PS_LAND_M2_MIN[i], self.PS_LAND_M2_MAX[i]
 
+    def ps_duty_pumps(self, ps_type: str) -> int:
+        """How many DUTY pumps a station of this type has. G203-p40 Table 17: Type 1 = 1+1,
+        Type 2 = 2+1, Type 3 = 3+1 (duty + standby).
+
+        A HELPER over the already-cited PS_DUTY_PUMPS tuple, not a new number. It exists so
+        that "how many pumps share the duty" has exactly ONE answer in W12, reachable by
+        name - because the moment a caller has to index `PS_DUTY_PUMPS` itself it is one
+        off-by-one away from dividing the station duty by the wrong count."""
+        i = {"Type 1": 0, "Type 2": 1, "Type 3": 2}.get(str(ps_type))
+        if i is None:
+            raise CriteriaError(
+                f"unknown pumping station type {ps_type!r}. Known: Type 1 / Type 2 / Type 3 "
+                "(G203-p40). An unrecognised type must RAISE - defaulting to one duty pump "
+                "is exactly how a Type 2 wet well came to be sized on the whole station.")
+        return int(self.PS_DUTY_PUMPS[i])
+
+    def q_single_pump_ls(self, q_duty_ls: float, ps_type: Optional[str] = None,
+                         n_duty: Optional[int] = None) -> float:
+        """THE single-pump capacity, L/s - the Q that G203-p48's V = 0.25 Q T takes.
+
+        THIS FUNCTION EXISTS BECAUSE THE STATION DUTY AND THE PUMP DUTY ARE TWO DIFFERENT
+        FLOWS AND THE GUIDELINE ASKS FOR THE SECOND. G203-p48 sec 7.8, verbatim: "The active
+        sump volume required for a single constant-speed pump ... V = 0.25 QT ... Q = single
+        pump capacity in m3/sec". The station's `Q_DUTY_LS` is the flow ALL the duty pumps
+        carry together, so feeding it straight into the equation asks for a wet well
+        `n_duty` times the size the clause specifies: twice on a Type 2, three times on a
+        Type 3 (G203-p40 Table 17). W12's `contract.validate()` did exactly that and failed
+        both published Type 2 stations against a design that was already correct.
+
+        `n_duty` wins when given (the design's own pump count); otherwise the count comes
+        from the type through `ps_duty_pumps()`. Nothing here is a new number - it is one
+        division, given a name so no caller has to remember to do it.
+        """
+        n = self.ps_duty_pumps(ps_type) if n_duty is None else int(n_duty)
+        if n < 1:
+            raise CriteriaError(
+                f"{n} duty pumps. A station has at least one (G203-p40 Table 17); zero would "
+                "make the single-pump capacity infinite and the wet well with it.")
+        return float(q_duty_ls) / n
+
     def ps_min_flow_factor(self, q_avg_ls: float) -> float:
         """G203-p40 Table 16. The table gives four points (50, 500, 2500, 5000 l/s ->
         0.25, 0.35, 0.45, 0.50); between them we interpolate LINEARLY IN log10(Q), which is
@@ -804,8 +844,21 @@ class Criteria:
 
     def well_volume_m3(self, q_single_pump_m3s: float,
                        starts_per_hour: Optional[float] = None) -> float:
-        """G203-p48 sec 7.8: V = 0.25 Q T, T = 3600 / starts per hour, minimum 10 starts/h
-        for motors up to 30 kW."""
+        """Minimum wet-well LIVE volume, m3. G203-p48 sec 7.8, re-read from the PDF
+        2026-09-06 and quoted exactly:
+
+            "The minimum live volume (i.e. the volume between the start level and the stop
+             level of the pump) is calculated using the formula:  V = 0.25 QT
+             Where:  V = live volume of the sump in m3
+                     Q = single pump capacity in m3/sec
+                     T = on off cycle time in seconds = 3600 / starts per hour ... The
+                     number of starts per hour for the pump/motor shall be minimum 10 for
+                     smaller motors (Up to 30 Kw)"
+
+        THE Q IS ONE PUMP, NOT THE STATION - the clause's own preamble scopes it to "a
+        single constant-speed pump", and the parameter is named for it. Callers holding a
+        STATION duty must divide first, through `q_single_pump_ls()`; there is no way for
+        this function to tell the two apart, which is why the division has its own name."""
         s = self.WELL_STARTS_MIN if starts_per_hour is None else float(starts_per_hour)
         if s < self.WELL_STARTS_MIN:
             raise CriteriaError(
@@ -1182,6 +1235,24 @@ class Criteria:
                 "Table 5 gives a lateral 1 % minimum and a property connection 3 %. Applying "
                 "Table 11 to a tertiary pipe is a fivefold error - table11() raises below "
                 "DN200 rather than extrapolating into it.",
+            "Which Q is the 'single pump capacity' in the wet-well cycle":
+                "OPEN, AND IT CHANGES TWO PUBLISHED WELLS. G203-p48 sec 7.8 says "
+                "'Q = single pump capacity in m3/sec' and nothing more, and a station with "
+                "two duty pumps has TWO defensible readings of it. (a) the pump's SHARE of "
+                "the station duty, Q_DUTY_LS / n_duty - what W12 uses, published as "
+                "Q_PP_LS. (b) what one pump actually delivers running ALONE against the "
+                "rising main, published as Q_1PUMP, which is larger because the system head "
+                "is lower with one pump running; the classic cycle derivation (worst inflow "
+                "= half the PUMPING RATE) points at this one. MEASURED on the 43 published "
+                "stations 2026-09-06: the two coincide on all 41 Type 1 stations and differ "
+                "on the 2 Type 2s - 64.332 against 80.63 L/s, and 75.844 against 97.67. At "
+                "the published wells (5.7899 and 6.8259 m3) reading (b) gives 12.53 and "
+                "12.88 starts/h at worst inflow, ABOVE the 10/h this clause sets as the "
+                "minimum a motor shall take; holding 10/h on reading (b) needs 7.257 and "
+                "8.790 m3, +25 % and +29 %. W12 checks reading (a) because that is what "
+                "s7_pumps designs to. THE CHOICE IS THE ENGINEER'S AND IT IS NOT SETTLED - "
+                "recorded here rather than left as a comment, because a conflict silently "
+                "resolved is one nobody can find.",
         }
 
     @property
@@ -1384,6 +1455,28 @@ def _self_test(verbose: bool = True) -> None:
         pass
     else:                                                     # pragma: no cover
         raise AssertionError("below 10 starts/h must raise (G203-p48)")
+
+    # --- G203-p40 Table 17 duty pumps, and THE division the wet-well clause needs.
+    # The regression: G203-p48's Q is the SINGLE PUMP, so a Type 2 station's wet well is
+    # sized on half its duty and a Type 3's on a third. Feeding the station duty asks for a
+    # well 2x / 3x the clause's, which is what contract.validate() did until 2026-09-06.
+    assert (C.ps_duty_pumps("Type 1"), C.ps_duty_pumps("Type 2"),
+            C.ps_duty_pumps("Type 3")) == (1, 2, 3)
+    assert C.q_single_pump_ls(128.664, "Type 2") == 128.664 / 2.0
+    assert C.q_single_pump_ls(50.0, "Type 1") == 50.0        # Type 1: the two coincide
+    assert C.q_single_pump_ls(600.0, "Type 3") == 200.0
+    assert C.q_single_pump_ls(128.664, "Type 1", n_duty=2) == 128.664 / 2.0   # n_duty wins
+    # the published W12 Type 2 station, end to end: 5.7899 m3, not the 11.58 the station
+    # duty would have demanded
+    assert abs(C.well_volume_m3(C.q_single_pump_ls(128.664, "Type 2") / 1000.0, 10.0)
+               - 5.78988) < 1e-5
+    for bad_type in ("Type 4", "", "type 2"):
+        try:
+            C.ps_duty_pumps(bad_type)
+        except CriteriaError:
+            pass
+        else:                                                 # pragma: no cover
+            raise AssertionError(f"{bad_type!r} must raise, never default to one pump")
 
     # --- G201-p71: Merrimack is a mandatory formula above 100 properties, held below
     pf, meth = C.peak_factor(3000.0, 40)

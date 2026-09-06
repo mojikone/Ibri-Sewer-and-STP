@@ -620,14 +620,25 @@ def build(verbose: bool = True) -> Dict[str, object]:
         nodes_out["Q_PK_LS"] = node_q * M3D_TO_LS * node_pf + node_inf
         nodes_out["IS_OUTFALL"] = is_outfall.astype(int)
         nodes_out["DEAD_END"] = term_not_outfall.astype(int)
-        nodes_out["DELIVERED"] = F.reaches_outfall.astype(int)
+        # DELIVERED IS ONE QUESTION AND IT GETS ONE ANSWER (inheritance row 10).  It was
+        # `F.reaches_outfall` alone until 2026-09-06, and `Forest._trace` sets that flag on
+        # every node that reaches A TERMINAL - which, in a forest, is EVERY NODE.  The column
+        # was published 1 on all 10,183 rows: a constant dressed as a finding, the same class
+        # of defect as the 90-degree crossing angle on all 3,290 rows (tests/test_columns).
+        # A terminal is only a DELIVERY point if it is an OUTFALL; the 154 terminals that are
+        # dead ends take flow and pass it nowhere.  This is the arc column's own definition,
+        # written once and used for both, so the two cannot answer differently again.
+        delivered_node = F.reaches_outfall & is_outfall[np.clip(F.outfall_of, 0, None)]
+        nodes_out["DELIVERED"] = delivered_node.astype(int)
         nodes_out["TAU_FLAG"] = CRIT.tau_banner()
 
-        # what each arc ends up at
+        # what each arc ends up at.  An arc delivers where the node it DISCHARGES INTO does -
+        # for a branch arc that is where its own load lands, and for a route arc its
+        # downstream node is its upstream node's successor, so the two agree by construction.
         arc_outfall = np.where(F.outfall_of[F.av] >= 0,
                                nodes["NODE_ID"].to_numpy()[np.clip(F.outfall_of[F.av], 0, None)],
                                "")
-        delivered_arc = F.reaches_outfall[F.av] & is_outfall[np.clip(F.outfall_of[F.av], 0, None)]
+        delivered_arc = delivered_node[F.av]
         arcs["OUTFALL"] = np.where(delivered_arc, arc_outfall, "")
         arcs["DELIVERED"] = delivered_arc.astype(int)
         arcs["TAU_FLAG"] = CRIT.tau_banner()
