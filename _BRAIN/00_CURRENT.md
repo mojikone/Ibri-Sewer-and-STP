@@ -1,11 +1,41 @@
-# What is current, and what is not — checked 2026-09-03
+# What is current, and what is not — checked 2026-09-06
 
 **READ THIS FIRST, THEN `07_PROJECT_STATE.md`, THEN `08_DESIGN_PHILOSOPHY.md` BEFORE LAYING
-OUT ANY NETWORK.**
+OUT ANY NETWORK — and `09_INHERITANCE.md` + `10_ASBUILT_CALIBRATION.md` BEFORE STARTING A NEW `W#`.**
 
-## W11b IS THE LIVE DESIGN. W11a IS SUPERSEDED.
+## W12 IS THE LIVE DESIGN (started 2026-09-06). W11b IS SUPERSEDED.
 
-W11b borrows nothing — every module lives under `W11b/`. Run it from `W11b/py`:
+**W12 is a COPY of W11b, revised — not a rewrite.** 28 files inherited plus W11a's auditor;
+package renamed `w11b` -> `w12`; all compile and import. The user settled the rule on
+2026-09-06: *"where did I say do not carry the scripts from the previous working folder to the
+next? It is obvious the work is growing, not starting from scratch."* Sixteen inherited
+docstrings said "W12 BORROWS NOTHING" and were rewritten — that sentence is the invention that
+cost two iterations of lost work.
+
+### W12 is a CONCEPT-STAGE design. Everything stays pure hydraulic until the layout is fixed.
+
+| Rule (user, 2026-09-05/06) | What it means |
+|---|---|
+| **Follow the ground slope** | Laid slope is a clamp: never flatter than the guideline minimum, never steeper than the slope that meets max velocity, otherwise the ground's own fall |
+| **Drops carry a reason** | Fall the pipe cannot take goes to a drop at a manhole, each flagged with why it exists |
+| **Outfall at the lowest point** | A subnetwork joins the main pipe at the lowest point where it MEETS it. **No subnetwork crosses the main pipe and grows past it.** Where there is no street at the low point, connect at the nearest usable place and record the distance from the true low point |
+| **Main-pipe chambers nudge to road crossings** | Within the spacing band, so connections arrive square rather than oblique |
+| **Plot connectability, not house connections** | One simple gravity calculation per plot — the connection leaves BELOW ground, runs to a CHAMBER, and loses fall over its own length. Flag what cannot connect, with what it would take |
+| **Naming** | `I-S03-SM-M012` — town letter (articles dropped; both towns extend on a clash), subnetwork, tier, element, zero-padded. Elements outside a town take the first downstream town's letter |
+| **Switched OFF until the concept is approved** | House connection design (riders, laterals, PCC/HCC), motor sizing, life-cycle costing, the excavation-vs-pumping break-even, phasing and packages, SewerGEMS export, swept-channel detail |
+
+**The as-built calibration is now a `_BRAIN` file**, not a folder file: `10_ASBUILT_CALIBRATION.md`
+— 20 gates measured from the built 2006 network, six corrections to numbers in our own live
+documents, and the three data requests to NWS. It also settles that **a terminal is legal if it
+is the main pipe OR a pumping station with a designed rising main** (NAMA's 5A-1, a third of the
+built network, ends 6,754 m short of the works), which retires the standing criticism of W11b's
+18 subnetworks that stop short.
+
+---
+
+## Superseded — W11b (2026-09-03)
+
+W11b borrowed nothing — every module lives under `W11b/`. Run it from `W11b/py`:
 `s1_roads → s2_orient → s3_hierarchy → s4_chambers → s5_flows → s6_levels → s7_pumps →
 s8_export`, then `make_overview.py` for the KMZ and DXF.
 
