@@ -1566,8 +1566,10 @@ def cap_exits(net: Net, des: Design, cov_deep: np.ndarray, crit: Criteria = CRIT
 
     An excursion past the 12 m cap is allowed to stand when, walking downstream from the
     breaching chamber:
-        * the cover recovers below the cap within 500 m, or
-        * the run reaches a terminal within 1,000 m,
+        * the cover recovers below the cap within 500 m.
+    THE SECOND EXIT - "the run reaches a terminal within 1,000 m" - WAS WITHDRAWN BY THE
+    ENGINEER on 2026-09-06, after it turned out to be the only exit anything used: 1,362 of
+    1,362 breaches, median excursion 54 m, worst 19.98 m of cover.
     and it is WITHDRAWN when any chamber inside the excursion carries a drop or a cover past
     criteria.DROP_CEILING_M.  Stated as distance alone, an exit says nothing about how deep
     the excursion goes in between - and on 2026-09-02 that omission produced a chamber
@@ -1586,8 +1588,14 @@ def cap_exits(net: Net, des: Design, cov_deep: np.ndarray, crit: Criteria = CRIT
         while True:
             k = int(net.edge_of[cur])
             if k < 0 or des.station[cur]:
-                if d <= 1000.0:
-                    found = "outfall_1000m"
+                # THE 1,000 m OUTFALL EXIT IS WITHDRAWN - ENGINEER, 2026-09-06.
+                # It was the ONLY exit any breach ever used: all 1,362 chambers past the
+                # 12 m cap on the first W12 run came through here, none through the 500 m
+                # recovery. Median excursion 54 m, worst cover 19.98 m - i.e. it was not
+                # licensing long deep runs, it was licensing the last few chambers before an
+                # outfall to go as deep as they liked, because "nearly there" was accepted as
+                # a reason. A 20 m excavation is not made acceptable by being close to the
+                # end. Reaching a terminal is no longer an excuse; a breach here is a breach.
                 break
             d += float(net.elen[k])
             cur = int(net.ev[k])

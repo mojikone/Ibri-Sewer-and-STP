@@ -162,7 +162,26 @@ def conduit_full(r, us: str, ds: str) -> str:
 
 
 def chamber_key(r) -> str:
-    return f"{r.get('NAME', '-')}  {f(r.get('DEPTH_M'), 2, 'm')}"
+    # COVER, NOT DEPTH. DEPTH_M on the published node layer is GRD_M - INV_M and those two
+    # disagree on 11,707 of 56,943 chambers (21 %), giving depths from -152.13 m to
+    # +178.94 m - an invert above its own ground. COVER_M on the same rows is sane
+    # (1.30-19.98 m, no negatives), so the layer carries TWO INCONSISTENT LEVEL SOURCES and
+    # DEPTH_M faithfully reproduces the contradiction. Labelling with it put "-45.53m" on
+    # chambers in the drawing the engineer opened. Until the levels are reconciled the
+    # drawing shows the number that is trustworthy and MARKS the one that is not.
+    nm = r.get("NAME", "") or "(unnamed)"
+    return f"{nm}  cov {f(r.get('COVER_M'), 2, 'm')}{_depth_flag(r)}"
+
+
+def _depth_flag(r) -> str:
+    """'  !DEPTH' when GRD_M - INV_M is not a physically possible depth."""
+    try:
+        d = float(r.get("DEPTH_M"))
+        if math.isnan(d):
+            return "  !DEPTH?"
+        return "" if 0.0 <= d <= 25.0 else "  !DEPTH"
+    except (TypeError, ValueError):
+        return "  !DEPTH?"
 
 
 def chamber_full(r) -> str:
@@ -178,7 +197,8 @@ def chamber_full(r) -> str:
             f"{r.get('NODE_KIND', '')}  {r.get('TIER', '')}\\P"
             f"GL {f(r.get('GRD_M'), 3, '')}\\P"
             f"IL {inv}\\P"
-            f"depth {f(r.get('DEPTH_M'), 2, ' m')}  cover {f(r.get('COVER_M'), 2, ' m')}"
+            f"cover {f(r.get('COVER_M'), 2, ' m')}   depth {f(r.get('DEPTH_M'), 2, ' m')}"
+            f"{_depth_flag(r)}"
             f"{dl}")
 
 
@@ -264,7 +284,20 @@ def build(theme: str, scale: int) -> str:
     th, leader, offs = S["text"], S["leader"], S["offset"]
 
     nodes = gpd.read_file(GPKG, layer="nodes")
+    # BOTH REACH LAYERS. The export publishes levelled reaches in `reaches` (26,579,
+    # 711.8 km) and the rest in `reaches_unlevelled` (30,088, 777.7 km). Drawing only the
+    # first left 777.7 km - more than half the network - off the drawing, which the engineer
+    # spotted immediately as pipes that do not join up. A drawing that silently omits half
+    # its subject is worse than no drawing.
     reach = gpd.read_file(GPKG, layer="reaches")
+    reach["LEVELLED"] = 1
+    try:
+        unl = gpd.read_file(GPKG, layer="reaches_unlevelled")
+        unl["LEVELLED"] = 0
+        reach = pd.concat([reach, unl], ignore_index=True)
+        reach = gpd.GeoDataFrame(reach, geometry="geometry", crs=unl.crs)
+    except Exception as e:
+        print(f"    WARNING: reaches_unlevelled not read ({e}) - the drawing is INCOMPLETE")
     stn = gpd.read_file(GPKG, layer="stations")
     rms = gpd.read_file(GPKG, layer="rising_mains")
     try:

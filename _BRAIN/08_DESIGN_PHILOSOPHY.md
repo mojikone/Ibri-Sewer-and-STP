@@ -275,7 +275,17 @@ a rewrite lost it, which is the argument for writing it here rather than in code
 Layers 1 and 2 can only ever **add** a station within a pass. The economics can only make you pump
 **earlier**, never later.
 
-**Past the cap, two exits — either alone is sufficient, and BOTH are bounded twice:**
+**PAST THE CAP, ONE EXIT. The second was WITHDRAWN by the engineer on 2026-09-06.**
+
+*The withdrawn exit was "the run reaches the outfall — works or an existing station — within
+1,000 m". It was the ONLY exit anything ever used: on the first W12 run **all 1,362 chambers
+past the 12 m cap came through it and none through the 500 m recovery**. Median excursion
+**54 m**, worst cover **19.98 m**. So it was not licensing long deep runs — it was licensing
+the last few chambers before an outfall to go as deep as they liked, because "nearly there"
+counted as a reason. A 20 m excavation is not made acceptable by being close to the end.
+Kept struck rather than deleted, per rule 12.*
+
+~~**Past the cap, two exits — either alone is sufficient, and BOTH are bounded twice:**~~
 
 - the cover **recovers within 500 m**, or
 - the run **reaches the outfall** — works or an existing station — **within 1,000 m**
