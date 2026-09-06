@@ -21,9 +21,19 @@ station demands.
     2  ACCUMULATE flow down the tree - QADF, properties, upstream length - then the peak
        factor and the unpeaked infiltration.  ONE accumulator, checked against s5_flows'
        published answer on s5's own graph before it is used on ours.
-    3  PASS 1, STRICT.  Every reach laid at the SHALLOWEST legal profile: the steeper of
-       Table 11 and the tractive minimum, steepened only where the ground falls fast enough
-       to let the pipe come back up to 1.30 m of cover.  Crown matching at every chamber.
+    3  PASS 1 - THE CLAMP.  THE PIPE FOLLOWS THE GROUND (concept rule 1, engineer
+       2026-09-05/06):
+
+           s_laid = clamp(s_ground, s_min_guideline(own bore, own flow), s_max_velocity)
+
+       Never flatter than the steeper of G203-p29 Table 11 and the tractive minimum for its
+       OWN bore and flow.  Never steeper than the gradient at which G203-p27's 3.0 m/s is
+       reached.  Otherwise the ground's own fall, rounded UP to the 0.05 % step.  Where the
+       ground outruns the pipe the gradient that meets the cap is laid and the surplus fall
+       is taken as a DROP at the chamber, flagged DROP_WHY = 'velocity_cap'.  Crown matching
+       at every chamber.  Until 2026-09-06 this stage instead steepened every reach until it
+       surfaced at 1.30 m of cover, which is levelling as arithmetic and flattens the tier
+       depth spread the as-built calibration is measured on.
     4  PASS 2, REVIEW.  The gradient a person would have drawn: a run of pass-through
        chambers takes ONE gradient (P1) laid to land on the level its downstream chamber
        actually needs, so the fall is spent along the run instead of being thrown away in a
@@ -35,9 +45,19 @@ station demands.
        inside the cap on the branch that is dragging the network down - the foot of the
        excursion - never at the junction it ends at.  Then the whole thing is re-levelled,
        and it repeats until no breach is left.
-    6  DROPS.  Backdrop over 0.60 m, vortex drop shaft over 2.00 m (G203-p30).  The count is
-       THE diagnostic for a tree that is not following the ground, and it is printed on the
+    6  DROPS.  Backdrop over 0.60 m, vortex drop shaft over 2.00 m (G203-p30).  EVERY DROP
+       CARRIES THE REASON IT EXISTS in DROP_WHY - velocity_cap, tier_step, cover_recovery or
+       obstruction (A-LEV-15) - and the count by reason is published.  A drop on a STRAIGHT
+       RUN is a hard failure and the stage refuses to publish, with one exemption: the drop
+       concept rule 1 itself creates where the ground outruns the pipe.  The count is THE
+       diagnostic for a tree that is not following the ground, and it is printed on the
        front page beside NAMA's own.
+    6a WHAT WAS ADDED AND WHAT WAS TAKEN AWAY.  Anything a pass can ADD, a later pass must
+       be able to TAKE AWAY, and the stage publishes how many it removed (philosophy sec 5,
+       inheritance ledger row 4).  Two things here are removable: stations, which the outer
+       loop only ever adds and `solve`'s prune takes back out, and drops, which pass 1 adds
+       and pass 2 removes by spending the fall along the run.  Both counts are in
+       `removal_table` and on the front page.
     7  PUBLISH through `contract.publish`, which validates before it writes, then re-read
        the file and re-derive every headline from it.
 
@@ -332,6 +352,56 @@ ASSUMPTIONS: Tuple[Dict[str, str], ...] = (
          IF_WRONG="The reaches short of 1.50 m on wadi ground are counted in `wadi_h1a` and "
                   "named as a shortfall against OUR rule, not the guideline's.",
          KIND="project decision", SOURCE="G203-p52 8.2.4; philosophy H1a note 3"),
+    dict(ID="A-LEV-15",
+         WHAT="The four DROP_WHY words are mapped onto what this stage measures like this: "
+              "velocity_cap = the chamber was SUNK for its own outgoing reach because the "
+              "ground outruns the pipe AND THE CAP ACTUALLY BIT (`des.cliff` > 0, which is "
+              "set only where `capped`); tier_step = the drop IS the crown step at a size "
+              "change, within the 20 mm laying tolerance - INCLUDING the sinking a bigger "
+              "outgoing bore forces because its minimum-cover datum is deeper "
+              "(`des.step_sink`), which is bounded by the same crown step; cover_recovery = "
+              "the arriving run stayed at its own cover and hands the difference over at "
+              "the chamber; obstruction = a level fixed from OUTSIDE the design, which this "
+              "stage never produces.",
+         WHY="Concept rule 1 says every drop carries the reason it exists, and "
+             "contract.DROP_WHY fixes the vocabulary at four words. The mapping from "
+             "physics to word is a DECISION, so it is written down rather than implied by "
+             "the code. Cause before symptom: a chamber sunk for a cliff would also look "
+             "like a junction drop, so the cliff is tested first.",
+         IF_WRONG="`drop_reason_table` publishes the count, the total metres and the "
+                  "junction split for every word, so a mis-mapping shows as a class that "
+                  "is empty or that swallows everything. contract.validate() independently "
+                  "REFUSES a DROP_WHY column that is constant across every drop.",
+         KIND="project decision", SOURCE="contract.DROP_WHY; philosophy sec 9"),
+    dict(ID="A-LEV-16",
+         WHAT="No bore below DN200 is emitted, so G203-p29 Table 11 covers every published "
+              "reach and no minimum-gradient floor has to be invented.",
+         WHY="criteria.DN_SERIES starts at 200 (G203-p22 Table 6: OD200 minimum for a "
+             "lateral AND for a main) and `choose_size` never looks below DN_SERIES[0]. "
+             "Table 11 PRESCRIBES NOTHING BELOW DN200 - the as-built study found NAMA's "
+             "built network is 61.5 % OD160 by length, laid to a minimum the guideline does "
+             "not print for it.",
+         IF_WRONG="`assert_bore_floor_declared` RAISES if the series is ever extended down. "
+                  "The floor would then be G203-p18 Table 5 - rider and lateral 1 % to "
+                  "10 %, property connection 3 % to 10 % - and it would be an ASSUMPTION, "
+                  "not a citation, because Table 5's 'lateral' is G203's 45 m tertiary pipe "
+                  "and ours is a street run (philosophy sec 4 vocabulary note).",
+         KIND="ASSUMPTION (declared, currently unused)", SOURCE="G203-p29 Tab 11; p18 Tab 5"),
+    dict(ID="A-LEV-17",
+         WHAT="PASS 2 may lay a run STEEPER than concept rule 1's clamp, up to the same "
+              "velocity cap, so that it lands on the level its junction needs instead of "
+              "dropping into it.",
+         WHY="Rule 1 clamps the gradient between the guideline minimum and the velocity "
+             "cap and says the ground's fall otherwise; it says nothing about a run whose "
+             "END is deeper than a ground-following profile delivers. Philosophy P1 wants "
+             "one gradient across a run and philosophy sec 4 makes the drop count THE "
+             "diagnostic, so spending the fall along the run beats a vortex shaft at the "
+             "bottom of it. The clamp's CEILING still holds everywhere - `relay` bounds "
+             "every arm by `_hi_bound`.",
+         IF_WRONG="`clamp_table` publishes the share of length pass 2 steepened, so the "
+                  "cost of this reading is a number. Removing it puts the drops back: "
+                  "measured 2026-09-03 on the same network, vortex shafts 1,781 -> 196.",
+         KIND="method", SOURCE="philosophy sec 9 rule 1 + P1 + sec 4"),
 )
 
 
@@ -378,6 +448,22 @@ CONFLICTS: Tuple[Dict[str, str], ...] = (
                 "ground) both become the contract's 'provisional', which is what philosophy "
                 "sec 4 calls a platted reserve.",
          WHO="s1_roads / contract.SRC, contract.CONFIDENCE"),
+    dict(ID="C-LEV-5",
+         WHAT="A-LEV-3 - 'a reach is never smaller than the reach immediately upstream of "
+              "it' - is DECLARED AND NOT ENFORCED.",
+         DETAIL="`pass1` calls `choose_size(..., dn_floor=_DN0)` on every reach, so the "
+                "floor is always the smallest size in the series and never the upstream "
+                "diameter; and A-LEV-3 cites a function `sizing_reason` that does not exist "
+                "in this module. FOUND WHILE TESTING THE CLAMP, and reproducible in three "
+                "chambers: at 30 L/s a reach on 12 mm/m ground needs DN250 to stay inside "
+                "its d/D limit, while the reach below it - same flow, on ground steep "
+                "enough to be held at the velocity cap - carries the flow in a DN200. So "
+                "the design can publish a DN250 discharging into a DN200, and a "
+                "constriction in a gravity sewer is a blockage waiting to happen. NOT FIXED "
+                "HERE: it is a SIZING change that would move diameters across the whole "
+                "network, which is not what this revision was asked to do. The evidence is "
+                "held in tests/test_levels_clamp.py so the gap cannot be lost again.",
+         WHO="s6_levels.pass1 / A-LEV-3"),
 )
 
 
@@ -653,6 +739,10 @@ def _rebuild_tables(crit: Criteria) -> None:
     """Re-derive the lookup tables for a sensitivity run.  Called only by `--sweep`, which
     passes a different Criteria object; the design basis is never edited in place."""
     global _SERIES, _OD, _ID, _DMIN, _T11, _DODL, _STEP, _DN0, _SMAX_CACHE, _VCAP_CACHE
+    # BEFORE the tables are built, not after: `criteria.table11()` raises on a bore under
+    # 200 in its own words, and the reader needs THIS stage's words - which floor would have
+    # to be declared, and that it would be an assumption rather than a citation (A-LEV-16).
+    assert_bore_floor_declared(crit)
     _SERIES = list(crit.DN_SERIES)
     _OD = {d: crit.outside_diameter(d) for d in _SERIES}
     _ID = {d: crit.internal_diameter(d) for d in _SERIES}
@@ -663,6 +753,34 @@ def _rebuild_tables(crit: Criteria) -> None:
     _DN0 = _SERIES[0]
     _SMAX_CACHE = {}
     _VCAP_CACHE = {}
+
+
+def assert_bore_floor_declared(crit: Criteria = CRIT) -> None:
+    """G203-p29 TABLE 11 STARTS AT DN200 AND PRESCRIBES NOTHING BELOW IT (A-LEV-16).
+
+    The as-built study found the built network is 61.5 % OD160 by length - below the OD200
+    minimum G203-p22 Table 6 sets for a lateral or a main - and Table 11 has no row for it.
+    So the moment this stage emits a bore under 200 it is laying pipe to a minimum gradient
+    the guideline does not print, and the floor it uses would be an ASSUMPTION that must be
+    declared, not a page that can be cited.
+
+    W12 does not emit one: `criteria.DN_SERIES` starts at 200 and `choose_size` never looks
+    below `DN_SERIES[0]`.  This raises rather than inventing a floor if that ever changes,
+    and A-LEV-16 records what the declared floor would have to be.
+
+    It reads the SERIES IT IS HANDED, not the module's cached one, so it can be run before
+    the tables are rebuilt - which is the only moment at which its message is the one the
+    reader sees."""
+    dn0 = min(crit.DN_SERIES)
+    if dn0 < crit.DN_MIN_LATERAL:
+        raise K.ContractError(
+            f"the diameter series starts at DN{dn0}, below the DN{crit.DN_MIN_LATERAL} "
+            "minimum G203-p22 Table 6 sets for a lateral or a main - and G203-p29 Table 11 "
+            "PRESCRIBES NO MINIMUM GRADIENT BELOW DN200. A bore under 200 is the TERTIARY "
+            "network, where G203-p18 Table 5 governs with percentage slopes (rider and "
+            "lateral 1-10 %, property connection 3-10 %) in a DIFFERENT tier vocabulary "
+            "from ours. Laying it to Table 11's 5.00 mm/m would be inventing a number. "
+            "Declare the floor in ASSUMPTIONS (A-LEV-16) before extending the series down.")
 
 
 def ceil_step(s: float) -> float:
@@ -737,40 +855,72 @@ def vmax_slope(dn: int, q: float, crit: Criteria = CRIT) -> Optional[float]:
 
 def choose_size(q: float, inv_up: Optional[float], grd_up: float, grd_dn: float,
                 length: float, dn_floor: int, crit: Criteria = CRIT
-                ) -> Tuple[int, float, float, str, float, bool]:
-    """PASS 1's decision for one reach.
-    Returns (DN, S laid, S minimum, sized_by, INV_UP, capped-by-velocity).
+                ) -> Tuple[int, float, float, str, float, bool, str]:
+    """PASS 1's decision for one reach - THE CLAMP.
+    Returns (DN, S laid, S minimum, sized_by, INV_UP, capped-by-velocity, clamp arm).
 
-    The rule, in the order the philosophy states it:
+    CONCEPT RULE 1 (engineer 2026-09-05/06; philosophy sec 9).  The laid slope is a clamp
+    on the GROUND's own fall:
 
-      * LAY AS SHALLOW AS H3 ALLOWS.  The shallowest legal downstream invert is
-        `grd_dn - invert_depth_min(dn)`, so `S_shallow` is the flattest gradient that does
-        not leave less than 1.30 m of cover at the downstream end.  Where the ground falls
-        faster than the pipe needs, this is what lets the pipe climb back towards the
-        surface instead of carrying its depth to the sea.
-      * never flatter than the STEEPER of Table 11 and the tractive minimum (G203-p27).
-      * never faster than 3.0 m/s (G203-p27 4.2.2.2) - and where the ground is steeper than
-        that allows, the pipe does NOT follow the cliff.
+        s_laid = clamp(s_ground, s_min_guideline(own bore, own flow), s_max_velocity)
+
+      * `s_ground` is (grd_up - grd_dn) / length, taken along THIS reach.  Negative where
+        the ground rises along the direction of flow.
+      * `s_min` is the STEEPER of G203-p29 Table 11 for the reach's OWN bore and the
+        tractive minimum for its OWN flow (G203-p27 4.2.2.1).  The two are alternatives and
+        the guideline says the steeper governs.
+      * `s_max` is the gradient at which the pipe reaches G203-p27 4.2.2.2's 3.0 m/s, and
+        the contract's own 25 % bound on a publishable gradient, whichever bites first.
+      * OTHERWISE THE GROUND'S OWN FALL.  Where the ground outruns the pipe the gradient
+        that exactly meets the cap is laid and the surplus fall is taken as a DROP at the
+        chamber (`pass1`'s cliff rule), carrying DROP_WHY = 'velocity_cap'.
+
+    WHAT THIS REPLACED, AND WHY IT MATTERS.  Until 2026-09-06 the target was
+    `max(s_min, s_shallow)`, where `s_shallow` was the gradient that brings a deep pipe back
+    up to 1.30 m of cover WITHIN THIS ONE REACH.  At a head the two are identical, because
+    the head starts at minimum cover and `s_shallow` is then exactly the ground slope.
+    Everywhere else `s_shallow` is STEEPER than the ground, so a pipe that inherited depth
+    at a junction was steepened until it surfaced - levelling as arithmetic.  It flattens
+    the tier spread the as-built calibration is measured on (lateral 1.395 / trunk 3.004 /
+    sub-main 4.010 m of cover; `_BRAIN/10_ASBUILT_CALIBRATION.md`), because every tier is
+    dragged back to the minimum as fast as the velocity cap allows.  Following the ground
+    keeps the depth a junction hands over, which is what makes a sub main a sub main.
+
+    ROUNDING IS ALWAYS UP (`ceil_step`), never to the nearest step.  Rounding down would put
+    the laid gradient below the ground's fall by up to half a step (0.25 mm/m), and on a
+    reach starting at exactly 1.30 m of cover that is a reach ending BELOW minimum cover -
+    an H3 breach bought by a rounding rule.  Rounding up costs at most 0.5 mm/m of extra
+    fall, which is 0.05 m of depth over a 100 m reach, and it makes "cover never decreases
+    downstream while the cap is not biting" a structural property rather than a hope.
+
       * the diameter is the smallest in the series, at or above the floor, that carries the
         flow inside its own depth-of-flow limit at that gradient.  It is NEVER chosen to buy
         a flatter gradient (G203-p29; Ten States 33.43).
 
     `inv_up` is None at a head, where the upstream invert is itself set by the minimum cover
     for the diameter being tried - which is why the diameter loop has to own it."""
+    s_ground = (grd_up - grd_dn) / length
     cands = [d for d in _SERIES if d >= dn_floor]
     for pos, dn in enumerate(cands):
         iv = (grd_up - _DMIN[dn]) if inv_up is None else inv_up
         s_min = max(_T11[dn], HY.smin_tractive(q, crit))
-        s_shallow = (iv - (grd_dn - _DMIN[dn])) / length
-        S = ceil_step(max(s_min, s_shallow))
+        # ---- THE CLAMP ---------------------------------------------------------------
+        if s_ground < s_min:
+            S = ceil_step(s_min)
+            clamp_by = "minimum"
+        else:
+            S = ceil_step(s_ground)
+            clamp_by = "ground"
         capped = False
         if S > SLOPE_HARD_MAX:
             S = floor_step(SLOPE_HARD_MAX)
             capped = True
+            clamp_by = "vmax"
         sc = vmax_slope(dn, q, crit)
         if sc is not None and S > sc:
             S = sc
             capped = True
+            clamp_by = "vmax"
         # H7 is a HARD constraint and 3.004 m/s is not 3.0 m/s.  vmax_slope caches against a
         # flow rounded to 0.1 L/s, so the cap it returns is verified HERE at this reach's own
         # flow before the gradient is accepted.
@@ -780,6 +930,13 @@ def choose_size(q: float, inv_up: Optional[float], grd_up: float, grd_dn: float,
                 break
             S = floor_step(S - _STEP / 2)
             capped = True
+            clamp_by = "vmax"
+        # The cap has driven the gradient below this bore's own minimum: the two ends of the
+        # clamp have crossed and no gradient satisfies both.  The answer is a BIGGER BORE -
+        # which has a flatter Table 11 minimum AND reaches 3.0 m/s later - and that is the
+        # next candidate, not a relaxed constraint.  It is the one place a diameter moves for
+        # a reason that is not capacity, and it moves UP, so G203-p29's prohibition on
+        # oversizing to lay FLATTER is not engaged.
         if S < s_min or not carries(dn, S, q, crit):
             continue
         # WHY this size, in hydra.size_pipe()'s own vocabulary and evaluated at the gradient
@@ -796,14 +953,13 @@ def choose_size(q: float, inv_up: Optional[float], grd_up: float, grd_dn: float,
                 why = "dod"
             else:
                 why = "velocity"
-        return dn, S, s_min, why, iv, capped
+        return dn, S, s_min, why, iv, capped, clamp_by
     # the whole series is too small at any legal gradient.  Named, never clamped silently.
     dn = _SERIES[-1]
     iv = (grd_up - _DMIN[dn]) if inv_up is None else inv_up
     s_min = max(_T11[dn], HY.smin_tractive(q, crit))
-    S = min(ceil_step(max(s_min, (iv - (grd_dn - _DMIN[dn])) / length)),
-            floor_step(SLOPE_HARD_MAX))
-    return dn, S, s_min, "infeasible", iv, True
+    S = min(ceil_step(max(s_min, s_ground)), floor_step(SLOPE_HARD_MAX))
+    return dn, S, s_min, "infeasible", iv, True, "infeasible"
 
 
 # ======================================================================================
@@ -814,8 +970,9 @@ class Design:
     """The levelled network.  Every array is indexed BY NODE and describes the reach LEAVING
     that node, except `drop`, which describes what ARRIVES at it."""
 
-    __slots__ = ("inv", "dn", "slope", "smin", "sized_by", "grad_by", "drop", "station",
-                 "uniform", "absorbed", "capped", "cliff", "passes", "notes")
+    __slots__ = ("inv", "dn", "slope", "smin", "sized_by", "grad_by", "drop", "drop_why",
+                 "station", "uniform", "absorbed", "capped", "clamp_by", "cliff",
+                 "step_sink", "passes", "notes")
 
     def __init__(self, n: int):
         self.inv = np.full(n, np.nan)
@@ -825,11 +982,22 @@ class Design:
         self.sized_by = np.array([""] * n, dtype=object)
         self.grad_by = np.array([""] * n, dtype=object)
         self.drop = np.zeros(n)
+        self.drop_why = np.array([""] * n, dtype=object)   # contract.DROP_WHY, per chamber
         self.station = np.zeros(n, dtype=bool)
         self.uniform = np.zeros(n, dtype=bool)      # took its run's common gradient (P1)
         self.absorbed = np.zeros(n, dtype=bool)     # steepened to swallow a drop
         self.capped = np.zeros(n, dtype=bool)       # gradient held back by the velocity cap
+        # which arm of concept rule 1's clamp set the gradient: 'ground' (the ground's own
+        # fall), 'minimum' (the guideline floor for this bore and flow), 'vmax' (the 3.0 m/s
+        # cap or the 25 % publishing bound), 'infeasible' (no size in the series works).
+        self.clamp_by = np.array([""] * n, dtype=object)
         self.cliff = np.zeros(n)                    # m the chamber was deepened for a cliff
+        # m the chamber was deepened because its OUTGOING BORE IS BIGGER and needs a deeper
+        # minimum-cover datum.  A DIFFERENT CAUSE from `cliff`, kept apart from it because
+        # mixing the two published 'velocity_cap' on ordinary size changes and switched pass 2
+        # off on every run containing one.  Bounded by the crown step, and subsumed by
+        # `enforce_crowns` - it moves no level.
+        self.step_sink = np.zeros(n)
         self.passes = 0
         self.notes: Dict = {}
 
@@ -839,7 +1007,13 @@ class Design:
 # ======================================================================================
 
 def pass1(net: Net, qpk: np.ndarray, station: np.ndarray, crit: Criteria = CRIT) -> Design:
-    """The shallowest legal profile, laid upstream-first.
+    """THE PIPE FOLLOWS THE GROUND, laid upstream-first (concept rule 1).
+
+    Every reach takes `choose_size`'s clamp - the ground's own fall, held between the
+    guideline minimum for its own bore and the slope that meets 3.0 m/s.  A head starts at
+    1.30 m of cover; everything below inherits the level its upstream chamber hands it and
+    keeps whatever depth the ground has already cost, because THIS STAGE NO LONGER STEEPENS
+    A REACH TO SURFACE IT.  That is what gives the tiers their depth spread.
 
     At every chamber the outgoing invert is the HIGHEST level satisfying BOTH:
         * 1.30 m of cover on its own outside diameter (G203-p33), and
@@ -862,26 +1036,58 @@ def pass1(net: Net, qpk: np.ndarray, station: np.ndarray, crit: Criteria = CRIT)
         L = float(net.elen[k])
         q = float(qpk[i]) / 1000.0
         iv0 = None if math.isnan(des.inv[i]) else float(des.inv[i])
-        d, S, sm, why, iv, capped = choose_size(
+        d, S, sm, why, iv, capped, clamp_by = choose_size(
             q, iv0, float(net.grd[i]), float(net.grd[j]), L, _DN0, crit)
         if math.isnan(des.inv[i]):
             des.inv[i] = iv
-        # THE CLIFF RULE.  Where the ground falls faster than the pipe is allowed to - the
-        # velocity cap, or the contract's own 25 % bound on a published gradient - a reach
-        # laid from 1.30 m of cover at the top surfaces before it reaches the bottom.  The
-        # philosophy's answer is not to chase the cliff but to take the difference at a drop
-        # chamber; the chamber is at the TOP, so this deepens THIS chamber until the reach
-        # still has its cover at the far end.  The step it creates is a real drop and is
-        # counted as one.
+        # THE CLIFF RULE - concept rule 1's second half, and the ONLY place a drop is
+        # MANUFACTURED rather than inherited.  Where the ground falls faster than the pipe is
+        # allowed to - the 3.0 m/s cap, or the contract's own 25 % bound on a published
+        # gradient - a reach laid from 1.30 m of cover at the top surfaces before it reaches
+        # the bottom.  The answer is not to chase the cliff: the gradient that exactly meets
+        # the cap is laid and THE SURPLUS FALL IS TAKEN AS A DROP AT THE CHAMBER.  The
+        # chamber is the one at the TOP, because a reach must already be deep enough at its
+        # upstream end to still have cover at its downstream end - dropping at the bottom
+        # instead would surface the pipe along the way.  `des.cliff[i]` is the surplus, and
+        # `drop_reasons` reads it to write DROP_WHY = 'velocity_cap'.
+        #
+        # A SECOND, DIFFERENT THING SINKS THE SAME CHAMBER, and until 2026-09-06 the two were
+        # recorded as one.  Where the OUTGOING BORE IS BIGGER than the pipe arriving, its
+        # minimum-cover datum `_DMIN[d]` is deeper by exactly the crown step, so the ceiling
+        # drops by that step and the chamber is sunk - on flat ground, with the pipe laid at
+        # the ground's own fall and NOTHING capped.  Nothing outran anything; the pipe grew.
+        # Calling that a cliff was wrong three ways, and all three were measured:
+        #   * DROP_WHY published 'velocity_cap' on an ordinary size change, because
+        #     `drop_reasons` tests the cliff first (A-LEV-15's cause-before-symptom order);
+        #   * `relay` skips any run containing a cliff, so pass 2 - the pass that took the
+        #     vortex count from 1,781 to 196 - was silently switched off on every run that
+        #     contained a bore step-up.  Measured on 300 random branched networks: 86
+        #     size-step chambers mislabelled and 47 runs dropped from pass 2 for that reason
+        #     ALONE, with no cap anywhere in them;
+        #   * the headline row "chambers deepened for a cliff" counted them.
+        # The sinking itself is KEPT, because H3 must never depend on a later pass - but it
+        # changes no level: for an uncapped reach the surplus is bounded by the crown step
+        # (surplus = L(s_ground - S) + (OD_out - OD_in) + (1.30 - cover_in), with S >=
+        # s_ground and cover_in >= 1.30), and `enforce_crowns` then lowers the chamber to the
+        # crown-matched level, which is at or below the ceiling.  Verified by re-running
+        # pass 1 + enforce_crowns with the uncapped sinking removed: worst invert difference
+        # 0.000e+00 m over 300 networks (tests/test_levels_review.py).  So it is recorded
+        # SEPARATELY, in `des.step_sink`, published as STEP_SINK_M and counted in the
+        # headline - not dropped, and not mixed into the cliff.
         inv_ceiling = (net.grd[j] - _DMIN[d]) + L * S
         if des.inv[i] > inv_ceiling + 1e-9:
-            des.cliff[i] = float(des.inv[i] - inv_ceiling)
+            surplus = float(des.inv[i] - inv_ceiling)
             des.inv[i] = inv_ceiling
+            if capped:
+                des.cliff[i] = surplus
+            else:
+                des.step_sink[i] = surplus
         des.dn[i] = d
         des.slope[i] = S
         des.smin[i] = sm
         des.sized_by[i] = why
         des.capped[i] = bool(capped)
+        des.clamp_by[i] = clamp_by
         arr = des.inv[i] - L * S
         # crown matching on the arriving pipe's own OD; `enforce_crowns` re-imposes the
         # exact rule once the outgoing diameter at j is known.
@@ -944,6 +1150,58 @@ def set_drops(net: Net, des: Design) -> None:
     once, from the published inverts and nowhere else."""
     hi, _ = arrivals(net, des)
     des.drop = np.where(hi > -1e17, np.maximum(0.0, hi - des.inv), 0.0)
+
+
+def drop_reasons(net: Net, des: Design, crit: Criteria = CRIT) -> np.ndarray:
+    """DROP_WHY at every chamber - CONCEPT RULE 1: *every drop carries the reason it exists*.
+
+    A drop with no reason cannot be told from a levelling error, and the drop count is the
+    diagnostic for a tree that is not following the ground (philosophy sec 4).  The four
+    words are `contract.DROP_WHY` and the mapping onto what this stage actually does is a
+    DECLARED ASSUMPTION (A-LEV-15), not an implied one:
+
+      velocity_cap    the chamber was SUNK because its own outgoing reach is on ground the
+                      pipe may not follow - `des.cliff` > 0, WHICH IS NOW ONLY SET WHERE THE
+                      CAP ACTUALLY BIT.  This is the drop concept rule 1 creates, and the
+                      only one this stage manufactures.
+      tier_step       the drop IS the crown step at a size change - the outgoing pipe is
+                      bigger, its soffit is matched to the arriving one (A-LEV-4), and the
+                      invert difference is OD_out - OD_in.  Nothing fell; the pipe grew.
+                      A BIGGER BORE ALSO NEEDS A DEEPER MINIMUM-COVER DATUM, so pass 1 sinks
+                      the chamber by up to the same crown step (`des.step_sink`).  That is
+                      this cause, not a cliff, and until 2026-09-06 it was published as
+                      'velocity_cap' on flat ground with nothing capped anywhere near it.
+      cover_recovery  the arriving run stayed at its own cover and hands the difference
+                      over here rather than carrying it - the alternative to pass 2
+                      spending the fall along the run.  This is the ordinary junction drop,
+                      and it is where NAMA's 120-of-121 drops sit.
+      obstruction     a level fixed from OUTSIDE the design - a tie-in, an existing
+                      structure, a crossing.  NOT PRODUCED AT CONCEPT: A-LEV-7 records that
+                      no tie-in invert is confirmed and TIE_TYPE is 'none' on every reach.
+                      It is published as a zero count rather than omitted, so the reader can
+                      see it was considered and is empty for a stated reason.
+
+    The order matters and it is cause-before-symptom: a chamber sunk for a cliff would also
+    look like a junction drop, so the cliff is tested first.
+    """
+    hi, who = arrivals(net, des)
+    why = np.array([""] * net.n, dtype=object)
+    tol = crit.LAY_TOLERANCE_M                    # 20 mm, G203-p29 4.3.1 - the laying
+    for j in range(net.n):                        # tolerance is the right grain for "is
+        if des.drop[j] <= 0.0:                    # this step exactly the crown step?"
+            continue
+        if des.cliff[j] > 1e-9:
+            why[j] = "velocity_cap"
+            continue
+        i = int(who[j])
+        d_in = int(des.dn[i]) if i >= 0 and des.dn[i] else 0
+        d_out = int(des.dn[j]) if des.dn[j] else 0
+        step = (_OD[d_in] - _OD[d_out]) if (d_in and d_out) else 0.0
+        if step < 0.0 and des.drop[j] <= -step + tol:
+            why[j] = "tier_step"                  # the pipe grew; nothing fell
+        else:
+            why[j] = "cover_recovery"
+    return why
 
 
 def covers(net: Net, des: Design, crit: Criteria = CRIT) -> Tuple[np.ndarray, np.ndarray]:
@@ -1070,9 +1328,14 @@ def _walk(net: Net, des: Design, chain: List[int], slopes: Sequence[float]) -> L
 def relay(net: Net, des: Design, qpk: np.ndarray, crit: Criteria = CRIT) -> Dict[str, float]:
     """PASS 2 over every run.  Returns the diagnostics the report prints."""
     runs = build_runs(net, des)
+    # every counter is SEEDED AT ZERO.  `skipped_capped` and `fallback_vmax` used to appear
+    # in the report only on the runs where they fired, and a row that is absent reads as
+    # "not measured" rather than "measured, none" - the same argument the removal ledger
+    # makes.  `skipped_capped` in particular is how much of pass 2 did not happen, and pass 2
+    # is what takes the vortex count from 1,781 to 196.
     stat = dict(runs=len(runs), uniform=0, late=0, untouched=0, reaches_uniform=0,
                 reaches_absorbed=0, fall_recovered_m=0.0, fallback_cap=0,
-                run_len_max_m=0.0)
+                fallback_vmax=0, skipped_capped=0, run_len_max_m=0.0)
     max_cov = crit.MAX_COVER
     for chain in runs:
         m = len(chain) - 1
@@ -1084,7 +1347,14 @@ def relay(net: Net, des: Design, qpk: np.ndarray, crit: Criteria = CRIT) -> Dict
             # cliff, is at its limit: re-laying the run would either raise the cliff chamber
             # back up or ask for a gradient the reach may not have.  Left as pass 1 laid it,
             # and counted.
-            stat["skipped_capped"] = stat.get("skipped_capped", 0) + 1
+            #
+            # `des.cliff` IS NOW THE CAP'S CLIFF ONLY.  A chamber sunk because its outgoing
+            # bore grew is in `des.step_sink`, and it must NOT stop the run being relaid:
+            # that sinking is bounded by the crown step and `_walk` reproduces it exactly
+            # through crown matching, so there is nothing for pass 2 to undo.  Counting it
+            # here cost 47 runs in 300 synthetic networks - runs with no cap anywhere in
+            # them - and pass 2 is the pass that takes the vortex shafts from 1,781 to 196.
+            stat["skipped_capped"] += 1
             continue
         lens = [float(net.elen[e]) for e in edges]
         Lrun = sum(lens)
@@ -1130,7 +1400,7 @@ def relay(net: Net, des: Design, qpk: np.ndarray, crit: Criteria = CRIT) -> Dict
                             _y, _v = HY.pipe_state(d, S, qt, crit)
                             if _v is not None and _v > crit.V_MAX + 1e-9:
                                 ok = False
-                                stat["fallback_vmax"] = stat.get("fallback_vmax", 0) + 1
+                                stat["fallback_vmax"] += 1
                     if ok:
                         adopted = ("uniform", su, inv_u)
 
@@ -1326,9 +1596,25 @@ def solve(net: Net, qpk: np.ndarray, crit: Criteria = CRIT, max_passes: int = 25
         des = pass1(net, qpk, station, crit)
         sweeps = enforce_crowns(net, des)
         set_drops(net, des)
+        # ANYTHING A PASS CAN ADD, A LATER PASS MUST BE ABLE TO TAKE AWAY, AND THE STAGE
+        # PUBLISHES HOW MANY IT REMOVED (philosophy sec 5; inheritance ledger row 4).  Pass 1
+        # ADDS a drop wherever a run arrives above the level its junction needs; pass 2 TAKES
+        # THEM AWAY by spending the fall along the run instead.  Counted here, on either side
+        # of `relay`, so the removal is a published number and not a claim.
+        drops_b = int((des.drop > crit.DROP_TRIGGER).sum())
+        vortex_b = int((des.drop > crit.BACKDROP_MAX).sum())
         rl = relay(net, des, qpk, crit)
         des.notes["relay"] = rl
         set_drops(net, des)
+        drops_a = int((des.drop > crit.DROP_TRIGGER).sum())
+        vortex_a = int((des.drop > crit.BACKDROP_MAX).sum())
+        # ON THE DESIGN ITSELF, not only in the pass trace.  The prune REPLACES `des` with a
+        # design built inside `_breaches`, so a ledger reading the trace would report the
+        # drops of a design that was then thrown away - added minus removed would not equal
+        # published on any run where a station was pruned.  Inheritance row 10: one
+        # published quantity, one source.
+        des.notes["drop_ledger"] = dict(drops_p1=drops_b, drops_p2=drops_a,
+                                        vortex_p1=vortex_b, vortex_p2=vortex_a)
         cov_deep, cov_shallow = covers(net, des, crit)
         tok, dist = cap_exits(net, des, cov_deep, crit)
         sites, sdf = station_sites(net, des, cov_deep, tok, crit)
@@ -1345,6 +1631,8 @@ def solve(net: Net, qpk: np.ndarray, crit: Criteria = CRIT, max_passes: int = 25
             MAX_COVER_M=round(float(cov_deep.max()), 2),
             MAX_DROP_M=round(float(des.drop.max()), 2),
             VORTEX_N=int((des.drop > crit.BACKDROP_MAX).sum()),
+            DROPS_P1=drops_b, DROPS_P2=drops_a, DROPS_REMOVED=drops_b - drops_a,
+            VORTEX_P1=vortex_b, VORTEX_REMOVED=vortex_b - vortex_a,
             NEW_STATIONS=len(sites)))
         if verbose:
             t = trace[-1]
@@ -1380,8 +1668,18 @@ def solve(net: Net, qpk: np.ndarray, crit: Criteria = CRIT, max_passes: int = 25
         d = pass1(net, qpk, st_mask, crit)
         enforce_crowns(net, d)
         set_drops(net, d)
-        relay(net, d, qpk, crit)
+        # `d.notes["relay"]` matters: a pruned design REPLACES `des`, and until 2026-09-06
+        # the replacement carried no relay diagnostics at all, so the report's pass 2 table
+        # went silently empty on every run where a station was pruned.
+        b1 = int((d.drop > crit.DROP_TRIGGER).sum())
+        v1 = int((d.drop > crit.BACKDROP_MAX).sum())
+        d.notes["relay"] = relay(net, d, qpk, crit)
         set_drops(net, d)
+        # the same ledger the outer loop keeps, on THIS design - so whichever design ends up
+        # published carries its own added/removed counts and not another one's.
+        d.notes["drop_ledger"] = dict(
+            drops_p1=b1, drops_p2=int((d.drop > crit.DROP_TRIGGER).sum()),
+            vortex_p1=v1, vortex_p2=int((d.drop > crit.BACKDROP_MAX).sum()))
         cd, _cs = covers(net, d, crit)
         tk, _ds = cap_exits(net, d, cd, crit)
         return int(((cd > crit.MAX_COVER) & (tk == "")).sum()), d
@@ -1413,6 +1711,36 @@ def solve(net: Net, qpk: np.ndarray, crit: Criteria = CRIT, max_passes: int = 25
 
     des.passes = len(trace)
     des.station = station
+    # the drop reasons are set once, on the design that will be published, and never
+    # recomputed downstream - one quantity, one function (inheritance ledger row 10).
+    set_drops(net, des)
+    des.drop_why = drop_reasons(net, des, crit)
+    # THE LEDGER IS READ OFF THE DESIGN THAT IS PUBLISHED, never off the pass trace: on any
+    # run where a station is pruned, `des` is a design the trace never saw.
+    dl = des.notes.get("drop_ledger", {})
+    des.notes["removed"] = dict(
+        stations_added=n_before, stations_pruned=pruned,
+        stations_published=int(station.sum()),
+        drops_added_pass1=int(dl.get("drops_p1", 0)),
+        drops_removed_pass2=int(dl.get("drops_p1", 0)) - int(dl.get("drops_p2", 0)),
+        vortex_added_pass1=int(dl.get("vortex_p1", 0)),
+        vortex_removed_pass2=int(dl.get("vortex_p1", 0)) - int(dl.get("vortex_p2", 0)),
+        drops_published=int((des.drop > crit.DROP_TRIGGER).sum()),
+        vortex_published=int((des.drop > crit.BACKDROP_MAX).sum()))
+
+    # `sites_df` IS THE PRE-PRUNE LIST - every site the cap passes ever proposed, including
+    # the ones the prune then took out.  It is published as `station_sites` and it is exactly
+    # the shape of the defect that gave W11b two station counts, 14 demanded and 47 designed:
+    # the pump stage read a list from before the prune.  A ledger that says which number is
+    # the real one and then ships the other one beside it unlabelled has not closed anything,
+    # so every row now says whether it survived (inheritance row 10: one published quantity,
+    # one funnel).
+    if len(sites_df) and "NODE" in sites_df.columns:
+        where = {str(u): i for i, u in enumerate(net.uid)}
+        kept = np.array([bool(station[where[str(u)]]) if str(u) in where else False
+                         for u in sites_df.NODE], dtype=bool)
+        sites_df = sites_df.assign(PUBLISHED=kept.astype(int),
+                                   PRUNED=(~kept).astype(int))
     return des, pd.DataFrame(trace), sites_df
 
 
@@ -1457,7 +1785,6 @@ def classify_gradient(net: Net, des: Design, qpk: np.ndarray, crit: Criteria = C
     n = net.n
     out = np.array([""] * n, dtype=object)
     fine = np.array([""] * n, dtype=object)
-    half = _STEP / 2.0 + 1e-12
     for i in range(n):
         k = int(net.edge_of[i])
         if k < 0 or des.station[i] or des.dn[i] == 0:
@@ -1469,29 +1796,45 @@ def classify_gradient(net: Net, des: Design, qpk: np.ndarray, crit: Criteria = C
         t11 = _T11[dn]
         tr = HY.smin_tractive(q, crit)
         sg = float(net.egnd_fall[k]) / float(net.elen[k])
-        if des.capped[i]:
+        cb = str(des.clamp_by[i])
+        # THE ARM OF THE CLAMP IS RECORDED, NOT RE-INFERRED.  The old test compared the laid
+        # gradient with the minimum - and `ceil_step` puts DN250's 3.75 mm/m Table 11 floor
+        # on the grid at 4.00, so a reach sitting exactly on its own minimum failed the test
+        # by 0.25 mm/m and was labelled something else.  `choose_size` knows which arm it
+        # took; this reads it.
+        if des.capped[i] or cb == "vmax":
             out[i] = "vmax"
-            fine[i] = "held back by the 3.0 m/s cap or the 25 % publishing bound"
-        elif S <= sm + 1e-12:
+            fine[i] = ("the ground outruns the pipe: laid at the slope that meets 3.0 m/s "
+                       "(or the 25 % publishing bound) and the surplus fall taken as a drop")
+        elif des.uniform[i]:
+            out[i] = "uniform"
+            fine[i] = "the run's common gradient (P1), laid to land on its junction invert"
+        elif des.absorbed[i]:
+            out[i] = "cover_min"
+            fine[i] = ("steepened by pass 2 to arrive at the level its downstream chamber "
+                       "needs, instead of dropping into it (P5 crown matching)")
+        elif cb == "minimum":
             if tr > t11:
                 out[i] = "tractive"
                 fine[i] = f"tractive minimum at tau = {crit.TAU_PA:g} Pa (GAP-9)"
             else:
                 out[i] = "table11"
                 fine[i] = "G203-p29 Table 11 floor for this diameter"
-        elif des.uniform[i]:
-            out[i] = "uniform"
-            fine[i] = "the run's common gradient (P1), laid to land on its junction invert"
-        elif abs(S - sg) <= half:
+        elif cb == "ground":
             out[i] = "ground"
-            fine[i] = "the ground fall; both minima already satisfied"
-        elif des.absorbed[i]:
-            out[i] = "cover_min"
-            fine[i] = ("steepened to arrive at the level its downstream chamber needs, "
-                       "instead of dropping into it (P5 crown matching)")
+            fine[i] = ("THE GROUND'S OWN FALL - concept rule 1's clamp, neither arm biting "
+                       f"(ground {sg * 1000:.2f} mm/m, laid {S * 1000:.2f})")
         else:
-            out[i] = "cover_min"
-            fine[i] = "steepened to hold 1.30 m of cover at the downstream end (G203-p33)"
+            # UNREACHABLE, and it must stay that way. `choose_size` returns exactly four
+            # arms, and its 'infeasible' fallback also returns capped = True, so that case
+            # is caught by the first branch above and published as 'vmax'. A reach that
+            # reaches here has a gradient nobody can account for, and philosophy sec 8 makes
+            # an untraceable published number BLOCKING - so it refuses rather than picking
+            # the nearest legal-looking token.
+            raise K.ContractError(
+                f"reach leaving {net.uid[i]} carries a laid gradient of {S * 1000:.2f} mm/m "
+                f"and no clamp arm ({des.clamp_by[i]!r}). GRAD_BY would have to be invented "
+                "for it, and a published number that cannot be traced is blocking.")
     return out, fine
 
 
@@ -1744,6 +2087,13 @@ def build_layers(net: Net, des: Design, acc: Dict[str, np.ndarray], held_pf: flo
     # ---- NODE_KIND: station > terminal > drop > whatever s4 called it ----------------
     drop_type = np.where(des.drop > crit.BACKDROP_MAX, "vortex",
                          np.where(des.drop > crit.DROP_TRIGGER, "backdrop", "none"))
+    # CONCEPT RULE 1: every drop carries the reason it exists. `solve` sets it on the design
+    # it publishes; recomputed here only when `build_layers` is handed a design that never
+    # went through `solve` (the sweep does that), so the column can never be silently blank.
+    drop_why = des.drop_why
+    if len(drop_why) != n or (bool((des.drop > 0.0).any())
+                              and not any(str(w) for w in drop_why)):
+        drop_why = drop_reasons(net, des, crit)
     terminal = n_out == 0
     kind = net.kind4.astype(object).copy()
     kind = np.where(drop_type != "none", "drop", kind)
@@ -1796,6 +2146,18 @@ def build_layers(net: Net, des: Design, acc: Dict[str, np.ndarray], held_pf: flo
         INLET_DEG=np.where(np.isfinite(net.inlet_deg), net.inlet_deg, 180.0),
         INLET_FLAG=(net.inlet_deg < crit.INLET_MIN_DEG).astype(int),
         DROP_M=des.drop, DROP_TYPE=drop_type.astype(str),
+        DROP_WHY=drop_why.astype(str),
+        # CONCEPT RULE 2 is the OUTFALL stage's, not this one's. The columns exist so the
+        # contract can check them from the first publish; they are written blank/zero here
+        # and a levelling stage has no business inventing where a subnetwork meets the main
+        # pipe. Named as an open item in `findings`, never as a silent default.
+        JOIN_MAIN=np.zeros(n, dtype=int), JOIN_OFF_M=np.zeros(n),
+        JOIN_WHY=np.array([""] * n, dtype=object),
+        # NAMING runs AFTER connectivity is known (an element outside a town takes the letter
+        # of the first town DOWNSTREAM of it), so this stage publishes the columns EMPTY.
+        # contract.assert_named() is the publication gate that refuses an empty NAME when the
+        # naming stage has run; validate() allows a blank until then.
+        NAME="", TOWN="", SUBNET="",
         VORTEX=(des.drop > crit.BACKDROP_MAX).astype(int),
         Q_ADF_M3D=acc["QADF"], Q_PK_LS=acc["QPK"], N_PROP=acc["NPROP"],
         PAST_CAP=past_cap_nd,
@@ -1864,6 +2226,9 @@ def build_layers(net: Net, des: Design, acc: Dict[str, np.ndarray], held_pf: flo
         ON_DUAL_M=on_dual[kk],
         ON_WADI_M=on_wadi_m[kk],
         CROSS_ID=np.array([str(cross_id[int(k)]) for k in kk], dtype=object),
+        # see the note on the node layer: naming runs after connectivity is known, so the
+        # columns are published empty rather than filled with a guess.
+        NAME="", TOWN="", SUBNET="",
         SRC=[SRC_MAP.get(str(s), "manual") for s in net.esrc[kk]],
         CONFIDENCE=[CONF_MAP.get(str(c), "provisional") for c in net.econf[kk]],
         STAGE=STAGE,
@@ -1886,6 +2251,11 @@ def build_layers(net: Net, des: Design, acc: Dict[str, np.ndarray], held_pf: flo
     lev_reach = pd.DataFrame(dict(
         EDGE_UID=[K.EDGE_UID_FMT.format(int(k) + 1) for k in kk],
         GRAD_FINE=np.array([str(grad_fine[i]) for i in ui], dtype=object),
+        # which arm of concept rule 1's clamp set this reach's gradient, and the ground slope
+        # it was clamped against - published so the rule can be CHECKED off the file rather
+        # than believed from the code.
+        CLAMP_BY=np.array([str(des.clamp_by[i]) for i in ui], dtype=object),
+        S_GROUND_MM=net.egnd_fall[kk] / L * 1000.0,
         UNIFORM=des.uniform[ui].astype(int), ABSORBED=des.absorbed[ui].astype(int),
         CAPPED=des.capped[ui].astype(int),
         QINF_LOC=crit.INFILT_L_D_KM * (L / 1000.0) / SEC_PER_DAY,
@@ -1900,14 +2270,22 @@ def build_layers(net: Net, des: Design, acc: Dict[str, np.ndarray], held_pf: flo
     ))
     lev_node = pd.DataFrame(dict(
         NODE_UID=net.uid, COV_DEEP=cov_deep, COV_SHALLOW=cov_shallow,
-        CLIFF_M=des.cliff, KIND_S4=net.kind4, HAZ=net.haz, ON_WADI=net.on_wadi_nd,
+        CLIFF_M=des.cliff,
+        # the OTHER thing that sinks a chamber - a bigger outgoing bore needing a deeper
+        # minimum-cover datum.  Published beside CLIFF_M rather than added into it, because
+        # the two have different causes and only one of them is concept rule 1's drop.
+        STEP_SINK_M=des.step_sink,
+        KIND_S4=net.kind4, HAZ=net.haz, ON_WADI=net.on_wadi_nd,
         N_CONN=net.n_conn, SUBNET=net.subnet, UPS_LEN_M=acc["UPSLEN"],
     ))
     return dict(nodes=nodes, reaches=reaches, crossings=cross_gdf,
                 pumped_links=pumped_links, levels_reaches=lev_reach,
                 levels_nodes=lev_node, wadi_h1a=h1a, obstacle_conflict=clash,
                 cov_deep=cov_deep, cov_shallow=cov_shallow, live=live,
-                on_dual=on_dual, cross_id=cross_id)
+                on_dual=on_dual, cross_id=cross_id,
+                # carried out of the solve so the headline can publish the REMOVAL, not
+                # only the survivors (inheritance ledger row 4).
+                stations_pruned=int(des.notes.get("stations_pruned", 0)))
 
 
 # ======================================================================================
@@ -2083,16 +2461,65 @@ def findings(layers: Dict[str, object], tables: Dict[str, pd.DataFrame],
                      "client's own drawing, an INPUT, which s4 never chambered - so the "
                      "trunk share of the LEVELLED network is 0 % by construction.",
              ASK="-"),
-        dict(ID="F9", WHOSE="the contract",
-             FINDING="Four vocabulary conflicts between live modules, all in `conflicts`: "
-                     "the 'held' peak factor has three definitions and one of them the "
-                     "contract rejects; GRAD_BY has no token for a gradient set by the "
-                     "level its downstream chamber needs; NODES.COVER_M is defined as a "
-                     "quantity the 12 m cap does not test; and s1's provenance vocabulary "
-                     "is not the contract's.",
+        dict(ID="F9", WHOSE="the contract / this stage",
+             FINDING="Five conflicts between live modules, all in `conflicts`: the 'held' "
+                     "peak factor has three definitions and one of them the contract "
+                     "rejects; GRAD_BY has no token for a gradient set by the level its "
+                     "downstream chamber needs; NODES.COVER_M is defined as a quantity the "
+                     "12 m cap does not test; s1's provenance vocabulary is not the "
+                     "contract's; and C-LEV-5 - A-LEV-3 says a reach is never smaller than "
+                     "the one above it, and `pass1` does not enforce it, so a DN250 can "
+                     "discharge into a DN200.",
              ASK="Reconcile them in ONE place. Every one of them currently costs a label "
                  "chosen to satisfy a validator."),
     ]
+    # ---- the concept-stage rules this stage owns, and the ones it does NOT -------------
+    cl = tables.get("clamp")
+    tg = tables.get("tier_gradient")
+    if cl is not None and len(cl):
+        g = cl[cl.ARM == "ground"]
+        v = cl[cl.ARM == "vmax"]
+        m = cl[cl.ARM == "minimum"]
+        rows.append(dict(
+            ID="F10", WHOSE="reported - CONCEPT RULE 1",
+            FINDING=f"{float(g.PCT_LEN.iloc[0]):.1f} % of the length is laid on THE "
+                    f"GROUND'S OWN FALL, {float(m.PCT_LEN.iloc[0]):.1f} % at the guideline "
+                    f"minimum because the ground is flatter than the pipe may be laid, and "
+                    f"{float(v.PCT_LEN.iloc[0]):.1f} % at the 3.0 m/s cap with the surplus "
+                    "fall taken as a flagged drop. The middle number is the flatness "
+                    "finding restated: it is ground the pipe has to dig itself into "
+                    "whichever way it points.",
+            ASK="-"))
+    if tg is not None and len(tg) and "FLATTER_NO_STEP_UP" in tg:
+        bad = int(tg.FLATTER_NO_STEP_UP.fillna(0).max())
+        rows.append(dict(
+            ID="F11", WHOSE="the engineer" if bad else "reported - a DO-NOT-COPY held",
+            FINDING=f"{bad} tier step-ups lay the DOWNSTREAM collector flatter than the "
+                    "branch feeding it WITHOUT the bore stepping up. That is the built "
+                    "network's own defect - 71.7 % of its lateral-to-sub-main pairs, and "
+                    "the as-built study proves the cause is capacity, not tau: `DIA_OUT` "
+                    "never steps up.",
+            ASK="-" if not bad else "Each of these is a sub main taking more flow on the "
+                                    "same bore at a flatter gradient. Check the sizing on "
+                                    "them before the layout is fixed."))
+    rows.append(dict(
+        ID="F12", WHOSE="the OUTFALL stage - NOT this one",
+        FINDING="JOIN_MAIN, JOIN_OFF_M and JOIN_WHY are published EMPTY on every chamber. "
+                "Concept rule 2 - a subnetwork joins the main pipe at the lowest point "
+                "where it MEETS it, and the distance from the true low point is recorded "
+                "where it cannot - is a layout decision and a levelling stage has no "
+                "business inventing it.",
+        ASK="Whoever owns the outfall stage must fill them. Until then the layer says "
+            "'not answered' rather than 'answered zero', which is the whole point of the "
+            "column existing from the first publish."))
+    rows.append(dict(
+        ID="F13", WHOSE="the NAMING stage - NOT this one",
+        FINDING="NAME, TOWN and SUBNET are published EMPTY on both layers. Naming runs "
+                "AFTER connectivity is known, because an element outside a town takes the "
+                "letter of the first town DOWNSTREAM of it.",
+        ASK="`contract.assert_named()` is the publication gate and it is not called "
+            "anywhere yet. Whoever owns the export stage must call it, or every layer can "
+            "legally ship with an empty NAME column."))
     return pd.DataFrame(rows)
 
 
@@ -2270,7 +2697,37 @@ def depth_table(nodes: gpd.GeoDataFrame, reaches: gpd.GeoDataFrame,
         dict(QUANTITY="chambers past the 12 m cap",
              VALUE=float((nodes.PAST_CAP.values == 1).sum()), UNIT="-",
              BUILT=0.0, BAND="0 unless a sec 5 exit applies"),
-    ])
+    ] + _cover_by_tier(reaches, cov, L))
+
+
+def _cover_by_tier(reaches: gpd.GeoDataFrame, cov: np.ndarray,
+                   L: np.ndarray) -> List[Dict]:
+    """COVER BY TIER, and the spread between them.
+
+    `_BRAIN/10_ASBUILT_CALIBRATION.md`: lateral **1.395** / trunk **3.004** / sub main
+    **4.010 m**, and *"the 2.6 m spread IS the depth budget a branch needs - a flattened-tier
+    design fails on sight"*.  It is the measurement that says whether the pipe followed the
+    ground: a levelling rule that steepens every reach until it surfaces flattens the spread
+    to nothing while every single-reach check still passes."""
+    built = {"lateral": 1.395, "sub main": 4.010, "trunk main": 3.004}
+    tier = reaches.TIER.astype(str).values
+    rows: List[Dict] = []
+    med = {}
+    for t in ("lateral", "sub main", "trunk main"):
+        sel = tier == t
+        if not sel.any():
+            continue
+        med[t] = _w(cov[sel], L[sel], 0.50)
+        rows.append(dict(QUANTITY=f"cover to crown, {t} median (length-weighted)",
+                         VALUE=med[t], UNIT="m", BUILT=built[t],
+                         BAND="the SPREAD is the gate, not the level"))
+    if len(med) >= 2:
+        rows.append(dict(
+            QUANTITY="TIER SPREAD - deepest tier median minus shallowest",
+            VALUE=float(max(med.values()) - min(med.values())), UNIT="m", BUILT=2.615,
+            BAND=">= ~2.6  MEASURED. A flattened spread means the levelling is surfacing "
+                 "every branch instead of letting it carry the depth it inherited"))
+    return rows
 
 
 def drop_table(nodes: gpd.GeoDataFrame, reaches: gpd.GeoDataFrame,
@@ -2309,6 +2766,184 @@ def drop_table(nodes: gpd.GeoDataFrame, reaches: gpd.GeoDataFrame,
     ])
 
 
+def clamp_table(reaches: gpd.GeoDataFrame, lev: pd.DataFrame,
+                crit: Criteria = CRIT) -> pd.DataFrame:
+    """CONCEPT RULE 1, MEASURED OFF THE PUBLISHED FILE.
+
+    `s_laid = clamp(s_ground, s_min, s_max)` is a claim about every reach, so the evidence
+    for it is the share of length that took each arm and, on the middle arm, that the laid
+    gradient IS the ground's own fall rounded up to the 0.05 % step.  A rule with no split
+    published is a rule nobody can check."""
+    L = reaches.LEN_M.values
+    tot = float(L.sum())
+    arm = lev.set_index("EDGE_UID").CLAMP_BY.reindex(reaches.EDGE_UID.values).astype(str)
+    sg = lev.set_index("EDGE_UID").S_GROUND_MM.reindex(reaches.EDGE_UID.values).values
+    sl = reaches.SLOPE_LAID.values * 10.0                    # mm/m
+    rows = []
+    words = {"ground": "THE GROUND'S OWN FALL - neither arm of the clamp bit",
+             "minimum": "held at the guideline minimum for its OWN bore and flow "
+                        "(G203-p29 Table 11 / p27 tractive) because the ground is flatter",
+             "vmax": "held at the slope that meets 3.0 m/s (G203-p27) or the 25 % "
+                     "publishing bound - the ground outruns the pipe and the surplus fall "
+                     "is taken as a drop",
+             "infeasible": "no size in the series carries the flow at a legal gradient - "
+                           "NAMED, not clamped away"}
+    for a in ("ground", "minimum", "vmax", "infeasible"):
+        sel = arm.values == a
+        rows.append(dict(ARM=a, N=int(sel.sum()), KM=float(L[sel].sum() / 1000.0),
+                         PCT_LEN=float(L[sel].sum() / tot * 100.0),
+                         MED_LAID_MM_M=float(np.median(sl[sel])) if sel.any() else float("nan"),
+                         MED_GROUND_MM_M=float(np.median(sg[sel])) if sel.any() else float("nan"),
+                         WHAT=words[a]))
+    # pass 2 lays a run steeper than the clamp to land on its junction invert (P1). It is
+    # bounded ABOVE by the same velocity cap, so the clamp's ceiling still holds - but the
+    # share is published, because on those reaches the laid gradient is NOT the ground's.
+    up = lev.set_index("EDGE_UID")
+    absorbed = up.ABSORBED.reindex(reaches.EDGE_UID.values).fillna(0).values == 1
+    rows.append(dict(
+        ARM="steepened by pass 2", N=int(absorbed.sum()),
+        KM=float(L[absorbed].sum() / 1000.0),
+        PCT_LEN=float(L[absorbed].sum() / tot * 100.0),
+        MED_LAID_MM_M=float(np.median(sl[absorbed])) if absorbed.any() else float("nan"),
+        MED_GROUND_MM_M=float(np.median(sg[absorbed])) if absorbed.any() else float("nan"),
+        WHAT="the fall spent ALONG the run instead of thrown away in a drop at the bottom "
+             "of it (P1). Never flatter than pass 1 (A-LEV-5) and never past the cap"))
+    on_ground = (arm.values == "ground") & (~absorbed)
+    exact = on_ground & (np.abs(sl - np.array([ceil_step(g / 1000.0) * 1000.0
+                                               for g in sg])) <= 1e-6)
+    rows.append(dict(
+        ARM="CHECK: laid == ceil_step(ground) on the ground arm",
+        N=int(exact.sum()), KM=float(L[exact].sum() / 1000.0),
+        PCT_LEN=float(L[exact].sum() / max(float(L[on_ground].sum()), 1e-9) * 100.0),
+        MED_LAID_MM_M=float("nan"), MED_GROUND_MM_M=float("nan"),
+        WHAT="must be 100 % of the ground arm's own length. Rounding is always UP, because "
+             "rounding down would put the pipe below its ground-following profile and a "
+             "reach starting at exactly 1.30 m of cover would end below it"))
+    return pd.DataFrame(rows)
+
+
+def drop_reason_table(nodes: gpd.GeoDataFrame, reaches: gpd.GeoDataFrame,
+                      crit: Criteria = CRIT) -> pd.DataFrame:
+    """EVERY DROP CARRIES THE REASON IT EXISTS, and the count by reason is published.
+
+    Split at the junction as well, because the as-built settles that **120 of NAMA's 121
+    drops over 0.60 m sit at a junction** and a non-junction drop is a hard failure - with
+    TWO exemptions, which is what `refuse_nonjunction_drops` actually tests: the drop concept
+    rule 1 itself creates on ground the pipe may not follow ('velocity_cap'), and the crown
+    step a size change forces ('tier_step'). This table is what lets a reader see how big
+    each of them is rather than take the gate's word for it."""
+    km = float(reaches.LEN_M.sum() / 1000.0)
+    d = pd.to_numeric(nodes.DROP_M, errors="coerce").fillna(0.0)
+    why = nodes.DROP_WHY.astype(str)
+    junction = pd.to_numeric(nodes.N_IN, errors="coerce").fillna(0) >= 2
+    rows = []
+    for w in K.DROP_WHY:
+        if not w:
+            continue
+        sel = (d > 0.0) & (why == w)
+        big = sel & (d > crit.DROP_TRIGGER)
+        rows.append(dict(
+            DROP_WHY=w, N=int(sel.sum()), N_OVER_0P60=int(big.sum()),
+            PER_KM=float(big.sum()) / km,
+            AT_A_JUNCTION=int((big & junction).sum()),
+            ON_A_STRAIGHT_RUN=int((big & ~junction).sum()),
+            TOTAL_M=float(d[sel].sum()),
+            WORST_M=float(d[sel].max()) if sel.any() else 0.0))
+    big_all = d > crit.DROP_TRIGGER
+    rows.append(dict(
+        DROP_WHY="ALL", N=int((d > 0).sum()), N_OVER_0P60=int(big_all.sum()),
+        PER_KM=float(big_all.sum()) / km,
+        AT_A_JUNCTION=int((big_all & junction).sum()),
+        ON_A_STRAIGHT_RUN=int((big_all & ~junction).sum()),
+        TOTAL_M=float(d.sum()), WORST_M=float(d.max()) if len(d) else 0.0))
+    return pd.DataFrame(rows)
+
+
+def tier_gradient_table(reaches: gpd.GeoDataFrame) -> pd.DataFrame:
+    """A SUB MAIN IS NEVER FLATTER THAN THE LATERALS FEEDING IT - the built network's own
+    DO-NOT-COPY, measured on ours.
+
+    NAMA gets this wrong on **71.7 % of 60 lateral-to-sub-main pairs**, and the as-built
+    study settles the cause: it is *not* tau, it is pure capacity - `DIA_OUT` never steps
+    up, so the collector is laid flatter on the same bore.  Our sizing is driven by flow, so
+    a flatter downstream reach is legitimate WHEN THE BORE STEPPED UP (a bigger pipe has a
+    flatter Table 11 minimum and carries more at the same slope) and is a finding when it
+    did not.  Both are counted; only the second is the defect."""
+    out_of = dict(zip(reaches.US_NODE.astype(str), reaches.index))
+    rows = []
+    order = {"rider": 0, "lateral": 1, "main": 2, "sub main": 3, "trunk main": 4}
+    sl = reaches.SLOPE_LAID.values
+    dn = reaches.DN.values
+    tier = reaches.TIER.astype(str).values
+    ds = reaches.DS_NODE.astype(str).values
+    pairs = []
+    for r in range(len(reaches)):
+        o = out_of.get(ds[r])
+        if o is None:
+            continue
+        if order.get(tier[o], -1) <= order.get(tier[r], -1):
+            continue                                  # same tier or a step DOWN: not a pair
+        pairs.append((r, o))
+    if not pairs:
+        return pd.DataFrame([dict(PAIR="lateral -> sub main / trunk", N=0, FLATTER=0,
+                                  FLATTER_PCT=float("nan"), FLATTER_NO_STEP_UP=0,
+                                  BUILT_FLATTER_PCT=71.7)])
+    up = np.array([p[0] for p in pairs])
+    dnn = np.array([p[1] for p in pairs])
+    flatter = sl[dnn] < sl[up] - 1e-9
+    stepped = dn[dnn] > dn[up]
+    for lab, sel in (("ALL tier step-ups", np.ones(len(pairs), dtype=bool)),
+                     ("lateral -> sub main",
+                      (tier[up] == "lateral") & (tier[dnn] == "sub main")),
+                     ("sub main -> trunk main",
+                      (tier[up] == "sub main") & (tier[dnn] == "trunk main"))):
+        n = int(sel.sum())
+        if not n:
+            continue
+        rows.append(dict(
+            PAIR=lab, N=n, FLATTER=int((flatter & sel).sum()),
+            FLATTER_PCT=float((flatter & sel).sum()) / n * 100.0,
+            FLATTER_NO_STEP_UP=int((flatter & sel & ~stepped).sum()),
+            BUILT_FLATTER_PCT=71.7 if lab == "lateral -> sub main" else float("nan")))
+    return pd.DataFrame(rows)
+
+
+def removal_table(des: "Design") -> pd.DataFrame:
+    """ANYTHING A PASS CAN ADD, A LATER PASS MUST BE ABLE TO TAKE AWAY, AND THE STAGE
+    PUBLISHES HOW MANY IT REMOVED (philosophy sec 5; inheritance ledger row 4).
+
+    Losing exactly this cost W11b 69 spurious pumping stations: the solver only ever ADDED,
+    so a station placed on pass 1 - before the crown sweeps, the drops and the relaid runs
+    had recovered any fall - survived to the deliverable.  Two things this stage adds are
+    removable, and both are counted here rather than asserted in a comment."""
+    r = des.notes.get("removed", {})
+    rows = [
+        dict(WHAT="lifting stations ADDED by the cap passes",
+             N=r.get("stations_added", 0),
+             NOTE="the outer loop can only ever add one"),
+        dict(WHAT="lifting stations REMOVED by the prune",
+             N=r.get("stations_pruned", 0),
+             NOTE="a station is kept ONLY if taking it out brings an un-excused breach "
+                  "back. W8 cleared its flags every pass and said why; the rewrite lost it"),
+        dict(WHAT="lifting stations PUBLISHED", N=r.get("stations_published", 0),
+             NOTE="this is the ONE number s7_pumps may read - inheritance row 10"),
+        dict(WHAT="drops over 0.60 m ADDED by pass 1", N=r.get("drops_added_pass1", 0),
+             NOTE="counted on the LAST cap pass. A run laid to the ground arrives above "
+                  "the level its junction needs, and pass 1 takes the difference at a drop"),
+        dict(WHAT="drops over 0.60 m REMOVED by pass 2",
+             N=r.get("drops_removed_pass2", 0),
+             NOTE="the same pass, after `relay`: the fall spent ALONG the run instead (P1)"),
+        dict(WHAT="vortex shafts ADDED by pass 1", N=r.get("vortex_added_pass1", 0),
+             NOTE="drop over 2.00 m, G203-p30"),
+        dict(WHAT="vortex shafts REMOVED by pass 2", N=r.get("vortex_removed_pass2", 0),
+             NOTE="the single largest improvement this stage makes"),
+        dict(WHAT="drops over 0.60 m PUBLISHED", N=r.get("drops_published", 0),
+             NOTE="NAMA built 1.329/km of backdrop and 0.585/km of vortex"),
+        dict(WHAT="vortex shafts PUBLISHED", N=r.get("vortex_published", 0), NOTE="-"),
+    ]
+    return pd.DataFrame(rows)
+
+
 def gradient_table(reaches: gpd.GeoDataFrame, lev: pd.DataFrame) -> pd.DataFrame:
     L = reaches.LEN_M.values
     s = reaches.SLOPE_LAID.values * 10.0                     # mm/m
@@ -2328,6 +2963,22 @@ def gradient_table(reaches: gpd.GeoDataFrame, lev: pd.DataFrame) -> pd.DataFrame
              VALUE=float((reaches.INV_UP.values < reaches.INV_DN.values - 0.020).sum()),
              UNIT="-", BUILT=0.0, BAND="0  G203-p29 4.3.1"),
     ]
+    # BY TIER, against `_BRAIN/10_ASBUILT_CALIBRATION.md`'s own three numbers. The lateral
+    # median is the gate the calibration names; the 6.0 mm/m rung is NAMA's own habit, and
+    # ours is the ground's, so the share on that rung is REPORTED and not aimed at.
+    built = {"lateral": 6.032, "sub main": 4.036, "trunk main": 5.187}
+    for t in ("lateral", "sub main", "trunk main"):
+        sel = reaches.TIER.astype(str).values == t
+        if not sel.any():
+            continue
+        rows.append(dict(QUANTITY=f"laid gradient, {t} median (length-weighted)",
+                         VALUE=_w(s[sel], L[sel], 0.50), UNIT="mm/m", BUILT=built[t],
+                         BAND="lateral ~6.0 MEASURED; a sub main is NEVER flatter than the "
+                              "laterals feeding it - see the tier table"))
+    rung = np.abs(s - 6.0) < 0.26                      # the 0.05 % grid is 0.5 mm/m wide
+    rows.append(dict(QUANTITY="share of length on the 6.0 mm/m rung",
+                     VALUE=float(L[rung].sum() / L.sum() * 100.0), UNIT="%",
+                     BUILT=float("nan"), BAND=">= 20  MEASURED, on laterals"))
     return pd.DataFrame(rows)
 
 
@@ -2410,7 +3061,17 @@ def station_table(nodes: gpd.GeoDataFrame, pumped, sites: pd.DataFrame) -> pd.Da
             dict(QUANTITY="static lift, maximum", VALUE=float(pumped.LIFT_M.max()), UNIT="m"),
         ]
     if not sites.empty and "ON_UPHILL" in sites:
+        # `sites` is the PRE-PRUNE list. Counting the pruned rows here would put a second,
+        # larger station count in the same table as the first - which is W11b's 14-versus-47
+        # in miniature. Only the sites that survived are counted, and the funnel is printed.
         s = sites[sites.NODE != ""]
+        if "PUBLISHED" in s.columns:
+            n_prop = int(len(s))
+            s = s[s.PUBLISHED == 1]
+            rows.append(dict(
+                QUANTITY="station SITES proposed by the cap passes, of which pruned - the "
+                         "rows below count only the survivors (inheritance row 10)",
+                VALUE=float(n_prop - len(s)), UNIT=f"of {n_prop}"))
         rows += [
             dict(QUANTITY="stations sited inside a contiguous UPHILL stretch - the ideal "
                           "site is the FOOT of the climb and moving it there is a layout "
@@ -2443,11 +3104,47 @@ def refuse_if_undesignable(nodes: gpd.GeoDataFrame, crit: Criteria = CRIT) -> No
             "makes the stage refuse to publish rather than clip. Chambers: " + ids)
 
 
+def refuse_nonjunction_drops(nodes: gpd.GeoDataFrame, crit: Criteria = CRIT) -> None:
+    """A NON-JUNCTION DROP IS A HARD FAILURE - with exactly TWO exemptions, both named below
+    and both in the code: 'velocity_cap' and 'tier_step'.  (It said "one exemption" until
+    2026-09-06 while the code tested two.  Inheritance row 9 is a constant that read 85 deg
+    in code and 75 deg in its own docstring; a count of exemptions is the same kind of thing.)
+
+    `_BRAIN/10_ASBUILT_CALIBRATION.md`: **120 of NAMA's 121 drops over 0.60 m sit at a
+    junction**, and a drop on a straight run is a design levelling its way out of a layout
+    fault - the pipe should have been laid to arrive at the level it needs, or the layout
+    should have been changed.
+
+    THE EXEMPTION IS CONCEPT RULE 1'S OWN DROP.  Where the ground falls faster than 3.0 m/s
+    allows, the rule says in terms: lay the slope that meets the cap and take the surplus as
+    a drop.  That drop is on a straight run by definition and it is legal - it is the reason
+    DROP_WHY exists.  `tier_step` is exempt for a different reason: nothing fell, the pipe
+    grew, and the step is the crown match a size change forces (A-LEV-4).
+
+    What is left - a `cover_recovery` or `obstruction` drop with only one pipe arriving - is
+    a levelling fault, and the stage refuses to publish and names the chambers.  It is not
+    clipped: clipping satisfies a validator by lying."""
+    d = pd.to_numeric(nodes.DROP_M, errors="coerce").fillna(0.0)
+    why = nodes.DROP_WHY.astype(str)
+    junction = pd.to_numeric(nodes.N_IN, errors="coerce").fillna(0) >= 2
+    bad = (d > crit.DROP_TRIGGER) & (~junction) & (~why.isin(("velocity_cap", "tier_step")))
+    if bad.any():
+        ids = ", ".join(nodes.NODE_UID[bad].astype(str).head(12))
+        raise K.ContractError(
+            f"{int(bad.sum()):,} chambers take a drop over {crit.DROP_TRIGGER:g} m on a "
+            f"STRAIGHT RUN with no exemption (worst {d[bad].max():.2f} m). NAMA put 120 of "
+            "its 121 drops at a junction in 95.45 km; a drop on a straight run is a design "
+            "levelling its way out of a layout fault. The two legal answers are "
+            "DROP_WHY = 'velocity_cap' (the ground outruns the pipe - concept rule 1) and "
+            "'tier_step' (the crown match at a size change). Chambers: " + ids)
+
+
 def publish(layers: Dict[str, object], rec: K.StageRecord) -> None:
     nodes = layers["nodes"]
     reaches = layers["reaches"]
     cross = layers["crossings"]
     refuse_if_undesignable(nodes)
+    refuse_nonjunction_drops(nodes)
 
     p = K.publish(cross, "crossings", str(W12), stage=STAGE, allow_empty=True)
     rec.wrote("crossings", p, len(cross))
@@ -2556,7 +3253,29 @@ def report(layers: Dict[str, object], tables: Dict[str, pd.DataFrame],
             "> *What actually buys depth on this ground is not that pipes point the wrong "
             "way - it is that the ground is too flat to lay them on.*", "",
             _md(tables["flatness"]), "",
+            "## CONCEPT RULE 1 - the pipe follows the ground, clamped", "",
+            "> *s_laid = clamp(s_ground, s_min_guideline(own bore, own flow), "
+            "s_max_velocity). Never flatter than the guideline minimum for its OWN bore, "
+            "never steeper than the slope at which 3.0 m/s is reached, otherwise the "
+            "ground's own fall.*", "",
+            _md(tables["clamp"]), "",
             "## Depth and cover", "", _md(tables["depth"]), "",
+            "## Every drop, and the reason it exists", "",
+            "> *A drop with no reason cannot be told from a levelling error. A drop on a "
+            "STRAIGHT RUN is a hard failure unless the ground outruns the pipe - and that "
+            "one case is the drop concept rule 1 itself creates.*", "",
+            _md(tables["drop_reasons"]), "",
+            "## What this stage ADDED, and what a later pass TOOK AWAY", "",
+            "> *Anything a pass can add, a later pass must be able to take away, and the "
+            "stage publishes how many it removed. Losing exactly this cost the previous "
+            "iteration 69 spurious pumping stations.*", "",
+            _md(tables["removals"]), "",
+            "## A sub main is never flatter than the laterals feeding it", "",
+            "> *NAMA gets this wrong on 71.7 % of its lateral-to-sub-main pairs. The "
+            "as-built study settles the cause: not tau - the bore never steps up. A flatter "
+            "downstream reach is legitimate WHEN THE BORE STEPPED UP and is a finding when "
+            "it did not.*", "",
+            _md(tables["tier_gradient"]), "",
             "## THE DIAGNOSTIC: drop structures", "",
             "> *A design generating vortex shafts by the thousand where the built network "
             "has tens is describing its own tree, not the ground.*", "",
@@ -2630,6 +3349,10 @@ def headline_table(net: Net, layers: Dict[str, object], acc: Dict[str, np.ndarra
     tr = K.terrain_report(reaches, nodes)
     cd = layers["cov_deep"]
     st = int((nodes.NODE_KIND == "station").sum())
+    # `levels_reaches` is built from the same `kk` selection as `reaches`, in the same
+    # order, so the two are row-aligned - the same reason `reason_table` maps on EDGE_UID
+    # and this one does not have to.
+    lev_clamp = layers["levels_reaches"].CLAMP_BY.values.astype(str)
     return pd.DataFrame([
         dict(QUANTITY="gravity network published", VALUE=float(L.sum() / 1000.0), UNIT="km",
              NOTE=f"{len(reaches):,} reaches, {len(nodes):,} chambers"),
@@ -2678,7 +3401,27 @@ def headline_table(net: Net, layers: Dict[str, object], acc: Dict[str, np.ndarra
         dict(QUANTITY="chambers deepened for a cliff the pipe may not follow", UNIT="-",
              VALUE=float((layers['levels_nodes'].CLIFF_M.values > 1e-6).sum()),
              NOTE="philosophy sec 5: hold the gradient and take the difference at a drop "
-                  "chamber - the chamber is at the TOP of the cliff"),
+                  "chamber - the chamber is at the TOP of the cliff. THE CAP ONLY: a "
+                  "chamber sunk because its outgoing BORE grew is the next row"),
+        dict(QUANTITY="chambers deepened because the outgoing bore grew", UNIT="-",
+             VALUE=float((layers['levels_nodes'].STEP_SINK_M.values > 1e-6).sum()),
+             NOTE="a deeper minimum-cover datum at a size change, bounded by the crown "
+                  "step and subsumed by crown matching - it moves no level. Counted "
+                  "SEPARATELY because mixing it into the cliff published 'velocity_cap' on "
+                  "flat ground and switched pass 2 off on every run containing one"),
+        dict(QUANTITY="length laid on THE GROUND'S OWN FALL", UNIT="%",
+             VALUE=float(L[lev_clamp == "ground"].sum() / L.sum() * 100.0),
+             NOTE="concept rule 1's middle arm - neither the guideline minimum nor the "
+                  "3.0 m/s cap biting"),
+        dict(QUANTITY="drops with no reason on the layer", UNIT="-",
+             VALUE=float(((nodes.DROP_M > 0.0)
+                          & (nodes.DROP_WHY.astype(str).str.strip() == "")).sum()),
+             NOTE="concept rule 1: every drop carries the reason it exists. Must be 0 - "
+                  "contract.validate() refuses the layer otherwise"),
+        dict(QUANTITY="stations the passes ADDED and the prune TOOK AWAY", UNIT="-",
+             VALUE=float(layers.get("stations_pruned", 0)),
+             NOTE="inheritance ledger row 4. W8 cleared its pump flags every pass and said "
+                  "why; losing that cost the last iteration 69 spurious stations"),
     ])
 
 
@@ -2734,6 +3477,10 @@ def build(crit: Criteria = CRIT, publish_it: bool = True, verbose: bool = True) 
             flatness=flatness_table(net, reaches, crit),
             depth=depth_table(nodes, reaches, layers["levels_nodes"], crit),
             drops=drop_table(nodes, reaches, crit),
+            clamp=clamp_table(reaches, layers["levels_reaches"], crit),
+            drop_reasons=drop_reason_table(nodes, reaches, crit),
+            tier_gradient=tier_gradient_table(reaches),
+            removals=removal_table(des),
             gradient=gradient_table(reaches, layers["levels_reaches"]),
             selfclean=selfclean_table(reaches, crit),
             diameter=diameter_table(reaches),
@@ -2934,6 +3681,50 @@ def verify(crit: Criteria = CRIT) -> pd.DataFrame:
         bool(((reaches.AGN_GRADE == 1) ==
               (reaches.GND_FALL < -crit.ADVERSE_MIN_M)).all()),
         f"{tr['against_share'] * 100:.2f} % of length uphill", "-")
+
+    # ---- CONCEPT RULE 1, recomputed from the published rows and nothing else -----------
+    # 25 THE CLAMP'S CEILING. The laid gradient never passes the slope at which this reach's
+    # own bore reaches 3.0 m/s at its own flow. Recomputed with hydra, not read back.
+    hi = np.array([_hi_bound(int(dn), float(q) / 1000.0, crit)
+                   for dn, q in zip(reaches.DN, reaches.QPK_LS)])
+    over = reaches.SLOPE_LAID.values / 100.0 > hi + 1e-12
+    chk("SLOPE_LAID never past the velocity cap for its own bore and flow (G203-p27)",
+        not bool(over.any()),
+        f"{int(over.sum())} reaches, worst by "
+        f"{float((reaches.SLOPE_LAID.values / 100.0 - hi)[over].max() * 1000) if over.any() else 0:.3f} mm/m",
+        "0")
+    # 26 THE CLAMP'S MIDDLE ARM. Where GRAD_BY says the ground set the gradient, the laid
+    # gradient IS the ground's own fall on the 0.05 % grid - the whole of concept rule 1.
+    gnd = reaches.GRAD_BY.astype(str).values == "ground"
+    if gnd.any():
+        want = np.array([ceil_step(float(f) / float(l))
+                         for f, l in zip(reaches.GND_FALL.values[gnd],
+                                         reaches.LEN_M.values[gnd])])
+        d = np.abs(reaches.SLOPE_LAID.values[gnd] / 100.0 - want)
+        chk("GRAD_BY 'ground' means SLOPE_LAID == ceil_step(ground fall / length)",
+            float(d.max()) <= 1e-9,
+            f"{int(gnd.sum()):,} reaches, worst {float(d.max()) * 1000:.4f} mm/m", "0")
+    else:
+        chk("GRAD_BY 'ground' means SLOPE_LAID == ceil_step(ground fall / length)",
+            False, "NO reach took the ground arm of the clamp - concept rule 1 is not "
+                   "reaching the published layer", "> 0 reaches")
+    # 27 every drop names itself, and the reasons are not one repeated word
+    d = pd.to_numeric(nodes.DROP_M, errors="coerce").fillna(0.0)
+    why = nodes.DROP_WHY.astype(str).str.strip()
+    chk("every drop carries a DROP_WHY (concept rule 1)",
+        int(((d > 0) & (why == "")).sum()) == 0,
+        f"{int(((d > 0) & (why == '')).sum())} drops with no reason", "0")
+    chk("no DROP_WHY on a chamber that does not drop",
+        int(((d <= 0) & (why != "")).sum()) == 0,
+        f"{int(((d <= 0) & (why != '')).sum())} reasons for a drop that is not there", "0")
+    chk("DROP_WHY is not one word repeated (inheritance row 22)",
+        K.constant_column_problem(nodes, "DROP_WHY", d > 0) is None,
+        f"{sorted(set(why[d > 0]))}", "more than one, on a network this size")
+    # 28 a drop on a straight run, which is the as-built's own hard failure
+    nj = (d > crit.DROP_TRIGGER) & (nodes.N_IN < 2) & (~why.isin(("velocity_cap",
+                                                                 "tier_step")))
+    chk("no drop over 0.60 m on a straight run without the velocity-cap exemption",
+        not bool(nj.any()), f"{int(nj.sum())} chambers", "0  MEASURED (NAMA 1 of 121)")
     return pd.DataFrame(checks)
 
 
@@ -2967,7 +3758,7 @@ def _self_test(verbose: bool = True) -> None:
     # failed up there therefore fails down here too, which is why the two must agree.
     for q in (0.002, 0.02, 0.08, 0.2, 0.6, 1.4):
         for gd in (100.0, 99.0, 96.0):                     # flat, gentle and steep ground
-            dn, S, sm, why, iv, cap = choose_size(q, 100.0, 100.0, gd, 100.0, 200, C)
+            dn, S, sm, why, iv, cap, _arm = choose_size(q, 100.0, 100.0, gd, 100.0, 200, C)
             if cap:
                 continue                                   # the velocity cap moved S
             ref_dn, ref_y, ref_v, ref_why = HY.size_pipe(q, S, C, dn_min=200)
@@ -3036,8 +3827,77 @@ def _self_test(verbose: bool = True) -> None:
     ok(abs(HY.smin_tractive(q, replace(C, TAU_PA=2.0)) / HY.smin_tractive(q, C)
            - 2.0 ** 1.23) < 1e-12, "tau sensitivity is exactly 2^1.23")
 
+    # ---- 9a. CONCEPT RULE 1 - the clamp, one case per arm, worked by hand -------------
+    # DN200 at a small flow: Table 11 gives 5.00 mm/m, the tractive minimum at tau = 1.0 Pa
+    # and the Q floor gives 4.67, so s_min is Table 11's 5.00 and the clamp's lower arm is
+    # 0.0050 exactly - which is already on the 0.05 % grid.
+    q_small = 0.004
+    s_min_200 = max(C.table11(200), HY.smin_tractive(q_small, C))
+    ok(abs(s_min_200 - 0.005) < 1e-12, "DN200's governing minimum at a small flow is "
+                                       "Table 11's 5.00 mm/m, not the tractive value")
+    # ARM 1 - the ground is FLATTER than the minimum: the pipe is held at the minimum and
+    # digs itself in. 100 m at 1 mm/m of ground fall.
+    dn, S, sm, why, iv, cap, arm = choose_size(
+        q_small, None, 100.0, 99.9, 100.0, 200, C)
+    ok(arm == "minimum" and abs(S - 0.005) < 1e-12,
+       f"flat ground must take the minimum arm at 5.00 mm/m, got {arm} {S * 1000:.2f}")
+    ok(not cap, "the velocity cap does not bite on a DN200 at 5.00 mm/m")
+    # ARM 2 - the ground falls at 12 mm/m, between the minimum and the cap: FOLLOW IT.
+    dn, S, sm, why, iv, cap, arm = choose_size(
+        q_small, None, 100.0, 98.8, 100.0, 200, C)
+    ok(arm == "ground" and abs(S - ceil_step(0.012)) < 1e-12,
+       f"ground at 12.00 mm/m must be followed, got {arm} {S * 1000:.2f} mm/m")
+    ok(abs(S - 0.012) < 1e-12, "12.00 mm/m is already on the 0.05 % grid")
+    # and the depth does not change along it: the pipe follows the ground exactly.
+    ok(abs((iv - 100.0 * S) - (98.8 - C.invert_depth_min(dn))) < 1e-12,
+       "on the ground arm the reach ends at exactly the cover it started with")
+    # ARM 3 - the ground falls at 400 mm/m. The cap must bite and the laid gradient must be
+    # strictly flatter than the ground, which is what makes the surplus a DROP.
+    dn, S, sm, why, iv, cap, arm = choose_size(
+        q_small, None, 100.0, 60.0, 100.0, 200, C)
+    ok(arm == "vmax" and cap, f"a 40 % cliff must take the vmax arm, got {arm}")
+    ok(S < 0.400 - 1e-12, "the laid gradient on a cliff is flatter than the ground")
+    _y, _v = HY.pipe_state(dn, S, q_small, C)
+    ok(_v is None or _v <= C.V_MAX + 1e-9,
+       f"the vmax arm must actually hold 3.0 m/s, got {_v}")
+    # ARM 2 again, from a DEEP upstream invert. THE POINT OF THE CHANGE: the pipe keeps the
+    # depth it inherited instead of being steepened until it surfaces.
+    deep = 100.0 - C.invert_depth_min(200) - 3.0          # 3 m deeper than minimum cover
+    dn, S, sm, why, iv, cap, arm = choose_size(
+        q_small, deep, 100.0, 98.8, 100.0, 200, C)
+    ok(arm == "ground" and abs(S - 0.012) < 1e-12,
+       "a DEEP pipe on ground falling at 12 mm/m still follows the ground - it is not "
+       "steepened to surface, which is what flattened the tier depth spread")
+    ok(abs((100.0 - iv) - (98.8 - (iv - 100.0 * S)) - 0.0) < 1e-9,
+       "the inherited 3 m of extra depth is carried, not thrown away")
+
+    # ---- 9b. the clamp is monotone in the ground, and always inside its own bounds ----
+    for gd in (100.5, 100.0, 99.9, 99.5, 99.0, 97.0, 90.0, 70.0):
+        for qq in (0.004, 0.05, 0.4):
+            dn, S, sm, why, iv, cap, arm = choose_size(qq, None, 100.0, gd, 100.0, 200, C)
+            ok(S >= sm - 1e-12,
+               f"the clamp went below its own minimum at ground {100.0 - gd:+.1f} m, q={qq}")
+            hb = _hi_bound(dn, qq, C)
+            ok(S <= hb + 1e-12,
+               f"the clamp went past the velocity cap at ground {100.0 - gd:+.1f} m, q={qq}")
+            ok(arm in ("ground", "minimum", "vmax", "infeasible"), f"unknown arm {arm!r}")
+            if arm == "ground":
+                ok(abs(S - ceil_step((100.0 - gd) / 100.0)) < 1e-12,
+                   "the ground arm must BE the ground's fall on the 0.05 % grid")
+
+    # ---- 9c. no bore below DN200, so Table 11 covers every published reach (A-LEV-16) --
+    ok(_DN0 >= C.DN_MIN_LATERAL,
+       f"the series starts at DN{_DN0}; Table 11 prescribes nothing below DN200")
+    try:
+        C.table11(160)
+        ok(False, "criteria.table11(160) must REFUSE - Table 11 has no row below DN200")
+    except Exception:
+        n_ok += 1
+
     # ---- 10. the accumulator reproduces s5_flows on s5's OWN graph --------------------
     try:
+        if not FLOWS_GPKG.is_file():
+            raise FileNotFoundError(str(FLOWS_GPKG))
         a = gpd.read_file(FLOWS_GPKG, layer="arcs", ignore_geometry=True)
         nd = gpd.read_file(FLOWS_GPKG, layer="nodes", ignore_geometry=True)
         idx = {u: i for i, u in enumerate(nd.NODE_UID.astype(str))}
@@ -3067,9 +3927,15 @@ def _self_test(verbose: bool = True) -> None:
         if verbose:
             print(f"  accumulator vs s5_flows on s5's own graph: worst relative difference "
                   f"{float(np.nanmax(rel)):.2e} over {int(route.sum()):,} route arcs")
-    except FileNotFoundError:
+    except (FileNotFoundError, OSError, RuntimeError, ValueError) as e:
+        # pyogrio raises DataSourceError - a RuntimeError, not a FileNotFoundError - so the
+        # narrow catch here turned "s5 has not run" into a crash of the whole self-test and
+        # nobody could run --selftest on a cold checkout. The existence test above makes the
+        # ordinary case explicit rather than relying on a driver's exception class. The skip
+        # is PRINTED, never silent: a check that cannot run has to say so (ledger row 2).
         if verbose:
-            print("  (s5_flows not published - the cross-check against it was skipped)")
+            print(f"  (s5_flows not published - the cross-check against it CANNOT RUN, "
+                  f"which is a skip and not a pass: {type(e).__name__})")
 
     if verbose:
         print(f"{STAGE_VERSION}: self-test PASSED ({n_ok} checks)")

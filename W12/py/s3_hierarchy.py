@@ -85,6 +85,49 @@ chambers that have exactly one pipe in and one pipe out - the same definition
 All three thresholds are monotone downstream, so the hierarchy cannot invert: a lateral can
 never receive a main.  That is checked, not assumed (`tier_inversions`, must be 0).
 
+THE CALIBRATION IS MEASURED PER SUB-NETWORK, NOT AS A NETWORK AVERAGE
+---------------------------------------------------------------------
+`_BRAIN/10_ASBUILT_CALIBRATION.md` sec 1 gives five structural gates, and rule T2 of that
+file gives the reason they bind per sub-network rather than per design: *"One package is one
+connected component with exactly one outlet."*  That is what a sub-network is here, so the
+bands measured BETWEEN NAMA'S PACKAGES are the bands a sub-network is held to.  The file is
+explicit about why an average will not do:
+
+    "Tier length shares ... PER SUBNETWORK: trunk 1.5-13.5 %, sub-main 10.9-17.2 %.
+     A subnetwork with 0 % sub-main FAILS even if the average passes."
+
+    tier length share      trunk and sub main, against the measured package bands
+    chain depth            lateral -> main: median <= 2, p90 <= 4, absolute 5
+    lateral-zone density   > 7 zones/km means THE MAIN TIER IS MISSING
+    hierarchy ratio        lateral runs into another lateral, 60-78 %
+
+Three consequences, and the first is a bug this stage had been carrying:
+
+  1  `tiers()` had always CLAIMED in its own docstring that "every catchment gets one by
+     construction, because the run at the outfall always drains the whole catchment", and
+     the code tested `run_sub_km >= submain_km` and nothing else - so a sub-network smaller
+     than the threshold got NO collector tier at all.  s2's outfall rule multiplies the
+     number of small sub-networks, which turns a rare case into the common one.  The outlet
+     clause is now written down: the run that discharges a component is a sub main whatever
+     its accumulated length, and the monotonicity a tier depends on is safe because that run
+     has the largest accumulated length in its component.
+  2  `label_subnets()` puts a SUBNET on EVERY published reach, taken from this stage's own
+     forest.  s2 leaves it blank on the heads, the islands and every corridor its tree did
+     not use - about a fifth of the length - and a reach nobody can attribute cannot be
+     calibrated.  An island keeps its island id, because "drains to a local low point with
+     no path to the trunk" is a different fact and must not be dressed up as one.
+  3  The trunk share per sub-network needs an APPORTIONMENT and it says so: the Main Pipe is
+     ONE client input serving every sub-network, so "this sub-network's trunk length" is not
+     a measurable quantity.  Every metre goes to the nearest join, sampled at the node-merge
+     radius; it conserves length exactly and needs no flow direction on the trunk, which
+     this stage does not have and must not invent.
+
+One number is typed against the _BRAIN file rather than read from `asbuilt.py`: the
+hierarchy ratio.  `asbuilt.m_tiers()` still returns **87.69 %** and sec 4 of the calibration
+retracts it by name - *"wrong twice; use 73.2 % on 272 exits, banded 60-78 %"*.  Both figures
+are published side by side with the retraction stated, because quietly swapping one for the
+other is how a withdrawn number gets back into circulation.
+
 WHAT THIS STAGE REFUSES TO CLAIM
 --------------------------------
 It does not improve the uphill share.  That was s2's job and the four measured facts stand:
@@ -125,7 +168,7 @@ from w12 import asbuilt as AB                               # noqa: E402
 C = CR.DEFAULT
 
 STAGE = "s3_hierarchy"
-STAGE_VERSION = "W12-hierarchy-1.0"
+STAGE_VERSION = "W12-hierarchy-1.1-subnet-calibration"
 
 # ================================================================== paths
 W12 = os.path.dirname(_HERE)                                # .../W12
@@ -208,6 +251,42 @@ SUBMAIN_SWEEP = (0.5, 0.75, 1.0, 1.5, 2.0, 2.5, 3.0, 3.25, 3.5, 3.75, 4.0,
 #   junctions_per_km               4.83 1/km ; heads_per_km 5.09 1/km
 
 TAU_FLAG = f"tau={C.TAU_PA:g} Pa ASSUMED (GAP-9)"
+
+# --- THE PER-SUB-NETWORK CALIBRATION GATES -----------------------------------------------
+# `_BRAIN/10_ASBUILT_CALIBRATION.md` sec 1, measured from NAMA's built 2006 network.  The
+# tier-share bands are READ FROM `asbuilt.targets()` at run time rather than typed here, so
+# they cannot go stale against the measurement - only the two the measurement does not carry
+# are constants, and both name their line in that file.
+#
+# THE UNIT OF COMPARISON IS THE PACKAGE, and rule T2 of that file says a package IS one
+# connected component with exactly one outlet - which is exactly what a sub-network is here.
+# So the band that was measured BETWEEN NAMA'S PACKAGES is applied PER SUB-NETWORK, and the
+# file is explicit about why the average is not enough: "a subnetwork with 0 % sub-main
+# fails even if the average passes".
+CAL_CHAIN_MED_MAX = 2       # 10_ASBUILT_CALIBRATION sec 1: built median 2 hops (excl 5A-1)
+CAL_CHAIN_P90_MAX = 4       #   built p90 3; the band for W12 is <= 4
+CAL_CHAIN_ABS_MAX = 5       #   built max 5, and it is an absolute
+CAL_ZONE_PER_KM_MAX = 7.0   #   built 4.27 zones/km; "> 7/km means the MAIN TIER IS MISSING
+#                             - the single best structural symptom"
+CAL_HIER_PCT = (60.0, 78.0)  # lateral runs discharging into ANOTHER lateral.
+#   THE MEASURED VALUE IS 73.2 % ON 272 EXITS, banded 60-78 %.  `asbuilt.py` still returns
+#   87.69 % for `lateral_zone_into_lateral_pct`, and 10_ASBUILT_CALIBRATION sec 4 retracts
+#   that figure by name: "wrong twice; use 73.2 % on 272 exits, banded 60-78 %".  So this
+#   one band is typed here, against the _BRAIN file, and BOTH numbers are published side by
+#   side with the retraction stated - quoting the live code's figure would re-publish a
+#   number this project has already withdrawn.
+CAL_HIER_MEASURED_PCT = 73.2
+CAL_HIER_RETRACTED_PCT = 87.69
+
+SUBNET_MIN_KM_FOR_BAND = AB.A_PKG_MIN_KM_GEOM   # 3.0 km. DERIVED, not chosen: it is the
+#   floor `asbuilt._pkg_band` itself uses to decide a package is big enough to set a band.
+#   Applying a band measured only over packages above it to a sub-network below it would be
+#   comparing against evidence that never included anything that small.
+TRUNK_SAMPLE_M = C.MH_SNAP_M    # 3.0 m. A NUMERICAL RESOLUTION, not a design value: the
+#   step at which the Main Pipe is sampled to apportion its length between the sub-networks
+#   that join it.  Set to the node-merge radius because that is the finest distance the
+#   published topology can distinguish - a finer step would be measuring below the
+#   resolution of the thing being measured.
 
 
 def _log(msg: str) -> None:
@@ -998,21 +1077,78 @@ class Hier:
               budget_path_m: Optional[float] = None) -> np.ndarray:
         """Tier per RUN, then written onto the arcs.
 
-        sub main   run_sub_km >= submain_km        - the outlet governs: the run at the
-                                                     outfall always drains the whole
-                                                     catchment, so every catchment has one
+        sub main   run_sub_km >= submain_km, OR the run is the one that DISCHARGES the
+                   component - the outlet governs
         main       run_depth > budget_runs  OR  run_path_m > budget_path_m
         lateral    everything else
 
         All three quantities are non-decreasing downstream, so the tier is monotone by
-        construction and a lateral can never receive a main.  Verified anyway."""
+        construction and a lateral can never receive a main.  Verified anyway.
+
+        WHY THE OUTLET CLAUSE IS EXPLICIT, AND WHY IT WAS A BUG.  This docstring has always
+        said "every catchment gets one by construction, because the run at the outfall
+        always drains the whole catchment" - and the code did not do it.  `run_sub_km >= sk`
+        alone gives a sub-network SMALLER than SUBMAIN_KM no sub main at all, and the
+        as-built calibration is explicit that "a subnetwork with 0 % sub-main FAILS even if
+        the average passes" (10_ASBUILT_CALIBRATION.md sec 1).  The outfall rule multiplies
+        the number of small sub-networks, so what was a rare case becomes the common one.
+        The outlet run has the LARGEST run_sub_km in its component, so naming it cannot
+        break the monotonicity a tier depends on."""
         sk = self.submain_km if submain_km is None else submain_km
         br = self.budget_runs if budget_runs is None else budget_runs
         bp = self.budget_path_m if budget_path_m is None else budget_path_m
         t = np.array(["lateral"] * self.n_runs, dtype=object)
         t[(self.run_depth > br) | (self.run_path_m > bp)] = "main"
         t[self.run_sub_km >= sk] = "sub main"
+        t[self.run_next == -1] = "sub main"          # the outlet governs
         return t
+
+    # ---------------------------------------------------------------- 2h(i). subnet labels
+    def label_subnets(self):
+        """SUBNET on EVERY published reach, taken from the component it drains through.
+
+        s2 wrote SUBNET on the arcs it put in its tree and left it blank on the heads, the
+        islands and everything the tree did not use - about a fifth of the published length.
+        A blank there is not a missing label, it is a reach nobody can attribute: the
+        outfall rule's whole point is that a sub-network is a catchment with ONE outlet, and
+        the per-sub-network calibration (tier shares, chain depth, zone density) cannot be
+        measured on a layer where a fifth of the pipe belongs to nothing.
+
+        The authority is this stage's own forest, not s2's arc column: `rootof` says which
+        root each arc drains to, and the root's own name carries the label.  An island keeps
+        its island id, because "drains to a local low point with no path to the trunk" is a
+        different fact from "drains to the trunk at S042" and must not be dressed up as one.
+        """
+        o_sub = dict(zip(self.onodes.NODE_ID, self.onodes.SUBNET.astype(str)))
+        isl = {}
+        if len(getattr(self, "island_report", [])):
+            isl = dict(zip(self.island_report.ROOT, self.island_report.COMP))
+        lab = np.array([""] * self.n_nodes, dtype=object)
+        for i in np.flatnonzero(self.used):
+            nm = self.nid_out[self.rootof[i]]
+            s = o_sub.get(nm, "")
+            if not s or s == "nan":
+                s = isl.get(nm, "")
+            if not s:
+                s = f"ORPH-{nm}"          # a component draining nowhere: named, not blanked
+            lab[i] = s
+        self.node_subnet = lab
+        arc = np.array([""] * len(self.arcs), dtype=object)
+        arc[self.keep] = lab[self.Uo[self.keep]]
+        self.arc_subnet = arc
+        blank = int((arc[self.keep] == "").sum())
+        if blank:
+            raise AssertionError(
+                f"{blank} kept reach(es) have no sub-network label. Every reach drains to "
+                f"exactly one root (H15) and the root names the sub-network, so a blank "
+                f"here means the forest is not what build_forest published.")
+        if self.verbose:
+            n_orph = int(sum(1 for s in set(arc[self.keep]) if s.startswith("ORPH-")))
+            _log(f"sub-networks: {len(set(arc[self.keep])):,} labels on "
+                 f"{int(self.keep.sum()):,} reaches "
+                 f"(s2 left {int((self.arcs.SUBNET.astype(str).isin(['', 'nan'])).sum()):,} "
+                 f"arcs blank); {n_orph} component(s) drain nowhere and are named ORPH-*")
+        return self
 
     def _submain_routes(self, tier: np.ndarray) -> int:
         """A sub-main ROUTE is a maximal chain of sub-main runs.
@@ -1047,6 +1183,249 @@ class Hier:
                 pd.Series(arc_tier[self.keep])).sum()
             _log(f"tiers: " + ", ".join(f"{k} {v:,.1f} km" for k, v in km.items())
                  + f"; inversions {inv}")
+        return self
+
+    # ---------------------------------------------------------------- 2h(ii). calibration
+    def _apportion_trunk(self) -> Dict[str, float]:
+        """The Main Pipe's length, shared out between the sub-networks that join it.
+
+        A PROJECT APPORTIONMENT, and it says so: the trunk is ONE client input serving every
+        sub-network, so "this sub-network's trunk length" is not a measurable quantity the
+        way its own pipe is.  Without some apportionment the per-sub-network trunk share is
+        not computable at all, and the as-built band for it would have to be dropped.
+
+        The rule is nearest-join: every metre of trunk belongs to the sub-network whose join
+        is closest to it.  It is well defined, it sums EXACTLY to the trunk length, and it
+        needs no flow direction on the Main Pipe - which this stage does not have and must
+        not invent.  Sampled at TRUNK_SAMPLE_M, the node-merge radius.
+        """
+        from scipy.spatial import cKDTree
+        idx = np.flatnonzero(self.root_kind == "main_pipe")
+        if idx.size == 0:
+            return {}
+        tree = cKDTree(np.c_[self.NX_out[idx], self.NY_out[idx]])
+        labels = [str(self.node_subnet[i]) for i in idx]
+        out: Dict[str, float] = {}
+        for part in self.main_pipe.geometry:
+            geoms = part.geoms if part.geom_type == "MultiLineString" else [part]
+            for gm in geoms:
+                if gm.length <= 0:
+                    continue
+                n = max(1, int(math.ceil(gm.length / TRUNK_SAMPLE_M)))
+                seg = gm.length / n
+                pts = np.array([[p.x, p.y] for p in
+                                (gm.interpolate((k + 0.5) * seg) for k in range(n))])
+                _d, j = tree.query(pts)
+                for jj in np.atleast_1d(j):
+                    out[labels[int(jj)]] = out.get(labels[int(jj)], 0.0) + seg
+        return {k: v / 1000.0 for k, v in out.items()}
+
+    def subnet_calibration(self):
+        """THE AS-BUILT GATES, MEASURED PER SUB-NETWORK - not as a network average.
+
+        `10_ASBUILT_CALIBRATION.md` sec 1 gives five structural gates and rule T2 says a
+        package is one connected component with exactly one outlet, which is what a
+        sub-network is.  So the bands measured BETWEEN NAMA'S PACKAGES are applied
+        SUB-NETWORK BY SUB-NETWORK, and the file is explicit about why an average will not
+        do: "a subnetwork with 0 % sub-main fails even if the average passes".
+
+            tier length share      trunk and sub main, against the measured package bands
+            chain depth            lateral -> main, median <= 2, p90 <= 4, absolute 5
+            lateral-zone density   > 7 zones/km means THE MAIN TIER IS MISSING
+            hierarchy ratio        lateral runs into another lateral, 60-78 %
+
+        WHAT A ZONE IS HERE, STATED.  NAMA's zone is a DRAFTING zone (5A-1-A49); ours is the
+        set of lateral runs draining through one lateral run that discharges into a
+        non-lateral.  The definitions are not the same object, so the density is compared as
+        a STRUCTURAL SYMPTOM - both count lateral clusters per km - and never quoted as a
+        like-for-like match.  The one like-for-like row is a lateral reaching the trunk with
+        nothing in between, and it is in `lateral_into`.
+
+        Nothing here changes the design.  It measures it and names what fails, with the
+        size beside it, which is the concept-stage rule.
+        """
+        keep = self.keep
+        lab = self.arc_subnet
+        L = self.len_out
+        tier = self.arc_tier
+        tgt = AB.AsBuilt().targets()
+        band_t = (tgt["tier_share_trunk_pct"].lo, tgt["tier_share_trunk_pct"].hi)
+        band_s = (tgt["tier_share_submain_pct"].lo, tgt["tier_share_submain_pct"].hi)
+        self.cal_band_trunk, self.cal_band_submain = band_t, band_s
+        trunk_km = self._apportion_trunk()
+
+        # --- chain depth: hops from a lateral run to the first non-lateral ---------------
+        tr_run = self.run_tier
+        hops = np.zeros(self.n_runs, dtype=np.int64)
+        for rr in self.run_order[::-1]:            # downstream first, so `next` is settled
+            if tr_run[rr] != "lateral":
+                hops[rr] = 0
+                continue
+            nx = self.run_next[rr]
+            hops[rr] = 1 + (int(hops[nx]) if nx != -1 and tr_run[nx] == "lateral" else 0)
+        self.run_hops = hops
+
+        run_lab = np.array([""] * self.n_runs, dtype=object)
+        run_lab[self.run_id[keep]] = lab[keep]
+        self.run_subnet = run_lab
+
+        # --- one row per sub-network -----------------------------------------------------
+        A = pd.DataFrame(dict(SUB=lab[keep], L=L[keep], TIER=tier[keep]))
+        km = A.groupby("SUB").L.sum() / 1000.0
+        by_tier = (A.pivot_table(index="SUB", columns="TIER", values="L",
+                                 aggfunc="sum", fill_value=0.0) / 1000.0)
+        for t in ("lateral", "main", "sub main"):
+            if t not in by_tier.columns:
+                by_tier[t] = 0.0
+
+        # WHAT EACH SUB-NETWORK ENDS AT.  An island or an orphan has no join onto the Main
+        # Pipe, so `_apportion_trunk` gives it none and its trunk share is 0 - which the
+        # band then reads as "below", a FAILURE against a gate it could not possibly meet.
+        # A sub-network that does not reach the trunk is a different fact and is named as
+        # one; `10_ASBUILT_CALIBRATION` rule T1 already settles that such a terminal is
+        # legal where it ends at a designed station.
+        # `root_kind` is "" on every node that is not a root, which is the same indexing
+        # `_apportion_trunk` uses, so no extra state is needed to read it.
+        root_of_sub: Dict[str, str] = {}
+        for i, k in enumerate(np.asarray(self.root_kind, dtype=object)):
+            if k:
+                root_of_sub[str(self.node_subnet[i])] = str(k)
+
+        rows = []
+        for s in sorted(km.index):
+            own = float(km[s])
+            tk = float(trunk_km.get(s, 0.0))
+            tot = own + tk
+            sm = float(by_tier.loc[s, "sub main"])
+            lat = float(by_tier.loc[s, "lateral"]) + float(by_tier.loc[s, "main"])
+            rr = np.flatnonzero(run_lab == s)
+            lat_runs = [int(r) for r in rr if tr_run[r] == "lateral"]
+            h = np.array([hops[r] for r in lat_runs], dtype=float)
+            into_lat = sum(1 for r in lat_runs
+                           if self.run_next[r] != -1
+                           and tr_run[self.run_next[r]] == "lateral")
+            zones = len(lat_runs) - into_lat          # a zone is one that exits the tier
+            small = own < SUBNET_MIN_KM_FOR_BAND
+            rows.append(dict(
+                SUBNET=s, KM=round(own, 3), TRUNK_KM=round(tk, 3),
+                TRUNK_PCT=round(100.0 * tk / tot, 2) if tot > 0 else 0.0,
+                SM_PCT=round(100.0 * sm / tot, 2) if tot > 0 else 0.0,
+                LAT_PCT=round(100.0 * lat / tot, 2) if tot > 0 else 0.0,
+                SM_ZERO=int(sm <= 0.0),
+                N_RUNS=int(rr.size), N_LAT_RUNS=len(lat_runs),
+                CHAIN_MED=float(np.median(h)) if h.size else 0.0,
+                CHAIN_P90=float(np.percentile(h, 90)) if h.size else 0.0,
+                CHAIN_MAX=int(h.max()) if h.size else 0,
+                ZONES=int(zones),
+                ZONE_PER_KM=round(zones / own, 3) if own > 0 else 0.0,
+                HIER_PCT=round(100.0 * into_lat / len(lat_runs), 2) if lat_runs else 0.0,
+                ENDS_AT=root_of_sub.get(s, ""),
+                BANDED=int(not small)))
+        cal = pd.DataFrame(rows)
+
+        def verdict(v, lo, hi):
+            if lo is None or hi is None or not np.isfinite(v):
+                return "no band"
+            return "in band" if lo <= v <= hi else ("below" if v < lo else "above")
+
+        cal["V_TRUNK"] = ["no join onto the Main Pipe" if e and e != "main_pipe" else
+                          (verdict(v, *band_t) if b else "too small to band")
+                          for v, b, e in zip(cal.TRUNK_PCT, cal.BANDED, cal.ENDS_AT)]
+        cal["V_SM"] = [verdict(v, *band_s) if b else "too small to band"
+                       for v, b in zip(cal.SM_PCT, cal.BANDED)]
+        # A CHECK THAT CANNOT RUN IS NOT A PASS - inheritance-ledger row 2.  Chain depth,
+        # zone density and the hierarchy ratio are all measured OVER THE LATERAL RUNS, and
+        # a sub-network with none of them has nothing for them to measure.  Scored the
+        # arithmetic way, such a sub-network reads CHAIN_MED = 0 -> "pass" and
+        # HIER_PCT = 0.0 -> "below": one silent pass and one false failure on the same
+        # empty evidence.  The outfall rule multiplies small sub-networks, so this is not a
+        # corner case - it is about to be a large share of the table.  They are named
+        # instead and counted apart from the verdicts.
+        no_lat = (cal.N_LAT_RUNS.to_numpy(int) == 0)
+        cal["V_CHAIN"] = np.where(
+            no_lat, "no lateral runs - cannot run",
+            np.where((cal.CHAIN_MED <= CAL_CHAIN_MED_MAX) &
+                     (cal.CHAIN_P90 <= CAL_CHAIN_P90_MAX) &
+                     (cal.CHAIN_MAX <= CAL_CHAIN_ABS_MAX), "pass", "FAIL"))
+        cal["V_ZONE"] = np.where(
+            no_lat, "no lateral runs - cannot run",
+            np.where(cal.ZONE_PER_KM <= CAL_ZONE_PER_KM_MAX, "pass",
+                     "FAIL - the main tier is missing"))
+        cal["V_HIER"] = ["no lateral runs - cannot run" if nl else
+                         (verdict(v, *CAL_HIER_PCT) if b else "too small to band")
+                         for v, b, nl in zip(cal.HIER_PCT, cal.BANDED, no_lat)]
+        self.subnet_cal = cal.sort_values("KM", ascending=False).reset_index(drop=True)
+
+        # --- the summary, which is what goes in the manifest -----------------------------
+        b = cal[cal.BANDED == 1]
+        km_all = float(cal.KM.sum())
+        # `N_NA` is the third state every one of these gates needs and only some of them
+        # had: the sub-networks the gate could not be measured on at all.  Without it a
+        # sub-network with no lateral runs is counted as a PASS on chain depth, which is
+        # inheritance-ledger row 2 in reverse - and the outfall rule is about to make that
+        # the common case rather than a curiosity.
+        n_nolat = int((cal.V_CHAIN == "no lateral runs - cannot run").sum())
+        self.cal_summary = pd.DataFrame([
+            {"GATE": "trunk share of a sub-network, %",
+             "BAND": f"{band_t[0]:.2f}-{band_t[1]:.2f}",
+             "N_BANDED": int((b.V_TRUNK != "no join onto the Main Pipe").sum()),
+             "N_IN": int((b.V_TRUNK == "in band").sum()),
+             "N_OUT": int(b.V_TRUNK.isin(["below", "above"]).sum()),
+             "N_NA": int(len(cal) - len(b))
+                     + int((b.V_TRUNK == "no join onto the Main Pipe").sum()),
+             "KM_OUT": round(float(b.loc[b.V_TRUNK.isin(["below", "above"]), "KM"].sum()), 1),
+             "SOURCE": "asbuilt.targets()['tier_share_trunk_pct'], package band. A "
+                       "sub-network that does not reach the Main Pipe is NOT graded "
+                       "against it - it has no trunk to take a share of"},
+            {"GATE": "sub-main share of a sub-network, %",
+             "BAND": f"{band_s[0]:.2f}-{band_s[1]:.2f}",
+             "N_BANDED": int(len(b)), "N_IN": int((b.V_SM == "in band").sum()),
+             "N_OUT": int(b.V_SM.isin(["below", "above"]).sum()),
+             "N_NA": int(len(cal) - len(b)),
+             "KM_OUT": round(float(b.loc[b.V_SM.isin(["below", "above"]), "KM"].sum()), 1),
+             "SOURCE": "asbuilt.targets()['tier_share_submain_pct'], package band"},
+            {"GATE": "sub-networks with NO sub main at all", "BAND": "0 allowed",
+             "N_BANDED": int(len(cal)), "N_IN": int((cal.SM_ZERO == 0).sum()),
+             "N_OUT": int(cal.SM_ZERO.sum()), "N_NA": 0,
+             "KM_OUT": round(float(cal.loc[cal.SM_ZERO == 1, "KM"].sum()), 1),
+             "SOURCE": "10_ASBUILT_CALIBRATION sec 1, verbatim. NOTE: the outlet clause in "
+                       "tiers() makes this 0 BY CONSTRUCTION, so a 0 here is not evidence "
+                       "about the layout - anything above 0 is a real defect"},
+            {"GATE": "chain depth lateral->main (med<=2, p90<=4, max 5)",
+             "BAND": f"{CAL_CHAIN_MED_MAX}/{CAL_CHAIN_P90_MAX}/{CAL_CHAIN_ABS_MAX}",
+             "N_BANDED": int(len(cal) - n_nolat),
+             "N_IN": int((cal.V_CHAIN == "pass").sum()),
+             "N_OUT": int((cal.V_CHAIN == "FAIL").sum()), "N_NA": n_nolat,
+             "KM_OUT": round(float(cal.loc[cal.V_CHAIN == "FAIL", "KM"].sum()), 1),
+             "SOURCE": "10_ASBUILT_CALIBRATION sec 1, built median 2 / p90 3 / max 5"},
+            {"GATE": "lateral-zone density, zones per km",
+             "BAND": f"<= {CAL_ZONE_PER_KM_MAX:g}",
+             "N_BANDED": int(len(cal) - n_nolat),
+             "N_IN": int((cal.V_ZONE == "pass").sum()),
+             "N_OUT": int(cal.V_ZONE.str.startswith("FAIL").sum()), "N_NA": n_nolat,
+             "KM_OUT": round(float(
+                 cal.loc[cal.V_ZONE.str.startswith("FAIL"), "KM"].sum()), 1),
+             "SOURCE": "built 4.27/km; > 7/km means the main tier is missing"},
+            {"GATE": "hierarchy ratio, lateral into lateral, %",
+             "BAND": f"{CAL_HIER_PCT[0]:g}-{CAL_HIER_PCT[1]:g}",
+             "N_BANDED": int((b.V_HIER != "no lateral runs - cannot run").sum()),
+             "N_IN": int((b.V_HIER == "in band").sum()),
+             "N_OUT": int(b.V_HIER.isin(["below", "above"]).sum()),
+             "N_NA": int(len(cal) - len(b))
+                     + int((b.V_HIER == "no lateral runs - cannot run").sum()),
+             "KM_OUT": round(float(b.loc[b.V_HIER.isin(["below", "above"]), "KM"].sum()), 1),
+             "SOURCE": f"10_ASBUILT_CALIBRATION sec 1+4: {CAL_HIER_MEASURED_PCT} % on 272 "
+                       f"exits. asbuilt.py still returns "
+                       f"{CAL_HIER_RETRACTED_PCT} %, RETRACTED by sec 4"},
+        ])
+        self.cal_km_all = km_all
+        if self.verbose:
+            _log(f"per-sub-network calibration on {len(cal):,} sub-networks "
+                 f"({int(len(b)):,} at or above the {SUBNET_MIN_KM_FOR_BAND:g} km band "
+                 f"floor):")
+            for r in self.cal_summary.itertuples():
+                _log(f"    {r.GATE:52s} {r.N_IN:5d} pass / {r.N_OUT:5d} out "
+                     f"({r.KM_OUT:,.1f} km) / {r.N_NA:5d} cannot run")
         return self
 
     # ---------------------------------------------------------------- 2i. measure
@@ -1368,11 +1747,18 @@ class Hier:
             "PATH_UP_M": np.round(self.arc_path_up[idx], 1),
             "RUN_LEN_M": np.round(self.run_len[self.run_id[idx]], 1),
             "RUN_DEPTH": self.run_depth[self.run_id[idx]].astype(int),
+            # hops from this run to the first non-lateral one - the as-built calibration's
+            # "chain depth, lateral -> main": built median 2, p90 3, max 5.  0 on a run that
+            # is not a lateral, because the chain it measures starts at a lateral.
+            "CHAIN": self.run_hops[self.run_id[idx]].astype(int),
             "GND_FALL": np.round(self.fall_pub[idx], 4),
             "AGN_GRADE": (self.fall_pub[idx] < -C.ADVERSE_MIN_M).astype(int),
             "INLET_DEG": np.round(self.inlet[idx], 1),
             "DIR_CONF": a.DIR_CONF.to_numpy(object)[idx],
-            "SUBNET": a.SUBNET.to_numpy(object)[idx],
+            # SUBNET comes from THIS stage's forest, not from s2's arc column: s2 leaves it
+            # blank on every head, island and unused corridor, and a reach nobody can
+            # attribute cannot be calibrated.  One column, one authority.
+            "SUBNET": self.arc_subnet[idx],
             "ROOT_KIND": self.root_kind[self.rootof[self.Uo[idx]]],
             "SRC": a.SRC.to_numpy(object)[idx],
             "CONFIDENCE": a.CONFIDENCE.to_numpy(object)[idx],
@@ -1399,6 +1785,7 @@ class Hier:
             "TIER_OUT": [self.arc_tier[self.out_arc[i]] if self.out_arc[i] != -1 else ""
                          for i in ni],
             "ROOT_KIND": self.root_kind[self.rootof[ni]],
+            "SUBNET": self.node_subnet[ni],
             "MADE_BY": [self.made_by[i] for i in ni],
             "SET_BACK_FROM": [self.node_parent[i] for i in ni],
             "STAGE": STAGE,
@@ -1433,6 +1820,8 @@ class Hier:
 
         _write_table(self.tier_table, "tiers")
         _write_table(self.compare_tier, "compare_tier")
+        _write_table(self.subnet_cal, "subnet_calibration")
+        _write_table(self.cal_summary, "calibration_gates")
         _write_table(self.head_table, "heads")
         _write_table(self.head_passes, "head_passes")
         _write_table(self.prune, "pruned")
@@ -1575,6 +1964,76 @@ class Hier:
         ]
         for t in ("lateral", "main", "sub main", "trunk main"):
             rows.append((f"km_{t.replace(' ', '_')}", self.tier_km[t], "km", ""))
+
+        # --- THE PER-SUB-NETWORK CALIBRATION -------------------------------------------
+        # The as-built gates are measured PER SUB-NETWORK, because a network average hides
+        # exactly the failure the calibration names: "a subnetwork with 0 % sub-main fails
+        # even if the average passes" (10_ASBUILT_CALIBRATION sec 1).
+        cal, cs = self.subnet_cal, self.cal_summary
+        b = cal[cal.BANDED == 1]
+        rows += [
+            ("CAL_CHAIN_MED_MAX", CAL_CHAIN_MED_MAX, "hops",
+             "10_ASBUILT_CALIBRATION sec 1, built median 2 (excl. 5A-1)"),
+            ("CAL_CHAIN_P90_MAX", CAL_CHAIN_P90_MAX, "hops", "built p90 3, band <= 4"),
+            ("CAL_CHAIN_ABS_MAX", CAL_CHAIN_ABS_MAX, "hops", "built max 5, an absolute"),
+            ("CAL_ZONE_PER_KM_MAX", CAL_ZONE_PER_KM_MAX, "1/km",
+             "built 4.27/km; above 7 the MAIN TIER IS MISSING - the single best "
+             "structural symptom"),
+            ("CAL_HIER_PCT_LO", CAL_HIER_PCT[0], "%", "10_ASBUILT_CALIBRATION sec 1"),
+            ("CAL_HIER_PCT_HI", CAL_HIER_PCT[1], "%", "10_ASBUILT_CALIBRATION sec 1"),
+            ("CAL_HIER_MEASURED_PCT", CAL_HIER_MEASURED_PCT, "%",
+             "MEASURED, 272 exits. asbuilt.py still returns "
+             f"{CAL_HIER_RETRACTED_PCT} %, RETRACTED by 10_ASBUILT_CALIBRATION sec 4 - "
+             "the retracted figure is published beside it rather than silently replaced"),
+            ("CAL_TRUNK_BAND_LO", round(float(self.cal_band_trunk[0]), 3), "%",
+             "asbuilt.targets()['tier_share_trunk_pct'], the spread BETWEEN packages"),
+            ("CAL_TRUNK_BAND_HI", round(float(self.cal_band_trunk[1]), 3), "%", ""),
+            ("CAL_SUBMAIN_BAND_LO", round(float(self.cal_band_submain[0]), 3), "%",
+             "asbuilt.targets()['tier_share_submain_pct']"),
+            ("CAL_SUBMAIN_BAND_HI", round(float(self.cal_band_submain[1]), 3), "%", ""),
+            ("SUBNET_MIN_KM_FOR_BAND", SUBNET_MIN_KM_FOR_BAND, "km",
+             "DERIVED from asbuilt.A_PKG_MIN_KM_GEOM - the floor the band itself was "
+             "measured above"),
+            ("TRUNK_SAMPLE_M", TRUNK_SAMPLE_M, "m",
+             "NUMERICAL RESOLUTION, not a design value: the step at which the Main Pipe is "
+             "sampled to apportion its length by nearest join"),
+            ("subnets_n", int(len(cal)), "",
+             "sub-networks on the published layer. Every reach carries one - s2 leaves the "
+             "heads and islands blank and this stage takes the label from its own forest"),
+            ("subnets_banded", int(len(b)), "",
+             f"at or above the {SUBNET_MIN_KM_FOR_BAND:g} km band floor"),
+            ("subnets_no_submain", int(cal.SM_ZERO.sum()), "",
+             "sub-networks with NO sub main at all. 10_ASBUILT_CALIBRATION sec 1: this "
+             "FAILS even if the average passes. The outlet clause in tiers() makes it 0 "
+             "by construction, so anything above 0 is a real defect"),
+            ("subnets_trunk_out_of_band", int(cs.iloc[0].N_OUT), "", str(cs.iloc[0].BAND)),
+            ("subnets_submain_out_of_band", int(cs.iloc[1].N_OUT), "",
+             str(cs.iloc[1].BAND)),
+            ("subnets_chain_fail", int(cs.iloc[3].N_OUT), "",
+             "chain depth past median 2 / p90 4 / max 5"),
+            ("km_chain_fail", float(cs.iloc[3].KM_OUT), "km", ""),
+            ("subnets_with_no_lateral_runs", int(cs.iloc[3].N_NA), "",
+             "sub-networks the chain-depth, zone-density and hierarchy-ratio gates CANNOT "
+             "BE MEASURED ON, because all three are computed over the lateral runs and "
+             "these have none. Counted apart from the verdicts: scored arithmetically they "
+             "read 'pass' on chain depth and 'below' on the hierarchy ratio off the same "
+             "empty evidence (inheritance row 2). The outfall rule makes small "
+             "sub-networks the common case, so this number is the honesty of the three "
+             "gates above it"),
+            ("subnets_zone_density_fail", int(cs.iloc[4].N_OUT), "",
+             f"above {CAL_ZONE_PER_KM_MAX:g} lateral zones per km - the main tier is "
+             f"missing there"),
+            ("km_zone_density_fail", float(cs.iloc[4].KM_OUT), "km", ""),
+            ("subnets_hier_out_of_band", int(cs.iloc[5].N_OUT), "",
+             f"outside {CAL_HIER_PCT[0]:g}-{CAL_HIER_PCT[1]:g} %"),
+            ("chain_median_all", float(np.median(cal.CHAIN_MED)) if len(cal) else 0.0,
+             "hops", "median across sub-networks of their own median chain depth"),
+            ("chain_max_all", int(cal.CHAIN_MAX.max()) if len(cal) else 0, "hops",
+             f"the deepest lateral chain anywhere; the absolute is {CAL_CHAIN_ABS_MAX}"),
+            ("zone_per_km_all",
+             round(float(cal.ZONES.sum() / max(cal.KM.sum(), 1e-9)), 3), "1/km",
+             "over the whole network; built 4.27"),
+        ]
         return pd.DataFrame(rows, columns=["ITEM", "VALUE", "UNIT", "SOURCE"])
 
     # ---------------------------------------------------------------- 2n. report
@@ -1679,6 +2138,54 @@ class Hier:
           "of every surviving arc is s2's, unchanged. **60 % of this corridor network lies "
           "on ground falling more gently than the 5.00 mm/m a DN200 may be laid at "
           "(G203-p29 Tab 11), and no tree fixes that.**\n")
+        A("### Calibration PER SUB-NETWORK - the gate that a network average hides\n")
+        cal, cs = self.subnet_cal, self.cal_summary
+        b = cal[cal.BANDED == 1]
+        A(f"**{len(cal):,} sub-networks**, of which **{len(b):,}** are at or above the "
+          f"{SUBNET_MIN_KM_FOR_BAND:g} km floor the as-built band was itself measured above "
+          f"(`asbuilt.A_PKG_MIN_KM_GEOM`).  The unit of comparison is NAMA's PACKAGE, and "
+          f"rule T2 of `10_ASBUILT_CALIBRATION.md` says a package is one connected "
+          f"component with exactly one outlet - which is what a sub-network is here.  So "
+          f"the band measured BETWEEN their packages is applied sub-network by "
+          f"sub-network, and the reason is in that file's own words: **\"a subnetwork with "
+          f"0 % sub-main fails even if the average passes\"**.\n")
+        A(_md(cs, 2) + "\n")
+        A(f"**Sub-networks with no sub main at all: {int(cal.SM_ZERO.sum())}.**  That is 0 "
+          f"by construction now - `tiers()` names the run that DISCHARGES a component a sub "
+          f"main whatever its accumulated length, which is what \"the outlet governs\" has "
+          f"always meant in this file's own docstring and what the code did not do.  With "
+          f"the outfall rule multiplying the number of small sub-networks, the threshold "
+          f"alone would have left many of them with no collector tier at all.\n")
+        A(f"**Chain depth** - hops from a lateral run to the first non-lateral - is "
+          f"published per reach as `CHAIN`.  Median across sub-networks "
+          f"{float(np.median(cal.CHAIN_MED)) if len(cal) else 0:.1f}, deepest anywhere "
+          f"{int(cal.CHAIN_MAX.max()) if len(cal) else 0}, against the built network's "
+          f"median 2, p90 3 and absolute maximum 5.\n")
+        A(f"**Lateral-zone density** is the single best structural symptom in the "
+          f"calibration: above {CAL_ZONE_PER_KM_MAX:g} zones per km the main tier is "
+          f"missing.  Ours is "
+          f"{cal.ZONES.sum() / max(cal.KM.sum(), 1e-9):.2f}/km over the whole network "
+          f"against the built 4.27.  **The definitions are NOT the same object** - NAMA's "
+          f"zone is a drafting zone, ours is the set of lateral runs draining through one "
+          f"lateral that discharges into a non-lateral - so this is compared as a symptom, "
+          f"never quoted as a like-for-like match.  The one like-for-like row is a lateral "
+          f"reaching the trunk with nothing in between, and it is in the W7 test above.\n")
+        A(f"**The hierarchy ratio band is 60-78 %**, measured at "
+          f"{CAL_HIER_MEASURED_PCT} % on 272 exits.  `asbuilt.py` still returns "
+          f"{CAL_HIER_RETRACTED_PCT} % for the same quantity and "
+          f"`10_ASBUILT_CALIBRATION.md` sec 4 retracts it by name - *\"wrong twice; use "
+          f"73.2 % on 272 exits, banded 60-78 %\"*.  Both numbers are printed here rather "
+          f"than one being quietly swapped for the other.\n")
+        A("The 25 largest sub-networks:\n")
+        A(_md(cal[["SUBNET", "KM", "TRUNK_KM", "TRUNK_PCT", "SM_PCT", "LAT_PCT",
+                   "CHAIN_MED", "CHAIN_P90", "CHAIN_MAX", "ZONE_PER_KM", "HIER_PCT",
+                   "V_TRUNK", "V_SM", "V_CHAIN", "V_ZONE", "V_HIER"]], 2, maxrows=25))
+        A("\n\n`TRUNK_KM` is a **PROJECT APPORTIONMENT and not a measurement**: the trunk "
+          "is one client input serving every sub-network, so the length is shared out by "
+          "nearest join, sampled at the node-merge radius. It sums exactly to the trunk "
+          "length and needs no flow direction on the Main Pipe, which this stage does not "
+          "have and must not invent. Without it the per-sub-network trunk band could not "
+          "be applied at all.\n")
         A("### Calibration - the sub-main threshold\n")
         A(_md(self.sweep_submain, 2) + "\n")
         A("### Calibration - the lateral budget\n")
@@ -1698,9 +2205,9 @@ class Hier:
     # ---------------------------------------------------------------- run it
     def build(self):
         (self.load().fix_islands().one_pipe_leaves().gates().set_heads().mint_nodes()
-         .build_forest().build_runs())
+         .build_forest().build_runs().label_subnets())
         self.calibrate()
-        self.apply_tiers().measure().sweep().publish()
+        self.apply_tiers().subnet_calibration().measure().sweep().publish()
         os.makedirs(RUN, exist_ok=True)
         with open(REPORT_MD, "w", encoding="utf-8") as fh:
             fh.write(self.report())
@@ -1833,7 +2340,30 @@ def verify() -> dict:
             inv += 1
     out["tier_inversions"] = inv
 
-    # 8. against the manifest
+    # 8. THE PER-SUB-NETWORK CALIBRATION, re-derived from the published columns.
+    #    A check that cannot run is a FAILURE, not a blank (inheritance row 2), so the
+    #    absence of a SUBNET column is reported as such rather than skipped.
+    if "SUBNET" not in r.columns:
+        out["subnet_check"] = "CANNOT RUN - the reaches layer has no SUBNET column"
+        out["reaches_without_a_subnet"] = -1
+        out["subnets_with_no_submain"] = -1
+    else:
+        s = r.SUBNET.astype(str).str.strip()
+        out["reaches_without_a_subnet"] = int((s.eq("") | s.eq("nan")).sum())
+        out["subnets"] = int(s[~(s.eq("") | s.eq("nan"))].nunique())
+        # "a subnetwork with 0 % sub-main FAILS even if the average passes"
+        has_sm = r[r.TIER == "sub main"].SUBNET.astype(str).unique()
+        out["subnets_with_no_submain"] = int(
+            len(set(s[~(s.eq("") | s.eq("nan"))]) - set(has_sm)))
+    if "CHAIN" not in r.columns:
+        out["chain_check"] = "CANNOT RUN - the reaches layer has no CHAIN column"
+        out["chain_max"] = -1
+    else:
+        lat = r[r.TIER == "lateral"]
+        out["chain_max"] = int(lat.CHAIN.max()) if len(lat) else 0
+        out["chain_over_absolute"] = int((lat.CHAIN > CAL_CHAIN_ABS_MAX).sum())
+
+    # 9. against the manifest
     out["manifest_km_corridors"] = float(mv.get("km_corridors", float("nan")))
     out["agrees_with_manifest"] = bool(
         abs(out["km_corridors"] - out["manifest_km_corridors"]) < 0.05)
@@ -1888,7 +2418,38 @@ def selftest(verbose: bool = True) -> bool:
     t = h.tiers()
     chk(list(t[:3]) == ["lateral"] * 3, "first three runs are laterals (budget 3)")
     chk(t[3] == "main", "the fourth run is a main - the run budget is spent")
-    chk(t[5] == "main" and h.run_path_m[5] > 750, "the path budget also promotes to main")
+    chk(t[5] == "sub main",
+        "THE OUTLET GOVERNS: the run that discharges a component is a sub main whatever "
+        "its accumulated length")
+
+    # the path budget, on a tree where NOTHING else could have promoted the run - so the
+    # outlet clause cannot be what did it
+    hp = Hier.__new__(Hier)
+    hp.submain_km, hp.budget_runs, hp.budget_path_m = 99.0, 99, 750.0
+    hp.n_runs = 3
+    hp.run_next = np.array([1, 2, -1])
+    hp.run_sub_km = np.array([0.1, 0.2, 0.3])
+    hp.run_depth = np.array([1, 2, 3], dtype=float)
+    hp.run_path_m = np.array([0.0, 800.0, 900.0])
+    tp = hp.tiers()
+    chk(tp[0] == "lateral" and tp[1] == "main",
+        "the path budget alone promotes a mid-tree run to main")
+    chk(tp[2] == "sub main", "and the outlet is a sub main regardless")
+
+    # A SUB-NETWORK SMALLER THAN SUBMAIN_KM STILL GETS A SUB MAIN.  The outfall rule
+    # multiplies the number of small sub-networks, and 10_ASBUILT_CALIBRATION sec 1 is
+    # explicit: "a subnetwork with 0 % sub-main fails even if the average passes".
+    hs = Hier.__new__(Hier)
+    hs.submain_km, hs.budget_runs, hs.budget_path_m = 2.0, 3, 750.0
+    hs.n_runs = 2
+    hs.run_next = np.array([1, -1])
+    hs.run_sub_km = np.array([0.05, 0.12])         # 120 m of network, against a 2 km rule
+    hs.run_depth = np.array([1, 2], dtype=float)
+    hs.run_path_m = np.array([0.0, 60.0])
+    ts = hs.tiers()
+    chk(ts[1] == "sub main",
+        "a sub-network far under SUBMAIN_KM still has a collector tier")
+
     t2 = h.tiers(submain_km=1.0)
     chk(t2[4] == "sub main" and t2[5] == "sub main",
         "a lower threshold promotes the collector to sub main")

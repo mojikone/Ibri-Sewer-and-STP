@@ -85,9 +85,70 @@ shipped default is the knee of it.  Measured, the front runs from 26.6 % uphill 
 Both ends are legal and the choice along the front is the engineer's, which is why it is
 published as a table and not buried in a constant.
 
+THE OUTFALL RULE (engineer 2026-09-05/06; philosophy sec 9) - THE MOST IMPORTANT CHANGE IN
+W12, AND EVERYTHING DOWNSTREAM DEPENDS ON IT
+
+    "A subnetwork joins the main pipe at the LOWEST POINT WHERE IT MEETS it.
+     NO SUBNETWORK CROSSES THE MAIN PIPE AND GROWS PAST IT."
+
+W11b could not obey it because it asked the question of the wrong object.  `find_roots` asks
+whether a NODE is close to the trunk.  A corridor can cross the trunk, or run a metre from
+it, with neither of its two nodes anywhere near - a 200 m street crossing at its midpoint has
+both ends 100 m away.  Measured on W11b's own shipped `arcs` layer: 214 arcs, 48.49 km,
+physically CROSS the Main Pipe, and 397 come within 3 m of it where only 193 NODES did.  Each
+of those is a flow path that reaches the trunk, ignores it and grows out the other side, and
+it is how two subnetworks came to hold a quarter of the whole network - 7,871 and 6,271
+chambers - while touching the trunk at 1.1 m and 3.1 m and discharging somewhere else.
+Re-measured here on the same file: 39 subnetworks discharge with more than half their
+catchment BELOW the outlet, 517.9 km, worst outlet 26.34 m above its own low point.
+
+Three things fix it, in this order:
+
+  1  `meet_main_pipe()` moves the test from the NODE to the CORRIDOR.  Wherever a corridor
+     crosses the Main Pipe, runs along it, or passes within MEET_TOL_M of it, a node is
+     inserted and the corridor cut there.  Nothing is deleted and no length is lost - the
+     equality is asserted, not asserted about.  MEET_TOL_M is DERIVED: it is
+     `criteria.MH_SNAP_M`, the node-merge radius `s1_roads` used to node the whole corridor
+     graph.  Two positions closer than that are ONE node in the published topology.  It
+     replaced a 5.0 m project number chosen by eye, because a tolerance that decides where a
+     network discharges may not be invented.
+  2  every such node is an outfall (`find_roots` asserts it), so a flow path arriving at the
+     trunk DISCHARGES instead of crossing - and every place a catchment meets the trunk is
+     now a candidate outlet, which is what "the lowest point where it MEETS it" needs in
+     order to be a choice at all.
+  3  `reroot_below_outfall()` then MAKES that choice.  A node sitting below the outfall it
+     drains to has its branch re-pointed to a neighbouring subnetwork whose outfall is at or
+     below it, bounded by the built network's own detour ratio (4.0,
+     `_BRAIN/10_ASBUILT_CALIBRATION.md` sec 1).  Because the new outfall is lower, the
+     below-outlet length is monotone non-increasing, so the loop provably terminates; it
+     stops the moment a pass moves nothing and the per-pass table is published.
+
+EXPECT THE SUBNETWORK COUNT TO RISE SUBSTANTIALLY.  That is correct and approved: "more
+subnetworks worth keeping the work clean, rather than monster useless subnetworks".
+
+MEASURED, on W11b's own data, before this stage is re-run end to end:
+  * the cut takes corridors meeting the trunk with no node on the meeting point from
+    229 to 0, in one round, with the corridor length, plot count and load identical to
+    within a millimetre (12,664 -> 12,949 corridors, 285 new nodes: 192 crossings and
+    93 approaches inside the merge radius);
+  * re-rooting alone, on W11b's published tree and its 193 outfalls - so without any of
+    the new meeting points - takes the length draining up to its own outlet from
+    438.6 km to 184.2 km, converging in 17 passes and 1.1 s, with the forest intact.
+Both figures are recomputed on every build; these are what they were when it was written.
+
+WHAT IS PUBLISHED PER SUBNETWORK: the outfall, its true LOW_NODE and LOW_Z, HEAD_M (how far
+the outlet sits above that low point), JOIN_OFF_M (the flow-path distance from it),
+JOIN_WHY, BELOW_KM and BELOW_PCT.  And per arc, `X_MAIN` - recomputed from the geometry about
+to be written, never carried from the pass that made it - which must be 0 everywhere.
+
+`reroot_below_outfall` is the general form of inheritance-ledger row 4: ANYTHING A PASS CAN
+ADD, A LATER PASS MUST BE ABLE TO TAKE AWAY, AND THE STAGE PUBLISHES HOW MANY IT REMOVED.
+The branching only ever ASSIGNS a node to the outfall its weights liked; this takes the
+assignment away where the ground says it was wrong, and prints the count.
+
 ROOTS.  The outfalls are the corridor nodes that touch the client's Main Pipe, which is an
-INPUT (`SHP/Main Pipe/Main Pipe.shp`, 85.49 km).  193 corridor nodes lie within 5 m of it,
-and ALL of them are taken.  The intention had been to price a join so the count stayed near
+INPUT (`SHP/Main Pipe/Main Pipe.shp`, 85.49 km) and is never derived.  Every node within
+MEET_TOL_M of it is taken, including every node `meet_main_pipe` minted.  The intention had been to price a join so the count stayed near
 NAMA's built 21 - until the RATE was checked: NAMA make 4.64 joins per km of their own
 trunk, and 193 joins on 85.49 km is 2.26 per km, less than half that.  There is no evidence
 for suppressing joins on this trunk, so JOIN_COST_M is 0 and the parameter is swept rather
@@ -193,7 +254,7 @@ from w12 import asbuilt as AB                               # noqa: E402
 C = CR.DEFAULT
 
 STAGE = "s2_orient"
-STAGE_VERSION = "W12-orient-1.0"
+STAGE_VERSION = "W12-orient-1.1-outfall"
 
 # ================================================================== paths
 W12 = os.path.dirname(_HERE)                                # .../W12
@@ -258,9 +319,49 @@ JOIN_COST_M = 0.0         # MEASURED, not chosen.  A connection onto the client'
 #                           85.49 km Main Pipe, less than half the built density.  There is
 #                           no evidence for suppressing joins, so none are suppressed and
 #                           the parameter is set to zero rather than tuned.  Swept anyway.
-MAIN_SNAP_M = 5.0         # PROJECT. A corridor node this close to the Main Pipe can
-#                           discharge into it. 193 nodes qualify; the sensitivity of the
-#                           count to this radius is published in `sweep_snap`.
+# --- the OUTFALL RULE (engineer, 2026-09-05/06; philosophy sec 9) -------------------------
+# "A subnetwork joins the main pipe at the LOWEST POINT WHERE IT MEETS it.  No subnetwork
+#  crosses the main pipe and grows past it."
+#
+# MEET_TOL_M is DERIVED, not chosen.  The word "meets" needs a distance and the project
+# already has exactly one: `criteria.MH_SNAP_M`, the node-merge radius s1_roads used to node
+# the whole corridor graph (`s1_roads.py`: "noding at MH_SNAP_M = 3 m").  Two positions
+# closer than that are ONE node in the published topology, so a corridor passing within it
+# of the Main Pipe already shares a node with the trunk in every sense the graph can
+# express.  Anything larger is a SPUR - a real pipe, an engineer's decision - and the
+# sensitivity of the whole answer to that decision is swept in `sweep_main_snap`.
+MEET_TOL_M = C.MH_SNAP_M  # 3.0 m. DERIVED from criteria.MH_SNAP_M, the node-merge radius.
+MAIN_SNAP_M = MEET_TOL_M  # the old name, kept so the sweep and the manifest still read.
+#                           WAS 5.0 m, a PROJECT number chosen by eye. Replaced 2026-09-06
+#                           because a tolerance that decides where a network discharges may
+#                           not be invented; the old value is still a row in the sweep.
+MEET_PASSES = 4           # PROJECT, STRUCTURAL cap only. A cut can reveal a meeting point
+#                           the uncut corridor hid, so the cut repeats until nothing is
+#                           left; on the real corridor set it converges in ONE round (229
+#                           corridors meeting the trunk off-node -> 0), and the per-round
+#                           table is published so that is read rather than claimed.
+REROOT_PASSES = 40        # PROJECT, and a STRUCTURAL cap rather than a design value: the
+#                           re-rooting loop stops the moment a pass accepts no move, and the
+#                           per-pass table is published so convergence is visible rather
+#                           than claimed.  MEASURED on W11b's own published tree - 9,743
+#                           nodes, 193 outfalls - it converges in 17 passes and 1.1 s,
+#                           taking the below-outlet length 438.6 -> 184.2 km.  40 only
+#                           bounds a case that does not converge; if the table ever shows
+#                           the cap being hit, the monotonicity argument needs looking at.
+DETOUR_RATIO_MAX = 4.0    # MEASURED BOUND, _BRAIN/10_ASBUILT_CALIBRATION.md sec 1: "Detour
+#                           ratio | median 1.23, p90 2.26 | median <= 1.45, p90 <= 2.8,
+#                           <= 5 % above 4.0".  The quantity is defined there per CHAMBER as
+#                           its flow-path length to the outfall divided by its straight-line
+#                           distance to it (W12/docs/ASBUILT_STUDY.md H10, 1,992 chambers),
+#                           which is exactly what is computed here.  A re-root that lands a
+#                           node past 4.0 is refused: it would buy a lower outlet with pipe
+#                           nobody would build.  This is a REFUSAL BOUND, not the band - the
+#                           band is a gate on the finished layout and belongs to s3.
+BELOW_OUTLET_FAIL_PCT = 50.0   # the ENGINEER'S OWN diagnostic, quoted from the defect
+#                           register (_BRAIN/00_CURRENT.md, "42 components discharge with
+#                           MORE THAN HALF their catchment BELOW the outlet"). It is the
+#                           threshold the defect was stated at, not one chosen here.
+
 GRID = "R5"               # the 5 m working grid. terrain.py measured native 0.5 m sampling
 #                           to be NO more accurate (SD 0.7564 vs 0.7561 m) and to give an
 #                           identical drain direction on every decidable test line.
@@ -330,6 +431,107 @@ def _sha1(path: str, n: int = 16) -> str:
 # ==========================================================================================
 # THE ALGORITHM
 # ==========================================================================================
+
+def _line_parts(g) -> list:
+    """LineString components of a geometry, flattened."""
+    if g is None or g.is_empty:
+        return []
+    t = g.geom_type
+    if t == "LineString":
+        return [g]
+    if t in ("MultiLineString", "GeometryCollection"):
+        out = []
+        for p in g.geoms:
+            out.extend(_line_parts(p))
+        return out
+    return []
+
+
+def _point_parts(g) -> list:
+    """Point components of a geometry, flattened."""
+    if g is None or g.is_empty:
+        return []
+    t = g.geom_type
+    if t == "Point":
+        return [g]
+    if t in ("MultiPoint", "GeometryCollection"):
+        out = []
+        for p in g.geoms:
+            out.extend(_point_parts(p))
+        return out
+    return []
+
+
+def meet_points(g, main, buf, tol: float) -> List[Tuple[float, str]]:
+    """WHERE A CORRIDOR MEETS THE MAIN PIPE - the one definition, used twice.
+
+    Returns (along-distance, kind) for every place `g` meets `main`:
+
+        crosses      it passes through the trunk - the point of intersection
+        along        it runs ON the trunk for a stretch - the TWO ENDS of that stretch, not
+                     its middle.  A node at the middle leaves half the stretch on the trunk
+                     on either side of it and the next pass cuts those in half again; nodes
+                     at the ends isolate the on-trunk stretch as one corridor whose two
+                     nodes are both outfalls, which is what it physically is.
+        within_tol   it never touches but comes within `tol` - the point of CLOSEST
+                     approach in that stretch, one per contiguous approach
+
+    ONE function, because the pass that CUTS the corridors and the check that says whether
+    any got past must be asking the same question.  Two definitions of "meets" is how a
+    stage comes to satisfy its own validator while breaking the rule.
+    """
+    if g is None or g.is_empty or g.length <= 0:
+        return []
+    here: List[Tuple[float, str]] = []
+    try:
+        hit = g.intersection(main)
+    except Exception:                                              # pragma: no cover
+        hit = g.intersection(main.buffer(0))
+    from shapely.geometry import Point as _Pt
+    for p in _point_parts(hit):
+        here.append((float(g.project(p)), "crosses"))
+    for seg in _line_parts(hit):
+        if len(seg.coords) < 2:
+            continue
+        here.append((float(g.project(_Pt(seg.coords[0]))), "along"))
+        here.append((float(g.project(_Pt(seg.coords[-1]))), "along"))
+    # ...and then every contiguous stretch inside the tolerance that does NOT already carry
+    # one of the points above.  Doing this only when there are no crossings at all - which
+    # is what the first draft did - hides every close approach on a corridor that also
+    # crosses somewhere else, and those are real: measured on the built corridor set, four
+    # corridors ran within the merge radius of the trunk for hundreds of metres and were
+    # invisible because they happened to cross it once as well.
+    from shapely.ops import nearest_points
+    from shapely.geometry import Point
+    for seg in _line_parts(g.intersection(buf)):
+        if seg.is_empty or len(seg.coords) < 2:
+            continue
+        a = float(g.project(Point(seg.coords[0])))
+        b = float(g.project(Point(seg.coords[-1])))
+        lo, hi = (a, b) if a <= b else (b, a)
+        if any(lo - tol <= at <= hi + tol for at, _k in here):
+            continue
+        p = nearest_points(seg, main)[0]
+        here.append((float(g.project(p)), "within_tol"))
+    return sorted(here, key=lambda t: t[0])
+
+
+def meets_without_a_node(g, main, buf, tol: float) -> int:
+    """How many places `g` meets the Main Pipe with NO node of its own within `tol`.
+
+    THIS IS THE INVARIANT, and it must be 0 on every drained arc.  A crossing WITH a node on
+    it is a legal junction - the node is an outfall, so the flow discharges there and does
+    not continue.  A crossing with no node on it is a flow path that reaches the trunk,
+    ignores it and grows out the other side, which is exactly what the outfall rule forbids.
+
+    Stated on the along-distance to the arc's OWN ends, because those ends are its nodes.
+    """
+    pts = meet_points(g, main, buf, tol)
+    if not pts:
+        return 0
+    L = float(g.length)
+    return int(sum(1 for at, _k in pts if tol < at < L - tol))
+
 
 def msa_edges(n: int, U, V, W, root: int) -> np.ndarray:
     """Minimum spanning arborescence: Chu-Liu / Edmonds, vectorised.
@@ -769,6 +971,257 @@ class Orient:
              f"{len(self.cor):,} corridors now")
         self.measure()          # levels, falls and confidences for the new arcs
 
+    # ---------------------------------------------------------------- the outfall rule
+    def meet_main_pipe(self) -> None:
+        """THE OUTFALL RULE, applied by CUTTING rather than by pricing.
+
+        Engineer, 2026-09-05/06 (philosophy sec 9): *"A subnetwork joins the main pipe at
+        the lowest point where it MEETS it.  NO SUBNETWORK CROSSES THE MAIN PIPE AND GROWS
+        PAST IT."*
+
+        WHY THE PREVIOUS RUN COULD NOT OBEY IT.  `find_roots` asks whether a NODE is close
+        to the Main Pipe.  A corridor can cross the trunk, or run a metre from it, with
+        neither of its two nodes anywhere near - a 200 m street crossing at its midpoint has
+        both ends 100 m away.  Measured on W11b's own shipped `arcs` layer: **214 arcs,
+        48.49 km, physically CROSS the Main Pipe**, and 397 come within this tolerance of it
+        while only 193 NODES did.  Every one of those is a flow path that reaches the trunk,
+        ignores it, and grows out the other side.  That is how two subnetworks came to hold
+        a quarter of the whole network while discharging somewhere else entirely.
+
+        SO THE TEST MOVES FROM THE NODE TO THE CORRIDOR.  Wherever a corridor meets the Main
+        Pipe - crossing it, running along it, or passing within MEET_TOL_M of it - a node is
+        inserted at that point and the corridor is cut there.  `find_roots` then picks the
+        new node up as an outfall by its own unchanged distance test, so after this pass:
+
+          * no corridor crosses the trunk without a node on it, and a node ON the trunk is
+            an outfall, so no flow path can cross and continue - it discharges instead;
+          * every place a catchment meets the trunk is a candidate outlet, which is what
+            "the lowest point where it MEETS it" needs in order to be a choice at all.
+
+        EXPECT THE SUBNETWORK COUNT TO RISE, substantially, and that is the intended
+        result: the engineer's words are *"more subnetworks worth keeping the work clean,
+        rather than monster useless subnetworks"*.
+
+        NOTHING IS DELETED.  A cut corridor is replaced by its own pieces, end to end, with
+        length, plot count and load prorated exactly as the ridge rule does it - so the
+        published length before and after this pass is identical to within floating point,
+        and that equality is asserted, not asserted-in-a-comment.
+        """
+        from shapely.ops import substring, unary_union
+        from shapely.geometry import Point
+
+        main = unary_union(list(self.main.geometry))
+        buf = main.buffer(MEET_TOL_M)
+        tol = MEET_TOL_M
+        km_before = float(self.cor.LEN_M.sum())
+        plot_before = float(self.cor.N_PLOT.sum())
+        q_before = float(self.cor.Q_M3D.sum())
+        qn_before = float(self.cor.Q_NEAR_M3D.sum())
+        _log(f"outfall rule: cutting every corridor where it MEETS the Main Pipe "
+             f"(MEET_TOL_M = {tol:g} m, DERIVED from criteria.MH_SNAP_M, the node-merge "
+             f"radius)")
+
+        gpd = self.gpd
+        rec: List[dict] = []
+        meet_nodes: List[str] = []
+        kinds: Dict[str, int] = {"crosses": 0, "along": 0, "within_tol": 0}
+        n_cut_total = 0
+        rounds = []
+        # MEETING POINTS DROPPED AT AN END WHOSE NODE IS NOT ITSELF ON THE TRUNK.
+        # The end-drop below is stated on ALONG-distance, and along-distance is only a
+        # PROXY for "the end node is on the meeting point".  For a crossing the two agree -
+        # the crossing sits on the trunk, so a node within `tol` ALONG the line is within
+        # `tol` of the trunk and `find_roots` takes it as an outfall.  For a CLOSE APPROACH
+        # they can diverge: the meeting point may be up to `tol` from the trunk AND up to
+        # `tol` from the end node, which puts that node as much as 2 x tol away, past the
+        # radius `find_roots` uses.  Measured on a hand case: a corridor passing 2.6 m from
+        # the trunk 1.3 m from its own end, whose end node is 3.4 m away and is therefore
+        # NOT an outfall.  Nothing crosses in that case, so the hard rule holds - what is
+        # lost is a CANDIDATE OUTLET, silently.  It is counted and published instead
+        # (concept rule 7: flag, do not solve).
+        end_gap: List[dict] = []
+        # A CUT CAN REVEAL A MEETING POINT THE UNCUT CORRIDOR HID: splitting a stretch that
+        # ran inside the tolerance turns one contiguous approach into two, each with its own
+        # closest point.  So the pass repeats until nothing is left, bounded by MEET_PASSES
+        # and stopped the moment a round cuts nothing.  The per-round table is published.
+        for rnd in range(MEET_PASSES):
+            cor = self.cor
+            try:
+                cand = np.asarray(cor.sindex.query(buf, predicate="intersects"),
+                                  dtype=np.int64)
+            except Exception:                                      # pragma: no cover
+                cand = np.nonzero(cor.geometry.intersects(buf).to_numpy())[0]
+            cand = np.unique(cand)
+
+            cuts: Dict[int, List[Tuple[float, str]]] = {}
+            for i in cand:
+                here = meet_points(cor.geometry.iloc[int(i)], main, buf, tol)
+                if here:
+                    cuts[int(i)] = here
+            if not cuts:
+                rounds.append(dict(round=rnd, corridors_cut=0, nodes_minted=0))
+                break
+
+            new_rows, add_xy = [], []
+            keep_mask = np.ones(len(cor), bool)
+            for i, here in cuts.items():
+                g = cor.geometry.iloc[i]
+                base = cor.iloc[i]
+                # drop any meeting point that lands on an END - that node already meets the
+                # trunk, and a second node inside the merge radius is the duplicate chamber
+                # MH_SNAP_M exists to forbid - and any that lands inside the merge radius of
+                # the one before it, for the same reason.
+                picked: List[Tuple[float, str]] = []
+                for at, kind in here:
+                    if at <= tol or at >= g.length - tol:
+                        # the end node is only an outfall if it is itself inside the
+                        # tolerance of the trunk.  Where it is not, the meeting point is
+                        # dropped and NO node picks it up - so it is recorded here.
+                        nm = str(base.US_NODE if at <= tol else base.DS_NODE)
+                        gp = self.node_geom.get(nm)
+                        if gp is not None and gp.distance(main) > tol:
+                            end_gap.append(dict(CID=str(base.CID), NODE=nm, AT_M=float(at),
+                                                KIND=kind, ROUND=rnd,
+                                                NODE_DMAIN_M=round(
+                                                    float(gp.distance(main)), 3)))
+                        continue
+                    if picked and at - picked[-1][0] < tol:
+                        continue
+                    picked.append((at, kind))
+                if not picked:
+                    continue
+                bounds = [0.0] + [a for a, _ in picked] + [float(g.length)]
+                ids = [str(base.US_NODE)]
+                for at, kind in picked:
+                    nid = f"M{len(meet_nodes):06d}"
+                    pt = g.interpolate(at)
+                    add_xy.append((nid, pt.x, pt.y))
+                    ids.append(nid)
+                    meet_nodes.append(nid)
+                    kinds[kind] = kinds.get(kind, 0) + 1
+                    rec.append(dict(CID=str(base.CID), LEN_M=float(base.LEN_M),
+                                    AT_M=float(at), KIND=kind, NEW_NODE=nid, ROUND=rnd))
+                ids.append(str(base.DS_NODE))
+                for k in range(len(bounds) - 1):
+                    part = substring(g, bounds[k], bounds[k + 1])
+                    if part.is_empty or part.length <= 0:
+                        continue
+                    r = base.copy()
+                    r["geometry"] = part
+                    r["US_NODE"] = ids[k]
+                    r["DS_NODE"] = ids[k + 1]
+                    r["LEN_M"] = float(part.length)
+                    frac = part.length / g.length
+                    r["CID"] = f"{base.CID}/m{k}"
+                    r["N_PLOT"] = float(base.N_PLOT) * frac
+                    r["Q_NEAR_M3D"] = float(base.Q_NEAR_M3D) * frac
+                    r["Q_M3D"] = float(base.Q_M3D) * frac
+                    new_rows.append(r)
+                keep_mask[i] = False
+
+            n_cut = int((~keep_mask).sum())
+            rounds.append(dict(round=rnd, corridors_cut=n_cut,
+                               nodes_minted=len(add_xy)))
+            if not new_rows:
+                break
+            add = gpd.GeoDataFrame(new_rows, crs=cor.crs)
+            self.cor = gpd.GeoDataFrame(
+                pd.concat([cor[keep_mask], add], ignore_index=True),
+                geometry="geometry", crs=cor.crs)
+            for nid, x, y in add_xy:
+                self.node_geom[nid] = Point(x, y)
+            n_cut_total += n_cut
+
+        self.meet_rounds = pd.DataFrame(rounds)
+        self.meet_splits = int(n_cut_total)
+        self.meet_nodes = meet_nodes
+        self.meet_kinds = dict(kinds)
+        self.meet_rows = (pd.DataFrame(rec) if rec else
+                          pd.DataFrame(columns=["CID", "LEN_M", "AT_M", "KIND",
+                                                "NEW_NODE", "ROUND"]))
+        # the meeting points nobody picked up, deduplicated on (corridor, node) because an
+        # uncut corridor is re-examined in every round
+        eg = (pd.DataFrame(end_gap).drop_duplicates(subset=["CID", "NODE"]) if end_gap
+              else pd.DataFrame(columns=["CID", "NODE", "AT_M", "KIND", "ROUND",
+                                         "NODE_DMAIN_M"]))
+        self.meet_end_gap = eg.reset_index(drop=True)
+        self.n_meet_end_gap = int(len(self.meet_end_gap))
+        if self.n_meet_end_gap:
+            _log(f"  NAMED GAP: {self.n_meet_end_gap} meeting point(s) sit within {tol:g} m "
+                 f"of a corridor END whose own node is FURTHER than {tol:g} m from the "
+                 f"trunk (worst {self.meet_end_gap.NODE_DMAIN_M.max():.2f} m). No node is "
+                 f"minted there and `find_roots` will not take that end as an outfall, so "
+                 f"a candidate outlet is lost. Published as `meet_cuts_end_gap`; none of "
+                 f"them is a crossing, so the no-crossing rule is not affected.")
+        if not meet_nodes:
+            _log("  no corridor meets the Main Pipe away from a node it already has - "
+                 "nothing cut")
+            self.n_meet_off_node = 0
+            self.km_meet_off_node = 0.0
+            return
+
+        km_after = float(self.cor.LEN_M.sum())
+        # ZERO SILENT DROPS: cutting must not lose a metre, a plot or a litre.  Asserted,
+        # not asserted about - and on all three, because the docstring claims all three.
+        if abs(km_after - km_before) > 1e-3 * max(1.0, km_before / 1000.0):
+            raise AssertionError(
+                f"the Main-Pipe cut changed the corridor length: {km_before:,.3f} m -> "
+                f"{km_after:,.3f} m. Nothing may be lost here.")
+        for what, was, now in (("plots", plot_before, float(self.cor.N_PLOT.sum())),
+                               ("load m3/d", q_before, float(self.cor.Q_M3D.sum())),
+                               ("near-load m3/d", qn_before,
+                                float(self.cor.Q_NEAR_M3D.sum()))):
+            if abs(now - was) > 1e-6 * max(1.0, abs(was)):
+                raise AssertionError(
+                    f"the Main-Pipe cut changed the corridor {what}: {was:,.6f} -> "
+                    f"{now:,.6f}. Prorating a cut may not create or destroy load.")
+        _log(f"  {self.meet_splits:,} corridors meet the Main Pipe and were cut at "
+             f"{len(meet_nodes):,} new nodes ({kinds['crosses']:,} crossings, "
+             f"{kinds['along']:,} collinear stretches, {kinds['within_tol']:,} approaches "
+             f"inside {tol:g} m) over {len(rounds)} round(s); {len(self.cor):,} corridors "
+             f"now, length unchanged at {km_after/1000:,.3f} km")
+
+        # THE INVARIANT, RECHECKED ON WHAT THE CUT PRODUCED, with the same definition of
+        # "meets" the cut used.  A meeting point with a node on it is a legal junction; one
+        # without is a flow path that will cross the trunk and grow past it.
+        left = self.meets_off_node(self.cor.geometry)
+        self.n_meet_off_node = int((left > 0).sum())
+        self.km_meet_off_node = float(
+            self.cor.LEN_M.to_numpy(float)[left > 0].sum() / 1000.0)
+        if self.n_meet_off_node:
+            _log(f"  WARNING: {self.n_meet_off_node} corridor(s) still meet the Main Pipe "
+                 f"with no node on the meeting point ({self.km_meet_off_node:.2f} km) "
+                 f"after {MEET_PASSES} rounds. Published as X_MAIN on `arcs`, not swept up.")
+        else:
+            _log("  every place a corridor meets the Main Pipe now carries a node, and "
+                 "every one of those nodes is an outfall")
+        self.measure()          # levels, falls and confidences for the new arcs
+
+    def meets_off_node(self, geoms) -> np.ndarray:
+        """Per geometry: how many places it meets the Main Pipe with no node of its own on
+        the meeting point.
+
+        The invariant this stage owes the reader is that the answer is ZERO on every drained
+        arc, and it is recomputed from the geometry that is about to be PUBLISHED rather
+        than trusted from the pass that created it.  A crossing that carries a node is a
+        legal junction - the node is an outfall - so this counts the crossings that do NOT,
+        which is the defect and not the geometry.
+        """
+        from shapely.ops import unary_union
+        main = unary_union(list(self.main.geometry))
+        buf = main.buffer(MEET_TOL_M)
+        gl = list(geoms)
+        out = np.zeros(len(gl), np.int64)
+        try:                                   # only the ones anywhere near it can offend
+            near = set(int(k) for k in
+                       self.gpd.GeoSeries(gl, crs=f"EPSG:{CRS_EPSG}").sindex.query(
+                           buf, predicate="intersects"))
+        except Exception:                                          # pragma: no cover
+            near = set(range(len(gl)))
+        for k in near:
+            out[k] = meets_without_a_node(gl[k], main, buf, MEET_TOL_M)
+        return out
+
     # ---------------------------------------------------------------- roots
     def find_roots(self, snap: float = MAIN_SNAP_M, quiet: bool = False) -> None:
         """Outfalls: corridor nodes that touch the client's Main Pipe."""
@@ -783,6 +1236,20 @@ class Orient:
         rows = [dict(WITHIN_M=t, N_NODES=int((d <= t).sum())) for t in
                 (1, 3, 5, 10, 15, 20, 25, 30, 50, 100, 200)]
         self.snap_sweep = pd.DataFrame(rows)
+
+        # EVERY NODE `meet_main_pipe` MINTED MUST BE AN OUTFALL.  It was placed ON the
+        # trunk, so the distance test below has to find it; if it does not, the two steps
+        # disagree about what "meets" means and the outfall rule is not being enforced.
+        # Checked at the shipped radius only - the sweep deliberately runs others.
+        mm = [self.nid[m] for m in getattr(self, "meet_nodes", []) if m in self.nid]
+        if mm and abs(snap - MEET_TOL_M) < 1e-9:
+            miss = [self.node_ids[i] for i in mm if d[i] > snap]
+            if miss:
+                raise AssertionError(
+                    f"{len(miss)} node(s) minted ON the Main Pipe are not outfalls at "
+                    f"MEET_TOL_M = {snap:g} m, e.g. {miss[:5]}. `meet_main_pipe` and "
+                    f"`find_roots` disagree about what 'meets' means.")
+            self.n_meet_roots = len(mm)
 
         # IS THE CLIENT'S TRUNK ABOVE THE TOWN?  For every corridor node, its ground level
         # less the ground level of the nearest point ON the Main Pipe.  If that is
@@ -1120,6 +1587,214 @@ class Orient:
         self.weights_used = self.weights(lam_slope, lam_detour, best[3])
         return tr
 
+    # ---------------------------------------------------------------- the outfall rule, 2
+    def _below_outlet_km(self, tr: Tree, out: np.ndarray) -> float:
+        """Length of tree arc whose UPSTREAM node sits below the outfall it drains to.
+
+        This is the quantity the engineer's defect is stated in - *"42 components discharge
+        with more than half their catchment BELOW the outlet"* - and it is the objective the
+        re-rooting pass drives down.  Measured on the tree arcs only; a dead-end head drains
+        to its own low end by construction and can neither help nor hurt it.
+        """
+        if tr.arc.size == 0:
+            return 0.0
+        us = np.where(tr.fwd, self.u[tr.arc], self.v[tr.arc])
+        o = out[us]
+        m = (o >= 0) & (self.NZ[us] < self.NZ[np.maximum(o, 0)] - ADVERSE_MIN_M)
+        return float(self.L[tr.arc][m].sum() / 1000.0)
+
+    def _rebuild(self, tr: Tree, parent: Dict[int, int], via: Dict[int, int]) -> Tree:
+        """A Tree from a parent/via map, with its weight re-summed from the same weights
+        the solver used - never carried over, because a weight that no longer matches its
+        own tree is a number nobody can check."""
+        pos = {int(e): k for k, e in enumerate(self._idx)}
+        w = self.weights_used
+        arcs, fwds, tot = [], [], 0.0
+        for child, e in via.items():
+            if e < 0:
+                tot += float(JOIN_COST_M)
+                continue
+            fwd = bool(self.u[e] == child)
+            arcs.append(int(e))
+            fwds.append(fwd)
+            k = pos.get(int(e))
+            if k is not None:
+                tot += float(w["wf"][k] if fwd else w["wb"][k])
+        return Tree(name=tr.name, arc=np.asarray(arcs, np.int64),
+                    fwd=np.asarray(fwds, bool), parent=parent, via=via,
+                    joins=np.asarray([c for c, p in parent.items() if p < 0], np.int64),
+                    weight=float(tot))
+
+    @staticmethod
+    def _cycle(parent: Dict[int, int]) -> List[int]:
+        """One cycle in a parent map, or []. Iterative - the chains here reach 10,000 hops
+        and a recursive walk would blow the stack on the real network."""
+        colour: Dict[int, int] = {}
+        for s in parent:
+            if colour.get(s):
+                continue
+            stack, order = [s], []
+            while stack:
+                x = stack[-1]
+                if colour.get(x) == 1:
+                    stack.pop()
+                    colour[x] = 2
+                    continue
+                if colour.get(x) == 2:
+                    stack.pop()
+                    continue
+                colour[x] = 1
+                order.append(x)
+                p = parent.get(x, -1)
+                if p is not None and p >= 0:
+                    if colour.get(p) == 1:                 # back edge: a cycle
+                        cyc, y = [p], parent.get(p, -1)
+                        guard = 0
+                        while y != p and y is not None and y >= 0 and guard < 1_000_000:
+                            cyc.append(y)
+                            y = parent.get(y, -1)
+                            guard += 1
+                        return cyc
+                    if colour.get(p) is None:
+                        stack.append(p)
+        return []
+
+    def reroot_below_outfall(self, tr: Tree) -> Tree:
+        """A SUBNETWORK MUST NOT DISCHARGE ABOVE ITS OWN CATCHMENT.
+
+        `meet_main_pipe` made every place a catchment meets the trunk into an outfall, so
+        the *choice* of outlet now exists.  This pass makes it.
+
+        THE MOVE, AND WHY IT CAN ONLY IMPROVE THINGS.  Take a node `x` that sits BELOW the
+        outfall it currently drains to - its sewage climbs to get out.  If a corridor from
+        `x` reaches a node in a NEIGHBOURING subnetwork whose outfall is at or below `x`,
+        re-point `x` there.  That moves x's whole upstream subtree with it, and because the
+        new outfall is lower than the old one, **every arc in that subtree that was below
+        its outlet is still below the new one or better** - the count cannot rise.  So the
+        below-outlet length is monotone non-increasing and the loop terminates; it is
+        stopped early the moment a pass accepts nothing, and the per-pass table is published
+        so convergence is read rather than claimed.
+
+        THIS IS THE GENERAL RULE FROM THE INHERITANCE LEDGER, ROW 4, IN ITS OTHER FORM:
+        *anything a pass can ADD, a later pass must be able to TAKE AWAY, and the stage
+        publishes how many it removed.*  The branching only ever ASSIGNS a node to the
+        outfall its weights liked; this pass takes that assignment away again where the
+        ground says it was wrong, and prints the count.
+
+        WHAT IT IS NOT.  It is not a re-solve.  It moves a branch onto a neighbour that is
+        already there, at first order, exactly as the neighbour test in `subnetworks` does -
+        and it is bounded by the built network's own detour ratio (DETOUR_RATIO_MAX = 4.0,
+        `10_ASBUILT_CALIBRATION.md` sec 1) so a lower outlet can never be bought with pipe
+        nobody would build.
+        """
+        inplay = np.nonzero(self.edge_in)[0]
+        inc: Dict[int, List[int]] = {}
+        for i in inplay:
+            inc.setdefault(int(self.u[i]), []).append(int(i))
+            inc.setdefault(int(self.v[i]), []).append(int(i))
+        rootset = set(int(r) for r in self.roots)
+
+        hist, moved_total = [], 0
+        for p in range(REROOT_PASSES):
+            plen, _pf, _pr = self._paths(tr)
+            out = self._outfall.copy()
+            before = self._below_outlet_km(tr, out)
+            cand: List[Tuple[float, int, int, int]] = []
+            for x in range(self.NV):
+                if x in rootset:
+                    continue                      # an outfall does not move; it IS the trunk
+                ox = int(out[x])
+                if ox < 0 or not (self.NZ[x] < self.NZ[ox] - ADVERSE_MIN_M):
+                    continue                      # not climbing to its own outlet
+                best = None
+                for i in inc.get(x, ()):
+                    y = int(self.v[i]) if int(self.u[i]) == x else int(self.u[i])
+                    oy = int(out[y])
+                    if oy < 0 or oy == ox:
+                        continue
+                    if self.NZ[oy] > self.NZ[x] + ADVERSE_MIN_M:
+                        continue                  # the new outlet is not below x either
+                    nlen = float(plen[y] + self.L[i])
+                    if not np.isfinite(nlen):
+                        continue
+                    straight = math.hypot(self.NX[x] - self.NX[oy],
+                                          self.NY[x] - self.NY[oy])
+                    if straight > 1.0 and nlen > DETOUR_RATIO_MAX * straight:
+                        continue                  # bought with pipe nobody would build
+                    key = (float(self.NZ[oy]), nlen)
+                    if best is None or key < best[0]:
+                        best = (key, y, i)
+                if best is not None:
+                    cand.append((float(self.NZ[ox] - best[0][0]), x, best[1], best[2]))
+            if not cand:
+                hist.append(dict(pass_=p, candidates=0, moved=0, reverted_cycles=0,
+                                 below_km_before=round(before, 3),
+                                 below_km_after=round(before, 3)))
+                break
+
+            parent, via = dict(tr.parent), dict(tr.via)
+            gain = {}
+            for g, x, y, i in cand:
+                parent[x], via[x], gain[x] = y, i, g
+            # a re-point can only close a loop THROUGH another re-point, so a cycle always
+            # contains one; break it at the smallest gain and try again.  H15 is a forest
+            # and this pass may not be the thing that breaks it.
+            reverted = 0
+            while True:
+                cyc = self._cycle(parent)
+                if not cyc:
+                    break
+                inside = [z for z in cyc if z in gain]
+                if not inside:                                     # pragma: no cover
+                    raise AssertionError(
+                        "a cycle with no re-pointed node in it: the tree handed to "
+                        "reroot_below_outfall was not a forest")
+                z = min(inside, key=lambda a: gain[a])
+                parent[z], via[z] = tr.parent[z], tr.via[z]
+                del gain[z]
+                reverted += 1
+
+            tr = self._rebuild(tr, parent, via)
+            plen, _pf, _pr = self._paths(tr)
+            after = self._below_outlet_km(tr, self._outfall)
+            moved = len(gain)
+            moved_total += moved
+            hist.append(dict(pass_=p, candidates=len(cand), moved=moved,
+                             reverted_cycles=reverted,
+                             below_km_before=round(before, 3),
+                             below_km_after=round(after, 3)))
+            _log(f"  reroot pass {p}: {moved:,} branches moved to a lower outfall "
+                 f"({reverted} reverted to keep the forest); catchment draining up to its "
+                 f"own outlet {before:,.1f} -> {after:,.1f} km")
+            if after > before + 1e-6:                              # pragma: no cover
+                raise AssertionError(
+                    f"re-rooting made it worse ({before:.3f} -> {after:.3f} km). The move "
+                    f"is only legal when the new outfall is lower, so this cannot happen "
+                    f"unless the monotonicity argument is wrong.")
+            if moved == 0:
+                break
+
+        self.reroot_hist = pd.DataFrame(hist) if hist else pd.DataFrame(
+            [{"pass_": 0, "candidates": 0, "moved": 0, "reverted_cycles": 0,
+              "below_km_before": 0.0, "below_km_after": 0.0}])
+        self.reroot_moved = int(moved_total)
+        self.reroot_converged = bool(hist and int(hist[-1]["moved"]) == 0)
+        _log(f"  outfall rule: {moved_total:,} branches re-pointed to a lower outfall in "
+             f"{len(hist)} pass(es)"
+             + ("" if self.reroot_converged else
+                f" - AND IT DID NOT CONVERGE inside the {REROOT_PASSES}-pass cap; the last "
+                f"pass still moved {hist[-1]['moved']}, so the remaining below-outlet "
+                f"length is an upper bound and the cap needs raising"))
+        # the inlet angles belong to the tree, so a re-pointed tree needs them again.  An
+        # angle measured against a direction that no longer exists is not a number.
+        if getattr(self, "cor", None) is not None:
+            self.last_angles = self._inlet_angles(tr)
+        else:                                       # a unit-test harness with no geometry
+            self.last_angles = []
+            self.notes.append("inlet angles were NOT re-measured after re-rooting: this "
+                              "instance carries no corridor geometry")
+        return tr
+
     # ---------------------------------------------------------------- comparison
     def compare(self, lam_slope=LAMBDA_SLOPE, lam_detour=LAMBDA_DETOUR,
                 join_cost=JOIN_COST_M) -> pd.DataFrame:
@@ -1174,10 +1849,12 @@ class Orient:
         out["sweep_join_cost"] = pd.DataFrame(rows)
         # THE SNAP RADIUS IS NOT A COSMETIC TOLERANCE, so it is not swept by node count
         # alone: at each radius the whole tree is re-solved and the gravity verdict
-        # re-measured.  5 m is literally "meets the trunk"; anything larger buys the
-        # connection with a spur, which is a legitimate pipe and an engineer's decision.
+        # re-measured.  MEET_TOL_M is literally "meets the trunk" and it is DERIVED from the
+        # node-merge radius, not chosen; anything larger buys the connection with a SPUR,
+        # which is a legitimate pipe and an engineer's decision.  The old 5.0 m is kept as a
+        # row so the change of tolerance can be read off rather than taken on trust.
         rows = []
-        for t in (5.0, 15.0, 25.0, 50.0, 100.0):
+        for t in (MEET_TOL_M, 5.0, 15.0, 25.0, 50.0, 100.0):
             self.find_roots(snap=t, quiet=True)
             self._arc_arrays()
             self._detour()
@@ -1316,41 +1993,142 @@ class Orient:
         deficit_floor = req_floor - pfall
         self.deficit = deficit
 
+        # Vectorised, and it had to be: the outfall rule multiplies the sub-network count,
+        # and the previous per-sub-network scan over every tree arc was already 1.8 million
+        # Python iterations at 193 sub-networks.  Every tree arc belongs to exactly one
+        # sub-network - the one its UPSTREAM node drains to - so the whole table is two
+        # group-bys.
+        arc_us = np.where(tr.fwd, self.u[tr.arc], self.v[tr.arc])
+        arc_sub = out[arc_us]
+        A = pd.DataFrame(dict(SUB=arc_sub, L=self.L[tr.arc], Q=self.Q[tr.arc],
+                              ZUS=self.NZ[arc_us]))
+        A = A[A.SUB >= 0].copy()
+        A["ZOUT"] = self.NZ[A.SUB.to_numpy(np.int64)]
+        A["BELOW_L"] = np.where(A.ZUS < A.ZOUT - ADVERSE_MIN_M, A.L, 0.0)
+        ga = A.groupby("SUB")
+        km_by = ga.L.sum() / 1000.0
+        q_by = ga.Q.sum()
+        below_by = ga.BELOW_L.sum() / 1000.0
+
+        nix = np.nonzero(out >= 0)[0]
+        N = pd.DataFrame(dict(SUB=out[nix], I=nix, Z=self.NZ[nix], PLEN=plen[nix],
+                              PFALL=pfall[nix], DEF=deficit[nix], DEFF=deficit_floor[nix]))
+        gn = N.groupby("SUB")
+        n_by = gn.size()
+        pathmax = gn.PLEN.max()
+        fallmin = gn.PFALL.min()
+        nbelow = gn.PFALL.apply(lambda s: int((s < -ADVERSE_MIN_M).sum()))
+        defmax = gn.DEF.max()
+        deffl = gn.DEFF.max()
+        nover = gn.DEF.apply(lambda s: int((s > DEPTH_BUDGET_M).sum()))
+        lowi = N.loc[gn.Z.idxmin(), ["SUB", "I"]].set_index("SUB").I
+
         rows = []
         for j in sorted(set(int(x) for x in out if x >= 0)):
-            m = out == j
-            arcs = np.array([k for k, e in enumerate(tr.arc)
-                             if m[self.u[int(e)]] or m[self.v[int(e)]]])
-            km = float(self.L[tr.arc[arcs]].sum() / 1000.0) if arcs.size else 0.0
-            q = float(self.Q[tr.arc[arcs]].sum()) if arcs.size else 0.0
-            d = deficit[m]
-            d = d[np.isfinite(d)]
-            df = deficit_floor[m]
-            df = df[np.isfinite(df)]
+            km = float(km_by.get(j, 0.0))
+            lo = int(lowi.get(j, j))
+            head_m = float(self.NZ[j] - self.NZ[lo])
+            off_m = float(plen[lo]) if np.isfinite(plen[lo]) else 0.0
+            # WHERE THE SUBNETWORK JOINS THE MAIN PIPE, AND WHY NOT AT ITS OWN LOW POINT.
+            # The vocabulary is closed so the column can be counted; the SIZE is in
+            # JOIN_OFF_M, HEAD_M and LOW_DMAIN, which is where a size belongs.
+            if head_m <= ADVERSE_MIN_M:
+                why = ""                                  # it joins AT its own low point
+            elif float(self.trunk_relief[lo]) < 0.0:
+                why = ("the true low point lies BELOW the Main Pipe beside it - gravity "
+                       "cannot reach the trunk there at all")
+            else:
+                why = ("no corridor meets the Main Pipe at the true low point; joined at "
+                       "the nearest corridor node that does")
             rows.append(dict(
-                SUBNET="", OUTFALL=self.node_ids[j], N_NODES=int(m.sum()), KM=km,
-                Q_M3D=q, X=float(self.NX[j]), Y=float(self.NY[j]), Z=float(self.NZ[j]),
+                SUBNET="", OUTFALL=self.node_ids[j], N_NODES=int(n_by.get(j, 0)), KM=km,
+                Q_M3D=float(q_by.get(j, 0.0)),
+                X=float(self.NX[j]), Y=float(self.NY[j]), Z=float(self.NZ[j]),
                 D_MAIN_M=float(self.d_main[j]),
-                PATH_MAX_M=float(np.nanmax(plen[m])) if m.any() else 0.0,
+                # --- the outfall rule, published per sub-network -------------------------
+                JOIN_MAIN=1,
+                LOW_NODE=self.node_ids[lo], LOW_Z=float(self.NZ[lo]),
+                LOW_DMAIN=float(self.d_main[lo]),
+                HEAD_M=round(head_m, 3),
+                JOIN_OFF_M=round(off_m, 1),
+                JOIN_WHY=why,
+                BELOW_KM=round(float(below_by.get(j, 0.0)), 3),
+                BELOW_PCT=round(100.0 * float(below_by.get(j, 0.0)) / km, 2) if km > 0
+                else 0.0,
+                # -------------------------------------------------------------------------
+                PATH_MAX_M=float(pathmax.get(j, 0.0)),
                 # the LEAST fall any node in this sub-network has to its outfall.  Negative
                 # means that node sits BELOW the point where its branch meets the trunk, so
                 # the flow has to climb before it has bought a single millimetre of gradient.
-                FALL_MIN_M=float(np.nanmin(pfall[m])) if m.any() else 0.0,
-                N_BELOW=int(np.nansum(pfall[m] < -ADVERSE_MIN_M)),
-                DEF_MAX_M=float(d.max()) if d.size else 0.0,
-                DEF_FLOOR_M=float(df.max()) if df.size else 0.0,
-                N_OVER_BUDGET=int((deficit[m] > DEPTH_BUDGET_M).sum())))
+                FALL_MIN_M=float(fallmin.get(j, 0.0)),
+                N_BELOW=int(nbelow.get(j, 0)),
+                DEF_MAX_M=float(defmax.get(j, 0.0)) if np.isfinite(defmax.get(j, 0.0))
+                else 0.0,
+                DEF_FLOOR_M=float(deffl.get(j, 0.0)) if np.isfinite(deffl.get(j, 0.0))
+                else 0.0,
+                N_OVER_BUDGET=int(nover.get(j, 0))))
         sn = pd.DataFrame(rows).sort_values("KM", ascending=False).reset_index(drop=True)
         sn["SUBNET"] = [f"S{i+1:03d}" for i in range(len(sn))]
         sn["GRAVITY"] = np.where(sn.DEF_MAX_M <= DEPTH_BUDGET_M, "gravity",
                                  np.where(sn.DEF_FLOOR_M <= DEPTH_BUDGET_M,
                                           "gravity if the big pipes are laid flat",
                                           "NOT on gravity inside the cover cap"))
-        self.subnet_of = {}
-        for k, row in sn.iterrows():
-            j = self.nid[row.OUTFALL]
-            for a in np.nonzero(out == j)[0]:
-                self.subnet_of[int(a)] = row.SUBNET
+        j2s = {self.nid[r.OUTFALL]: r.SUBNET for r in sn.itertuples()}
+        self.subnet_of = {int(a): j2s[int(out[a])] for a in np.nonzero(out >= 0)[0]}
+
+        # ---- THE OUTFALL RULE, REPORTED EVERY RUN -----------------------------------
+        # W11b shipped 42 components discharging with more than half their catchment BELOW
+        # the outlet - 389.5 km, worst outlet 22.8 m above its own low point - and nothing
+        # in the pipeline said so.  It says so here, on every build, in the manifest and in
+        # the report, whether the number is bad or good.
+        self.sn_by_outfall = {self.nid[r.OUTFALL]: r for r in sn.itertuples()}
+        bad = sn[sn.BELOW_PCT > BELOW_OUTLET_FAIL_PCT]
+        self.n_below_half = int(len(bad))
+        self.km_below_half = float(bad.KM.sum())
+        self.worst_head_m = float(sn.HEAD_M.max()) if len(sn) else 0.0
+        self.km_below_all = float(sn.BELOW_KM.sum())
+        # NO TREE ARC drains into these.  Not quite the same thing as "nothing arrives":
+        # `KM` sums the TREE arcs only, and a dead-end HEAD can still discharge at an
+        # outfall, so this is an UPPER bound on the joins that carry no flow.  Said here
+        # rather than in the headline, because the headline number is the one that gets
+        # quoted.  Nothing removes these: `meet_main_pipe` only ever ADDS an outfall, and
+        # no later pass takes one away - which is inheritance-ledger row 4 unclosed for the
+        # minting step, and the reason the count is published on every build.
+        self.n_empty_outfall = int((sn.KM <= 0).sum())
+        inplay_set = set(int(i) for i in np.nonzero(self.edge_in)[0])
+        head_idx = inplay_set - set(int(a) for a in tr.arc)
+        touched = set()
+        for i in head_idx:
+            touched.add(int(self.u[i])); touched.add(int(self.v[i]))
+        self.n_empty_outfall_head = int(sum(
+            1 for r in sn.itertuples() if r.KM <= 0 and self.nid[r.OUTFALL] in touched))
+        # THE COUNT AND THE REASON COLUMN MUST BE THE SAME SET.  `JOIN_OFF_M > 0` is true
+        # of almost every sub-network - it only says the low point is a DIFFERENT NODE from
+        # the outlet - while `JOIN_WHY` is written only where the outlet is genuinely ABOVE
+        # that low point.  Counting the first and describing the second published a number
+        # most of whose rows carried no explanation.  The rule is stated on LEVEL, not on
+        # distance ("the LOWEST POINT where it meets"), so the count is the rows with a
+        # reason, and the rows whose low point is a different node at the SAME level are
+        # published separately rather than folded in or dropped.
+        _why = sn.JOIN_WHY.astype(str)
+        self.n_join_offset = int((_why.str.len() > 0).sum())
+        self.n_low_node_level = int(((sn.JOIN_OFF_M > 0) & (_why.str.len() == 0)).sum())
+        _log(f"  outfall rule: {len(sn):,} sub-networks; "
+             f"{self.n_below_half} discharge with more than "
+             f"{BELOW_OUTLET_FAIL_PCT:g} % of their catchment BELOW the outlet "
+             f"({self.km_below_half:,.1f} km); worst outlet sits "
+             f"{self.worst_head_m:,.2f} m above its own low point; "
+             f"{self.n_join_offset} join ABOVE their true low point and carry a reason; "
+             f"{self.n_low_node_level} more have their low point at another node but at "
+             f"the same level")
+        if self.n_empty_outfall:
+            _log(f"  {self.n_empty_outfall} outfall(s) have no TREE arc draining into them "
+                 f"- published with KM = 0 rather than dropped. "
+                 f"{self.n_empty_outfall_head} of them still touch a dead-end head, so the "
+                 f"joins that genuinely carry nothing are between "
+                 f"{self.n_empty_outfall - self.n_empty_outfall_head} and "
+                 f"{self.n_empty_outfall}. NOTHING REMOVES THEM: this pass only ever adds "
+                 f"an outfall (inheritance row 4, unclosed for the minting step)")
 
         # --- ASK THE NEIGHBOURS, BEFORE CALLING ANYTHING A PUMP -----------------------
         # Philosophy sec 5: when a run cannot reach its outfall by gravity, the first
@@ -1447,6 +2225,10 @@ class Orient:
     # ---------------------------------------------------------------- publish
     def build(self, publish: bool = True) -> dict:
         self.measure()
+        # THE OUTFALL RULE COMES FIRST, before the ridge rule, because it changes which
+        # corridors exist: a street cut where it meets the trunk is two streets, and the
+        # crest test then applies to the halves that will actually be built.
+        self.meet_main_pipe()
         self.presplit_ridges()
         self.find_roots()
         self._arc_arrays()
@@ -1458,6 +2240,8 @@ class Orient:
 
         _log("solving the shipped tree")
         tr = self.solve_with_bends()
+        # ... and then TAKE AWAY the outlet assignments the ground says were wrong
+        tr = self.reroot_below_outfall(tr)
         self.tree = tr
         sc = self.score(tr)
         hd = self.heads(tr)
@@ -1575,7 +2359,31 @@ class Orient:
                              SRC=str(r.SRC), CONFIDENCE=str(r.CONFIDENCE),
                              TAU_FLAG=TAU_FLAG))
             geoms.append(r.geometry)
-        return gpd.GeoDataFrame(recs, geometry=geoms, crs=f"EPSG:{CRS_EPSG}")
+        gdf = gpd.GeoDataFrame(recs, geometry=geoms, crs=f"EPSG:{CRS_EPSG}")
+
+        # THE OUTFALL RULE, CHECKED ON THE GEOMETRY ABOUT TO BE PUBLISHED.  `X_MAIN` counts
+        # the places the arc meets the client's Main Pipe with NO node of its own on the
+        # meeting point - a flow path that reaches the trunk, ignores it and grows out the
+        # other side.  A crossing that DOES carry a node is a legal junction, because that
+        # node is an outfall and the flow discharges there.  It must be 0 on every DRAINED
+        # arc, and it is measured here, from the written geometry, never carried from the
+        # pass that made it.
+        from shapely.ops import unary_union
+        main = unary_union(list(self.main.geometry))
+        gdf["X_MAIN"] = self.meets_off_node(gdf.geometry)
+        gdf["D_MAIN_M"] = np.round(gdf.geometry.distance(main).to_numpy(float), 2)
+        drained = gdf.ROLE.isin(["tree", "head", "split_head"])
+        self.n_cross_main = int((gdf.loc[drained, "X_MAIN"] > 0).sum())
+        self.km_cross_main = float(gdf.loc[drained & (gdf.X_MAIN > 0), "LEN_M"].sum()
+                                   / 1000.0)
+        if self.n_cross_main:
+            _log(f"  WARNING: {self.n_cross_main} drained arc(s) still meet the Main Pipe "
+                 f"with no node on the meeting point ({self.km_cross_main:.2f} km). The "
+                 f"outfall rule is NOT satisfied and the count is published as X_MAIN.")
+        else:
+            _log("  outfall rule: no drained arc meets the Main Pipe without a node on it "
+                 "(X_MAIN = 0 everywhere)")
+        return gdf
 
     def _node_frame(self, tr: Tree):
         from shapely.geometry import Point
@@ -1588,9 +2396,18 @@ class Orient:
                 p = tr.parent.get(child, -1)
                 if p >= 0:
                     deg_in[p] += 1
+        by_out = getattr(self, "sn_by_outfall", {})
+        meet = set(getattr(self, "meet_nodes", []))
         recs = []
         for a in range(self.NV):
             p = tr.parent.get(a, None)
+            # THE OUTFALL RULE lives on the node that makes the join, so it can be read
+            # straight off the map.  JOIN_OFF_M is the distance from the sub-network's TRUE
+            # low point to this connection - 0.0 when it joins AT it - and JOIN_WHY is only
+            # written where the offset is real, so a column of explanations cannot hide the
+            # ones that matter.
+            row = by_out.get(a)
+            o = int(self._outfall[a])
             recs.append(dict(
                 NODE_ID=self.node_ids[a], X=float(self.NX[a]), Y=float(self.NY[a]),
                 GRD_M=float(self.NZ[a]),
@@ -1601,6 +2418,12 @@ class Orient:
                       "head" if deg_in[a] == 0 else
                       "junction" if deg_in[a] > 1 else "through"),
                 SUBNET=self.subnet_of.get(a, ""),
+                JOIN_MAIN=int(row is not None),
+                JOIN_OFF_M=float(row.JOIN_OFF_M) if row is not None else 0.0,
+                JOIN_WHY=(row.JOIN_WHY if row is not None else ""),
+                LOW_NODE=(row.LOW_NODE if row is not None else ""),
+                BELOW_OUT=int(o >= 0 and self.NZ[a] < self.NZ[o] - ADVERSE_MIN_M),
+                MEET_MAIN=int(self.node_ids[a] in meet),
                 PATH_M=float(plen[a]) if np.isfinite(plen[a]) else np.nan,
                 FALL_M=float(pfall[a]) if np.isfinite(pfall[a]) else np.nan,
                 REQ_M=float(preq[a]) if np.isfinite(preq[a]) else np.nan,
@@ -1673,7 +2496,22 @@ class Orient:
             ("BEND_EQUIV_M", BEND_EQUIV_M, "m", "PROJECT"),
             ("BEND_PASSES", BEND_PASSES, "", "PROJECT"),
             ("JOIN_COST_M", JOIN_COST_M, "m", "PROJECT, swept: sweep_join_cost"),
-            ("MAIN_SNAP_M", MAIN_SNAP_M, "m", "PROJECT, swept: sweep_main_snap"),
+            # --- the outfall rule
+            ("MEET_TOL_M", MEET_TOL_M, "m",
+             "DERIVED from criteria.MH_SNAP_M, the node-merge radius s1_roads used to node "
+             "the corridor graph. The distance at which a corridor MEETS the Main Pipe. "
+             "It replaced a PROJECT 5.0 m chosen by eye (engineer 2026-09-06: the tolerance "
+             "that decides where a network discharges may not be invented). Swept"),
+            ("MAIN_SNAP_M", MAIN_SNAP_M, "m",
+             "the same number under its old name, swept: sweep_main_snap"),
+            ("REROOT_PASSES", REROOT_PASSES, "",
+             "PROJECT, STRUCTURAL cap only - the loop stops when a pass moves nothing"),
+            ("DETOUR_RATIO_MAX", DETOUR_RATIO_MAX, "",
+             "MEASURED BOUND, 10_ASBUILT_CALIBRATION.md sec 1: detour ratio p90 2.26, "
+             "<= 5 % above 4.0. A re-root may not buy a lower outlet past it"),
+            ("BELOW_OUTLET_FAIL_PCT", BELOW_OUTLET_FAIL_PCT, "%",
+             "the ENGINEER'S OWN threshold, quoted from the defect register: '42 components "
+             "discharge with MORE THAN HALF their catchment BELOW the outlet'"),
             ("TAU_PA", C.TAU_PA, "Pa", "ENGINEER 2026-09-03, GAP-9 open - flagged on output"),
             # --- inputs measured this run
             ("corridors_n", int(len(self.cor)), "", "after the ridge pre-split"),
@@ -1695,6 +2533,76 @@ class Orient:
             ("joins_realised", sc["joins"], "",
              f"onto the Main Pipe; NAMA built {self.BUILT_JOINS}"),
             ("subnetworks_n", int(len(sn)), "", "each ends at exactly one outfall"),
+            # --- THE OUTFALL RULE, measured on this run
+            ("meet_corridors_cut", int(getattr(self, "meet_splits", 0)), "",
+             "corridors cut where they MEET the Main Pipe, so no flow path can cross it "
+             "and grow past it. W11b shipped 214 arcs / 48.49 km that did"),
+            ("meet_nodes_minted", int(len(getattr(self, "meet_nodes", []))), "",
+             "new nodes ON the Main Pipe; every one of them is an outfall, asserted in "
+             "find_roots"),
+            ("meet_rounds", int(len(getattr(self, "meet_rounds", []))), "",
+             "rounds the cut needed. A cut can reveal a meeting point the uncut corridor "
+             "hid, so it repeats; measured on the real corridor set it converges in one"),
+            ("meet_points_lost_at_an_end", int(getattr(self, "n_meet_end_gap", -1)), "",
+             f"NAMED GAP. Meeting points dropped because they sit within {MEET_TOL_M:g} m "
+             f"ALONG the corridor of one of its ends, where that END NODE is itself "
+             f"further than {MEET_TOL_M:g} m from the trunk. A close approach can be "
+             f"{MEET_TOL_M:g} m from the trunk AND {MEET_TOL_M:g} m from the node, so the "
+             f"two distances can differ by a factor of two. No node is minted and no "
+             f"outfall is created, so a CANDIDATE OUTLET is lost - listed row by row in "
+             f"`meet_cuts_end_gap`. A crossing cannot land here (it lies ON the trunk, so "
+             f"an end within tolerance along the line is within tolerance of the trunk), "
+             f"which is why the no-crossing rule is unaffected"),
+            ("corridors_meeting_off_node", int(getattr(self, "n_meet_off_node", -1)), "",
+             "corridors still meeting the Main Pipe with no node on the meeting point, "
+             "measured on the CORRIDOR set after the cut. MUST BE 0"),
+            ("arcs_crossing_main", int(getattr(self, "n_cross_main", -1)), "",
+             "drained arcs that STILL cross the Main Pipe, recomputed from the published "
+             "geometry. MUST BE 0 - it is the outfall rule's own check"),
+            ("km_crossing_main", round(float(getattr(self, "km_cross_main", 0.0)), 3), "km",
+             "the length of those, if any"),
+            ("reroot_converged", int(bool(getattr(self, "reroot_converged", False))), "",
+             "1 = the last re-rooting pass moved nothing. 0 means the published "
+             "below-outlet length is an UPPER BOUND and REROOT_PASSES needs raising"),
+            ("reroot_branches_moved", int(getattr(self, "reroot_moved", 0)), "",
+             "branches re-pointed to a LOWER outfall after the branching had assigned them. "
+             "Inheritance ledger row 4 in its general form: anything a pass can ADD, a "
+             "later pass must be able to TAKE AWAY, and the stage publishes how many"),
+            ("subnets_below_half", int(getattr(self, "n_below_half", -1)), "",
+             f"sub-networks discharging with more than {BELOW_OUTLET_FAIL_PCT:g} % of their "
+             f"catchment BELOW the outlet. W11b: 42 components, 389.5 km. THIS IS THE "
+             f"NUMBER THE OUTFALL RULE EXISTS TO DRIVE TO ZERO"),
+            ("km_below_half", round(float(getattr(self, "km_below_half", 0.0)), 2), "km",
+             "the length in those sub-networks"),
+            ("km_below_outlet", round(float(getattr(self, "km_below_all", 0.0)), 2), "km",
+             "length of tree arc whose upstream node sits below its own outfall, over the "
+             "WHOLE network - the objective the re-rooting pass drives down"),
+            ("worst_outlet_above_low_m",
+             round(float(getattr(self, "worst_head_m", 0.0)), 2), "m",
+             "the worst outfall's height above its own sub-network's low point. W11b: 22.8 m"),
+            ("subnets_joining_off_low", int(getattr(self, "n_join_offset", 0)), "",
+             "sub-networks whose outlet sits ABOVE their own low point - the rule is on "
+             "LEVEL, not on distance. Every one of them carries JOIN_OFF_M (the distance), "
+             "HEAD_M (the height) and JOIN_WHY (the reason), so the count and the reason "
+             "column are the same set of rows"),
+            ("subnets_low_point_at_another_node",
+             int(getattr(self, "n_low_node_level", 0)), "",
+             f"sub-networks whose lowest node is not the outlet but is within "
+             f"{ADVERSE_MIN_M:g} m of its level. They join at the lowest point in every "
+             f"sense the DEM can resolve, so they carry no JOIN_WHY - published here "
+             f"rather than folded into the row above, which is what hid them"),
+            ("outfalls_with_no_catchment", int(getattr(self, "n_empty_outfall", 0)), "",
+             "outfalls with no TREE arc draining into them. Published with KM = 0, never "
+             "dropped - W11b shipped 15 of these on its station layer unremarked. It is an "
+             "UPPER bound on the joins that carry no flow, because KM counts tree arcs "
+             "only and a dead-end head can still discharge at one. INHERITANCE ROW 4 IS "
+             "NOT CLOSED HERE: meet_main_pipe only ever ADDS an outfall and no later pass "
+             "takes one away, so a spurious trunk connection can only be flagged, not "
+             "removed - the engineer's call, and the same shape as W11b's 15 stations"),
+            ("outfalls_with_no_catchment_but_a_head",
+             int(getattr(self, "n_empty_outfall_head", 0)), "",
+             "of those, the ones a dead-end head still discharges at, so the number of "
+             "joins carrying genuinely nothing is the row above MINUS this one"),
             ("heads_n", whole["heads_n"], "", "dead-end runs: the corridors the tree could "
                                               "not use, all draining to their low end"),
             ("heads_needing_setback", whole["heads_setback"], "",
@@ -1760,7 +2668,11 @@ class Orient:
         arcs.to_file(OUT_GPKG, layer="arcs", driver="GPKG")
         nodes.to_file(OUT_GPKG, layer="nodes", driver="GPKG")
         tabs = dict(subnets=sn, neighbours=nb, compare=cmp_df, manifest=man,
-                    bend_passes=self.bend_hist, ridge_splits=self.split_rows, **sw)
+                    bend_passes=self.bend_hist, ridge_splits=self.split_rows,
+                    meet_cuts=getattr(self, "meet_rows", None),
+                    meet_cuts_end_gap=getattr(self, "meet_end_gap", None),
+                    meet_rounds=getattr(self, "meet_rounds", None),
+                    reroot_passes=getattr(self, "reroot_hist", None), **sw)
         for name, df in tabs.items():
             if df is None or not len(df):
                 df = pd.DataFrame([{"NOTE": "empty"}])
@@ -1824,6 +2736,50 @@ class Orient:
         A(f"Cumulative climb **{mv['climb_m']:,.0f} m** against **{mv['descent_m']:,.0f} m** "
           f"of descent; **{mv['climb_per_km']} m** of climb per km of sewer against the "
           f"built network's **{self.BUILT_CLIMB_PER_KM:.2f}**.\n")
+        A("## The outfall rule - where each sub-network joins the trunk\n")
+        A(f"**A sub-network joins the Main Pipe at the lowest point where it MEETS it, and "
+          f"nothing crosses the trunk and grows past it** (engineer 2026-09-05/06; "
+          f"philosophy sec 9).  \"Meets\" is **{MEET_TOL_M:g} m**, which is not a number "
+          f"chosen here: it is `criteria.MH_SNAP_M`, the node-merge radius `s1_roads` used "
+          f"to node the whole corridor graph.  Two positions closer than that are one node "
+          f"in the published topology, so a corridor passing within it of the trunk already "
+          f"shares a node with it in every sense the graph can express.  Anything wider is a "
+          f"spur - a real pipe, and an engineer's decision, swept below.\n")
+        A(f"The test moved from the NODE to the CORRIDOR, and that is the whole fix.  W11b "
+          f"asked whether a node was near the trunk; a 200 m street crossing the trunk at "
+          f"its midpoint has both ends 100 m away, so it crossed and kept going.  Measured "
+          f"on W11b's own shipped layer: **214 arcs, 48.49 km, physically crossed the Main "
+          f"Pipe**.  Here **{mv['meet_corridors_cut']:,} corridors were cut at "
+          f"{mv['meet_nodes_minted']:,} new nodes**, every one of them an outfall, and the "
+          f"published layer carries `X_MAIN` per arc: "
+          f"**{mv['arcs_crossing_main']} drained arcs still cross** "
+          f"({mv['km_crossing_main']} km).\n")
+        A(f"**{mv['subnetworks_n']:,} sub-networks.**  That count is much higher than "
+          f"W11b's 193 and the rise is the intended result - the engineer's words are "
+          f"*\"more subnetworks worth keeping the work clean, rather than monster useless "
+          f"subnetworks\"*.  W11b's two largest held a quarter of the entire network "
+          f"between them while discharging somewhere else entirely.\n")
+        A(f"**{mv['subnets_below_half']} sub-networks discharge with more than "
+          f"{BELOW_OUTLET_FAIL_PCT:g} % of their catchment BELOW the outlet** "
+          f"({mv['km_below_half']} km), and the worst outfall sits "
+          f"**{mv['worst_outlet_above_low_m']} m above its own low point**.  W11b shipped "
+          f"42 such components, 389.5 km, worst 22.8 m.  Over the whole network "
+          f"**{mv['km_below_outlet']} km** of pipe drains up to reach its own outlet.\n")
+        A(f"Getting there took **{mv['reroot_branches_moved']:,} branches re-pointed to a "
+          f"lower outfall** after the branching had already assigned them.  That is "
+          f"inheritance-ledger row 4 in its general form - *anything a pass can ADD, a "
+          f"later pass must be able to TAKE AWAY, and the stage publishes how many* - and "
+          f"the per-pass table shows it converging rather than claiming it:\n")
+        if getattr(self, "reroot_hist", None) is not None and len(self.reroot_hist):
+            A(_md(self.reroot_hist, 2))
+            A("")
+        A(f"**{mv['subnets_joining_off_low']} sub-networks join away from their true low "
+          f"point.**  Each carries `JOIN_OFF_M`, the distance from that low point along its "
+          f"own flow path, and `JOIN_WHY`, which is one of two things: no corridor meets the "
+          f"trunk at the low point, or the low point lies BELOW the trunk beside it and "
+          f"gravity cannot reach it there at all.  The reason vocabulary is closed so the "
+          f"column can be counted; the SIZE is in `JOIN_OFF_M`, `HEAD_M` and `LOW_DMAIN`, "
+          f"which is where a size belongs.\n")
         A("## What a better tree cannot fix\n")
         A(f"**{mv['flat_ground_pct']} % of the corridor network - {mv['flat_ground_km']} km "
           f"- lies on ground falling more gently than the minimum gradient a DN200 may be "
@@ -2011,7 +2967,48 @@ def verify() -> dict:
     if abs(km - float(mv["published_km"])) > 0.05:
         fails.append(f"published km {km:.2f} vs manifest {mv['published_km']}")
 
+    # ---- THE OUTFALL RULE, re-derived from the written layers ------------------------
+    # Not from X_MAIN, which the build wrote: from the GEOMETRY, against the client's own
+    # Main Pipe file.  A check that reads back the column the build wrote is not a check.
+    from shapely.ops import unary_union
+    mp = gpd.read_file(MAIN_PIPE)
+    if mp.crs is not None and mp.crs.to_epsg() != CRS_EPSG:
+        mp = mp.to_crs(CRS_EPSG)
+    main = unary_union(list(mp.geometry))
+    buf = main.buffer(MEET_TOL_M)
+    dr = arcs[arcs.ROLE.isin(["tree", "head", "split_head"])]
+    xn = int(sum(1 for g in dr.geometry
+                 if meets_without_a_node(g, main, buf, MEET_TOL_M) > 0))
+    if xn:
+        fails.append(f"{xn} drained arc(s) meet the Main Pipe with no node on the meeting "
+                     f"point - they cross it and grow past it, and the outfall rule is "
+                     f"broken on the published layer")
+    if "arcs_crossing_main" in mv and int(float(mv["arcs_crossing_main"])) != xn:
+        fails.append(f"arcs crossing the Main Pipe recomputed {xn} vs manifest "
+                     f"{mv['arcs_crossing_main']}")
+
+    # catchment below the outlet, recomputed from the written SUBNET / GRD_US / KIND
+    outz = (nodes[nodes.KIND == "outfall"].set_index("SUBNET")["GRD_M"]
+            if "SUBNET" in nodes.columns else pd.Series(dtype=float))
+    t = arcs[(arcs.ROLE == "tree") & arcs.SUBNET.astype(str).ne("")].copy()
+    if len(t) and len(outz):
+        t["ZO"] = t.SUBNET.map(outz)
+        t = t[t.ZO.notna()]
+        t["BL"] = np.where(t.GRD_US.to_numpy(float) < t.ZO.to_numpy(float) - ADVERSE_MIN_M,
+                           t.LEN_M.to_numpy(float), 0.0)
+        g = t.groupby("SUBNET").agg(KM=("LEN_M", "sum"), BKM=("BL", "sum"))
+        pct = 100.0 * g.BKM / g.KM.replace(0.0, np.nan)
+        nbad = int((pct > BELOW_OUTLET_FAIL_PCT).sum())
+        if "subnets_below_half" in mv and int(float(mv["subnets_below_half"])) != nbad:
+            fails.append(f"sub-networks discharging above half their catchment recomputed "
+                         f"{nbad} vs manifest {mv['subnets_below_half']}")
+    else:
+        nbad = -1
+        fails.append("the below-outlet check CANNOT RUN on the published layers - a check "
+                     "that cannot run is a FAILURE, not a blank (inheritance row 2)")
+
     out = dict(ok=not fails, fails=fails, uphill_pct=got, published_km=km,
+               arcs_crossing_main=xn, subnets_below_half=nbad,
                arcs=int(len(arcs)), nodes=int(len(nodes)))
     print(json.dumps(out, indent=1))
     return out
@@ -2063,7 +3060,8 @@ def selftest(verbose: bool = True) -> bool:
 
 def sweep_only():
     o = Orient()
-    o.measure(); o.presplit_ridges(); o.find_roots(); o._arc_arrays(); o._detour()
+    o.measure(); o.meet_main_pipe(); o.presplit_ridges(); o.find_roots()
+    o._arc_arrays(); o._detour()
     cmp_df = o.compare()
     print("\n=== four trees on the same graph ===")
     print(cmp_df.to_string(index=False, float_format=lambda x: f"{x:,.1f}"))

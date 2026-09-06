@@ -6,78 +6,110 @@ W12 INHERITS W11b and revises it (user rule, 2026-09-06): a new W# copies the pr
 `W10/py` or `W11a/py`. Earlier folders are read as DATA only.
 
 ======================================================================================
-READ THIS FIRST: THIS STAGE DOES SOMETHING IT SHOULD NOT HAVE HAD TO DO
+THE FIVE LAYERS AND THE THREE THEMES.  This is what the engineer reviews the design by.
 ======================================================================================
 
-W12 has stages 1 (roads), 2 (orient), 3 (hierarchy), 4 (chambers), 5 (flows) and 7
-(pumps). **THERE IS NO STAGE 6.** Nothing in W12 has ever computed an invert, a
-diameter, a laid gradient, a velocity, a depth of flow or a drop.
+FIVE layers, the SAME content and the SAME colours in the GeoPackage, the shapefiles,
+the DXF and the KMZ, because a drawing that disagrees with the schedule is worse than
+no drawing:
 
-That is not a detail. Every single thing the engineer asked this stage for needs
-stage 6:
+    reaches       gravity conduits - NAME, DN, gradient, flow, velocity, length, and the
+                  inlet and outlet manhole BY NAME
+    nodes         manholes         - NAME, depth, ground level, invert, drop, and the
+                  kind of chamber it is
+    stations      pumps            - NAME, ground, invert, lift, duty flow, wet well
+    rising_mains  force mains      - NAME, DN, gradient, flow, velocity, length, the pump
+                  it leaves and whether it lands on a MANHOLE or at the WORKS
+    subnetworks   one polygon per subnetwork over the plots it serves, PLUS the areas the
+                  network does not reach, each carrying SERVED = 0, a flag and a reason
 
-    "KMZ by pipe depth"          needs an invert
-    "KMZ by diameter"            needs a diameter
-    "the pipe schedule"          scope-p25 asks for invert, DN, gradient, velocity
-    "long-section profiles"      a profile IS the invert against the ground
-    "a SewerGEMS package"        contract.SEWERGEMS wants INV_EL, INV_UP, INV_DN, DIA_MM
-    "quantities"                 an excavation quantity is a depth times a length
+THREE themes, each a saved QGIS style (.qml) and one KMZ whose folders are the layers:
 
-So this stage carries a LEVELS AND SIZES pass of its own, in section 4, and every
-number it produces is tagged `STAGE = "s8_export/levels-standin"` on the row,
-`LEVELS_SRC = "s8 stand-in"` in the manifest, and printed on the legend of every map
-that depends on it. It is a STAND-IN, not stage 6:
-
-  * it is a single strict pass (philosophy sec 7 asks for two, then an audit);
-  * it never places, moves or removes a pumping station, because stations are s7's and
-    inventing one here would put an eighth lifting-station count into circulation on a
-    project that already retracted seven;
-  * where the 12 m cover cap is passed and neither philosophy sec 5 exit applies, it
-    publishes PAST_CAP = 1 with a BLANK CAP_EXIT and counts it. It does not clip the
-    depth, and it does not invent an exit. Clipping satisfies a validator by lying.
-
-Read the count of blank-exit breaches in EXPORT.md as the size of the hole stage 6
-has to fill, not as a defect of this exporter.
+    STRUCTURE   every subnetwork its own colour, conduit weight rising with DN, flow
+                direction, and pumps / force mains / drop manholes / the chamber where
+                each subnetwork meets the main pipe all separately symbolised
+    DEPTH       the MAGMA ramp on EVERY element, on the FIXED published breaks in
+                DEPTH_BREAKS - never auto-stretched, so two runs are comparable
+    EXCEPTIONS  ONLY the flagged items - plots that cannot connect, subnetworks that do
+                not reach the main pipe, outfalls off their own low point, drops that
+                exist only to hold the velocity cap, anything past the depth trigger,
+                any chamber on wadi ground.  Colour by kind, size by severity, and THE
+                COUNT IS IN THE LAYER NAME so the legend itself reports the totals.
 
 ======================================================================================
-WHAT ELSE IS MISSING, NAMED RATHER THAN PAPERED OVER
+LEVELS: WHERE THEY COME FROM, AND THE ONE THING THAT MUST NOT HAPPEN
 ======================================================================================
 
-1.  THE TRUNK IS NOT IN THE GRAPH. `W12_hier.gpkg|trunk` is 85.49 km in 54 pieces,
-    the client's own drawn Main Pipe, an INPUT. It carries no chambers, no nodes and
-    no topology, so nothing drains INTO it here. The 195 outfalls this stage exports
-    are subnetwork outlets, not the works. The trunk is exported as its own layer,
-    drawn on every map, and excluded from every hydraulic statement.
+W12 HAS an `s6_levels.py`, and it publishes `W12/shp/W12.gpkg` - the contract file.
+This stage ALSO carries a levels-and-sizes pass in section 4, inherited from W11b where
+there genuinely was no stage 6.  Two passes that both compute an invert is inheritance
+row 10 ("one published quantity, one function") waiting to fail: W10 put seven station
+counts into circulation exactly this way.
 
-2.  THE STATION NODE IDS DO NOT RESOLVE. s7 minted `NODE_UID` N0000001..N0000085 for
-    its 85 stations. Those strings ALSO exist in the chamber layer, on entirely
-    different chambers - station N0000001 says ground 378.33 m, chamber N0000001 is at
-    317.08 m. So the ids collide instead of referencing. This stage re-anchors each
-    station to the nearest chamber BY GEOMETRY, records the distance it had to move in
-    `ST_SNAP_M`, and refuses to claim the anchor is topology: H16 says topology is
-    written down, and a recovered anchor is not. Reported, with the distances.
+So `build()` now LOOKS for s6's published file and, when it finds one, says so on the
+console, in the manifest, on the DXF banner and in EXPORT.md - loudly, by name, with the
+size of the disagreement.  It does NOT silently publish a second set of levels as if it
+were the only one.  Wiring this stage to READ s6's inverts instead of computing its own
+is the right end state and is written up in EXPORT.md; it was not done blind.
 
-3.  NO PACKAGES STAGE EXISTS. `PACKAGE` and `PHASE` are `required=False` in the
-    contract for exactly this reason. This stage derives a package per subnetwork so
-    the package schedule and the package map are printable, tags them
-    `SRC = "terrain"/CONFIDENCE = "derived"`, and says on the face of the schedule that
-    they are a grouping and not a procurement strategy.
+Everything the stand-in produces is tagged `STAGE = "s8_export/levels-standin"` on the
+row and printed on every legend that depends on it.  It is a single strict pass
+(philosophy sec 7 asks for two and then an audit); it never places, moves or removes a
+pumping station; and where the 12 m cover cap is passed with no philosophy-sec-5 exit it
+publishes PAST_CAP = 1 with a BLANK CAP_EXIT and counts it.  It does not clip the depth
+and it does not invent an exit - clipping satisfies a validator by lying.
+
+======================================================================================
+WHAT IS MISSING, NAMED RATHER THAN PAPERED OVER
+======================================================================================
+
+1.  THE TRUNK IS NOT IN THE GRAPH. `W12_hier.gpkg|trunk` is the client's own drawn Main
+    Pipe, an INPUT. It carries no chambers, no nodes and no topology, so nothing drains
+    INTO it here. The outfalls this stage exports are subnetwork outlets, not the works.
+    The trunk is exported as its own layer, drawn on every theme, and excluded from
+    every hydraulic statement.  How far each subnetwork's outfall still is from it is
+    MEASURED and published (JOIN_MAIN / JOIN_OFF_M / JOIN_WHY), and the ones that do not
+    reach it are an EXCEPTIONS layer with the count in its name.
+
+2.  THE STATION NODE IDS DO NOT RESOLVE. s7 mints station `NODE_UID`s that also exist in
+    the chamber layer on entirely different chambers, and none agree on ground level. So
+    the string is s7's own counter, not a reference. This stage re-anchors each station
+    to the nearest chamber BY GEOMETRY, records the distance in `ST_SNAP_M`, and refuses
+    to call a recovered anchor topology (H16). Reported, with the distances.
+
+3.  A STATION WITH NOTHING DRAINING INTO IT IS REMOVED HERE, NOT SHIPPED.  Inheritance
+    row 4: anything a pass can ADD, a later pass must be able to TAKE AWAY, and the stage
+    publishes how many it removed.  Each one goes to the `stations_rejected` layer with
+    its reason, its coordinates and its s7 id.  Nothing is deleted silently.
+
+======================================================================================
+SWITCHED OFF AT CONCEPT STAGE - criteria.CONCEPT_OFF is the one register
+======================================================================================
+
+house connection design | motor selection | life-cycle costing | excavation-vs-pumping |
+phasing and packaging | the SewerGEMS referee export | swept-channel chamber detail.
+
+Each is refused BY NAME through `criteria.assert_enabled()`, so a stage that reaches for
+one is stopped rather than quietly producing nothing.  None of them is abandoned; the
+register carries what brings each back.
 
 ======================================================================================
 WHAT IT PRODUCES
 ======================================================================================
 
-    W12/shp/W12_export.gpkg      the contract layers: nodes, reaches, connections,
-                                   stations, rising_mains, crossings, packages, trunk,
-                                   plus contract_check, manifest, assumptions
-    W12/shp/kmz/*.kmz             ELEVEN styled Google Earth files, subfoldered
-    W12/export/shp/*.shp          the same layers as ESRI shapefiles
-    W12/export/dxf/*.dxf          plan drawing, one layer per tier + chambers + text
+    W12/shp/W12_export.gpkg       the contract layers: nodes, reaches, connections,
+                                    stations, rising_mains, crossings, trunk,
+                                    subnetworks, stations_rejected, packages,
+                                    plus contract_check, manifest, assumptions
+    W12/shp/kmz/*.kmz             the three THEME files, plus the per-question views
+    W12/shp/kmz/*.qml             the saved QGIS style for every layer of every theme
+    W12/export/shp/*.shp          the same layers as ESRI shapefiles, names <= 10 chars
+    W12/export/dxf/*.dxf          plan drawing: the five layers, annotated
     W12/export/schedules/*.xlsx   chambers, pipes, stations, rising mains, connections,
-                                   crossings, packages, quantities, not-served
+                                    crossings, quantities, not-served
+    W12/export/W12_FIELD_DICTIONARY.md   the one-page key to every abbreviated field name
     W12/export/profiles/*.pdf     long sections, ground against invert
-    W12/export/sewergems/         the model package + the field map + the read-me
-    W12/export/qgis_load_W12.py  the PyQGIS loader (also driven over the qgis MCP)
+    W12/export/qgis_load_W12.py   the PyQGIS loader (also driven over the qgis MCP)
     W12/run/export/EXPORT.md      the report, every number with its source
 
 Run:  python s8_export.py build        (then --verify, --report, --selftest)
@@ -104,7 +136,7 @@ if _HERE not in sys.path:
     sys.path.insert(0, _HERE)
 
 import geopandas as gpd
-from shapely.geometry import LineString, Point, Polygon, MultiPolygon
+from shapely.geometry import LineString, MultiPoint, Point, Polygon, MultiPolygon
 from shapely.ops import unary_union
 
 from w12 import contract as CT
@@ -136,16 +168,44 @@ GPKG_CHAMB = os.path.join(SHP, "W12_chambers.gpkg")
 GPKG_FLOWS = os.path.join(SHP, "W12_flows.gpkg")
 GPKG_PUMPS = os.path.join(SHP, "W12_pumps.gpkg")
 GPKG_OUT = os.path.join(SHP, "W12_export.gpkg")
+# s6_levels' own published contract file. Read here ONLY to detect that a second set of
+# levels exists (see the header): this stage must never publish two answers to one
+# question without saying so.
+GPKG_S6 = os.path.join(SHP, CT.GPKG_NAME)
+
+# The settlement polygons the town letter of every NAME comes from. A CLIENT INPUT, never
+# in the repo (CLAUDE.md), and read-only.
+TOWNS_SHP = os.path.join(os.path.dirname(REPO), "SHP", "Towns")
+TOWNS_LAYER = "Towns"
+TOWNS_NAME_FIELD = "NAME_EN"
 
 DIR_KMZ = os.path.join(SHP, "kmz")
 DIR_SHP = os.path.join(OUT, "shp")
 DIR_DXF = os.path.join(OUT, "dxf")
 DIR_SCH = os.path.join(OUT, "schedules")
 DIR_PRF = os.path.join(OUT, "profiles")
-DIR_GEM = os.path.join(OUT, "sewergems")
 
 _T0 = time.time()
 _LOG: List[str] = []
+
+# What this stage REMOVED, by kind. Inheritance row 4: "anything a pass can ADD, a later pass
+# must be able to TAKE AWAY, and the stage publishes how many it removed." Populated by
+# build_stations() and read by build() into the manifest, so the ledger has one home rather
+# than being reconstructed from log lines.
+REMOVED_COUNTS: Dict[str, int] = {}
+
+# Themes that could not be built, and why. `build_themes()` catches every exception so one
+# broken theme cannot take the other two down with it - but an EMPTY exceptions map reads as
+# "we checked and it is fine", which is the module's own reason for omitting an empty folder.
+# So the failure is kept here where check_contract() can publish it as a named row.
+THEME_FAILURES: Dict[str, str] = {}
+
+# Which bound actually forced each `velocity_cap` drop. The contract's DROP_WHY vocabulary
+# has ONE word for "the pipe could not take the ground's fall", and two different things map
+# to it: `vmax` (G203-p27 4.2.2.2, a guideline 3.0 m/s) and `cover_max` (the 25 % laying
+# bound, a PROJECT ASSUMPTION declared in EXPORT_NUMBERS). Reporting the second under the
+# first's page number is borrowed authority, so the split is counted and published.
+DROP_CAUSE_SPLIT: Dict[str, int] = {}
 
 
 def _log(msg: str) -> None:
@@ -155,7 +215,7 @@ def _log(msg: str) -> None:
 
 
 def _mkdirs() -> None:
-    for d in (RUN, OUT, DIR_KMZ, DIR_SHP, DIR_DXF, DIR_SCH, DIR_PRF, DIR_GEM):
+    for d in (RUN, OUT, DIR_KMZ, DIR_SHP, DIR_DXF, DIR_SCH, DIR_PRF):
         os.makedirs(d, exist_ok=True)
 
 
@@ -183,14 +243,19 @@ EXPORT_NUMBERS: List[Tuple[str, Any, str, str]] = [
      "the drop a vortex shaft is assumed buildable to. G203 gives no maximum"),
     ("SLOPE_STEP", C.SLOPE_STEP, "PROJECT RULE (user 2026-08-23)",
      "gradients are laid on round 0.05 % steps so the drawing matches the levels"),
-    ("V_MAX", C.V_MAX, "G203-p27 4.2.2.2", "gravity maximum velocity"),
+    ("V_MAX", C.V_MAX, "G203-p27 4.2.2.2",
+     "the maximum velocity in a GRAVITY sewer, and the slope at which a pipe reaches it is "
+     "the steep end of the concept-stage clamp. It is NOT the rising-main figure - that is "
+     "2.5 m/s at G203-p50 sec 8.1 - and the two were conflated once already, which capped "
+     "every force main at the wrong number (inheritance row 9)"),
     ("TAU_PA", C.TAU_PA, "ASSUMPTION GAP-9 (G203-p27 gives no numeric tau)",
      "the tractive stress every tractive-governed gradient rests on"),
-    ("MANNING_N_EXPORT", C.MANNING_N_EXPORT, "ASSUMPTION (G203-p27 derivation n=0.013)",
-     "Manning n written into the SewerGEMS/SWMM package; a MODEL parameter, never a "
-     "design value on the pipe"),
     ("INFILT_L_D_KM", C.INFILT_L_D_KM, "G201-p72 7.4.3",
-     "infiltration for a NEW network, unpeaked"),
+     "infiltration allowance for a NEW network, per kilometre of sewer and UNPEAKED - so "
+     "it is added after the peak factor, never multiplied by it. The 10 %-of-wastewater "
+     "figure is the EXISTING-network allowance and is not used anywhere in this design; "
+     "the swap between the two moves the capacity gate's own output by 11.7 % "
+     "(10_ASBUILT_CALIBRATION sec 4)"),
     ("PF_HOLD_PROPERTIES", C.PF_HOLD_PROPERTIES, "G201-p71 7.4.2",
      "below this many properties G201 prescribes no peak-factor formula, so PF is HELD "
      "at 1.0 and said so"),
@@ -210,6 +275,37 @@ EXPORT_NUMBERS: List[Tuple[str, Any, str, str]] = [
     ("TRENCH_SIDE_M", 0.30, "PROJECT ASSUMPTION - no guideline trench width was found",
      "working space each side of the barrel in the excavation take-off. The take-off is "
      "declared indicative and is NOT a bill of quantities"),
+    ("JOIN_TOL_M", 50.0, "PROJECT ASSUMPTION - no guideline defines 'reaches the main pipe'",
+     "how close a subnetwork outfall must sit to the client's Main Pipe before the design "
+     "may say it JOINS it. 50 m is roughly two chamber spacings (as-built median 29.77 m, "
+     "10_ASBUILT_CALIBRATION sec 1), so a subnetwork within it is one chamber from the "
+     "trunk and one past it is a gap somebody has to close. Published on every outfall as "
+     "JOIN_MAIN with the measured distance beside it, so the threshold can be moved and "
+     "the effect read straight off the layer"),
+    ("SERVICE_BUFFER_M", 60.0, "G203-p17 3.2 (2 x the 45 m rider limit, less the setback)",
+     "the half-width of a subnetwork's service-area polygon - the distance within which a "
+     "plot could plausibly belong to that subnetwork. It is a DRAWING of extent and NOT a "
+     "service-area calculation; the polygon is labelled that way on the map and its "
+     "AREA_M2 is the polygon's own area, not a catchment"),
+    ("UNSERVED_CLUSTER_M", 400.0, "PROJECT ASSUMPTION - no guideline defines an 'area'",
+     "plots this close to one another are drawn as ONE unserved area, because they are one "
+     "decision: serve this ground another way, or do not serve it. The number changes how "
+     "many areas are reported and therefore how many decisions are put to the engineer, "
+     "so it is declared rather than buried in a clustering call"),
+    ("UNSERVED_MIN_PLOTS", 8, "PROJECT ASSUMPTION",
+     "below this many plots a cluster is not drawn as a servicing AREA at all - a lone "
+     "plot is a connection question and is already named, individually, on the connection "
+     "layer with what it would take. Nothing is dropped: the plots below this threshold "
+     "are still every one of them in the not-served schedule"),
+    ("DEPTH_BREAKS", "1.30 / 3.00 / 4.00 / 6.00 / 9.00 / 12.00 m",
+     "G203-p33 (1.30 and 12.00) + 10_ASBUILT_CALIBRATION sec 1 (3.00, 4.00, 6.00)",
+     "THE FIXED class edges of the DEPTH theme, on every element. Fixed and published so "
+     "two runs are comparable: an auto-stretched ramp makes the same colour mean a "
+     "different depth in every export, which is how a reviewer comes to trust a picture "
+     "that has changed under them. 1.30 = minimum cover; 3.00 = the built network's TRUNK "
+     "median cover 3.004 m; 4.00 = its SUB-MAIN median 4.010 m; 6.00 = the built "
+     "network's layout-fault trigger; 12.00 = the cover cap. 9.00 carries no source and "
+     "is marked presentation-only on the legend"),
 ]
 EXPORT_NUM = {n: v for n, v, _s, _w in EXPORT_NUMBERS}
 
@@ -218,6 +314,31 @@ MH_DIA_STD_M = EXPORT_NUM["MH_DIA_STD_M"]
 TRENCH_SIDE_M = EXPORT_NUM["TRENCH_SIDE_M"]
 EXIT_RECOVER_M = EXPORT_NUM["EXIT_RECOVER_M"]
 EXIT_OUTFALL_M = EXPORT_NUM["EXIT_OUTFALL_M"]
+JOIN_TOL_M = float(EXPORT_NUM["JOIN_TOL_M"])
+
+# THE fixed depth classes, in ONE place. Every depth-themed layer - conduits, manholes,
+# pumps, force mains, subnetwork polygons - is classified on these and on nothing else.
+#
+# The two guideline edges are READ FROM `criteria`, never re-typed: move MIN_COVER_CROWN
+# or MAX_COVER and the map moves with them. The three interior edges are the as-built
+# medians and the as-built layout-fault trigger from `_BRAIN/10_ASBUILT_CALIBRATION.md`
+# sec 1 - EVIDENCE, not a "shall", and the legend says so. 9.0 carries no source at all
+# and present.py marks such a band "(o)" on the legend rather than letting it read as one.
+AB_TRUNK_COVER_MED_M = 3.00      # 10_ASBUILT_CALIBRATION sec 1, measured 3.004 m
+AB_SUBMAIN_COVER_MED_M = 4.00    # 10_ASBUILT_CALIBRATION sec 1, measured 4.010 m
+AB_LAYOUT_FAULT_M = 6.00         # 10_ASBUILT_CALIBRATION sec 1, "layout-fault trigger at 6 m"
+DEPTH_BREAKS: List[float] = [
+    C.MIN_COVER_CROWN, AB_TRUNK_COVER_MED_M, AB_SUBMAIN_COVER_MED_M,
+    AB_LAYOUT_FAULT_M, 9.0, C.MAX_COVER,
+]
+DEPTH_BREAK_REFS: List[str] = [
+    "G203-p33 minimum cover",
+    "as-built TRUNK median cover 3.004 m",
+    "as-built SUB-MAIN median cover 4.010 m",
+    "as-built layout-fault trigger 6 m",
+    "",                                     # presentation only; the legend marks it (o)
+    "G203-p33 cover cap",
+]
 
 
 # The vocabularies upstream stages actually wrote, against the vocabularies the contract
@@ -371,10 +492,12 @@ def assemble() -> Assembly:
 def _reanchor_stations(a: Assembly) -> gpd.GeoDataFrame:
     """s7's station NODE_UIDs collide with the chamber namespace instead of referencing it.
 
-    Proved rather than assumed: 85 of 85 stations carry a NODE_UID that also exists in the
-    chamber layer, and ZERO of the 85 agree on ground level - station N0000001 says
-    378.33 m aOD where chamber N0000001 stands at 317.08 m. So the string is s7's own
-    counter, not a reference.
+    Proved rather than assumed, on every run: the collision count and the ground-level
+    disagreement are MEASURED below and published in the note, not asserted here. When it
+    was first found, every station carried a NODE_UID that also existed in the chamber
+    layer and not one of them agreed on ground level - station N0000001 said 378.33 m aOD
+    where chamber N0000001 stands at 317.08 m. So the string is s7's own counter, not a
+    reference.
 
     The anchor is recovered by proximity, the distance is published in ST_SNAP_M, and the
     row is marked so nothing downstream can mistake a recovered anchor for written
@@ -653,6 +776,10 @@ class Levels:
     node_dn: np.ndarray
     st_reset: np.ndarray
     stats: Dict[str, Any] = dc_field(default_factory=dict)
+    # CONCEPT RULE 1: "EVERY DROP CARRIES THE REASON IT EXISTS." Not a label chosen
+    # afterwards - the reason is read off the arm that actually drops, from the gradient
+    # decision that put it there. Vocabulary: contract.DROP_WHY.
+    drop_why: List[str] = dc_field(default_factory=list)
 
 
 def _size_all(g: Graph, f: Flows, tiers: Sequence[str]):
@@ -835,6 +962,7 @@ def design_levels(a: Assembly, g: Graph, f: Flows,
     drop_type = ["vortex" if d > C.BACKDROP_MAX + 1e-9 else
                  ("backdrop" if d > C.DROP_TRIGGER + 1e-9 else "none") for d in drop]
     vortex = (drop > C.BACKDROP_MAX + 1e-9).astype(np.int8)
+    drop_why = _drop_reasons(a, g, tiers, grad_by, inv_dn, arr_min, arr_max, drop_type)
 
     past_cap, cap_exit, cap_len = _cap_exits(g, cover, drop)
 
@@ -845,7 +973,7 @@ def design_levels(a: Assembly, g: Graph, f: Flows,
         cover_us=cover_us, cover_dn=cover_dn, material=[],
         inv=inv, depth=depth, cover=cover, drop=drop, drop_type=drop_type, vortex=vortex,
         past_cap=past_cap, cap_exit=cap_exit, cap_len=cap_len, node_dn=node_dn,
-        st_reset=st_reset)
+        st_reset=st_reset, drop_why=drop_why)
 
     # ---- the hydraulic state AT THE LAID gradient, and which route cleans it -------------
     _log("levels [%s]: solving depth of flow and velocity at the laid gradient" % label)
@@ -890,6 +1018,70 @@ def design_levels(a: Assembly, g: Graph, f: Flows,
         km_total=float(g.e_len.sum() / 1000.0),
     )
     return lv
+
+
+def _drop_reasons(a: Assembly, g: Graph, tiers: Sequence[str], grad_by: Sequence[str],
+                  inv_dn: np.ndarray, arr_min: np.ndarray, arr_max: np.ndarray,
+                  drop_type: Sequence[str]) -> List[str]:
+    """WHY each drop exists - read off the arm that actually drops, never chosen afterwards.
+
+    CONCEPT RULE 1 (engineer, 2026-09-05/06): "EVERY DROP CARRIES THE REASON IT EXISTS
+    (velocity cap / tier mismatch / obstruction / cover recovery)."  The contract refuses a
+    drop with no reason AND refuses one reason repeated across every drop on a large network
+    (inheritance row 22 - a published column constant where it should vary is a fabrication).
+    So this has to be a real derivation, and it is: the arm that arrives HIGHEST is the arm
+    that drops, and the gradient decision that put it there is already recorded in GRAD_BY.
+
+        vmax        the pipe was FLATTENED to hold 3.0 m/s (G203-p27 4.2.2.2)
+        cover_max   the pipe was HELD at the laying bound and philosophy sec 5 takes the
+                    surplus fall at the manhole
+    Both mean the same physical thing - the pipe could not take the ground's fall - and both
+    map to `velocity_cap`, which is the vocabulary's word for it.
+
+        a different TIER arriving        -> tier_step   (a lateral into a sub main, G203-p30)
+        the chamber sits on wadi ground  -> obstruction (the crossing forced the level)
+        anything else                    -> cover_recovery: another arm set this chamber's
+                                            invert deeper, or the chamber was laid back at
+                                            minimum cover, and this arm has to come down.
+    """
+    n = len(g.uid)
+    ins: Dict[int, List[int]] = defaultdict(list)
+    for k in range(len(g.e_ds)):
+        ins[int(g.e_ds[k])].append(k)
+    on_wadi = (a.chambers.ON_WADI.to_numpy(dtype=float) > 0
+               if "ON_WADI" in a.chambers.columns else np.zeros(n, dtype=bool))
+    tier_out = [tiers[int(g.e_of[v])] if g.e_of[v] >= 0 else "" for v in range(n)]
+
+    why: List[str] = [""] * n
+    for v in range(n):
+        if drop_type[v] == "none":
+            continue
+        kin = ins.get(v, [])
+        if not kin:
+            # a drop with nothing arriving cannot happen; if it ever does, say so rather
+            # than inventing a reason for it.
+            why[v] = "obstruction"
+            continue
+        k_hi = max(kin, key=lambda k: float(inv_dn[k]))
+        gb = str(grad_by[k_hi])
+        if gb in ("vmax", "cover_max"):
+            # BOTH map to the contract's word `velocity_cap` because that is the only word
+            # its vocabulary has for "the pipe could not take the ground's fall". They are
+            # NOT the same authority and must not be reported as one: `vmax` is G203-p27
+            # 4.2.2.2, a guideline maximum of 3.0 m/s; `cover_max` is the 25 % laying bound
+            # in EXPORT_NUMBERS["SLOPE_MAX_LAID_PCT"], a PROJECT BOUND with no guideline
+            # behind it. Citing G203-p27 for a drop the project's own assumption caused is
+            # the kind of borrowed authority `_BRAIN/02` exists to stop, so the split is
+            # counted here and printed on the legend and in the manifest.
+            DROP_CAUSE_SPLIT[gb] = DROP_CAUSE_SPLIT.get(gb, 0) + 1
+            why[v] = "velocity_cap"
+        elif tier_out[v] and str(tiers[k_hi]) != tier_out[v]:
+            why[v] = "tier_step"
+        elif bool(on_wadi[v]):
+            why[v] = "obstruction"
+        else:
+            why[v] = "cover_recovery"
+    return why
 
 
 def _cap_exits(g: Graph, cover: np.ndarray, drop: np.ndarray):
@@ -1094,7 +1286,17 @@ def build_crossings(a: Assembly, g: Graph, contacts: pd.DataFrame
         rows.append(dict(
             CROSS_ID=cid, EDGE_UID="", OBSTACLE=obstacle,
             LEN_M=round(float(line.length), 3),
+            # A DUAL-CARRIAGEWAY CONTACT WHOSE ANGLE s1 DID NOT RECORD LANDS HERE AS NaN.
+            # ANGLE_DEG is a required, non-blank contract field, so the row has to carry a
+            # number - but 0.00 deg MEANS "runs along the obstacle", the worst reading there
+            # is, and a reader cannot tell a measured 0 from an unmeasured one. That is the
+            # ANGLE_DEG = 90 defect with the sign flipped. So the value stays 0.0 (the
+            # conservative reading, and the one the contract can hold) and ANG_MEAS says
+            # whether anything was actually measured. The manifest's angle statistics are
+            # taken over ANG_MEAS = 1 only; a fabricated zero must not move a published
+            # median.
             ANGLE_DEG=round(float(ang), 2) if ang == ang else 0.0,
+            ANG_MEAS=int(ang == ang),
             METHOD="open_cut", COVER_M=round(float(C.min_cover_for(on_wadi_crossing=True)), 3),
             APPROVED=0, N_REACH=int(len(ks)), CONTACT_M=round(contact, 2),
             SQUARE=int(abs(90.0 - ang) <= C.WADI_XING_SKEW_DEG) if ang == ang else 0,
@@ -1108,8 +1310,12 @@ def build_crossings(a: Assembly, g: Graph, contacts: pd.DataFrame
         km_dual=float(on_d.sum() / 1000.0),
         both=both,
         n_square=int(cx.SQUARE.sum()) if len(cx) else 0,
-        angle_min=float(cx.ANGLE_DEG.min()) if len(cx) else 0.0,
-        angle_median=float(cx.ANGLE_DEG.median()) if len(cx) else 0.0,
+        # over the rows where an angle was actually MEASURED - see ANG_MEAS above
+        n_angle_unmeasured=int((cx.ANG_MEAS == 0).sum()) if len(cx) else 0,
+        angle_min=float(cx.ANGLE_DEG[cx.ANG_MEAS == 1].min())
+                  if len(cx) and int((cx.ANG_MEAS == 1).sum()) else float("nan"),
+        angle_median=float(cx.ANGLE_DEG[cx.ANG_MEAS == 1].median())
+                     if len(cx) and int((cx.ANG_MEAS == 1).sum()) else float("nan"),
     )
     _log(f"   crossings register: {stats['n_rows']:,} rows "
          f"({stats['n_wadi']:,} wadi, {stats['n_dual']:,} dual), "
@@ -1181,6 +1387,276 @@ def node_refs(a: Assembly, g: Graph, node_pkg: np.ndarray, tier_out: List[str]) 
 
 
 # ======================================================================================
+# 6b.  NAMING - concept rule 8
+#
+#      `I-S03-SM-M012`: town letter, subnetwork, tier, element, zero-padded. The GRAMMAR,
+#      the FORMATTER and the TOWN-CODE RESOLVER all live in `contract` and are called from
+#      here - this section decides only WHICH town, WHICH subnetwork and WHICH number, and
+#      `contract.validate()` then checks that every NAME agrees with its own TOWN, SUBNET
+#      and TIER columns.
+#
+#      TWO DECISIONS THIS STAGE MAKES, BOTH DELIBERATE AND BOTH CHECKABLE:
+#
+#      1. A SUBNETWORK HAS ONE TOWN - the town of its OUTFALL. Every element in it carries
+#         that letter. The alternative (each element takes the town it physically sits in)
+#         is a closer reading of "elements outside any town take the letter of the first
+#         town DOWNSTREAM of them", but it makes `S03` mean two different subnetworks the
+#         moment one crosses a boundary, and `I-S03` would no longer read as "subnetwork 3
+#         in Ibri". The engineer's rule is applied where it bites instead: an outfall that
+#         sits in NO town takes the nearest one, and the DISTANCE IS PUBLISHED so nobody
+#         has to take the assignment on trust. How many elements sit physically in a town
+#         other than the one in their name is COUNTED and reported, never hidden.
+#
+#      2. A MANHOLE IS NUMBERED WITHIN ITS SUBNETWORK, NOT WITHIN ITS TIER, so the conduit
+#         leaving manhole 12 is C012 - "a conduit is named for its UPSTREAM manhole", which
+#         is only true if the two numbers are the same one. The tier token still rides in
+#         the manhole name (`-SM-`) and still has to agree with the TIER column.
+#
+#      Numbering order is deterministic and stated: subnetworks by descending served load
+#      within their town, manholes by descending distance to their own outfall (so M001 is
+#      the head of the longest chain), ties broken on NODE_UID. Re-running the export on
+#      the same layers gives the same names; changing the design changes them, which is why
+#      NAME is referenced by NOTHING. Identity is NODE_UID and stays NODE_UID.
+# ======================================================================================
+
+@dataclass
+class Naming:
+    node_name: List[str]
+    node_town: List[str]
+    node_sub: List[str]
+    edge_name: List[str]
+    subnet_name: Dict[int, str]        # outfall node index -> "I-S03"
+    subnet_town: Dict[int, str]        # outfall node index -> "I"
+    subnet_code: Dict[int, str]        # outfall node index -> "S03"
+    town_of_subnet: Dict[int, str]     # outfall node index -> the settlement's full name
+    notes: List[str]
+    stats: Dict[str, Any]
+
+
+# WHICH TIERS THE CONCEPT NAME GRAMMAR CAN ACTUALLY EXPRESS.
+#
+# Concept rule 8 declares THREE tier codes - "TM / SM / L" - and `contract.NAME_RE` enforces
+# exactly those three. This design's governing tier set (philosophy sec 4, contract.TIERS) has
+# FIVE: rider, lateral, main, sub main, trunk main. `contract.TIER_TOKEN` maps the two extra
+# ones to "R" and "M", which the grammar then refuses, so a chamber on a `main` or a `rider`
+# reach came out named `I-S03-M-M012` - a string `parse_name()` returns None for and
+# `validate()` reports as "N NAME values do not fit the grammar". s3_hierarchy emits `main` on
+# every run past its depth or path budget, so that was most of a real network.
+#
+# The set below is DISCOVERED, not typed: each tier is put through concept_name() and
+# parse_name() once at import, so the day the contract's grammar grows a token this widens on
+# its own instead of going stale. A tier the grammar cannot express mints NO name, and the
+# count is published - rule 7, flag do not solve. Inventing a mapping ("call a main a sub
+# main") would put one tier's label on another tier's chamber, which is exactly what
+# concept_name()'s own error message forbids.
+def _grammar_tiers() -> Tuple[set, set]:
+    ok, no = set(), set()
+    for t in CT.TIERS:
+        try:
+            nm = CT.concept_name("I", "manhole", subnet="S01", tier=t, seq=1)
+        except Exception:
+            no.add(t)
+            continue
+        (ok if CT.parse_name(nm) is not None else no).add(t)
+    return ok, no
+
+
+TIERS_NAMEABLE, TIERS_NOT_NAMEABLE = _grammar_tiers()
+
+
+def _read_towns() -> Optional[gpd.GeoDataFrame]:
+    """The settlement polygons, with a unique letter code on each. Read-only client data."""
+    try:
+        t = gpd.read_file(TOWNS_SHP, layer=TOWNS_LAYER)
+    except Exception as e:                                     # pragma: no cover - IO
+        _log(f"   TOWNS NOT READ ({type(e).__name__}: {e}). Every NAME will be BLANK and "
+             f"the publication gate contract.assert_named() will refuse the layer - which "
+             f"is the correct outcome, not a workaround.")
+        return None
+    if t.crs is not None and t.crs.to_epsg() != CT.CRS_EPSG:
+        t = t.to_crs(CT.CRS_EPSG)
+    names = [str(v) for v in t[TOWNS_NAME_FIELD]]
+    codes = CT.town_letters(names)
+    t = t.copy()
+    t["TOWN_NAME"] = names
+    t["TOWN_CODE"] = [codes[n] for n in names]
+    return t[["TOWN_NAME", "TOWN_CODE", "geometry"]]
+
+
+def build_names(a: Assembly, g: Graph, f: Flows) -> Naming:
+    """NAME / TOWN / SUBNET for every chamber and every conduit."""
+    n, m = len(g.uid), len(g.e_len)
+    blank_n, blank_e = [""] * n, [""] * m
+    towns = _read_towns()
+    notes: List[str] = []
+    if towns is None or len(towns) == 0:
+        return Naming(blank_n, list(blank_n), list(blank_n), blank_e, {}, {}, {}, {},
+                      ["the settlement layer could not be read, so nothing is named"],
+                      {"named_nodes": 0, "towns_used": 0,
+                       "names_refused_no_tier_token": 0, "names_refused_by_tier": {}})
+
+    outfalls = [int(i) for i in np.unique(f.subnet)]
+    pts = gpd.GeoDataFrame(
+        {"i": outfalls},
+        geometry=[Point(float(a.chambers.X.iloc[i]), float(a.chambers.Y.iloc[i]))
+                  for i in outfalls],
+        crs=f"EPSG:{CT.CRS_EPSG}")
+    inside = gpd.sjoin(pts, towns, how="left", predicate="within")
+    inside = inside[~inside.index.duplicated(keep="first")]     # a point on a shared edge
+
+    # the outfalls that fell in NO settlement take the NEAREST one, and the distance is
+    # published rather than assumed away.
+    town_of: Dict[int, str] = {}
+    how: Dict[int, str] = {}
+    dist_of: Dict[int, float] = {}
+    tgeom = towns.geometry.values
+    tname = towns.TOWN_NAME.tolist()
+    # indexed by the LEFT frame's own index, not by position: sjoin can return more rows
+    # than it was given, and after the dedup a positional walk would silently pair an
+    # outfall with another outfall's town.
+    for ridx, row in inside.iterrows():
+        i = int(row.i)
+        nmv = row.TOWN_NAME
+        if isinstance(nmv, str) and nmv:
+            town_of[i], how[i], dist_of[i] = nmv, "within", 0.0
+        else:
+            pt = pts.geometry.loc[ridx]
+            d = np.array([pt.distance(gm) for gm in tgeom], dtype=float)
+            k = int(np.argmin(d))
+            town_of[i], how[i], dist_of[i] = tname[k], "nearest", float(d[k])
+    n_near = sum(1 for v in how.values() if v == "nearest")
+    if n_near:
+        worst = max((dist_of[i] for i in how if how[i] == "nearest"), default=0.0)
+        notes.append(
+            f"{n_near} of {len(outfalls)} subnetwork outfalls sit in NO mapped settlement "
+            f"and took the NEAREST one (worst {worst:,.0f} m away). The engineer's rule is "
+            f"'the first town downstream'; downstream of an outfall is the client's Main "
+            f"Pipe, which carries no direction in this data, so the nearest settlement is "
+            f"the stand-in and the distance is published on the subnetwork polygon "
+            f"(TOWN_D_M) so it can be overruled by eye.")
+
+    codes = dict(zip(towns.TOWN_NAME, towns.TOWN_CODE))
+    # subnetworks numbered WITHIN their town, by descending served load
+    by_town: Dict[str, List[int]] = defaultdict(list)
+    for i in outfalls:
+        by_town[town_of[i]].append(i)
+    subnet_name: Dict[int, str] = {}
+    subnet_town: Dict[int, str] = {}
+    subnet_code: Dict[int, str] = {}
+    for tn, members in by_town.items():
+        code = codes[tn]
+        for r, i in enumerate(sorted(members, key=lambda j: (-float(f.q_adf[j]), g.uid[j])),
+                              start=1):
+            sc = f"S{r:02d}"
+            subnet_code[i] = sc
+            subnet_town[i] = code
+            subnet_name[i] = CT.concept_name(code, "subnet", subnet=sc)
+
+    # manhole numbers: descending distance to the subnetwork's own outfall, ties on uid
+    dist = _dist_to_outfall(g)
+    seq = np.zeros(n, dtype=np.int64)
+    order_by_sub: Dict[int, List[int]] = defaultdict(list)
+    for v in range(n):
+        order_by_sub[int(f.subnet[v])].append(v)
+    for s, members in order_by_sub.items():
+        members.sort(key=lambda v: (-float(dist[v]), g.uid[v]))
+        for r, v in enumerate(members, start=1):
+            seq[v] = r
+
+    tier_e = a.segments.TIER.astype(str).to_numpy()
+    tier_node: List[str] = ["lateral"] * n
+    for k in range(m):
+        w = int(g.e_ds[k])
+        tier_node[w] = tier_e[k]
+    for v in range(n):
+        e = int(g.e_of[v])
+        if e >= 0:
+            tier_node[v] = tier_e[e]
+
+    node_name: List[str] = [""] * n
+    node_town: List[str] = [""] * n
+    node_sub: List[str] = [""] * n
+    refused_by_tier: Dict[str, int] = defaultdict(int)
+    for v in range(n):
+        s = int(f.subnet[v])
+        code, sc = subnet_town.get(s, ""), subnet_code.get(s, "")
+        if not code:
+            continue
+        node_town[v], node_sub[v] = code, sc
+        t = str(tier_node[v])
+        if t not in TIERS_NAMEABLE:
+            # NO NAME IS MINTED. The grammar has no token for this tier, and a string it
+            # cannot parse is a label, not an identifier (contract._name_problems). Blank is
+            # the channel the contract designed for "not named yet": the LayerSpec allows it
+            # and `assert_named()` then refuses the layer at publication, loudly, which is
+            # the correct outcome and not a workaround.
+            refused_by_tier[t] += 1
+            continue
+        node_name[v] = CT.concept_name(code, "manhole", subnet=sc, tier=t, seq=int(seq[v]))
+    # a conduit is named for its UPSTREAM manhole, and carries its number. Where that manhole
+    # could not be named, the conduit is not named either: a conduit name is only useful
+    # because it points at a chamber a reader can then find, and half a pair is worse than
+    # none - it looks like a complete naming that has simply lost one row.
+    edge_name: List[str] = [""] * m
+    for k in range(m):
+        u = int(g.e_us[k])
+        if node_town[u] and node_name[u]:
+            edge_name[k] = CT.concept_name(node_town[u], "conduit",
+                                           subnet=node_sub[u], seq=int(seq[u]))
+    n_refused = int(sum(refused_by_tier.values()))
+    if n_refused:
+        notes.append(
+            f"{n_refused:,} of {n:,} chambers are on a tier the concept NAME grammar has no "
+            f"token for and are therefore NOT NAMED: "
+            + ", ".join(f"{t} {c:,}" for t, c in sorted(refused_by_tier.items()))
+            + f". Concept rule 8 declares THREE tier codes (TM / SM / L) and "
+              f"contract.NAME_RE enforces exactly those; this design's governing tier set is "
+              f"FIVE (philosophy sec 4), and contract.TIER_TOKEN maps the extra two to 'R' "
+              f"and 'M', which the grammar refuses. Nothing is invented here - calling a "
+              f"main a sub main would put one tier's label on another tier's chamber. THE "
+              f"DECISION IS THE ENGINEER'S: either the grammar gains R and M, or s3 stops "
+              f"emitting those tiers. Until then assert_named() refuses these layers and the "
+              f"objection is on the contract_check layer with this count.")
+
+    # how many elements sit physically in a settlement OTHER than the one in their name -
+    # measured, because "one town per subnetwork" is a decision and its cost is a number.
+    cross = 0
+    try:
+        chpts = gpd.GeoDataFrame(
+            {"v": np.arange(n)},
+            geometry=[Point(float(x), float(y))
+                      for x, y in zip(a.chambers.X.to_numpy(), a.chambers.Y.to_numpy())],
+            crs=f"EPSG:{CT.CRS_EPSG}")
+        j = gpd.sjoin(chpts, towns, how="left", predicate="within")
+        j = j[~j.index.duplicated(keep="first")]
+        got = j.TOWN_CODE.fillna("").astype(str).to_numpy()
+        cross = int(sum(1 for v in range(n)
+                        if got[v] and node_town[v] and got[v] != node_town[v]))
+    except Exception as e:                                     # pragma: no cover
+        notes.append(f"the in-town cross-check could not run: {type(e).__name__}: {e}")
+    if cross:
+        notes.append(
+            f"{cross:,} of {n:,} chambers sit physically inside a settlement other than "
+            f"the one whose letter their NAME carries. That is the price of 'one town per "
+            f"subnetwork' (decision 1 above) and it is stated rather than hidden - a "
+            f"per-element town would remove it and would make S## mean two subnetworks.")
+
+    _log(f"   named {sum(1 for x in node_name if x):,} chambers and "
+         f"{sum(1 for x in edge_name if x):,} conduits across "
+         f"{len(set(subnet_town.values()))} settlements, "
+         f"{len(subnet_name)} subnetworks")
+    return Naming(node_name, node_town, node_sub, edge_name, subnet_name, subnet_town,
+                  subnet_code, town_of, notes,
+                  {"named_nodes": int(sum(1 for x in node_name if x)),
+                   "towns_used": len(set(subnet_town.values())),
+                   "outfalls_nearest_town": n_near,
+                   "chambers_in_another_town": cross,
+                   "names_refused_no_tier_token": n_refused,
+                   "names_refused_by_tier": dict(refused_by_tier),
+                   "town_dist": dist_of})
+
+
+# ======================================================================================
 # 7.  THE CONTRACT LAYERS
 #
 #     Field for field against `contract.LAYERS`. Nothing is written that the contract does
@@ -1237,9 +1713,99 @@ def _bearing_fix_inlets(a: Assembly, g: Graph) -> np.ndarray:
     return val
 
 
+@dataclass
+class Joins:
+    """Where each subnetwork meets the client's Main Pipe, and how far that is from its own
+    lowest point. CONCEPT RULE 2, and the two numbers that make it checkable."""
+    is_join: np.ndarray        # per node, 1 at an outfall that reaches the main pipe
+    gap_m: np.ndarray          # per node, straight-line distance to the main pipe
+    off_m: np.ndarray          # per node, distance from the subnetwork's TRUE low point
+    why: List[str]
+    low_uid: Dict[int, str]    # outfall node index -> the uid of its own lowest chamber
+    stats: Dict[str, Any]
+
+
+def measure_joins(a: Assembly, g: Graph, f: Flows) -> Joins:
+    """CONCEPT RULE 2: a subnetwork joins the main pipe at the LOWEST POINT WHERE IT MEETS
+    it, and where there is no street at the low point it connects at the nearest usable
+    place and RECORDS THE DISTANCE FROM THE TRUE LOW POINT.
+
+    This stage does not move an outfall - the tree is s2's and s3's. What it does is
+    MEASURE the rule, on every subnetwork, and publish the three numbers the rule is made
+    of: does this outfall reach the main pipe at all (JOIN_MAIN), how far it sits from its
+    own catchment's lowest chamber (JOIN_OFF_M) and why (JOIN_WHY). W11b shipped two
+    subnetworks holding a quarter of the network that touched the trunk at 1.1 m and 3.1 m
+    and discharged somewhere else entirely, and nothing on the layer said so."""
+    n = len(g.uid)
+    is_join = np.zeros(n, dtype=np.int8)
+    gap = np.zeros(n)
+    off = np.zeros(n)
+    why: List[str] = [""] * n
+    low_uid: Dict[int, str] = {}
+    try:
+        tline = unary_union(list(a.trunk.geometry.values))
+    except Exception:                                          # pragma: no cover
+        tline = None
+    xs = a.chambers.X.to_numpy(dtype=float)
+    ys = a.chambers.Y.to_numpy(dtype=float)
+
+    n_reach = n_short = 0
+    for out_i in np.unique(f.subnet):
+        out_i = int(out_i)
+        sel = np.flatnonzero(f.subnet == out_i)
+        low = int(sel[int(np.argmin(g.grd[sel]))])
+        low_uid[out_i] = g.uid[low]
+        d_trunk = (float(Point(xs[out_i], ys[out_i]).distance(tline))
+                   if tline is not None else float("inf"))
+        gap[out_i] = round(d_trunk, 1)
+        d_low = float(math.hypot(xs[out_i] - xs[low], ys[out_i] - ys[low]))
+        dz = float(g.grd[out_i] - g.grd[low])
+        if d_trunk <= JOIN_TOL_M:
+            is_join[out_i] = 1
+            n_reach += 1
+            if d_low > 1.0:
+                d_low_trunk = (float(Point(xs[low], ys[low]).distance(tline))
+                               if tline is not None else float("nan"))
+                off[out_i] = round(d_low, 1)
+                why[out_i] = (
+                    f"outlet {d_low:,.0f} m from the subnetwork's own low point "
+                    f"{g.uid[low]}, which stands {dz:,.2f} m lower; that low point is "
+                    f"{d_low_trunk:,.0f} m from the main pipe, so the outlet is at the "
+                    f"nearest place the network actually meets it")
+        else:
+            n_short += 1
+            # JOIN_MAIN = 0, so JOIN_OFF_M must stay 0: the contract refuses an offset from
+            # a join that does not exist, and it is right to - there is no join to offset
+            # from. The distance short is carried on the subnetwork polygon (GAP_M) and is
+            # an EXCEPTIONS layer of its own.
+    _log(f"   joins to the main pipe: {n_reach} of {n_reach + n_short} subnetwork outfalls "
+         f"are within {JOIN_TOL_M:g} m of it; {n_short} are not and are drawn as an "
+         f"exception with the distance in words")
+    # THE HEADLINE IS MEASURED OVER THE OUTFALLS, AND AN UNMEASURABLE DISTANCE SAYS SO.
+    # `gap` is per NODE and is 0.0 on every chamber that is not an outfall, so a max over the
+    # whole array with the non-finite values filtered out returned 0.0 when the client's Main
+    # Pipe could not be read at all - i.e. "no subnetwork is more than 0 m from the trunk",
+    # the exact opposite of the truth, printed as a headline into the manifest and EXPORT.md.
+    out_ix = [int(i) for i in np.unique(f.subnet)]
+    meas = np.array([gap[i] for i in out_ix], dtype=float)
+    finite = meas[np.isfinite(meas)]
+    n_unmeasured = int(len(meas) - len(finite))
+    if n_unmeasured:
+        _log(f"   *** the distance to the client's Main Pipe COULD NOT BE MEASURED on "
+             f"{n_unmeasured} of {len(meas)} outfalls (the trunk layer is empty or "
+             f"unreadable). GAP_M is null on those rows and the 'worst gap' below counts "
+             f"only the ones that could be measured - it is NOT evidence that the rest are "
+             f"close.")
+    return Joins(is_join, gap, off, why, low_uid,
+                 {"reaching": n_reach, "short": n_short,
+                  "off_low_point": int((off > 0).sum()),
+                  "gap_unmeasured": n_unmeasured,
+                  "worst_gap_m": float(finite.max()) if len(finite) else float("nan")})
+
+
 def build_layers(a: Assembly, g: Graph, f: Flows, lv: Levels, contacts: pd.DataFrame,
-                 cross_id: np.ndarray, node_pkg: np.ndarray, edge_pkg: np.ndarray
-                 ) -> Dict[str, gpd.GeoDataFrame]:
+                 cross_id: np.ndarray, node_pkg: np.ndarray, edge_pkg: np.ndarray,
+                 nm: Naming, jn: Joins) -> Dict[str, gpd.GeoDataFrame]:
     n, m = len(g.uid), len(g.e_len)
     seg = a.segments
     ch = a.chambers
@@ -1319,18 +1885,38 @@ def build_layers(a: Assembly, g: Graph, f: Flows, lv: Levels, contacts: pd.DataF
         MH_MAT="precast concrete (class per PAM-SPC, pending)",
         DROP_M=np.round(lv.drop, 3),
         DROP_TYPE=lv.drop_type,
+        # CONCEPT RULE 1 - every drop says why it exists, derived in _drop_reasons() from
+        # the arm that actually drops. The contract refuses a drop with no reason and it
+        # also refuses ONE reason repeated across every drop (inheritance row 22).
+        DROP_WHY=lv.drop_why,
+        # CONCEPT RULE 2 - where this chamber meets the main pipe, and how far that is
+        # from the subnetwork's own lowest point. Measured in measure_joins().
+        JOIN_MAIN=jn.is_join,
+        JOIN_OFF_M=np.round(jn.off_m, 1),
+        JOIN_WHY=jn.why,
         VORTEX=lv.vortex.astype(np.int8),
         Q_ADF_M3D=np.round(f.q_adf, 3),
         Q_PK_LS=np.round(qpk_n, 4),
         N_PROP=np.round(f.n_prop, 2),
         PAST_CAP=lv.past_cap.astype(np.int8),
         CAP_EXIT=lv.cap_exit,
+        # ---- concept rule 8, the NAME grammar. Built in build_names(). ----------------
+        NAME=nm.node_name,
+        TOWN=nm.node_town,
+        SUBNET=nm.node_sub,
         # ---- beyond the contract, declared here and printed in the data dictionary -----
         CAP_LEN_M=np.round(lv.cap_len, 1),
         ST_RESET=lv.st_reset.astype(np.int8),
         N_CONN=f.n_conn.astype(np.int64),
         UPS_LEN_M=np.round(f.ups_len, 1),
-        SUBNET=[g.uid[int(s)] for s in f.subnet],
+        # SUBNET is "S03" because the grammar puts it there and validate() checks NAME
+        # against it - but "S03" is NOT unique across towns, so the machine key is the
+        # component's own outfall chamber and the DISPLAY key is the subnetwork's full
+        # name "I-S03". Colouring or foldering on SUBNET alone would merge one subnetwork
+        # in Ibri with another in Ad Dariz.
+        SUBNET_ND=[g.uid[int(s)] for s in f.subnet],
+        SUB_NAME=[nm.subnet_name.get(int(s), "") for s in f.subnet],
+        JOIN_GAP_M=np.round(jn.gap_m, 1),
         TRIGGER=ch.TRIGGER.astype(str).to_numpy(),
         ON_WADI=ch.ON_WADI.to_numpy(),
         TAU_PA=float(C.TAU_PA),
@@ -1390,8 +1976,17 @@ def build_layers(a: Assembly, g: Graph, f: Flows, lv: Levels, contacts: pd.DataF
         ON_DUAL_M=contacts.ON_DUAL_M.to_numpy(),
         ON_WADI_M=contacts.ON_WADI_M.to_numpy(),
         CROSS_ID=cross_id.astype(str),
+        # ---- concept rule 8. A conduit is named for its UPSTREAM manhole and carries
+        # ---- that manhole's number, which is why manholes are numbered per SUBNETWORK
+        # ---- and not per tier.
+        NAME=nm.edge_name,
+        TOWN=[nm.node_town[int(i)] for i in g.e_us],
+        SUBNET=[nm.node_sub[int(i)] for i in g.e_us],
         # ---- beyond the contract -------------------------------------------------------
-        SUBNET=[g.uid[int(s)] for s in f.subnet[g.e_us]],
+        SUBNET_ND=[g.uid[int(s)] for s in f.subnet[g.e_us]],
+        SUB_NAME=[nm.subnet_name.get(int(s), "") for s in f.subnet[g.e_us]],
+        US_NAME=[nm.node_name[int(i)] for i in g.e_us],
+        DS_NAME=[nm.node_name[int(i)] for i in g.e_ds],
         RUN_LEN_M=np.round(f.e_upslen, 1),
         SRC=src_e, CONFIDENCE=conf_e, STAGE=LEVELS_TAG,
         PACKAGE=edge_pkg, PHASE=np.zeros(m, dtype=np.int64),
@@ -1409,17 +2004,37 @@ def build_layers(a: Assembly, g: Graph, f: Flows, lv: Levels, contacts: pd.DataF
 
 def build_connections(a: Assembly, g: Graph, nodes: gpd.GeoDataFrame,
                       reaches: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-    """The load units, with CAN_DRAIN now ANSWERABLE.
+    """CONCEPT RULE 5: PLOT CONNECTIONS ARE NOT DESIGNED. One simple gravity check.
 
-    s4 published `CAN_DRAIN cannot run - no designed invert exists at stage 4`. There is
-    one now, so the question is answered: does the plot's own ground sit above the sewer
-    invert at the chamber it connects to, with the 0.60 m minimum cover a property
-    connection needs (G203-p19 3.5) and the 3 % minimum gradient (G203-p18 Table 5)?"""
+    The engineer's words, and each half is a separate trap this answers:
+
+      * "the connection leaves BELOW ground level (not at it)"  -> the property outlet is
+        set at the G203-p19 sec 3.4 minimum HCC depth, not at the plot's surface. A level
+        comparison at the plot centroid passes plots that cannot physically be connected.
+      * "runs to a CHAMBER (not to the nearest point on a pipe)" -> the target invert is
+        `nodes.INV_M` at OUT_NODE, the chamber s4 assigned it.
+      * "loses fall over its own route length"                   -> over LEN_M, at the
+        G203-p18 Table 5 minimum 3 % gradient, not as a bare level difference.
+
+    And rule 7, FLAG DO NOT SOLVE: every plot that fails is named with its reason AND ITS
+    SIZE - CONN_NEED is how many metres deeper the sewer would have to be on that run.
+    W11b's "5,521 plots cannot drain" is a number nobody can act on; "this plot needs the
+    sewer 0.84 m deeper" is a decision.
+
+    CAN_DRAIN is written FROM CAN_CONN, never computed twice: the contract refuses two
+    answers to one question, and that defect has cost this project more than any other."""
     cn = a.connections.copy()
     inv = dict(zip(nodes.NODE_UID.astype(str), nodes.INV_M.astype(float)))
     ci = cn.OUT_NODE.astype(str).map(inv).to_numpy(dtype=float)
     grd_plot = cn.GRD_PLOT.to_numpy(dtype=float)
-    L = np.maximum(cn.LEN_M.to_numpy(dtype=float), 0.5)
+    # THE LENGTH THE CHECK RUNS ON IS THE LENGTH THAT IS PUBLISHED. It used to run on the
+    # upstream stage's own LEN_M while publishing a length RE-MEASURED off the geometry, so a
+    # reviewer multiplying the published SLOPE_LAID by the published LEN_M did not get the
+    # published FALL_AV_M back, and CONN_NEED - "how much deeper the sewer must be" - was
+    # sized on a route length the row does not carry. The geometry is the authority: it is
+    # what the drawing shows and what the DXF measures.
+    len_pub = np.round(cn.geometry.length.to_numpy(dtype=float), 3)
+    L = np.maximum(len_pub, 0.5)
     # the outlet of the property, at the minimum HCC depth (G203-p19 3.4: 1.2-2.0 m)
     out_lvl = grd_plot - C.HCC_DEPTH_MIN
     fall_avail = out_lvl - ci
@@ -1428,6 +2043,26 @@ def build_connections(a: Assembly, g: Graph, nodes: gpd.GeoDataFrame,
     s_laid = np.clip(np.where(s_need > 0, s_need, C.PCS_MIN_SLOPE),
                      C.PCS_MIN_SLOPE, C.PCS_MAX_SLOPE)
     cover = np.maximum(C.PCS_MIN_COVER, C.HCC_DEPTH_MIN - C.DN_TERTIARY / 1000.0)
+
+    # WHAT IT WOULD TAKE, in metres: the chamber invert has to fall by the shortfall
+    # between the fall available and the fall the 3 % minimum needs over this length.
+    need = np.where(can == 1, 0.0,
+                    np.maximum(0.0, C.PCS_MIN_SLOPE * L - fall_avail))
+    why = np.where(
+        can == 1, "",
+        np.where(fall_avail <= 0.0,
+                 np.array([f"the property outlet sits {abs(fa):.2f} m BELOW the sewer "
+                           f"invert at its chamber - sewer {nd:.2f} m deeper on this run, "
+                           f"or a local collector"
+                           for fa, nd in zip(fall_avail, need)], dtype=object),
+                 np.array([f"only {fa:.2f} m of fall over {ln:,.0f} m, and "
+                           f"{C.PCS_MIN_SLOPE * 100:g} % needs "
+                           f"{C.PCS_MIN_SLOPE * ln:.2f} m (G203-p18 Tab 5) - sewer "
+                           f"{nd:.2f} m deeper on this run"
+                           for fa, ln, nd in zip(fall_avail, L, need)], dtype=object)))
+
+    ndx = nodes.set_index(nodes.NODE_UID.astype(str))
+    key = cn.OUT_NODE.astype(str)
     out = gpd.GeoDataFrame(dict(
         CONN_ID=cn.CONN_ID.astype(str),
         PLOT_ID=cn.PLOT_ID.astype(str),
@@ -1437,34 +2072,106 @@ def build_connections(a: Assembly, g: Graph, nodes: gpd.GeoDataFrame,
         CONN_TYPE=cn.CONN_TYPE.astype(str),
         Q_ADF_M3D=np.round(cn.Q_ADF_M3D.to_numpy(dtype=float), 4),
         N_PROP=np.round(cn.N_PROP.to_numpy(dtype=float), 3),
-        LEN_M=np.round(cn.geometry.length.to_numpy(), 3),
+        LEN_M=len_pub,
         SLOPE_LAID=np.round(s_laid * 100.0, 3),
         COVER_M=round(float(cover), 3),
+        CAN_CONN=can,
+        CONN_WHY=why.astype(object),
+        CONN_NEED=np.round(need, 3),
+        # written FROM CAN_CONN, not computed a second time (contract cross-field check)
         CAN_DRAIN=can,
         FALL_AV_M=np.round(fall_avail, 3),
         XPLOT=cn.XPLOT.to_numpy(), XDUAL=cn.XDUAL.to_numpy(),
         CH_WADI=cn.CH_WADI.to_numpy(),
+        # A CONNECTION HAS NO NAME, DELIBERATELY. Concept rule 8's grammar covers a
+        # manhole, a conduit, a pump, a force main and a subnetwork - there is no
+        # connection element, and several plots enter one chamber, so borrowing the
+        # chamber's name would duplicate it on this layer. TOWN and SUBNET are carried
+        # because they ARE meaningful and make the layer filterable; NAME stays blank and
+        # assert_named() is not called on this layer. A name invented to fill a column is
+        # a label, not an identifier.
+        NAME="",
+        TOWN=key.map(ndx.TOWN.astype(str)).fillna(""),
+        SUBNET=key.map(ndx.SUBNET.astype(str)).fillna(""),
+        SUB_NAME=key.map(ndx.SUB_NAME.astype(str)).fillna(""),
         SRC="dwg_road", CONFIDENCE="derived", STAGE=LEVELS_TAG,
-        PACKAGE=cn.OUT_NODE.astype(str).map(
-            dict(zip(nodes.NODE_UID.astype(str), nodes.PACKAGE.astype(str)))).fillna(""),
+        PACKAGE=key.map(ndx.PACKAGE.astype(str)).fillna(""),
         PHASE=0,
     ), geometry=cn.geometry.values, crs=f"EPSG:{CT.CRS_EPSG}")
-    _log(f"   connections: CAN_DRAIN answered for the first time - "
-         f"{int(can.sum()):,} of {len(can):,} plots can reach their chamber on gravity at "
-         f"the {C.PCS_MIN_SLOPE*100:g} % minimum (G203-p18 Tab 5); "
-         f"{int((can == 0).sum()):,} cannot")
+    _log(f"   connections (concept rule 5): {int(can.sum()):,} of {len(can):,} plots "
+         f"reach their chamber on gravity at the {C.PCS_MIN_SLOPE*100:g} % minimum "
+         f"(G203-p18 Tab 5). {int((can == 0).sum()):,} cannot, and each says what it "
+         f"would take - median {np.median(need[can == 0]) if int((can == 0).sum()) else 0.0:.2f} m "
+         f"deeper, worst {need.max():.2f} m")
     return out
 
 
-def build_stations(a: Assembly, nodes: gpd.GeoDataFrame) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
-    """s7's stations and rising mains, re-keyed into the export namespace.
+def build_stations(a: Assembly, nodes: gpd.GeoDataFrame, g: Graph, f: Flows, nm: Naming
+                   ) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame, gpd.GeoDataFrame]:
+    """s7's stations and rising mains, re-keyed, NAMED, and PRUNED.
 
     Every hydraulic number here is s7's and is copied, never recomputed: duty flow, lift,
-    wet well, head, motor, land take, the rising main's diameter, velocity and fittings.
-    What this stage adds is the anchor, the label and the package."""
+    wet well, land take, the rising main's diameter, velocity and fittings. What this
+    stage adds is the anchor, the concept-stage name, and the two fields concept rule 6
+    demands as the evidence that a station's position was CHOSEN and not TRIGGERED -
+    N_SUBNET and CATCH_KM.
+
+    AND IT REMOVES THE STATIONS WITH NOTHING DRAINING INTO THEM. Inheritance row 4:
+    "anything a pass can ADD, a later pass must be able to TAKE AWAY, and the stage
+    publishes how many it removed". W11b shipped 15 of 47 with nothing upstream, and the
+    reason they survived is that no pass could ever remove one. This is that pass. Each
+    removed station is published in full on `stations_rejected` with its reason, its
+    coordinates and its s7 id - the ledger's rule is remove-and-publish, never delete.
+
+    MOTOR_KW, KWH_YR, LCC_OMR and HEAD_M ARE NOT WRITTEN. The first three are motor
+    selection and life-cycle costing, both switched off at concept stage
+    (criteria.CONCEPT_OFF); HEAD_M is a banned second name for LIFT_M / STAT_HD_M /
+    TOT_HD_M. `contract.validate()` refuses all four by name, which is the point of
+    banning them: a stage reaching for one is told the field to use instead."""
     st = a.stations.copy()
     ndx = nodes.set_index(nodes.NODE_UID.astype(str))
     anchor = st.ANCHOR_ND.astype(str)
+
+    # ---- concept rule 6: what does each station actually capture? ----------------------
+    # N_SUBNET is computed, not asserted - and on THIS wiring it comes out 1 on every
+    # retained station, because s7 places a station INSIDE a component rather than at a
+    # seam between subnetworks. That is a finding about s7's siting, not a measurement of
+    # this design's quality, and it is said in the log and in EXPORT.md rather than left
+    # to look like a fabricated column. CATCH_KM is the number rule 6 actually scores on.
+    ai = anchor.map(g.ix)
+    n_sub = np.zeros(len(st), dtype=np.int64)
+    catch = np.zeros(len(st), dtype=float)
+    # N_SUBNET IS COUNTED, NOT ASSERTED. The first build wrote the LITERAL 1 wherever the
+    # anchor had any inflow at all - a boolean wearing a count's name, and constant on every
+    # published row, which is inheritance row 22 (a published column constant where it should
+    # vary is a fabrication). It is now the number of DISTINCT subnetworks whose arms arrive
+    # at the anchor, read off f.subnet. On this wiring it still comes out 1, because s7 sites
+    # a station INSIDE a component rather than at the seam concept rule 6 asks for - but it
+    # is now a measurement that will move the day s7 does, instead of a constant that cannot.
+    arms_at: Dict[int, List[int]] = defaultdict(list)
+    for k in range(len(g.e_ds)):
+        arms_at[int(g.e_ds[k])].append(int(g.e_us[k]))
+    for r, idx in enumerate(ai.to_numpy()):
+        if idx is None or (isinstance(idx, float) and math.isnan(idx)):
+            continue
+        i = int(idx)
+        n_sub[r] = len({int(f.subnet[u]) for u in arms_at.get(i, ())})
+        if n_sub[r]:
+            catch[r] = float(f.ups_len[i]) / 1000.0
+    inv_at = anchor.map(ndx.INV_M.astype(float)).to_numpy(dtype=float)
+    town_at = anchor.map(ndx.TOWN.astype(str)).fillna("").to_numpy()
+
+    # ---- concept rule 8: I-PMP02, numbered within its town by descending duty ----------
+    duty = pd.to_numeric(st.Q_DUTY_LS, errors="coerce").fillna(0.0).to_numpy(dtype=float)
+    names = [""] * len(st)
+    per_town: Dict[str, int] = defaultdict(int)
+    for r in sorted(range(len(st)), key=lambda k: (-duty[k], str(st.NODE_UID.iloc[k]))):
+        t = str(town_at[r])
+        if not t:
+            continue
+        per_town[t] += 1
+        names[r] = CT.concept_name(t, "pump", seq=per_town[t])
+
     st_out = gpd.GeoDataFrame(dict(
         NODE_UID=st.NODE_UID.astype(str),
         NODE_REF=st.NODE_REF.astype(str),
@@ -1477,22 +2184,27 @@ def build_stations(a: Assembly, nodes: gpd.GeoDataFrame) -> Tuple[gpd.GeoDataFra
         WELL_M3=np.round(st.WELL_M3.to_numpy(dtype=float), 4),
         WW_STARTS=np.round(st.WW_STARTS.to_numpy(dtype=float), 2),
         GRD_M=np.round(st.GRD_M.to_numpy(dtype=float), 3),
+        INV_M=np.round(inv_at, 3),
+        N_SUBNET=n_sub,
+        CATCH_KM=np.round(catch, 3),
         # FLOOD_LV IS LEFT NULL, DELIBERATELY. s7 published it null and there is no way
         # to fill it: `hazard.flood_level_m_aod()` RAISES by design, because the grids
         # carry an AR&R hazard CLASS and no water-surface level, and deriving one would
         # mean inventing a depth and adding it to a terrain reading. Filling it with
         # ground level - which this stage did on its first build - manufactured a
-        # 300 mm-freeboard failure on all 85 stations that says nothing about any of
+        # 300 mm-freeboard failure on every station that says nothing about any of
         # them. The contract will report the null, and that null IS the data request
         # (G203-p38 7.2 needs the 1:50 water-surface level).
         FLOOD_LV=pd.to_numeric(st.FLOOD_LV, errors="coerce").to_numpy(dtype=float),
         LAND_M2=np.round(st.LAND_M2.to_numpy(dtype=float), 1),
         RM_EDGE=st.RM_EDGE.astype(str),
         COMM_PT=st.COMM_PT.to_numpy(),
-        HEAD_M=np.round(st.HEAD_M.to_numpy(dtype=float), 2),
-        MOTOR_KW=np.round(st.MOTOR_KW.to_numpy(dtype=float), 2),
-        KWH_YR=np.round(st.KWH_YR.to_numpy(dtype=float), 0),
-        LCC_OMR=np.round(st.LCC_OMR.to_numpy(dtype=float), 0),
+        NAME=names,
+        TOWN=town_at,
+        # A STATION IS A SEAM BETWEEN SUBNETWORKS, NOT A MEMBER OF ONE. SUBNET is blank
+        # here on purpose and the contract's name check expects exactly that: I-PMP02
+        # carries no S-token, so a SUBNET value would contradict its own name.
+        SUBNET="",
         ANCHOR_ND=anchor,
         ST_SNAP_M=st.ST_SNAP_M.to_numpy(dtype=float),
         UID_S7=st.NODE_UID_S7.astype(str),
@@ -1502,13 +2214,66 @@ def build_stations(a: Assembly, nodes: gpd.GeoDataFrame) -> Tuple[gpd.GeoDataFra
         SRC="terrain", CONFIDENCE="derived", STAGE="s7_pumps (levels by s8)",
     ), geometry=st.geometry.values, crs=f"EPSG:{CT.CRS_EPSG}")
 
+    # ---- inheritance row 4: TAKE AWAY what an earlier pass could only ADD ---------------
+    keep = st_out.N_SUBNET.to_numpy() > 0
+    rejected = st_out[~keep].copy()
+    if len(rejected):
+        # THE REMOVAL RESTS ON A GEOMETRIC SNAP, AND THE ROW SAYS SO. s7's station ids do not
+        # resolve (header note 2), so the anchor is the NEAREST chamber - `_reanchor_stations`
+        # takes it with no distance limit at all. "Nothing drains into it" is therefore a
+        # statement about the chamber the station was SNAPPED to, and a station snapped 300 m
+        # to a headwater chamber would be removed on that chamber's evidence, not its own.
+        # ST_SNAP_M goes into the reason so the removal can be argued with rather than taken
+        # on trust; a big snap distance is the first thing to check on any row here.
+        rejected["REJECT_WHY"] = [
+            "NOTHING DRAINS INTO IT. The chamber this station is anchored to has zero "
+            "incoming reaches, so it captures no catchment and lifts nothing. Placed by a "
+            "pass that could only ADD a station and never re-test one (inheritance row 4); "
+            "removed here, published in full, and handed back to s7_pumps. THE ANCHOR IS A "
+            f"PROXIMITY SNAP of {float(s):,.1f} m (s7's own node id does not resolve), so "
+            "the evidence is that chamber's - check the snap before accepting the removal."
+            for s in rejected.ST_SNAP_M.to_numpy()]
+        rejected["ANCHOR_X"] = np.round(rejected.geometry.x.to_numpy(), 2)
+        rejected["ANCHOR_Y"] = np.round(rejected.geometry.y.to_numpy(), 2)
+    st_out = st_out[keep].reset_index(drop=True)
+    _log(f"   stations: s7 designed {len(st):,}; {int((~keep).sum()):,} REMOVED with "
+         f"nothing draining into them (published on `stations_rejected`); "
+         f"{len(st_out):,} published. CATCH_KM "
+         f"{st_out.CATCH_KM.min() if len(st_out) else 0:.2f}-"
+         f"{st_out.CATCH_KM.max() if len(st_out) else 0:.2f} km. "
+         f"N_SUBNET is 1 on every one BY CONSTRUCTION - s7 sites a station INSIDE a "
+         f"component, not at a seam between subnetworks, which is what concept rule 6 asks "
+         f"for. The number that scores rule 6 is CATCH_KM.")
+
     rm = a.rising.copy()
     s7_to_new = dict(zip(st.NODE_UID_S7.astype(str), st.NODE_UID.astype(str)))
+    station_new = rm.STATION.astype(str).map(s7_to_new).fillna(rm.STATION.astype(str))
+    # a force main carries the number of the pump it leaves - I-PMP02 -> I-P02
+    pump_name = dict(zip(st_out.NODE_UID.astype(str), st_out.NAME.astype(str)))
+    pump_town = dict(zip(st_out.NODE_UID.astype(str), st_out.TOWN.astype(str)))
+    rm_name, rm_town = [], []
+    for s in station_new:
+        pn = pump_name.get(str(s), "")
+        parsed = CT.parse_name(pn) if pn else None
+        if parsed and parsed.get("pmp"):
+            rm_town.append(parsed["town"])
+            rm_name.append(CT.concept_name(parsed["town"], "main", seq=int(parsed["pmp"])))
+        else:
+            rm_town.append(pump_town.get(str(s), ""))
+            rm_name.append("")
+    # CONCEPT RULE 6: does this main lift to the nearest manhole where gravity resumes, or
+    # all the way to the works? A long force main goes anaerobic, needs an air valve at
+    # every summit and a washout at every low point, and is a single point of failure. The
+    # ANSWER is s7's; publishing WHICH of the two it is, is this stage's.
+    known_nodes = set(nodes.NODE_UID.astype(str))
+    ds = rm.DS_NODE.astype(str)
+    ds_type = np.where(ds.isin(known_nodes), "manhole", "stp")
+
     rm_out = gpd.GeoDataFrame(dict(
         EDGE_UID=rm.EDGE_UID.astype(str),
         US_NODE=rm.US_NODE.astype(str).map(s7_to_new).fillna(rm.US_NODE.astype(str)),
-        DS_NODE=rm.DS_NODE.astype(str),
-        STATION=rm.STATION.astype(str).map(s7_to_new).fillna(rm.STATION.astype(str)),
+        DS_NODE=ds,
+        STATION=station_new,
         DN=rm.DN.to_numpy(dtype=np.int64),
         MATERIAL=rm.MATERIAL.astype(str),
         LEN_M=np.round(rm.geometry.length.to_numpy(), 3),
@@ -1523,12 +2288,32 @@ def build_stations(a: Assembly, nodes: gpd.GeoDataFrame) -> Tuple[gpd.GeoDataFra
         N_ISOL=rm.N_ISOL.to_numpy(dtype=np.int64),
         WADI_M=np.round(rm.WADI_M.to_numpy(dtype=float), 2),
         SEPTIC_FL=rm.SEPTIC_FL.to_numpy(dtype=np.int64),
-        PACKAGE=rm.STATION.astype(str).map(s7_to_new).map(
-            dict(zip(st_out.NODE_UID, st_out.PACKAGE))).fillna(""),
+        DS_TYPE=ds_type,
+        NAME=rm_name,
+        TOWN=rm_town,
+        SUBNET="",                      # a force main is a seam, exactly as its pump is
+        PACKAGE=station_new.map(dict(zip(st_out.NODE_UID, st_out.PACKAGE))).fillna(""),
         PHASE=0,
         SRC="terrain", CONFIDENCE="derived", STAGE="s7_pumps",
     ), geometry=rm.geometry.values, crs=f"EPSG:{CT.CRS_EPSG}")
-    return st_out, rm_out
+    # a rising main whose pump was removed has nothing to lift; it goes with it.
+    live = rm_out.STATION.astype(str).isin(set(st_out.NODE_UID.astype(str)))
+    if (~live).any():
+        _log(f"   {int((~live).sum()):,} rising mains removed with the stations that were "
+             f"pruned - a force main with no pump lifts nothing")
+    # INHERITANCE ROW 4 - what a pass takes away, it PUBLISHES. The station count was already
+    # a manifest metric; the force mains that went with them were only printed to a console,
+    # and a console is not a deliverable. Both counts are recorded here so build() can put
+    # them in the manifest and EXPORT.md from one place.
+    REMOVED_COUNTS["stations_removed"] = int((~keep).sum())
+    REMOVED_COUNTS["rising_mains_removed"] = int((~live).sum())
+    rm_out = rm_out[live].reset_index(drop=True)
+    n_to_works = int((rm_out.DS_TYPE == "stp").sum())
+    if n_to_works:
+        _log(f"   {n_to_works:,} of {len(rm_out):,} rising mains discharge at the WORKS "
+             f"rather than at the nearest manhole where gravity resumes (concept rule 6) - "
+             f"drawn on the EXCEPTIONS theme with their length")
+    return st_out, rm_out, rejected
 
 
 def build_trunk(a: Assembly) -> gpd.GeoDataFrame:
@@ -1544,7 +2329,7 @@ def build_trunk(a: Assembly) -> gpd.GeoDataFrame:
         TIER="trunk main",
         LEN_M=np.round(t.geometry.length.to_numpy(), 3),
         NOTE="CLIENT INPUT. Not chambered, not levelled, not sized. Nothing in this "
-             "export drains into it: the 195 outfalls are subnetwork outlets.",
+             "export drains into it: the outfalls are subnetwork outlets.",
         SRC="main_pipe", CONFIDENCE="drafted", STAGE="s3_hierarchy (passed through by s8)",
     ), geometry=t.geometry.values, crs=f"EPSG:{CT.CRS_EPSG}")
 
@@ -1553,11 +2338,33 @@ def build_trunk(a: Assembly) -> gpd.GeoDataFrame:
 # 7b.  VALIDATION - run it, publish the result, never silence it
 # ======================================================================================
 
+# The layers concept rule 8's grammar actually covers. `connections` is NOT here and the
+# reason is in build_connections(): the grammar has no connection element, several plots
+# enter one chamber, and a name invented to fill a column is a label, not an identifier.
+NAMED_LAYERS = ("nodes", "reaches", "stations", "rising_mains")
+
+
 def check_contract(layers: Dict[str, gpd.GeoDataFrame]) -> pd.DataFrame:
+    """Validate every contract layer and PUBLISH the result - one row per PROBLEM, not one
+    row per layer.
+
+    W11b wrote the whole ContractError into a single 8,000-character cell, so "stations
+    fails" could equally have meant one missing field or forty. Splitting on the blank line
+    `validate()` already uses gives a countable list, and a reader can see at a glance that
+    a layer fails on ONE named data gap rather than on its design."""
     rows = []
     for name in ("nodes", "reaches", "connections", "stations", "rising_mains",
-                 "crossings", "packages"):
+                 "crossings", "subnetworks", "packages"):
         gdf = layers.get(name)
+        if name == "subnetworks":
+            # not a contract layer - there is no LayerSpec for a service-area polygon. Say
+            # that plainly rather than scoring it as a pass.
+            rows.append(dict(LAYER=name, RESULT="no LayerSpec - not a contract layer",
+                             PASS=1,
+                             DETAIL=f"{0 if gdf is None else len(gdf):,} rows. The five "
+                                    f"published layers include this one; the contract "
+                                    f"declares four of them."))
+            continue
         if gdf is None:
             rows.append(dict(LAYER=name, RESULT="NOT PRODUCED", PASS=0, DETAIL=""))
             continue
@@ -1566,9 +2373,38 @@ def check_contract(layers: Dict[str, gpd.GeoDataFrame]) -> pd.DataFrame:
             rows.append(dict(LAYER=name, RESULT="passes contract.validate()", PASS=1,
                              DETAIL=f"{len(gdf):,} rows"))
         except CT.ContractError as e:
-            txt = str(e)
-            rows.append(dict(LAYER=name, RESULT="CONTRACT VIOLATION", PASS=0,
-                             DETAIL=txt[:8000]))
+            # `validate()` separates its problems with a BLANK LINE and wraps them in a
+            # header (which carries the layer's purpose) and a footer. Splitting on the
+            # blank line and dropping those two gives one row per PROBLEM - so "stations
+            # fails" becomes a countable list rather than an 8,000-character cell that
+            # could equally be one missing field or forty.
+            chunks = [c.strip() for c in str(e).split("\n\n") if c.strip()]
+            probs = [c for c in chunks
+                     if not c.startswith("CONTRACT VIOLATION")
+                     and not c.startswith("Fix this in the stage")]
+            for p in (probs or [str(e)[:4000]]):
+                rows.append(dict(LAYER=name, RESULT="CONTRACT VIOLATION", PASS=0,
+                                 DETAIL=p[:4000]))
+    # the publication gate: was the naming work actually DONE, not just possible
+    for name in NAMED_LAYERS:
+        gdf = layers.get(name)
+        if gdf is None or not len(gdf):
+            continue
+        try:
+            CT.assert_named(gdf, name, stage=STAGE)
+            rows.append(dict(LAYER=f"{name} <- assert_named", PASS=1,
+                             RESULT="every row is NAMED", DETAIL=f"{len(gdf):,} rows"))
+        except CT.ContractError as e:
+            rows.append(dict(LAYER=f"{name} <- assert_named", PASS=0,
+                             RESULT="LAYER IS NOT FULLY NAMED", DETAIL=str(e)[:4000]))
+    # A THEME THAT COULD NOT BE BUILT IS A PUBLISHED FAILURE, NOT A CONSOLE LINE. An empty
+    # EXCEPTIONS map reads as "we checked and it is fine"; that has to be visible on the
+    # deliverable, next to every other objection, and not only in a log nobody keeps.
+    for tname, err in sorted(THEME_FAILURES.items()):
+        rows.append(dict(LAYER=f"theme:{tname}", RESULT="THEME COULD NOT BE BUILT", PASS=0,
+                         DETAIL=f"{err}. Its KMZ and its QGIS styles were NOT written. An "
+                                f"absent theme is not a clean one - do not read the two "
+                                f"that were written as the whole picture."))
     try:
         CT.assert_crossings_resolve(reaches=layers.get("reaches"),
                                     crossings=layers.get("crossings"))
@@ -1576,24 +2412,51 @@ def check_contract(layers: Dict[str, gpd.GeoDataFrame]) -> pd.DataFrame:
                          PASS=1, DETAIL=""))
     except CT.ContractError as e:
         rows.append(dict(LAYER="crossings <-> reaches", RESULT="REGISTER DOES NOT RESOLVE",
-                         PASS=0, DETAIL=str(e)[:8000]))
+                         PASS=0, DETAIL=str(e)[:4000]))
     return pd.DataFrame(rows)
 
 
-def publish(layers: Dict[str, gpd.GeoDataFrame], extra: Dict[str, pd.DataFrame]) -> None:
-    """One GeoPackage, rewritten whole. `packages` and the four report tables carry no
-    geometry - the contract declares PACKAGES with geom="none" - so they are written as
-    attribute-only layers rather than left out of the file the reviewer opens."""
-    if os.path.exists(GPKG_OUT):
-        os.remove(GPKG_OUT)
+def publish(layers: Dict[str, gpd.GeoDataFrame], extra: Dict[str, pd.DataFrame]) -> str:
+    """One GeoPackage, WRITTEN BESIDE THE OLD ONE AND THEN SWAPPED IN.
+
+    The previous version deleted the target and wrote into it. Two things went wrong with
+    that, and both cost a whole run:
+
+      * QGIS holds an open handle on the GeoPackage it is displaying, so `os.remove` raises
+        PermissionError on Windows and the export dies AFTER the design work is done;
+      * a crash halfway through left a file with some layers in it and no way to tell.
+
+    So: write every layer into `W12_export.<pid>.part.gpkg`, then `os.replace()` it over
+    the target - atomic on the same volume. If the swap is refused because something holds
+    the target open, the run is NOT lost: the part file is renamed to a TIMESTAMPED
+    GeoPackage beside it and the path is returned and printed. A locked file costs you the
+    convenience of one filename, never a run.
+
+    Returns the path actually written, which is not always GPKG_OUT."""
+    tmp = os.path.join(SHP, f"W12_export.{os.getpid()}.part.gpkg")
+    for p in (tmp, tmp + "-journal", tmp + "-wal"):
+        if os.path.exists(p):
+            os.remove(p)
     for name, df in list(layers.items()) + list(extra.items()):
-        if isinstance(df, gpd.GeoDataFrame) and df.geometry.notna().any():
-            df.to_file(GPKG_OUT, layer=name, driver="GPKG")
+        if isinstance(df, gpd.GeoDataFrame) and len(df) and df.geometry.notna().any():
+            df.to_file(tmp, layer=name, driver="GPKG")
         else:
             gpd.GeoDataFrame(pd.DataFrame(df).copy(), geometry=[None] * len(df),
                              crs=f"EPSG:{CT.CRS_EPSG}").to_file(
-                GPKG_OUT, layer=name, driver="GPKG")
-        _log(f"   wrote {name:<14} {len(df):>7,}  -> {os.path.basename(GPKG_OUT)}")
+                tmp, layer=name, driver="GPKG")
+        _log(f"   wrote {name:<18} {len(df):>7,}")
+    try:
+        os.replace(tmp, GPKG_OUT)
+        _log(f"   swapped in -> {os.path.basename(GPKG_OUT)} "
+             f"({os.path.getsize(GPKG_OUT) / 1e6:.1f} MB)")
+        return GPKG_OUT
+    except OSError as e:
+        alt = os.path.join(SHP, f"W12_export_{time.strftime('%Y%m%d_%H%M%S')}.gpkg")
+        os.replace(tmp, alt)
+        _log(f"   *** {os.path.basename(GPKG_OUT)} IS LOCKED ({type(e).__name__}: {e}). "
+             f"THE RUN IS NOT LOST - it is in {os.path.basename(alt)}. Close QGIS and "
+             f"rename it, or point QGIS at the new file.")
+        return alt
 
 
 # ======================================================================================
@@ -1609,37 +2472,158 @@ def publish(layers: Dict[str, gpd.GeoDataFrame], extra: Dict[str, pd.DataFrame])
 #     because a view is a declaration and adding one is not editing the library.
 # ======================================================================================
 
-def package_areas(layers: Dict[str, gpd.GeoDataFrame]) -> gpd.GeoDataFrame:
-    """A polygon per package - the ground a contract covers.
+# Declared in EXPORT_NUMBERS above with the source and the consequence of each - these
+# three shape PUBLISHED data (a polygon's extent, how many unserved areas are reported,
+# and which clusters get a boundary at all), so they are register entries and not local
+# literals. Read from the register so there is exactly one value for each.
+SERVICE_BUFFER_M = float(EXPORT_NUM["SERVICE_BUFFER_M"])
+UNSERVED_CLUSTER_M = float(EXPORT_NUM["UNSERVED_CLUSTER_M"])
+UNSERVED_MIN_PLOTS = int(EXPORT_NUM["UNSERVED_MIN_PLOTS"])
 
-    It is a 60 m buffer of the package's own reaches, unioned and simplified. That is a
-    DRAWING of the package's extent and not a service-area calculation, and it is labelled
-    that way on the map. 60 m is the distance s4 could chain a rider and a lateral over
-    (2 x 45 m, G203-p17 3.2, less the setback), so it is the width in which a plot could
-    plausibly belong to this package rather than a number chosen for looks."""
+
+def build_subnetworks(layers: Dict[str, gpd.GeoDataFrame], a: Assembly, g: Graph,
+                      f: Flows, nm: Naming, jn: Joins) -> gpd.GeoDataFrame:
+    """LAYER FIVE: one polygon per subnetwork over the plots it serves, PLUS the areas the
+    network does not reach - each carrying SERVED = 0, a flag and a reason.
+
+    The engineer asked for the AREA, not a polygon per orphan pipe, because the area with
+    its plots inside it is the thing somebody has to make a decision about: serve it
+    another way, or do not serve it. A lone plot is a connection question and is left to
+    the connection layer; an area needs UNSERVED_MIN_PLOTS members before a boundary round
+    it says anything.
+
+    The served polygon carries the three numbers concept rule 2 is made of - does this
+    subnetwork reach the main pipe, how far short it is, and how far its outlet sits from
+    its own low point - so the STRUCTURE and EXCEPTIONS themes read them off one layer."""
     r = layers["reaches"]
-    pk = layers["packages"].set_index("PACKAGE")
+    nd = layers["nodes"]
+    cn = layers["connections"]
     rows = []
-    for name, sub in r.groupby(r.PACKAGE.astype(str)):
+
+    plots_at = cn.groupby(cn.SUB_NAME.astype(str)).size().to_dict()
+    q_at = cn.groupby(cn.SUB_NAME.astype(str)).Q_ADF_M3D.sum().to_dict()
+    prop_at = cn.groupby(cn.SUB_NAME.astype(str)).N_PROP.sum().to_dict()
+    conn_by_sub = {k: v for k, v in cn.groupby(cn.SUB_NAME.astype(str))}
+    node_by_sub = {k: v for k, v in nd.groupby(nd.SUB_NAME.astype(str))}
+    out_by_sub = {str(nm.subnet_name.get(int(i), "")): int(i) for i in np.unique(f.subnet)}
+    # uid -> the chamber's NAME, built once. Masking the whole node layer per subnetwork
+    # is 195 passes over 57,000 rows for one lookup each.
+    name_of_uid = dict(zip(nd.NODE_UID.astype(str), nd.NAME.astype(str)))
+    tdist = nm.stats.get("town_dist", {}) if isinstance(nm.stats, dict) else {}
+
+    for name, sub in r.groupby(r.SUB_NAME.astype(str)):
+        if not name:
+            continue
+        parts = [sub.geometry.buffer(SERVICE_BUFFER_M, resolution=4)]
+        cs = conn_by_sub.get(name)
+        if cs is not None and len(cs):
+            parts.append(cs.geometry.buffer(SERVICE_BUFFER_M, resolution=4))
         try:
-            poly = unary_union(sub.geometry.buffer(60.0, resolution=4)).simplify(5.0)
-        except Exception:
+            poly = unary_union(pd.concat(parts).values).simplify(5.0)
+        except Exception:                                      # pragma: no cover
             continue
         if poly.is_empty:
             continue
-        info = pk.loc[name] if name in pk.index else None
+        nsub = node_by_sub.get(name)
+        oi = out_by_sub.get(name, -1)
+        outfall = g.uid[oi] if oi >= 0 else ""
         rows.append(dict(
-            PACKAGE=name,
-            PHASE=0,
-            LEN_KM=float(info.LEN_KM) if info is not None else round(sub.LEN_M.sum() / 1000, 3),
-            N_PLOT=int(info.N_PLOT) if info is not None else 0,
-            OUTLET=str(info.OUTLET) if info is not None else "",
-            DS_PKG="", COMM_SEQ=int(info.COMM_SEQ) if info is not None else 0,
-            INDEP=1, ONE_TREE=1,
+            NAME=name,
+            TOWN=str(sub.TOWN.iloc[0]),
+            SUBNET=str(sub.SUBNET.iloc[0]),
+            SERVED=1,
+            N_PLOT=int(plots_at.get(name, 0)),
+            N_PROP=round(float(prop_at.get(name, 0.0)), 1),
+            Q_ADF_M3D=round(float(q_at.get(name, 0.0)), 2),
+            N_CHAMBER=int(len(nsub)) if nsub is not None else 0,
+            LEN_KM=round(float(sub.LEN_M.sum()) / 1000.0, 3),
+            DEEP_M=round(float(nsub.DEPTH_M.max()), 2) if nsub is not None and len(nsub) else 0.0,
+            OUTFALL=outfall,
+            OUT_NAME=name_of_uid.get(outfall, ""),
+            JOIN_MAIN=int(jn.is_join[oi]) if oi >= 0 else 0,
+            GAP_M=round(float(jn.gap_m[oi]), 1) if oi >= 0 else 0.0,
+            OFF_M=round(float(jn.off_m[oi]), 1) if oi >= 0 else 0.0,
+            LOW_ND=jn.low_uid.get(oi, ""),
+            TOWN_D_M=round(float(tdist.get(oi, 0.0)), 1),
+            FLAG="" if (oi >= 0 and jn.is_join[oi]) else "does not reach the main pipe",
+            WHY="" if (oi >= 0 and jn.is_join[oi]) else
+                (f"outfall {outfall} stands {float(jn.gap_m[oi]):,.0f} m from the client's "
+                 f"Main Pipe - beyond the {JOIN_TOL_M:g} m at which this design says a "
+                 f"subnetwork JOINS it. Legal only if it ends at a designed pumping "
+                 f"station with a rising main (10_ASBUILT_CALIBRATION rule T1); otherwise "
+                 f"it drains nowhere" if oi >= 0 else ""),
             AREA_M2=round(float(poly.area), 1),
             SRC="terrain", CONFIDENCE="derived", STAGE=STAGE,
             geometry=poly))
-    return gpd.GeoDataFrame(rows, geometry="geometry", crs=f"EPSG:{CT.CRS_EPSG}")
+
+    # ---- the areas the network does not reach ------------------------------------------
+    un = a.unserved
+    if un is not None and len(un) and un.geometry.notna().any():
+        rows += _unserved_areas(un)
+
+    out = gpd.GeoDataFrame(rows, geometry="geometry", crs=f"EPSG:{CT.CRS_EPSG}")
+    _log(f"   subnetwork polygons: {int((out.SERVED == 1).sum()):,} served areas covering "
+         f"{int(out[out.SERVED == 1].N_PLOT.sum()):,} plots; "
+         f"{int((out.SERVED == 0).sum()):,} UNSERVED areas holding "
+         f"{int(out[out.SERVED == 0].N_PLOT.sum()):,} plots, each with a reason")
+    return out
+
+
+def _unserved_areas(un: gpd.GeoDataFrame) -> List[Dict[str, Any]]:
+    """A boundary round every cluster of plots the network does not reach.
+
+    Clustered with a KD-tree and union-find rather than sklearn, which is not installed
+    here and is a heavy dependency for one call. Same idea as DBSCAN."""
+    from scipy.spatial import cKDTree
+    cent = un.geometry.centroid
+    xy = np.c_[cent.x.to_numpy(), cent.y.to_numpy()]
+    parent = list(range(len(xy)))
+
+    def find(i):
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    tree = cKDTree(xy)
+    for i, j in tree.query_pairs(UNSERVED_CLUSTER_M):
+        ri, rj = find(i), find(j)
+        if ri != rj:
+            parent[ri] = rj
+    groups: Dict[int, List[int]] = defaultdict(list)
+    for i in range(len(xy)):
+        groups[find(i)].append(i)
+
+    rows: List[Dict[str, Any]] = []
+    keep = sorted((m for m in groups.values() if len(m) >= UNSERVED_MIN_PLOTS),
+                  key=lambda m: -len(m))
+    for k, members in enumerate(keep, start=1):
+        sel = un.iloc[members]
+        hull = MultiPoint(list(sel.geometry.centroid)).convex_hull.buffer(120.0)
+        # the reason, in the stage's own words plus the measured distance - one reason per
+        # area, and the areas differ, so the column varies (inheritance row 22)
+        whys = sel.WHY.astype(str).value_counts() if "WHY" in sel.columns else None
+        lead = str(whys.index[0]) if whys is not None and len(whys) else "not reached"
+        d_near = (round(float(pd.to_numeric(sel.D_NEAR_M, errors="coerce").min()), 1)
+                  if "D_NEAR_M" in sel.columns else float("nan"))
+        rows.append(dict(
+            NAME="", TOWN="", SUBNET="", SERVED=0,
+            N_PLOT=int(len(sel)),
+            N_PROP=round(float(pd.to_numeric(sel.N_PROP, errors="coerce").sum()), 1)
+                   if "N_PROP" in sel.columns else 0.0,
+            Q_ADF_M3D=round(float(pd.to_numeric(sel.Q_ADF_M3D, errors="coerce").sum()), 2)
+                      if "Q_ADF_M3D" in sel.columns else 0.0,
+            N_CHAMBER=0, LEN_KM=0.0, DEEP_M=0.0, OUTFALL="", OUT_NAME="",
+            JOIN_MAIN=0, GAP_M=0.0, OFF_M=0.0, LOW_ND="", TOWN_D_M=0.0,
+            FLAG=f"UNSERVED-{k:03d}",
+            WHY=(f"{len(sel):,} plots, nearest chamber {d_near:,.0f} m away. {lead}. "
+                 f"scope-p4 item 3 requires every plot SERVICED, and 'serviced' is not "
+                 f"'connected to one network' (philosophy sec 8a) - the decision is which "
+                 f"system serves this area, not whether to drop it"),
+            AREA_M2=round(float(hull.area), 1),
+            SRC="terrain", CONFIDENCE="derived", STAGE=STAGE,
+            geometry=hull))
+    return rows
 
 
 def _extra_columns(layers: Dict[str, gpd.GeoDataFrame]) -> None:
@@ -1660,9 +2644,9 @@ def _extra_columns(layers: Dict[str, gpd.GeoDataFrame]) -> None:
         for o, s in zip(cx.OBSTACLE.astype(str), cx.SQUARE.to_numpy())]
 
     cn = layers["connections"]
-    cn["DRAIN_TXT"] = np.where(cn.CAN_DRAIN.to_numpy() == 1,
-                               "drains to its chamber on gravity",
-                               "CANNOT drain - the sewer invert is above the property outlet")
+    cn["DRAIN_TXT"] = np.where(cn.CAN_CONN.to_numpy() == 1,
+                               "connects to its chamber on gravity",
+                               "CANNOT connect - the sewer invert is above the property outlet")
 
     r = layers["reaches"]
     r["CLEAN_TXT"] = r.CLEAN_BY.astype(str).map({
@@ -1670,6 +2654,39 @@ def _extra_columns(layers: Dict[str, gpd.GeoDataFrame]) -> None:
         "tractive": "TRACTIVE route - rests on the ASSUMED tau = 1.0 Pa (G203-p27, GAP-9)",
         "neither": "NEITHER route - this pipe will silt",
     }).fillna("unknown")
+
+    # ---- DEP_M: ONE depth column on ALL FIVE LAYERS, so the DEPTH theme is literally one
+    # ---- field classified on one fixed set of breaks. What it means per layer is in the
+    # ---- field dictionary, and it is NOT the same physical quantity everywhere - which is
+    # ---- exactly why it is written down rather than left to the reader.
+    r["DEP_M"] = np.round(np.maximum(pd.to_numeric(r.US_DEPTH, errors="coerce"),
+                                     pd.to_numeric(r.DS_DEPTH, errors="coerce")), 3)
+    nd["DEP_M"] = np.round(pd.to_numeric(nd.DEPTH_M, errors="coerce"), 3)
+    st = layers["stations"]
+    st["DEP_M"] = np.round(pd.to_numeric(st.GRD_M, errors="coerce")
+                           - pd.to_numeric(st.INV_M, errors="coerce"), 3)
+    rm = layers["rising_mains"]
+    st_dep = dict(zip(st.NODE_UID.astype(str), st.DEP_M))
+    # a pressure main has no invert of its own in this design, so it takes the depth of the
+    # wet well it leaves - which is the depth a reviewer is actually judging.
+    rm["DEP_M"] = np.round(rm.STATION.astype(str).map(st_dep).fillna(0.0), 3)
+    sn = layers["subnetworks"]
+    sn["DEP_M"] = np.round(pd.to_numeric(sn.DEEP_M, errors="coerce").fillna(0.0), 3)
+
+    # ---- STR_CLS: the STRUCTURE class of a chamber, in words. A chamber is one thing on
+    # ---- that map, in this priority: the place a subnetwork meets the main pipe, then a
+    # ---- drop, then a pumping station, then what kind of chamber it is.
+    kind = nd.NODE_KIND.astype(str).to_numpy()
+    dtyp = nd.DROP_TYPE.astype(str).to_numpy()
+    dwhy = nd.DROP_WHY.astype(str).to_numpy()
+    strc = np.where(nd.JOIN_MAIN.to_numpy() == 1,
+                    "subnetwork joins the MAIN PIPE here",
+                    np.where(dtyp == "vortex",
+                             np.char.add("VORTEX drop shaft - ", dwhy.astype(str)),
+                             np.where(dtyp == "backdrop",
+                                      np.char.add("backdrop - ", dwhy.astype(str)),
+                                      np.char.add("chamber - ", kind.astype(str)))))
+    nd["STR_CLS"] = strc
 
 
 def register_extra_views() -> List[str]:
@@ -1840,8 +2857,714 @@ KMZ_VIEWS = [
     # and the ones that answer a question this design actually raises
     "pumping_demand", "ground_fall", "constraint", "drops", "crossings",
     "chambers", "capacity", "velocity", "clean_by", "sized_by", "grad_by",
-    "flow", "package", "packages_area", "rising_mains", "can_drain", "material",
+    "flow", "rising_mains", "can_drain", "material",
 ]
+
+
+# ======================================================================================
+# 8a.  THE THREE THEMES - STRUCTURE, DEPTH, EXCEPTIONS
+#
+#      Each theme is a list of ThemeLayers, and a ThemeLayer is one published layer, one
+#      CLASS COLUMN and one class table (value -> label, colour, width). That shape is
+#      deliberate: it is the only shape that can drive a KMZ folder, a QGIS .qml and a DXF
+#      layer set from ONE declaration, so the three cannot tell different stories. The
+#      previous iteration's KMZ and its shapefiles disagreed about which chambers were
+#      drops, and nobody could say which was right.
+#
+#      The DEPTH theme classifies EVERY layer on ONE column, `DEP_M`, against ONE fixed
+#      set of edges, `DEPTH_BREAKS`, on the MAGMA ramp. Fixed, because an auto-stretched
+#      ramp makes the same colour mean a different depth in every export.
+#
+#      The EXCEPTIONS theme draws NOTHING that is not flagged, colours by kind, sizes by
+#      severity, and PUTS THE COUNT IN THE LAYER NAME so the legend reports the totals.
+# ======================================================================================
+
+# MAGMA, registered into present's own ramp table rather than edited into the library -
+# adding a ramp is a declaration, the same way adding a View is. Control points are the
+# published magma anchors (dark purple -> orange -> pale yellow), REVERSED so that
+# SHALLOW IS LIGHT AND DEEP IS DARK, which is what the engineer asked for and is also the
+# only direction that reads correctly against a satellite background.
+PR.RAMPS.setdefault("magma", [
+    (0.00, (252, 253, 191)),     # shallow
+    (0.25, (254, 176, 120)),
+    (0.50, (241, 96, 93)),
+    (0.75, (140, 41, 129)),
+    (1.00, (12, 8, 38)),         # deep
+])
+
+# Feature counts above this are drawn as ONE placemark per class holding a MultiGeometry
+# instead of one placemark per feature. A 57,000-placemark folder will not pan in Google
+# Earth, and at the zoom a layout is judged from you cannot see one chamber anyway. Below
+# it, every feature keeps its own placemark and its own popup.
+KMZ_INDIVIDUAL_MAX = 4000
+
+# The DN bands the conduit line weight steps on - the sizes G203 itself tabulates, grouped
+# so a reviewer can tell a lateral from a trunk at a glance. Weight, not colour: colour is
+# the subnetwork on the STRUCTURE theme.
+DN_BANDS: List[Tuple[int, str, float]] = [
+    (250, "DN200-250", 1.2),
+    (400, "DN315-400", 2.0),
+    (700, "DN450-700", 3.0),
+    (1200, "DN800-1200", 4.2),
+    (10 ** 6, "DN1400 and above", 5.6),
+]
+
+
+def _dn_band(dn: float) -> Tuple[str, float]:
+    for hi, lab, w in DN_BANDS:
+        if float(dn) <= hi:
+            return lab, w
+    return DN_BANDS[-1][1], DN_BANDS[-1][2]
+
+
+@dataclass
+class ThemeLayer:
+    """One drawable layer of one theme: a frame, a class column, and the class table."""
+    key: str                                    # file-safe id; also the DXF layer suffix
+    title: str                                  # what the folder / QGIS layer is called
+    role: str                                   # the published layer it came from
+    geom: str                                   # line | point | polygon
+    field: str                                  # the class column
+    classes: List[Tuple[Any, str, Tuple[int, int, int], float]]
+    gdf: gpd.GeoDataFrame
+    popup: Sequence[Tuple[str, str, str]] = ()
+    label_field: Optional[str] = None
+    note: str = ""
+
+    @property
+    def n(self) -> int:
+        return int(len(self.gdf))
+
+    def folder_name(self) -> str:
+        return f"{self.title} ({self.n:,})"
+
+
+def _depth_classes(geom: str) -> List[Tuple[Any, str, Tuple[int, int, int], float]]:
+    """The ONE class table of the DEPTH theme. Index i means 'between edge i-1 and i'."""
+    nb = len(DEPTH_BREAKS) + 1
+    w0, w1 = (1.1, 5.0) if geom == "line" else (0.6, 2.2)
+    out = []
+    for i in range(nb):
+        lo = DEPTH_BREAKS[i - 1] if i > 0 else None
+        hi = DEPTH_BREAKS[i] if i < len(DEPTH_BREAKS) else None
+        # A BAND IS MARKED (o) IF EITHER OF ITS OWN EDGES HAS NO SOURCE - not if both do.
+        # `present` picks up whichever edge happens to carry a citation, which lets a band
+        # bounded by one sourced and one invented edge read as fully sourced. Here 9.00 m
+        # has no source, so BOTH bands that touch it say so.
+        edge_refs = ([DEPTH_BREAK_REFS[i - 1]] if i > 0 else []) + \
+                    ([DEPTH_BREAK_REFS[i]] if i < len(DEPTH_BREAKS) else [])
+        cited = [x for x in edge_refs if x]
+        band = ("under %.2f m" % hi if lo is None else
+                ("%.2f m and deeper" % lo if hi is None else "%.2f - %.2f m" % (lo, hi)))
+        lab = (band
+               + ("   [" + " | ".join(cited) + "]" if cited else "")
+               + ("   (o)" if any(x == "" for x in edge_refs) else ""))
+        t = i / max(1, nb - 1)
+        out.append((i, lab, PR.ramp_rgb("magma", t), round(w0 + (w1 - w0) * t, 2)))
+    return out
+
+
+def _depth_index(v) -> np.ndarray:
+    """Which fixed band each value falls in. NaN -> the shallowest band, never dropped."""
+    x = pd.to_numeric(v, errors="coerce").to_numpy(dtype=float)
+    idx = np.digitize(x, np.array(DEPTH_BREAKS, dtype=float), right=False)
+    return np.where(np.isnan(x), 0, idx).astype(int)
+
+
+_REACH_POP = (("NAME", "Conduit", "{}"), ("US_NAME", "From manhole", "{}"),
+              ("DS_NAME", "To manhole", "{}"), ("TIER", "Tier", "{}"),
+              ("DN", "Size", "DN{:.0f}"), ("LEN_M", "Length", "{:.1f} m"),
+              ("SLOPE_LAID", "Laid gradient", "{:.2f} %"),
+              ("QPK_LS", "Peak flow", "{:.1f} L/s"),
+              ("V_PK_MS", "Velocity at peak", "{:.2f} m/s"),
+              ("DEP_M", "Depth to invert, deeper end", "{:.2f} m"))
+_NODE_POP = (("NAME", "Manhole", "{}"), ("NODE_KIND", "Kind", "{}"),
+             ("GRD_M", "Ground level", "{:.2f} m aOD"),
+             ("INV_M", "Invert level", "{:.2f} m aOD"),
+             ("DEPTH_M", "Depth", "{:.2f} m"), ("COVER_M", "Cover", "{:.2f} m"),
+             ("DROP_M", "Drop", "{:.2f} m"), ("DROP_TYPE", "Drop structure", "{}"),
+             ("DROP_WHY", "Why the drop exists", "{}"))
+_ST_POP = (("NAME", "Pumping station", "{}"), ("ST_TYPE", "Type", "{}"),
+           ("GRD_M", "Ground level", "{:.2f} m aOD"),
+           ("INV_M", "Arrival invert", "{:.2f} m aOD"),
+           ("LIFT_M", "Static lift", "{:.2f} m"),
+           ("Q_DUTY_LS", "Duty flow", "{:.1f} L/s"),
+           ("WELL_M3", "Wet well, live volume", "{:.2f} m3"),
+           ("CATCH_KM", "Network captured", "{:.2f} km"))
+_RM_POP = (("NAME", "Force main", "{}"), ("STATION", "From station", "{}"),
+           ("DS_NODE", "To", "{}"), ("DS_TYPE", "Lands on", "{}"),
+           ("DN", "Size", "DN{:.0f}"), ("LEN_M", "Length", "{:.1f} m"),
+           ("Q_DUTY_LS", "Duty flow", "{:.1f} L/s"),
+           ("V_DUTY_MS", "Velocity at duty", "{:.2f} m/s"),
+           ("TOT_HD_M", "Total head", "{:.2f} m"))
+_SN_POP = (("NAME", "Subnetwork", "{}"), ("TOWN", "Town", "{}"),
+           ("N_PLOT", "Plots served", "{:.0f}"), ("LEN_KM", "Sewer", "{:.2f} km"),
+           ("N_CHAMBER", "Chambers", "{:.0f}"), ("Q_ADF_M3D", "Load", "{:.1f} m3/d"),
+           ("OUT_NAME", "Outfall", "{}"), ("GAP_M", "Distance to the main pipe", "{:.0f} m"),
+           ("OFF_M", "Outlet off its own low point", "{:.0f} m"),
+           ("FLAG", "Flag", "{}"), ("WHY", "Why", "{}"))
+
+
+def theme_structure(layers: Dict[str, gpd.GeoDataFrame]) -> List[ThemeLayer]:
+    """Each subnetwork its own colour, conduit weight rising with DN, flow direction, and
+    pumps / force mains / drop chambers / main-pipe connections separately symbolised."""
+    r, nd = layers["reaches"], layers["nodes"]
+    st, rm, sn = layers["stations"], layers["rising_mains"], layers["subnetworks"]
+    served = sn[sn.SERVED == 1]
+
+    # ONE COLOUR PER SUBNETWORK, from present's own golden-ratio palette AND IN PRESENT'S
+    # OWN ORDER - descending total conduit length. That ordering is not cosmetic: it is
+    # what `present.classify()` uses for a categorical view with no declared palette, so
+    # taking the same order is what makes the STRUCTURE theme and the per-question `subnet`
+    # map agree about which subnetwork is which colour. Two maps of the same network in
+    # different colours is the picture-level form of publishing one quantity twice.
+    order = (r.assign(_k=r.SUB_NAME.astype(str))
+             .groupby("_k")["LEN_M"].sum().sort_values(ascending=False))
+    subs = [s for s in order.index.tolist() if s]
+    subs += [s for s in served.NAME.astype(str).tolist() if s and s not in subs]
+    colour = {s: PR.golden_rgb(i) for i, s in enumerate(subs)}
+
+    band = [_dn_band(d) for d in pd.to_numeric(r.DN, errors="coerce").fillna(200)]
+    r = r.copy()
+    r["STR_CLS"] = [f"{s} | {b}" for s, (b, _w) in zip(r.SUB_NAME.astype(str), band)]
+    rclasses = []
+    for key in sorted(set(r.STR_CLS)):
+        s, b = key.rsplit(" | ", 1)
+        w = next((w for _hi, lab, w in DN_BANDS if lab == b), 1.2)
+        rclasses.append((key, f"{s}   {b}", colour.get(s, (150, 150, 150)), w))
+
+    sn2 = served.copy()
+    snclasses = [(s, s, colour.get(s, (150, 150, 150)), 1.0) for s in sorted(set(sn2.NAME))]
+
+    node_classes = [
+        ("subnetwork joins the MAIN PIPE here",
+         "WHERE A SUBNETWORK MEETS THE MAIN PIPE", (0, 150, 255), 1.9),
+        ("__vortex__", "VORTEX drop shaft (drop over "
+         f"{C.BACKDROP_MAX:g} m, G203-p30)", (165, 0, 38), 1.5),
+        ("__backdrop__", f"backdrop (drop over {C.DROP_TRIGGER:g} m, G203-p30)",
+         (253, 174, 97), 1.0),
+        ("__head__", "head of a run", (120, 198, 121), 0.5),
+        ("__chamber__", "chamber", (120, 120, 120), 0.28),
+    ]
+    nd2 = nd.copy()
+    k = nd2.NODE_KIND.astype(str).to_numpy()
+    d = nd2.DROP_TYPE.astype(str).to_numpy()
+    nd2["STR_KEY"] = np.where(nd2.JOIN_MAIN.to_numpy() == 1,
+                              "subnetwork joins the MAIN PIPE here",
+                              np.where(d == "vortex", "__vortex__",
+                                       np.where(d == "backdrop", "__backdrop__",
+                                                np.where(k == "head", "__head__",
+                                                         "__chamber__"))))
+
+    out = [
+        ThemeLayer("conduits", "Gravity conduits, coloured by subnetwork and weighted by size",
+                   "reaches", "line", "STR_CLS", rclasses, r, _REACH_POP, "NAME",
+                   note="colour = the subnetwork; line weight = the DN band. Two "
+                        "independent facts on one line, which is why the class is the "
+                        "PAIR - a data-defined width would not survive into a .qml."),
+        ThemeLayer("manholes", "Manholes", "nodes", "point", "STR_KEY", node_classes, nd2,
+                   _NODE_POP, "NAME"),
+        # A CATEGORISED STYLE MUST NAME A COLUMN THE LAYER HAS. This used to classify on the
+        # literal "__single__", which is not a column of `stations`: the KMZ was fine (it
+        # falls back to a synthetic series) but `theme_qml()` wrote
+        # `<renderer-v2 attr="__single__">`, and QGIS silently matches nothing against an
+        # attribute that does not exist - an EMPTY layer, which looks exactly like a layer
+        # with no features. theme_qml()'s own comment says this about the column TYPE; it is
+        # more true of the column NAME. So the class column is written onto the frame.
+        ThemeLayer("pumps", "Pumping stations", "stations", "point", "STR_KEY",
+                   [("__single__", "Pumping station", (200, 30, 140), 2.0)],
+                   st.assign(STR_KEY="__single__"), _ST_POP, "NAME"),
+        ThemeLayer("forcemains", "Force mains", "rising_mains", "line", "DS_TYPE",
+                   [("manhole", "Force main - lands on a MANHOLE where gravity resumes",
+                     (230, 120, 20), 3.2),
+                    ("stp", "Force main - lifts ALL THE WAY TO THE WORKS", (140, 40, 0), 4.4)],
+                   rm, _RM_POP, "NAME"),
+        ThemeLayer("subnetworks", "Subnetwork service areas", "subnetworks", "polygon",
+                   "NAME", snclasses, sn2, _SN_POP, "NAME"),
+    ]
+    return out
+
+
+def theme_depth(layers: Dict[str, gpd.GeoDataFrame]) -> List[ThemeLayer]:
+    """The MAGMA ramp on EVERY element, on the FIXED published breaks in DEPTH_BREAKS."""
+    out = []
+    for key, title, role, geom, popup in (
+            ("conduits", "Gravity conduits by depth", "reaches", "line", _REACH_POP),
+            ("manholes", "Manholes by depth", "nodes", "point", _NODE_POP),
+            ("pumps", "Pumping stations by wet-well depth", "stations", "point", _ST_POP),
+            ("forcemains", "Force mains by the depth of the well they leave",
+             "rising_mains", "line", _RM_POP),
+            ("subnetworks", "Subnetworks by their DEEPEST chamber", "subnetworks",
+             "polygon", _SN_POP)):
+        gdf = layers[role]
+        if role == "subnetworks":
+            gdf = gdf[gdf.SERVED == 1]
+        gdf = gdf.copy()
+        gdf["DEP_BAND"] = _depth_index(gdf.DEP_M)
+        out.append(ThemeLayer(key, title, role, geom, "DEP_BAND",
+                              _depth_classes(geom), gdf, popup, None,
+                              note="ONE column (DEP_M) on ONE fixed set of edges "
+                                   f"({', '.join('%.2f' % b for b in DEPTH_BREAKS)} m), "
+                                   "never auto-stretched, so two runs are comparable. What "
+                                   "DEP_M means on each layer is in the field dictionary."))
+    return out
+
+
+# The kinds of exception, in the order they are drawn, with the severity that sets the
+# symbol size. SEVERITY IS A RANK, not a measurement: 3 = the design does not work here,
+# 2 = it works but breaks a rule the client will ask about, 1 = it needs a decision.
+EXC_KINDS: List[Tuple[str, str, Tuple[int, int, int], int]] = [
+    ("plot_cannot_connect", "Plots that CANNOT connect on gravity", (165, 0, 38), 3),
+    ("subnet_not_at_main", "Subnetworks that do NOT reach the main pipe", (215, 25, 28), 3),
+    ("outfall_off_low", "Outfalls OFF their subnetwork's own low point", (244, 109, 67), 2),
+    ("drop_velocity_cap", "Drops that exist ONLY to hold the velocity cap", (253, 174, 97), 2),
+    ("past_depth_cap", "Past the depth trigger", (110, 30, 5), 3),
+    ("chamber_on_wadi", "Chambers on WADI ground", (84, 39, 143), 2),
+    ("main_to_works", "Force mains that lift ALL THE WAY TO THE WORKS", (140, 40, 0), 2),
+    ("station_rejected", "Pumping stations REMOVED - nothing drained into them",
+     (37, 37, 37), 1),
+    ("area_unserved", "Areas the network does not reach", (152, 0, 67), 3),
+]
+EXC_SIZE = {1: 1.0, 2: 1.5, 3: 2.2}       # symbol scale / line width by severity rank
+
+
+def theme_exceptions(layers: Dict[str, gpd.GeoDataFrame]) -> List[ThemeLayer]:
+    """ONLY the flagged items. Nothing that is not a problem appears on this map at all.
+
+    The count is in the folder name, so the legend itself reports the totals - a reviewer
+    reads 'Plots that CANNOT connect on gravity (5,521)' without opening a schedule."""
+    nd, r, cn = layers["nodes"], layers["reaches"], layers["connections"]
+    rm, sn = layers["rising_mains"], layers["subnetworks"]
+    rej = layers.get("stations_rejected")
+    out: List[ThemeLayer] = []
+
+    def add(key, gdf, geom, popup, note="", label="NAME"):
+        """`label` is what a reader sees floating over the feature. It is NOT always NAME:
+        a plot connection and an unserved area have no name in the concept grammar, and an
+        unlabelled placemark on an exceptions map is a red dot nobody can look up."""
+        meta = next(x for x in EXC_KINDS if x[0] == key)
+        _k, title, rgb, sev = meta
+        g2 = gdf.copy()
+        g2["EXC_KIND"] = key
+        g2["EXC_SEV"] = sev
+        lab = label if label in g2.columns else None
+        out.append(ThemeLayer(key, title, key, geom, "EXC_KIND",
+                              [(key, f"{title}   (severity {sev})", rgb, EXC_SIZE[sev])],
+                              g2, popup, lab, note))
+
+    add("plot_cannot_connect", cn[cn.CAN_CONN == 0], "line",
+        (("PLOT_ID", "Plot", "{}"), ("OUT_NODE", "Chamber", "{}"),
+         ("LEN_M", "Connection length", "{:.1f} m"),
+         ("FALL_AV_M", "Fall available", "{:.2f} m"),
+         ("CONN_NEED", "Sewer would have to be deeper by", "{:.2f} m"),
+         ("CONN_WHY", "Why", "{}")),
+        "each one says WHAT IT WOULD TAKE, in metres - rule 7, flag do not solve",
+        label="PLOT_ID")
+    add("subnet_not_at_main", sn[(sn.SERVED == 1) & (sn.JOIN_MAIN == 0)], "polygon",
+        _SN_POP,
+        "legal only if it ends at a designed station with a rising main "
+        "(10_ASBUILT_CALIBRATION rule T1) - NAMA's own 5A-1 does exactly that",
+        label="NAME")
+    add("outfall_off_low", nd[pd.to_numeric(nd.JOIN_OFF_M, errors="coerce").fillna(0) > 0],
+        "point",
+        (("NAME", "Outfall chamber", "{}"), ("JOIN_OFF_M", "Off its own low point by",
+                                             "{:.0f} m"), ("JOIN_WHY", "Why", "{}")))
+    add("drop_velocity_cap", nd[(nd.DROP_TYPE != "none") & (nd.DROP_WHY == "velocity_cap")],
+        "point", _NODE_POP,
+        "the pipe could not take the ground's fall, so the surplus is taken at the "
+        "manhole. TWO DIFFERENT BOUNDS ARRIVE UNDER THIS ONE WORD, because the contract's "
+        f"DROP_WHY vocabulary has only one for it: the {C.V_MAX:g} m/s velocity maximum "
+        f"(G203-p27 4.2.2.2, a GUIDELINE) and the "
+        f"{EXPORT_NUM['SLOPE_MAX_LAID_PCT']:g} % laying bound (a PROJECT ASSUMPTION, "
+        f"EXPORT_NUMBERS SLOPE_MAX_LAID_PCT, no guideline behind it). This run: "
+        + (", ".join(f"{k} {v:,}" for k, v in sorted(DROP_CAUSE_SPLIT.items()))
+           or "not yet counted")
+        + ". Do not read the whole folder as a guideline consequence.")
+    add("past_depth_cap", nd[nd.PAST_CAP == 1], "point",
+        (("NAME", "Chamber", "{}"), ("COVER_M", "Cover", "{:.2f} m"),
+         ("CAP_EXIT", "Exit held", "{}"),
+         ("CAP_LEN_M", "Distance to recovery / outfall", "{:.0f} m")),
+        f"the cap is {C.MAX_COVER:g} m of COVER (G203-p33); a blank CAP_EXIT is a "
+        "STATION DEMAND, not a flag")
+    add("chamber_on_wadi", nd[pd.to_numeric(nd.ON_WADI, errors="coerce").fillna(0) > 0],
+        "point", _NODE_POP,
+        "H1: no chamber ALONG a wadi. A crossing is legal under H1a; presence is not")
+    add("main_to_works", rm[rm.DS_TYPE == "stp"], "line", _RM_POP,
+        "concept rule 6: a rising main lifts to the NEAREST point where gravity resumes. "
+        "A long force main goes anaerobic, needs an air valve at every summit and a "
+        "washout at every low point, and is a single point of failure")
+    if rej is not None and len(rej):
+        add("station_rejected", rej, "point",
+            (("NODE_REF", "s7 reference", "{}"), ("UID_S7", "s7 id", "{}"),
+             ("Q_DUTY_LS", "Duty s7 gave it", "{:.1f} L/s"),
+             ("REJECT_WHY", "Why it was removed", "{}")),
+            "inheritance row 4 - removed here and published, never deleted",
+            label="NODE_REF")
+    add("area_unserved", sn[sn.SERVED == 0], "polygon",
+        (("FLAG", "Area", "{}"), ("N_PLOT", "Plots", "{:.0f}"),
+         ("N_PROP", "Properties", "{:.1f}"), ("Q_ADF_M3D", "Load", "{:.1f} m3/d"),
+         ("WHY", "Why", "{}")), label="FLAG")
+
+    return [t for t in out if t.n > 0]
+
+
+THEME_BUILDERS = {
+    "structure": theme_structure,
+    "depth": theme_depth,
+    "exceptions": theme_exceptions,
+}
+THEME_TITLES = {
+    "structure": "W12 STRUCTURE - what the network IS",
+    "depth": "W12 DEPTH - how deep everything sits, on fixed comparable bands",
+    "exceptions": "W12 EXCEPTIONS - what could NOT be solved",
+}
+
+
+def build_themes(layers: Dict[str, gpd.GeoDataFrame]) -> Dict[str, List[ThemeLayer]]:
+    out: Dict[str, List[ThemeLayer]] = {}
+    for name, fn in THEME_BUILDERS.items():
+        try:
+            out[name] = fn(layers)
+            THEME_FAILURES.pop(name, None)
+        except Exception as e:                                 # pragma: no cover
+            # RECORDED, not only printed. An empty EXCEPTIONS map reads as "we checked and it
+            # is fine" - this module's own reason for omitting an empty folder - so the
+            # failure has to reach the deliverable. check_contract() publishes a row per
+            # entry here on the `contract_check` layer.
+            THEME_FAILURES[name] = f"{type(e).__name__}: {e}"
+            _log(f"   THEME '{name}' COULD NOT BE BUILT: {type(e).__name__}: {e}")
+            out[name] = []
+    for name, tls in out.items():
+        _log(f"   theme {name:<11} {len(tls)} layers, "
+             + ", ".join(f"{t.key}={t.n:,}" for t in tls))
+    return out
+
+
+# ======================================================================================
+# 8b.  WRITING A THEME - one KMZ, and one .qml per layer
+#
+#      Written here rather than through `present.kmz()` because a theme is one FILE with a
+#      folder per layer, and `present` is one file per view. Both read the same class
+#      tables, so nothing can drift; what this adds is the folder structure, the count in
+#      the folder name, and the size control that lets a 57,000-chamber network open.
+# ======================================================================================
+
+_WGS = 4326
+
+
+def _to_wgs(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    return gdf.to_crs(_WGS) if gdf.crs is not None else gdf
+
+
+def _coords(geom) -> List[str]:
+    """Every ring or line of a geometry, as KML coordinate strings."""
+    if geom is None or geom.is_empty:
+        return []
+    parts = list(geom.geoms) if geom.geom_type.startswith("Multi") else [geom]
+    out = []
+    for p in parts:
+        if p.geom_type == "Polygon":
+            cs = list(p.exterior.coords)
+        elif p.geom_type in ("LineString", "LinearRing"):
+            cs = list(p.coords)
+        elif p.geom_type == "Point":
+            cs = [(p.x, p.y)]
+        else:
+            continue
+        if len(cs) >= 1:
+            out.append(" ".join(f"{c[0]:.6f},{c[1]:.6f},0" for c in cs))
+    return out
+
+
+def _kml_geom(geom, kind: str) -> str:
+    tag = {"line": "LineString", "polygon": "Polygon", "point": "Point"}[kind]
+    bits = []
+    for cs in _coords(geom):
+        if kind == "polygon":
+            bits.append("<Polygon><outerBoundaryIs><LinearRing><coordinates>"
+                        + cs + "</coordinates></LinearRing></outerBoundaryIs></Polygon>")
+        elif kind == "line":
+            bits.append("<LineString><tessellate>1</tessellate><coordinates>"
+                        + cs + "</coordinates></LineString>")
+        else:
+            bits.append("<Point><coordinates>" + cs + "</coordinates></Point>")
+    if not bits:
+        return ""
+    if len(bits) == 1:
+        return bits[0]
+    return "<MultiGeometry>" + "".join(bits) + "</MultiGeometry>"
+
+
+def _esc(v: Any) -> str:
+    return (str(v).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"))
+
+
+def _balloon(row, popup: Sequence[Tuple[str, str, str]]) -> str:
+    rows = []
+    for fld, head, spec in popup:
+        if fld not in row.index:
+            continue
+        v = row[fld]
+        if v is None or (isinstance(v, float) and not np.isfinite(v)):
+            continue
+        try:
+            txt = spec.format(v)
+        except Exception:
+            txt = str(v)
+        if str(txt).strip() in ("", "nan"):
+            continue
+        rows.append(f"<tr><td><b>{_esc(head)}</b></td><td>{_esc(txt)}</td></tr>")
+    return "<table>" + "".join(rows) + "</table>" if rows else ""
+
+
+def _style_block(sid: str, rgb, width: float, geom: str) -> str:
+    col = PR.kml_color(rgb)
+    if geom == "point":
+        return (f'<Style id="{sid}"><IconStyle><color>{col}</color>'
+                f'<scale>{width:.2f}</scale><Icon><href>'
+                f'http://maps.google.com/mapfiles/kml/shapes/donut.png</href></Icon>'
+                f'</IconStyle><LabelStyle><scale>0.7</scale></LabelStyle></Style>')
+    if geom == "polygon":
+        return (f'<Style id="{sid}"><LineStyle><color>{col}</color><width>2</width>'
+                f'</LineStyle><PolyStyle><color>{PR.kml_color(rgb, 0.28)}</color>'
+                f'</PolyStyle></Style>')
+    return (f'<Style id="{sid}"><LineStyle><color>{col}</color>'
+            f'<width>{max(1.0, width):.2f}</width></LineStyle></Style>')
+
+
+def theme_kmz(theme: str, tls: Sequence[ThemeLayer], trunk: Optional[gpd.GeoDataFrame],
+              arrows: Optional[Sequence[Sequence[Tuple[float, float]]]] = None) -> str:
+    """One KMZ per theme: a folder per layer, the count in the folder name, and the class
+    list written into the folder description so the legend travels with the file."""
+    P = ['<?xml version="1.0" encoding="UTF-8"?>',
+         '<kml xmlns="http://www.opengis.net/kml/2.2"><Document>',
+         f'<name>{_esc(THEME_TITLES[theme])}</name>',
+         f'<description><![CDATA[<p>{_esc(VERSION)}, built '
+         f'{time.strftime("%Y-%m-%d %H:%M")}. EPSG:{CT.CRS_EPSG} reprojected to WGS84.</p>'
+         f'<p><b>{_esc(C.concept_banner())}</b></p>'
+         f'<p>{_esc(C.tau_banner())}</p>'
+         f'<p>Levels: {_esc(LEVELS_TAG)}.</p>]]></description>']
+
+    n_written = 0
+    for tl in tls:
+        gdf = _to_wgs(tl.gdf)
+        if not len(gdf):
+            continue
+        cls = {str(k): (i, lab, rgb, w) for i, (k, lab, rgb, w) in enumerate(tl.classes)}
+        for i, (_k, lab, rgb, w) in enumerate(tl.classes):
+            P.append(_style_block(f"{tl.key}_{i}", rgb, w, tl.geom))
+        legend = "".join(f"<li>{_esc(lab)}</li>" for _k, lab, _c, _w in tl.classes[:60])
+        P.append(f'<Folder><name>{_esc(tl.folder_name())}</name><open>0</open>'
+                 f'<description><![CDATA[<ul>{legend}</ul>'
+                 + (f"<p><i>{_esc(tl.note)}</i></p>" if tl.note else "")
+                 + ']]></description>')
+        vals = gdf[tl.field].astype(str) if tl.field in gdf.columns else \
+            pd.Series(["__single__"] * len(gdf), index=gdf.index)
+        if len(gdf) <= KMZ_INDIVIDUAL_MAX:
+            for (_i, row), v in zip(gdf.iterrows(), vals):
+                gm = _kml_geom(row.geometry, tl.geom)
+                if not gm:
+                    continue
+                sid = cls.get(v, (0, "", (150, 150, 150), 1.0))[0]
+                nmv = row[tl.label_field] if tl.label_field and tl.label_field in row.index else ""
+                P.append(f'<Placemark><name>{_esc(nmv)}</name>'
+                         f'<description><![CDATA[{_balloon(row, tl.popup)}]]></description>'
+                         f'<styleUrl>#{tl.key}_{sid}</styleUrl>{gm}</Placemark>')
+                n_written += 1
+        else:
+            # ONE placemark per class holding every feature in it. A 57,000-placemark
+            # folder will not pan; at the zoom a layout is judged from you cannot see one
+            # chamber anyway. The popup then describes the CLASS, and the folder says so.
+            for v, sub in gdf.groupby(vals):
+                gm = [b for row in sub.geometry for b in _coords(row)]
+                if not gm:
+                    continue
+                i, lab, _rgb, _w = cls.get(str(v), (0, str(v), (150, 150, 150), 1.0))
+                tag = {"line": "LineString", "polygon": "Polygon",
+                       "point": "Point"}[tl.geom]
+                inner = "".join(
+                    (f"<{tag}><tessellate>1</tessellate><coordinates>{c}</coordinates></{tag}>"
+                     if tl.geom == "line" else
+                     (f"<Polygon><outerBoundaryIs><LinearRing><coordinates>{c}"
+                      f"</coordinates></LinearRing></outerBoundaryIs></Polygon>"
+                      if tl.geom == "polygon" else
+                      f"<Point><coordinates>{c}</coordinates></Point>")) for c in gm)
+                P.append(f'<Placemark><name>{_esc(lab)} ({len(sub):,})</name>'
+                         f'<description><![CDATA[<p>{_esc(lab)}</p><p>{len(sub):,} features. '
+                         f'Drawn as one placemark per class because this layer holds more '
+                         f'than {KMZ_INDIVIDUAL_MAX:,} features; the per-feature attributes '
+                         f'are in the GeoPackage and the shapefile.</p>]]></description>'
+                         f'<styleUrl>#{tl.key}_{i}</styleUrl>'
+                         f'<MultiGeometry>{inner}</MultiGeometry></Placemark>')
+                n_written += len(sub)
+        P.append('</Folder>')
+
+    if trunk is not None and len(trunk):
+        P.append('<Style id="trunk"><LineStyle><color>ff1111ff</color><width>6</width>'
+                 '</LineStyle></Style>')
+        t4 = _to_wgs(trunk)
+        inner = "".join(f"<LineString><tessellate>1</tessellate><coordinates>{c}"
+                        f"</coordinates></LineString>"
+                        for gm in t4.geometry for c in _coords(gm))
+        P.append(f'<Folder><name>Main pipe - CLIENT INPUT ({len(t4)})</name><open>1</open>'
+                 f'<Placemark><name>Main Pipe</name><description><![CDATA['
+                 f'<p>The client\'s own drawing. Not chambered, not levelled, not sized. '
+                 f'NOTHING in this export drains into it.</p>]]></description>'
+                 f'<styleUrl>#trunk</styleUrl><MultiGeometry>{inner}</MultiGeometry>'
+                 f'</Placemark></Folder>')
+
+    if arrows:
+        P.append('<Style id="flow"><LineStyle><color>ff303030</color><width>2</width>'
+                 '</LineStyle></Style>')
+        inner = "".join("<LineString><tessellate>1</tessellate><coordinates>"
+                        + " ".join(f"{x:.6f},{y:.6f},0" for x, y in seg)
+                        + "</coordinates></LineString>" for seg in arrows)
+        P.append(f'<Folder><name>Flow direction ({len(arrows) // 2})</name><open>1</open>'
+                 f'<Placemark><styleUrl>#flow</styleUrl>'
+                 f'<MultiGeometry>{inner}</MultiGeometry></Placemark></Folder>')
+
+    P.append('</Document></kml>')
+    path = os.path.join(DIR_KMZ, f"W12_theme_{theme}.kmz")
+    os.makedirs(DIR_KMZ, exist_ok=True)
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
+        z.writestr("doc.kml", "\n".join(P))
+    _log(f"   {os.path.basename(path):<30} {os.path.getsize(path) / 1e6:6.2f} MB  "
+         f"{len(tls)} folders, {n_written:,} features")
+    return path
+
+
+_QML_HEAD = ('<!DOCTYPE qgis PUBLIC "http://mrcc.com/qgis.dtd" "SYSTEM">\n'
+             '<qgis version="3.34" styleCategories="Symbology|Labeling">\n')
+
+
+def _qml_symbol(idx: int, geom: str, rgb, width: float) -> str:
+    r, g_, b = rgb
+    if geom == "line":
+        layer = (f'<layer class="SimpleLine" pass="0" locked="0">'
+                 f'<Option type="Map">'
+                 f'<Option name="line_color" type="QString" value="{r},{g_},{b},255"/>'
+                 f'<Option name="line_width" type="QString" value="{max(0.2, width * 0.22):.2f}"/>'
+                 f'<Option name="line_width_unit" type="QString" value="MM"/>'
+                 f'<Option name="capstyle" type="QString" value="round"/>'
+                 f'<Option name="joinstyle" type="QString" value="round"/>'
+                 f'</Option></layer>')
+        stype = "line"
+    elif geom == "polygon":
+        layer = (f'<layer class="SimpleFill" pass="0" locked="0">'
+                 f'<Option type="Map">'
+                 f'<Option name="color" type="QString" value="{r},{g_},{b},70"/>'
+                 f'<Option name="outline_color" type="QString" value="{r},{g_},{b},255"/>'
+                 f'<Option name="outline_width" type="QString" value="0.4"/>'
+                 f'<Option name="outline_width_unit" type="QString" value="MM"/>'
+                 f'<Option name="style" type="QString" value="solid"/>'
+                 f'</Option></layer>')
+        stype = "fill"
+    else:
+        layer = (f'<layer class="SimpleMarker" pass="0" locked="0">'
+                 f'<Option type="Map">'
+                 f'<Option name="color" type="QString" value="{r},{g_},{b},255"/>'
+                 f'<Option name="outline_color" type="QString" value="35,35,35,255"/>'
+                 f'<Option name="outline_width" type="QString" value="0.2"/>'
+                 f'<Option name="size" type="QString" value="{max(0.6, width * 1.1):.2f}"/>'
+                 f'<Option name="size_unit" type="QString" value="MM"/>'
+                 f'<Option name="name" type="QString" value="circle"/>'
+                 f'</Option></layer>')
+        stype = "marker"
+    return (f'<symbol name="{idx}" type="{stype}" alpha="1" force_rhr="0" frame_rate="10">'
+            f'{layer}</symbol>')
+
+
+def theme_qml(theme: str, tl: ThemeLayer) -> str:
+    """A saved QGIS style for one theme layer, written WITHOUT QGIS.
+
+    `present.qgis_plan()` asks QGIS itself to save a .qml, which is better XML - but it
+    needs QGIS running. A style file that only exists when the reviewer has already opened
+    the project is not a deliverable, so this writes a plain categorized renderer from the
+    SAME class table the KMZ drew, and QGIS overwrites it with its own the moment the
+    loader is run."""
+    cats, syms = [], []
+    for i, (key, lab, rgb, w) in enumerate(tl.classes):
+        # the declared type has to match the COLUMN, not the look of the value: a depth
+        # band is an integer column and QGIS silently matches nothing if it is told the
+        # category is a double. A style that renders nothing looks exactly like a layer
+        # with no features.
+        if isinstance(key, bool):
+            qtype = "QString"
+        elif isinstance(key, (int, np.integer)):
+            qtype = "int"
+        elif isinstance(key, (float, np.floating)):
+            qtype = "double"
+        else:
+            qtype = "QString"
+        cats.append(f'<category render="true" symbol="{i}" value="{_esc(key)}" '
+                    f'label="{_esc(lab)}" type="{qtype}"/>')
+        syms.append(_qml_symbol(i, tl.geom, rgb, w))
+    xml = (_QML_HEAD
+           + f'  <!-- W12 theme {theme} / layer {tl.key}: {_esc(tl.title)} -->\n'
+           + f'  <!-- {_esc(tl.note)} -->\n'
+           + f'  <renderer-v2 type="categorizedSymbol" attr="{_esc(tl.field)}" '
+             f'forceraster="0" symbollevels="0" enableorderby="0">\n'
+             f'    <categories>' + "".join(cats) + '</categories>\n'
+             f'    <symbols>' + "".join(syms) + '</symbols>\n'
+             f'  </renderer-v2>\n'
+           + '</qgis>\n')
+    path = os.path.join(DIR_KMZ, f"W12_{theme}_{tl.key}.qml")
+    open(path, "w", encoding="utf-8").write(xml)
+    return path
+
+
+def write_themes(layers: Dict[str, gpd.GeoDataFrame],
+                 arrows: Optional[Sequence[Sequence[Tuple[float, float]]]] = None
+                 ) -> Dict[str, List[str]]:
+    """The three themes, each as one KMZ and one saved QGIS style per layer."""
+    themes = build_themes(layers)
+    # the arrows are built in UTM (metres, because their size is a length); the KMZ is
+    # WGS84. Reprojected HERE and once, rather than inside the writer, so a caller cannot
+    # hand the writer metres and get arrows in the Gulf of Guinea.
+    arrows_wgs = None
+    if arrows:
+        gs = gpd.GeoSeries([LineString(s) for s in arrows],
+                           crs=f"EPSG:{CT.CRS_EPSG}").to_crs(_WGS)
+        arrows_wgs = [list(ls.coords) for ls in gs]
+    out: Dict[str, List[str]] = {}
+    for name, tls in themes.items():
+        if not tls:
+            _log(f"   theme '{name}' produced NO layers - not written, and said so here "
+                 f"rather than leaving an empty file that reads like a clean result")
+            continue
+        files = [theme_kmz(name, tls, layers.get("trunk"),
+                           arrows_wgs if name == "structure" else None)]
+        files += [theme_qml(name, tl) for tl in tls]
+        out[name] = files
+    return out
+
+
+def flow_arrows(reaches: gpd.GeoDataFrame, every_m: float = 600.0, size: float = 22.0
+                ) -> List[List[Tuple[float, float]]]:
+    """An open V every `every_m` along the bigger pipes, pointing the way the flow goes.
+
+    Only on the main and sub-main tiers: an arrow on every lateral is a grey smear at the
+    zoom anyone actually reads a layout at."""
+    tier = reaches.TIER.astype(str) if "TIER" in reaches.columns else pd.Series("", index=reaches.index)
+    keep = reaches[tier.str.contains("main", case=False, na=False)]
+    segs: List[List[Tuple[float, float]]] = []
+    run = 0.0
+    for gm in keep.geometry:
+        parts = list(gm.geoms) if gm.geom_type.startswith("Multi") else [gm]
+        for part in parts:
+            cs = list(part.coords)
+            for i in range(len(cs) - 1):
+                (x0, y0), (x1, y1) = cs[i][:2], cs[i + 1][:2]
+                d = math.hypot(x1 - x0, y1 - y0)
+                run += d
+                if run >= every_m and d > 1.0:
+                    run = 0.0
+                    x, y = (x0 + x1) / 2, (y0 + y1) / 2
+                    back = math.atan2(y1 - y0, x1 - x0) + math.pi
+                    a = (x + size * math.cos(back + 0.42), y + size * math.sin(back + 0.42))
+                    b = (x + size * math.cos(back - 0.42), y + size * math.sin(back - 0.42))
+                    segs += [[a, (x, y)], [(x, y), b]]
+    return segs
 
 
 
@@ -1963,11 +3686,23 @@ def tune_views() -> None:
 
     Everything here mutates a registered `View` - the library's own declaration object -
     rather than reimplementing anything it does."""
+    # THE DEPTH VIEWS AND THE DEPTH THEME MUST USE THE SAME EDGES AND THE SAME RAMP. Two
+    # depth maps in one deliverable, banded differently, is the picture-level form of the
+    # defect this project keeps paying for. `present` shipped [1.3, 3, 6, 9, 12] on its own
+    # ramp; DEPTH_BREAKS is the published set and MAGMA is the published ramp, so both
+    # views are moved onto them here rather than the theme being bent to match the view.
+    for vn in ("depth", "chambers"):
+        v = PR.VIEWS[vn]
+        v.breaks = list(DEPTH_BREAKS)
+        v.break_refs = list(DEPTH_BREAK_REFS)
+        v.ramp = "magma"
+        v.field = "DEP_M"
+
     d = PR.VIEWS["depth"]
-    d.label_expr = lambda r: f"{float(r['US_DEPTH']):.1f} m"
-    d.label_filter = lambda x: (pd.to_numeric(x["US_DEPTH"], errors="coerce")
-                                > C.MAX_COVER) if "US_DEPTH" in x else None
-    d.label_field = "US_DEPTH"
+    d.label_expr = lambda r: f"{float(r['DEP_M']):.1f} m"
+    d.label_filter = lambda x: (pd.to_numeric(x["DEP_M"], errors="coerce")
+                                > C.MAX_COVER) if "DEP_M" in x else None
+    d.label_field = "DEP_M"
     d.label_min_lod, d.label_max = 256, 5000
 
     dia = PR.VIEWS["diameter"]
@@ -1984,21 +3719,19 @@ def tune_views() -> None:
     fl.label_field = "QPK_LS"
     fl.label_min_lod, fl.label_max = 200, 3000
 
+    # SUBNET on the published layer is "S03" and "S03" IS NOT UNIQUE ACROSS TOWNS - the
+    # town letter is the other half of the name. Colouring or foldering on SUBNET alone
+    # would merge subnetwork 3 in Ibri with subnetwork 3 in Ad Dariz into one class, which
+    # would read as a network twice the size it is. SUB_NAME is the full "I-S03".
     sn = PR.VIEWS["subnet"]
-    sn.label_field = "SUBNET"
+    sn.field = "SUB_NAME"
+    sn.derive = None                # the stage publishes it; nothing needs deriving
+    sn.folder_fields = ("SUB_NAME",)
+    sn.label_field = "SUB_NAME"
     sn.label_min_lod, sn.label_max = 900, 400
     sn.notes = tuple(sn.notes) + (
-        "On this design a sub-network and a package are the SAME set, because no packaging "
-        "stage exists and the packages were derived one per component. The folder is named "
-        "by the component's outfall chamber; the package view names the same folder P###.",)
-
-    # PHASE is 0 on every row - there is no phasing stage - so folding phase over package
-    # buys one empty outer level and nothing else. Fold on the package alone.
-    pkv = PR.VIEWS["package"]
-    pkv.folder_fields = ("PACKAGE",)
-    pkv.folder_sort = "length"
-    pkv.label_field = "PACKAGE"
-    pkv.label_min_lod, pkv.label_max = 900, 400
+        "The class is the subnetwork's full NAME - town letter AND number. SUBNET alone is "
+        "S03, which two towns can both carry.",)
 
     # The DN palette in `present` is the GRAVITY series and starts at DN200. A rising main
     # is sized on pump duty (G203-p50) and this scheme's run DN80-DN300, so four of its
@@ -2039,8 +3772,35 @@ def _shp_ready(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     return out
 
 
+def assert_shp_names(layers: Dict[str, gpd.GeoDataFrame]) -> None:
+    """EVERY column this stage writes fits a DBF name, not only the declared ones.
+
+    `contract._assert_shp_safe()` checks the LayerSpecs at import. It cannot check the
+    presentation and diagnostic columns this stage adds - CAP_WHY, STR_CLS, SUB_NAME,
+    DEP_M and the rest - and those are exactly the ones nobody remembers to keep short. A
+    truncated name is a field the auditor cannot find, so this raises BEFORE anything is
+    written rather than after the shapefile is on disk."""
+    bad: List[str] = []
+    for name, gdf in layers.items():
+        gname = gdf.geometry.name if isinstance(gdf, gpd.GeoDataFrame) else "geometry"
+        for c in gdf.columns:
+            if c in (gname, "geometry"):
+                continue
+            if len(str(c)) > CT.SHP_FIELD_MAXLEN:
+                bad.append(f"{name}.{c} ({len(str(c))} chars)")
+    if bad:
+        raise CT.ContractError(
+            f"{len(bad)} published column name(s) exceed the {CT.SHP_FIELD_MAXLEN}-character "
+            "DBF limit and would be TRUNCATED in the shapefile, where no check could find "
+            "them again:\n  " + "\n  ".join(bad)
+            + "\nShorten the name at the point it is written. The engineer's short forms "
+              "are the convention - `inv` for invert level, `g` for ground - and every "
+              "abbreviation is spelled out in W12_FIELD_DICTIONARY.md.")
+
+
 def write_shapefiles(layers: Dict[str, gpd.GeoDataFrame],
                      tables: Dict[str, pd.DataFrame]) -> List[str]:
+    assert_shp_names(layers)
     written = []
     for name, gdf in layers.items():
         if len(gdf) == 0:
@@ -2066,91 +3826,399 @@ def write_shapefiles(layers: Dict[str, gpd.GeoDataFrame],
 
 
 # ======================================================================================
+# 9b.  THE FIELD DICTIONARY
+#
+#      A shapefile field name is ten characters. That is not a style choice, it is the DBF
+#      format, and it is why every field on these layers is an abbreviation. An
+#      abbreviation nobody can expand is a column nobody checks - so the abbreviations get
+#      a page of their own, next to the export, and it is generated from the contract
+#      rather than typed, so it cannot go stale.
+# ======================================================================================
+
+# The engineer's own short forms, and the ones this stage adds. Read as: wherever you see
+# the left-hand token in a field name, it means the right-hand thing.
+ABBREVIATIONS: List[Tuple[str, str]] = [
+    ("INV", "invert level, metres above Ordnance Datum"),
+    ("GRD / G", "ground level (existing surface), metres above Ordnance Datum"),
+    ("DN", "nominal bore in millimetres - the size the pipe is called"),
+    ("LEN", "length in metres, along the pipe"),
+    ("SLOPE", "gradient in PERCENT. LAID = what it is built at, MIN = the legal floor"),
+    ("Q", "flow. ADF = average dry weather, PK = peak, DUTY = a pump's duty point"),
+    ("V", "velocity, metres per second"),
+    ("DOD", "depth of flow divided by diameter - how full the pipe runs"),
+    ("PF", "peak factor, and PF_METH says which formula produced it"),
+    ("COVER", "depth of ground OVER THE CROWN of the pipe, metres"),
+    ("DEPTH / DEP", "depth from ground level DOWN TO THE INVERT, metres"),
+    ("US / DS", "upstream / downstream"),
+    ("MH", "manhole"),
+    ("TM / SM / L", "trunk main / sub main / lateral - the tier tokens inside a NAME"),
+    ("PMP / P", "a pumping station / its force main, inside a NAME"),
+    ("N_", "a count of the thing named after it"),
+    ("_M / _KM / _M2 / _M3", "the unit: metres, kilometres, square metres, cubic metres"),
+    ("_LS / _M3D", "litres per second / cubic metres per day"),
+    ("WHY", "free text: the REASON the row carries the flag beside it"),
+    ("FLAG", "a short label naming an exception; blank means no exception"),
+]
+
+
+def field_dictionary_md(layers: Dict[str, gpd.GeoDataFrame]) -> str:
+    """One page: what every abbreviation means, and every published field with its units,
+    the rule it exists for and the check that reads it."""
+    L: List[str] = []
+    A = L.append
+    A("# W12 field dictionary")
+    A("")
+    A(f"*{VERSION}, built {time.strftime('%Y-%m-%d %H:%M')}. Generated from "
+      f"`contract.LAYERS` - it cannot go stale, because the schema and this page are the "
+      f"same object.*")
+    A("")
+    A("A shapefile field name is capped at **ten characters** by the DBF format, so every "
+      "field below is an abbreviation. This page is how they are read.")
+    A("")
+    A("## The short forms")
+    A("")
+    A("| In a field name | Means |")
+    A("|---|---|")
+    for tok, meaning in ABBREVIATIONS:
+        A(f"| `{tok}` | {meaning} |")
+    A("")
+    A("## Names")
+    A("")
+    A("Every element carries a `NAME` built from one grammar - **town letter, subnetwork, "
+      "tier, element, zero-padded**:")
+    A("")
+    A("```")
+    A("I-S03            subnetwork 3, in the town whose letter is I")
+    A("I-S03-SM-M012    manhole 12 of that subnetwork, on the SUB MAIN tier")
+    A("I-S03-C012       the conduit LEAVING manhole 12 - a conduit is named for its")
+    A("                 upstream manhole, which is why manholes are numbered per")
+    A("                 SUBNETWORK and not per tier")
+    A("I-PMP02          pumping station 2 in that town. A station is a SEAM between")
+    A("                 subnetworks, so it carries no S-token and a blank SUBNET")
+    A("I-P02            the force main leaving pump 2 - same number as its pump")
+    A("```")
+    A("")
+    A("The town letter drops the Arabic article (`Al `, `Ad `, `Ash `). Where two towns "
+      "would take the same letter **both** extend to two letters, then three - the town "
+      "with more served plots is not favoured, because favouring it would make the small "
+      "town's code depend on a plot count.")
+    A("")
+    A("`NAME` is referenced by **nothing**. Identity is `NODE_UID` / `EDGE_UID` and stays "
+      "there, so a retier or a re-town renames the drawing without orphaning a single "
+      "reference.")
+    A("")
+    A("## `DEP_M` - one column, five meanings, all of them written down")
+    A("")
+    A("The DEPTH theme classifies every layer on one column so the bands are literally the "
+      "same bands. It is **not the same physical quantity on each layer**, which is why it "
+      "is stated here rather than left to the reader:")
+    A("")
+    A("| Layer | `DEP_M` is |")
+    A("|---|---|")
+    A("| conduits | the DEEPER of the two ends, ground down to invert |")
+    A("| manholes | ground down to invert at the chamber |")
+    A("| pumps | ground down to the arrival invert - the wet-well depth |")
+    A("| force mains | the depth of the wet well it LEAVES; a pressure main has no invert "
+      "of its own in this design |")
+    A("| subnetworks | the DEEPEST chamber anywhere in that subnetwork |")
+    A("")
+    A(f"Classified on FIXED edges - {', '.join('%.2f' % b for b in DEPTH_BREAKS)} m - "
+      f"never auto-stretched, so the same colour means the same depth in every export.")
+    A("")
+    A("## Every field, by layer")
+    A("")
+    dd = data_dictionary()
+    # every field name this document explains, so the sweep at the end can name what it
+    # does not. Collected as the document is built rather than re-derived afterwards.
+    _explained: set = {str(x) for x in dd.Field}
+    for lname in sorted(set(dd.Layer)):
+        sub = dd[dd.Layer == lname]
+        A(f"### `{lname}`")
+        A("")
+        A("| Field | Units | Required | Allowed values | Why it exists |")
+        A("|---|---|---|---|---|")
+        for _i, row in sub.iterrows():
+            A(f"| `{row.Field}` | {row.Units or '-'} | {row.Required} | "
+              f"{(row.Allowed or '-')[:80]} | {str(row.Why_this_field_exists)[:220]} |")
+        A("")
+    A("## Fields this stage adds beyond the contract")
+    A("")
+    A("Each is a diagnostic or a presentation column - a restatement of a published field "
+      "in words a legend can carry - never a new number.")
+    A("")
+    A("| Field | On | What it is |")
+    A("|---|---|---|")
+    for fld, where, what in (
+            ("SUB_NAME", "nodes, reaches, connections",
+             "the subnetwork's full NAME, e.g. `I-S03`. SUBNET alone is `S03`, which is "
+             "NOT unique across towns"),
+            ("SUBNET_ND", "nodes, reaches", "the component's own outfall chamber - the "
+                                            "machine key behind SUB_NAME"),
+            ("US_NAME / DS_NAME", "reaches", "the NAME of the manhole at each end"),
+            ("DEP_M", "all five layers", "see above"),
+            ("STR_CLS", "nodes", "the STRUCTURE theme class of a chamber, in words"),
+            ("JOIN_GAP_M", "nodes", "straight-line distance from this chamber to the "
+                                    "client's Main Pipe"),
+            ("CAP_LEN_M", "nodes, reaches", "distance to the recovery or the outfall that "
+                                            "justifies a past-the-cap exit"),
+            ("ST_RESET", "nodes", "1 where a pumping station reset the depth in the "
+                                  "measured with-stations arm"),
+            ("UPS_LEN_M", "nodes", "metres of sewer upstream of this chamber"),
+            ("RUN_LEN_M", "reaches", "metres of sewer upstream INCLUDING this reach"),
+            ("ANCHOR_ND / ST_SNAP_M / UID_S7", "stations",
+             "the chamber a station was re-anchored to, how far it had to move, and the "
+             "id s7 gave it. A recovered anchor is not written topology (H16)"),
+            ("EXC_KIND / EXC_SEV", "the EXCEPTIONS theme",
+             "which kind of exception, and a SEVERITY RANK 1-3 that sets the symbol size. "
+             "A rank, not a measurement"),
+            ("SERVED / FLAG / WHY", "subnetworks",
+             "1 for a subnetwork's own service area, 0 for an area the network does not "
+             "reach - and then FLAG names it and WHY says what would have to change"),
+    ):
+        A(f"| `{fld}` | {where} | {what} |")
+        _explained.add(fld)
+        for part in str(fld).replace("/", " ").split():
+            _explained.add(part.strip())
+    A("")
+
+    # ---- THE COMPLETENESS SWEEP -------------------------------------------------------
+    # The table above is HAND-WRITTEN, and the claim this file makes about itself - "it
+    # cannot go stale" - is only true of the half generated from `contract.LAYERS`. It had
+    # already gone stale: DEEP_M, GAP_M, OFF_M, LOW_ND, TOWN_D_M, OUT_NAME, N_CHAMBER,
+    # AREA_M2, REJECT_WHY, ANCHOR_X/Y, CAP_WHY and the six band columns were all published
+    # and none of them was in it. A dictionary that is silently incomplete is worse than a
+    # short one, because a reader takes its silence for "there is nothing else". So the
+    # actual published columns are swept against everything explained above and the
+    # remainder is LISTED, by layer, as an admitted gap.
+    unexplained: List[Tuple[str, List[str]]] = []
+    for lname in sorted(layers):
+        gdf = layers[lname]
+        gname = gdf.geometry.name if isinstance(gdf, gpd.GeoDataFrame) else "geometry"
+        left = sorted(c for c in gdf.columns
+                      if c not in (gname, "geometry") and str(c) not in _explained)
+        if left:
+            unexplained.append((lname, left))
+    A("### Published columns this dictionary does NOT yet explain")
+    A("")
+    if not unexplained:
+        A("None - every column on every published layer is described above.")
+    else:
+        A("Each of these is written to the GeoPackage and the shapefile and has no entry "
+          "above. They are diagnostics, not design values, but an unexplained column is "
+          "one a reviewer cannot use and an auditor cannot check. Listed rather than "
+          "quietly omitted.")
+        A("")
+        A("| Layer | Columns with no entry |")
+        A("|---|---|")
+        for lname, left in unexplained:
+            A(f"| `{lname}` | " + ", ".join(f"`{c}`" for c in left) + " |")
+    A("")
+    A("## What is switched off, and why the columns are absent")
+    A("")
+    A(f"*{C.concept_banner()}*")
+    A("")
+    A("`MOTOR_KW`, `LCC_OMR`, `HEAD_M`, `Q_LS`, `DIA_MM`, `V_MS`, `STOR_M3` and "
+      "`US_PUMP` are **banned field names** (`contract.BANNED_FIELDS`). The first two "
+      "belong to capabilities switched off at concept stage; the rest are second names "
+      "for quantities the contract already carries, and two names for one quantity is the "
+      "most expensive recurring defect in this project.")
+    A("")
+    return "\n".join(L)
+
+
+def write_field_dictionary(layers: Dict[str, gpd.GeoDataFrame]) -> str:
+    p = os.path.join(OUT, "W12_FIELD_DICTIONARY.md")
+    os.makedirs(OUT, exist_ok=True)
+    open(p, "w", encoding="utf-8").write(field_dictionary_md(layers))
+    _log(f"   {os.path.basename(p):<28} {os.path.getsize(p) / 1024:6.0f} kB")
+    return p
+
+
+# ======================================================================================
 # 10.  DXF
 #
 #      Two drawings, because they answer different needs and one of them is 20x the size:
 #        W12_network.dxf     geometry only - opens instantly, for looking at
-#        W12_annotated.dxf   the same plus every chamber and pipe label - for marking up
+#        W12_annotated.dxf   the same plus every chamber, pipe, pump and main labelled
 #
-#      Layer names carry the tier, so a CAD user can freeze the laterals and see the
-#      structure. Colours match the KMZ and the QGIS project because they come from the
-#      SAME `present.TIER_COLOURS` list.
+#      THE FIVE LAYERS, and the same colours as the KMZ and the QGIS styles, because all
+#      three read `theme_structure()`'s class table. A CAD layer filter on `W12-CONDUIT*`
+#      picks up the one logical conduit layer; the tier suffixes exist so a draughtsman can
+#      freeze the laterals and see the structure, which is the first thing anyone does.
+#
+#      Colour is written as TRUE COLOUR on the layer, not as an ACI index, so the RGB in
+#      the drawing is the RGB on the map. ACI is a 255-colour palette and rounding the
+#      subnetwork palette into it made neighbouring subnetworks share a shade.
 # ======================================================================================
 
-DXF_LAYERS = {
-    "W12-TRUNK-CLIENT": (7, "the client's own Main Pipe - an INPUT, not designed here"),
-    "W12-SUBMAIN": (1, "sub main"),
-    "W12-MAIN": (5, "main sewer"),
-    "W12-LATERAL": (4, "lateral"),
-    "W12-CHAMBER": (2, "chambers, drawn at MH_DIA"),
-    "W12-CHAMBER-DROP": (1, "chambers carrying a backdrop or a vortex shaft"),
-    "W12-STATION": (6, "pumping stations (s7)"),
-    "W12-RISING": (6, "rising mains (s7)"),
-    "W12-CONNECTION": (8, "property connections"),
-    "W12-CROSSING": (1, "registered wadi / dual-carriageway contact"),
-    "W12-CAP-BREACH": (1, "chambers past the 12 m cover cap with no exit"),
-    "W12-TEXT-MH": (3, "chamber label: ref / cover level / invert level"),
-    "W12-TEXT-PIPE": (3, "pipe label: DN, length, laid gradient"),
-}
-TIER_DXF = {"trunk main": "W12-SUBMAIN", "sub main": "W12-SUBMAIN",
-            "main": "W12-MAIN", "lateral": "W12-LATERAL", "rider": "W12-LATERAL"}
+DXF_TEXT_H = 1.1            # metres. A 1.1 m capital at 1:1000 is 1.1 mm on paper - legible
+DXF_TITLE_H = 12.0          # the drawing header, read at full-sheet zoom
+
+
+def _dxf_layers() -> List[Tuple[str, Tuple[int, int, int], str]]:
+    """(layer, rgb, what it is). ONE table, used to create the layers AND to write the key
+    into the drawing itself, so a CAD user does not need this file open beside it."""
+    tier_rgb = {t: rgb for t, _lab, rgb, _w in PR.TIER_COLOURS}
+    return [
+        ("W12-CONDUIT-TRUNK", tier_rgb["trunk main"], "gravity conduit, trunk main tier"),
+        ("W12-CONDUIT-SUBMAIN", tier_rgb["sub main"], "gravity conduit, sub main tier"),
+        ("W12-CONDUIT-MAIN", tier_rgb["main"], "gravity conduit, main sewer tier"),
+        ("W12-CONDUIT-LATERAL", tier_rgb["lateral"], "gravity conduit, lateral tier"),
+        ("W12-MANHOLE", (120, 120, 120), "manhole, drawn at its own MH_DIA"),
+        ("W12-MANHOLE-DROP", (253, 174, 97),
+         "manhole carrying a backdrop or a vortex drop shaft "
+         "(over %g m / %g m, G203-p30)" % (C.DROP_TRIGGER, C.BACKDROP_MAX)),
+        ("W12-MANHOLE-JOIN", (0, 150, 255),
+         "the chamber where a subnetwork MEETS THE MAIN PIPE"),
+        ("W12-PUMP", (200, 30, 140), "pumping station"),
+        ("W12-FORCEMAIN", (230, 120, 20),
+         "force main landing on a manhole where gravity resumes"),
+        ("W12-FORCEMAIN-STP", (140, 40, 0),
+         "force main lifting ALL THE WAY TO THE WORKS - concept rule 6 asks why"),
+        ("W12-SUBNET", (90, 90, 90), "subnetwork service area, over the plots it serves"),
+        ("W12-UNSERVED", (152, 0, 67),
+         "an area the network does NOT reach, with its plot count and its reason"),
+        ("W12-MAINPIPE", (17, 17, 17),
+         "the client's own Main Pipe - AN INPUT. Not chambered, not levelled, not sized"),
+        ("W12-CONNECTION", (150, 190, 150), "plot connection, chamber to property"),
+        ("W12-CONNECTION-FAIL", (165, 0, 38),
+         "plot connection that CANNOT work on gravity - the label says by how much"),
+        ("W12-CROSSING", (84, 39, 143), "registered wadi / dual-carriageway contact"),
+        ("W12-EXC-PASTCAP", (110, 30, 5),
+         "chamber past the %g m cover cap (G203-p33)" % C.MAX_COVER),
+        ("W12-EXC-WADI", (84, 39, 143), "chamber standing on wadi ground - H1"),
+        ("W12-FLOWDIR", (48, 48, 48), "flow direction, on the main and sub-main tiers"),
+        ("W12-TXT-CONDUIT", (60, 60, 60), "conduit label: NAME, DN, length, gradient, "
+                                          "flow, velocity, and the manhole at each end"),
+        ("W12-TXT-MANHOLE", (60, 60, 60),
+         "manhole label: NAME, ground level, invert level, depth, drop and kind"),
+        ("W12-TXT-PUMP", (60, 60, 60),
+         "pump label: NAME, ground, invert, lift, duty flow, wet-well volume"),
+        ("W12-TXT-FORCEMAIN", (60, 60, 60),
+         "force main label: NAME, DN, length, flow, velocity, and where it lands"),
+        ("W12-TXT-SUBNET", (60, 60, 60),
+         "subnetwork label: NAME, plots served, sewer length, and any flag on it"),
+        ("W12-TITLE", (0, 0, 0), "the drawing header and this layer key"),
+    ]
+
+
+TIER_DXF = {"trunk main": "W12-CONDUIT-TRUNK", "sub main": "W12-CONDUIT-SUBMAIN",
+            "main": "W12-CONDUIT-MAIN", "lateral": "W12-CONDUIT-LATERAL",
+            "rider": "W12-CONDUIT-LATERAL"}
+
+
+def _dxf_line(msp, geom, layer: str) -> None:
+    parts = list(geom.geoms) if geom.geom_type.startswith("Multi") else [geom]
+    for p in parts:
+        cs = [(float(x), float(y)) for x, y, *_ in p.coords]
+        if len(cs) >= 2:
+            msp.add_lwpolyline(cs, dxfattribs={"layer": layer})
+
+
+def _dxf_poly(msp, geom, layer: str) -> None:
+    parts = list(geom.geoms) if geom.geom_type.startswith("Multi") else [geom]
+    for p in parts:
+        if p.geom_type != "Polygon":
+            continue
+        cs = [(float(x), float(y)) for x, y, *_ in p.exterior.coords]
+        if len(cs) >= 3:
+            msp.add_lwpolyline(cs, close=True, dxfattribs={"layer": layer})
+
+
+def _dxf_text(msp, txt, x: float, y: float, layer: str,
+              h: float = DXF_TEXT_H, rot: float = 0.0) -> None:
+    if not str(txt).strip():
+        return
+    msp.add_text(str(txt), height=h, rotation=rot,
+                 dxfattribs={"layer": layer}).set_placement((float(x), float(y)))
 
 
 def write_dxf(layers: Dict[str, gpd.GeoDataFrame], annotated: bool = True) -> List[str]:
+    """The five layers, in DXF, carrying the annotation the engineer listed."""
     import ezdxf
     out = []
+    r = layers["reaches"]
+    nd = layers["nodes"]
+    st = layers["stations"]
+    rm = layers["rising_mains"]
+    sn = layers.get("subnetworks")
+    cn = layers.get("connections")
+    spec = _dxf_layers()
+
     for tag, ann in (("network", False), ("annotated", True)):
         if ann and not annotated:
             continue
         doc = ezdxf.new("R2013", setup=True)
         doc.header["$INSUNITS"] = 6                     # metres
         msp = doc.modelspace()
-        for nm, (col, desc) in DXF_LAYERS.items():
-            # ezdxf 1.4's LayerTable.add() takes (name, color, linetype, dxfattribs) and
-            # NOT `description`; the layer note goes on the drawing as a comment block
-            # instead, which is where a CAD user looks for it anyway.
-            doc.layers.add(name=nm, color=col)
+        for nm_, rgb, _desc in spec:
+            lay = doc.layers.add(name=nm_)
+            try:
+                lay.rgb = rgb                   # exact colour, not an ACI rounding
+            except Exception:                   # pragma: no cover - older ezdxf
+                pass
 
-        r = layers["reaches"]
+        # ---- 1. gravity conduits --------------------------------------------------------
         for geom, tier in zip(r.geometry.values, r.TIER.astype(str)):
-            msp.add_lwpolyline([(float(x), float(y)) for x, y, *_ in geom.coords],
-                               dxfattribs={"layer": TIER_DXF.get(tier, "W12-LATERAL")})
+            _dxf_line(msp, geom, TIER_DXF.get(tier, "W12-CONDUIT-LATERAL"))
+        # ---- the client's main pipe, so the gap to it is visible ------------------------
         for geom in layers["trunk"].geometry.values:
-            msp.add_lwpolyline([(float(x), float(y)) for x, y, *_ in geom.coords],
-                               dxfattribs={"layer": "W12-TRUNK-CLIENT"})
-        for geom in layers["connections"].geometry.values:
-            cs = [(float(x), float(y)) for x, y, *_ in geom.coords]
-            if len(cs) >= 2:
-                msp.add_lwpolyline(cs, dxfattribs={"layer": "W12-CONNECTION"})
-        for geom in layers["rising_mains"].geometry.values:
-            msp.add_lwpolyline([(float(x), float(y)) for x, y, *_ in geom.coords],
-                               dxfattribs={"layer": "W12-RISING"})
-        for geom in layers["crossings"].geometry.values:
-            msp.add_lwpolyline([(float(x), float(y)) for x, y, *_ in geom.coords],
-                               dxfattribs={"layer": "W12-CROSSING"})
+            _dxf_line(msp, geom, "W12-MAINPIPE")
+        # ---- 4. force mains -------------------------------------------------------------
+        for geom, dst in zip(rm.geometry.values, rm.DS_TYPE.astype(str)):
+            _dxf_line(msp, geom,
+                      "W12-FORCEMAIN-STP" if dst == "stp" else "W12-FORCEMAIN")
+        # ---- plot connections, split on whether they actually work ----------------------
+        if cn is not None and len(cn):
+            for geom, ok in zip(cn.geometry.values, cn.CAN_CONN.to_numpy()):
+                _dxf_line(msp, geom,
+                          "W12-CONNECTION" if int(ok) == 1 else "W12-CONNECTION-FAIL")
+        # the crossings register is optional here on purpose: it is drawn when it exists
+        # and its ABSENCE is reported by check_contract, not papered over by a KeyError
+        # that would take the whole drawing down with it.
+        for geom in (layers.get("crossings", gpd.GeoDataFrame(geometry=[])).geometry.values):
+            _dxf_line(msp, geom, "W12-CROSSING")
+        # ---- 5. subnetwork polygons, and the areas nothing reaches ----------------------
+        if sn is not None and len(sn):
+            for geom, served in zip(sn.geometry.values, sn.SERVED.to_numpy()):
+                _dxf_poly(msp, geom, "W12-SUBNET" if int(served) == 1 else "W12-UNSERVED")
 
-        nd = layers["nodes"]
-        for x, y, dia, dt, pc, ce in zip(nd.X, nd.Y, nd.MH_DIA, nd.DROP_TYPE,
-                                         nd.PAST_CAP, nd.CAP_EXIT.astype(str)):
-            lay = "W12-CHAMBER-DROP" if str(dt) != "none" else "W12-CHAMBER"
-            msp.add_circle((float(x), float(y)), float(dia) / 2.0,
-                           dxfattribs={"layer": lay})
-            if int(pc) == 1 and not ce:
+        # ---- 2. manholes ----------------------------------------------------------------
+        for x, y, dia, dt, jm, pc, wd in zip(
+                nd.X, nd.Y, nd.MH_DIA, nd.DROP_TYPE, nd.JOIN_MAIN, nd.PAST_CAP,
+                pd.to_numeric(nd.ON_WADI, errors="coerce").fillna(0)):
+            lay = ("W12-MANHOLE-JOIN" if int(jm) == 1 else
+                   "W12-MANHOLE-DROP" if str(dt) != "none" else "W12-MANHOLE")
+            msp.add_circle((float(x), float(y)), float(dia) / 2.0, dxfattribs={"layer": lay})
+            if int(pc) == 1:
                 msp.add_circle((float(x), float(y)), 3.0,
-                               dxfattribs={"layer": "W12-CAP-BREACH"})
-        for geom in layers["stations"].geometry.values:
+                               dxfattribs={"layer": "W12-EXC-PASTCAP"})
+            if float(wd) > 0:
+                msp.add_circle((float(x), float(y)), 4.5,
+                               dxfattribs={"layer": "W12-EXC-WADI"})
+        # ---- 3. pumps -------------------------------------------------------------------
+        for geom in st.geometry.values:
             msp.add_circle((float(geom.x), float(geom.y)), 6.0,
-                           dxfattribs={"layer": "W12-STATION"})
+                           dxfattribs={"layer": "W12-PUMP"})
 
         if ann:
-            for ref, x, y, grd, inv in zip(nd.NODE_REF, nd.X, nd.Y, nd.GRD_M, nd.INV_M):
-                msp.add_text(str(ref), height=1.2,
-                             dxfattribs={"layer": "W12-TEXT-MH"}
-                             ).set_placement((float(x) + 1.0, float(y) + 1.4))
-                msp.add_text(f"CL {float(grd):.2f} / IL {float(inv):.2f}", height=1.0,
-                             dxfattribs={"layer": "W12-TEXT-MH"}
-                             ).set_placement((float(x) + 1.0, float(y) - 0.2))
-            for geom, dn, L, s in zip(r.geometry.values, r.DN, r.LEN_M, r.SLOPE_LAID):
+            # ---- manhole: NAME / ground / invert / depth / drop / kind ------------------
+            for nmv, x, y, grd, inv, dep, drp, dt, kind in zip(
+                    nd.NAME, nd.X, nd.Y, nd.GRD_M, nd.INV_M, nd.DEPTH_M, nd.DROP_M,
+                    nd.DROP_TYPE, nd.NODE_KIND):
+                _dxf_text(msp, nmv, float(x) + 1.0, float(y) + 2.6, "W12-TXT-MANHOLE")
+                _dxf_text(msp, "g %.2f / inv %.2f / d %.2f" % (float(grd), float(inv),
+                                                               float(dep)),
+                          float(x) + 1.0, float(y) + 1.2, "W12-TXT-MANHOLE", 0.95)
+                tail = str(kind)
+                if str(dt) != "none":
+                    tail = "%s %.2f m / %s" % (dt, float(drp), tail)
+                _dxf_text(msp, tail, float(x) + 1.0, float(y) - 0.1,
+                          "W12-TXT-MANHOLE", 0.85)
+            # ---- conduit: NAME / DN / length / gradient / flow / velocity / both ends ---
+            for geom, nmv, dn, L, s, q, v, us, ds in zip(
+                    r.geometry.values, r.NAME, r.DN, r.LEN_M, r.SLOPE_LAID, r.QPK_LS,
+                    r.V_PK_MS, r.US_NAME, r.DS_NAME):
                 mid = geom.interpolate(0.5, normalized=True)
                 cs = np.asarray(geom.coords)
                 d = cs[-1, :2] - cs[0, :2]
@@ -2159,27 +4227,57 @@ def write_dxf(layers: Dict[str, gpd.GeoDataFrame], annotated: bool = True) -> Li
                     ang -= 180
                 if ang < -90:
                     ang += 180
-                msp.add_text(f"DN{int(dn)}  L={float(L):.1f}  S={float(s):.2f}%",
-                             height=1.0, rotation=ang,
-                             dxfattribs={"layer": "W12-TEXT-PIPE"}
-                             ).set_placement((float(mid.x), float(mid.y) + 0.6))
+                _dxf_text(msp, "%s  DN%d  L=%.1f  S=%.2f%%  Q=%.1fL/s  v=%.2fm/s"
+                          % (nmv, int(dn), float(L), float(s), float(q), float(v)),
+                          float(mid.x), float(mid.y) + 0.8, "W12-TXT-CONDUIT",
+                          DXF_TEXT_H, ang)
+                _dxf_text(msp, "%s -> %s" % (us, ds), float(mid.x), float(mid.y) - 0.6,
+                          "W12-TXT-CONDUIT", 0.85, ang)
+            # ---- pump: NAME / ground / invert / lift / duty / wet well ------------------
+            for geom, nmv, grd, inv, lift, q, well in zip(
+                    st.geometry.values, st.NAME, st.GRD_M, st.INV_M, st.LIFT_M,
+                    st.Q_DUTY_LS, st.WELL_M3):
+                _dxf_text(msp, str(nmv), float(geom.x) + 8, float(geom.y) + 6,
+                          "W12-TXT-PUMP", 2.4)
+                _dxf_text(msp, "g %.2f / inv %.2f / lift %.2f m"
+                          % (float(grd), float(inv), float(lift)),
+                          float(geom.x) + 8, float(geom.y) + 2.6, "W12-TXT-PUMP", 1.8)
+                _dxf_text(msp, "duty %.1f L/s / well %.2f m3" % (float(q), float(well)),
+                          float(geom.x) + 8, float(geom.y) - 0.4, "W12-TXT-PUMP", 1.8)
+            # ---- force main: NAME / DN / length / flow / velocity / where it lands ------
+            for geom, nmv, dn, L, q, v, ds, dst in zip(
+                    rm.geometry.values, rm.NAME, rm.DN, rm.LEN_M, rm.Q_DUTY_LS,
+                    rm.V_DUTY_MS, rm.DS_NODE, rm.DS_TYPE):
+                mid = geom.interpolate(0.5, normalized=True)
+                _dxf_text(msp, "%s  DN%d  L=%.0fm  Q=%.1fL/s  v=%.2fm/s  -> %s (%s)"
+                          % (nmv, int(dn), float(L), float(q), float(v), ds, dst),
+                          float(mid.x), float(mid.y) + 3.0, "W12-TXT-FORCEMAIN", 2.4)
+            # ---- subnetwork: NAME / plots / km / the flag on it -------------------------
+            if sn is not None and len(sn):
+                for geom, nmv, npl, km, flag, why in zip(
+                        sn.geometry.values, sn.NAME, sn.N_PLOT, sn.LEN_KM, sn.FLAG, sn.WHY):
+                    c = geom.centroid
+                    head = str(nmv) if str(nmv).strip() else str(flag)
+                    _dxf_text(msp, "%s   %d plots   %.2f km" % (head, int(npl), float(km)),
+                              float(c.x), float(c.y), "W12-TXT-SUBNET", 22.0)
+                    if str(flag).strip():
+                        _dxf_text(msp, str(why)[:150], float(c.x), float(c.y) - 26.0,
+                                  "W12-TXT-SUBNET", 16.0)
 
-        # the layer key, written into the drawing so a CAD user does not need this file
-        y0 = float(layers["nodes"].Y.max()) + 400.0
-        x0 = float(layers["nodes"].X.min())
-        msp.add_text(f"W12 sewer network - {tag}.  {VERSION}, "
-                     f"{time.strftime('%Y-%m-%d')}.  EPSG:{CT.CRS_EPSG}.  "
-                     f"LEVELS BY THE s8 STAGE-6 STAND-IN.  {C.tau_banner()[:120]}",
-                     height=12.0, dxfattribs={"layer": "W12-TEXT-MH"}
-                     ).set_placement((x0, y0 + 30.0))
-        for i, (nm, (_c, desc)) in enumerate(DXF_LAYERS.items()):
-            msp.add_text(f"{nm} = {desc}", height=8.0,
-                         dxfattribs={"layer": "W12-TEXT-MH"}
-                         ).set_placement((x0, y0 - i * 12.0))
-        p = os.path.join(DIR_DXF, f"W12_{tag}.dxf")
+        # ---- the header and the layer key, written INTO the drawing --------------------
+        y0 = float(nd.Y.max()) + 400.0
+        x0 = float(nd.X.min())
+        _dxf_text(msp, "W12 sewer network - %s.  %s, %s.  EPSG:%d.  LEVELS: %s.  %s"
+                  % (tag, VERSION, time.strftime("%Y-%m-%d"), CT.CRS_EPSG, LEVELS_TAG,
+                     C.tau_banner()[:110]),
+                  x0, y0 + 44.0, "W12-TITLE", DXF_TITLE_H)
+        _dxf_text(msp, C.concept_banner()[:240], x0, y0 + 26.0, "W12-TITLE", 9.0)
+        for i, (nm_, _rgb, desc) in enumerate(spec):
+            _dxf_text(msp, "%s = %s" % (nm_, desc), x0, y0 - i * 12.0, "W12-TITLE", 8.0)
+        p = os.path.join(DIR_DXF, "W12_%s.dxf" % tag)
         doc.saveas(p)
         out.append(p)
-        _log(f"   {os.path.basename(p):<24} {os.path.getsize(p) / 1e6:8.1f} MB")
+        _log("   %-24s %8.1f MB" % (os.path.basename(p), os.path.getsize(p) / 1e6))
     return out
 
 
@@ -2255,11 +4353,13 @@ def quantities(layers: Dict[str, gpd.GeoDataFrame]) -> Dict[str, pd.DataFrame]:
     rms["Length_m"] = rms.Length_m.round(1)
 
     st = layers["stations"]
+    # NO MOTOR COLUMN. Motor selection is switched off at concept stage
+    # (criteria.CONCEPT_OFF["motor_selection"]) and MOTOR_KW is a banned field name.
     sts = (st.groupby("ST_TYPE", as_index=False)
              .agg(Stations=("LAND_M2", "size"), Land_m2=("LAND_M2", "sum"),
-                  Duty_LS=("Q_DUTY_LS", "sum"), Motor_kW=("MOTOR_KW", "sum"),
-                  Wet_well_m3=("WELL_M3", "sum")))
-    for c in ("Land_m2", "Duty_LS", "Motor_kW", "Wet_well_m3"):
+                  Duty_LS=("Q_DUTY_LS", "sum"), Wet_well_m3=("WELL_M3", "sum"),
+                  Network_captured_km=("CATCH_KM", "sum")))
+    for c in ("Land_m2", "Duty_LS", "Wet_well_m3", "Network_captured_km"):
         sts[c] = sts[c].round(2)
 
     cn = layers["connections"]
@@ -2267,7 +4367,7 @@ def quantities(layers: Dict[str, gpd.GeoDataFrame]) -> Dict[str, pd.DataFrame]:
         Item="Property connections (rider, HCC to chamber)",
         Number=len(cn), Length_m=round(float(cn.LEN_M.sum()), 1),
         Note=f"DN{C.DN_TERTIARY} minimum, G203-p22 Tab 6; "
-             f"{int((cn.CAN_DRAIN == 0).sum()):,} cannot drain on gravity")])
+             f"{int((cn.CAN_CONN == 0).sum()):,} cannot connect on gravity")])
 
     headline = pd.DataFrame([
         dict(Item="Gravity sewer", Quantity=round(float(L.sum()) / 1000.0, 3), Unit="km",
@@ -2296,6 +4396,18 @@ def quantities(layers: Dict[str, gpd.GeoDataFrame]) -> Dict[str, pd.DataFrame]:
              Source="s7_pumps"),
         dict(Item="Registered wadi / carriageway crossings", Quantity=len(layers["crossings"]),
              Unit="no.", Source="H1a register, this export"),
+        dict(Item="Subnetworks", Quantity=int((layers["subnetworks"].SERVED == 1).sum()),
+             Unit="no.", Source="one per connected component, named per concept rule 8"),
+        dict(Item="Subnetworks that do NOT reach the main pipe",
+             Quantity=int(((layers["subnetworks"].SERVED == 1)
+                           & (layers["subnetworks"].JOIN_MAIN == 0)).sum()),
+             Unit="no.", Source=f"concept rule 2, at the declared {JOIN_TOL_M:g} m"),
+        dict(Item="Plots that CANNOT connect on gravity",
+             Quantity=int((cn.CAN_CONN == 0).sum()), Unit="no.",
+             Source="concept rule 5; each names what it would take, in metres"),
+        dict(Item="Pumping stations REMOVED - nothing drained into them",
+             Quantity=len(layers.get("stations_rejected", [])), Unit="no.",
+             Source="inheritance row 4 - a later pass must be able to take away"),
     ])
     return {"Headline": headline, "Pipes": pipes, "Chambers": ch, "Drop structures": drops,
             "Rising mains": rms, "Stations": sts, "Connections": conn}
@@ -2357,13 +4469,36 @@ def write_schedules(a: Assembly, layers: Dict[str, gpd.GeoDataFrame],
         _log(f"   {os.path.basename(path):<38} "
              f"{sum(len(d) for d in sheets.values()):>7,} rows")
 
+    # NO PACKAGE SCHEDULE. Phasing and packaging are switched off at concept stage
+    # (criteria.CONCEPT_OFF["phasing_packaging"]) - "a package boundary drawn on a layout
+    # that is still moving is a boundary that will move with it". The PACKAGE column stays
+    # on the layers as a GROUPING key, which is what the profiles and the outfall check use
+    # it for, and nothing is printed that reads like a procurement strategy.
     for key, layer_name in (("chambers", "nodes"), ("pipes", "reaches"),
                             ("stations", "stations"), ("rising_mains", "rising_mains"),
-                            ("connections", "connections"), ("crossings", "crossings"),
-                            ("packages", "packages")):
+                            ("connections", "connections"), ("crossings", "crossings")):
         df, status = schedule(layers[layer_name], key)
         _book(os.path.join(DIR_SCH, f"W12_schedule_{key}.xlsx"),
               {key.replace('_', ' ').title(): df}, note=status)
+
+    # the fifth layer gets a schedule of its own - it is where the concept-rule-2 numbers
+    # live, and it is the only place a reviewer can see every subnetwork on one page.
+    sn = layers["subnetworks"]
+    _book(os.path.join(DIR_SCH, "W12_schedule_subnetworks.xlsx"),
+          {"Subnetworks": pd.DataFrame({
+              "Name": sn.NAME, "Town": sn.TOWN, "Served": sn.SERVED,
+              "Plots": sn.N_PLOT, "Properties": sn.N_PROP,
+              "Qadf (m3/d)": sn.Q_ADF_M3D, "Chambers": sn.N_CHAMBER,
+              "Sewer (km)": sn.LEN_KM, "Deepest chamber (m)": sn.DEEP_M,
+              "Outfall": sn.OUT_NAME,
+              "Joins the main pipe": sn.JOIN_MAIN,
+              "Distance to the main pipe (m)": sn.GAP_M,
+              "Outlet off its own low point (m)": sn.OFF_M,
+              "Flag": sn.FLAG, "Why": sn.WHY})},
+          note="CONCEPT RULE 2: a subnetwork joins the main pipe at the LOWEST POINT WHERE "
+               f"IT MEETS it. 'Joins' means within {JOIN_TOL_M:g} m (an s8 assumption, "
+               "declared). Rows with SERVED = 0 are areas the network does not reach at "
+               "all.")
 
     _book(os.path.join(DIR_SCH, "W12_quantities.xlsx"), quantities(layers),
           note="INDICATIVE take-off. Not a bill of quantities, not priced. Trench width "
@@ -2378,20 +4513,29 @@ def write_schedules(a: Assembly, layers: Dict[str, gpd.GeoDataFrame],
         "Nearest chamber (m)": ns.D_NEAR_M.round(1),
         "Tertiary needed (m)": ns.L_TERT_M.round(1)})
     cn = layers["connections"]
-    nodrain = cn[cn.CAN_DRAIN == 0]
+    nodrain = cn[cn.CAN_CONN == 0]
     nd_tab = pd.DataFrame({
         "Plot": nodrain.PLOT_ID.astype(str), "Connection": nodrain.CONN_ID.astype(str),
         "Chamber": nodrain.OUT_NODE.astype(str),
         "Qadf (m3/d)": nodrain.Q_ADF_M3D.round(3),
         "Fall available (m)": nodrain.FALL_AV_M.round(3),
         "Length (m)": nodrain.LEN_M.round(1),
-        "Status": "CONNECTED to a chamber, but the sewer invert sits above the property "
-                  "outlet at the G203-p19 minimum HCC depth"})
+        "Sewer would have to be deeper by (m)": nodrain.CONN_NEED.round(2),
+        "Why": nodrain.CONN_WHY.astype(str)})
+    sn0 = layers["subnetworks"]
+    sn0 = sn0[sn0.SERVED == 0]
+    area_tab = pd.DataFrame({
+        "Area": sn0.FLAG.astype(str), "Plots": sn0.N_PLOT, "Properties": sn0.N_PROP,
+        "Qadf (m3/d)": sn0.Q_ADF_M3D, "Area (m2)": sn0.AREA_M2,
+        "Why": sn0.WHY.astype(str)})
     _book(os.path.join(DIR_SCH, "W12_schedule_not_served.xlsx"),
-          {"Not connected": ns_tab, "Connected but cannot drain": nd_tab},
+          {"Plot by plot": ns_tab,
+           "Connected but cannot connect": nd_tab,
+           "Areas not reached": area_tab},
           note="scope-p4 item 3 requires every plot SERVICED. 'Serviced' is not 'connected "
                "to one network' (philosophy sec 8a) - these are the plots this network "
-               "does not serve, each named.")
+               "does not serve, each named, and each says WHAT IT WOULD TAKE (concept "
+               "rule 7: flag, do not solve, and a flag with no size is not a flag).")
 
     _book(os.path.join(DIR_SCH, "W12_data_dictionary.xlsx"),
           {"Fields": data_dictionary(),
@@ -2523,211 +4667,32 @@ def write_profiles(g: Graph, layers: Dict[str, gpd.GeoDataFrame], node_pkg: np.n
 
 
 # ======================================================================================
-# 13.  THE SEWERGEMS PACKAGE
+# 13.  THE SEWERGEMS PACKAGE - SWITCHED OFF AT CONCEPT STAGE
 #
-#      THE PEAK FACTOR IS OURS AND MUST NOT BE APPLIED TWICE.  (engineer, explicitly)
+#      It is not deleted and it is not commented out. It is REFUSED BY NAME, through the
+#      one register that says what a concept stage omits:
 #
-#      Merrimack (G201-p71 7.4.2) is Qpdf = 2.65 Qadf^0.879 with both sides in Ml/d, so
-#      the peak factor FALLS as properties accumulate: 3.62 at a head, 1.63 at the biggest
-#      outfall on this network. It is therefore NOT additive - a model that loads our
-#      peaked flows at every manhole and then applies its own extreme-flow multiplier
-#      peaks a peak, and one that simply SUMS them peaks the tips all the way down.
+#          criteria.CONCEPT_OFF["sewergems_export"]
 #
-#      So the package loads AVERAGE DRY WEATHER FLOW at every manhole, which IS additive,
-#      and carries our peak beside it as a REFERENCE column the model never reads. The
-#      modeller sets the peaking in SewerGEMS' own Extreme Flow Setup, or reproduces ours
-#      from the reference column. Both halves are spelled out in the README the package
-#      carries, because this is the single easiest way to get a wrong answer out of a
-#      right model.
+#      The reason is in the register too, and it is an engineering reason rather than a
+#      scheduling one: the model referees HYDRAULICS and can never choose a layout
+#      (inheritance row 26), so running it against a layout still under review referees
+#      the wrong thing. It comes back when the layout is fixed and the hydraulics are
+#      final - and `contract.SEWERGEMS`, which maps every canonical field to its Bentley
+#      name, is still there waiting for it.
+#
+#      A guard rather than a deletion, because a capability that is merely absent is
+#      indistinguishable from one that was forgotten. `assert_enabled()` also refuses an
+#      UNKNOWN capability name, so this guard cannot be silently misspelled into a no-op.
 # ======================================================================================
 
-GEMS_README = """W12 SewerGEMS / SWMM package
-=================================================================================
-Built {built} by {version} (design iteration W12, Ibri sewer, 2621).
-
-WHAT IS IN HERE
-    MANHOLES.shp / .csv    every chamber: label, ground and invert ELEVATION, diameter
-    CONDUITS.shp / .csv    every gravity reach: label, start/stop node, DN, inverts,
-                           length, material, Manning n
-    OUTFALL.shp / .csv     the {n_outfall} subnetwork outlets
-    LOADS.csv              average dry weather flow per manhole, and OUR peak beside it
-    RISING_MAINS.shp       the {n_rm} force mains, for reference - NOT gravity elements
-    fieldmap.csv           canonical field -> Bentley field, straight out of
-                           contract.SEWERGEMS so the model cannot drift from the layer
-    W12.inp               an EPA SWMM 5 input file of the same network, so the package
-                           can be run by something other than SewerGEMS
-
-*** THE PEAK FACTOR IS OURS. DO NOT APPLY IT TWICE. ***
-    LOADS.csv column  Q_AVG_LS   is AVERAGE dry weather flow. Load THIS.
-    LOADS.csv column  Q_PK_LS    is OUR peak, for checking only. Do NOT load it.
-    Merrimack (PAM-GUD-201 p71 sec 7.4.2), Qpdf = 2.65 x Qadf^0.879 with BOTH sides in
-    Ml/d, gives a peak factor that FALLS as the catchment grows - the steepest peak factor
-    on this network is {pf_hi:.2f} and the one on the largest reach is {pf_lo:.2f}. Peak
-    flows are therefore NOT additive: summing them down the tree carries the tip peak all
-    the way to the outfall. ({pf_held:,} reaches carry PF = 1.0 and PF_METH = "held",
-    which is not a peak factor at all - it is the honest token for a catchment under the
-    {pf_hold:.0f} properties below which G201 prescribes NO formula.)
-    Infiltration ({inf} L/d/km, PAM-GUD-201 p72 sec 7.4.3) is UNPEAKED and is already
-    excluded from Q_AVG_LS - add it as a separate steady inflow if you want it.
-
-*** LABELS ARE THE UID, NEVER THE REF. ***
-    START_ND / STOP_ND resolve against MANHOLES.LABEL, which carries NODE_UID. NODE_REF
-    (the NAMA-style 5A-2-SM.2-MH391 label) is regenerated on every re-tier and is in
-    NODE_REF for drawings only. Label the manholes with NODE_REF and every conduit
-    imports UNCONNECTED - the model runs, reports nothing, and is wrong.
-
-*** WHAT THIS MODEL CANNOT REFEREE ***
-  * The levels came from a STAGE-6 STAND-IN inside s8_export.py. W12 has no levels
-    stage. Every invert here is that stand-in's.
-  * {past_cap:,} chambers sit past the {maxcover:g} m cover cap and {no_exit:,} of them
-    have no exit under philosophy sec 5. A solver will not object - it deepens forever.
-    The pumping decision is ours, before the solver runs.
-  * The client's trunk main is an INPUT with no chambers. NOTHING here drains into it;
-    the {n_outfall} outfalls are subnetwork outlets, each an independent discharge.
-  * Manning n = {n_manning} is a MODEL parameter (the n behind G203-p27's own tractive
-    derivation), not a design value. The DESIGN is Colebrook-White at ks = {ks} m,
-    which G203-p24 sec 4.2.1 mandates. Expect small differences and do not "fix" the
-    design to match the model.
-  * Tractive stress tau = {tau} Pa is an ASSUMPTION (GAP-9). {tract_km:,.0f} km of this
-    network - {tract_pct:.0f} % - is self-cleansed by the tractive route and would need
-    steeper gradients at 2.0 Pa.
-=================================================================================
-"""
-
-
-def write_sewergems(layers: Dict[str, gpd.GeoDataFrame], lv: Levels, f: Flows,
-                    g: Graph) -> List[str]:
-    out = []
-    nd = layers["nodes"]
-    r = layers["reaches"]
-
-    def _map(gdf, table):
-        pairs = CT.SEWERGEMS[table]
-        keep = [s for s, _d in pairs if s in gdf.columns]
-        miss = [s for s, _d in pairs if s not in gdf.columns]
-        if miss:
-            raise CT.ContractError(f"SewerGEMS {table} needs {miss}")
-        sub = gdf[keep + ["geometry"]].rename(columns=dict(pairs))
-        return sub
-
-    mh = _map(nd[nd.IS_OUTFALL == 0], "MANHOLES")
-    of = _map(nd[nd.IS_OUTFALL == 1], "OUTFALL")
-    cd = _map(r, "CONDUITS")
-    cd["MANNING_N"] = C.MANNING_N_EXPORT
-    for name, gdf in (("MANHOLES", mh), ("OUTFALL", of), ("CONDUITS", cd)):
-        p = os.path.join(DIR_GEM, f"{name}.shp")
-        _shp_ready(gdf).to_file(p, driver="ESRI Shapefile", encoding="utf-8")
-        pd.DataFrame(gdf.drop(columns="geometry")).to_csv(
-            os.path.join(DIR_GEM, f"{name}.csv"), index=False)
-        out += [p, os.path.join(DIR_GEM, f"{name}.csv")]
-
-    loads = pd.DataFrame(dict(
-        LABEL=nd.NODE_UID.astype(str),
-        Q_AVG_LS=(nd.Q_ADF_M3D.to_numpy(dtype=float) * 1000.0 / 86400.0).round(6),
-        Q_PK_LS=nd.Q_PK_LS.to_numpy(dtype=float).round(6),
-        N_PROP=nd.N_PROP.to_numpy(dtype=float).round(2),
-        LOAD_THIS=["Q_AVG_LS"] * len(nd),
-        NOTE=["OUR peak factor is already in Q_PK_LS. Load Q_AVG_LS and let the model "
-              "do its own peaking, or reproduce ours - never both."] * len(nd)))
-    loads.to_csv(os.path.join(DIR_GEM, "LOADS.csv"), index=False)
-    out.append(os.path.join(DIR_GEM, "LOADS.csv"))
-
-    _shp_ready(layers["rising_mains"]).to_file(
-        os.path.join(DIR_GEM, "RISING_MAINS.shp"), driver="ESRI Shapefile", encoding="utf-8")
-    out.append(os.path.join(DIR_GEM, "RISING_MAINS.shp"))
-
-    fm = pd.DataFrame([dict(Table=t, Canonical_field=s, Bentley_field=d)
-                       for t, pairs in CT.SEWERGEMS.items() for s, d in pairs]
-                      + [dict(Table="CONDUITS", Canonical_field="(criteria.MANNING_N_EXPORT)",
-                              Bentley_field="MANNING_N")])
-    fm.to_csv(os.path.join(DIR_GEM, "fieldmap.csv"), index=False)
-    out.append(os.path.join(DIR_GEM, "fieldmap.csv"))
-
-    inp = _swmm_inp(layers, g)
-    out.append(inp)
-
-    txt = GEMS_README.format(
-        built=time.strftime("%Y-%m-%d %H:%M"), version=VERSION,
-        n_outfall=int((nd.IS_OUTFALL == 1).sum()), n_rm=len(layers["rising_mains"]),
-        pf_hi=float(r.PF.max()),
-        pf_lo=float(r.PF.iloc[int(np.argmax(r.QADF_M3D.to_numpy()))]),
-        pf_held=int((r.PF_METH.astype(str) == "held").sum()),
-        pf_hold=float(C.PF_HOLD_PROPERTIES), inf=C.INFILT_L_D_KM,
-        past_cap=int((nd.PAST_CAP == 1).sum()),
-        no_exit=int(((nd.PAST_CAP == 1) & (nd.CAP_EXIT.astype(str) == "")).sum()),
-        maxcover=C.MAX_COVER, n_manning=C.MANNING_N_EXPORT, ks=C.KS, tau=C.TAU_PA,
-        tract_km=lv.stats["km_tractive"],
-        tract_pct=100.0 * lv.stats["km_tractive"] / lv.stats["km_total"])
-    p = os.path.join(DIR_GEM, "README.txt")
-    open(p, "w", encoding="utf-8").write(txt)
-    out.append(p)
-    _log(f"   SewerGEMS package: {len(mh):,} manholes, {len(of):,} outfalls, "
-         f"{len(cd):,} conduits, LOADS.csv carries AVERAGE flow with our peak beside it")
-    return out
-
-
-def _swmm_inp(layers: Dict[str, gpd.GeoDataFrame], g: Graph) -> str:
-    """An EPA SWMM 5 input file of the same network - a referee that is not Bentley.
-
-    Dry weather flow only, average, at every junction: the peak factor is ours and stays
-    out of the model (see the README). Sections are written in the order SWMM expects."""
-    nd = layers["nodes"]
-    r = layers["reaches"]
-    p = os.path.join(DIR_GEM, "W12.inp")
-    L: List[str] = []
-    L.append("[TITLE]")
-    L.append(f";;W12 Ibri sewer - gravity network, {len(r):,} conduits. "
-             f"Levels by the s8 stage-6 stand-in. tau={C.TAU_PA:g} Pa ASSUMED.")
-    L.append(";;LOADS ARE AVERAGE DRY WEATHER FLOW. Our peak factor is NOT applied here.")
-    L.append("")
-    L.append("[OPTIONS]")
-    for k, v in (("FLOW_UNITS", "LPS"), ("INFILTRATION", "HORTON"),
-                 ("FLOW_ROUTING", "DYNWAVE"), ("LINK_OFFSETS", "ELEVATION"),
-                 ("START_DATE", "01/01/2055"), ("END_DATE", "01/02/2055"),
-                 ("REPORT_STEP", "00:15:00"), ("ROUTING_STEP", "00:00:15"),
-                 ("MIN_SLOPE", "0")):
-        L.append(f"{k:<22}{v}")
-    L.append("")
-    out_mask = nd.IS_OUTFALL == 1
-    L.append("[JUNCTIONS]")
-    L.append(";;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded")
-    for u, iv, dep in zip(nd.NODE_UID[~out_mask], nd.INV_M[~out_mask], nd.DEPTH_M[~out_mask]):
-        L.append(f"{u:<17}{float(iv):<11.3f}{max(float(dep), 0.1):<11.3f}0          0          0")
-    L.append("")
-    L.append("[OUTFALLS]")
-    L.append(";;Name           Elevation  Type       Gated")
-    for u, iv in zip(nd.NODE_UID[out_mask], nd.INV_M[out_mask]):
-        L.append(f"{u:<17}{float(iv):<11.3f}FREE       NO")
-    L.append("")
-    L.append("[CONDUITS]")
-    L.append(";;Name           From             To               Length     Roughness  "
-             "InOffset   OutOffset")
-    for e, a_, b_, ln, iu, idn in zip(r.EDGE_UID, r.US_NODE, r.DS_NODE, r.LEN_M,
-                                      r.INV_UP, r.INV_DN):
-        L.append(f"{e:<17}{a_:<17}{b_:<17}{float(ln):<11.3f}"
-                 f"{C.MANNING_N_EXPORT:<11.4f}{float(iu):<11.3f}{float(idn):<11.3f}")
-    L.append("")
-    L.append("[XSECTIONS]")
-    L.append(";;Link           Shape        Geom1      Geom2 Geom3 Geom4 Barrels")
-    for e, dn in zip(r.EDGE_UID, r.DN):
-        L.append(f"{e:<17}CIRCULAR     {C.internal_diameter(int(dn)):<11.4f}0     0     0     1")
-    L.append("")
-    L.append("[DWF]")
-    L.append(";;Node           Parameter  AverageValue")
-    qavg = nd.Q_ADF_M3D.to_numpy(dtype=float) * 1000.0 / 86400.0
-    for u, q in zip(nd.NODE_UID, qavg):
-        if q > 1e-9:
-            L.append(f"{u:<17}FLOW       {float(q):.6f}")
-    L.append("")
-    L.append("[COORDINATES]")
-    L.append(";;Node           X-Coord    Y-Coord")
-    for u, x, y in zip(nd.NODE_UID, nd.X, nd.Y):
-        L.append(f"{u:<17}{float(x):<11.2f}{float(y):.2f}")
-    L.append("")
-    open(p, "w", encoding="utf-8").write("\n".join(L))
-    _log(f"   {os.path.basename(p):<24} {os.path.getsize(p) / 1e6:8.1f} MB  "
-         f"(EPA SWMM 5, average DWF only)")
-    return p
+def write_sewergems(*_a, **_kw) -> List[str]:
+    """Refused at concept stage. Calling it raises, and the message names the register."""
+    C.assert_enabled("sewergems_export")
+    raise CT.ContractError(                                    # pragma: no cover
+        "sewergems_export is enabled in criteria but s8_export no longer carries the "
+        "writer. Restore it from W11b/py/s8_export.py section 13, which is unchanged and "
+        "is the record; the peak-factor warning in its README is the part that matters.")
 
 
 # ======================================================================================
@@ -2773,18 +4738,23 @@ def write_report(a: Assembly, g: Graph, f: Flows, lv: Levels, lv_st: Levels,
     L: List[str] = []
     A = L.append
 
-    A("# W12 stage 8 - export, and the levels stage that does not exist")
+    A("# W12 stage 8 - the export: five layers, three themes")
     A("")
-    A(f"*{VERSION}, built {time.strftime('%Y-%m-%d %H:%M')}. "
-      f"Nothing imported from `W8/py/sewnet`, `W10/py` or `W11a/py`.*")
+    A(f"*{VERSION}, built {time.strftime('%Y-%m-%d %H:%M')}.*")
+    A("")
+    A(f"*{C.concept_banner()}*")
     A("")
     A("## The uncomfortable answer first")
     A("")
-    A(f"**There is no stage 6 in W12, so this stage had to build one.** Every invert, "
-      f"diameter, gradient, velocity, depth of flow, cover and drop in this export came "
-      f"out of a levels-and-sizes pass written inside `s8_export.py`, tagged "
-      f"`STAGE = '{LEVELS_TAG}'` on every published row. It is a single strict pass; "
-      f"philosophy sec 7 asks for two and then an audit.")
+    conflict = levels_source_conflict()
+    if conflict:
+        A(f"**TWO SETS OF LEVELS EXIST IN THIS FOLDER, and this export publishes one of "
+          f"them.** {conflict}")
+    else:
+        A(f"**Every invert, diameter, gradient, velocity, depth of flow, cover and drop in "
+          f"this export came out of a levels-and-sizes pass written inside "
+          f"`s8_export.py`**, tagged `STAGE = '{LEVELS_TAG}'` on every published row. It is "
+          f"a single strict pass; philosophy sec 7 asks for two and then an audit.")
     A("")
     A(f"**And what it measures is not a tree problem. It is flatness.** "
       f"**{int((nd.PAST_CAP == 1).sum()):,} of {len(nd):,} chambers "
@@ -2802,7 +4772,7 @@ def write_report(a: Assembly, g: Graph, f: Flows, lv: Levels, lv_st: Levels,
       f"ground's own fall** - which is what it means to say the ground is flatter than the "
       f"pipe may be laid. There the pipe sinks whichever way it points.")
     A("")
-    A(f"**The 85 stations s7 located are worth {lv.stats['past_cap_nodes'] - lv_st.stats['past_cap_nodes']:,} "
+    A(f"**The {len(a.stations):,} stations s7 located are worth {lv.stats['past_cap_nodes'] - lv_st.stats['past_cap_nodes']:,} "
       f"chambers.** Run the same levels with each station resetting the depth at its "
       f"anchor chamber and the breach count falls "
       f"{lv.stats['past_cap_nodes']:,} -> {lv_st.stats['past_cap_nodes']:,} and the "
@@ -2854,11 +4824,19 @@ def write_report(a: Assembly, g: Graph, f: Flows, lv: Levels, lv_st: Levels,
     A(f"| `W12/export/dxf/` | {len(files['dxf'])} drawings - geometry, and geometry with "
       f"every chamber and pipe labelled |")
     A(f"| `W12/export/schedules/` | {len(files['sch'])} workbooks - chambers, pipes, "
-      f"stations, rising mains, connections, crossings, packages, quantities, not-served, "
-      f"data dictionary |")
+      f"stations, rising mains, connections, crossings, subnetworks, quantities, "
+      f"not-served, data dictionary |")
+    A(f"| `W12/export/W12_FIELD_DICTIONARY.md` | the one-page key to every abbreviated "
+      f"field name, generated from `contract.LAYERS` so it cannot go stale |")
     A(f"| `W12/export/profiles/` | {len(files['prf'])} long sections |")
-    A(f"| `W12/export/sewergems/` | the model package, the field map, the read-me and a "
-      f"runnable EPA SWMM 5 `.inp` |")
+    A(f"| `W12/shp/kmz/W12_theme_*.kmz` | the THREE themes - structure, depth, exceptions "
+      f"- each one file with a folder per layer and the count in the folder name |")
+    A(f"| `W12/shp/kmz/W12_*_*.qml` | the saved QGIS style for every theme layer, written "
+      f"from the SAME class table the KMZ drew |")
+    A(f"| SewerGEMS | **NOT EXPORTED.** Switched off at concept stage - "
+      f"`criteria.CONCEPT_OFF[\"sewergems_export\"]`. It referees HYDRAULICS and can "
+      f"never choose a layout, so running it against a layout still under review referees "
+      f"the wrong thing |")
     A(f"| `W12/export/qgis_load_W12.py` | the PyQGIS loader, generated from the SAME "
       f"View objects the KMZ used |")
     A("")
@@ -2942,15 +4920,25 @@ def write_report(a: Assembly, g: Graph, f: Flows, lv: Levels, lv_st: Levels,
       f"measured minimum was 0.00 deg. This register measures every one.*")
     A("")
 
-    A("### CAN_DRAIN, answered for the first time")
+    A("### CONCEPT RULE 5 - plot connectability, with the SIZE of every failure")
     A("")
-    A(f"s4 published `CAN_DRAIN cannot run - no designed invert exists at stage 4`. There "
-      f"is one now. **{int((cn.CAN_DRAIN == 1).sum()):,} of {len(cn):,} connected plots "
-      f"can reach their chamber on gravity**; **{int((cn.CAN_DRAIN == 0).sum()):,} cannot** "
-      f"- the sewer invert sits above the property outlet at the G203-p19 3.4 minimum HCC "
-      f"depth of {C.HCC_DEPTH_MIN:g} m, with the {C.PCS_MIN_SLOPE * 100:g} % minimum "
-      f"gradient of G203-p18 Table 5 over the connection's own length. They are in "
-      f"`W12_schedule_not_served.xlsx`, sheet 2, each named.")
+    A(f"**{int((cn.CAN_CONN == 1).sum()):,} of {len(cn):,} connected plots reach their "
+      f"chamber on gravity**; **{int((cn.CAN_CONN == 0).sum()):,} cannot.** The test is "
+      f"the engineer's, and each half of it matters: the connection leaves BELOW ground "
+      f"at the G203-p19 3.4 minimum HCC depth of {C.HCC_DEPTH_MIN:g} m (not at the "
+      f"surface), it runs to a CHAMBER (not to the nearest point on a pipe), and it loses "
+      f"fall over its OWN route length at the {C.PCS_MIN_SLOPE * 100:g} % minimum of "
+      f"G203-p18 Table 5.")
+    A("")
+    A(f"Rule 7 is why the number is usable: **every failure carries `CONN_NEED`, how many "
+      f"metres deeper the sewer would have to be on that run** - median "
+      f"{float(cn.loc[cn.CAN_CONN == 0, 'CONN_NEED'].median()) if int((cn.CAN_CONN == 0).sum()) else 0.0:.2f} m, "
+      f"worst {float(cn.CONN_NEED.max()):.2f} m. \"5,521 plots cannot drain\" is a number "
+      f"nobody can act on; \"this plot needs the sewer 0.84 m deeper\" is a decision.")
+    A("")
+    A("`CAN_DRAIN` is written FROM `CAN_CONN` and is never computed a second time. Two "
+      "answers to one question is the defect this project pays most for, and the contract "
+      "refuses the layer if the two disagree.")
     A("")
 
     A("## What does NOT validate, and why each one is real")
@@ -2984,11 +4972,12 @@ def write_report(a: Assembly, g: Graph, f: Flows, lv: Levels, lv_st: Levels,
       f"{int((cn.LEN_M < 1e-9).sum()):,} zero-length connections | s4: the chamber stands "
       f"on the property's own connection point. Shapely calls a zero-length LineString "
       f"invalid |")
-    A(f"| `FLOOD_LV` null on all {len(st)} stations | 85 | **NWS.** "
+    A(f"| `FLOOD_LV` null on all {len(st)} stations | {len(st)} | **NWS.** "
       f"`hazard.flood_level_m_aod()` raises by design - the grids carry an AR&R hazard "
       f"CLASS and no water level, and G203-p38 7.2 needs the 1:50 water surface for the "
       f"300 mm freeboard. Filling it with ground level (which this stage did on its first "
-      f"build) manufactured a freeboard failure on all 85 that says nothing about any |")
+      f"build) manufactured a freeboard failure on every one that says nothing about "
+      f"any |")
     A(f"| Rising mains under 0.75 m/s at design MINIMUM flow | {len(layers['rising_mains'])} | "
       f"**s7's**, inherited unchanged |")
     A(f"| `WELL_M3` disagrees with 0.25 Q T | 1 station | **s7's**, inherited unchanged |")
@@ -2998,17 +4987,23 @@ def write_report(a: Assembly, g: Graph, f: Flows, lv: Levels, lv_st: Levels,
 
     A("## What this export could NOT do")
     A("")
-    A("1. **Design the trunk.** `W12_hier.gpkg|trunk` is 85.49 km of the client's own "
+    A(f"1. **Design the trunk.** `W12_hier.gpkg|trunk` is "
+      f"{float(layers['trunk'].LEN_M.sum()) / 1000:,.2f} km of the client's own "
       "Main Pipe in 54 pieces, with no chambers and no topology. Nothing here drains into "
-      "it. The 195 outfalls are subnetwork outlets, each an independent discharge, and "
+      f"it. The {int((nd.IS_OUTFALL == 1).sum()):,} outfalls are subnetwork outlets, "
+      f"each an independent discharge, and "
       "the biggest reach in the design therefore carries a fraction of what a joined "
-      "network would - s5 measured the like-for-like figure at 1,362 L/s and tagged it a "
-      "hypothetical. It is still one.")
-    A("2. **Resolve the station ids.** s7 minted `NODE_UID` N0000001-N0000085; those "
-      "strings also exist in the chamber layer on different chambers, and none of the 85 "
-      "agree on ground level. Re-anchored by proximity - median 0.00 m, max 65.9 m, 75 of "
-      "85 within 1 m - and published as `ANCHOR_ND` with `ST_SNAP_M` beside it. A "
-      "recovered anchor is not written topology (H16).")
+      "network would. A joined-network flow can only be a hypothetical until something "
+      "drains into the trunk.")
+    _snap = pd.to_numeric(a.stations.ST_SNAP_M, errors="coerce")         if "ST_SNAP_M" in a.stations.columns else pd.Series(dtype=float)
+    A(f"2. **Resolve the station ids.** s7 mints station `NODE_UID`s that also exist in "
+      f"the chamber layer on different chambers, and none agree on ground level. "
+      f"Re-anchored by proximity across {len(a.stations):,} stations - median "
+      f"{_snap.median() if len(_snap) else float('nan'):.2f} m, max "
+      f"{_snap.max() if len(_snap) else float('nan'):.1f} m, "
+      f"{int((_snap < 1.0).sum()) if len(_snap) else 0} within 1 m - and published as "
+      f"`ANCHOR_ND` with `ST_SNAP_M` beside it. A recovered anchor is not written "
+      f"topology (H16).")
     A("3. **Phase anything.** `PHASE = 0` on every row: the contract's own words are "
       "\"0 = not yet assigned\". Packages are one per subnetwork - which satisfies "
       "\"one tree, one outlet\" by construction and the 3.5-40 km size band only where it "
@@ -3018,9 +5013,19 @@ def write_report(a: Assembly, g: Graph, f: Flows, lv: Levels, lv_st: Levels,
     A("4. **Run the second pass.** Philosophy sec 7 wants a strict pass, a review pass and "
       "then the audit. This is one strict pass. Nothing here absorbs a finger, moves a sub "
       "main onto a through-street or puts a station on a package seam.")
-    A("5. **Referee its own hydraulics.** The SewerGEMS package and the SWMM `.inp` are "
-      "written but not run. A solver will not object to a chamber 85 m deep - it deepens "
-      "forever - so the referee checks the hydraulics and never the routing.")
+    A("5. **Referee its own hydraulics.** The SewerGEMS export is SWITCHED OFF at concept "
+      "stage (`criteria.CONCEPT_OFF[\"sewergems_export\"]`), not forgotten. It referees "
+      "HYDRAULICS and can never choose a layout (inheritance row 26), so running it "
+      "against a layout still under review referees the wrong thing. `contract.SEWERGEMS` "
+      "still maps every field to its Bentley name and is waiting for the layout to be "
+      "fixed.")
+    A("6. **Read s6_levels' inverts.** W12 HAS a stage 6 and it publishes its own "
+      "`W12.gpkg`; this stage still computes levels with the stand-in it inherited from "
+      "W11b, where there was no stage 6. That is two functions for one published quantity "
+      "- inheritance row 10, the row that put seven station counts into circulation in "
+      "W10. It is DETECTED and printed on every run rather than resolved blind: the swap "
+      "has to be made against real layers, matching on the WRITTEN topology and refusing "
+      "unless every edge matches.")
     A("")
 
     A("## Every number this stage used that is not already in `criteria`")
@@ -3033,7 +5038,51 @@ def write_report(a: Assembly, g: Graph, f: Flows, lv: Levels, lv_st: Levels,
     A(f"*{C.tau_banner()}*")
     A("")
 
-    A("## The KMZ set")
+    A("## The three themes")
+    A("")
+    A("Each is one KMZ with a folder per layer, and one saved QGIS style (`.qml`) per "
+      "layer. Both are written from the SAME class table, so the Earth file and the GIS "
+      "project cannot tell different stories.")
+    A("")
+    A("| Theme | What it shows |")
+    A("|---|---|")
+    A("| **STRUCTURE** | every subnetwork its own colour, conduit weight rising with DN, "
+      "flow direction, and pumps / force mains / drop chambers / the chamber where each "
+      "subnetwork meets the main pipe all separately symbolised |")
+    A(f"| **DEPTH** | the MAGMA ramp on EVERY element, classified on ONE column (`DEP_M`) "
+      f"against FIXED published edges - {', '.join('%.2f' % b for b in DEPTH_BREAKS)} m - "
+      f"so two runs are comparable. Never auto-stretched |")
+    A("| **EXCEPTIONS** | ONLY the flagged items. Colour by kind, size by severity, and "
+      "**the count is in the layer name**, so the legend itself reports the totals |")
+    A("")
+    A("What lands on the EXCEPTIONS theme, and how big each one is:")
+    A("")
+    A("| Exception | Count |")
+    A("|---|---|")
+    _sn = layers.get("subnetworks")
+    _rej = layers.get("stations_rejected")
+    for _lab, _n in (
+            ("Plots that CANNOT connect on gravity", int((cn.CAN_CONN == 0).sum())),
+            ("Subnetworks that do NOT reach the main pipe",
+             int(((_sn.SERVED == 1) & (_sn.JOIN_MAIN == 0)).sum()) if _sn is not None else 0),
+            ("Outfalls off their subnetwork's own low point",
+             int((pd.to_numeric(nd.JOIN_OFF_M, errors="coerce").fillna(0) > 0).sum())),
+            ("Drops that exist only to hold the velocity cap",
+             int(((nd.DROP_TYPE != "none") & (nd.DROP_WHY == "velocity_cap")).sum())),
+            (f"Chambers past the {C.MAX_COVER:g} m cover cap",
+             int((nd.PAST_CAP == 1).sum())),
+            ("Chambers on wadi ground",
+             int((pd.to_numeric(nd.ON_WADI, errors="coerce").fillna(0) > 0).sum())),
+            ("Force mains that lift all the way to the works",
+             int((layers["rising_mains"].DS_TYPE == "stp").sum())),
+            ("Pumping stations REMOVED - nothing drained into them",
+             len(_rej) if _rej is not None else 0),
+            ("Areas the network does not reach",
+             int((_sn.SERVED == 0).sum()) if _sn is not None else 0)):
+        A(f"| {_lab} | **{_n:,}** |")
+    A("")
+
+    A("## The per-question KMZ set")
     A("")
     A("| File | The question it answers |")
     A("|---|---|")
@@ -3062,8 +5111,56 @@ def write_report(a: Assembly, g: Graph, f: Flows, lv: Levels, lv_st: Levels,
 # 16.  BUILD, VERIFY, SELF-TEST
 # ======================================================================================
 
+def levels_source_conflict() -> Optional[str]:
+    """Is there a SECOND set of levels in this folder? Say so, loudly, by name.
+
+    W12 has an `s6_levels.py` and it publishes `W12.gpkg`. This stage carries a levels
+    stand-in inherited from W11b, where there genuinely was no stage 6. Two passes that
+    both compute an invert is inheritance row 10 - "one published quantity, one function" -
+    and that row is the one that put seven station counts into circulation in W10.
+
+    This does NOT silently prefer one. Rewiring the export to read s6's inverts is the
+    right end state, but it is a change that has to be made against real layers and
+    verified reach by reach, and a blind swap of the levels source is exactly the class of
+    change that has cost this project two iterations. So the conflict is DETECTED, printed,
+    written into the manifest, stamped on the DXF banner and written up in EXPORT.md with
+    the size of the disagreement - and the decision is left to a human with the data in
+    front of them."""
+    if not os.path.exists(GPKG_S6):
+        return None
+    try:
+        import fiona
+        have = set(fiona.listlayers(GPKG_S6))
+    except Exception as e:                                     # pragma: no cover
+        return (f"{os.path.basename(GPKG_S6)} exists but its layers could not be listed "
+                f"({type(e).__name__}: {e})")
+    if not {"nodes", "reaches"} & have:
+        return None
+    try:
+        r6 = gpd.read_file(GPKG_S6, layer="reaches", ignore_geometry=True)
+        n6 = gpd.read_file(GPKG_S6, layer="nodes", ignore_geometry=True)
+        extra = ""
+        if "INV_M" in n6.columns:
+            extra = (f" s6 published {len(n6):,} chambers, inverts "
+                     f"{pd.to_numeric(n6.INV_M, errors='coerce').min():.2f} to "
+                     f"{pd.to_numeric(n6.INV_M, errors='coerce').max():.2f} m aOD, and "
+                     f"{len(r6):,} reaches.")
+    except Exception as e:                                     # pragma: no cover
+        extra = f" (its layers would not read: {type(e).__name__}: {e})"
+    return (
+        "TWO SETS OF LEVELS EXIST IN THIS FOLDER. `s6_levels` has published "
+        f"{os.path.basename(GPKG_S6)} AND this stage has just computed its own with the "
+        f"W11b stand-in tagged '{LEVELS_TAG}'." + extra +
+        " Inheritance row 10 says one published quantity has one function. Wire s8 to READ "
+        "s6's nodes/reaches (match on the WRITTEN topology - US_NODE/DS_NODE and NODE_UID - "
+        "and REFUSE the swap unless every edge matches, rather than falling back silently), "
+        "or delete the stand-in. Until then, do not quote a depth from one file against a "
+        "depth from the other.")
+
+
 def build(do_dxf: bool = True, do_profiles: bool = True, do_kmz: bool = True) -> Dict[str, Any]:
     _mkdirs()
+    print(C.concept_banner())
     with CT.Manifest.stage(STAGE, STAGE_ORDER) as rec:
         a = assemble()
         for nm, src, n in a.reads:
@@ -3071,25 +5168,36 @@ def build(do_dxf: bool = True, do_profiles: bool = True, do_kmz: bool = True) ->
         g = build_graph(a)
         f = accumulate(a, g)
 
+        conflict = levels_source_conflict()
+        if conflict:
+            _log("   *** " + conflict)
+            a.note(conflict)
+
         # the two arms. The GRAVITY-ONLY arm is what gets published; the with-stations arm
-        # is run so the relief the 85 stations buy is a MEASURED number and not a claim.
+        # is run so the relief the s7 stations buy is a MEASURED number and not a claim.
         lv = design_levels(a, g, f, label="gravity only - PUBLISHED")
         anchors = [g.ix[u] for u in a.stations.ANCHOR_ND.astype(str) if u in g.ix]
         lv_st = design_levels(a, g, f, station_nodes=anchors,
-                              label="with the 85 s7 stations - measured, NOT published")
+                              label=f"with the {len(a.stations)} s7 stations - measured, "
+                                    f"NOT published")
 
         contacts = measure_contacts(a, g)
         cx, cross_id, cross_stats = build_crossings(a, g, contacts)
         pk, node_pkg, edge_pkg = build_packages(a, g, f)
+        nm_ = build_names(a, g, f)
+        for note in nm_.notes:
+            a.note(note)
+        jn = measure_joins(a, g, f)
 
-        layers = build_layers(a, g, f, lv, contacts, cross_id, node_pkg, edge_pkg)
+        layers = build_layers(a, g, f, lv, contacts, cross_id, node_pkg, edge_pkg, nm_, jn)
         layers["connections"] = build_connections(a, g, layers["nodes"], layers["reaches"])
-        layers["stations"], layers["rising_mains"] = build_stations(a, layers["nodes"])
+        (layers["stations"], layers["rising_mains"],
+         layers["stations_rejected"]) = build_stations(a, layers["nodes"], g, f, nm_)
         layers["crossings"] = cx
         layers["packages"] = pk
         layers["trunk"] = build_trunk(a)
+        layers["subnetworks"] = build_subnetworks(layers, a, g, f, nm_, jn)
         _extra_columns(layers)
-        layers["package_areas"] = package_areas(layers)
         register_extra_views()
         tune_views()
         add_band_columns(layers)
@@ -3101,8 +5209,11 @@ def build(do_dxf: bool = True, do_profiles: bool = True, do_kmz: bool = True) ->
 
         ofc = outfall_check(g, f, layers)
         chk = check_contract(layers)
-        _log("contract check: " + ", ".join(
-            f"{r.LAYER}={'pass' if r.PASS else 'FAIL'}" for r in chk.itertuples()))
+        n_fail = int((chk.PASS == 0).sum())
+        _log(f"contract check: {len(chk) - n_fail} of {len(chk)} checks pass, "
+             f"{n_fail} named violations published on the `contract_check` layer")
+        for row in chk[chk.PASS == 0].itertuples():
+            _log(f"   FAIL {row.LAYER}: {str(row.DETAIL)[:180]}")
 
         extra = {
             "contract_check": chk,
@@ -3112,23 +5223,28 @@ def build(do_dxf: bool = True, do_profiles: bool = True, do_kmz: bool = True) ->
             "outfall_check": ofc,
         }
         pub = {k: v for k, v in layers.items()}
-        publish(pub, extra)
+        written_to = publish(pub, extra)
         for k, v in pub.items():
-            rec.wrote(k, GPKG_OUT, len(v))
+            rec.wrote(k, written_to, len(v))
 
-        files: Dict[str, List[str]] = {"shp": [], "dxf": [], "sch": [], "prf": [], "gem": []}
+        files: Dict[str, List[str]] = {"shp": [], "dxf": [], "sch": [], "prf": [],
+                                       "kmz": [], "doc": []}
         files["shp"] = write_shapefiles(
             {k: v for k, v in layers.items() if k != "packages"},
             {"packages": pk, "contract_check": chk, "manifest": extra["manifest"],
              "levels_arms": extra["levels_arms"], "outfall_check": ofc})
+        files["doc"] = [write_field_dictionary(layers)]
         if do_dxf:
             files["dxf"] = write_dxf(layers)
         files["sch"] = write_schedules(a, layers, chk)
         if do_profiles:
             files["prf"] = write_profiles(g, layers, node_pkg)
-        files["gem"] = write_sewergems(layers, lv, f, g)
 
-        kmz = build_kmz_from_gpkg() if do_kmz else None
+        if do_kmz:
+            arrows = flow_arrows(layers["reaches"])
+            for _t, fl in write_themes(layers, arrows).items():
+                files["kmz"] += fl
+        kmz = build_kmz_from_gpkg(written_to) if do_kmz else None
         if kmz is not None:
             qgis_script(kmz)
         rep = write_report(a, g, f, lv, lv_st, layers, chk, cross_stats,
@@ -3138,30 +5254,46 @@ def build(do_dxf: bool = True, do_profiles: bool = True, do_kmz: bool = True) ->
         rec.metric("chambers", len(layers["nodes"]))
         rec.metric("past_cap_no_exit", lv.stats["past_cap_no_exit"])
         rec.metric("vortex_shafts", int((layers["nodes"].DROP_TYPE == "vortex").sum()))
-        rec.note("levels and sizes produced by the s8 STAGE-6 STAND-IN; W12 has no s6")
+        rec.metric("stations_published", len(layers["stations"]))
+        rec.metric("stations_removed", len(layers["stations_rejected"]))
+        # inheritance row 4 - the whole removal ledger, not just its headline row
+        rec.metric("rising_mains_removed",
+                   int(REMOVED_COUNTS.get("rising_mains_removed", 0)))
+        rec.metric("chambers_not_named_no_tier_token",
+                   int(nm_.stats.get("names_refused_no_tier_token", 0)))
+        rec.metric("themes_that_failed_to_build", len(THEME_FAILURES))
+        rec.metric("subnetworks_not_at_main", jn.stats["short"])
+        rec.metric("plots_that_cannot_connect",
+                   int((layers["connections"].CAN_CONN == 0).sum()))
+        rec.note(f"levels by {LEVELS_TAG}"
+                 + ("; A SECOND SET OF LEVELS EXISTS - see EXPORT.md" if conflict else ""))
     return dict(layers=layers, levels=lv, levels_stations=lv_st, check=chk, files=files,
-                report=rep, graph=g, flows=f)
+                report=rep, graph=g, flows=f, naming=nm_, joins=jn,
+                gpkg=written_to, conflict=conflict)
 
 
 def _empty_render():
     return PR.RenderResult(DIR_KMZ, [], {"layers": [], "layouts": []}, "", [], {})
 
 
-def build_kmz_from_gpkg() -> "PR.RenderResult":
+def build_kmz_from_gpkg(gpkg: Optional[str] = None) -> "PR.RenderResult":
     """Render every view straight off the PUBLISHED GeoPackage.
 
     Not off the in-memory frames: the QGIS project this generates points at the same file,
     so a reviewer opening it after the next rerun sees the new answer instead of a copy
     that has quietly gone stale. It also means the KMZ is drawn from exactly the bytes the
     contract check was run against."""
-    roles = {r: (GPKG_OUT, r) for r in
+    # THE FILE THAT WAS ACTUALLY WRITTEN, not the canonical name. `publish()` falls back
+    # to a timestamped file when the target is locked; rendering off GPKG_OUT in that case
+    # would draw the PREVIOUS run and nothing would say so.
+    gpkg = gpkg or GPKG_OUT
+    roles = {r: (gpkg, r) for r in
              ("reaches", "nodes", "stations", "rising_mains", "crossings", "connections")}
-    roles["packages"] = (GPKG_OUT, "package_areas")
     register_extra_views()
     tune_views()
     fold_on_bands()
     _log(f"rendering {len(KMZ_VIEWS)} KMZ views through w12.present, off "
-         f"{os.path.basename(GPKG_OUT)}")
+         f"{os.path.basename(gpkg)}")
     res = PR.render(roles, DIR_KMZ, views=KMZ_VIEWS, prefix="W12", group="Claude W12",
                     layouts=("tier", "depth", "subnet", "diameter", "stations",
                              "pumping_demand"),
@@ -3177,8 +5309,13 @@ def _manifest_table(a, g, f, lv, lv_st, layers, cross_stats) -> pd.DataFrame:
         ("stage", VERSION, "-", "this module"),
         ("run", time.strftime("%Y-%m-%d %H:%M"), "-", ""),
         ("LEVELS_SRC", LEVELS_TAG, "-",
-         "W12 HAS NO STAGE 6. Every invert, DN, gradient, velocity, d/D, cover and drop "
-         "below came from the stand-in in s8_export.py section 4"),
+         "every invert, DN, gradient, velocity, d/D, cover and drop below came from the "
+         "levels stand-in in s8_export.py section 4, inherited from W11b"),
+        ("SECOND SET OF LEVELS", "yes - see EXPORT.md" if levels_source_conflict()
+         else "no", "-",
+         "s6_levels publishes W12.gpkg. Two passes that both compute an invert is "
+         "inheritance row 10, and it is DETECTED here rather than resolved blind"),
+        ("CONCEPT_STAGE", C.CONCEPT_STAGE, "-", C.concept_banner()),
         ("network", round(km, 3), "km", "LEN_M over the published reach layer"),
         ("chambers", len(nd), "-", "the published node layer"),
         ("chambers per km", round(len(nd) / km, 2), "-", "built network 34.23 (s4/asbuilt)"),
@@ -3196,7 +5333,7 @@ def _manifest_table(a, g, f, lv, lv_st, layers, cross_stats) -> pd.DataFrame:
         ("past the 12 m cap", int((nd.PAST_CAP == 1).sum()), "chambers", "G203-p33"),
         ("past the cap WITH NO EXIT", lv.stats["past_cap_no_exit"], "chambers",
          "philosophy sec 5 - each is a station demand handed back to stage 7"),
-        ("relief from the 85 s7 stations",
+        ("relief from the s7 stations",
          lv.stats["past_cap_nodes"] - lv_st.stats["past_cap_nodes"], "chambers",
          "MEASURED by re-running the levels with each station resetting depth. NOT "
          "published - the stations are not in the written topology"),
@@ -3219,11 +5356,65 @@ def _manifest_table(a, g, f, lv, lv_st, layers, cross_stats) -> pd.DataFrame:
         ("crossings within the skew tolerance", cross_stats["n_square"], "-",
          f"criteria.WADI_XING_SKEW_DEG = {C.WADI_XING_SKEW_DEG:g} deg. The rest run ALONG"),
         ("measured crossing angle, median", round(cross_stats["angle_median"], 1), "deg",
-         "against the nearest stream's own direction. W11a asserted 90 on 3,290"),
-        ("plots that CANNOT drain to their chamber",
-         int((layers['connections'].CAN_DRAIN == 0).sum()), "-",
-         "s4 could not run this check; there are inverts now"),
-        ("pumping stations", len(layers["stations"]), "-", "s7_pumps, unchanged"),
+         "against the nearest stream's own direction, over the "
+         f"{cross_stats['n_rows'] - cross_stats['n_angle_unmeasured']:,} rows where an "
+         f"angle was actually measured. W11a asserted 90 on 3,290"),
+        ("crossings with NO measured angle", cross_stats["n_angle_unmeasured"], "-",
+         "s1 recorded no bearing for these dual-carriageway contacts. ANGLE_DEG carries "
+         "0.00 because the contract requires a number and 0 is the conservative reading "
+         "(runs ALONG the obstacle); ANG_MEAS = 0 is how a reader tells it from a "
+         "measurement, and these rows are excluded from the statistics above"),
+        ("plots that CANNOT connect to their chamber",
+         int((layers['connections'].CAN_CONN == 0).sum()), "-",
+         "CONCEPT RULE 5. Each carries CONN_NEED - how many metres deeper the sewer "
+         "would have to be on that run"),
+        ("deepest a plot needs the sewer to go",
+         round(float(layers['connections'].CONN_NEED.max()), 2), "m",
+         "CONN_NEED, the size on the flag (rule 7)"),
+        ("subnetworks", int((layers['subnetworks'].SERVED == 1).sum()), "-",
+         "one per connected component; named per concept rule 8"),
+        ("subnetworks NOT reaching the main pipe",
+         int(((layers['subnetworks'].SERVED == 1)
+              & (layers['subnetworks'].JOIN_MAIN == 0)).sum()), "-",
+         f"CONCEPT RULE 2, at the declared JOIN_TOL_M = {JOIN_TOL_M:g} m. Legal only if "
+         f"each ends at a designed station (10_ASBUILT_CALIBRATION rule T1)"),
+        ("outfalls sitting off their own low point",
+         int((pd.to_numeric(layers['nodes'].JOIN_OFF_M, errors='coerce').fillna(0)
+              > 0).sum()), "-",
+         "CONCEPT RULE 2 - each records the distance and the reason"),
+        ("areas the network does not reach",
+         int((layers['subnetworks'].SERVED == 0).sum()), "-",
+         "each with its plot count and its reason; scope-p4 item 3"),
+        ("drops that exist only to hold the velocity cap",
+         int((layers['nodes'].DROP_WHY == "velocity_cap").sum()), "-",
+         "CONCEPT RULE 1 - every drop carries the reason it exists. TWO BOUNDS SHARE THIS "
+         "ONE WORD (the contract's vocabulary has no second): "
+         + (", ".join(f"{k} {v:,}" for k, v in sorted(DROP_CAUSE_SPLIT.items()))
+            or "not counted")
+         + f". `vmax` is G203-p27 4.2.2.2 ({C.V_MAX:g} m/s, a GUIDELINE); `cover_max` is "
+           f"the {EXPORT_NUM['SLOPE_MAX_LAID_PCT']:g} % laying bound, a PROJECT "
+           f"ASSUMPTION with no guideline behind it"),
+        ("pumping stations PUBLISHED", len(layers["stations"]), "-", "s7_pumps"),
+        ("pumping stations REMOVED - nothing drained into them",
+         len(layers.get("stations_rejected", [])), "-",
+         "INHERITANCE ROW 4. Anything a pass can ADD, a later pass must be able to TAKE "
+         "AWAY, and the stage publishes how many it removed. Each is on the "
+         "`stations_rejected` layer in full"),
+        ("rising mains REMOVED with the stations that were pruned",
+         int(REMOVED_COUNTS.get("rising_mains_removed", 0)), "-",
+         "the other half of the same ledger. A force main with no pump lifts nothing, and "
+         "a removal that is only printed to a console is not published"),
+        ("chambers NOT NAMED - the grammar has no token for their tier",
+         int(nd.NAME.fillna("").astype(str).str.strip().eq("").sum()), "-",
+         "CONCEPT RULE 8 declares three tier codes (TM / SM / L) and contract.NAME_RE "
+         "enforces exactly those; this design's tier set has five. No name is invented for "
+         "the other two - see the note on this run and the contract_check layer"),
+        ("themes that could NOT be built", len(THEME_FAILURES), "-",
+         "an absent theme is not a clean one. Each failure is a row on contract_check "
+         + (f"({', '.join(sorted(THEME_FAILURES))})" if THEME_FAILURES else "")),
+        ("rising mains that lift ALL THE WAY TO THE WORKS",
+         int((layers['rising_mains'].DS_TYPE == "stp").sum()), "-",
+         "CONCEPT RULE 6 - a main should lift to the nearest point where gravity resumes"),
         ("rising main", round(float(layers["rising_mains"].LEN_M.sum()) / 1000.0, 3), "km",
          "s7_pumps, unchanged"),
         ("client trunk main", round(float(layers["trunk"].LEN_M.sum()) / 1000.0, 2), "km",
@@ -3263,7 +5454,7 @@ def verify() -> int:
     bad: List[str] = []
     have = set(fiona.listlayers(GPKG_OUT))
     need = {"nodes", "reaches", "connections", "stations", "rising_mains", "crossings",
-            "packages", "trunk", "package_areas", "manifest", "contract_check"}
+            "packages", "trunk", "subnetworks", "manifest", "contract_check"}
     if not need <= have:
         print(f"MISSING LAYERS: {sorted(need - have)}")
         return 1
@@ -3294,6 +5485,55 @@ def verify() -> int:
        man["VORTEX DROP SHAFTS"], 0)
     eq("max d/D", round(float(r.DOD_PK.max()), 4), man["max d/D"], 1e-4)
     eq("deepest cover", round(float(nd.COVER_M.max()), 3), man["deepest cover"], 0.002)
+    sn = gpd.read_file(GPKG_OUT, layer="subnetworks")
+    cn = gpd.read_file(GPKG_OUT, layer="connections")
+    eq("subnetworks", int((sn.SERVED == 1).sum()), man["subnetworks"], 0)
+    eq("subnetworks NOT reaching the main pipe",
+       int(((sn.SERVED == 1) & (sn.JOIN_MAIN == 0)).sum()),
+       man["subnetworks NOT reaching the main pipe"], 0)
+    eq("plots that CANNOT connect to their chamber",
+       int((cn.CAN_CONN == 0).sum()),
+       man["plots that CANNOT connect to their chamber"], 0)
+
+    # THE FIVE LAYERS, and the concept rules that are checkable on the file alone
+    for lyr, cols in (("nodes", ("NAME", "TOWN", "SUBNET", "DROP_WHY", "JOIN_MAIN",
+                                 "JOIN_OFF_M", "JOIN_WHY", "DEP_M")),
+                      ("reaches", ("NAME", "TOWN", "SUBNET", "DEP_M")),
+                      ("stations", ("NAME", "TOWN", "N_SUBNET", "CATCH_KM", "INV_M")),
+                      ("rising_mains", ("NAME", "TOWN", "DS_TYPE")),
+                      ("subnetworks", ("NAME", "SERVED", "JOIN_MAIN", "GAP_M", "FLAG"))):
+        g_ = gpd.read_file(GPKG_OUT, layer=lyr)
+        miss = [c for c in cols if c not in g_.columns]
+        print(f"  {'OK ' if not miss else 'BAD'}  {lyr + ' carries its concept fields':<38} "
+              f"{'all present' if not miss else 'MISSING ' + str(miss)}")
+        if miss:
+            bad.append(f"{lyr} missing {miss}")
+
+    banned = sorted(set(CT.BANNED_FIELDS) & (set(nd.columns) | set(r.columns)
+                                             | set(gpd.read_file(GPKG_OUT,
+                                                                 layer="stations").columns)))
+    print(f"  {'OK ' if not banned else 'BAD'}  "
+          f"{'no banned field name reached the file':<38} "
+          f"{'-' if not banned else banned}")
+    if banned:
+        bad.append(f"banned field published: {banned}")
+
+    zero_up = int((pd.to_numeric(gpd.read_file(GPKG_OUT, layer='stations').N_SUBNET,
+                                 errors='coerce').fillna(0) == 0).sum())
+    print(f"  {'OK ' if zero_up == 0 else 'BAD'}  "
+          f"{'stations with nothing draining in':<38} {zero_up}")
+    if zero_up:
+        bad.append("a station with nothing draining into it reached the published layer")
+
+    drops = nd[nd.DROP_TYPE.astype(str) != "none"]
+    nowhy = int(drops.DROP_WHY.fillna("").astype(str).str.strip().eq("").sum())
+    print(f"  {'OK ' if nowhy == 0 else 'BAD'}  "
+          f"{'every drop carries its reason':<38} {len(drops) - nowhy} of {len(drops)}")
+    if nowhy:
+        bad.append("a drop with no DROP_WHY")
+    if len(drops) >= CT.VARY_MIN_ROWS and drops.DROP_WHY.nunique() == 1:
+        print("  BAD  every drop shares one reason - FABRICATION (inheritance row 22)")
+        bad.append("DROP_WHY is constant")
 
     # invariants that must hold on the file, not on a model
     dup = int(nd.NODE_UID.duplicated().sum())
@@ -3341,6 +5581,120 @@ def verify() -> int:
           f"{n_fail} carry named, published violations - see the `contract_check` layer.")
     print(f"\n{'VERIFY PASSED' if not bad else 'VERIFY FAILED: ' + ', '.join(bad)}")
     return 1 if bad else 0
+
+
+def _raises_contains(fn, needle: str) -> bool:
+    """A guard that does not fire is not a guard. This is how the self-test proves one does."""
+    try:
+        fn()
+    except Exception as e:
+        return needle in str(e)
+    return False
+
+
+def _fields_this_stage_writes() -> set:
+    """Every UPPER_CASE column name this module can put on a layer, read out of its OWN
+    SOURCE rather than listed by hand.
+
+    A hand-written list is the thing that goes stale: someone adds `MOTOR_KW` back in a
+    keyword argument and the check that was meant to catch it is looking at a list written
+    three weeks earlier."""
+    import ast
+    tree = ast.parse(open(os.path.abspath(__file__), encoding="utf-8").read())
+    out = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.keyword) and node.arg and node.arg.isupper():
+            out.add(node.arg)
+        if (isinstance(node, ast.Subscript) and isinstance(node.slice, ast.Constant)
+                and isinstance(node.slice.value, str)
+                and node.slice.value.isupper()):
+            out.add(node.slice.value)
+    return out
+
+
+def demo_layers() -> Dict[str, gpd.GeoDataFrame]:
+    """A tiny, closed layer set carrying every concept-stage column.
+
+    Small enough to read in one screen, and it exercises the parts of this stage that do
+    not need the upstream GeoPackages: the class tables, the folder names, the KML and the
+    .qml. It is NOT a design and no number in it is quoted anywhere."""
+    crs = f"EPSG:{CT.CRS_EPSG}"
+    x0, y0 = 444000.0, 2563000.0
+    r = gpd.GeoDataFrame(dict(
+        NAME=["I-S01-SM-M001", "I-S01-SM-M002", "D-S01-L-M001"],
+        SUB_NAME=["I-S01", "I-S01", "D-S01"], SUBNET=["S01", "S01", "S01"],
+        TOWN=["I", "I", "D"], TIER=["sub main", "sub main", "lateral"],
+        DN=[300, 400, 200], LEN_M=[100.0, 100.0, 100.0],
+        SLOPE_LAID=[0.50, 0.55, 1.00], QPK_LS=[12.0, 18.0, 3.0],
+        V_PK_MS=[0.8, 0.9, 0.7], US_DEPTH=[1.5, 2.4, 8.0], DS_DEPTH=[2.4, 3.6, 13.0],
+        US_NAME=["I-S01-SM-M001", "I-S01-SM-M002", "D-S01-L-M001"],
+        DS_NAME=["I-S01-SM-M002", "I-S01-SM-M003", "D-S01-L-M002"]),
+        geometry=[LineString([(x0, y0), (x0 + 100, y0)]),
+                  LineString([(x0 + 100, y0), (x0 + 200, y0)]),
+                  LineString([(x0 + 500, y0), (x0 + 600, y0)])], crs=crs)
+    nd = gpd.GeoDataFrame(dict(
+        NAME=["I-S01-SM-M001", "I-S01-SM-M002", "D-S01-L-M001"],
+        SUB_NAME=["I-S01", "I-S01", "D-S01"], NODE_KIND=["head", "junction", "outfall"],
+        DROP_TYPE=["none", "backdrop", "vortex"],
+        DROP_WHY=["", "velocity_cap", "tier_step"],
+        DROP_M=[0.0, 0.9, 2.6], JOIN_MAIN=[0, 0, 1], JOIN_OFF_M=[0.0, 0.0, 210.0],
+        JOIN_WHY=["", "", "no street at the low point"],
+        PAST_CAP=[0, 0, 1], CAP_EXIT=["", "", ""], CAP_LEN_M=[0.0, 0.0, 1200.0],
+        ON_WADI=[0, 0, 1], GRD_M=[330.0, 329.0, 320.0], INV_M=[328.5, 326.6, 307.0],
+        DEPTH_M=[1.5, 2.4, 13.0], COVER_M=[1.3, 2.2, 12.8], MH_DIA=[1.2, 1.5, 1.5],
+        X=[x0, x0 + 100, x0 + 500], Y=[y0, y0, y0]),
+        geometry=[Point(x0, y0), Point(x0 + 100, y0), Point(x0 + 500, y0)], crs=crs)
+    st = gpd.GeoDataFrame(dict(
+        NODE_UID=["PS00001"], NAME=["I-PMP01"], TOWN=["I"], SUBNET=[""],
+        ST_TYPE=["Type 1"], GRD_M=[329.0], INV_M=[321.0], LIFT_M=[8.0],
+        Q_DUTY_LS=[50.0], WELL_M3=[4.5], CATCH_KM=[3.2], N_SUBNET=[1]),
+        geometry=[Point(x0 + 200, y0)], crs=crs)
+    rm = gpd.GeoDataFrame(dict(
+        NAME=["I-P01"], TOWN=["I"], SUBNET=[""], STATION=["PS00001"],
+        DS_NODE=["STP"], DS_TYPE=["stp"], DN=[200], LEN_M=[300.0],
+        Q_DUTY_LS=[50.0], V_DUTY_MS=[1.6], TOT_HD_M=[12.0]),
+        geometry=[LineString([(x0 + 200, y0), (x0 + 500, y0)])], crs=crs)
+    sq = Polygon([(x0 - 50, y0 - 50), (x0 + 250, y0 - 50),
+                  (x0 + 250, y0 + 50), (x0 - 50, y0 + 50)])
+    sq2 = Polygon([(x0 + 450, y0 - 50), (x0 + 650, y0 - 50),
+                   (x0 + 650, y0 + 50), (x0 + 450, y0 + 50)])
+    sn = gpd.GeoDataFrame(dict(
+        NAME=["I-S01", "D-S01", ""], TOWN=["I", "D", ""], SUBNET=["S01", "S01", ""],
+        SERVED=[1, 1, 0], N_PLOT=[120, 40, 60], N_PROP=[170.0, 55.0, 80.0],
+        Q_ADF_M3D=[140.0, 45.0, 70.0], N_CHAMBER=[2, 1, 0], LEN_KM=[0.2, 0.1, 0.0],
+        DEEP_M=[2.4, 13.0, 0.0], OUTFALL=["N2", "N3", ""],
+        OUT_NAME=["I-S01-SM-M002", "D-S01-L-M001", ""],
+        JOIN_MAIN=[1, 0, 0], GAP_M=[10.0, 1873.0, 0.0], OFF_M=[0.0, 0.0, 0.0],
+        LOW_ND=["N2", "N3", ""], TOWN_D_M=[0.0, 0.0, 0.0],
+        FLAG=["", "does not reach the main pipe", "UNSERVED-001"],
+        WHY=["", "1,873 m short of the main pipe", "60 plots, nearest chamber 810 m away"],
+        AREA_M2=[float(sq.area), float(sq2.area), float(sq2.area)]),
+        geometry=[sq, sq2, sq2], crs=crs)
+    cn = gpd.GeoDataFrame(dict(
+        PLOT_ID=["P1", "P2"], CONN_ID=["C1", "C2"], OUT_NODE=["N1", "N3"],
+        CAN_CONN=[1, 0], CAN_DRAIN=[1, 0], CONN_NEED=[0.0, 0.84],
+        CONN_WHY=["", "only 0.10 m of fall over 40 m - sewer 0.84 m deeper on this run"],
+        LEN_M=[20.0, 40.0], FALL_AV_M=[0.9, 0.10], Q_ADF_M3D=[1.1, 1.1],
+        NAME=["", ""], TOWN=["I", "D"], SUBNET=["S01", "S01"],
+        SUB_NAME=["I-S01", "D-S01"]),
+        geometry=[LineString([(x0, y0 + 20), (x0, y0)]),
+                  LineString([(x0 + 500, y0 + 40), (x0 + 500, y0)])], crs=crs)
+    rej = gpd.GeoDataFrame(dict(
+        NODE_UID=["PS00002"], NODE_REF=["P002-PS"], UID_S7=["N0000042"], NAME=[""],
+        Q_DUTY_LS=[0.0], N_SUBNET=[0],
+        REJECT_WHY=["NOTHING DRAINS INTO IT."]),
+        geometry=[Point(x0 + 900, y0)], crs=crs)
+    trunk = gpd.GeoDataFrame(dict(EDGE_UID=["TRUNK001"], LEN_M=[400.0]),
+                             geometry=[LineString([(x0, y0 - 200), (x0 + 400, y0 - 200)])],
+                             crs=crs)
+    r["DEP_M"] = np.maximum(r.US_DEPTH, r.DS_DEPTH)
+    nd["DEP_M"] = nd.DEPTH_M
+    st["DEP_M"] = st.GRD_M - st.INV_M
+    rm["DEP_M"] = [float(st.DEP_M.iloc[0])]
+    sn["DEP_M"] = sn.DEEP_M
+    return {"reaches": r, "nodes": nd, "stations": st, "rising_mains": rm,
+            "subnetworks": sn, "connections": cn, "stations_rejected": rej,
+            "trunk": trunk}
 
 
 def selftest() -> int:
@@ -3411,10 +5765,71 @@ def selftest() -> int:
             if len(f) > CT.SHP_FIELD_MAXLEN]
     ck("no contract field exceeds the DBF limit", not long, str(long))
     for c in ("CAP_WHY", "XING_CLS", "DRAIN_TXT", "CLEAN_TXT", "ST_SNAP_M", "ANCHOR_ND",
-              "FALL_AV_M", "CAP_LEN_M", "ST_RESET", "UPS_LEN_M", "RUN_LEN_M", "UID_S7"):
+              "FALL_AV_M", "CAP_LEN_M", "ST_RESET", "UPS_LEN_M", "RUN_LEN_M", "UID_S7",
+              "DEP_M", "DEP_BAND", "STR_CLS", "STR_KEY", "SUB_NAME", "SUBNET_ND",
+              "US_NAME", "DS_NAME", "JOIN_GAP_M", "EXC_KIND", "EXC_SEV", "REJECT_WHY",
+              "ANCHOR_X", "ANCHOR_Y", "TOWN_D_M", "N_CHAMBER", "AREA_M2", "LOW_ND",
+              "OUT_NAME", "GAP_M", "OFF_M", "SERVED", "FLAG", "WHY", "DEEP_M"):
         ck(f"extra field {c} fits a DBF name", len(c) <= CT.SHP_FIELD_MAXLEN)
     # 11. the cap exits are the contract's two, and blank is legal
     ck("CAP_EXIT vocabulary", set(("", "recovers_500m", "outfall_1000m")) == set(CT.CAP_EXIT))
+
+    # ---- 12. THE CONCEPT STAGE. Each of these is a rule the engineer stated. -----------
+    ck("SewerGEMS export is refused BY NAME, not merely absent",
+       _raises_contains(write_sewergems, "sewergems_export"))
+    ck("phasing and packaging is switched off in the one register",
+       "phasing_packaging" in C.CONCEPT_OFF and "motor_selection" in C.CONCEPT_OFF)
+    _banned_written = set(CT.BANNED_FIELDS) & _fields_this_stage_writes()
+    ck("no banned field name is written by this stage", not _banned_written,
+       str(sorted(_banned_written)))
+
+    # ---- 13. THE DEPTH THEME'S EDGES: fixed, ordered, and mostly sourced ---------------
+    ck("DEPTH_BREAKS is strictly ascending",
+       all(b < c2 for b, c2 in zip(DEPTH_BREAKS, DEPTH_BREAKS[1:])), str(DEPTH_BREAKS))
+    ck("DEPTH_BREAKS starts at the guideline minimum cover and ends at the cap",
+       DEPTH_BREAKS[0] == C.MIN_COVER_CROWN and DEPTH_BREAKS[-1] == C.MAX_COVER,
+       f"{DEPTH_BREAKS[0]} .. {DEPTH_BREAKS[-1]}")
+    ck("every DEPTH break has a slot for its source",
+       len(DEPTH_BREAK_REFS) == len(DEPTH_BREAKS))
+    ck("the unsourced DEPTH break is marked (o) on the legend",
+       any(lab.endswith("(o)") for _k, lab, _c, _w in _depth_classes("line")))
+    ck("MAGMA is registered and runs light -> dark",
+       sum(PR.ramp_rgb("magma", 0.0)) > sum(PR.ramp_rgb("magma", 1.0)),
+       f"{PR.ramp_rgb('magma', 0.0)} -> {PR.ramp_rgb('magma', 1.0)}")
+    _idx = _depth_index(pd.Series([0.5, 1.31, 3.5, 5.0, 7.0, 10.0, 20.0, float("nan")]))
+    ck("the DEPTH bands are FIXED - one value always lands in one band",
+       list(_idx) == [0, 1, 2, 3, 4, 5, 6, 0], str(list(_idx)))
+
+    # ---- 14. NAMING: the grammar round-trips, and the town rule is symmetric -----------
+    _n1 = CT.concept_name("I", "manhole", subnet="S03", tier="sub main", seq=12)
+    _n2 = CT.concept_name("I", "conduit", subnet="S03", seq=12)
+    ck("a conduit carries its upstream manhole's number",
+       _n1 == "I-S03-SM-M012" and _n2 == "I-S03-C012", f"{_n1} / {_n2}")
+    ck("a pump is never parsed as a force main",
+       (CT.parse_name("I-PMP02") or {}).get("kind") == "pump")
+    _codes = CT.town_letters(["Al Aqar", "Ad Dariz", "Ibri"])
+    ck("the article is dropped and a clash extends BOTH towns",
+       _codes["Ibri"] == "I" and _codes["Al Aqar"] != _codes["Ad Dariz"], str(_codes))
+
+    # ---- 15. THE THEME MACHINERY, on a synthetic layer set ----------------------------
+    try:
+        _demo = demo_layers()
+        _themes = build_themes(_demo)
+        ck("all three themes build", set(_themes) == {"structure", "depth", "exceptions"})
+        ck("STRUCTURE draws the five layers",
+           [t.key for t in _themes["structure"]]
+           == ["conduits", "manholes", "pumps", "forcemains", "subnetworks"],
+           str([t.key for t in _themes["structure"]]))
+        ck("DEPTH classifies every layer on ONE column",
+           {t.field for t in _themes["depth"]} == {"DEP_BAND"})
+        ck("EXCEPTIONS draws ONLY flagged items and puts the count in the layer name",
+           bool(_themes["exceptions"])
+           and all(t.n > 0 and t.folder_name().endswith(f"({t.n:,})")
+                   for t in _themes["exceptions"]))
+        ck("every class carries a key, a label, a colour and a width",
+           all(len(c) == 4 for tt in _themes.values() for tl in tt for c in tl.classes))
+    except Exception as e:
+        ck(f"the theme machinery runs ({type(e).__name__}: {e})", False)
     print(f"\n{len(fails)} of many checks failed" if fails else "\nall self-checks pass")
     return 1 if fails else 0
 
