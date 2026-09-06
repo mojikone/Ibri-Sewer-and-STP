@@ -119,7 +119,7 @@ which would have caught a fabricated crossing angle the moment it was written.
    deeper; the route is re-searched first, and whatever pumping is left is real.
    - The rising main from each station is sized on the **pump duty** (wet well emptied faster than
      it fills), keeping 0.75-3.0 m/s (G203-p50 8.1) — not on the arriving gravity flow.
-   - Stations within 1.5 km of one another are cascade candidates (rule 9); land acquisition makes
+   - ~~Stations within 1.5 km of one another are cascade candidates (rule 9)~~ **REVERSED 2026-09-06: a station never pumps into another station.** Two within 1.5 km means the siting search failed and they should have been one. Land acquisition makes
      the station COUNT the thing to minimise.
 4. **A sewer network is a HIERARCHY, not a flat set of branches** (learned from the as-built, 2026-08-23). Properties feed riders, riders feed laterals, laterals feed laterals, and only collectors reach the trunk. In NAMA's built network 91% of laterals drain into another lateral and only ~16 things touch the trunk. Designing every catchment its own path to the main pipe produces a network no contractor would build. Every pipe carries a `TIER` field — trunk main / sub main / lateral — in the as-built's own vocabulary.
 5. **Guideline values are quoted from the source, never from memory** (user, 2026-08-23: "no guessing can be tolerated"). Verification on 23 Aug corrected three long-standing loose quotes: the depth rule is a RECOMMENDATION of "approximately 10-12 m" COVER whose stated trigger for pumping is excavation COST, not a hard 12 m to invert; G203 Table 6 carries a 45 m maximum lateral length that the code declares but never enforces; and Merrimack is stated only for catchments over 100 properties.

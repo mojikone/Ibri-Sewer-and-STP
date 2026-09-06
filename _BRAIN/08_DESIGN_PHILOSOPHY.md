@@ -338,6 +338,20 @@ produced a 35 m drop that every rule in this document permitted.*
   network to receive it in 2006, not by it being right: retention time makes it anaerobic (§6
   already names septicity a design driver), it needs an air valve at every summit and a washout
   at every low point, and it is a single point of failure for everything upstream of it.
+- **A STATION NEVER PUMPS INTO ANOTHER STATION. It discharges to a gravity manhole or to the
+  works.** The engineer's argument, 2026-09-06, and it closes the question from both ends:
+  *"if the pump is close, the number of pumps is not optimised"* — two stations near each other
+  should have been one, so a cascade is evidence the siting search failed — *"if they are far,
+  it is not advised to pump sewage for long distances"* — so the cascade is buying a long
+  anaerobic main instead. **Cascading is a symptom of bad siting at every separation**, which is
+  why there is no distance at which it becomes right. `contract` allows a rising main to
+  discharge to `manhole` or `stp` only; a station-to-station main is refused, not warned about.
+
+  *This REVERSES the standing rule "cascade stations within ~1.5 km" (`CLAUDE.md` rule 9,
+  `07_PROJECT_STATE.md`). That rule was written when a station was a response to a local depth
+  pocket; once the position is chosen by catchment capture, two stations within 1.5 km is a
+  failed search, not a cascade opportunity.*
+
   **So the two objectives are: the FEWEST stations, each with the SHORTEST main the receiving
   gravity network allows.** Where they conflict — a big catchment whose nearest gravity point is
   far — state the trade with both numbers rather than resolving it silently.

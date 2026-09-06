@@ -90,6 +90,39 @@ deliberately tiny - an id, a length, provenance - because a contract that demand
 stage has not invented yet blocks the stage instead of protecting it. Add fields HERE when
 they exist, never at the point of writing.
 
+----------------------------------------------------------------------------------------
+NEW IN W12, SECOND PASS: THE CONCEPT-STAGE FIELDS (engineer, 2026-09-05/06).
+
+Philosophy sec 9 sets the concept-stage rules, and five of them need a place on the layer or
+they are opinions. Each field below exists because a rule would otherwise be unprovable:
+
+    NAME TOWN SUBNET      rule 8. One grammar - I-S03-SM-M012 - built by concept_name(),
+                          checked against NAME_RE, and cross-checked against the row's own
+                          TOWN / SUBNET / TIER columns. Blank is legal on the layer and
+                          illegal at publication (assert_named), because naming runs AFTER
+                          connectivity: an element outside a town takes the letter of the
+                          first town DOWNSTREAM of it.
+    DROP_WHY              rule 1. The laid slope is a clamp and the surplus fall becomes a
+                          DROP, so every drop carries the reason it exists. A drop with no
+                          reason cannot be told from a levelling error.
+    JOIN_MAIN JOIN_OFF_M  rule 2. A subnetwork joins the main pipe at the LOWEST POINT WHERE
+    JOIN_WHY              IT MEETS IT. Where it cannot, the distance from the true low point
+                          is RECORDED. W11b had 42 components discharging with more than half
+                          their catchment below the outlet - 389.5 km - and nothing on the
+                          layer said so.
+    CAN_CONN CONN_WHY     rule 5. One gravity check per plot, and the failures named with
+    CONN_NEED             their size. W11b published DRAIN_SHALLOW and recorded CAN_DRAIN as
+                          "cannot run", and a check that cannot run is a FAILURE.
+    N_SUBNET CATCH_KM     rule 6. A station's POSITION IS CHOSEN, NOT TRIGGERED - so the
+    DS_TYPE               layer carries what it captures, and its main says whether it lifts
+                          to the nearest point where gravity resumes or all the way to the
+                          works.
+
+And six proposed field names were REFUSED as synonyms of fields already here - HEAD_M, Q_LS,
+STOR_M3, DIA_MM, V_MS, US_PUMP. They are in BANNED_FIELDS, so a stage that reaches for one is
+told the existing name instead of quietly adding a second column for the same quantity. Two
+names for one quantity is this project's most expensive recurring defect.
+
 WHY validate() RAISES INSTEAD OF WARNING. A missing field is not a slightly incomplete
 layer - it is an unauditable one, and philosophy sec 8 makes any check that cannot run
 blocking. Thirteen of W10's 22 checks were unanswerable for exactly this reason. Failing at
@@ -106,6 +139,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import re
 import time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -168,6 +202,13 @@ DEPTH_SANITY_M = 40.0            # a RANGE GUARD on depth fields, not a rule. Th
 NODE_UID_FMT = "N{:07d}"         # dumb, stable, sortable. Meaning lives in NODE_REF.
 EDGE_UID_FMT = "E{:07d}"
 CROSS_UID_FMT = "X{:06d}"
+
+VARY_MIN_ROWS = 30               # a STRUCTURAL threshold, not a design value. Below this
+                                 # many rows, one repeated value in a column that should vary
+                                 # is a small sample; at or above it, it is the fabrication
+                                 # inheritance row 22 names - ANGLE_DEG = 90 on all 3,290
+                                 # crossings, called a declaration, measured minimum 0.00 deg.
+                                 # The number bounds a CLAIM about evidence, not a pipe.
 
 
 # ======================================================================================
@@ -289,6 +330,206 @@ SYSTEM: Tuple[str, ...] = ("central", "satellite", "onsite", "unserved")
 
 
 # ======================================================================================
+# CONCEPT-STAGE VOCABULARY (engineer 2026-09-05/06; philosophy sec 9)
+# ======================================================================================
+
+# WHY A DROP EXISTS. Concept rule 1: the laid slope is a clamp, and where the ground outruns
+# the pipe the surplus fall is taken as a DROP at a manhole - "EVERY DROP CARRIES THE REASON
+# IT EXISTS". A drop with no reason is indistinguishable from a levelling error, and the drop
+# count is the diagnostic for a tree that is not following the ground (philosophy sec 4).
+#
+# The empty string is the value where there is no drop; it is in the enum so a blank is a
+# legal VALUE rather than a null the validator has to be told to forgive.
+DROP_WHY: Tuple[str, ...] = (
+    "",                  # DROP_M = 0: nothing to explain
+    "velocity_cap",      # the ground falls faster than 3.0 m/s allows (G203-p27) - the pipe
+                         # is laid at the slope that meets the cap and the surplus is dropped
+    "tier_step",         # a smaller pipe arrives above a larger one; the soffits are matched
+                         # and the invert difference becomes a drop (G203-p30)
+    "cover_recovery",    # the run has gone deep and the drop hands the depth back rather
+                         # than carrying it (philosophy sec 5 - never used to dodge a station)
+    "obstruction",       # a crossing, a utility or an existing structure fixes the level
+)
+
+# WHERE A RISING MAIN DISCHARGES. Concept rule 6: "a rising main LIFTS TO THE NEAREST POINT
+# WHERE GRAVITY RESUMES, NOT TO THE WORKS". The two values are the two legal answers, and the
+# split between them is the number that says whether the rule was obeyed: the built network's
+# one 10.0 km main straight to the works is explained by there being no gravity network to
+# receive it in 2006, not by it being right (philosophy sec 6).
+DS_TYPE: Tuple[str, ...] = ("manhole", "stp")
+
+# ======================================================================================
+# NAMING (engineer 2026-09-05/06). ONE grammar, one formatter, one regex.
+# ======================================================================================
+#
+#     I-S03            subnetwork 3 in Ibri
+#     I-S03-SM-M012    manhole 12, sub main tier
+#     I-S03-C012       conduit, named for its UPSTREAM manhole (no tier token)
+#     I-PMP02          pump - NOT inside a subnetwork, because a station is a SEAM
+#     I-P02            force main, numbered with its pump
+#
+# The town letter comes from the settlement name with the Arabic definite article dropped.
+# ARTICLES ARE A PROJECT DECISION, not a guideline: "Al Aqar" and "Ad Dariz" would otherwise
+# both be "A" and every town in the wilayat would collide on one letter.
+TOWN_ARTICLES: Tuple[str, ...] = ("al ", "ad ", "ash ", "as ", "at ", "an ", "ar ", "az ",
+                                  "el ", "ath ", "adh ")
+
+# Element tokens. TIER_TOKEN above supplies TM / SM / L for the tiered elements.
+ELEMENT_TOKEN = {"manhole": "M", "conduit": "C", "pump": "PMP", "main": "P"}
+
+# The grammar as a regex, so a NAME can be CHECKED and not merely stored. Zero-padding is a
+# MINIMUM width, not a fixed one: S03 and S147 are both legal, M012 and M1234 both legal, and
+# a network that outgrows its padding must not be renamed into an unparseable state.
+# PMP is matched before P so "I-PMP02" is a pump and never a force main numbered "MP02".
+NAME_RE = re.compile(
+    r"^(?P<town>[A-Z]{1,3})-"
+    r"(?:"
+    r"(?P<sub>S\d{2,})(?:-(?:(?P<tier>TM|SM|L)-M(?P<mh>\d{3,}))|-C(?P<cd>\d{3,}))?"
+    r"|PMP(?P<pmp>\d{2,})"
+    r"|P(?P<fm>\d{2,})"
+    r")$")
+
+SUBNET_RE = re.compile(r"^S\d{2,}$")
+TOWN_RE = re.compile(r"^[A-Z]{1,3}$")
+
+
+def town_letter(name: str, n: int = 1) -> str:
+    """The first `n` letters of a settlement name with the article dropped, upper-cased.
+
+    "Al Aqar" -> "A" / "AQ" / "AQA".  Spaces and punctuation are skipped so a two-letter
+    extension of "Al Aqar" is "AQ" and not "A " - a field value with a space in it is a
+    value that will come back from a DBF differently from a GeoPackage."""
+    s = str(name).strip().lower()
+    for art in TOWN_ARTICLES:
+        if s.startswith(art):
+            s = s[len(art):]
+            break
+    letters = [c for c in s if c.isalnum()]
+    if not letters:
+        raise ContractError(f"settlement name {name!r} has no letters to take a code from")
+    return "".join(letters[:max(1, int(n))]).upper()
+
+
+def town_letters(names: Sequence[str]) -> Dict[str, str]:
+    """Settlement name -> its unique code. THE ONE resolver, so two stages cannot disagree
+    about which town is 'A'.
+
+    THE CLASH RULE IS THE ENGINEER'S, AND IT IS DELIBERATELY SYMMETRIC (2026-09-05/06): on a
+    clash BOTH towns extend to two letters, then three, until unique - "the town with more
+    served plots is not favoured". Favouring the larger town would make the code of the small
+    one depend on a LOAD, so a plot count moving would rename half a network.
+
+    Two settlements whose de-articled names are genuinely identical cannot be separated by
+    letters at all; they take a numeric suffix and the pair is reported in the code itself
+    rather than being silently merged into one town."""
+    out: Dict[str, str] = {}
+    width: Dict[str, int] = {str(n): 1 for n in names}
+    for _round in range(24):                      # bounded: no name is 24 letters of clash
+        out = {n: town_letter(n, w) for n, w in width.items()}
+        clashes: Dict[str, List[str]] = {}
+        for n, code in out.items():
+            clashes.setdefault(code, []).append(n)
+        stuck = False
+        for code, group in clashes.items():
+            if len(group) < 2:
+                continue
+            # extend BOTH (all) members of the clash - never just the smaller one
+            grew = False
+            for n in group:
+                if width[n] < len([c for c in str(n) if c.isalnum()]):
+                    width[n] += 1
+                    grew = True
+            if not grew:
+                stuck = True
+        if all(len(g) < 2 for g in clashes.values()):
+            return out
+        if stuck:
+            break
+    # identical de-articled names: separate them by index, visibly
+    seen: Dict[str, int] = {}
+    final: Dict[str, str] = {}
+    for n in sorted(out):
+        code = out[n]
+        seen[code] = seen.get(code, 0) + 1
+        final[n] = code if seen[code] == 1 else f"{code}{seen[code]}"
+    return final
+
+
+def concept_name(town: str, kind: str, *, subnet: Optional[str] = None,
+                 tier: Optional[str] = None, seq: Optional[int] = None) -> str:
+    """THE ONE formatter for a concept-stage name. `node_ref()` below builds NAMA's own
+    5A-2-SM.2-MH391 grammar for the drawings; this builds ours.
+
+    Both exist because they answer different questions - NODE_REF makes our network read like
+    the one NAMA operate, NAME makes it navigable in this design's own terms - and NEITHER is
+    referenced by anything, so both can be regenerated after a retier without orphaning a
+    single US_NODE. Identity is NODE_UID and stays NODE_UID.
+
+        concept_name("I", "subnet",  subnet="S03")                     -> I-S03
+        concept_name("I", "manhole", subnet="S03", tier="sub main", seq=12)
+                                                                       -> I-S03-SM-M012
+        concept_name("I", "conduit", subnet="S03", seq=12)             -> I-S03-C012
+        concept_name("I", "pump", seq=2)                               -> I-PMP02
+        concept_name("I", "main", seq=2)                               -> I-P02
+    """
+    t = str(town).strip().upper()
+    if not TOWN_RE.match(t):
+        raise ContractError(
+            f"town code {town!r} is not 1-3 upper-case letters. Codes come from "
+            "town_letters(), which drops the article and extends BOTH towns on a clash.")
+    k = str(kind).strip().lower()
+    sn = (str(subnet).strip().upper() if subnet else "")
+    if k in ("manhole", "conduit", "subnet") and not SUBNET_RE.match(sn):
+        raise ContractError(
+            f"{k} {seq!r} in town {t}: subnet {subnet!r} is not S## - a gravity element is "
+            "always inside a subnetwork. A station and its force main are the exception, "
+            "because a station is a SEAM between subnetworks, not a member of one.")
+    if k == "subnet":
+        return f"{t}-{sn}"
+    if seq is None:
+        raise ContractError(f"a {k} name needs a sequence number")
+    n = int(seq)
+    if k == "manhole":
+        tok = TIER_TOKEN.get(str(tier).strip().lower() if tier else "")
+        if tok is None:
+            raise ContractError(
+                f"manhole {n} in {t}-{sn}: tier {tier!r} is not one of {list(TIERS)}. The "
+                "tier token is IN the name, so an unknown tier cannot be defaulted - it "
+                "would put a lateral's label on a trunk chamber.")
+        return f"{t}-{sn}-{tok}-M{n:03d}"
+    if k == "conduit":
+        return f"{t}-{sn}-C{n:03d}"
+    if k in ("pump", "main"):
+        return f"{t}-{ELEMENT_TOKEN[k]}{n:02d}"
+    raise ContractError(f"unknown element kind {kind!r}. Known: "
+                        f"{', '.join(sorted(ELEMENT_TOKEN) + ['subnet'])}")
+
+
+def parse_name(name: str) -> Optional[Dict[str, str]]:
+    """The inverse: the parts of a NAME, or None if it does not fit the grammar.
+
+    Used by validate() to check that a row's NAME agrees with its own TOWN, SUBNET and TIER
+    columns. A name that says one thing and a column that says another is a layer nobody can
+    filter, and the drawing and the schedule would disagree about which subnetwork a chamber
+    is in."""
+    m = NAME_RE.match(str(name).strip())
+    if not m:
+        return None
+    d = {k: (v or "") for k, v in m.groupdict().items()}
+    if d["pmp"]:
+        d["kind"] = "pump"
+    elif d["fm"]:
+        d["kind"] = "main"
+    elif d["mh"]:
+        d["kind"] = "manhole"
+    elif d["cd"]:
+        d["kind"] = "conduit"
+    else:
+        d["kind"] = "subnet"
+    return d
+
+
+# ======================================================================================
 # BANNED_FIELDS - names that mean two things, or that a checker will not find
 # ======================================================================================
 
@@ -309,6 +550,33 @@ BANNED_FIELDS: Dict[str, str] = {
                    "name - which W12's 10-character rule exists to make impossible"),
     "ELEV": "ground or invert? Use GRD_M and INV_M",
     "UPHILL": "the measured quantity is AGN_GRADE (0/1) with RISE_M beside it",
+
+    # --- the concept-stage synonyms. Each of these is a SECOND NAME for a quantity the
+    # --- contract already carries, and two names for one quantity is the defect that has
+    # --- cost this project the most: a wall allowance of 0.05 and 0.10 failed a blocking
+    # --- cover check on every reach, and seven station counts reached circulation because
+    # --- each was computed where it was printed. Banning the synonym is how the stage that
+    # --- reaches for it is told the existing name instead of quietly adding a column.
+    "HEAD_M": ("a station's head is LIFT_M (static lift, stations layer); a rising main's "
+               "are STAT_HD_M and TOT_HD_M. HEAD_M would be a third name for one of the "
+               "three and no row could say which"),
+    "Q_LS": ("flow at what? Use Q_DUTY_LS on a station and its rising main (pump duty, from "
+             "the wet-well cycle), QPK_LS on a gravity reach (peak design flow), Q_PK_LS on "
+             "a node. A bare Q_LS is the ambiguity SLOPE_PCT already cost us once"),
+    "STOR_M3": "wet-well live volume is WELL_M3, and it is tied to Q_DUTY_LS and WW_STARTS "
+               "by G203-p48 sec 7.8 (V = 0.25 Q T). A second volume field would not be",
+    "DIA_MM": "the sizing function and every check read DN, on the reach AND the rising main",
+    "V_MS": "velocity at what flow? A rising main carries V_DUTY_MS (at duty) and V_MIN_MS "
+            "(at the design MINIMUM flow, where G203-p50 holds the 0.75 m/s floor). The "
+            "difference between them is the whole reason a main silts in year one",
+    "US_PUMP": "the station upstream of a rising main is US_NODE (the graph) and STATION "
+               "(the station whose duty sized it). Both already exist and both are checked",
+    "JOIN_OFFS_M": ("11 characters - the DBF truncates it and no check would find it "
+                    "afterwards. The field is JOIN_OFF_M"),
+    "MOTOR_KW": "motor selection is SWITCHED OFF at concept - criteria.CONCEPT_OFF["
+                "'motor_selection']. It comes back when the station positions are fixed",
+    "LCC_OMR": "life-cycle costing is SWITCHED OFF at concept - criteria.CONCEPT_OFF["
+               "'life_cycle_cost']. It comes back when the priced BoQs arrive",
 }
 
 
@@ -370,6 +638,30 @@ EXCLUDED: Tuple[Excluded, ...] = (
              "exists to catch silent corruption is the one corrupted.",
              "never. Explode in the stage that reads it and account for the extra parts in "
              "a Funnel; a part silently discarded is a reach nobody designed"),
+    Excluded("HEAD_M / Q_LS / STOR_M3 / DIA_MM / V_MS / US_PUMP on the pump layers",
+             "all six were proposed for the concept-stage station and rising-main schema on "
+             "2026-09-06 and all six are SECOND NAMES for fields the contract already "
+             "carries: LIFT_M, Q_DUTY_LS, WELL_M3, DN, V_DUTY_MS, US_NODE/STATION. The "
+             "brief that proposed them was writing a fresh list, not reading the existing "
+             "one. Two names for one quantity is this project's most expensive recurring "
+             "defect - it cost a blocking cover failure on every reach once and seven "
+             "circulating station counts another time.",
+             "never as synonyms. A genuinely NEW quantity gets a new name and a `why` - "
+             "which is exactly how N_SUBNET, CATCH_KM and DS_TYPE got in on the same day"),
+    Excluded("motor size and life-cycle cost on the stations layer",
+             "SWITCHED OFF at concept (philosophy sec 9, criteria.CONCEPT_OFF). A station's "
+             "POSITION is the concept question; its motor is not, and neither changes the "
+             "other. Publishing an empty or guessed kW would read as a designed one.",
+             "criteria.CONCEPT_STAGE = False, once the positions are fixed and the priced "
+             "BoQs arrive. The field names are BANNED meanwhile so the column cannot appear "
+             "quietly as an undeclared extra"),
+    Excluded("a per-plot house connection design at concept",
+             "concept rule 5: PLOT CONNECTIONS ARE NOT DESIGNED. One gravity check per plot - "
+             "leaves BELOW ground, runs to a CHAMBER, loses fall over its own route length - "
+             "and the answer is CAN_CONN / CONN_WHY / CONN_NEED. W11b published DRAIN_SHALLOW "
+             "and admitted CAN_DRAIN 'cannot run', which is a check that cannot run and "
+             "therefore a FAILURE (inheritance row 2).",
+             "detailed design. The riders, laterals, PCC and HCC fields belong to it"),
     Excluded("an 'uphill is acceptable here' exemption flag",
              "philosophy sec 4 does not forbid uphill drainage - it BOUNDS AND REPORTS it. "
              "A per-reach exemption converts a reported quantity into a hidden one, which "
@@ -455,6 +747,39 @@ _PROV = (
 )
 
 
+# ---- the naming group. Engineer's rule, 2026-09-06 ----------------------------------
+#
+# `required=True, blank_ok=True` and the pair is deliberate. The COLUMN must exist from the
+# first stage that publishes the layer, because a column that appears late is one every
+# earlier artefact cannot be checked against. The ROW may be blank until naming has run -
+# and it must be allowed to, because ELEMENTS OUTSIDE A TOWN TAKE THE LETTER OF THE FIRST
+# TOWN DOWNSTREAM OF THEM, so naming runs AFTER connectivity is known and cannot be done at
+# the point a chamber is first minted.
+#
+# What stops a layer shipping with the column empty is not this spec: it is assert_named(),
+# which the publishing stage calls, and which requires every row named, unique and
+# grammatical. Two mechanisms, because they answer two different questions - "can this be
+# checked?" and "was it actually done?".
+_NAMING = (
+    F("NAME", "str", "-", "the human name: I-S03-SM-M012 (manhole), I-S03-C012 (conduit, "
+      "named for its UPSTREAM manhole), I-PMP02 (pump), I-P02 (force main). Built by "
+      "concept_name() and checked against NAME_RE - a stored name that cannot be parsed is "
+      "a label, not an identifier. NOTHING references it; identity is NODE_UID/EDGE_UID, so "
+      "a retier can rewrite every name without orphaning a reference. (The 10-character "
+      "limit is on the FIELD NAME, which is 4; the VALUE is a DBF string field and has room)",
+      required=True, blank_ok=True),
+    F("TOWN", "str", "-", "the town letter, from town_letters(): the settlement name with "
+      "the Arabic article dropped, and on a clash BOTH towns extend - the town with more "
+      "served plots is not favoured, because a code that depended on a plot count would "
+      "move when the count did", required=True, blank_ok=True),
+    F("SUBNET", "str", "-", "the subnetwork, S03. Blank on a station and its force main, "
+      "and that blank is the rule rather than a gap: A STATION IS A SEAM BETWEEN "
+      "subnetworks, not a member of one. Concept rule 2 makes the subnetwork the unit that "
+      "joins the main pipe at its own lowest point, so this is the field every outfall "
+      "question is grouped by", required=True, blank_ok=True),
+)
+
+
 # ---- the two primary layers ----------------------------------------------------------
 
 NODES = LayerSpec(
@@ -530,6 +855,35 @@ NODES = LayerSpec(
           lo=0.0, hi=C.DROP_CEILING_M),
         F("DROP_TYPE", "str", "-", "none / backdrop / vortex - ramped and EXTERNAL to the "
           "manhole (G203-p30). Never used to dodge a station", allowed=DROP_TYPE),
+        F("DROP_WHY", "str", "-", "WHY THIS DROP EXISTS - velocity_cap / tier_step / "
+          "cover_recovery / obstruction, blank where there is no drop. Concept rule 1: the "
+          "laid slope is a clamp, and where the ground outruns the pipe the surplus fall is "
+          "taken as a drop - so a drop is a DECISION and it carries its reason. Without it a "
+          "drop cannot be told from a levelling error, and the drop count is the diagnostic "
+          "for a tree that is not following the ground. validate() requires it wherever "
+          "DROP_M > 0 and REFUSES a column that is constant across every drop on a network "
+          "of any size (inheritance row 22: ANGLE_DEG = 90 on all 3,290 crossings)",
+          allowed=DROP_WHY, audit="C1", blank_ok=True),
+        F("JOIN_MAIN", "int", "0/1", "1 where this chamber is where its subnetwork MEETS the "
+          "main pipe. Concept rule 2: a subnetwork joins the main pipe at the LOWEST POINT "
+          "WHERE IT MEETS IT, and no subnetwork crosses the main pipe and grows past it. In "
+          "W11b two subnetworks held a quarter of the whole network - 7,871 and 6,271 "
+          "chambers - each touching the main pipe at 1.1 m and 3.1 m and discharging "
+          "somewhere else entirely", audit="C2", lo=0, hi=1),
+        F("JOIN_OFF_M", "float", "m", "metres from the subnetwork's TRUE low point to where "
+          "it actually connects; 0.0 when it connects AT the low point. NOT a tolerance and "
+          "not a defect on its own - if there is no street at the low point the connection "
+          "goes to the nearest usable place and THE DISTANCE IS RECORDED, which is the whole "
+          "of concept rule 2's second half. A design that cannot say how far off it is "
+          "cannot be argued with. (Named JOIN_OFF_M, not JOIN_OFFS_M: 11 characters would be "
+          "truncated by the DBF and no check would find it afterwards)",
+          audit="C2", lo=0.0, blank_ok=True),
+        F("JOIN_WHY", "str", "-", "why the join is not at the true low point - free text, "
+          "because the reasons are situational ('no street at the low point, nearest "
+          "crossing 210 m north'). Required wherever JOIN_OFF_M > 0; blank where the join "
+          "IS at the low point. An offset with no reason is an unexplained outfall, and 42 "
+          "of W11b's discharged with more than half their catchment below them",
+          audit="C2", blank_ok=True),
         F("VORTEX", "int", "0/1", "1 where DROP_M > 2.0 m and a vortex drop shaft is "
           "required (G203-p30). Its own flag because it is a DIFFERENT STRUCTURE with a "
           "different cost, not a deeper backdrop - and because the count of these is the "
@@ -547,7 +901,7 @@ NODES = LayerSpec(
           "within 500 m, or the run reaches the outfall within 1,000 m. Blank when "
           "PAST_CAP = 0. Nothing past the cap is final until a manufacturer's rating and "
           "NWS's station cost arrive", allowed=CAP_EXIT, audit="H4b", blank_ok=True),
-    ) + _PROV,
+    ) + _NAMING + _PROV,
     refs=(("DS_NODE", "nodes", "NODE_UID"),),
 )
 
@@ -682,7 +1036,7 @@ REACHES = LayerSpec(
           "crossing. A crossing is legal only if it is scheduled, and an id with no register "
           "row behind it schedules nothing - assert_crossings_resolve() enforces both",
           audit="H1,H1a,R4", blank_ok=True),
-    ) + _PROV,
+    ) + _NAMING + _PROV,
     refs=(("US_NODE", "nodes", "NODE_UID"),
           ("DS_NODE", "nodes", "NODE_UID"),
           ("CROSS_ID", "crossings", "CROSS_ID")),
@@ -734,7 +1088,16 @@ RISING_MAINS = LayerSpec(
           "treatment - always 1 in practice, and recorded so it is DESIGNED rather than "
           "assumed away (G203-p55 sec 8.5: water seal, forced venting, corrosion-resistant "
           "receiving manhole)", lo=0, hi=1),
-    ) + _PROV,
+        F("DS_TYPE", "str", "-", "WHAT this main discharges into: 'manhole' (gravity resumes "
+          "here) or 'stp' (it runs to the works). Concept rule 6: A RISING MAIN LIFTS TO THE "
+          "NEAREST POINT WHERE GRAVITY RESUMES, NOT TO THE WORKS - long force mains go "
+          "anaerobic, need an air valve at every summit and a washout at every low point, "
+          "and are a single point of failure for everything upstream. The built network's "
+          "10.0 km main straight to the works is explained by there being no gravity network "
+          "to receive it in 2006, not by it being right. Stored so the share of mains ending "
+          "at 'stp' is a number on the deliverable rather than a claim in a paragraph",
+          allowed=DS_TYPE, audit="C5"),
+    ) + _NAMING + _PROV,
     refs=(("US_NODE", "nodes", "NODE_UID"), ("DS_NODE", "nodes", "NODE_UID"),
           ("STATION", "stations", "NODE_UID")),
 )
@@ -784,11 +1147,29 @@ STATIONS = LayerSpec(
         F("LAND_M2", "float", "m2", "indicative land take. G203-p43 Table 21: Type 1 "
           "50-100 m2, Type 2 200-400, Type 3 >=900, plus a 6 m turning circle. This is a land "
           "RESERVATION the client has to make, so it belongs in the concept output", lo=0.0),
+        F("INV_M", "float", "m aOD", "incoming invert at the station - the level gravity "
+          "arrives at, and the bottom end of LIFT_M. Denormalised from the node of the same "
+          "NODE_UID (as GRD_M already is) so the station schedule is readable on its own; it "
+          "MUST equal nodes.INV_M for that uid, and a station whose two layers disagree "
+          "about its invert is the W10 defect where the node and pipe layers came out of "
+          "different solves", required=False, lo=-50.0, hi=1200.0),
+        F("N_SUBNET", "int", "-", "how many subnetworks drain into this station. ZERO IS A "
+          "FINDING, NOT A VALUE: 15 of W11b's 47 stations had nothing draining into them. "
+          "Concept rule 6 - a station's POSITION IS CHOSEN, NOT TRIGGERED - and this is half "
+          "the evidence that it was chosen: a site is scored by how much it CAPTURES",
+          audit="C5", lo=0),
+        F("CATCH_KM", "float", "km", "kilometres of network captured upstream of this "
+          "station - the other half of the same evidence. Station cost correlates 0.99 with "
+          "power and 0.72 with head, and 86 % of life-cycle cost is MANNING, so twenty small "
+          "stations cost about twenty times one large one however little each lifts. The "
+          "2006 designer put ONE station in 95.45 km. A station with a large lift and a small "
+          "catchment is the one to argue about, and neither number alone shows it",
+          audit="C5", lo=0.0),
         F("RM_EDGE", "str", "-", "EDGE_UID of its rising main", required=False,
           blank_ok=True),
         F("COMM_PT", "int", "0/1", "1 where this station makes its package commissionable on "
           "its own", required=False, lo=0, hi=1),
-    ) + _PROV,
+    ) + _NAMING + _PROV,
     refs=(("NODE_UID", "nodes", "NODE_UID"),),
 )
 
@@ -830,9 +1211,29 @@ CONNECTIONS = LayerSpec(
           lo=0.0),
         F("CAN_DRAIN", "int", "0/1", "does the plot outlet sit above the sewer invert where it "
           "joins. 0 is not a rounding error - it is a plot the gravity network does not "
-          "actually serve, and it must reach the not-served schedule",
+          "actually serve, and it must reach the not-served schedule. SUPERSEDED AT CONCEPT "
+          "BY CAN_CONN, which asks the same question in a form that can actually be computed "
+          "- kept because s8 writes it and the two must agree",
           required=False, lo=0, hi=1),
-    ) + _PROV,
+        F("CAN_CONN", "int", "0/1", "CAN THIS PLOT CONNECT, on gravity, to a CHAMBER. Concept "
+          "rule 5: one simple check per plot - the connection leaves BELOW ground level (not "
+          "at it), runs to a CHAMBER (not to the nearest point on a pipe), and loses fall "
+          "over its OWN ROUTE LENGTH. This is the field that closes the gap W11b left open: "
+          "it published DRAIN_SHALLOW - a bound at minimum cover - and recorded CAN_DRAIN as "
+          "'cannot run', and a check that cannot run is a FAILURE, not a blank "
+          "(inheritance row 2)", audit="C3", lo=0, hi=1),
+        F("CONN_WHY", "str", "-", "why it cannot connect; blank where it can. Free text, "
+          "kept short and reusable so the not-served schedule groups - e.g. 'sewer above the "
+          "plot outlet', 'no chamber within reach', 'route rises'. Concept rule 7 is FLAG, "
+          "DO NOT SOLVE: anything unresolvable at concept is named with its REASON and its "
+          "SIZE, never silently dropped. This is the reason; CONN_NEED is the size",
+          audit="C3", blank_ok=True),
+        F("CONN_NEED", "float", "m", "WHAT IT WOULD TAKE, in metres - how much deeper the "
+          "sewer on this run would have to be for the plot to reach it on gravity. 0.0 where "
+          "it already connects. A named gap with no size cannot be priced, cannot be ranked "
+          "and cannot be argued about, and 5,521 plots is a number nobody can act on until "
+          "it is 5,521 plots needing this much depth on these runs", audit="C3", lo=0.0),
+    ) + _NAMING + _PROV,
     refs=(("OUT_NODE", "nodes", "NODE_UID"),),
 )
 
@@ -1286,6 +1687,126 @@ def validate(gdf, layer_name: str, *, stage: str = "", strict: bool = True,
     return gdf
 
 
+def constant_column_problem(gdf, col: str, mask=None, *, what: str = "",
+                            min_rows: int = VARY_MIN_ROWS) -> Optional[str]:
+    """One line describing a column that is CONSTANT where it should VARY, or None.
+
+    INHERITANCE ROW 22, and it is the only defect class in this project no result-based check
+    could ever find: `ANGLE_DEG = 90` was published on all 3,290 crossings and called a
+    declaration, while the measured minimum was 0.00 deg with 23 crossings under 45. The
+    layer was internally consistent, every range check passed, and the number was invented.
+
+    `mask` restricts the test to the rows where the quantity is supposed to exist - the drop
+    reasons on the chambers that actually drop, the failure reasons on the plots that
+    actually fail. Constancy over a filtered set is the evidence; constancy over a column
+    that is mostly blank is not.
+
+    `min_rows` is VARY_MIN_ROWS, a STRUCTURAL threshold: below it, one repeated value is a
+    small sample rather than a fabrication, and calling a five-drop test network a fabrication
+    would train everyone to switch the check off.
+    """
+    if col not in gdf.columns:
+        return None
+    s = gdf[col]
+    if mask is not None:
+        s = s[mask]
+    s = s[~_blank(s)] if not pd.api.types.is_numeric_dtype(s) else s[s.notna()]
+    n = len(s)
+    if n < min_rows:
+        return None
+    vals = set(s.astype(str))
+    if len(vals) > 1:
+        return None
+    return (f"{col} is CONSTANT at {list(vals)[0]!r} across all {n:,} rows where it applies"
+            + (f" ({what})" if what else "")
+            + ". A published column that is constant where it should vary is a FABRICATION, "
+              "not a declaration - a crossing angle was published as 90 deg on 3,290 rows "
+              "here and the measured minimum was 0.00. If every one of these genuinely has "
+              "the same value, the computation is not reading its own input.")
+
+
+def _name_problems(gdf, spec: LayerSpec, cols) -> List[str]:
+    """NAME / TOWN / SUBNET / TIER must agree with each other and with the grammar.
+
+    A name that says one thing and a column that says another is a layer nobody can filter:
+    the drawing groups by NAME, the schedule groups by SUBNET, and the two then describe
+    different networks. Blank rows are skipped - naming runs after connectivity is known
+    (an element outside a town takes the letter of the first town DOWNSTREAM of it), so a
+    layer published before it is legitimately unnamed. assert_named() is what requires the
+    work to have actually happened."""
+    out: List[str] = []
+    if "NAME" not in cols:
+        return out
+
+    def _norm(col):
+        """A blank is a blank whichever format it came back from. A shapefile DBF returns
+        None where the GeoPackage stored an empty string, and `astype(str)` would turn that
+        into the literal 'nan' - which then 'disagrees' with a station's legitimately blank
+        SUBNET. The publish round trip in _self_test() caught exactly that."""
+        s = gdf[col]
+        return s.where(~_blank(s), "").astype(str).str.strip()
+
+    nm = _norm("NAME")
+    named = ~_blank(gdf["NAME"])
+    if not named.any():
+        return out
+
+    parsed = {v: parse_name(v) for v in set(nm[named])}
+    bad = [v for v in sorted(parsed) if parsed[v] is None]
+    if bad:
+        out.append(
+            f"{len(bad):,} NAME values do not fit the grammar (e.g. {bad[:4]}). The forms "
+            "are I-S03 / I-S03-SM-M012 / I-S03-C012 / I-PMP02 / I-P02 - town letter, "
+            "subnetwork, tier, element, zero-padded. Build them with concept_name(); a "
+            "stored name that cannot be parsed is a label, not an identifier.")
+
+    dup = nm[named].duplicated(keep=False)
+    if dup.any():
+        out.append(f"DUPLICATE NAME on {int(dup.sum()):,} rows of '{spec.name}' "
+                   f"({sorted(set(nm[named][dup]))[:4]}). A name that identifies two things "
+                   "identifies neither, and the drawing and the schedule would each pick a "
+                   "different one.")
+
+    # The three comparisons below are VECTORISED and format ONE example, not one string per
+    # bad row. On a 56,930-chamber layer whose TOWN column is stale, a list comprehension
+    # would build 56,930 messages to print four of them.
+    parseable = named & nm.map(lambda v: parsed.get(v) is not None)
+
+    def _first(mask, a, b, alab):
+        i = mask.idxmax()
+        return f"{a[i]} vs {alab}={b[i]!r}"
+
+    if "TOWN" in cols:
+        t = _norm("TOWN")
+        want = nm.map(lambda v: (parsed.get(v) or {}).get("town", ""))
+        mism = parseable & (want != t)
+        if mism.any():
+            out.append(f"NAME and TOWN disagree on {int(mism.sum()):,} rows (e.g. "
+                       f"{_first(mism, nm, t, 'TOWN')}). The town letter is IN the name; two "
+                       "sources for it means one of them is stale after the next retown.")
+    if "SUBNET" in cols:
+        sn = _norm("SUBNET")
+        want = nm.map(lambda v: (parsed.get(v) or {}).get("sub", ""))
+        mism = parseable & (want != sn)
+        if mism.any():
+            out.append(
+                f"NAME and SUBNET disagree on {int(mism.sum()):,} rows (e.g. "
+                f"{_first(mism, nm, sn, 'SUBNET')}). A pump and its force main carry a BLANK "
+                "subnet and a name with no S-token - a station is a SEAM between "
+                "subnetworks, not a member of one - and every gravity element carries both.")
+    if "TIER" in cols:
+        tr = _norm("TIER").str.lower()
+        is_mh = nm.map(lambda v: (parsed.get(v) or {}).get("kind", "") == "manhole")
+        want = nm.map(lambda v: (parsed.get(v) or {}).get("tier", ""))
+        got = tr.map(lambda v: TIER_TOKEN.get(v, ""))
+        mism = parseable & is_mh & (want != got)
+        if mism.any():
+            out.append(f"NAME and TIER disagree on {int(mism.sum()):,} chambers (e.g. "
+                       f"{_first(mism, nm, tr, 'TIER')}). The tier token is in the name: "
+                       f"{TIER_TOKEN}.")
+    return out
+
+
 def _cross_field(gdf, spec: LayerSpec, cols) -> List[str]:
     """Consistency rules BETWEEN fields of one row. Each is a rule an auditor cannot see,
     because an auditor recomputes from geometry and terrain rather than from the row - so a
@@ -1294,6 +1815,9 @@ def _cross_field(gdf, spec: LayerSpec, cols) -> List[str]:
 
     def has(*c):
         return all(x in cols for x in c)
+
+    # ---------------------------------------------------------------- naming, shared
+    out += _name_problems(gdf, spec, cols)
 
     # ---------------------------------------------------------------- nodes
     if spec.name == "nodes":
@@ -1369,6 +1893,53 @@ def _cross_field(gdf, spec: LayerSpec, cols) -> List[str]:
                            f"(the trigger is {C.BACKDROP_MAX} m, G203-p30). The vortex count "
                            "is the diagnostic for a tree that is not following the ground, "
                            "so it must be exactly right.")
+        # CONCEPT RULE 1: every drop carries the reason it exists.
+        if has("DROP_M", "DROP_WHY"):
+            d = pd.to_numeric(gdf.DROP_M, errors="coerce").fillna(0.0)
+            drops = d > 0.0
+            noreason = drops & _blank(gdf.DROP_WHY)
+            if noreason.any():
+                out.append(
+                    f"{int(noreason.sum()):,} chambers drop with no DROP_WHY (rows "
+                    f"{_fmt_rows(gdf.index[noreason])}). Concept rule 1: the laid slope is a "
+                    "clamp and the surplus fall is taken as a DROP - so a drop is a decision "
+                    f"and it names itself. Allowed: {[v for v in DROP_WHY if v]}.")
+            spurious = (~drops) & (~_blank(gdf.DROP_WHY))
+            if spurious.any():
+                out.append(f"{int(spurious.sum()):,} chambers carry a DROP_WHY with DROP_M = "
+                           "0 - a reason for a drop that is not there.")
+            prob = constant_column_problem(
+                gdf, "DROP_WHY", drops,
+                what="every drop on this network was given the same reason")
+            if prob:
+                out.append(prob + " Four causes are declared - a velocity cap, a tier step, "
+                           "a cover recovery and an obstruction - and a network large enough "
+                           "to have this many drops meets more than one of them.")
+
+        # CONCEPT RULE 2: the subnetwork joins the main pipe at its LOWEST POINT, and where
+        # it cannot, the distance from that low point is recorded.
+        if has("JOIN_MAIN", "JOIN_OFF_M"):
+            jm = pd.to_numeric(gdf.JOIN_MAIN, errors="coerce").fillna(0) == 1
+            off = pd.to_numeric(gdf.JOIN_OFF_M, errors="coerce").fillna(0.0)
+            bad = (~jm) & (off > 0)
+            if bad.any():
+                out.append(f"{int(bad.sum()):,} chambers carry a JOIN_OFF_M without "
+                           "JOIN_MAIN = 1 - an offset from a low point they do not join at.")
+        if has("JOIN_OFF_M", "JOIN_WHY"):
+            off = pd.to_numeric(gdf.JOIN_OFF_M, errors="coerce").fillna(0.0)
+            bad = (off > 0) & _blank(gdf.JOIN_WHY)
+            if bad.any():
+                out.append(
+                    f"{int(bad.sum()):,} subnetworks join the main pipe away from their own "
+                    f"low point (worst {off[bad].max():,.0f} m) with no JOIN_WHY. Concept "
+                    "rule 2 allows the join to move when there is no street at the low point "
+                    "- it requires the distance AND the reason. W11b had 42 components "
+                    "discharging with more than half their catchment BELOW the outlet, "
+                    "389.5 km of it, and nothing on the layer said so.")
+            bad = (off <= 0) & (~_blank(gdf.JOIN_WHY))
+            if bad.any():
+                out.append(f"{int(bad.sum()):,} chambers explain an offset of zero.")
+
         if has("MH_DIA", "DROP_TYPE"):
             dia = pd.to_numeric(gdf.MH_DIA, errors="coerce")
             internal = gdf.DROP_TYPE.astype(str).str.lower() == "backdrop"
@@ -1617,6 +2188,46 @@ def _cross_field(gdf, spec: LayerSpec, cols) -> List[str]:
                            "SYSTEM='central' with no chamber to enter at. Say which system "
                            "serves them, or the plot is silently unserved.")
 
+        # CONCEPT RULE 5 and RULE 7: a plot that cannot connect is named, with its size.
+        if has("CAN_CONN", "CONN_WHY"):
+            cc = pd.to_numeric(gdf.CAN_CONN, errors="coerce").fillna(-1)
+            cannot = cc == 0
+            bad = cannot & _blank(gdf.CONN_WHY)
+            if bad.any():
+                out.append(
+                    f"{int(bad.sum()):,} plots are marked CAN_CONN = 0 with no CONN_WHY "
+                    f"(rows {_fmt_rows(gdf.index[bad])}). FLAG, DO NOT SOLVE means named "
+                    "with its reason and its size - an unexplained count is the same "
+                    "unusable finding as W11b's '5,521 plots cannot drain'.")
+            bad = (cc == 1) & (~_blank(gdf.CONN_WHY))
+            if bad.any():
+                out.append(f"{int(bad.sum()):,} plots that CAN connect carry a reason why "
+                           "they cannot.")
+            prob = constant_column_problem(
+                gdf, "CONN_WHY", cannot,
+                what="every plot that cannot connect was given the same reason")
+            if prob:
+                out.append(prob)
+        if has("CAN_CONN", "CONN_NEED"):
+            cc = pd.to_numeric(gdf.CAN_CONN, errors="coerce").fillna(-1)
+            need = pd.to_numeric(gdf.CONN_NEED, errors="coerce").fillna(0.0)
+            bad = (cc == 1) & (need > 0.0)
+            if bad.any():
+                out.append(f"{int(bad.sum()):,} plots connect and still ask for "
+                           f"{need[bad].max():.2f} m more depth. CONN_NEED is what it would "
+                           "TAKE, so it is zero wherever nothing is needed.")
+        if has("CAN_CONN", "CAN_DRAIN"):
+            cc = pd.to_numeric(gdf.CAN_CONN, errors="coerce")
+            cd = pd.to_numeric(gdf.CAN_DRAIN, errors="coerce")
+            bad = cc.notna() & cd.notna() & (cc != cd)
+            if bad.any():
+                out.append(
+                    f"CAN_CONN and CAN_DRAIN disagree on {int(bad.sum()):,} plots. They ask "
+                    "the same question - can this plot reach the network on gravity - and "
+                    "CAN_CONN is the concept-stage form that can actually be computed. Two "
+                    "answers to one question is the defect that has cost this project most; "
+                    "write CAN_DRAIN from CAN_CONN or stop writing it.")
+
     # ---------------------------------------------------------------- stations
     if spec.name == "stations":
         if has("ST_TYPE", "Q_DUTY_LS"):
@@ -1662,6 +2273,32 @@ def _cross_field(gdf, spec: LayerSpec, cols) -> List[str]:
                            f"{C.WELL_STARTS_MIN:g} starts/h. G203-p48 sets that as the "
                            "MINIMUM for motors up to 30 kW; a lower rate buys a smaller wet "
                            "well by breaching the cycle rule.")
+        # CONCEPT RULE 6: a station's POSITION IS CHOSEN, NOT TRIGGERED. These two fields are
+        # the evidence that it was chosen, and W11b is the reason they are required.
+        if has("N_SUBNET"):
+            ns = pd.to_numeric(gdf.N_SUBNET, errors="coerce").fillna(-1)
+            bad = ns == 0
+            if bad.any():
+                out.append(
+                    f"{int(bad.sum()):,} stations have N_SUBNET = 0 - NOTHING DRAINS INTO "
+                    f"THEM (rows {_fmt_rows(gdf.index[bad])}). 15 of W11b's 47 were like "
+                    "this, and they were leftovers from a pass that could only ever ADD. "
+                    "Anything a pass can add, a later pass must be able to TAKE AWAY, and "
+                    "the stage publishes how many it removed (inheritance row 4).")
+        if has("N_SUBNET", "CATCH_KM"):
+            ns = pd.to_numeric(gdf.N_SUBNET, errors="coerce").fillna(0)
+            ck = pd.to_numeric(gdf.CATCH_KM, errors="coerce").fillna(0.0)
+            bad = (ns > 0) & (ck <= 0.0)
+            if bad.any():
+                out.append(f"{int(bad.sum()):,} stations claim upstream subnetworks and zero "
+                           "captured network length. A station that captures no kilometres "
+                           "cannot be scored against its lift, which is the whole of the "
+                           "'position is chosen' test.")
+            prob = constant_column_problem(gdf, "CATCH_KM", what="every station captures "
+                                           "exactly the same length of network")
+            if prob:
+                out.append(prob)
+
         if has("GRD_M", "FLOOD_LV"):
             g = pd.to_numeric(gdf.GRD_M, errors="coerce")
             f_ = pd.to_numeric(gdf.FLOOD_LV, errors="coerce")
@@ -1779,6 +2416,50 @@ def assert_crossings_resolve(reaches=None, corridors=None, crossings=None) -> No
                 "or a reach that crosses lost its link - both are findings.")
     if problems:
         raise ContractError("CROSSINGS REGISTER DOES NOT RESOLVE:\n  " + "\n  ".join(problems))
+
+
+def assert_named(gdf, layer_name: str, *, stage: str = "") -> None:
+    """Every row on this layer is NAMED - the gate the FINAL publish calls.
+
+    The LayerSpec makes NAME/TOWN/SUBNET `required` (the column must exist) and `blank_ok`
+    (a row may be blank), because naming runs AFTER connectivity is known: an element outside
+    a town takes the letter of the first town DOWNSTREAM of it, which is not knowable when a
+    chamber is first minted. So the spec answers 'can this be checked?' and this answers 'was
+    it actually done?'.
+
+    Two mechanisms rather than one, deliberately. A single `blank_ok=False` would block every
+    intermediate stage; a single gate with no column requirement would let a layer reach the
+    audit with no naming column at all, and a check that cannot run is a failure."""
+    spec = _spec(layer_name)
+    if spec.field("NAME") is None:
+        raise ContractError(f"layer '{spec.name}' has no NAME field to check - assert_named() "
+                            "was pointed at a layer the naming rule does not cover.")
+    problems = []
+    for col in ("NAME", "TOWN"):
+        if col not in gdf.columns:
+            problems.append(f"no {col} column at all")
+            continue
+        blank = _blank(gdf[col])
+        if blank.any():
+            problems.append(f"{int(blank.sum()):,} of {len(gdf):,} rows have no {col} "
+                            f"(rows {_fmt_rows(gdf.index[blank])})")
+    # SUBNET is legitimately blank on a station and its force main - a station is a SEAM
+    # between subnetworks, not a member of one - so it is required only where the grammar
+    # says the name carries one.
+    if "SUBNET" in gdf.columns and "NAME" in gdf.columns:
+        want = gdf["NAME"].astype(str).map(
+            lambda v: bool((parse_name(v) or {}).get("sub")))
+        blank = _blank(gdf["SUBNET"]) & want
+        if blank.any():
+            problems.append(f"{int(blank.sum()):,} rows carry a name with an S-token and no "
+                            "SUBNET value")
+    if problems:
+        raise ContractError(
+            f"LAYER '{spec.name}' IS NOT FULLY NAMED"
+            + (f" (stage {stage})" if stage else "") + ":\n  " + "\n  ".join(problems)
+            + "\nNaming runs after connectivity is known, so an unnamed layer mid-pipeline is "
+              "expected - an unnamed layer at publication is not. Build the names with "
+              "concept_name() and the town codes with town_letters().")
 
 
 # ======================================================================================
@@ -2506,7 +3187,7 @@ def run_banner(reaches=None, nodes=None) -> str:
     above DN1200, and FLAG them. Plus the terrain quantities, because a design that is not
     following the ground must say so on its own front page."""
     parts = [f"{CONTRACT_VERSION} | criteria {C.__module__} | EPSG:{CRS_EPSG}",
-             "", C.tau_banner()]
+             "", C.tau_banner(), "", C.concept_banner()]
     if reaches is not None and "DN" in reaches.columns:
         big = C.large_dn_banner(pd.to_numeric(reaches["DN"], errors="coerce").dropna())
         if big:
@@ -2555,17 +3236,37 @@ AUDIT_NEEDS: Dict[str, Dict[str, Tuple[str, ...]]] = {
     "G3":  {"reaches": ("US_NODE", "DS_NODE"), "nodes": ("NODE_UID",)},
     "G4":  {"external": ("manifest",)},                          # no stage silently no-ops
     "G5":  {"reaches": ("SRC", "CONFIDENCE"), "nodes": ("SRC", "CONFIDENCE")},
+    # C1-C5 are the CONCEPT-STAGE rules (engineer 2026-09-05/06, philosophy sec 9). Each is
+    # a rule the engineer stated, so each gets a check - "a rule that cannot be checked is
+    # decoration, and a finding that is not checked is a finding waiting to be lost twice".
+    "C1":  {"nodes": ("DROP_M", "DROP_WHY", "DROP_TYPE")},       # every drop names its cause
+    "C2":  {"nodes": ("JOIN_MAIN", "JOIN_OFF_M", "JOIN_WHY")},   # outfall at the low point
+    "C3":  {"connections": ("CAN_CONN", "CONN_WHY", "CONN_NEED")},   # plot connectability
+    "C4":  {"nodes": ("NAME", "TOWN", "SUBNET"),                 # the naming grammar
+            "reaches": ("NAME", "TOWN", "SUBNET")},
+    "C5":  {"stations": ("N_SUBNET", "CATCH_KM", "WHY"),         # position chosen, not
+            "rising_mains": ("DS_TYPE", "LEN_M")},               # triggered; shortest main
 }
 
 
-def audit_readiness(reaches=None, nodes=None, external: Sequence[str] = ()) -> pd.DataFrame:
+def audit_readiness(reaches=None, nodes=None, external: Sequence[str] = (), *,
+                    connections=None, stations=None, rising_mains=None) -> pd.DataFrame:
     """Which checks can run against these layers, and what is missing from each.
 
     Call it at the END OF EVERY STAGE that touches a published layer. A check that cannot run
     is a FAILURE, so discovering one here - while the writing code is still open - is the
-    whole point. W10 shipped with 7 of 22 unanswerable."""
+    whole point. W10 shipped with 7 of 22 unanswerable.
+
+    The three keyword layers were added with the concept-stage checks C3 and C5, which read
+    the connections, stations and rising-main layers. They are keyword-only and default to
+    None so every existing two-layer caller keeps working - and a caller that passes neither
+    is TOLD its C3/C5 cannot run rather than being scored as if they had passed."""
     have = {"reaches": set(reaches.columns) if reaches is not None else set(),
             "nodes": set(nodes.columns) if nodes is not None else set(),
+            "connections": set(connections.columns) if connections is not None else set(),
+            "stations": set(stations.columns) if stations is not None else set(),
+            "rising_mains": (set(rising_mains.columns) if rising_mains is not None
+                             else set()),
             "external": set(external)}
     rows = []
     for cid, need in AUDIT_NEEDS.items():
@@ -2614,18 +3315,23 @@ class Schedule:
 SCHEDULES: Dict[str, Schedule] = {s.name: s for s in (
     Schedule(
         "chambers", "nodes", "NODE_REF",
-        (("Manhole", "NODE_REF"), ("Easting", "X"), ("Northing", "Y"),
+        (("Name", "NAME"), ("Subnetwork", "SUBNET"),
+         ("Manhole", "NODE_REF"), ("Easting", "X"), ("Northing", "Y"),
          ("Type", "NODE_KIND"), ("Cover level (m)", "GRD_M"), ("Invert level (m)", "INV_M"),
          ("Depth (m)", "DEPTH_M"), ("Cover to crown (m)", "COVER_M"),
          ("Chamber dia. (m)", "MH_DIA"), ("Inlets", "N_IN"),
          ("Min inlet angle (deg)", "INLET_DEG"), ("Swept channel", "INLET_FLAG"),
          ("Max drop (m)", "DROP_M"), ("Drop type", "DROP_TYPE"),
-         ("Vortex shaft", "VORTEX"), ("Tier", "TIER"), ("Package", "PACKAGE"),
+         ("Drop reason", "DROP_WHY"),
+         ("Vortex shaft", "VORTEX"), ("Joins main pipe", "JOIN_MAIN"),
+         ("Offset from low point (m)", "JOIN_OFF_M"), ("Offset reason", "JOIN_WHY"),
+         ("Tier", "TIER"), ("Package", "PACKAGE"),
          ("Phase", "PHASE"), ("Confidence", "CONFIDENCE")),
-        "scope-p25 chamber schedule; G203-p29-30 sec 4.4"),
+        "scope-p25 chamber schedule; G203-p29-30 sec 4.4; concept rules 1 and 2"),
     Schedule(
         "pipes", "reaches", "EDGE_UID",
-        (("Pipe", "EDGE_UID"), ("US manhole", "US_NODE"), ("DS manhole", "DS_NODE"),
+        (("Name", "NAME"), ("Subnetwork", "SUBNET"),
+         ("Pipe", "EDGE_UID"), ("US manhole", "US_NODE"), ("DS manhole", "DS_NODE"),
          ("US invert (m)", "INV_UP"), ("DS invert (m)", "INV_DN"),
          ("US depth (m)", "US_DEPTH"), ("DS depth (m)", "DS_DEPTH"),
          ("Length (m)", "LEN_M"), ("DN (mm)", "DN"), ("Material", "MATERIAL"),
@@ -2640,29 +3346,36 @@ SCHEDULES: Dict[str, Schedule] = {s.name: s for s in (
         "scope-p25 pipe schedule; scope-p16 item 36"),
     Schedule(
         "stations", "stations", "NODE_REF",
-        (("Station", "NODE_REF"), ("Chamber", "NODE_UID"), ("Type", "ST_TYPE"),
+        (("Name", "NAME"),
+         ("Station", "NODE_REF"), ("Chamber", "NODE_UID"), ("Type", "ST_TYPE"),
          ("Reason", "WHY"), ("Duty flow (L/s)", "Q_DUTY_LS"), ("Qadf (m3/d)", "Q_ADF_M3D"),
          ("Static lift (m)", "LIFT_M"), ("Wet well (m3)", "WELL_M3"),
          ("Starts per hour", "WW_STARTS"), ("Ground level (m)", "GRD_M"),
+         ("Subnetworks served", "N_SUBNET"), ("Network captured (km)", "CATCH_KM"),
          ("1:50-yr flood level (m)", "FLOOD_LV"), ("Land take (m2)", "LAND_M2"),
          ("Properties", "N_PROP"), ("Package", "PACKAGE"), ("Phase", "PHASE")),
-        "scope-p15 item 19; G203-p40 Tab 17, p43 Tab 21, p48 sec 7.8"),
+        "scope-p15 item 19; G203-p40 Tab 17, p43 Tab 21, p48 sec 7.8; concept rule 6"),
     Schedule(
         "rising_mains", "rising_mains", "EDGE_UID",
-        (("Rising main", "EDGE_UID"), ("Station", "STATION"), ("DN (mm)", "DN"),
+        (("Name", "NAME"),
+         ("Rising main", "EDGE_UID"), ("Station", "STATION"), ("DN (mm)", "DN"),
          ("Material", "MATERIAL"), ("Length (m)", "LEN_M"),
          ("Duty flow (L/s)", "Q_DUTY_LS"), ("Velocity at duty (m/s)", "V_DUTY_MS"),
          ("Static head (m)", "STAT_HD_M"), ("Total head (m)", "TOT_HD_M"),
+         ("Discharges into", "DS_TYPE"), ("Discharge chamber", "DS_NODE"),
          ("Air valves", "N_AIRV"), ("Washouts", "N_WASH"),
          ("Septicity treatment", "SEPTIC_FL"), ("Package", "PACKAGE")),
-        "scope-p13; G203-pp50-55 sec 8"),
+        "scope-p13; G203-pp50-55 sec 8; concept rule 6 - the shortest main gravity allows"),
     Schedule(
         "connections", "connections", "PLOT_ID",
         (("Plot", "PLOT_ID"), ("Connection", "CONN_ID"), ("Chamber", "OUT_NODE"),
+         ("Subnetwork", "SUBNET"),
          ("Served by", "SYSTEM"), ("Status", "WHY"), ("Properties", "N_PROP"),
          ("Qadf (m3/d)", "Q_ADF_M3D"), ("Length (m)", "LEN_M"),
-         ("Gradient (%)", "SLOPE_LAID"), ("Cover (m)", "COVER_M"), ("Package", "PACKAGE")),
-        "scope-p12 list of customer / house connections"),
+         ("Gradient (%)", "SLOPE_LAID"), ("Cover (m)", "COVER_M"),
+         ("Can connect", "CAN_CONN"), ("If not, why", "CONN_WHY"),
+         ("Extra sewer depth needed (m)", "CONN_NEED"), ("Package", "PACKAGE")),
+        "scope-p12 list of customer / house connections; concept rules 5 and 7"),
     Schedule(
         "crossings", "crossings", "CROSS_ID",
         (("Crossing", "CROSS_ID"), ("Pipe", "EDGE_UID"), ("Obstacle", "OBSTACLE"),
@@ -2778,8 +3491,12 @@ def _demo_reaches(net: "Network"):
             PF=1.0, PF_METH="held",
             V_PK_MS=v, DOD_PK=y, RET_MIN=hydra.retention_min(r.LEN_M, v) or 0.0,
             PAST_CAP=0, CAP_EXIT="", CAP_LEN_M=0.0, TIE_TYPE="none",
-            ON_DUAL_M=0.0, ON_WADI_M=0.0, CROSS_ID=""))
+            ON_DUAL_M=0.0, ON_WADI_M=0.0, CROSS_ID="",
+            TOWN="I", SUBNET="S01"))
     ex = pd.DataFrame(rows)
+    # a conduit is named for its UPSTREAM manhole (concept rule 8)
+    ex["NAME"] = [concept_name("I", "conduit", subnet="S01", seq=i + 1)
+                  for i in range(len(ex))]
     ex["QPK_LS"] = ex.QADF_M3D * 1000.0 / 86400.0 * ex.PF + ex.QINF_LS
     out = g.join(ex)
     # the laid gradient has to reproduce the inverts, or the contract will say so
@@ -2794,10 +3511,74 @@ def _demo_nodes(net: "Network"):
     n["COVER_M"] = [cover(200, d) for d in n.DEPTH_M]
     for col, val in (("INLET_DEG", 180.0), ("INLET_FLAG", 0), ("MH_DIA", 1.0),
                      ("MH_MAT", "concrete"), ("DROP_M", 0.0), ("DROP_TYPE", "none"),
-                     ("VORTEX", 0), ("Q_ADF_M3D", 10.0), ("Q_PK_LS", 0.5),
-                     ("N_PROP", 12.0), ("PAST_CAP", 0), ("CAP_EXIT", "")):
+                     ("DROP_WHY", ""), ("VORTEX", 0), ("Q_ADF_M3D", 10.0), ("Q_PK_LS", 0.5),
+                     ("N_PROP", 12.0), ("PAST_CAP", 0), ("CAP_EXIT", ""),
+                     ("JOIN_MAIN", 0), ("JOIN_OFF_M", 0.0), ("JOIN_WHY", ""),
+                     ("TOWN", "I"), ("SUBNET", "S01")):
         n[col] = val
+    n["NAME"] = [concept_name("I", "manhole", subnet="S01", tier=t, seq=i + 1)
+                 for i, t in enumerate(n.TIER)]
+    # the subnetwork meets the main pipe at its outfall, and here it does so AT its own low
+    # point - so the offset is 0.0 and there is nothing to explain (concept rule 2)
+    n.loc[n.IS_OUTFALL == 1, "JOIN_MAIN"] = 1
     return n
+
+
+def _demo_connections(net: "Network"):
+    """Two load units - one that connects, one that cannot and says why and by how much."""
+    uids = list(net.nodes)
+    rows, geoms = [], []
+    for i, (can, why, need) in enumerate(((1, "", 0.0),
+                                          (0, "sewer above the plot outlet", 0.80))):
+        geoms.append(LineString([(i * 20.0, 30.0), (i * 20.0, 20.0)]))
+        rows.append(dict(
+            CONN_ID=f"C{i + 1:05d}", PLOT_ID=f"PLOT{i + 1:05d}", OUT_NODE=uids[i],
+            WHY="assigned", SYSTEM="central", CONN_TYPE="PCS",
+            Q_ADF_M3D=round(C.PLOT_QADF_M3D * C.PROPS_PER_PLOT, 4),
+            N_PROP=C.PROPS_PER_PLOT, LEN_M=10.0,
+            SLOPE_LAID=C.PCS_MIN_SLOPE * 100.0,        # G203-p18 Table 5, PCS 3 % minimum
+            COVER_M=C.PCS_MIN_COVER,                   # G203-p19 sec 3.5, 600 mm
+            CAN_CONN=can, CONN_WHY=why, CONN_NEED=need,
+            NAME=concept_name("I", "manhole", subnet="S01", tier="lateral", seq=i + 1),
+            TOWN="I", SUBNET="S01",
+            SRC="dwg_road", CONFIDENCE="drafted", STAGE="T", PACKAGE="", PHASE=0))
+    g = gpd.GeoDataFrame(rows, geometry=geoms, crs=CRS_EPSG)
+    # a connection is named for the CHAMBER it enters, so two plots on one chamber would
+    # share a name - here they do not, and the uniqueness check is live
+    g["LEN_M"] = g.geometry.length
+    return g
+
+
+def _demo_stations():
+    """One station, designed rather than located: duty, lift, wet well, and the two fields
+    that say its position was CHOSEN - what it captures, and from how many subnetworks."""
+    q_ls, starts = 50.0, 10.0
+    return gpd.GeoDataFrame(
+        [dict(NODE_UID="N0000003", NODE_REF="P0-L-MH0003", NAME="I-PMP01", TOWN="I",
+              SUBNET="", WHY="cap", ST_TYPE=C.ps_type(q_ls), Q_DUTY_LS=q_ls, LIFT_M=6.20,
+              N_PROP=430.0, Q_ADF_M3D=1830.0,
+              WELL_M3=C.well_volume_m3(q_ls / 1000.0, starts), WW_STARTS=starts,
+              GRD_M=330.0, INV_M=323.8, FLOOD_LV=328.0, LAND_M2=60.0,
+              N_SUBNET=2, CATCH_KM=7.4, RM_EDGE="E9000001", COMM_PT=1,
+              SRC="dwg_road", CONFIDENCE="derived", STAGE="T", PACKAGE="", PHASE=0)],
+        geometry=[Point(200.0, 0.0)], crs=CRS_EPSG)
+
+
+def _demo_rising_mains():
+    """One rising main that lifts to the NEAREST point where gravity resumes - DS_TYPE
+    'manhole', not 'stp' (concept rule 6)."""
+    dn, q_ls = 200, 50.0
+    v = (q_ls / 1000.0) / (math.pi * (C.internal_diameter(dn) / 2.0) ** 2)
+    line = LineString([(200.0, 0.0), (200.0, 180.0)])
+    return gpd.GeoDataFrame(
+        [dict(EDGE_UID="E9000001", US_NODE="N0000003", DS_NODE="N0000002",
+              STATION="N0000003", NAME="I-P01", TOWN="I", SUBNET="",
+              DN=dn, MATERIAL="DI", LEN_M=line.length, Q_DUTY_LS=q_ls,
+              V_DUTY_MS=round(v, 3), V_MIN_MS=round(v * 0.45, 3),
+              STAT_HD_M=6.20, TOT_HD_M=8.10, RETENT_M=3.0, N_AIRV=1, N_WASH=1,
+              SEPTIC_FL=1, DS_TYPE="manhole",
+              SRC="dwg_road", CONFIDENCE="derived", STAGE="T", PACKAGE="", PHASE=0)],
+        geometry=[line], crs=CRS_EPSG)
 
 
 def _raises(fn, needle: str, what: str) -> None:
@@ -2846,6 +3627,7 @@ def _self_test(verbose: bool = True) -> None:
     assert net.outfalls() == [c] and net.check() == []
 
     reaches, nodes = _demo_reaches(net), _demo_nodes(net)
+    conns, stns, rmains = _demo_connections(net), _demo_stations(), _demo_rising_mains()
     validate(nodes, "nodes", stage="selftest")
     validate(reaches, "reaches", stage="selftest")
     Network.assert_round_trip(nodes, reaches)
@@ -3016,16 +3798,175 @@ def _self_test(verbose: bool = True) -> None:
     # ------------------------------------------------------------- schedules and the model
     ch = schedule_frame(nodes, "chambers", stage="selftest")
     pi = schedule_frame(reaches, "pipes", stage="selftest")
-    assert list(ch.columns)[0] == "Manhole" and "Tractive stress (Pa)" in pi.columns
+    assert list(ch.columns)[0] == "Name" and "Manhole" in ch.columns
+    assert "Tractive stress (Pa)" in pi.columns
+    # the concept-stage flags reach the tables the client actually reads. A flag that lives
+    # only in a GeoPackage column is a flag nobody outside this pipeline will ever see.
+    assert {"Drop reason", "Joins main pipe", "Offset from low point (m)"} <= set(ch.columns)
+    st_sch = schedule_frame(stns, "stations", stage="selftest")
+    rm_sch = schedule_frame(rmains, "rising_mains", stage="selftest")
+    cn_sch = schedule_frame(conns, "connections", stage="selftest")
+    assert {"Subnetworks served", "Network captured (km)"} <= set(st_sch.columns)
+    assert "Discharges into" in rm_sch.columns
+    assert {"Can connect", "If not, why",
+            "Extra sewer depth needed (m)"} <= set(cn_sch.columns)
     gems = gems_frame(reaches, "CONDUITS", stage="selftest")
     assert {"LABEL", "START_ND", "STOP_ND"} <= set(gems.columns)
 
+    # =========================================================== THE CONCEPT-STAGE RULES
+    # Engineer, 2026-09-05/06; philosophy sec 9. Each rule gets a demonstration that its
+    # guard BITES - a check nobody has seen fail is a check nobody knows is wired in.
+
+    validate(conns, "connections", stage="selftest")
+    validate(stns, "stations", stage="selftest")
+    validate(rmains, "rising_mains", stage="selftest")
+
+    # ---- rule 8: the naming grammar, and the town letters --------------------------------
+    assert concept_name("I", "subnet", subnet="S03") == "I-S03"
+    assert concept_name("I", "manhole", subnet="S03", tier="sub main", seq=12) == \
+        "I-S03-SM-M012"
+    assert concept_name("I", "conduit", subnet="S03", seq=12) == "I-S03-C012"
+    assert concept_name("I", "pump", seq=2) == "I-PMP02"
+    assert concept_name("I", "main", seq=2) == "I-P02"
+    # PMP is matched before P, so a pump is never read as force main "MP02"
+    assert parse_name("I-PMP02")["kind"] == "pump"
+    assert parse_name("I-P02")["kind"] == "main"
+    assert parse_name("I-S03-SM-M012")["tier"] == "SM"
+    assert parse_name("I-S03-C012")["sub"] == "S03"
+    assert parse_name("I-S03-XX-M012") is None and parse_name("S03-M012") is None
+    _raises(lambda: concept_name("I", "manhole", subnet="S03", tier="lane", seq=1),
+            "not one of", "an unknown tier in a name")
+    _raises(lambda: concept_name("I", "manhole", subnet="", tier="lateral", seq=1),
+            "not S##", "a gravity element with no subnetwork")
+    _raises(lambda: concept_name("Ibri", "pump", seq=1), "1-3 upper-case",
+            "a town name used where a town CODE belongs")
+    # the article is dropped, and a clash extends BOTH towns - not the smaller one
+    assert town_letter("Al Aqar") == "A" and town_letter("Ad Dariz") == "D"
+    codes = town_letters(["Al Aqar", "Al Ayn", "Ibri"])
+    assert codes["Ibri"] == "I", codes
+    assert codes["Al Aqar"] != codes["Al Ayn"], codes
+    assert len(codes["Al Aqar"]) == len(codes["Al Ayn"]) == 2, (
+        "both towns extend on a clash - the town with more served plots is not favoured, "
+        f"got {codes}")
+    assert len(set(town_letters(["Al Aqar", "Aqar", "Ibri"]).values())) == 3
+
+    bad = nodes.copy()
+    bad.loc[bad.index[0], "NAME"] = "I-S01-TM-M001"        # says trunk, TIER says lateral
+    _raises(lambda: validate(bad, "nodes"), "NAME and TIER disagree", "a name against its tier")
+    bad = nodes.copy()
+    bad["NAME"] = "I-S01-L-M001"                            # one name for every chamber
+    _raises(lambda: validate(bad, "nodes"), "DUPLICATE NAME", "one name on three chambers")
+    bad = nodes.copy()
+    bad.loc[bad.index[0], "NAME"] = "MH-1"
+    _raises(lambda: validate(bad, "nodes"), "do not fit the grammar", "an unparseable name")
+    bad = nodes.copy()
+    bad.loc[bad.index[0], "SUBNET"] = "S09"
+    _raises(lambda: validate(bad, "nodes"), "NAME and SUBNET disagree",
+            "a subnet column that contradicts the name")
+    # blank names pass validate() - naming runs after connectivity - but not assert_named()
+    blank = nodes.copy()
+    blank["NAME"] = ""
+    blank["TOWN"] = ""
+    validate(blank, "nodes")
+    _raises(lambda: assert_named(blank, "nodes"), "NOT FULLY NAMED", "an unnamed publish")
+    assert_named(nodes, "nodes")
+    assert_named(reaches, "reaches")
+    assert_named(stns, "stations")       # SUBNET blank on a station is legal - it is a SEAM
+
+    # ---- rule 1: every drop carries the reason it exists ---------------------------------
+    bad = nodes.copy()
+    bad["DROP_M"] = 1.20
+    bad["DROP_TYPE"] = "backdrop"
+    bad["MH_DIA"] = C.MH_DIA_INTERNAL_BACKDROP      # G203-p30, so only DROP_WHY is at issue
+    _raises(lambda: validate(bad, "nodes"), "no DROP_WHY", "a drop with no reason")
+    bad["DROP_WHY"] = "velocity_cap"
+    validate(bad, "nodes")                                  # ... and now it is explained
+    bad["DROP_WHY"] = "because_it_is"
+    _raises(lambda: validate(bad, "nodes"), "ILLEGAL VALUE in DROP_WHY", "a free-text reason")
+    bad = nodes.copy()
+    bad["DROP_WHY"] = "velocity_cap"                        # a reason with no drop
+    _raises(lambda: validate(bad, "nodes"), "DROP_M = 0", "a reason for a drop that is not there")
+    # and a whole network of drops given ONE reason is a fabrication, not a finding
+    many = pd.concat([nodes.assign(DROP_M=1.2, DROP_TYPE="backdrop",
+                                   DROP_WHY="velocity_cap")] * VARY_MIN_ROWS,
+                     ignore_index=True)
+    prob = constant_column_problem(many, "DROP_WHY", many.DROP_M > 0)
+    assert prob and "FABRICATION" in prob, prob
+    many["DROP_WHY"] = ["velocity_cap" if i else "cover_recovery"
+                        for i in range(len(many))]
+    assert constant_column_problem(many, "DROP_WHY", many.DROP_M > 0) is None
+
+    # ---- rule 2: the outfall sits at the low point, or says how far off it is ------------
+    bad = nodes.copy()
+    bad.loc[bad.IS_OUTFALL == 1, "JOIN_OFF_M"] = 210.0
+    _raises(lambda: validate(bad, "nodes"), "no JOIN_WHY", "an outfall moved with no reason")
+    bad.loc[bad.IS_OUTFALL == 1, "JOIN_WHY"] = "no street at the low point"
+    validate(bad, "nodes")
+    bad = nodes.copy()
+    bad.loc[bad.index[0], "JOIN_OFF_M"] = 5.0               # offset without joining at all
+    bad.loc[bad.index[0], "JOIN_WHY"] = "x"
+    _raises(lambda: validate(bad, "nodes"), "without JOIN_MAIN", "an offset from nothing")
+
+    # ---- rule 5: a plot that cannot connect is named, with its size ----------------------
+    bad = conns.copy()
+    bad["CONN_WHY"] = ""
+    _raises(lambda: validate(bad, "connections"), "no CONN_WHY",
+            "a plot that cannot connect and does not say why")
+    bad = conns.copy()
+    bad["CAN_CONN"] = 1                                     # says it connects ...
+    _raises(lambda: validate(bad, "connections"), "carry a reason why they cannot",
+            "a connectable plot with a failure reason")
+    bad = conns.copy()
+    bad["CAN_CONN"] = 1
+    bad["CONN_WHY"] = ""
+    _raises(lambda: validate(bad, "connections"), "still ask for",
+            "a connectable plot that needs more depth anyway")
+    bad = conns.copy()
+    bad["CAN_DRAIN"] = 1 - pd.to_numeric(bad.CAN_CONN)
+    _raises(lambda: validate(bad, "connections"), "CAN_CONN and CAN_DRAIN disagree",
+            "two answers to one drainability question")
+
+    # ---- rule 6: a station's position is CHOSEN, and its main is the shortest one --------
+    bad = stns.copy()
+    bad["N_SUBNET"] = 0
+    _raises(lambda: validate(bad, "stations"), "NOTHING DRAINS INTO THEM",
+            "a station with nothing draining into it")
+    bad = stns.copy()
+    bad["CATCH_KM"] = 0.0
+    _raises(lambda: validate(bad, "stations"), "captures no kilometres",
+            "a station that captures nothing")
+    bad = rmains.copy()
+    bad["DS_TYPE"] = "works"
+    _raises(lambda: validate(bad, "rising_mains"), "ILLEGAL VALUE in DS_TYPE",
+            "an invented discharge type")
+    bad = rmains.copy()
+    bad["V_DUTY_MS"] = 2.9                                  # legal for GRAVITY, not for this
+    _raises(lambda: validate(bad, "rising_mains"), "G203-p50",
+            "the gravity 3.0 m/s applied to a rising main")
+
+    # ---- the banned synonyms bite before they become a second column --------------------
+    for col, needle in (("HEAD_M", "LIFT_M"), ("Q_LS", "Q_DUTY_LS"), ("STOR_M3", "WELL_M3")):
+        bad = stns.copy()
+        bad[col] = 1.0
+        _raises(lambda b=bad: validate(b, "stations"), needle, f"the synonym {col}")
+    bad = nodes.copy()
+    bad["JOIN_OFFS_M"] = 0.0
+    _raises(lambda: validate(bad, "nodes"), "JOIN_OFF_M",
+            "the 11-character spelling of the join offset")
+
     # ------------------------------------------------------------- audit readiness
     rd = audit_readiness(reaches, nodes, external=("roads", "hazard", "crossings",
-                                                   "existing", "manifest"))
+                                                   "existing", "manifest"),
+                         connections=conns, stations=stns, rising_mains=rmains)
     cannot = rd[~rd.can_run]
     assert cannot.empty, ("a fully-populated pair of layers must make every check runnable; "
                           f"these cannot run: {cannot.to_dict('records')}")
+    # ... and a caller that passes no connections layer is TOLD C3 cannot run, rather than
+    # being scored as though it passed. A check that cannot run is a FAILURE, not a blank.
+    partial = audit_readiness(reaches, nodes, external=("roads", "hazard", "crossings",
+                                                        "existing", "manifest"))
+    assert set(partial[~partial.can_run].check) == {"C3", "C5"}, \
+        partial[~partial.can_run].to_dict("records")
 
     if verbose:
         print(f"{CONTRACT_VERSION}: self-test PASSED")

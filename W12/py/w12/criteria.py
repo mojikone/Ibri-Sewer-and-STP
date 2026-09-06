@@ -537,6 +537,24 @@ class Criteria:
                                       # "undecidable" because the far bank lay outside a
                                       # grid covering 47 % of the area. Report the covered
                                       # fraction beside every wadi result all the same.
+    HAZARD_CELL_M: float = 3.0        # MEASURED 2026-09-06 from Hazard_T50y.tif, the grid
+                                      # HAZARD_RETURN_YR actually selects: 3.000 x 3.000 m,
+                                      # 68000 x 58097. NOT 5 m. Hazard_T100y.tif is 2.0 m, so
+                                      # the cell VARIES BY RETURN PERIOD - read it from the
+                                      # open raster where you can, and use this only as the
+                                      # declared default. See hazard_sample_step_m().
+    HAZARD_SAMPLE_FRACTION: float = 0.5   # NYQUIST, not a design value. Sampling a raster AT
+                                      # its cell size can step over a cell entirely.
+                                      # THIS EXACT DEFECT HAS ALREADY COST US: the export
+                                      # sampled at 3.0 m and the auditor at 1.5 m, and "19
+                                      # corridors were legal to the stage and illegal to the
+                                      # auditor". One name, two values, two answers - the
+                                      # same class as the 0.05/0.10 wall allowance that
+                                      # failed every reach on a BLOCKING cover check.
+                                      # The 3.0 m figure also carried a comment saying the
+                                      # grid was 5 m and that 3 m over-sampled it. Both
+                                      # halves were wrong. NOBODY RE-DECLARES A SAMPLING
+                                      # STEP: call hazard_sample_step_m().
     WADI_XING_SKEW_DEG: float = 25.0  # ASSUMPTION - H1 says a crossing is "perpendicular";
                                       # the tolerance on that word is ours.
     DUAL_XING_MAX_M: float = 70.0     # ASSUMPTION - longest perpendicular crossing of a dual
@@ -569,6 +587,22 @@ class Criteria:
                                       # shallower slopes, so shallower pipes and fewer pumps;
                                       # if NWS return 2.0 the required slopes roughly double
                                       # - exactly 2^1.23 = 2.346x. See tau_sensitivity().
+
+    # ================================================== CONCEPT STAGE (engineer 2026-09-05/06)
+    # W12 is a CONCEPT-STAGE design. Everything stays pure hydraulic until the layout is
+    # fixed, because we are comparing scenarios and a cheap comparable run beats a polished
+    # one (philosophy sec 9). Seven capabilities are SWITCHED OFF - not abandoned, not
+    # deleted, and above all NOT silently no-opped.
+    #
+    # THIS IS INHERITANCE-LEDGER ROW 13. W10's `RoadTreatment(units=None, sampler=None)` ran
+    # with three of its nine steps doing nothing and nobody knew; 34 collapsed "roundabouts"
+    # contained a registered plot. A stage MAY do nothing. It may not do nothing QUIETLY.
+    # So a capability that is off is off HERE, in one register, and the stage that would
+    # have run it says `crit.assert_enabled("motor_selection")` and is stopped by name.
+    CONCEPT_STAGE: bool = True        # PROJECT DECISION, not a guideline value. Set False in
+                                      # a `replace(DEFAULT, CONCEPT_STAGE=False)` run once the
+                                      # concept is approved, and every capability below comes
+                                      # back on without a single edit to this file.
 
     # =============================================================== derived, one definition
     @property
@@ -853,7 +887,106 @@ class Criteria:
             "diameter contemplates it. NWS have NOT confirmed a stock list; the sizes are "
             "declared here and need their written confirmation.")
 
+    def concept_banner(self) -> str:
+        """The concept-stage flag, printed beside tau_banner() on every deliverable.
+
+        A reader who does not know which capabilities were switched off cannot tell a design
+        decision from an omission - which is the whole difference between a concept design
+        and an unfinished one."""
+        if not self.CONCEPT_STAGE:
+            return ("CONCEPT_STAGE = False: every capability in CONCEPT_OFF is live. This is "
+                    "no longer a concept-stage run.")
+        return (
+            "CONCEPT-STAGE RUN (engineer, 2026-09-05/06). Everything stays pure hydraulic "
+            "until the layout is fixed. SWITCHED OFF, deliberately and by name - "
+            + "; ".join(sorted(self.CONCEPT_OFF))
+            + ". Each is switched off in criteria.CONCEPT_OFF with the reason and what "
+              "brings it back; a stage that would run one calls assert_enabled() and is "
+              "stopped by name rather than quietly producing nothing.")
+
     # =========================================================================== registers
+    @property
+    def CONCEPT_OFF(self) -> Dict[str, Tuple[str, str]]:
+        """THE SINGLE REGISTER of what is switched off at concept stage.
+
+        Philosophy sec 9 and the engineer's instruction of 2026-09-05/06. Each entry is
+        (what the capability is, what brings it back). Nothing here is abandoned - it is
+        deferred, and the register is the difference between deferred and forgotten.
+
+        Read by `assert_enabled()`, printed by `concept_banner()`, and the reason a stage
+        cannot no-op its way past a switched-off capability: an unknown name raises too, so
+        a guard cannot be spelled wrong and silently pass.
+        """
+        return {
+            "house_connections": (
+                "design of riders, laterals, property connection chambers and house "
+                "connection chambers (G203-p17-19 sec 3). At concept the ONLY question "
+                "asked of a plot is the one-line gravity check in contract.CONNECTIONS: "
+                "does the connection leave BELOW ground, reach a CHAMBER, and keep fall "
+                "over its own length. CAN_CONN / CONN_WHY / CONN_NEED carry the answer.",
+                "the concept layout is approved and the option is chosen"),
+            "motor_selection": (
+                "pump and motor selection - kW, duty point on a manufacturer's curve, "
+                "speed, impeller. G203-p41 Table 17 constrains it and none of it changes "
+                "where a station goes, which is the only pump question the concept asks.",
+                "the station positions are fixed and NWS confirm the pump standard"),
+            "life_cycle_cost": (
+                "25-year life-cycle costing of stations, mains and excavation. The finding "
+                "it rests on - manning is 86 % of a station's life-cycle cost, energy 0.4 % "
+                "(inheritance row 25) - is already what drives the concept rule 'fewest "
+                "stations'. The arithmetic adds nothing until unit rates exist.",
+                "Renardet's priced BoQs and NWS's station establishment cost arrive"),
+            "excavation_vs_pumping": (
+                "the break-even between digging on and lifting. G203-p33 frames the 12 m "
+                "cap as a COST trigger, so the trade is real - but it needs an excavation "
+                "rate and a station cost, neither of which is settled.",
+                "the same cost data, plus the K_FLIP rate-free form in inheritance sec 3"),
+            "phasing_packaging": (
+                "delivery phases and commissionable contract packages, and the seams "
+                "between them. A package boundary drawn on a layout that is still moving "
+                "is a boundary that will move with it.",
+                "the layout is fixed"),
+            "sewergems_export": (
+                "the SewerGEMS referee model. It referees HYDRAULICS and can never choose a "
+                "layout (inheritance row 26), so running it against a layout still under "
+                "review referees the wrong thing.",
+                "the layout is fixed and the hydraulics are final"),
+            "swept_channel_detail": (
+                "purpose-made swept-channel chamber detail for inlets short of the "
+                "G203-p30 90 deg rule. The FLAG stays on (nodes.INLET_FLAG) - it is the "
+                "DETAIL that is deferred, so the count is visible and priced later.",
+                "detailed design"),
+        }
+
+    def assert_enabled(self, capability: str) -> None:
+        """Stop a stage running something the concept stage has switched off - BY NAME.
+
+        Inheritance row 13: a stage may not silently no-op. The failure mode this replaces
+        is a function that quietly returns an empty frame because the thing it needed was
+        never wired in, which is indistinguishable in the output from a design that had
+        nothing to say.
+
+        An UNKNOWN capability raises as well. A guard spelled wrong is a guard that passes,
+        and a guard that always passes is worse than no guard because it reads as one.
+        """
+        name = str(capability).strip()
+        if name not in self.CONCEPT_OFF:
+            raise CriteriaError(
+                f"unknown capability {capability!r}. assert_enabled() only knows the "
+                "capabilities named in CONCEPT_OFF, and it refuses an unknown one on "
+                "purpose: a guard spelled wrong never fires and still reads as a guard. "
+                f"Known: {', '.join(sorted(self.CONCEPT_OFF))}.")
+        if not self.CONCEPT_STAGE:
+            return
+        what, back = self.CONCEPT_OFF[name]
+        raise CriteriaError(
+            f"'{name}' is SWITCHED OFF at concept stage (philosophy sec 9, engineer "
+            f"2026-09-05/06).\n  what it is: {what}\n  it comes back when: {back}\n"
+            "Do not stub it, do not half-run it and do not return an empty result - the "
+            "point of raising here is that the deliverable says which capabilities were "
+            "off rather than looking as though they ran and found nothing. To run it "
+            "deliberately: replace(DEFAULT, CONCEPT_STAGE=False).")
+
     @property
     def ASSUMPTIONS(self) -> Dict[str, Tuple]:
         """Every value in this file with no guideline page behind it. Reported verbatim on
@@ -981,6 +1114,15 @@ class Criteria:
             "PS_MIN_FLOW_INTERP": ("log10", "G203-p40 Table 16 tabulates four points and "
                                    "fits nothing. Interpolating linearly in log10(Q) between "
                                    "them is a method choice."),
+            "CONCEPT_STAGE": (self.CONCEPT_STAGE,
+                              "W12 is a CONCEPT-STAGE design (engineer 2026-09-05/06, "
+                              "philosophy sec 9). No guideline says what a concept stage "
+                              "omits - PAM-GUD-203 describes one design, not three levels "
+                              "of one. The seven capabilities switched off are named in "
+                              "CONCEPT_OFF with what brings each back, and assert_enabled() "
+                              "stops a stage running one BY NAME rather than letting it "
+                              "produce an empty result nobody can distinguish from a "
+                              "finding of nothing."),
             "INLET_MIN_DEG_NO_RELAXATION": (self.INLET_MIN_DEG,
                                             "G203-p30 is a 'shall'. W8's 85 deg working "
                                             "tolerance is NOT carried into W12: a sharp "
@@ -1264,8 +1406,55 @@ def _self_test(verbose: bool = True) -> None:
         for v in (up, dn_):
             assert abs(v / C.SLOPE_STEP - round(v / C.SLOPE_STEP)) < 1e-9, v
 
-    # --- infiltration is per-km and unpeaked
+    # --- infiltration is per-km and unpeaked, AND it is the NEW-network figure
+    # G201-p72 sec 7.4.3 gives TWO allowances and W12 is a NEW network: 720 L/d/km of sewer,
+    # not the 10 % of wastewater flow that applies to an EXISTING inland network. Both are
+    # stored, only one is wired in, and the difference is not cosmetic - on this network the
+    # 10 % route would move the capacity gate's own output by about 12 %. The percentages
+    # exist so an assessment of NAMA's built 95.45 km can use them; nothing in the DESIGN may.
     assert abs(C.infiltration_ls(1000.0) - 720.0 / 86400.0) < 1e-15
+    assert C.INFILT_L_D_KM == 720.0, "G201-p72: newly designed networks take 720 L/d/km"
+    assert C.INFILT_EXISTING_INLAND == 0.10 and C.INFILT_EXISTING_GW == 0.40
+    # the existing-network percentages must not leak into the per-length allowance: scale the
+    # length and the answer scales exactly, which a percentage-of-flow rule could not do
+    assert abs(C.infiltration_ls(2000.0) - 2 * C.infiltration_ls(1000.0)) < 1e-18
+    assert C.infiltration_ls(0.0) == 0.0
+
+    # --- the two velocity caps are DIFFERENT NUMBERS FOR DIFFERENT PIPES, and stay that way.
+    # G203-p27 sec 4.2.2.2 caps a GRAVITY sewer at 3.0 m/s; G203-p50 sec 8.1 caps a RISING
+    # MAIN at 2.5 m/s. Conflating them has happened twice on this project (inheritance row 9),
+    # so the pair is asserted rather than trusted, and the assertion says which is which.
+    assert C.V_MAX == 3.0, "G203-p27 sec 4.2.2.2, gravity: 'shall not exceed 3 m/s'"
+    assert C.FM_V_MAX == 2.5, "G203-p50 sec 8.1, rising main: 'not greater than 2.5 m/s'"
+    assert C.FM_V_MAX < C.V_MAX, ("the rising-main cap is the LOWER of the two. If these are "
+                                  "ever equal, one of them was copied from the other.")
+    assert C.PS_PIPEWORK_V_MAX == 2.5      # G203-p41 Table 17, station pipework at max flow
+    assert C.FM_V_MIN == 0.75 and C.FM_V_MIN < C.FM_V_MAX
+
+    # --- the concept-stage switch and its register (inheritance row 13)
+    assert C.CONCEPT_STAGE is True
+    assert len(C.CONCEPT_OFF) == 7, sorted(C.CONCEPT_OFF)
+    for _cap, _pair in C.CONCEPT_OFF.items():
+        assert len(_pair) == 2 and all(isinstance(s, str) and s.strip() for s in _pair), _cap
+        try:
+            C.assert_enabled(_cap)
+        except CriteriaError:
+            pass
+        else:                                                 # pragma: no cover
+            raise AssertionError(f"assert_enabled({_cap!r}) must refuse at concept stage")
+    try:
+        C.assert_enabled("motor_seleciton")                   # deliberate typo
+    except CriteriaError as _e:
+        assert "unknown capability" in str(_e)
+    else:                                                     # pragma: no cover
+        raise AssertionError("a MISSPELLED capability must raise - a guard that never fires "
+                             "still reads as a guard")
+    # turning the stage off re-enables every one of them, without editing this file
+    _built = replace(C, CONCEPT_STAGE=False)
+    for _cap in C.CONCEPT_OFF:
+        _built.assert_enabled(_cap)                           # must NOT raise
+    assert "SWITCHED OFF" in C.concept_banner()
+    assert "CONCEPT_STAGE" in C.ASSUMPTIONS
 
     # --- every register entry is non-empty; an empty assumption register is the worst state
     assert len(C.ASSUMPTIONS) >= 20 and len(C.CONFLICTS) >= 5 and len(C.BENCHMARKS) >= 5
@@ -1331,8 +1520,33 @@ def _self_test(verbose: bool = True) -> None:
         print(f"  built gradient, re-measured: median {med:.2f}  length-weighted {lw:.2f}  "
               f"mean {mean:.2f} mm/m  (4.98 retracted)")
         print(f"  G203-p27's two K values are {(1 - ratio) * 100:.2f} % apart - registered")
+        print(f"  velocity caps: gravity {C.V_MAX:g} m/s (G203-p27) | rising main "
+              f"{C.FM_V_MAX:g} m/s (G203-p50) - two numbers, two pipe types")
+        print(f"  infiltration: {C.INFILT_L_D_KM:g} L/d/km, NEW network (G201-p72 7.4.3); "
+              f"the {C.INFILT_EXISTING_INLAND:.0%} existing-network rule is stored, unused")
         print("  " + C.tau_banner())
+        print("  " + C.concept_banner())
 
 
 if __name__ == "__main__":          # pragma: no cover
     _self_test()
+
+
+def hazard_sample_step_m(cell_m: float | None = None, c: "Criteria | None" = None) -> float:
+    """The step to sample the hazard grid along a reach, in metres.
+
+    Half the cell, so a contact cannot fall between two samples. Pass the OPEN
+    raster's own resolution as `cell_m` where you have it - the cell varies by
+    return period (T50 is 3.0 m, T100 is 2.0 m) - and this falls back to the
+    declared default only when you do not.
+
+    This function exists so the step is declared ONCE. Two files previously
+    declared it independently at 3.0 m and 1.5 m, disagreed about the grid size
+    in their own comments, and gave different answers about which corridors sat
+    on a wadi.
+    """
+    cc = c if c is not None else DEFAULT
+    cell = float(cell_m) if cell_m else float(cc.HAZARD_CELL_M)
+    if not (cell > 0.0):
+        raise ValueError(f"hazard cell size must be positive, got {cell_m!r}")
+    return cell * float(cc.HAZARD_SAMPLE_FRACTION)

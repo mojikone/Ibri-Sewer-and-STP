@@ -47,12 +47,12 @@ SNAP_M = 0.01
 # tolerances on our own rule, NOT guideline values - the guidelines give the cover at a
 # crossing (G203-p52 8.2.4) and the procedure for one (G201 9.3) but never say how square it
 # must be, and inventing a guideline number is prohibited.
-WADI_SAMPLE_M = 1.5     # HALF the hazard grid's 3.0 m cell. Sampling AT the cell size can
-                        # step over a cell entirely, and it did: the auditor at 3.0 m and
-                        # s2 at 1.5 m disagreed about where an on-wadi run begins, so 19
-                        # corridors were legal to the stage and illegal to the auditor. Not
-                        # finer precision than the source - the rate the source has to be
-                        # read at to be read without aliasing. ONE constant, both callers.
+# WADI_SAMPLE_M is NOT declared here any more. It was 1.5 m here and 3.0 m in the export
+# stage, with the two comments disagreeing about the grid size as well (3 m against 5 m).
+# Measured 2026-09-06: Hazard_T50y.tif is 3.000 m. One source of truth now, in criteria.
+from w12.criteria import hazard_sample_step_m as _hazard_step
+WADI_SAMPLE_M = _hazard_step()          # half the cell - see criteria.hazard_sample_step_m
+
 WADI_XING_SKEW = 1.155  # contact / band-width across the pipe; 1/cos(30 deg)
 WADI_PROBE_M = 400.0    # how far a perpendicular probe looks for the far bank before
                         # concluding the pipe runs ALONG the band rather than across it
