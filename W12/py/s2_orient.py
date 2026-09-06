@@ -332,6 +332,21 @@ JOIN_COST_M = 0.0         # MEASURED, not chosen.  A connection onto the client'
 # sensitivity of the whole answer to that decision is swept in `sweep_main_snap`.
 MEET_TOL_M = C.MH_SNAP_M  # 3.0 m. DERIVED from criteria.MH_SNAP_M, the node-merge radius.
 MAIN_SNAP_M = MEET_TOL_M  # the old name, kept so the sweep and the manifest still read.
+
+# THE BUFFER'S OWN APPROXIMATION ERROR, NOT A WIDER TOLERANCE. `meet_main_pipe` selects
+# with `main.buffer(MEET_TOL_M)` and an `intersects` predicate; `find_roots` then recomputes
+# the same distance point-to-line. GEOS builds a buffer from STRAIGHT SEGMENTS, so its
+# boundary sits slightly OUTSIDE the true 3.0 m offset - a point on the buffer edge can
+# measure a few microns past the tolerance. MEASURED on the first W12 run: M000211 at
+# 3.0000045 m and M000214 at 3.0000018 m, i.e. 4.5 and 1.8 microns over.
+# 1 mm is 0.03 % of the tolerance - geometrically nothing against a 3 m radius derived from
+# a manhole-merge distance, three orders above the error observed, and far too small to
+# admit a node that genuinely fails the rule.
+# THE COST OF NOT HAVING IT: those two nodes were minted as meeting points and then refused
+# as roots, so TWO REAL OUTFALLS WERE SILENTLY LOST. It is applied to the ROOT SELECTION as
+# well as to the assertion, deliberately - applying it only to the assertion would silence
+# the check and still lose the outfalls, a green check over a real loss.
+MEET_EPS_M = 1e-3
 #                           WAS 5.0 m, a PROJECT number chosen by eye. Replaced 2026-09-06
 #                           because a tolerance that decides where a network discharges may
 #                           not be invented; the old value is still a row in the sweep.
@@ -1232,7 +1247,7 @@ class Orient:
         d = np.array([pts[i].distance(self.main.geometry.iloc[ix[i]])
                       for i in range(self.NV)])
         self.d_main = d
-        self.roots = np.nonzero(d <= snap)[0]
+        self.roots = np.nonzero(d <= snap + MEET_EPS_M)[0]   # see MEET_EPS_M
         rows = [dict(WITHIN_M=t, N_NODES=int((d <= t).sum())) for t in
                 (1, 3, 5, 10, 15, 20, 25, 30, 50, 100, 200)]
         self.snap_sweep = pd.DataFrame(rows)
@@ -1243,7 +1258,7 @@ class Orient:
         # Checked at the shipped radius only - the sweep deliberately runs others.
         mm = [self.nid[m] for m in getattr(self, "meet_nodes", []) if m in self.nid]
         if mm and abs(snap - MEET_TOL_M) < 1e-9:
-            miss = [self.node_ids[i] for i in mm if d[i] > snap]
+            miss = [self.node_ids[i] for i in mm if d[i] > snap + MEET_EPS_M]
             if miss:
                 raise AssertionError(
                     f"{len(miss)} node(s) minted ON the Main Pipe are not outfalls at "
