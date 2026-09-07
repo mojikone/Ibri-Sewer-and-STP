@@ -91,7 +91,7 @@ def restore_stranded_joins(info, kept, dropped, src2, spill2):
 
 
 def link_targets(sources, spill, z, ground, mp_union, stp_xy, min_grad, mp_invert_depth,
-                 max_len, plots=None):
+                 max_len, plots=None, existing=(), spacing_m=0.0):
     """Rule 3's direct link, as an outlet type. A basin or island low point whose ground can
     fall to the main pipe's invert, or to the STP, at min_grad over the straight distance, with
     no built or planned plot in the way and within max_len, is not a basin: it is an outlet with
@@ -99,11 +99,16 @@ def link_targets(sources, spill, z, ground, mp_union, stp_xy, min_grad, mp_inver
     ground at the foot of the link (a stated allowance). Returns {node: (type, plots crossed)}
     for the sources that qualify, preferring the main pipe when both work."""
     zstp = float(ground.z_at([stp_xy[0]], [stp_xy[1]])[0])
+    ex_pts = [Point(e) for e in existing]
     out = {}
-    for s in sources:
+    for s in sorted(sources):
         if s in spill and spill[s] == 0.0:          # already a target
             continue
         p = Point(s)
+        # a link is a join: it keeps the join spacing from every existing target unless the
+        # source is an island with no street path to anything (spill None)
+        if spacing_m and spill.get(s) is not None and any(p.distance(q) < spacing_m for q in ex_pts):
+            continue
         foot = mp_union.interpolate(mp_union.project(p))
         zf = float(ground.z_at([foot.x], [foot.y])[0]) - mp_invert_depth
         d_mp, d_stp = p.distance(foot), p.distance(Point(stp_xy))
@@ -116,6 +121,7 @@ def link_targets(sources, spill, z, ground, mp_union, stp_xy, min_grad, mp_inver
             crossed = plots.crossed(line) if plots else (0, 0)
             if crossed[0] == 0:
                 out[s] = (typ, crossed[1])
+                ex_pts.append(p)               # the next link keeps its distance from this one
                 break
     return out
 
@@ -321,9 +327,12 @@ def make_branches(runs, extra, z, dist, gates, level_m, flat_pct, fanout_m=10.0,
     return branches, gaps, dropped
 
 
-def trim_tree_heads(runs, tree, par, gates, fanout_m=10.0, min_len=15.0):
-    """A tree run that starts at a dead-end head starts at the first gate instead."""
-    has_child = set(par.values())
+def trim_tree_heads(runs, tree, par, gates, fanout_m=10.0, min_len=15.0, receiving=()):
+    """A tree run that starts at a true dead-end head starts at the first gate instead. A node
+    that receives any pipe, a tree child or a branch, is not a head and its run is left whole
+    (found 2026-09-07: 256 branches were draining into a junction whose run had been trimmed
+    away from under them)."""
+    has_child = set(par.values()) | set(receiving)
     gaps, trimmed = [], 0
     for i in tree:
         r = runs[i]

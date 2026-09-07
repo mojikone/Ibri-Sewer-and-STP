@@ -47,6 +47,9 @@ def _poly_rings(geom):
 def write_dxf(path, runs, run_catch, catch_info, catch_polys, catch_colour, nodes, streams,
               wadis, main_pipe, built, envelope, stp, title):
     doc = ezdxf.new("R2010", setup=True)
+    doc.header["$INSUNITS"] = 6
+    doc.header["$LTSCALE"] = 8.0
+    doc.header["$PSLTSCALE"] = 0
     for name, col in (("A_RUNS", 7), ("A_ARROWS", 7), ("A_GRADIENT", 8), ("A_JUNCTIONS", 8),
                       ("A_OUTLETS", 7), ("A_OUTLET_LABEL", 7), ("A_CATCHMENTS", 7),
                       ("A_CATCH_LABEL", 7), ("A_STREAMS", 5), ("A_WADI", 4), ("A_MAIN_PIPE", 5),

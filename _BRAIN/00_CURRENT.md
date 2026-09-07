@@ -38,9 +38,10 @@ cover is a **conditional exception** needing a stated circumstance, concrete pro
 the 0.5 m measured *above the protection*.
 
 **Stage A of the new engine is done on the built area (2026-09-07):** `python W13/py/run_stage_a.py`,
-47 s, the ground read along 146 km of DXF street inside the 9.09 km² the 2006 network serves,
-then the network as a tree: 46 joins at NAMA's spacing, 17 direct links, sub-mains as spines,
-heads at the first gate, 133 contiguous catchments, no loops, one outlet per node. **The drawing
+88 s, the ground read along 120 km of DXF street inside the 7.21 km² the 2006 laterals serve
+(trunk corridor out), then the network as a tree: 23 joins at NAMA's spacing, 7 direct links,
+sub-mains as spines, heads at the first gate, 83 contiguous catchments, no loops, one outlet per
+node, checked in QGIS (group `Claude W13 A`). **The drawing
 to look at is `W13/dxf/W13_A_tree.dxf`**; `W13_A_ground.dxf` is the raw ground for reference;
 numbers `W13/run/stage_a.json` and `W13/docs/W13_EVIDENCE.md`. **Next is Stage B (rules 3–6
 routed).** The old test-boundary pipeline (`run_test_boundary.py`, `stages/tree.py`,

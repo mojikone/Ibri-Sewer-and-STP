@@ -63,8 +63,13 @@ def main():
     rep["street_km_in_area"] = round(sum(g.length for g, _ in lines) / 1000, 1)
     rep["snap"] = srep
 
-    log("ground: terrain at %.0f m over the area ..." % cfg.GROUND_RES_M)
-    ground = G.Ground(cfg.TERRAIN, envelope.bounds, cfg.GROUND_RES_M)
+    log("ground: terrain at %.0f m over the area and both targets ..." % cfg.GROUND_RES_M)
+    mp0 = gpd.read_file(cfg.MAIN_PIPE)
+    l, b, r, t = envelope.bounds
+    ml, mb, mr, mt = mp0.total_bounds
+    ground = G.Ground(cfg.TERRAIN, (min(l, ml, cfg.STP[0]), min(b, mb, cfg.STP[1]),
+                                    max(r, mr, cfg.STP[0]), max(t, mt, cfg.STP[1])),
+                      cfg.GROUND_RES_M)
 
     log("runs: junction to junction, split at crests and sags ...")
     runs0, _ = G.build_runs(noded)
@@ -167,7 +172,8 @@ def main():
     links = {}
     for _ in range(6):
         new = K.link_targets(set(src2.values()), spill2, znode, ground, mp_union, cfg.STP,
-                             cfg.LINK_MIN_GRAD, cfg.MP_INVERT_DEPTH_M, cfg.LINK_MAX_M, gates)
+                             cfg.LINK_MIN_GRAD, cfg.MP_INVERT_DEPTH_M, cfg.LINK_MAX_M, gates,
+                             existing=list(targets2), spacing_m=cfg.JOIN_SPACING_M)
         new = {n: v for n, v in new.items() if n not in targets2}
         if not new:
             break
@@ -199,7 +205,14 @@ def main():
                                                 cfg.FLAT_PCT, cfg.FANOUT_OFFSET_M,
                                                 cfg.BRANCH_MIN_M)
     gaps_h, trimmed = K.trim_tree_heads(runs, tree_idx, par, gates, cfg.FANOUT_OFFSET_M,
-                                        cfg.BRANCH_MIN_M)
+                                        cfg.BRANCH_MIN_M,
+                                        receiving={b["dn"] for b in branches})
+    # every pipe must end where another pipe starts, or at an outlet
+    starts = {p["up"] for p in [runs[i] for i in tree_idx] + branches}
+    ends_ok = {p["dn"] for p in [runs[i] for i in tree_idx] + branches}
+    dangling = [p for p in [runs[i] for i in tree_idx] + branches
+                if p["dn"] not in starts and p["dn"] not in set(src2.values())]
+    rep["dangling_ends"] = len(dangling)
     rep["branches"] = {"count": len(branches), "km": round(sum(b["len"] for b in branches) / 1000, 2),
                        "heads_at_gate": sum(1 for b in branches if b["head_how"] == "gate"),
                        "heads_offset_10m": sum(1 for b in branches if b["head_how"] == "offset"),

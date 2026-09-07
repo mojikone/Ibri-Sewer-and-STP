@@ -44,7 +44,9 @@ of designing can be tried and compared.
      measured at its invert, taken as **3 m** below the ground at the foot of the link, a stated
      allowance until Stage C lays it. A basin that fails the straight-line test is not refused
      a link; it waits for Stage B to route one through the streets, and its label carries the
-     fall and distance to both targets.
+     fall and distance to both targets. A link is a join for the spacing rule: it keeps the
+     join spacing from every existing join or link, unless its source is an island with no
+     street path to anything.
 4. **Sub-mains first.** Long, straight, few bends. Low is the filter, long and straight is the
    choice. They earn their diameter from the houses they collect, and a bigger pipe reaches
    further on flat ground: about 2 km at DN200, 4 km at DN315, 5 km at DN400 before 12 m.
@@ -154,8 +156,11 @@ this stage and is the comparison for every rule.
 
 ## Scope at this stage (2026-09-07)
 
-**The area:** the ground the 2006 network serves, every street within 60 m of a built sewer,
-holes filled (engineer, 2026-09-07), so the new design can be compared with what NAMA built.
+**The area:** the ground the 2006 network serves, every street within 60 m of a built lateral
+or sub main, holes filled (engineer, 2026-09-07), so the new design can be compared with what
+NAMA built. The part of a trunk main that lies inside a settlement stays, clipped to it, because
+its street carries the joins; the trunk corridor between the settlements and to the STP is out,
+since a street crossing that corridor is not served by this network (engineer, 2026-09-07).
 Targets are the main pipe and the STP; each sub-network drains to whichever it reaches by
 gravity.
 

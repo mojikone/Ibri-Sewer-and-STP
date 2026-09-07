@@ -50,6 +50,9 @@ def outlet_label(cid, info):
 def write_dxf(path, pipes, gaps, dropped_geoms, catch_info, catch_polys, catch_colour, joins,
               streams, wadis, main_pipe, built, envelope, stp, title, links=None):
     doc = ezdxf.new("R2010", setup=True)
+    doc.header["$INSUNITS"] = 6                  # metres
+    doc.header["$LTSCALE"] = 8.0                 # dashes visible at town scale, not a solid line
+    doc.header["$PSLTSCALE"] = 0
     for name, col in (("A_SUBMAIN", 7), ("A_LATERAL", 7), ("A_BRANCH", 7), ("A_HEAD_GAP", 8),
                       ("A_HEADS", 8), ("A_ARROWS", 7), ("A_GRADIENT", 8), ("A_JOIN_LINK", 6),
                       ("A_DIRECT_LINK", 6),

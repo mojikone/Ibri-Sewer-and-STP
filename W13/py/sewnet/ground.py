@@ -54,13 +54,29 @@ def read_dxf_lines(path, layers):
     return out
 
 
-def built_envelope(sewer_shp, buffer_m):
-    """The ground the built 2006 network serves: a buffer round every built line, holes
-    filled. Returns the polygon and the built lines."""
+def built_envelope(sewer_shp, buffer_m, exclude_trunk=True, exclude_codes=("8F-1",)):
+    """The ground the built 2006 network serves: a buffer round every built lateral and sub
+    main, holes filled. The trunk mains and the line to the STP are left out of the envelope
+    (engineer, 2026-09-07): a street crossing that corridor is not served by this network, and
+    with the corridor in, its clipped stubs became one-run catchments on the main pipe.
+    Returns the polygon and ALL the built lines (for drawing)."""
     g = gpd.read_file(sewer_shp)
     g = g[g["OP_STATUE"].astype(str).isin(["1", "1.0"])]
     g = g[g.geometry.notna() & ~g.geometry.is_empty]
-    env = unary_union([geom.buffer(buffer_m) for geom in g.geometry])
+    served = g
+    if exclude_trunk:
+        tm = (g["US_MHID"].astype(str).str.contains("-TM-") |
+              g["DS_MHID"].astype(str).str.contains("-TM-") |
+              g["PROJECTCOD"].astype(str).isin(exclude_codes))
+        lat_env = unary_union([geom.buffer(buffer_m) for geom in g[~tm].geometry])
+        # the part of a trunk that lies inside a settlement stays, clipped to it: its street
+        # carries the joins. The corridor between settlements and to the STP is out.
+        inside = [geom.intersection(lat_env) for geom in g[tm].geometry
+                  if geom.intersects(lat_env)]
+        geoms = list(g[~tm].geometry) + [p for p in inside if not p.is_empty]
+        env = unary_union([geom.buffer(buffer_m) for geom in geoms])
+    else:
+        env = unary_union([geom.buffer(buffer_m) for geom in served.geometry])
     parts = list(env.geoms) if hasattr(env, "geoms") else [env]
     filled = unary_union([Polygon(p.exterior) for p in parts])
     return filled, g
