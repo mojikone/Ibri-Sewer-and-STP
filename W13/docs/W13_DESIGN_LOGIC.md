@@ -38,6 +38,18 @@ of designing can be tried and compared, and that still reproduces the test-area 
    further on flat ground: about 2 km at DN200, 4 km at DN315, 5 km at DN400 before 12 m.
 5. **Then hang the rest off them.** Every street drains to the sub-main below it, every house to
    the street it fronts. On flat ground, the shortest run to the nearest sub-main.
+   - 2026-09-07 (engineer, from the Stage A drawing): **one outlet per junction, and no loops.**
+     Which pipe leaves a junction is a design decision under the criteria and these rules, the
+     sub-main first, then the lateral; the ground's steepest fall is one input, not the rule.
+     Every other street on that junction starts as a head at the first house gate, the first
+     plot's centroid dropped square onto the street, or 10 m along where no plot faces it, as in
+     W8. **Checked against the as-built:** of 3,268 built manholes exactly one has two pipes
+     leaving it.
+   - 2026-09-07: **a street that touches the main pipe does not join it; only sub-mains join.**
+     NAMA's 4.5 km trunk in this area takes 21 pipes at 18 manholes (8 sub mains, 13 laterals),
+     median spacing 167 m, while 14.4 km of built pipe runs within 40 m of the trunk without
+     joining it. The Stage A ground gave 96 joins; this rule brings it to NAMA's order. Every join
+     is drawn as a connector from the street to the main pipe, on its own layer.
 6. **A ridge is a boundary, not a place to build.** A street on a ridge drains whole into the
    lower side. A very long ridge street splits at the crest, two heads back to back.
 7. **Gradient follows the ground in three bands.** Flatter than the minimum: lay at the minimum.
@@ -46,6 +58,12 @@ of designing can be tried and compared, and that still reproduces the test-area 
    closer chambers if needed.
 8. **Gradients are laid in steps of a tenth of that pipe's minimum gradient:** 0.5 mm/m at
    DN200, finer for bigger pipes. The diameter is earned by the flow, never chosen to flatten.
+   - 2026-09-07 (engineer): **one gradient per street run, held until the cover is no longer
+     enough.** The gradient changes only at a junction, or where holding it would breach the
+     minimum cover or the maximum depth. G203-p29: "uniform slopes must be maintained between
+     successive manholes". **As-built:** of 278 built street runs of three or more pipes, 55 %
+     carry one gradient throughout, median spread 0.14 mm/m; NAMA's favourite values are 6.0 and
+     5.0 mm/m; its depths are median 1.92 m, 90th percentile 4.57 m, maximum 8.85 m.
 9. **Lay each catchment from its heads by rule 7.** That is the shallowest the route can ever be.
    Under 12 m at the main pipe: gravity, done.
 10. **Over 12 m: reroute first.** A different join, a street where the ground helps, or the
@@ -122,6 +140,34 @@ the street network is settled.
 | After filling hollows to 2 m | 187 catchments: **96 JOIN (84 km)**, 1 STP, **65 SINK (57 km, spill 2.4 to 10.3 m)**, 25 LOW islands (5 km, 23 of them under 0.5 km) |
 | Against the ground | 11.4 km of run flows over the rim of a filled hollow |
 | Largest | C01 JOIN 22 km and C02 JOIN 20 km (east, south and centre); C03 SINK 9.6 km, spill 3.0 m (east, north); the west settlement is SINKs of 2.4 to 6.6 m spill falling south-west, away from the main pipe, toward where NAMA built its own trunk |
+
+**What a SINK means, checked against NAMA (2026-09-07).** A SINK is not "no gravity"; its spill
+is the extra depth a pipe needs to leave it by gravity. 55 of the 65 sink basins have built
+sewer inside them, and NAMA left them by gravity at depths in line with the spill plus cover:
+C03 spill 3.0 m, NAMA max depth 5.4 m; C04 spill 4.5 m, NAMA 7.0 m; C05 2.4 m, NAMA 6.1 m; C12
+5.3 m, NAMA 6.9 m. In the west settlement the spill is measured toward the main pipe, uphill,
+while NAMA's route to the STP is cross-country and not a DXF street, so those spills overstate
+the cost; the direct link of rule 3 corrects it. **Terrain check:** the 2 m terrain minus NAMA's
+surveyed ground at 2,144 manholes is +0.14 m median, 0.34 m median absolute deviation, 1.01 m
+RMSE, 90 % within −0.9 to +1.3 m. Good enough for the fall of a sloping street; on a flat street
+the noise is the size of the fall, which is why direction there is a design choice (rule 5).
+
+**Stage A rerun, agreed 2026-09-07.** The drawing is rebuilt as a tree, not as the raw ground:
+
+1. **The outlet of a junction is chosen by rule, in this order:** the run that belongs to the
+   sub-main; else the run on the cheapest route to the sub-main or the join, where cheap means
+   short and least trench depth (W8's search with its depth cost: a flat street charged for the
+   depth it forces on a pipe at the minimum gradient); the steepest fall only as the tie-break.
+   W8's structure resolver stays as it is: chambers within 3 m are one structure, the tree is
+   re-derived so a structure has one physical outlet, and every leftover branch starts at the
+   next house gate along its own street or 10 m away. W8's join cap is replaced by the sub-main.
+2. **Sub-mains are picked in Stage A**, because the tree needs them: the long, straight, low
+   street of each catchment, from the ground and the street geometry, made the spine to its join.
+   Laterals then search their cheapest route to the sub-main, not to the main pipe.
+3. **Catchments follow the tree:** what drains through one sub-main to one join, not what
+   steepest descent says. This ends the mixed colours in the south-east.
+4. **Sinks relabelled** as "leaves by gravity at about X m", and the west settlement's cost
+   measured toward the STP as well as toward the main pipe.
 
 Two things the picture says for Stage B. The west settlement's outlet is its south-west corner
 and its spine is to the STP, not to the main pipe. And the ground gives 96 joins on the main pipe
