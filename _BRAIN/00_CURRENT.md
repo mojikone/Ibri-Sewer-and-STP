@@ -19,6 +19,24 @@ Six weeks, four iterations, four worse designs. The engineer reverted the line o
 Run it after every change. A design that cannot still do 5.51 km² has no business being
 trusted on 531. See `CLAUDE.md` rule 1.
 
+**STANDING DECISION 2026-09-07 — 12 m OF COVER IS A HARD LIMIT.** G203-p33 §4.6.3 makes
+10–12 m a *recommendation* and makes **excavation cost** the real trigger for a pumping
+station. We are not costing anything at concept stage, so **until the hydraulic design is
+ready for cost analysis, nothing goes deeper than 12 m.** Do not read "recommendation" as
+permission, and **do not build exits around it** — W12 capped at 12 m, allowed any breach
+"within 1,000 m of an outfall", and 1,362 chambers came through that single exit at up to
+19.98 m. Deleting the exit gave 3 chambers and 12.79 m. W13 implements the hard limit
+correctly, including the trench *between* chambers. It has never bound on the test area
+(deepest 10.45 m); it will bind at full area.
+
+**The wadi rules were restored on 2026-09-07 with their real citations** — presence
+*"must be avoided"* (p30 §4.4.1a) / *"shall be avoided"* (p33), read as `shall` where the
+design finds no other way, with the presence recorded as a justified exception rather than a
+silent one; **1.5 m cover at a crossing is a GUIDELINE value** (p52 §8.2.4, *"As for
+gravitational sewer…"*), not the project assumption we had wrongly filed it as; and the 0.5 m
+cover is a **conditional exception** needing a stated circumstance, concrete protection, and
+the 0.5 m measured *above the protection*.
+
 **Nothing is lost.**
 
 | Where | What |
