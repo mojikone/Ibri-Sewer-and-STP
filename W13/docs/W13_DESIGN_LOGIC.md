@@ -18,6 +18,10 @@ of designing can be tried and compared, and that still reproduces the test-area 
    Each outlet is one catchment.
 3. **From each outlet, the gravity path to the main pipe is the spine.** One join per catchment.
    The ground sets the number of joins, not a cap.
+   - 2026-09-07: where the streets give the outlet no proper way to the main pipe, connect the
+     outlet to the main pipe directly, across open ground, provided no plot lies in the way. An
+     outlet that could reach the main pipe only across a dual carriageway is not linked; it is
+     reported as a pocket for the engineer to decide.
 4. **Sub-mains first.** Long, straight, few bends. Low is the filter, long and straight is the
    choice. They earn their diameter from the houses they collect, and a bigger pipe reaches
    further on flat ground: about 2 km at DN200, 4 km at DN315, 5 km at DN400 before 12 m.
@@ -72,21 +76,19 @@ intersection is a node (0 unnoded crossings in 22,276), and the lines sit in the
 How the engine treats it:
 
 - **Snap** line ends within 3 m (57 gaps of 0.3 to 3 m).
-- **Dual carriageways are gaps**: 1,120 line ends stop at one and only 7 crossings are drawn. The
-  engine offers a perpendicular crossing of at most 70 m between opposing ends, charged as before,
-  and writes every crossing it uses to a review layer.
+- **No crossings of dual carriageways are generated** (engineer, 2026-09-07). The drawing is the
+  network as it may be used: 1,120 line ends stop at a dual carriageway and the 7 crossings the
+  draftsman drew are the only ones. The engine never adds one.
 - **Islands are reported, never dropped silently**: 57 small components, about 60 km in all,
-  against one main component of 1,759 km.
+  against one main component of 1,759 km. Each reaches the main pipe by its streets, or by the
+  direct link of rule 3, or is reported as a pocket.
 - **No attributes** come with it. None are needed: exclusion is already done, and rule 4 picks
   sub-mains by geometry and ground, not by road class.
-- The SHP layer stays as the record of where the dual carriageways are (`dual = 1`), for the
-  crossing rule and for the drawing.
+- The SHP layer is kept only to draw where the dual carriageways are (`dual = 1`) as context.
 
-Open on the drawing, for the engineer's eye: 290 km of SHP roads inside the boundary have no
-DXF line within 10 m, almost all access roads; 67 km of that runs within 30 m of a built or
-planned plot, so those plots have no street sewer unless the lines are added. And 1.7 km of DXF
-line runs parallel to a dual carriageway at 3 to 8 m, which may be the carriageway itself rather
-than a service road (36 km sits at 8 to 20 m and reads as service road).
+Decided 2026-09-07, from the checks made before adoption: **trust the DXF as drawn.** The 290 km
+of SHP roads with no DXF line (67 km of it beside built or planned plots) are not added. The
+1.7 km of DXF line running 3 to 8 m from a dual carriageway is service road.
 
 ## Scope at this stage (2026-09-07)
 
