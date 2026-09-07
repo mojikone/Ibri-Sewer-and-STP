@@ -55,8 +55,62 @@ of designing can be tried and compared, and that still reproduces the test-area 
 | 10 | reroute, then cut | pumps only where a reroute could not remove them |
 | 11 | real pumps | hollows and enclosed pockets, listed with the reason |
 
-## The gate
+## Inputs (2026-09-07)
 
-No change ships until the engine still gives 71.6 km, about 1,415 chambers and zero pumping
-stations on the 5.51 km² test area (`W13/py/run_test_boundary.py`, 26 seconds). Then the full
-area, in minutes, not hours.
+**Road network: `Hydraulic/DWG/road network 03092026 eyeballed.dxf`** (draftsman, 3 September
+2026; UTM 40N metres). It replaces `SHP/Road centerline 2` as the corridor source.
+
+| Layer | Meaning | Measured |
+|---|---|---|
+| `piping center line` | existing roads | 6,419 lines, 918 km; 89 % within 10 m of an SHP road |
+| `piping center line-propo-01` | streets added where roads were missing, mostly through planned plots | 6,195 lines, 902 km; 7 % near any SHP road |
+
+What the drawing already does for us: dual carriageways are left out (0.2 km along one), every
+intersection is a node (0 unnoded crossings in 22,276), and the lines sit in the road reserve
+(97 to 99 % of length outside any plot).
+
+How the engine treats it:
+
+- **Snap** line ends within 3 m (57 gaps of 0.3 to 3 m).
+- **Dual carriageways are gaps**: 1,120 line ends stop at one and only 7 crossings are drawn. The
+  engine offers a perpendicular crossing of at most 70 m between opposing ends, charged as before,
+  and writes every crossing it uses to a review layer.
+- **Islands are reported, never dropped silently**: 57 small components, about 60 km in all,
+  against one main component of 1,759 km.
+- **No attributes** come with it. None are needed: exclusion is already done, and rule 4 picks
+  sub-mains by geometry and ground, not by road class.
+- The SHP layer stays as the record of where the dual carriageways are (`dual = 1`), for the
+  crossing rule and for the drawing.
+
+Open on the drawing, for the engineer's eye: 290 km of SHP roads inside the boundary have no
+DXF line within 10 m, almost all access roads; 67 km of that runs within 30 m of a built or
+planned plot, so those plots have no street sewer unless the lines are added. And 1.7 km of DXF
+line runs parallel to a dual carriageway at 3 to 8 m, which may be the carriageway itself rather
+than a service road (36 km sits at 8 to 20 m and reads as service road).
+
+## Scope at this stage (2026-09-07)
+
+Street sewers only. The tertiary layer, property connections and riders, is left out to keep the
+engine fast. Consequence to remember: no house-level connectability check, so where a house sits
+below its road the chamber that would have been deepened for it is not. Add the tertiary back when
+the street network is settled.
+
+## Outputs to check the work (agreed 2026-09-07)
+
+A DXF, and the same content as a KMZ for Google Earth. The drawing is the check, so it shows the
+reasoning, not only the result.
+
+- **One layer per element class**, each switchable: main pipe, sub-main, lateral, force main,
+  chambers, pumps, joins (sub-network connection points to the main pipe), catchments, streets,
+  streams.
+- **Pipes coloured by sub-network**, from a dozen strong colours assigned so no two neighbouring
+  catchments share one. **Thickness grows with diameter** as polyline width, not lineweight, so
+  it scales with zoom and shows without switching lineweight display on.
+- **A flow arrow on every pipe.** Every arrow must point downhill to its outlet.
+- **Chambers shaded by depth in fixed bands**, light to dark: 0–2, 2–4, 4–6, 6–8, 8–10, 10–12 m,
+  and anything past 12 m in red. Fixed bands, never a stretched ramp, so two runs compare. A depth
+  label on every chamber over 8 m.
+- **The ground behind it**: thin grey street centrelines, excluded dual carriageways dashed,
+  terrain streams in blue thickening with Strahler order, catchment boundaries as dashed outlines
+  with the outlet marked.
+- **A stats text at each outlet**: sub-network ID, length, chambers, deepest, pump or not.
