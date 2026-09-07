@@ -37,6 +37,11 @@ gravitational sewer…"*), not the project assumption we had wrongly filed it as
 cover is a **conditional exception** needing a stated circumstance, concrete protection, and
 the 0.5 m measured *above the protection*.
 
+**The W13 design logic is written (2026-09-07):** `W13/docs/W13_DESIGN_LOGIC.md`, eleven agreed
+rules and a proposed rule-to-engine-step mapping. Read it before touching the engine. It lives in
+W13 on purpose: the brain philosophy file was set aside to keep the process light while the engine
+is rebuilt to run the full area in minutes. Change it by adding a dated line, never by rewriting.
+
 **The design criteria exist as a clean Word document (2026-09-07):**
 `W13/docs/design_criteria/R0/Ibri_Sewer_Design_Criteria_R0.docx` + `.pdf`, rebuilt by
 `W13/docs/design_criteria/build.py` (`--pdf` renders through Word). It is the readable form of
