@@ -72,6 +72,22 @@ of designing can be tried and compared, and that still reproduces the test-area 
     restarts at cover. Never dig past 12 m to avoid a pump. Never pump to avoid a reroute. Until
     we cost, gravity within 12 m beats a pump.
 11. **A closed hollow, or a ridge between a pocket and every neighbour, is a real pump.**
+12. **Chambers** (added 2026-09-07 from W8, at the engineer's request). A chamber sits at every
+    junction, every head, every change of gradient or diameter, and at the spacing: runs are
+    split at 100 m, which satisfies every class of G203 Table 12 (100 m to DN315, 120 m to
+    DN900), and the spacing is rounded to 10 m, or 5 m where 10 leaves an awkward remainder.
+    At a bend: up to 5°, none; 5° to 45°, one chamber at the bend; a sweeping curve over 45°,
+    two or three on chords, never more than three; a corner chamber sits at the tangent
+    intersection only if it is 2 m clear of every plot, otherwise the curve is followed. Two
+    chambers closer than 3 m are one structure. Every chamber is checked against every plot and
+    slid clear.
+    - **As-built check, 2026-09-07, and a decision for the engineer:** NAMA's manhole spacing on
+      the 2006 network is **median 30 m, mean 34 m, 90th percentile 38 m**, and 0.1 % of its
+      pipes exceed 100 m. That is 3,268 manholes on 111.6 km, against W8's 1,415 on 71.6 km at
+      the 100 m split. The guideline permits 100 m; NAMA built at a third of it. W8 tested
+      tighter spacing and found it does not keep trenches shallower. Which spacing this design
+      follows is a cost decision the engineer takes; until then the engine keeps the 100 m split
+      and reports the chamber count NAMA's spacing would give beside it.
 
 ## What the engine does with each rule (proposed mapping, to be confirmed as it is built)
 
