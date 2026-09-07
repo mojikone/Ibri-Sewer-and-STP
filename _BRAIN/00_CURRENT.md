@@ -40,7 +40,9 @@ the 0.5 m measured *above the protection*.
 **The W13 design logic is written (2026-09-07):** `W13/docs/W13_DESIGN_LOGIC.md`, eleven agreed
 rules, a proposed rule-to-engine-step mapping, the road input (the draftsman's DXF in
 `Hydraulic/DWG/`, replacing the SHP road layer for corridors), the scope (street sewers only, no
-tertiary yet) and the check-drawing spec. Read it before touching the engine. It lives in
+tertiary yet), the check-drawing spec, and the rulings of the same day: no crossings of dual
+carriageways are generated, the DXF is trusted as drawn, and an outlet without a street route to
+the main pipe is linked directly across open ground where no plot is in the way. Read it before touching the engine. It lives in
 W13 on purpose: the brain philosophy file was set aside to keep the process light while the engine
 is rebuilt to run the full area in minutes. Change it by adding a dated line, never by rewriting.
 
