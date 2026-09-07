@@ -37,6 +37,14 @@ gravitational sewer…"*), not the project assumption we had wrongly filed it as
 cover is a **conditional exception** needing a stated circumstance, concrete protection, and
 the 0.5 m measured *above the protection*.
 
+**Stage A of the new engine is done on the built area (2026-09-07):** `python W13/py/run_stage_a.py`,
+41 s, the ground read along 146 km of DXF street inside the 9.09 km² the 2006 network serves;
+187 catchments (96 join the main pipe, 65 basins with 2.4–10.3 m spill, 25 islands). Drawing
+`W13/dxf/W13_A_ground.dxf`, numbers `W13/run/stage_a.json`. **Next is Stage B (rules 3–6).** The
+old test-boundary pipeline (`run_test_boundary.py`, `stages/tree.py`, `stages/trunk.py`) still
+runs and is untouched; the new engine grows beside it in `sewnet/ground.py`, `outlets.py`,
+`streams.py`.
+
 **The W13 design logic is written (2026-09-07):** `W13/docs/W13_DESIGN_LOGIC.md`, eleven agreed
 rules, a proposed rule-to-engine-step mapping, the road input (the draftsman's DXF in
 `Hydraulic/DWG/`, replacing the SHP road layer for corridors), the scope (street sewers only, no

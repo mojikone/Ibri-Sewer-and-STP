@@ -16,12 +16,23 @@ of designing can be tried and compared, and that still reproduces the test-area 
 2. **Follow the arrows** from every junction until they stop. Where they stop is an outlet:
    either where the falling streets meet the main pipe, or a sink where every street rises away.
    Each outlet is one catchment.
+   - 2026-09-07, Stage A method choices. The raw ground on the built area has 290 sinks, most of
+     them cul-de-sacs falling away from their junction and small hollows in a street, which a
+     pipe crosses by going a little deeper. So hollows are filled on the street graph by priority
+     flood from the targets up to a spill of **2 m**; a sink needing more stays a **SINK** outlet
+     labelled with its spill, because leaving it by gravity is a real cost for Stage B to decide.
+     A part of the graph with no street path to any target is an island: its lowest node is a
+     **LOW** outlet and the island is flooded from there. A junction within **30 m** of the drawn
+     main pipe is a join (the main pipe is an eyeballed line; at 12 m a 24 km catchment ended
+     23 m short of it). Inside a filled hollow the flow runs against the ground; those runs are
+     classed AGAINST and drawn dash-dot, with a negative gradient.
 3. **From each outlet, the gravity path to the main pipe is the spine.** One join per catchment.
    The ground sets the number of joins, not a cap.
    - 2026-09-07: where the streets give the outlet no proper way to the main pipe, connect the
-     outlet to the main pipe directly, across open ground, provided no plot lies in the way. An
-     outlet that could reach the main pipe only across a dual carriageway is not linked; it is
-     reported as a pocket for the engineer to decide.
+     outlet to the main pipe directly, across open ground, provided no plot lies in the way. The
+     link may cross a dual carriageway only at an underpass (the roads in the DXF that pass
+     under one are the underpasses; engineer, 2026-09-07). An outlet that could reach the main
+     pipe only across a dual carriageway with no underpass is reported as a pocket.
 4. **Sub-mains first.** Long, straight, few bends. Low is the filter, long and straight is the
    choice. They earn their diameter from the houses they collect, and a bigger pipe reaches
    further on flat ground: about 2 km at DN200, 4 km at DN315, 5 km at DN400 before 12 m.
@@ -96,6 +107,26 @@ Street sewers only. The tertiary layer, property connections and riders, is left
 engine fast. Consequence to remember: no house-level connectability check, so where a house sits
 below its road the chamber that would have been deepened for it is not. Add the tertiary back when
 the street network is settled.
+
+## Stage A result on the built area (2026-09-07)
+
+`python W13/py/run_stage_a.py`, 41 seconds. Drawing `W13/dxf/W13_A_ground.dxf`; shapefiles
+`W13/shp/W13_A_*`; pictures `W13/img/W13_A_*.png`; numbers `W13/run/stage_a.json`.
+
+| | |
+|---|---|
+| Area | 9.09 km², the 60 m envelope of the 111.6 km built in 2006, holes filled |
+| Streets | 146.0 km of DXF street, 1,980 runs junction to junction, 82 split at a crest (41) or sag (41) |
+| Raw ground | 100 km falls steeper than 0.5 %, 36 km flatter, 10 km level within 0.1 m |
+| Targets | 114 junctions within 30 m of the main pipe, 1 at the STP |
+| After filling hollows to 2 m | 187 catchments: **96 JOIN (84 km)**, 1 STP, **65 SINK (57 km, spill 2.4 to 10.3 m)**, 25 LOW islands (5 km, 23 of them under 0.5 km) |
+| Against the ground | 11.4 km of run flows over the rim of a filled hollow |
+| Largest | C01 JOIN 22 km and C02 JOIN 20 km (east, south and centre); C03 SINK 9.6 km, spill 3.0 m (east, north); the west settlement is SINKs of 2.4 to 6.6 m spill falling south-west, away from the main pipe, toward where NAMA built its own trunk |
+
+Two things the picture says for Stage B. The west settlement's outlet is its south-west corner
+and its spine is to the STP, not to the main pipe. And the ground gives 96 joins on the main pipe
+where W8 used 20 and NAMA's built network has about 16; 71 of the 96 carry under 0.5 km, so rule
+4 will have to say whether a street that merely touches the main pipe gets its own join.
 
 ## Outputs to check the work (agreed 2026-09-07)
 
