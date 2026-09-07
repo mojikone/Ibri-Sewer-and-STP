@@ -1,0 +1,94 @@
+# W13 evidence: the numbers behind the rules
+
+Companion to `W13_DESIGN_LOGIC.md`, which carries rules only (engineer, 2026-09-07). Every
+measurement that supports a rule, every check against the 2006 as-built network, and every run
+result is recorded here, dated, so a rule can be traced to what was measured without the rule
+file turning into a report.
+
+The as-built used throughout is `W7/shp/EXISTING_SEWERLINE.shp` with `OP_STATUE = 1`: 3,267
+segments, 111.6 km, 3,268 manholes by ID, inverts and ground levels on 2,144 segments (66 %),
+no diameters recorded, project codes 5A-1 to 5A-5 and 8F-1.
+
+## Checks by rule
+
+**Rule 5, one outlet per junction (2026-09-07).** Of 3,268 built manholes, exactly one has two
+pipes leaving it (`5A-2-30-MH235`). NAMA never fans out.
+
+**Rule 5, only sub-mains join the main pipe (2026-09-07).** NAMA's trunk main in this area is
+4.5 km. 21 pipes discharge into it at 18 distinct manholes: 8 sub mains and 13 laterals. On the
+4.0 km trunk piece the joins are spaced at a median of 167 m (min 2, max 387). 14.4 km of
+built pipe, 135 segments, runs within 40 m of the trunk without joining it. The Stage A ground
+gave 96 joins on the drawn main pipe, 71 of them carrying under 0.5 km of street.
+
+**Rule 8, one gradient per run (2026-09-07).** Of 278 built street runs of three or more pipes
+between junctions, 153 (55 %) carry one gradient throughout (spread of 0.3 mm/m or less);
+median spread 0.14 mm/m, 75th percentile 5.14 mm/m where the ground is steep. Median run 160 m,
+6 pipes. Built gradients: median 6.00 mm/m; the most common values are 6.0 (309 pipes), 5.0
+(147), 6.1, 5.9, 5.1. Built depths (4,288 manhole ends): median 1.92 m, 90th percentile 4.57 m,
+99th 6.21 m, maximum 8.85 m.
+
+**Rule 12, chamber spacing (2026-09-07).** NAMA's manhole-to-manhole lengths: median 30 m,
+mean 34 m, 90th percentile 38 m; 0.1 % exceed 100 m. Most common lengths 30, 35, 31, 25, 28,
+24 m; a quarter fall within 1 m of a multiple of 10. That is 3,268 manholes on 111.6 km,
+against W8's 1,415 on 71.6 km at the 100 m split. W8 tested tighter spacing on the test area
+and found it does not keep trenches shallower. **Engineer's decision, 2026-09-07: follow the
+guideline spacing**, divided evenly and rounded (rule 12); W8's split does this: 230 m gives
+80, 80, 70; 250 m gives 90, 80, 80; 105 m gives 55, 50.
+
+**Rule 2, what a sink means (2026-09-07).** 55 of the 65 Stage A sink basins have built sewer
+inside them, and NAMA left them by gravity at depths in line with the spill plus cover:
+
+| Basin | Our spill (m) | NAMA depth inside, median / max (m) |
+|---|---|---|
+| C03, east north, 9.6 km | 3.0 | 1.7 / 5.4 |
+| C04, west, 9.4 km | 4.5 | 2.3 / 7.0 |
+| C05, west, 6.7 km | 2.4 | 2.5 / 6.1 |
+| C08, west, 2.7 km | 2.5 | 3.4 / 5.6 |
+| C12, west, 2.1 km | 5.3 | 2.4 / 6.9 |
+| C15, west, 1.7 km | 6.6 | 2.6 / 4.8 |
+
+In the west settlement the spill is measured toward the main pipe, uphill, while NAMA's route
+to the STP is cross-country and not a DXF street, so those spills overstate the cost; rule 3's
+direct link and the STP as a target correct it.
+
+**Rule 1, the terrain (2026-09-07).** The 2 m read of the 0.5 m blend minus NAMA's surveyed
+ground at 2,144 upstream manholes: median +0.14 m, median absolute deviation 0.34 m, RMSE
+1.01 m, 90 % within −0.90 to +1.25 m. Good for the fall of a sloping street; on a flat street
+the noise is the size of the fall, which is why direction there is a design choice (rule 5).
+
+## The road DXF, measured before adoption (2026-09-07)
+
+| Layer | Lines | Length | Relation to the SHP roads |
+|---|---|---|---|
+| `piping center line` (existing) | 6,419 | 918 km | 89 % within 10 m of an SHP road |
+| `piping center line-propo-01` (added) | 6,195 | 902 km | 7 % near any SHP road; drawn through planned plots |
+
+Dual carriageways: 0.2 km of DXF line runs along one. Topology: 0 unnoded crossings in 22,276
+intersection points; 57 line ends stop 0.3 to 3 m short of another line. Plots: 97 % (existing)
+and 99 % (added) of length outside any plot. Dual carriageways as gaps: 1,120 line ends stop at
+one, 7 crossings drawn. Connectivity: one component of 1,759 km, 57 small ones totalling about
+60 km. SHP roads with no DXF line within 10 m: 290 km inside the boundary, almost all access
+roads, 67 km within 30 m of a built or planned plot (engineer: not added). DXF lines running
+parallel to a dual carriageway at 3 to 8 m: 1.7 km (engineer: service roads); at 8 to 20 m:
+36 km.
+
+## Stage A, first run on the built area (2026-09-07)
+
+`python W13/py/run_stage_a.py`, 41 seconds. Drawing `W13/dxf/W13_A_ground.dxf`; shapefiles
+`W13/shp/W13_A_*`; pictures `W13/img/W13_A_*.png`; numbers `W13/run/stage_a.json`.
+
+| | |
+|---|---|
+| Area | 9.09 km², the 60 m envelope of the 111.6 km built in 2006, holes filled |
+| Streets | 146.0 km of DXF street, 1,980 runs junction to junction, 82 split at a crest (41) or sag (41) |
+| Raw ground | 100 km falls steeper than 0.5 %, 36 km flatter, 10 km level within 0.1 m; 290 raw sinks |
+| Targets | 114 junctions within 30 m of the main pipe, 1 at the STP |
+| After filling hollows to 2 m | 187 catchments: 96 JOIN (84 km), 1 STP, 65 SINK (57 km, spill 2.4 to 10.3 m), 25 LOW islands (5 km, 23 of them under 0.5 km) |
+| Against the ground | 11.4 km of run flows over the rim of a filled hollow |
+| Largest | C01 JOIN 22 km and C02 JOIN 20 km (east, south and centre); C03 SINK 9.6 km, spill 3.0 m (east, north); the west settlement is SINKs of 2.4 to 6.6 m spill falling south-west, toward where NAMA built its own trunk |
+| Join tolerance | at 12 m the 24 km catchment C01 ended 23 m short of the drawn main pipe; nodes within 12 / 20 / 30 / 40 m: 78 / 98 / 114 / 138 |
+
+What the engineer found in the drawing: loops and two outlets at a junction; several catchments
+mixed on the flat grid in the south-east; no connector drawn from the streets to the main pipe;
+gradients varying along a street. Each became a rule (rules 5, 8, 12) and the rerun in the
+logic file.

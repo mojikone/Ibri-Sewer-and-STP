@@ -45,8 +45,9 @@ old test-boundary pipeline (`run_test_boundary.py`, `stages/tree.py`, `stages/tr
 runs and is untouched; the new engine grows beside it in `sewnet/ground.py`, `outlets.py`,
 `streams.py`.
 
-**The W13 design logic is written (2026-09-07):** `W13/docs/W13_DESIGN_LOGIC.md`, eleven agreed
-rules, a proposed rule-to-engine-step mapping, the road input (the draftsman's DXF in
+**The W13 design logic is written (2026-09-07):** `W13/docs/W13_DESIGN_LOGIC.md`, twelve agreed
+rules (rules only — every measurement, as-built check and run result lives in
+`W13/docs/W13_EVIDENCE.md`, engineer's instruction), a proposed rule-to-engine-step mapping, the road input (the draftsman's DXF in
 `Hydraulic/DWG/`, replacing the SHP road layer for corridors), the scope (street sewers only, no
 tertiary yet), the check-drawing spec, and the rulings of the same day: no crossings of dual
 carriageways are generated, the DXF is trusted as drawn, and an outlet without a street route to
