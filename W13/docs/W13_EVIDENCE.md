@@ -92,3 +92,26 @@ What the engineer found in the drawing: loops and two outlets at a junction; sev
 mixed on the flat grid in the south-east; no connector drawn from the streets to the main pipe;
 gradients varying along a street. Each became a rule (rules 5, 8, 12) and the rerun in the
 logic file.
+
+## Stage A rerun as a tree (2026-09-07)
+
+Same runner, 47 seconds. Drawing `W13/dxf/W13_A_tree.dxf` (the ground drawing is kept as
+`W13_A_ground.dxf` for reference); shapefiles `W13/shp/W13_A_tree_*`; pictures
+`W13/img/W13_A_tree_*.png`; numbers `W13/run/stage_a.json`.
+
+| | |
+|---|---|
+| Joins | 96 candidates on the ground; 46 kept at 150 m spacing, 50 dropped into a neighbour, 3 restored because their streets had nowhere else to go |
+| Direct links (rule 3) | 17 to the main pipe's invert, none to the STP: every west-settlement line to the STP crosses plots, so those wait for a routed spine |
+| Sub-mains | 140 stems, 208 runs, 22.7 km (17 % of the network); 600 m stem floor, 1,500 m side stems |
+| Tree | 1,413 tree runs, 567 leftovers, 0 unreached; **no loops, at most one outlet per node** |
+| Branches and heads | 556 branches, 35.6 km; 514 heads at the first gate, 42 at 10 m; 471 dead-end tree heads trimmed to the first gate; 11 streets under 15 m cannot carry a head (0.1 km) |
+| Tiers | sub main 22.7 km, lateral 71.1 km, branch 35.6 km |
+| Catchments | 133: 46 JOIN (72.5 km), 1 STP, 17 LINK to the main pipe (13.7 km), 52 SINK (39.5 km), 17 LOW (3.7 km) |
+| East | C01 JOIN 19.6 km, C02 JOIN 18.9 km; the northern basin C03 10.5 km links to the main pipe over 189 m with 3.0 m of fall to the invert |
+| West | C04 8.8 km (spill 4.5 m toward the main pipe; to the STP +6.8 m over 3.4 km = 0.20 %), C05 6.1 km (2.4 m; +8.9 m over 3.5 km), C10 2.1 km, C20 1.3 km, C16 1.6 km; every straight line to the STP crosses plots |
+
+What changed against the first run: the mixed catchments in the south-east are gone, every
+junction has one outlet, every join is drawn, and the west settlement's cost is stated toward
+both targets. What Stage B has to do with it: route the west settlement's spine to the STP
+through open ground, as NAMA did, and decide the basins that remain.

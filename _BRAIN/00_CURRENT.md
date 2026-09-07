@@ -38,12 +38,14 @@ cover is a **conditional exception** needing a stated circumstance, concrete pro
 the 0.5 m measured *above the protection*.
 
 **Stage A of the new engine is done on the built area (2026-09-07):** `python W13/py/run_stage_a.py`,
-41 s, the ground read along 146 km of DXF street inside the 9.09 km² the 2006 network serves;
-187 catchments (96 join the main pipe, 65 basins with 2.4–10.3 m spill, 25 islands). Drawing
-`W13/dxf/W13_A_ground.dxf`, numbers `W13/run/stage_a.json`. **Next is Stage B (rules 3–6).** The
-old test-boundary pipeline (`run_test_boundary.py`, `stages/tree.py`, `stages/trunk.py`) still
-runs and is untouched; the new engine grows beside it in `sewnet/ground.py`, `outlets.py`,
-`streams.py`.
+47 s, the ground read along 146 km of DXF street inside the 9.09 km² the 2006 network serves,
+then the network as a tree: 46 joins at NAMA's spacing, 17 direct links, sub-mains as spines,
+heads at the first gate, 133 contiguous catchments, no loops, one outlet per node. **The drawing
+to look at is `W13/dxf/W13_A_tree.dxf`**; `W13_A_ground.dxf` is the raw ground for reference;
+numbers `W13/run/stage_a.json` and `W13/docs/W13_EVIDENCE.md`. **Next is Stage B (rules 3–6
+routed).** The old test-boundary pipeline (`run_test_boundary.py`, `stages/tree.py`,
+`stages/trunk.py`) still runs and is untouched; the new engine grows beside it in
+`sewnet/ground.py`, `outlets.py`, `skeleton.py`, `streams.py`, `export_tree.py`.
 
 **The W13 design logic is written (2026-09-07):** `W13/docs/W13_DESIGN_LOGIC.md`, twelve agreed
 rules (rules only — every measurement, as-built check and run result lives in

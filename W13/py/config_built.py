@@ -48,6 +48,26 @@ HOLLOW_M = 2.0          # a sink that spills with this much fill or less is a ho
                         # crosses by depth, not an outlet; deeper stays a SINK (Stage A method
                         # choice, 2026-09-07 — Stage B decides what a real basin costs)
 
+# ---- rules 3-5: the tree (Stage A rerun, 2026-09-07)
+JOIN_SPACING_M = 150.0    # a join is kept only this far from a bigger one (NAMA: median 167 m)
+STEM_MIN_M = 600.0        # a sub-main stops where less than this much street is upstream
+                          # (200 m gave 44 km of sub-main, a third of the network; NAMA's
+                          # sub mains are under a tenth — first run 2026-09-07)
+SIDE_STEM_MIN_M = 1500.0  # a child carrying this much street of its own is a sub-main too
+DEPTH_WEIGHT = 500.0      # route cost per metre of trench depth a street forces (W8)
+SMIN_PROXY = 0.005        # the DN200 minimum gradient the depth cost is measured against
+GATE_SEARCH_M = 45.0      # how far off a street a house gate may sit (W8)
+FANOUT_OFFSET_M = 10.0    # a head with no gate starts this far from the junction (W8)
+BRANCH_MIN_M = 15.0       # a leftover street shorter than this cannot carry a head; reported
+LINK_MIN_GRAD = 0.002     # a direct link (rule 3) is a large pipe; feasible by gravity when the
+                          # outlet's ground falls to the target at this gradient over the straight
+                          # distance (DN400 class, G203-p29 Table 11; Stage A method choice)
+MP_INVERT_DEPTH_M = 3.0   # the main pipe is a trunk laid at least this deep, so a link is measured
+                          # against its invert, not the ground at its foot (stated allowance)
+LINK_MAX_M = 4000.0       # no direct link longer than NAMA's own trunk from the west settlement
+                          # to the STP; anything further is Stage B's routed spine
+LINK_PLOT_PAD_M = 5000.0  # how far round the area plots are loaded for the no-plot-in-the-way test
+
 # ---- the guide picture: terrain streams
 STREAM_RES_M = 4.0
 STREAM_THRESHOLD_CELLS = 3000   # about 4.8 ha of contributing area at 4 m

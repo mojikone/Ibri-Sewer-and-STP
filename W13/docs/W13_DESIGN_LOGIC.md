@@ -36,12 +36,26 @@ of designing can be tried and compared.
      carriageway with no underpass is reported as a pocket.
    - 2026-09-07: a settlement whose ground falls away from the main pipe is measured toward the
      STP as well, and its spine goes to whichever it reaches by gravity.
+   - 2026-09-07, Stage A method for the direct link. A basin or island low point becomes a
+     LINK outlet when its ground falls to the target at **0.2 %** over the straight distance
+     (the DN400 minimum, a link is a large pipe), the link is no longer than **4 km** (NAMA's
+     own trunk from the west settlement to the STP), and the straight line crosses **no built
+     or planned plot**; agricultural plots crossed are counted and reported. The main pipe is
+     measured at its invert, taken as **3 m** below the ground at the foot of the link, a stated
+     allowance until Stage C lays it. A basin that fails the straight-line test is not refused
+     a link; it waits for Stage B to route one through the streets, and its label carries the
+     fall and distance to both targets.
 4. **Sub-mains first.** Long, straight, few bends. Low is the filter, long and straight is the
    choice. They earn their diameter from the houses they collect, and a bigger pipe reaches
    further on flat ground: about 2 km at DN200, 4 km at DN315, 5 km at DN400 before 12 m.
    - 2026-09-07: sub-mains are picked in Stage A, because the tree needs them: the long,
      straight, low street of each catchment, from the ground and the street geometry, made the
      spine to its join.
+   - 2026-09-07, Stage A method. The sub-main is read off the flood tree as the heaviest stem:
+     from the outlet, step to the child carrying the most street upstream, preferring the
+     straighter continuation where two children are within a quarter of each other, and stop
+     where less than **600 m** of street lies upstream. A side child carrying **1,500 m** or more
+     of its own is a sub-main too. Everything else is a lateral.
 5. **Then hang the rest off them.** Every street drains to the sub-main below it, every house to
    the street it fronts. On flat ground, the shortest run to the nearest sub-main.
    - 2026-09-07 (engineer): **one outlet per junction, and no loops.** Which pipe leaves a
@@ -57,6 +71,14 @@ of designing can be tried and compared.
      the as-built: it holds.
    - 2026-09-07: **catchments follow the tree**, what drains through one sub-main to one join,
      not what steepest descent says.
+   - 2026-09-07, Stage A method. Joins are kept biggest first and any candidate within **150 m**
+     of a kept one is dropped into its neighbour; a dropped join whose streets have no path to
+     any other outlet gets its join back. Laterals search their route to the nearest sub-main
+     with W8's cost: length, plus **500 m of equivalent length per metre** of trench depth a
+     street forces on a pipe at the **0.5 %** minimum. A leftover street drains to its lower end,
+     or to the end nearer a sub-main where the ends are level; its head is set back to the first
+     plot centroid within **45 m** of the street dropped square onto it, or **10 m** where no plot
+     faces it; a street under **15 m** cannot carry a head and is reported.
 6. **A ridge is a boundary, not a place to build.** A street on a ridge drains whole into the
    lower side. A very long ridge street splits at the crest, two heads back to back.
 7. **Gradient follows the ground in three bands.** Flatter than the minimum: lay at the minimum.
