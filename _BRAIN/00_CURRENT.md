@@ -37,6 +37,17 @@ gravitational sewer…"*), not the project assumption we had wrongly filed it as
 cover is a **conditional exception** needing a stated circumstance, concrete protection, and
 the 0.5 m measured *above the protection*.
 
+**The design criteria exist as a clean Word document (2026-09-07):**
+`W13/docs/design_criteria/R0/Ibri_Sewer_Design_Criteria_R0.docx` + `.pdf`, rebuilt by
+`W13/docs/design_criteria/build.py` (`--pdf` renders through Word). It is the readable form of
+`_BRAIN/02_DESIGN_CRITERIA.md` — same values, same page citations, internal history removed,
+standing decisions kept and dated, plus an **"Adopted in W13"** column read from
+`W13/py/sewnet/criteria.py` and two registers (decisions/assumptions; deviations to declare to
+NWS). `02_DESIGN_CRITERIA.md` remains the source of truth; when a value changes, change it there
+first and rebuild the document. **Known discrepancy it surfaced:** `criteria.py` OCCUPANCY = 5.0
+(W8 inheritance) against the locked 5.32 — the gate figures were produced at 5.0, so the code is
+unchanged and the decision is recorded in `07_PROJECT_STATE.md` §6.
+
 **Nothing is lost.**
 
 | Where | What |
