@@ -1,7 +1,0 @@
-TEST,N,KM,PCT_LEN,DEBT_M
-ground flatter than DN200's Table 11 minimum (5.00 mm/m),34862,919.3581190158669,61.71531018631933,
-ground flatter than the reach's OWN governing minimum,34194,901.7364755018668,60.53239226460302,
-ground FALLS at or steeper than the reach's own minimum,22458,587.9394513310581,39.467607735396975,
-ground rises along the direction of flow (AGN_GRADE),14906,392.2532432548668,26.331448081382607,
-"ACCUMULATED DEPTH DEBT - sum over reaches of (the reach's own minimum gradient minus the ground fall) x length. This is the depth the ground does not give back, and it is what the 12 m cap eventually runs into",34194,,,7331.46420437089
-"the same, per km of network",56652,1489.675926832925,,4.921516198464522

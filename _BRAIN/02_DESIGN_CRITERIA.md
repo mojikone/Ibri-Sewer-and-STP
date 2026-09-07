@@ -1,9 +1,6 @@
 # DESIGN CRITERIA — PAM-GUD-203 (201 pp) + PAM-GUD-201 (152 pp) + PAM-GUD-202 (177 pp)
 Refs: `p##` = PAM-GUD-203; `G1-p##` = PAM-GUD-201; `G2-p##` = PAM-GUD-202 Water & TSE Design Guidelines v1.0 (added 2026-08-14, in `_STANDARDS/` + `Data/`). **Nothing here may be altered without re-reading the source.**
 
-> ## ⚠ THIS FILE IS HALF THE PICTURE
-> **`02` holds the numbers that must be TRUE. `08_DESIGN_PHILOSOPHY.md` holds the method that produces a design worth building.** A design can satisfy every row below and still be one no contractor would build — W10 did exactly that. Read `08` before laying out any network. Where the two conflict, **this file wins**: a criterion is a rule of law, philosophy is a rule of judgement.
-
 > ## ⚠ READ FIRST — the two-tier rule (§11.0)
 > **PAM-GUD-201 §7 gives two methods for almost every demand and flow parameter.** Tier A (LPCD ratios 22 %/14 %, return rates 85 %/54 %) is for *"planning and forecasting purposes across broader service areas"*. Tier B — **mandatory "shall" wording wherever detailed land use exists** — is Table 12 unit rates for non-domestic/governmental demand and BS EN 752 for design flows. **Ibri is a project-specific design with detailed land use: Tier B governs, Tier A is a labelled fallback.** W1–W3 used Tier A throughout without saying so. Full rule and quotes in §11.0.
 >
@@ -67,10 +64,7 @@ Refs: `p##` = PAM-GUD-203; `G1-p##` = PAM-GUD-201; `G2-p##` = PAM-GUD-202 Water 
 ## 6. Wadi / crossings
 | Item | Value | Ref |
 |---|---|---|
-| Pipelines+chambers in wadis | avoid — washout risk. **We read "avoid" as PROHIBITED** (project decision, philosophy H1a) | p30 §4.4.1, p33 |
-| ★ **What counts as "wadi ground"** | `HAZARD_WADI_CLASSES = (4, 5, 6)` of the 50-year grid. These are **AR&R flood-hazard classes** keyed on danger to people and vehicles (class 4 ≈ 1.2 m of water) standing in for the guideline's **washout/SCOUR** criterion. **PROJECT ASSUMPTION**, not a guideline threshold — record beside GAP-9 and settle with a scour-depth check | assumption |
-| ★ **Gravity cover at a wadi crossing** | G203 gives **none**. The 1.5 m to crown is the **FORCE MAIN** figure (p52 §8.2.4) and G201-p86 raises it to 2.0 m in soft soil. **We adopt 1.5 m for gravity crossings by project decision** — so a gravity reach at 1.30 m is short of OUR rule, not the guideline's | p52 §8.2.4 + assumption |
-| ★ **45 m lateral length** | p22 Tab 6 states it on the **Lateral Sewer row only**; the Rider row carries no length limit, while p17 §3.2 attaches it to both. **We take the conservative reading** (45 m on both) as a declared project cap | p22 Tab 6, p17 §3.2 |
+| Pipelines+chambers in wadis | avoid — washout risk | p30, p33 |
 | Force main cover at wadi crossing | **1.5 m to crown** (vs 1.3 normal) | p52 §8.2.4 |
 | Twin pipelines for obstacle (highway/wadi) crossing | allowed w/ dedicated hydraulic justification (0.75 m/s in all modes, mechanically independent restraint) | p52 §8.2.3 |
 | Inverted siphons | avoid; only where no other feasible means (scope TOR) | scope p12(60) |
