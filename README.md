@@ -74,6 +74,20 @@ What exists on the ground is smaller than the dataset first suggests. **111.6 km
 
 ---
 
+
+**STANDING DECISION 2026-09-07 — 12 m OF COVER IS A HARD LIMIT.** G203-p33 §4.6.3 makes
+10–12 m a *recommendation* and makes **excavation cost** the real trigger for a pumping
+station. We are not costing anything at concept stage, so **until the hydraulic design is
+ready for cost analysis, nothing goes deeper than 12 m.** Do not read "recommendation" as
+permission, and **do not build exits around it** — W12 capped at 12 m, allowed any breach
+"within 1,000 m of an outfall", and 1,362 chambers came through that single exit at up to
+19.98 m. Deleting the exit gave 3 chambers and 12.79 m. W13 already implements the hard
+limit correctly, including the trench *between* chambers. It has never bound on the test
+area (deepest 10.45 m); it will bind at full area, and that is where the cost question
+becomes real.
+
+---
+
 ## Current state — latest first
 
 | Date | Update |

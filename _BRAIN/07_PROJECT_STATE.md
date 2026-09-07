@@ -44,6 +44,20 @@ pumping station, with 10–12 m only a *recommendation* to be checked with pipe 
 
 ---
 
+
+**STANDING DECISION 2026-09-07 — 12 m OF COVER IS A HARD LIMIT.** G203-p33 §4.6.3 makes
+10–12 m a *recommendation* and makes **excavation cost** the real trigger for a pumping
+station. We are not costing anything at concept stage, so **until the hydraulic design is
+ready for cost analysis, nothing goes deeper than 12 m.** Do not read "recommendation" as
+permission, and **do not build exits around it** — W12 capped at 12 m, allowed any breach
+"within 1,000 m of an outfall", and 1,362 chambers came through that single exit at up to
+19.98 m. Deleting the exit gave 3 chambers and 12.79 m. W13 already implements the hard
+limit correctly, including the trench *between* chambers. It has never bound on the test
+area (deepest 10.45 m); it will bind at full area, and that is where the cost question
+becomes real.
+
+---
+
 ## 1. Project in three lines
 Concept→detailed design + supervision of sewer network, TE network and STP capacity for Ibri Wilayat, Oman (Client NWS, Tender T/2719110/2025, Renardet job 2621). Horizons: start / 2030 / 2055 / ultimate-saturated; ≥3 options each for sewer, TE, STP. Existing STP at E444387 N2563352 (ground ≈327.5 m); ultimate flows ≫ 20,000 m³/d ⇒ STP phasing is the pivotal decision.
 
