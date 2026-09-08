@@ -119,6 +119,10 @@ RECIPE = "7 September evening"  # the layout the engineer approved (commit 3897c
                          # at a crest, attached where it touches the outlet or a sub-main; no
                          # connectors, no per-node outlet choice, no rule 10 trunks (2026-09-09)
 SAG_OUTLET_CUTS = False  # the cuts at a sag or a change of outlet (off in that recipe)
+TRUNK_FROM_EXIT = False  # (tried 2026-09-09, misfired: picked the south-east tip and sent the west to a ridge join at 24 m) a pocket's trunk starts at its exit, the member nearest the works in
+                         # depth terms, not at its lowest hollow (the 7 September picture)
+CHAIN_ORIENT = "outlet"  # a street's lower end is the end nearer the outlet along the flood
+                         # tree (the recipe); "fall" = the end its own decided runs fall to
 SKELETON_FIRST = False   # the long straight streets are attached to an outlet or to a bigger
                          # street first, longest first; every other street drains to the
                          # nearest skeleton node; catchments follow the skeleton. False = W13's
