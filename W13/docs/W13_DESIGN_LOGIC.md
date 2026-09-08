@@ -30,6 +30,14 @@ of designing can be tried and compared.
      a basin that would need more than **10 m** stays a pocket, for a pump or a cut under rule
      10, because with cover it would pass the 12 m limit. A part of the graph with no street path
      to any target is an island: its lowest node is a **LOW** outlet, to be linked or reported.
+   - 2026-09-07 (late): **which outlet a node drains to is decided by rule 5's cost, not by the
+     flood.** The flood answers the rim question, how high the water must rise to leave a
+     basin, and keeps that job: filled levels, basins and the ground picture. But on a slope
+     it hands everything to the lowest outlet, because the front that starts lower reaches
+     every node first whatever the distance. The assignment is now the least-cost route to
+     any outlet, length plus **500 m per metre** of trench a pipe at **0.5 %** is forced to,
+     the same cost the laterals use; a basin's fill is read off the route as the highest
+     ground on it. The flood remains one line of configuration away.
 3. **From each outlet, the gravity path to the main pipe is the spine.** One join per catchment.
    The ground sets the number of joins, not a cap.
    - 2026-09-07: where the streets give the outlet no proper way to the main pipe, connect the
@@ -83,6 +91,16 @@ of designing can be tried and compared.
      cut at the first chosen node it meets, and so on until no chain of **250 m** or more
      attaches. Direction along a chain is toward the outlet. Everything else is a lateral,
      routed to the nearest sub-main by the least-depth search.
+   - 2026-09-07 (late): **a chain is cut at a crest and wherever the fall turns**, so no
+     sub-main runs over a hill or against the fall. A crest is an interior node more than
+     **0.5 m** above the lowest ground on both sides of it along the chain (rule 6). The fall
+     turns where two neighbouring runs flow away from a node or into it, and where two
+     neighbouring nodes drain to different outlets; only a run whose ends differ by more than
+     **0.1 m** counts, because on level ground the arrow is a tie-break and a straight street
+     flips every few runs. A chain's lower end is the end its decided runs flow to; a chain
+     of level runs is pointed toward the outlet. A chain whose foot does not touch a chosen
+     sub-main may still attach through a connector of at most **250 m** along the fall, and
+     the connector becomes sub-main with it.
 5. **Then hang the rest off them.** Every street drains to the sub-main below it, every house to
    the street it fronts. On flat ground, the shortest run to the nearest sub-main.
    - 2026-09-07 (engineer): **one outlet per junction, and no loops.** Which pipe leaves a
@@ -106,6 +124,13 @@ of designing can be tried and compared.
      or to the end nearer a sub-main where the ends are level; its head is set back to the first
      plot centroid within **45 m** of the street dropped square onto it, or **10 m** where no plot
      faces it; a street under **15 m** cannot carry a head and is reported.
+   - 2026-09-07 (late): **the route search runs from the outlets, and a sub-main's length
+     counts.** A sub-main run costs **half** a lateral run in the search, so the collector is
+     preferred, but no longer nothing: every metre a pipe travels at the minimum gradient is
+     depth, sub-main or not. A sub-main node is entered only along its own stem. A node
+     routes only inside its own catchment (rule 2 decides the catchment, rules 4 and 5 work
+     inside it); a street between two catchments is left over and becomes a branch with its
+     head at the next gate, which is rule 5's one-outlet rule applied at the boundary.
 6. **A ridge is a boundary, not a place to build.** A street on a ridge drains whole into the
    lower side. A very long ridge street splits at the crest, two heads back to back.
 7. **Gradient follows the ground in three bands.** Flatter than the minimum: lay at the minimum.
@@ -120,11 +145,27 @@ of designing can be tried and compared.
      successive manholes". Checked against the as-built: it is NAMA's practice.
 9. **Lay each catchment from its heads by rule 7.** That is the shallowest the route can ever be.
    Under 12 m at the main pipe: gravity, done.
+   - 2026-09-07: **every Stage A run lays the tree and reports its depth**, so a layout is
+     never handed over without knowing where it digs. Each pipe is sized on the built and
+     planned plots it serves at saturation, one property per plot or the accounts counted on
+     it, **0.911 m3/d** per property, Merrimack peak, infiltration on length; the tree is laid
+     heads-down at each pipe's own Table 11 minimum gradient with a flat cover allowance to
+     invert. No drops, no chamber spacing, no rounded gradients: honest enough to say which
+     street digs too deep, not the Stage C design. **The diameter comes from the flow. It is
+     never chosen to flatten the gradient** (engineer, 2026-09-07).
 10. **Over 12 m: reroute first.** A different join, a street where the ground helps, or the
     neighbouring catchment, street by street, for whatever can reach it within 12 m. Then cut
     where the pipe passes 12 m: a pump at the cut into the nearest gravity chamber, and the pipe
     restarts at cover. Never dig past 12 m to avoid a pump. Never pump to avoid a reroute. Until
     we cost, gravity within 12 m beats a pump.
+    - 2026-09-07 (late): what a reroute looked like in practice, three times on one run,
+      each found by reading the governing path into the deepest chamber and each a rule
+      fix rather than a special case: a chain pointed uphill toward a join (rule 4's cut at
+      the turn of the fall), a hollow pulled onto a ridge sub-main and carried 2.3 km round
+      itself (rule 5's routing inside the catchment), and an interior sent 1 km east to the
+      nearest sub-main node instead of 850 m down the edge street (rule 5's sub-main length
+      counting). No cut and no pump was needed on the built area. The mechanical form of
+      this rule, an engine that reroutes on its own when the check fails, is not written yet.
 11. **A closed hollow, or a ridge between a pocket and every neighbour, is a real pump.**
 12. **Chambers** (2026-09-07, from W8). A chamber sits at every junction, every head, and every
     change of gradient or diameter. **Spacing follows the guideline**, G203-p30 Table 12 by

@@ -171,3 +171,49 @@ settlement, so the entry landed where that trunk begins.
 Open for the engineer: 250 m is the shortest street chain that becomes a sub-main, and it
 takes cross streets of 300 to 600 m in with the long ones. NAMA's sub mains are under a tenth
 of its network; ours are a third at 250 m. The threshold is a one-line change.
+
+## Stage A, the depth check and the reroutes (2026-09-07, late night)
+
+The engineer's sixth look: pipe size comes from the flow, never to flatten a gradient; above
+12 m is not a design; can a reroute help? The runner now sizes and lays every run (rule 9),
+and the answer was found by reading the governing path into the deepest chamber, five times.
+Same runner, 88 seconds. The run's working state is kept in `W13/run/stage_a_state.pkl`, so
+any question about a node or a pipe is answered in seconds from the record (not committed).
+
+| Run | Deepest | What the governing path showed | Fix |
+|---|---|---|---|
+| 1 | **20.0 m**, west north join | 2.26 km of DN200 at 0.5 % climbing 7.4 m from the interior (333.8 m) to the join (341.1 m); the flood had sent the interior to the corner, the chain rule pointed the street uphill because a join is an outlet and "nearer an outlet" won | cut chains where the fall turns, orient by the fall |
+| 2 | 11.6 m, east hollow | the hollow at 362.5 m left over a 367.6 m saddle to reach a sub-main 460 m away while its own rim is 365.4 m; the valley street below the rim was laterals for 2.8 km | connector: a chain attaches through up to 250 m of the fall |
+| 3 | **15.6 m**, east hollow | the hollow's east half, which the flood had sent down the valley at 8.6 m, was pulled onto a ridge sub-main and rode 2.3 km round the hollow at 0.5 % | a node routes only inside its own catchment |
+| 4 | 11.1 m | passes; but the 29.8 km east-centre catchment had 2.0 km of sub-main: its long streets were cut into fragments because on level ground the flood's arrow flips every few runs | only a decided run (over 0.1 m on the filled surface) cuts |
+| 5 | 13.1 m, west rim | the same catchment was not level at all: it rises 15 m, and the flood gave the whole slope to its lowest join. Assigned by rule 5's cost, the slope splits between the four joins on its frontage. The west interior then went 1,000 m east to the nearest sub-main node and 650 m along it to the rim, past an 850 m street to the same rim, because sub-main edges were free | outlets by least depth; the search runs from the outlets with sub-mains at half cost |
+| 6 | **11.5 m**, west rim | the interior (333.7 m) leaves over its 338.6 m rim by the edge street, 4.9 m of fill plus 0.5 % over 850 m | none; passes |
+
+The depth weight was tested at 500, 2,000 and 5,000 m per metre between runs 1 and 2:
+11.58, 11.44, 11.44 m. Depth is set by the structure of the tree, not by the weight.
+
+| Final run | |
+|---|---|
+| Catchments | 37: **22 JOIN (86.9 km), 1 corridor entry to the STP (19.9 km, the west), 3 LINK to the main pipe (1.1 km), no sink, 11 LOW islands (1.6 km)**; 19 catchments under 0.3 km (7 JOIN stubs on the main pipe road, 10 islands, 2 links) |
+| East | C01 33.8 km to (450575, 2567479), C03 16.3 km to (450261, 2567604), C07 4.1 km, C05 5.6 km, and six joins of 1.7 to 2.4 km along the west side of the main pipe road; the long north-south streets are the sub-mains |
+| West | C02 19.9 km to the corner entry, sub-mains the long diagonals and the edge street; C04 6.0 km and C09 2.4 km to joins on the main pipe |
+| Sub-mains | 33.0 km, 30 % of the network, 70 chains; 808 street chains, 226 cut at a crest, 218 at a turn of the fall |
+| Tree | 1,261 tree runs, 471 leftovers, 0 unreached; 467 branches (24.6 km), 445 heads at the first gate, 22 at 10 m; 4 streets too short for a head (35 m) |
+| Basins crossed by depth | 47, extra depth median 2.8 m, max 5.3 m |
+| Load | 4,152 plots served, 5,530 properties at saturation |
+| Diameters | DN200 105.3 km, DN250 2.0, DN315 1.3, DN400 0.9; every lateral and branch is DN200 |
+| Depth | 1,765 chambers, median 1.55 m, 90th percentile 4.35 m, **maximum 11.47 m, none over 12 m**, 31 over 8 m (14 in the west, 10 in the east centre, 5 at the top of the main pipe, 2 in the west north) |
+| Checks | no loops, one outlet per node, no pipe ends nowhere |
+
+**NAMA on the same rim.** NAMA's western trunk main (5A-5, 16 segments, 6.2 km, inverts
+recorded, diameter not) runs from the interior at ground 335.3 m and invert 333.0 m over the
+rim at ground 338.3 to 338.4 m with an invert of 332.5 m, 5.9 m deep, on a constant **0.21 %**
+to the corner and on to the works. 0.21 % is the Table 11 gradient of a DN400; the interior
+serves about 350 properties, a DN200 by flow. NAMA bought its 5.9 m with a pipe sized for the
+gradient; the rule as the engineer set it gives 11.5 m with a pipe sized for the flow.
+
+Open for the engineer: the 7 stub catchments on the main pipe road, each a street touching
+the main pipe with nowhere else to go, where the rule says only sub-mains join; the sub-main
+share at 30 % against NAMA's tenth (the 250 m floor); the west rim at 11.5 m against NAMA's
+5.9 m on the same line; and the mechanical form of rule 10, which was not needed on this
+area and is not written.

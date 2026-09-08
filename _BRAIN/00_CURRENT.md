@@ -44,7 +44,11 @@ settlement as one sub-network entering NAMA's corridor to the STP at its south-w
 short links to the main pipe (no road between, under 150 m), no sink (basins drain over their
 rim with the extra depth marked), 11 islands; sub-mains are the long straight streets (chains,
 250 m minimum, a threshold the engineer may tune), heads at the first gate, 30 contiguous
-catchments, no loops, one outlet per node, checked in QGIS (group `Claude W13 A`). **The drawing
+catchments, no loops, one outlet per node, checked in QGIS (group `Claude W13 A`). **Every run
+now lays the tree and reports its depth (rule 9, `sewnet/quicklay.py`): 1,765 chambers, deepest
+11.47 m, none over 12 m, no pump, after five reroutes found by reading the governing path into
+the deepest chamber (20.0 m at first). Outlets are assigned by rule 5's least-depth cost, not the
+flood (`ASSIGN_BY_DEPTH`); the search runs from the outlets with sub-mains at half cost.** **The drawing
 to look at is `W13/dxf/W13_A_tree.dxf`**; `W13_A_ground.dxf` is the raw ground for reference;
 numbers `W13/run/stage_a.json` and `W13/docs/W13_EVIDENCE.md`. **Next is Stage B (rules 3–6
 routed).** The old test-boundary pipeline (`run_test_boundary.py`, `stages/tree.py`,
