@@ -61,7 +61,10 @@ or a change of outlet; rule 10 builds no pipes; join floor set aside): strings o
 at the deepest because one street crosses C06's basin and climbs back. Then the W14 trial, sub-mains
 first (`W14/`, `SKELETON_FIRST`): every sub-network one clean block, the maze gone; then the 12 m rule as
 the engineer stated it (`REROUTE_MODE = "cut"`): 8 pump candidates, 32.9 km, and nothing past 12 m except
-the west's spine to the works (15.7 m, 8.1 m under the inlet). W13 stays the record of the catchments-first line; W14 is where the
+the west's trunk to the works (15.7 m, 8.1 m under the inlet at 323.0 m). Measured for the engineer: with
+nothing below 12 m that trunk meets the works at 317.3 m; to meet the inlet it may be no deeper than 3.3 m
+at its head, where the west's interior arrives at 11.4 m, so meeting the inlet by gravity means a pump for
+that interior. The two streets that climbed to the main pipe are a scratch layer in QGIS. W13 stays the record of the catchments-first line; W14 is where the
 engine grows now, nothing added to the logic until the engineer agrees the design.** **The drawing
 to look at is `W13/dxf/W13_A_tree.dxf`**; `W13_A_ground.dxf` is the raw ground for reference;
 numbers `W13/run/stage_a.json` and `W13/docs/W13_EVIDENCE.md`. **Next is Stage B (rules 3–6
