@@ -73,6 +73,9 @@ MP_INVERT_DEPTH_M = 3.0   # the main pipe is a trunk laid at least this deep, so
                           # against its invert, not the ground at its foot (stated allowance)
 LINK_MAX_M = 4000.0       # no direct link longer than NAMA's own trunk from the west settlement
                           # to the STP; anything further is Stage B's routed spine
+LINK_MP_MAX_M = 150.0     # a direct link to the main pipe is for a sub-network VERY close to it
+                          # with no road between (engineer, 2026-09-07); farther, or with a
+                          # street across the line, the water goes by the streets
 LINK_PLOT_PAD_M = 5000.0  # how far round the area plots are loaded for the no-plot-in-the-way test
 
 # ---- the guide picture: terrain streams

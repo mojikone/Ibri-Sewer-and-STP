@@ -171,9 +171,18 @@ def main():
         "or NAMA's trunk corridor to the STP, with no plot in the way ...")
     gates = K.Gates(cfg.PLOTS_CLASS, envelope, cfg.GATE_SEARCH_M, cfg.LINK_PLOT_PAD_M)
     corridor = K.TrunkCorridor(built, cfg.STP)
+    streets = K.Streets(runs)
     rep["corridor"] = {"lines": len(corridor.lines), "reaches_stp": corridor.ok,
                        "ends_tied_to_stp": corridor.tied_ends}
-    links, corridor_paths = {}, {}
+    # the corridor is a second target: its entry joins are chosen like joins on the main pipe
+    entries, corridor_paths = K.corridor_entry_targets(
+        node_keys, znode, ground, corridor, streets, cfg.LINK_MP_MAX_M, cfg.JOIN_SPACING_M,
+        cfg.CORRIDOR_MIN_GRAD, cfg.CORRIDOR_MAX_M, mp_union=mp_union, plots=gates)
+    entries = {n: t for n, t in entries.items() if n not in targets2}
+    targets2.update(entries)
+    rep["corridor"]["entry_joins"] = len(entries)
+    log(f"   corridor entry joins: {len(entries)}")
+    links = {}
     # 1. every basin deeper than HOLLOW_M is offered a direct link first: to the main pipe's
     #    invert, or along NAMA's corridor to the STP. Gravity with no extra depth beats
     #    climbing out of a basin (rule 5's least-depth logic; NAMA sent the west to the STP)
@@ -182,12 +191,14 @@ def main():
             runs, znode, targets2, cfg.HOLLOW_M, raw_term)
         new = K.link_targets(set(src2.values()), spill2, znode, ground, mp_union, cfg.STP,
                              cfg.LINK_MIN_GRAD, cfg.MP_INVERT_DEPTH_M, cfg.LINK_MAX_M, gates,
-                             existing=list(targets2), spacing_m=cfg.JOIN_SPACING_M)
+                             existing=list(targets2), spacing_m=cfg.JOIN_SPACING_M,
+                             streets=streets, mp_max_len=cfg.LINK_MP_MAX_M)
         new = {n: v for n, v in new.items() if n not in targets2}
         rest = {s for s in set(src2.values()) if s not in targets2 and s not in new}
         cl = K.corridor_links(rest, spill2, znode, ground, corridor, cfg.CORRIDOR_ENTRY_M,
                               cfg.CORRIDOR_MIN_GRAD, gates, mp_union=mp_union,
-                              mp_invert_depth=cfg.MP_INVERT_DEPTH_M, max_len=cfg.CORRIDOR_MAX_M)
+                              mp_invert_depth=cfg.MP_INVERT_DEPTH_M, max_len=cfg.CORRIDOR_MAX_M,
+                              streets=streets, mp_max_len=cfg.LINK_MP_MAX_M)
         for n, (t, ag, geom) in cl.items():
             new[n] = (t, ag)
             corridor_paths[n] = geom

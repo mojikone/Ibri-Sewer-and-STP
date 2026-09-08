@@ -90,8 +90,29 @@ def restore_stranded_joins(info, kept, dropped, src2, spill2):
     return back
 
 
+class Streets:
+    """The network's own streets, for the test 'is there a road between here and there'.
+    A leg is blocked when it crosses any street run more than clear_m from its start."""
+
+    def __init__(self, runs, clear_m=8.0):
+        self.geoms = [r["geom"] for r in runs]
+        self.tree = STRtree(self.geoms)
+        self.clear = clear_m
+
+    def blocked(self, leg):
+        start = Point(leg.coords[0]).buffer(self.clear)
+        body = leg.difference(start)
+        if body.is_empty:
+            return False
+        for k in self.tree.query(body):
+            if self.geoms[k].intersects(body):
+                return True
+        return False
+
+
 def link_targets(sources, spill, z, ground, mp_union, stp_xy, min_grad, mp_invert_depth,
-                 max_len, plots=None, existing=(), spacing_m=0.0):
+                 max_len, plots=None, existing=(), spacing_m=0.0, streets=None,
+                 mp_max_len=None):
     """Rule 3's direct link, as an outlet type. A basin or island low point whose ground can
     fall to the main pipe's invert, or to the STP, at min_grad over the straight distance, with
     no built or planned plot in the way and within max_len, is not a basin: it is an outlet with
@@ -113,16 +134,22 @@ def link_targets(sources, spill, z, ground, mp_union, stp_xy, min_grad, mp_inver
         zf = float(ground.z_at([foot.x], [foot.y])[0]) - mp_invert_depth
         d_mp, d_stp = p.distance(foot), p.distance(Point(stp_xy))
         cand = []
-        if 1.0 < d_mp <= max_len and (z[s] - zf) >= min_grad * d_mp:
+        mp_cap = mp_max_len if mp_max_len is not None else max_len
+        if 1.0 < d_mp <= mp_cap and (z[s] - zf) >= min_grad * d_mp:
             cand.append(("LINK-MP", LineString([p, foot]), d_mp))
         if 1.0 < d_stp <= max_len and (z[s] - zstp) >= min_grad * d_stp:
             cand.append(("LINK-STP", LineString([p, Point(stp_xy)]), d_stp))
         for typ, line, d in sorted(cand, key=lambda c: c[2]):
             crossed = plots.crossed(line) if plots else (0, 0)
-            if crossed[0] == 0:
-                out[s] = (typ, crossed[1])
-                ex_pts.append(p)               # the next link keeps its distance from this one
-                break
+            if crossed[0] != 0:
+                continue
+            # a link is for the case with no road between: where a street of the network
+            # lies across the line, the water goes by the streets (engineer, 2026-09-07)
+            if streets is not None and streets.blocked(line):
+                continue
+            out[s] = (typ, crossed[1])
+            ex_pts.append(p)                   # the next link keeps its distance from this one
+            break
     return out
 
 
@@ -221,8 +248,48 @@ class TrunkCorridor:
         return total, LineString(coords), entry, d1
 
 
+def corridor_entry_targets(nodes, z, ground, corridor, streets, entry_m, spacing_m, min_grad,
+                           max_len, mp_union=None, mp_near_m=40.0, plots=None):
+    """NAMA's trunk corridor as a second target. A street junction within entry_m of the
+    corridor, with no street and no built or planned plot between it and the corridor, whose
+    ground falls to the STP at min_grad along the corridor within max_len, is an entry join.
+    Entries are kept lowest first and spaced spacing_m apart, like joins on the main pipe.
+    A corridor point under the drawn main pipe is not an entry (that is the main pipe's job).
+    Returns ({node: 'LINK-STP'}, {node: geometry})."""
+    if corridor is None or not corridor.ok:
+        return {}, {}
+    zstp = float(ground.z_at([corridor.stp_xy[0]], [corridor.stp_xy[1]])[0])
+    cands = []
+    for n in nodes:
+        p = Point(n)
+        r = corridor.route(p, entry_m)
+        if r is None:
+            continue
+        total, geom, entry, d1 = r
+        if mp_union is not None and mp_union.distance(entry) <= mp_near_m:
+            continue
+        if total > max_len or (z[n] - zstp) < min_grad * total:
+            continue
+        leg = LineString([(p.x, p.y), (entry.x, entry.y)])
+        if streets is not None and streets.blocked(leg):
+            continue
+        if plots is not None and plots.crossed(leg)[0]:
+            continue
+        cands.append((z[n], n, geom))
+    cands.sort()
+    kept, pts, paths = {}, [], {}
+    for zz, n, geom in cands:
+        p = Point(n)
+        if all(p.distance(q) >= spacing_m for q in pts):
+            kept[n] = "LINK-STP"
+            paths[n] = geom
+            pts.append(p)
+    return kept, paths
+
+
 def corridor_links(sources, spill, z, ground, corridor, entry_m, min_grad, plots=None,
-                   mp_union=None, mp_invert_depth=3.0, mp_near_m=40.0, max_len=4000.0):
+                   mp_union=None, mp_invert_depth=3.0, mp_near_m=40.0, max_len=4000.0,
+                   streets=None, mp_max_len=None):
     """Rule 3 along NAMA's corridor: a basin or island low point that can reach the built
     trunk corridor within entry_m, crossing no built or planned plot on that leg, links along
     it. Where the corridor entry lies under the drawn main pipe (the eastern trunk), the link
@@ -245,9 +312,12 @@ def corridor_links(sources, spill, z, ground, corridor, entry_m, min_grad, plots
         crossed = plots.crossed(leg) if plots else (0, 0)
         if crossed[0] != 0:
             continue
+        if streets is not None and streets.blocked(leg):
+            continue
         if mp_union is not None and mp_union.distance(entry) <= mp_near_m:
             zf = float(ground.z_at([entry.x], [entry.y])[0]) - mp_invert_depth
-            if d1 > 1.0 and (z[s] - zf) >= min_grad * d1:
+            cap = mp_max_len if mp_max_len is not None else max_len
+            if 1.0 < d1 <= cap and (z[s] - zf) >= min_grad * d1:
                 out[s] = ("LINK-MP", crossed[1], leg)
             continue
         if total <= max_len and (z[s] - zstp) >= min_grad * total:

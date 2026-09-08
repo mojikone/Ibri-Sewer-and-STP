@@ -50,15 +50,19 @@ of designing can be tried and compared.
      fall and distance to both targets. A link is a join for the spacing rule: it keeps the
      join spacing from every existing join or link, unless its source is an island with no
      street path to anything.
-   - 2026-09-07: **a direct link may follow NAMA's built trunk corridor to the STP.** The
-     corridor is the built trunk mains, a right-of-way with no plot in it. A basin within
-     **600 m** of the corridor, with no built or planned plot on the leg to it, links along the
-     corridor when the whole way to the STP falls at **0.125 %** (the DN600 minimum, a trunk from
-     a settlement of this size) and is no longer than **6.5 km** (NAMA's own western trunk runs
-     5.65 km along it). Where the corridor entry lies under the drawn main pipe, the link is a
-     link to the main pipe at the entry, not a ride to the STP. Links are offered to basins
-     before any basin is filled toward the main pipe: gravity with no extra depth beats
-     climbing out.
+   - 2026-09-07 (engineer): **a direct link is for a sub-network very close to the main pipe
+     with no road between.** A link to the main pipe is at most **150 m** long and its line
+     crosses no street of the network; where a street lies between, the water goes by the
+     streets into the neighbouring sub-network, at the extra depth of rule 2.
+   - 2026-09-07: **NAMA's built trunk corridor to the STP is a second target.** The corridor is
+     the built trunk mains, a right-of-way with no plot in it. A street junction within 150 m
+     of it, with no street and no built or planned plot between them, whose ground falls to the
+     STP at **0.125 %** (the DN600 minimum, a trunk from a settlement of this size) along the
+     corridor within **6.5 km** (NAMA's own western trunk runs 5.65 km along it), is an entry
+     join, kept lowest first and spaced like joins on the main pipe. A corridor point under the
+     drawn main pipe is not an entry; that is the main pipe's job. The settlement then reaches
+     the entry by its own streets. Links are offered to basins before any basin is filled
+     toward the main pipe: gravity with no extra depth beats climbing out.
 4. **Sub-mains first.** Long, straight, few bends. Low is the filter, long and straight is the
    choice. They earn their diameter from the houses they collect, and a bigger pipe reaches
    further on flat ground: about 2 km at DN200, 4 km at DN315, 5 km at DN400 before 12 m.

@@ -128,13 +128,18 @@ sit inside a plot and 54 pipes run more than 2 m inside one (1.3 km, the draftsm
 The engineer's third look: isolated groups are not sub-networks. Every basin now drains, and
 the west settlement links to the STP along NAMA's corridor. Same runner, 90 seconds.
 
+The engineer's fourth look: a 189 m link from the northern basin jumped over streets and
+another sub-network to reach the main pipe. Links to the main pipe are now at most 150 m with
+no street across the line, and the corridor to the STP is a second target with entry joins
+reached by the settlement's own streets.
+
 | | |
 |---|---|
-| Catchments | 39: **23 JOIN (78.0 km), 1 LINK to the STP along the corridor (25.2 km, the west settlement), 7 LINK to the main pipe (4.7 km), 0 SINK, 8 LOW islands (1.4 km)** |
-| Basins crossed by depth | 36 marked; extra depth to leave them median 3.0 m, maximum 5.1 m; none over the 10 m pocket limit |
+| Catchments | 38: **23 JOIN (81.9 km), 1 entry to the STP corridor (25.2 km, the west settlement), 3 LINK to the main pipe (0.7 km, all under 60 m), 0 SINK, 11 LOW islands (1.6 km)** |
+| Basins crossed by depth | 39 marked; extra depth to leave them median 3.0 m, maximum 5.1 m; none over the 10 m pocket limit; the northern basin of the east now drains by its streets into the 5.2 km join at the top of the main pipe |
 | West settlement | one sub-network of 25.2 km, outlet at its south edge (445219, 2566295); the corridor route to the STP falls 8.2 m over about 6 km, 0.14 %, within the DN600 class; NAMA's own western trunk (71 segments, 5A-5, with inverts) falls 0.219 % overall, median gradient 6.0 mm/m, depth median 2.7 m, max 6.9 m |
-| East settlement | C01 29.5 km and C02 27.0 km on the main pipe; the northern basin C04 3.9 km links to the main pipe over 189 m |
-| Tiers | sub main 21.9 km, lateral 61.7 km, branch 25.7 km |
+| East settlement | C01 29.4 km and C02 26.5 km on the main pipe; C04 5.2 km at the top of the main pipe now holds the northern basin |
+| Tiers | sub main 22.8 km, lateral 61.3 km, branch 25.3 km |
 | Checks | no loops, one outlet per node, no pipe ends nowhere |
 
 On the way, two misfires of the corridor rule, both fixed: the eastern trunk corridor lies
