@@ -30,3 +30,6 @@ W13/run/*_log.txt
 *.dwl
 *.dwl2
 W13/dxf/*.dwg
+W14/run/*.pkl
+W14/run/*_log.txt
+W14/dxf/*.dwg
