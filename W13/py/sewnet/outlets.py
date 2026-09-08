@@ -101,6 +101,51 @@ def priority_flood(adj, z, sources):
     return filled, parent, seq
 
 
+def depth_search(runs, z, sources, depth_weight, smin):
+    """Rule 5's cost applied to the outlets: every node drains to the outlet it reaches at
+    the least cost, length plus depth_weight metres per metre of trench a pipe at the smin
+    gradient is forced to. A search edge from v to u carries the cost of a pipe FLOWING
+    u -> v. The filled level of a node is the highest ground on its route out, so a basin
+    reads exactly as it does under the flood. Returns filled, parent, reach order, cost."""
+    adj = {}
+    for r in runs:
+        u, v, L = r["up"], r["dn"], r["len"]
+        need = L * smin
+        adj.setdefault(v, []).append((u, L + depth_weight * max(0.0, need - (z[u] - z[v]))))
+        adj.setdefault(u, []).append((v, L + depth_weight * max(0.0, need - (z[v] - z[u]))))
+    cost, parent, seq = {}, {}, {}
+    heap = []
+    for s in sources:
+        cost[s] = 0.0
+        parent[s] = None
+        heapq.heappush(heap, (0.0, s))
+    while heap:
+        d, n = heapq.heappop(heap)
+        if d > cost[n] or n in seq:
+            continue
+        seq[n] = len(seq)
+        for nb, w in adj.get(n, []):
+            if d + w < cost.get(nb, float("inf")):
+                cost[nb] = d + w
+                parent[nb] = n
+                heapq.heappush(heap, (d + w, nb))
+    filled = {}
+    for n in cost:
+        path = []
+        m = n
+        while m not in filled:
+            path.append(m)
+            p = parent[m]
+            if p is None:
+                filled[m] = z[m]
+                break
+            m = p
+        for q in reversed(path):
+            p = parent[q]
+            filled[q] = z[q] if p is None else max(z[q], filled[p])
+    return filled, parent, seq, cost
+
+
 def components_of(adj, subset):
     seen, comps = set(), []
     for n in subset:
@@ -119,14 +164,20 @@ def components_of(adj, subset):
     return comps
 
 
-def resolve_outlets(runs, z, targets, hollow_m, raw_term):
+def resolve_outlets(runs, z, targets, hollow_m, raw_term, depth_weight=None, smin=None):
     """Flood from the targets. A raw sink that would need more than hollow_m of fill to
     spill becomes an outlet of its own (a SINK, its spill recorded at that moment). A
     part of the graph with no street path to any target is an island: its lowest node
     becomes an outlet (a LOW point, spill None) and the island is then flooded from there,
     so its own hollows are filled and only its real basins remain. Repeat until stable.
     Returns the outlet of every node, the filled surface, the drain parents, the reach
-    order, the spill of every outlet and the iteration log."""
+    order, the spill of every outlet and the iteration log.
+
+    With depth_weight given, the assignment is depth_search instead of the flood: on a
+    slope the flood hands everything to the lowest outlet, because the front that starts
+    0.5 m lower reaches every node first whatever the distance (measured 2026-09-07: a
+    29.8 km catchment on a 15 m slope with one join, where the least-depth cost gives the
+    same ground to the four joins along its frontage)."""
     adj = adjacency(runs)
     nodes = list(z)
     sources = set(targets)
@@ -135,7 +186,10 @@ def resolve_outlets(runs, z, targets, hollow_m, raw_term):
     iters = []
     filled = parent = seq = None
     for _ in range(30):
-        filled, parent, seq = priority_flood(adj, z, sources)
+        if depth_weight is None:
+            filled, parent, seq = priority_flood(adj, z, sources)
+        else:
+            filled, parent, seq, _cost = depth_search(runs, z, sources, depth_weight, smin)
         added = {}
         for s in raw_sinks:
             if s in sources or s not in filled:

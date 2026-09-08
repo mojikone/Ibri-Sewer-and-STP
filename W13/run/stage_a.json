@@ -48,48 +48,67 @@
     "crossing_agricultural_plots": 0
   },
   "basins_marked": {
-    "count": 37,
+    "count": 47,
     "extra_depth_m": {
       "median": 2.83,
-      "max": 5.07
+      "max": 5.28
     }
   },
   "submains": {
-    "chains_used": 63,
-    "submain_runs": 405,
-    "submain_km": 35.48,
-    "street_chains": 591,
-    "chains_over_min": 128
+    "chains_used": 70,
+    "submain_runs": 362,
+    "submain_km": 33.42,
+    "street_chains": 808,
+    "chains_cut_at_a_crest": 226,
+    "chains_cut_at_a_divide": 218,
+    "chains_over_min": 112
   },
   "dangling_ends": 0,
   "branches": {
-    "count": 458,
-    "km": 25.29,
-    "heads_at_gate": 448,
-    "heads_offset_10m": 10,
-    "tree_heads_trimmed_to_gate": 225,
-    "too_short_for_a_head": 6,
-    "too_short_km": 0.062
+    "count": 467,
+    "km": 24.61,
+    "heads_at_gate": 445,
+    "heads_offset_10m": 22,
+    "tree_heads_trimmed_to_gate": 231,
+    "too_short_for_a_head": 4,
+    "too_short_km": 0.035
   },
   "tree_check": {
     "no_loops": true,
     "max_outlets_per_node": 1
   },
+  "depth": {
+    "chambers": 1765,
+    "depth_median_m": 1.55,
+    "depth_90pct_m": 4.35,
+    "depth_max_m": 11.47,
+    "over_limit": 0,
+    "over_8m": 31,
+    "catchments_over_limit": {},
+    "dn_km": {
+      "200": 105.3,
+      "250": 2.0,
+      "315": 1.3,
+      "400": 0.9
+    },
+    "plots_served": 4152,
+    "properties_at_saturation": 5530
+  },
   "tier_km": {
-    "sub main": 34.2,
-    "lateral": 49.8,
-    "branch": 25.3
+    "sub main": 33.0,
+    "lateral": 51.8,
+    "branch": 24.6
   },
   "class_km": {
-    "NORMAL": 61.6,
-    "FLAT": 16.7,
-    "LEVEL": 8.6,
-    "AGAINST": 22.4
+    "NORMAL": 63.0,
+    "FLAT": 17.5,
+    "LEVEL": 8.5,
+    "AGAINST": 20.6
   },
   "catchments": {
-    "count": 30,
+    "count": 37,
     "by_type": {
-      "JOIN": 15,
+      "JOIN": 22,
       "STP": 0,
       "LINK-STP": 1,
       "LINK-MP": 3,
@@ -97,15 +116,22 @@
       "LOW": 11
     },
     "km_by_type": {
-      "JOIN": 83.0,
+      "JOIN": 86.9,
       "STP": 0,
-      "LINK-STP": 24.0,
-      "LINK-MP": 0.7,
+      "LINK-STP": 19.9,
+      "LINK-MP": 1.1,
       "SINK": 0,
       "LOW": 1.6
     }
   },
   "basins": [
+    {
+      "xy": [
+        446442.9,
+        2566054.2
+      ],
+      "extra_m": 2.65
+    },
     {
       "xy": [
         450567.6,
@@ -125,7 +151,7 @@
         445318.9,
         2566643.0
       ],
-      "extra_m": 2.62
+      "extra_m": 2.76
     },
     {
       "xy": [
@@ -136,10 +162,17 @@
     },
     {
       "xy": [
+        450563.5,
+        2568878.9
+      ],
+      "extra_m": 2.78
+    },
+    {
+      "xy": [
         450655.5,
         2570217.0
       ],
-      "extra_m": 2.65
+      "extra_m": 3.37
     },
     {
       "xy": [
@@ -150,10 +183,17 @@
     },
     {
       "xy": [
+        450218.2,
+        2569250.2
+      ],
+      "extra_m": 2.46
+    },
+    {
+      "xy": [
         450240.0,
         2569210.9
       ],
-      "extra_m": 2.13
+      "extra_m": 2.93
     },
     {
       "xy": [
@@ -167,7 +207,7 @@
         450432.5,
         2568756.0
       ],
-      "extra_m": 2.62
+      "extra_m": 4.41
     },
     {
       "xy": [
@@ -192,10 +232,17 @@
     },
     {
       "xy": [
+        450332.3,
+        2567859.8
+      ],
+      "extra_m": 2.05
+    },
+    {
+      "xy": [
         450395.6,
         2568629.5
       ],
-      "extra_m": 3.43
+      "extra_m": 4.66
     },
     {
       "xy": [
@@ -216,7 +263,7 @@
         450642.4,
         2570165.3
       ],
-      "extra_m": 2.65
+      "extra_m": 3.43
     },
     {
       "xy": [
@@ -237,7 +284,7 @@
         450602.5,
         2567879.0
       ],
-      "extra_m": 3.13
+      "extra_m": 3.99
     },
     {
       "xy": [
@@ -248,17 +295,31 @@
     },
     {
       "xy": [
+        450102.7,
+        2568024.6
+      ],
+      "extra_m": 2.28
+    },
+    {
+      "xy": [
+        446294.4,
+        2566273.9
+      ],
+      "extra_m": 2.23
+    },
+    {
+      "xy": [
         450238.6,
         2570216.8
       ],
-      "extra_m": 3.07
+      "extra_m": 4.14
     },
     {
       "xy": [
         450304.5,
         2569891.0
       ],
-      "extra_m": 3.11
+      "extra_m": 4.18
     },
     {
       "xy": [
@@ -276,10 +337,17 @@
     },
     {
       "xy": [
+        449986.4,
+        2568460.2
+      ],
+      "extra_m": 2.1
+    },
+    {
+      "xy": [
         450378.9,
         2568592.8
       ],
-      "extra_m": 3.81
+      "extra_m": 5.04
     },
     {
       "xy": [
@@ -287,6 +355,13 @@
         2570092.2
       ],
       "extra_m": 3.14
+    },
+    {
+      "xy": [
+        450530.2,
+        2569911.5
+      ],
+      "extra_m": 2.51
     },
     {
       "xy": [
@@ -300,7 +375,7 @@
         450333.8,
         2568585.4
       ],
-      "extra_m": 2.26
+      "extra_m": 3.49
     },
     {
       "xy": [
@@ -308,6 +383,13 @@
         2569862.4
       ],
       "extra_m": 2.72
+    },
+    {
+      "xy": [
+        450721.1,
+        2570068.2
+      ],
+      "extra_m": 2.45
     },
     {
       "xy": [
@@ -321,14 +403,21 @@
         446131.4,
         2566834.1
       ],
-      "extra_m": 2.26
+      "extra_m": 2.79
+    },
+    {
+      "xy": [
+        446452.9,
+        2566129.5
+      ],
+      "extra_m": 2.09
     },
     {
       "xy": [
         450073.8,
         2569068.4
       ],
-      "extra_m": 5.07
+      "extra_m": 5.28
     },
     {
       "xy": [
@@ -370,9 +459,9 @@
     {
       "id": "C01",
       "type": "JOIN",
-      "pipes": 794,
-      "km": 46.77,
-      "submain_km": 11.59,
+      "pipes": 496,
+      "km": 33.78,
+      "submain_km": 12.36,
       "spill_m": 0.0,
       "to_mp": null,
       "to_stp": null,
@@ -380,10 +469,10 @@
         450574.9,
         2567478.6
       ],
-      "area_km2": 2.815
+      "area_km2": 2.288
     },
     {
-      "id": "C30",
+      "id": "C37",
       "type": "LOW",
       "pipes": 1,
       "km": 0.02,
@@ -404,7 +493,7 @@
       "area_km2": 0.007
     },
     {
-      "id": "C19",
+      "id": "C24",
       "type": "LOW",
       "pipes": 3,
       "km": 0.11,
@@ -425,11 +514,11 @@
       "area_km2": 0.015
     },
     {
-      "id": "C09",
+      "id": "C21",
       "type": "JOIN",
-      "pipes": 28,
-      "km": 1.54,
-      "submain_km": 0.53,
+      "pipes": 4,
+      "km": 0.21,
+      "submain_km": 0.0,
       "spill_m": 0.0,
       "to_mp": null,
       "to_stp": null,
@@ -437,10 +526,40 @@
         451238.8,
         2566975.0
       ],
-      "area_km2": 0.09
+      "area_km2": 0.019
     },
     {
-      "id": "C25",
+      "id": "C18",
+      "type": "JOIN",
+      "pipes": 8,
+      "km": 0.34,
+      "submain_km": 0.0,
+      "spill_m": 0.0,
+      "to_mp": null,
+      "to_stp": null,
+      "outlet_xy": [
+        451132.0,
+        2567082.9
+      ],
+      "area_km2": 0.023
+    },
+    {
+      "id": "C13",
+      "type": "JOIN",
+      "pipes": 30,
+      "km": 1.77,
+      "submain_km": 0.72,
+      "spill_m": 0.0,
+      "to_mp": null,
+      "to_stp": null,
+      "outlet_xy": [
+        451015.7,
+        2567194.2
+      ],
+      "area_km2": 0.099
+    },
+    {
+      "id": "C31",
       "type": "LOW",
       "pipes": 1,
       "km": 0.05,
@@ -461,7 +580,22 @@
       "area_km2": 0.003
     },
     {
-      "id": "C17",
+      "id": "C08",
+      "type": "JOIN",
+      "pipes": 71,
+      "km": 2.6,
+      "submain_km": 0.27,
+      "spill_m": 0.0,
+      "to_mp": null,
+      "to_stp": null,
+      "outlet_xy": [
+        450875.4,
+        2567296.4
+      ],
+      "area_km2": 0.079
+    },
+    {
+      "id": "C22",
       "type": "LINK-MP",
       "pipes": 3,
       "km": 0.18,
@@ -482,7 +616,7 @@
       "area_km2": 0.007
     },
     {
-      "id": "C26",
+      "id": "C32",
       "type": "LOW",
       "pipes": 1,
       "km": 0.03,
@@ -503,7 +637,22 @@
       "area_km2": 0.005
     },
     {
-      "id": "C18",
+      "id": "C34",
+      "type": "JOIN",
+      "pipes": 1,
+      "km": 0.03,
+      "submain_km": 0.0,
+      "spill_m": 0.0,
+      "to_mp": null,
+      "to_stp": null,
+      "outlet_xy": [
+        450728.9,
+        2567375.6
+      ],
+      "area_km2": 0.001
+    },
+    {
+      "id": "C23",
       "type": "LINK-MP",
       "pipes": 4,
       "km": 0.15,
@@ -524,11 +673,26 @@
       "area_km2": 0.007
     },
     {
-      "id": "C04",
+      "id": "C03",
       "type": "JOIN",
-      "pipes": 105,
-      "km": 5.24,
-      "submain_km": 1.36,
+      "pipes": 323,
+      "km": 16.32,
+      "submain_km": 4.93,
+      "spill_m": 0.0,
+      "to_mp": null,
+      "to_stp": null,
+      "outlet_xy": [
+        450260.7,
+        2567604.1
+      ],
+      "area_km2": 0.712
+    },
+    {
+      "id": "C14",
+      "type": "JOIN",
+      "pipes": 32,
+      "km": 1.76,
+      "submain_km": 0.98,
       "spill_m": 0.0,
       "to_mp": null,
       "to_stp": null,
@@ -536,10 +700,10 @@
         450454.6,
         2567592.9
       ],
-      "area_km2": 0.218
+      "area_km2": 0.098
     },
     {
-      "id": "C16",
+      "id": "C20",
       "type": "LOW",
       "pipes": 1,
       "km": 0.22,
@@ -560,55 +724,40 @@
       "area_km2": 0.026
     },
     {
-      "id": "C07",
+      "id": "C06",
       "type": "JOIN",
-      "pipes": 48,
-      "km": 3.6,
-      "submain_km": 0.39,
+      "pipes": 64,
+      "km": 4.25,
+      "submain_km": 0.51,
       "spill_m": 0.0,
       "to_mp": null,
       "to_stp": null,
       "outlet_xy": [
-        449947.6,
-        2570878.4
+        449917.7,
+        2570573.1
       ],
-      "area_km2": 0.281
+      "area_km2": 0.307
     },
     {
-      "id": "C03",
+      "id": "C15",
       "type": "JOIN",
-      "pipes": 248,
-      "km": 13.67,
-      "submain_km": 5.88,
+      "pipes": 36,
+      "km": 1.67,
+      "submain_km": 0.6,
       "spill_m": 0.0,
       "to_mp": null,
       "to_stp": null,
       "outlet_xy": [
-        449912.5,
-        2567635.9
+        450101.0,
+        2569980.5
       ],
-      "area_km2": 0.697
-    },
-    {
-      "id": "C05",
-      "type": "JOIN",
-      "pipes": 122,
-      "km": 4.29,
-      "submain_km": 1.59,
-      "spill_m": 0.0,
-      "to_mp": null,
-      "to_stp": null,
-      "outlet_xy": [
-        450023.5,
-        2569138.1
-      ],
-      "area_km2": 0.129
+      "area_km2": 0.061
     },
     {
       "id": "C10",
       "type": "JOIN",
-      "pipes": 32,
-      "km": 1.13,
+      "pipes": 57,
+      "km": 1.98,
       "submain_km": 0.0,
       "spill_m": 0.0,
       "to_mp": null,
@@ -617,28 +766,43 @@
         450096.3,
         2569369.5
       ],
-      "area_km2": 0.036
+      "area_km2": 0.064
     },
     {
-      "id": "C08",
+      "id": "C11",
       "type": "JOIN",
-      "pipes": 19,
-      "km": 2.0,
-      "submain_km": 0.81,
+      "pipes": 58,
+      "km": 1.93,
+      "submain_km": 0.26,
       "spill_m": 0.0,
       "to_mp": null,
       "to_stp": null,
       "outlet_xy": [
-        450054.8,
-        2569548.3
+        450023.5,
+        2569138.1
       ],
-      "area_km2": 0.09
+      "area_km2": 0.057
     },
     {
-      "id": "C13",
+      "id": "C05",
+      "type": "JOIN",
+      "pipes": 138,
+      "km": 5.6,
+      "submain_km": 0.85,
+      "spill_m": 0.0,
+      "to_mp": null,
+      "to_stp": null,
+      "outlet_xy": [
+        449912.1,
+        2568732.7
+      ],
+      "area_km2": 0.178
+    },
+    {
+      "id": "C16",
       "type": "LINK-MP",
-      "pipes": 12,
-      "km": 0.35,
+      "pipes": 26,
+      "km": 0.77,
       "submain_km": 0.0,
       "spill_m": 0.0,
       "to_mp": [
@@ -653,25 +817,40 @@
         450116.1,
         2569778.8
       ],
-      "area_km2": 0.012
+      "area_km2": 0.023
     },
     {
-      "id": "C15",
+      "id": "C07",
       "type": "JOIN",
-      "pipes": 3,
-      "km": 0.23,
-      "submain_km": 0.0,
+      "pipes": 54,
+      "km": 4.12,
+      "submain_km": 1.07,
       "spill_m": 0.0,
       "to_mp": null,
       "to_stp": null,
       "outlet_xy": [
-        450101.0,
-        2569980.5
+        449912.5,
+        2567635.9
       ],
-      "area_km2": 0.014
+      "area_km2": 0.282
     },
     {
-      "id": "C27",
+      "id": "C12",
+      "type": "JOIN",
+      "pipes": 15,
+      "km": 1.79,
+      "submain_km": 0.26,
+      "spill_m": 0.0,
+      "to_mp": null,
+      "to_stp": null,
+      "outlet_xy": [
+        450054.8,
+        2569548.3
+      ],
+      "area_km2": 0.081
+    },
+    {
+      "id": "C33",
       "type": "LOW",
       "pipes": 1,
       "km": 0.03,
@@ -692,7 +871,7 @@
       "area_km2": 0.006
     },
     {
-      "id": "C12",
+      "id": "C17",
       "type": "LOW",
       "pipes": 8,
       "km": 0.68,
@@ -713,7 +892,22 @@
       "area_km2": 0.057
     },
     {
-      "id": "C24",
+      "id": "C27",
+      "type": "JOIN",
+      "pipes": 1,
+      "km": 0.1,
+      "submain_km": 0.0,
+      "spill_m": 0.0,
+      "to_mp": null,
+      "to_stp": null,
+      "outlet_xy": [
+        449947.6,
+        2570878.4
+      ],
+      "area_km2": 0.011
+    },
+    {
+      "id": "C30",
       "type": "LOW",
       "pipes": 1,
       "km": 0.05,
@@ -736,9 +930,9 @@
     {
       "id": "C02",
       "type": "LINK-STP",
-      "pipes": 238,
-      "km": 24.01,
-      "submain_km": 10.82,
+      "pipes": 193,
+      "km": 19.93,
+      "submain_km": 6.89,
       "spill_m": 0.0,
       "to_mp": [
         0.8,
@@ -752,10 +946,25 @@
         445360.1,
         2566056.1
       ],
-      "area_km2": 2.12
+      "area_km2": 1.795
     },
     {
-      "id": "C28",
+      "id": "C04",
+      "type": "JOIN",
+      "pipes": 60,
+      "km": 6.01,
+      "submain_km": 2.74,
+      "spill_m": 0.0,
+      "to_mp": null,
+      "to_stp": null,
+      "outlet_xy": [
+        446092.7,
+        2567623.6
+      ],
+      "area_km2": 0.52
+    },
+    {
+      "id": "C35",
       "type": "JOIN",
       "pipes": 1,
       "km": 0.02,
@@ -770,7 +979,7 @@
       "area_km2": 0.004
     },
     {
-      "id": "C22",
+      "id": "C28",
       "type": "JOIN",
       "pipes": 1,
       "km": 0.09,
@@ -785,7 +994,7 @@
       "area_km2": 0.009
     },
     {
-      "id": "C29",
+      "id": "C36",
       "type": "JOIN",
       "pipes": 1,
       "km": 0.02,
@@ -800,11 +1009,11 @@
       "area_km2": 0.005
     },
     {
-      "id": "C06",
+      "id": "C09",
       "type": "JOIN",
-      "pipes": 41,
-      "km": 3.61,
-      "submain_km": 1.02,
+      "pipes": 30,
+      "km": 2.39,
+      "submain_km": 0.35,
       "spill_m": 0.0,
       "to_mp": null,
       "to_stp": null,
@@ -812,10 +1021,10 @@
         446383.0,
         2567603.0
       ],
-      "area_km2": 0.273
+      "area_km2": 0.161
     },
     {
-      "id": "C20",
+      "id": "C25",
       "type": "JOIN",
       "pipes": 1,
       "km": 0.11,
@@ -830,22 +1039,7 @@
       "area_km2": 0.01
     },
     {
-      "id": "C11",
-      "type": "JOIN",
-      "pipes": 5,
-      "km": 0.71,
-      "submain_km": 0.0,
-      "spill_m": 0.0,
-      "to_mp": null,
-      "to_stp": null,
-      "outlet_xy": [
-        446092.7,
-        2567623.6
-      ],
-      "area_km2": 0.083
-    },
-    {
-      "id": "C14",
+      "id": "C19",
       "type": "LOW",
       "pipes": 1,
       "km": 0.24,
@@ -866,7 +1060,7 @@
       "area_km2": 0.13
     },
     {
-      "id": "C23",
+      "id": "C29",
       "type": "LOW",
       "pipes": 1,
       "km": 0.06,
@@ -887,7 +1081,7 @@
       "area_km2": 0.019
     },
     {
-      "id": "C21",
+      "id": "C26",
       "type": "LOW",
       "pipes": 1,
       "km": 0.1,
@@ -908,5 +1102,5 @@
       "area_km2": 0.041
     }
   ],
-  "seconds": 89.5
+  "seconds": 88.2
 }

@@ -462,12 +462,95 @@ def _key(pt, nd=2):
     return (round(float(pt[0]), nd), round(float(pt[1]), nd))
 
 
-def sub_mains_by_chains(runs, chains, parent, src, chain_min_m):
+def cut_at_crests(chains, runs, z, crest_m):
+    """Rule 6: a chain is cut at every crest, an interior node that stands more than crest_m
+    above the lowest ground on BOTH sides of it along the chain, so no sub-main runs over a
+    hill. Returns the pieces as chains."""
+    out = []
+    for c in chains:
+        nodes, seq = c["nodes"], c["runs"]
+        zz = [z[n] for n in nodes]
+        cuts = []
+        for i in range(1, len(nodes) - 1):
+            if zz[i] >= zz[i - 1] and zz[i] >= zz[i + 1]:
+                if zz[i] - min(zz[:i]) > crest_m and zz[i] - min(zz[i + 1:]) > crest_m:
+                    cuts.append(i)
+        if not cuts:
+            out.append(c)
+            continue
+        bounds = [0] + cuts + [len(nodes) - 1]
+        for a, b in zip(bounds[:-1], bounds[1:]):
+            part_nodes = nodes[a:b + 1]
+            part_runs = seq[a:b]
+            if part_runs:
+                out.append({"runs": part_runs, "nodes": part_nodes,
+                            "len": sum(runs[i]["len"] for i in part_runs), "cut": True})
+    return out
+
+
+def cut_at_divides(chains, runs, src, filled=None, level_m=0.0):
+    """Rule 6 in the flood's terms: a chain is cut wherever the flood changes direction along
+    it, at a divide (both neighbouring runs flow away) or a sag (both flow in), and wherever
+    two neighbouring nodes drain to different outlets, at the end the water leaves from. A
+    sub-main then never runs against the fall: measured 2026-09-07, a 2.3 km street chain
+    from the west settlement's interior climbed 7 m to a join and dug 20 m because its
+    'lower end' had been taken as the end nearer an outlet.
+
+    Only a DECIDED run counts, one whose ends differ by more than level_m on the filled
+    surface. On level ground the flood's arrow is a tie-break, and a straight street there
+    flips every few runs (measured 2026-09-07 on the east grid: the long north-south streets
+    fell below the 250 m floor and the 30 km half of the settlement kept one sub-main).
+    Direction on level ground is the chain's own choice, rule 5."""
+    out = []
+    for c in chains:
+        nodes, seq = c["nodes"], c["runs"]
+        d = []
+        for k, i in enumerate(seq):
+            a, b = nodes[k], nodes[k + 1]
+            fa = filled.get(a, runs[i]["z_up"]) if filled is not None else 1.0
+            fb = filled.get(b, runs[i]["z_dn"]) if filled is not None else 0.0
+            if filled is not None and abs(fa - fb) <= level_m:
+                d.append(0)                                   # level: the chain decides
+            else:
+                d.append(1 if runs[i]["up"] == a else -1)
+        cuts = set()
+        last = None                      # (index, direction) of the last decided run
+        for k, dk in enumerate(d):
+            if dk == 0:
+                continue
+            if last is not None and last[1] != dk:
+                # the flood turns between run last[0] and run k: cut at the end of the
+                # earlier decided run, the level runs between go with the later one
+                cuts.add(last[0] + 1)
+            last = (k, dk)
+        for k in range(len(seq)):
+            if d[k] != 0 and src.get(nodes[k]) != src.get(nodes[k + 1]):
+                cuts.add(k if d[k] == 1 else k + 1)
+        cuts = sorted(x for x in cuts if 0 < x < len(nodes) - 1)
+        if not cuts:
+            out.append(c)
+            continue
+        bounds = [0] + cuts + [len(nodes) - 1]
+        for a, b in zip(bounds[:-1], bounds[1:]):
+            part_runs = seq[a:b]
+            if part_runs:
+                out.append({"runs": part_runs, "nodes": nodes[a:b + 1],
+                            "len": sum(runs[i]["len"] for i in part_runs),
+                            "cut": c.get("cut", False), "divide": True})
+    return out
+
+
+def sub_mains_by_chains(runs, chains, parent, src, chain_min_m, link_m=0.0, filled=None,
+                        level_m=0.0):
     """Rule 4 as the engineer drew it: the sub-mains are the long straight streets. From each
     outlet, take the longest chain whose lower end touches the outlet or a sub-main already
     chosen, cut it at the first chosen node it meets, and repeat until no chain of
-    chain_min_m or more attaches. A chain's lower end is the end nearer the outlet along the
-    flood tree. Returns the sub-main run set, the stem parent of every sub-main node, and a
+    chain_min_m or more attaches. A chain's lower end is the end its runs flow to under the
+    final flood (cut_at_divides makes that one direction per chain). A chain whose lower end
+    does not touch a chosen node may still attach through a connector of at most link_m
+    along the flood tree, and the connector becomes sub-main with it (a 2.8 km valley street
+    was left as laterals on 2026-09-07 because its foot was one short bend from the
+    sub-main). Returns the sub-main run set, the stem parent of every sub-main node, and a
     report."""
     edge = run_lookup(runs)
     # distance to the outlet along the flood tree
@@ -507,7 +590,15 @@ def sub_mains_by_chains(runs, chains, parent, src, chain_min_m):
                 if nodes[0] in S and nodes[-1] in S and all(n in S for n in nodes):
                     continue
                 a, b = nodes[0], nodes[-1]
-                if d_out(a) <= d_out(b):
+                # the lower end is where the flood flows to along the chain's own DECIDED
+                # runs; a chain of level runs is pointed toward the outlet along the flood
+                fwd = 0
+                for k, i in enumerate(c["runs"]):
+                    if filled is not None and abs(filled.get(nodes[k], 0.0)
+                                                  - filled.get(nodes[k + 1], 0.0)) <= level_m:
+                        continue
+                    fwd += 1 if runs[i]["up"] == nodes[k] else -1
+                if fwd < 0 or (fwd == 0 and d_out(a) <= d_out(b)):
                     seq_nodes, seq_runs = nodes[::-1], c["runs"][::-1]   # upstream first
                 else:
                     seq_nodes, seq_runs = nodes, c["runs"]
@@ -517,11 +608,32 @@ def sub_mains_by_chains(runs, chains, parent, src, chain_min_m):
                     if n in S:
                         cut = k
                         break
-                if cut is None or cut == 0:
+                if cut == 0:
                     continue
-                part_nodes = seq_nodes[:cut + 1]
-                part_runs = seq_runs[:cut]
-                L = sum(runs[i]["len"] for i in part_runs)
+                conn_nodes, conn_runs = [], []
+                if cut is None:
+                    # reach S along the flood tree from the lower end, within link_m
+                    m, Lc = seq_nodes[-1], 0.0
+                    on_chain = set(seq_nodes)
+                    while m not in S:
+                        q = parent.get(m)
+                        i = edge.get((m, q)) if q is not None else None
+                        if i is None or src.get(q) != outlet or q in on_chain:
+                            conn_nodes = None      # no way, or the flood turns back along
+                            break                  # the chain itself (a level tail)
+                        Lc += runs[i]["len"]
+                        if Lc > link_m:
+                            conn_nodes = None
+                            break
+                        conn_nodes.append(q)
+                        conn_runs.append(i)
+                        m = q
+                    if conn_nodes is None:
+                        continue
+                    cut = len(seq_nodes) - 1
+                part_nodes = seq_nodes[:cut + 1] + conn_nodes
+                part_runs = seq_runs[:cut] + conn_runs
+                L = sum(runs[i]["len"] for i in seq_runs[:cut])
                 if L < chain_min_m:
                     continue
                 if best is None or L > best[0]:
@@ -544,10 +656,19 @@ def sub_mains_by_chains(runs, chains, parent, src, chain_min_m):
 
 
 # --------------------------------------------------------------------- tree
-def build_tree(runs, z, submain, stem_parent, depth_weight, smin, outlets=(), free_w=0.01):
-    """Route every junction to the nearest sub-main node, or outlet, by the least-depth route.
-    A search edge from m to n carries the cost of a pipe FLOWING n -> m. Returns the tree
-    parent of every node (None at an outlet) and the route cost."""
+def build_tree(runs, z, submain, stem_parent, depth_weight, smin, outlets=(), free_w=0.01,
+               src=None, submain_discount=0.5):
+    """Route every junction to its outlet by the least-depth route, rule 5's cost: length
+    plus depth_weight metres per metre of trench a pipe at smin is forced to. A search edge
+    from m to n carries the cost of a pipe FLOWING n -> m. A sub-main run costs the same
+    times submain_discount, so the collector is preferred but its length still counts:
+    measured 2026-09-07 with free sub-main edges, the west settlement's interior went
+    1,000 m east to the nearest sub-main node and 650 m along it to the rim, 13.1 m deep,
+    past an 850 m street to the same rim. A sub-main node is entered only along its own
+    stem. With src given, a lateral routes only inside its own catchment (rule 1 decides
+    the catchment, rules 4-5 work inside it); a street between two catchments is left over
+    and becomes a branch with its head at the next gate. Returns the tree parent of every
+    node (None at an outlet) and the route cost."""
     S = nx.DiGraph()
     for i, r in enumerate(runs):
         u, v, L = r["up"], r["dn"], r["len"]
@@ -555,19 +676,30 @@ def build_tree(runs, z, submain, stem_parent, depth_weight, smin, outlets=(), fr
         cost_uv = L + depth_weight * max(0.0, need - (z[u] - z[v]))     # pipe flows u -> v
         cost_vu = L + depth_weight * max(0.0, need - (z[v] - z[u]))     # pipe flows v -> u
         if i in submain:
-            cost_uv = cost_vu = free_w
-        S.add_edge(v, u, w=cost_uv, i=i)
-        S.add_edge(u, v, w=cost_vu, i=i)
-    sources = set(stem_parent) | set(stem_parent.values()) | set(outlets)
-    sources = {s for s in sources if s in S}
+            # the stem is fixed: only its own direction, at the discount
+            if stem_parent.get(u) == v:
+                S.add_edge(v, u, w=cost_uv * submain_discount, i=i)
+            elif stem_parent.get(v) == u:
+                S.add_edge(u, v, w=cost_vu * submain_discount, i=i)
+            continue
+        if src is not None and src.get(u) != src.get(v):
+            continue
+        if u not in stem_parent:            # u is not on a sub-main: it may drain to v
+            S.add_edge(v, u, w=cost_uv, i=i)
+        if v not in stem_parent:
+            S.add_edge(u, v, w=cost_vu, i=i)
+    sources = {s for s in outlets if s in S}
+    for s_ in stem_parent.values():         # a stem that ends where no outlet is listed
+        if s_ not in stem_parent and s_ in S:
+            sources.add(s_)
     dist, paths = nx.multi_source_dijkstra(S, sources, weight="w")
     par = dict(stem_parent)
     for n, p in paths.items():
-        if n in sources:
+        if n in sources or n in stem_parent:
             continue
         if len(p) >= 2:
             par[n] = p[-2]
-    unreached = [n for n in z if n not in dist]
+    unreached = [n for n in z if n not in dist and n not in stem_parent]
     return par, dist, unreached
 
 

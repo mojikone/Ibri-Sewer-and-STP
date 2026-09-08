@@ -23,6 +23,11 @@ STP_INVERT_M = 323.0     # the inlet manhole 5A-1-FL-STP: both built trunks end 
 TERRAIN = BASE + r"\Data\Terrain\Sat_0p5m\IBRI_0p5_VRT2.vrt"
 HAZARD = BASE + r"\Data\04 Lekhuwair\Hazard_T50y.tif"
 PLOTS_CLASS = BASE + r"\Hydraulic\Claude\W3\shp\MoH_Plots_class_v4.shp"
+ACCOUNTS = BASE + r"\Hydraulic\Claude\W4\shp\ELE_accounts.shp"   # counted properties
+
+# ---- rule 9, the depth check done on every run (quicklay.py)
+PER_PROPERTY_M3D = 0.911   # 5.32 people x 171.3 L/c/d, the locked load basis
+MAX_DEPTH_M = 12.0         # the hard limit (standing decision 2026-09-07)
 
 OUT = BASE + r"\Hydraulic\Claude\W13"
 OUT_SHP = OUT + r"\shp"
@@ -52,6 +57,9 @@ HOLLOW_M = 2.0          # a dip needing this much fill or less is not even marke
                         # are MARKED as basins with their extra depth, but still drain over
                         # their rim into the neighbouring sub-network (engineer, 2026-09-07:
                         # a sub-network is what connects to the main pipe, not a local sink)
+ASSIGN_BY_DEPTH = True  # outlets by rule 5's least-depth cost (DEPTH_WEIGHT, SMIN_PROXY) rather
+                        # than by the priority flood, which gives a whole slope to its lowest
+                        # join (2026-09-07). False restores the flood.
 BASIN_MAX_M = 10.0      # a basin needing more than this stays a pocket for a pump or a cut:
                         # with 1.3 m of cover it would pass the 12 m limit (rule 10)
 CORRIDOR_ENTRY_M = 600.0  # a direct link may reach NAMA's built trunk corridor within this
@@ -67,6 +75,10 @@ STRAIGHT_DEG = 25.0       # a street continues through a junction within this de
 CHAIN_MIN_M = 250.0       # a sub-main is a straight street chain at least this long that
                           # attaches to the outlet or to a sub-main already chosen (engineer,
                           # 2026-09-07: "long run with less bends")
+CHAIN_LINK_M = 250.0      # a chain whose foot is within this of a sub-main along the flood
+                          # tree attaches through that connector, which becomes sub-main too
+SUBMAIN_DISCOUNT = 0.5    # a sub-main run costs this fraction of a lateral run in the route
+                          # search: the collector is preferred, its length still counts
 DEPTH_WEIGHT = 500.0      # route cost per metre of trench depth a street forces (W8)
 SMIN_PROXY = 0.005        # the DN200 minimum gradient the depth cost is measured against
 GATE_SEARCH_M = 45.0      # how far off a street a house gate may sit (W8)

@@ -176,6 +176,11 @@ def write_shapes(out_dir, prefix, pipes, gaps, catch_info, catch_polys, joins, e
         "HEAD_HOW": [p.get("head_how", "") for p in pipes],
         "HEAD_OFF": [round(p.get("head_offset", 0.0), 1) for p in pipes],
         "LAYER": [p.get("layer", "") for p in pipes],
+        "DN_MM": [int(p.get("dn_mm", 0)) for p in pipes],
+        "Q_PEAK_LS": [round(p.get("q_peak_ls", 0.0), 2) for p in pipes],
+        "PROPS_UP": [int(p.get("props_up", 0)) for p in pipes],
+        "DEPTH_UP": [round(p.get("depth_up", 0.0), 2) for p in pipes],
+        "DEPTH_DN": [round(p.get("depth_dn", 0.0), 2) for p in pipes],
     }, geometry=[p["geom"] for p in pipes], crs=crs).to_file(
         os.path.join(out_dir, f"{prefix}_pipes.shp"))
     if gaps:

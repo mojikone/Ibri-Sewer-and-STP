@@ -95,6 +95,9 @@ def main():
     ptr = O.pointers(runs, targets)
     raw_term = O.terminals(node_keys, ptr, targets)
     raw_sinks = {t for t in set(raw_term.values()) if t not in targets}
+    # the outlet of every node (rule 5's cost, or the flood: config ASSIGN_BY_DEPTH)
+    assign = ({"depth_weight": cfg.DEPTH_WEIGHT, "smin": cfg.SMIN_PROXY}
+              if getattr(cfg, "ASSIGN_BY_DEPTH", False) else {})
     src, filled, parent, seq, spill, iters = O.resolve_outlets(runs, znode, targets,
                                                                 cfg.HOLLOW_M, raw_term)
     runs = O.flood_direction(runs, parent, filled, seq, cfg.FLAT_PCT, cfg.LEVEL_M)
@@ -155,7 +158,7 @@ def main():
         targets2 = {info[c]["outlet"]: "JOIN" for c in kept}
         targets2.update({n: "STP" for n, t in targets.items() if t == "STP"})
         src2, filled2, parent2, seq2, spill2, iters2 = O.resolve_outlets(
-            runs, znode, targets2, cfg.HOLLOW_M, raw_term)
+            runs, znode, targets2, cfg.HOLLOW_M, raw_term, **assign)
         back = K.restore_stranded_joins(info, kept, dropped_joins, src2, spill2)
         if not back:
             break
@@ -189,7 +192,7 @@ def main():
     #    climbing out of a basin (rule 5's least-depth logic; NAMA sent the west to the STP)
     for _ in range(8):
         src2, filled2, parent2, seq2, spill2, iters2 = O.resolve_outlets(
-            runs, znode, targets2, cfg.HOLLOW_M, raw_term)
+            runs, znode, targets2, cfg.HOLLOW_M, raw_term, **assign)
         new = K.link_targets(set(src2.values()), spill2, znode, ground, mp_union, cfg.STP,
                              cfg.LINK_MIN_GRAD, cfg.MP_INVERT_DEPTH_M, cfg.LINK_MAX_M, gates,
                              existing=list(targets2), spacing_m=cfg.JOIN_SPACING_M,
@@ -212,7 +215,10 @@ def main():
     # 2. what is left drains over its rim into the neighbouring sub-network, up to
     #    BASIN_MAX_M of extra depth; deeper than that is a pocket for a pump or a cut
     src2, filled2, parent2, seq2, spill2, iters2 = O.resolve_outlets(
-        runs, znode, targets2, cfg.BASIN_MAX_M, raw_term)
+        runs, znode, targets2, cfg.BASIN_MAX_M, raw_term, **assign)
+    # point every run down the FINAL filled surface: the first flood stopped at every sink,
+    # this one drains the basins over their rims, and the chains must read these arrows
+    runs = O.flood_direction(runs, parent2, filled2, seq2, cfg.FLAT_PCT, cfg.LEVEL_M)
     rep["links"] = {"to_stp": sum(1 for v in links.values() if v[0] == "LINK-STP"),
                     "to_main_pipe": sum(1 for v in links.values() if v[0] == "LINK-MP"),
                     "crossing_agricultural_plots": sum(1 for v in links.values() if v[1] > 0)}
@@ -232,16 +238,22 @@ def main():
 
     log("sub-mains: the long straight streets that attach to the outlet ...")
     chains = K.street_chains(runs, cfg.STRAIGHT_DEG)
+    chains = K.cut_at_crests(chains, runs, znode, cfg.CREST_M)      # rule 6: never over a hill
+    chains = K.cut_at_divides(chains, runs, src2, filled2, cfg.LEVEL_M)  # ... nor against it
     submain, stem_parent, srep3 = K.sub_mains_by_chains(runs, chains, parent2, src2,
-                                                        cfg.CHAIN_MIN_M)
+                                                        cfg.CHAIN_MIN_M, cfg.CHAIN_LINK_M,
+                                                        filled2, cfg.LEVEL_M)
     srep3["street_chains"] = len(chains)
+    srep3["chains_cut_at_a_crest"] = sum(1 for c in chains if c.get("cut"))
+    srep3["chains_cut_at_a_divide"] = sum(1 for c in chains if c.get("divide"))
     srep3["chains_over_min"] = sum(1 for c in chains if c["len"] >= cfg.CHAIN_MIN_M)
     rep["submains"] = srep3
     log(f"   {srep3}")
 
     log("the tree: laterals to the nearest sub-main by least depth; one outlet per junction ...")
     par, dist, unreached = K.build_tree(runs, znode, submain, stem_parent, cfg.DEPTH_WEIGHT,
-                                        cfg.SMIN_PROXY, outlets=set(src2.values()))
+                                        cfg.SMIN_PROXY, outlets=set(src2.values()), src=src2,
+                                        submain_discount=cfg.SUBMAIN_DISCOUNT)
     tree_idx, extra = K.orient_tree(runs, par, znode, cfg.LEVEL_M, cfg.FLAT_PCT)
     for i in tree_idx:
         runs[i]["tier"] = "sub main" if i in submain else "lateral"
@@ -278,6 +290,8 @@ def main():
             if p is None:
                 root_cache[n] = n
                 break
+            if n in path:
+                raise RuntimeError(f"the tree has a cycle through {n}: {path[-4:]}")
             path.append(n)
             n = p
         rt = root_cache[n]
@@ -324,6 +338,26 @@ def main():
         info2[cid] = d
     dag, max_out = K.check_tree(tree_runs, branches)
     rep["tree_check"] = {"no_loops": bool(dag), "max_outlets_per_node": int(max_out)}
+
+    log("depth: size every pipe on the plots it serves at saturation, lay heads-down (rule 9) ...")
+    from sewnet import quicklay as Q
+    from shapely.prepared import prep as _prep
+    near = _prep(envelope.buffer(cfg.GATE_SEARCH_M))
+    served_plots = [g for g, c in zip(gates.polys, gates.pcls) if c in ("B", "P")
+                    and near.contains(g.centroid)]
+    acc_pts = []
+    if getattr(cfg, "ACCOUNTS", None):
+        acc_pts = [g for g in gpd.read_file(cfg.ACCOUNTS).geometry
+                   if g is not None and near.contains(g)]
+    props, n_plots = Q.properties_per_pipe(pipes, served_plots, acc_pts, cfg.GATE_SEARCH_M)
+    znode_all = dict(znode)
+    for b in branches:
+        znode_all.setdefault(b["up"], b["z_up"])
+    depth, governs, laid = Q.lay(pipes, props, znode_all, cfg.PER_PROPERTY_M3D)
+    rep["depth"] = Q.report(pipes, depth, cfg.MAX_DEPTH_M)
+    rep["depth"]["plots_served"] = n_plots
+    rep["depth"]["properties_at_saturation"] = int(props.sum())
+    log(f"   {rep['depth']}")
     rep["tier_km"] = km_by(pipes, "tier", ("sub main", "lateral", "branch"))
     rep["class_km"] = km_by(pipes, "cls", ("NORMAL", "FLAT", "LEVEL", "AGAINST"))
     TYPES = ("JOIN", "STP", "LINK-STP", "LINK-MP", "SINK", "LOW")
@@ -384,6 +418,17 @@ def main():
     rep["seconds"] = round(time.time() - T0, 1)
     with open(os.path.join(cfg.OUT_RUN, "stage_a.json"), "w") as f:
         json.dump(rep, f, indent=2, default=str)
+    # the run's working state, so a question about any node or pipe is answered in seconds
+    # from the record instead of by a rerun (not committed: see .gitignore)
+    import pickle
+    with open(os.path.join(cfg.OUT_RUN, "stage_a_state.pkl"), "wb") as f:
+        pickle.dump({"runs": runs, "znode": znode, "znode_all": znode_all, "targets": targets2,
+                     "src": src2, "filled": filled2, "parent": parent2, "spill": spill2,
+                     "raw_sinks": raw_sinks, "basins": basins, "links": links,
+                     "chains": chains, "submain": submain, "stem_parent": stem_parent,
+                     "par": par, "dist": dist, "tree_idx": tree_idx, "branches": branches,
+                     "pipes": pipes, "info": info2, "depth": depth, "governs": governs,
+                     "props": props}, f)
     log(f"done: {dxf}")
     return 0
 
