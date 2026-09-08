@@ -148,3 +148,26 @@ the main pipe; and the western and eastern trunks end 37 m apart at the works, s
 them counted as reaching the STP until both ends were tied to one STP node.
 
 What Stage B has to do with it: lay it, and decide the 36 basins on depth.
+
+## Stage A, sub-mains as streets and the outlet at the corridor (2026-09-07, night)
+
+The engineer's fifth look, on the west settlement: the sub-mains followed the streams and
+converged on a stream exit at the west edge, while the true outlet is the south-west corner
+where NAMA's trunk leaves the settlement. Two causes, both fixed: the heaviest-stem method read
+sub-mains off the terrain's steepest descent, and the corridor included NAMA's trunk inside the
+settlement, so the entry landed where that trunk begins.
+
+| | |
+|---|---|
+| Street chains | 591 chains within 25° of deflection, 128 of them 250 m or longer; 63 became sub-mains |
+| Sub-mains | 34.2 km (31 % of the network); the west settlement's are the three long parallel streets and the edge street, as the engineer sketched; the east's the long north-south streets |
+| STP target level | the works inlet invert, 323.0 m, from the as-built: both trunks end at manhole 5A-1-FL-STP with inverts 322.7 and 323.0 m and ground 325.0 m; the terrain at the plant point reads 329.0 m, 6 m too high as a target |
+| Corridor outside the settlement | 4 lines; entry join at (445360, 2566056), the south-west corner, 8 m from the corridor's upstream end; 12.3 m of fall to the inlet invert over 5.6 km, 0.22 %, against NAMA's own trunk at 0.219 % |
+| Catchments | 30: 15 JOIN (83.0 km), 1 corridor entry to the STP (24.0 km, the west), 3 LINK to the main pipe (0.7 km), no sink, 11 LOW islands (1.6 km) |
+| Basins crossed by depth | 37, median 2.8 m, max 5.1 m |
+| Tiers | sub main 34.2 km, lateral 49.8 km, branch 25.3 km |
+| Checks | no loops, one outlet per node, no pipe ends nowhere |
+
+Open for the engineer: 250 m is the shortest street chain that becomes a sub-main, and it
+takes cross streets of 300 to 600 m in with the long ones. NAMA's sub mains are under a tenth
+of its network; ours are a third at 250 m. The threshold is a one-line change.

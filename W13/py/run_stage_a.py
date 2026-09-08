@@ -170,14 +170,15 @@ def main():
     log("direct links (rule 3): a basin whose ground reaches the main pipe's invert, the STP, "
         "or NAMA's trunk corridor to the STP, with no plot in the way ...")
     gates = K.Gates(cfg.PLOTS_CLASS, envelope, cfg.GATE_SEARCH_M, cfg.LINK_PLOT_PAD_M)
-    corridor = K.TrunkCorridor(built, cfg.STP)
+    corridor = K.TrunkCorridor(built, cfg.STP, envelope=envelope)
     streets = K.Streets(runs)
     rep["corridor"] = {"lines": len(corridor.lines), "reaches_stp": corridor.ok,
                        "ends_tied_to_stp": corridor.tied_ends}
     # the corridor is a second target: its entry joins are chosen like joins on the main pipe
     entries, corridor_paths = K.corridor_entry_targets(
         node_keys, znode, ground, corridor, streets, cfg.LINK_MP_MAX_M, cfg.JOIN_SPACING_M,
-        cfg.CORRIDOR_MIN_GRAD, cfg.CORRIDOR_MAX_M, mp_union=mp_union, plots=gates)
+        cfg.CORRIDOR_MIN_GRAD, cfg.CORRIDOR_MAX_M, mp_union=mp_union, plots=gates,
+        stp_level=cfg.STP_INVERT_M)
     entries = {n: t for n, t in entries.items() if n not in targets2}
     targets2.update(entries)
     rep["corridor"]["entry_joins"] = len(entries)
@@ -192,13 +193,15 @@ def main():
         new = K.link_targets(set(src2.values()), spill2, znode, ground, mp_union, cfg.STP,
                              cfg.LINK_MIN_GRAD, cfg.MP_INVERT_DEPTH_M, cfg.LINK_MAX_M, gates,
                              existing=list(targets2), spacing_m=cfg.JOIN_SPACING_M,
-                             streets=streets, mp_max_len=cfg.LINK_MP_MAX_M)
+                             streets=streets, mp_max_len=cfg.LINK_MP_MAX_M,
+                             stp_level=cfg.STP_INVERT_M)
         new = {n: v for n, v in new.items() if n not in targets2}
         rest = {s for s in set(src2.values()) if s not in targets2 and s not in new}
         cl = K.corridor_links(rest, spill2, znode, ground, corridor, cfg.CORRIDOR_ENTRY_M,
                               cfg.CORRIDOR_MIN_GRAD, gates, mp_union=mp_union,
                               mp_invert_depth=cfg.MP_INVERT_DEPTH_M, max_len=cfg.CORRIDOR_MAX_M,
-                              streets=streets, mp_max_len=cfg.LINK_MP_MAX_M)
+                              streets=streets, mp_max_len=cfg.LINK_MP_MAX_M,
+                              stp_level=cfg.STP_INVERT_M)
         for n, (t, ag, geom) in cl.items():
             new[n] = (t, ag)
             corridor_paths[n] = geom
@@ -227,9 +230,12 @@ def main():
                                               "max": round(max((b["extra_m"] for b in basins), default=0.0), 2)}}
     log(f"   basins crossed by depth: {rep['basins_marked']}")
 
-    log("sub-mains: the heaviest low stem of each catchment ...")
-    submain, stem_parent, srep3 = K.sub_mains(runs, parent2, seq2, src2, cfg.STEM_MIN_M,
-                                              cfg.SIDE_STEM_MIN_M)
+    log("sub-mains: the long straight streets that attach to the outlet ...")
+    chains = K.street_chains(runs, cfg.STRAIGHT_DEG)
+    submain, stem_parent, srep3 = K.sub_mains_by_chains(runs, chains, parent2, src2,
+                                                        cfg.CHAIN_MIN_M)
+    srep3["street_chains"] = len(chains)
+    srep3["chains_over_min"] = sum(1 for c in chains if c["len"] >= cfg.CHAIN_MIN_M)
     rep["submains"] = srep3
     log(f"   {srep3}")
 
@@ -298,7 +304,7 @@ def main():
     for p in pipes:
         p["catch"] = rename[p["catch"]]
     outlets_final = {rename[c]: o for c, o in outlets_final.items()}
-    zstp = float(ground.z_at([cfg.STP[0]], [cfg.STP[1]])[0])
+    zstp = cfg.STP_INVERT_M           # the works inlet invert, from the as-built
     info2 = {}
     for cid, o in outlets_final.items():
         ps = [p for p in pipes if p["catch"] == cid]

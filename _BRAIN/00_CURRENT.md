@@ -40,10 +40,11 @@ the 0.5 m measured *above the protection*.
 **Stage A of the new engine is done on the built area (2026-09-07):** `python W13/py/run_stage_a.py`,
 88 s, the ground read along 120 km of DXF street inside the 7.21 km² the 2006 laterals serve
 (trunk corridor out), then the network as a tree: 23 joins at NAMA's spacing, the west
-settlement as one sub-network reaching NAMA's corridor to the STP by its own streets, 3 short
-links to the main pipe (no road between, under 150 m), no sink (basins drain over their rim
-with the extra depth marked), 11 islands; sub-mains as spines, heads at the first gate, 38
-contiguous catchments, no loops, one outlet per node, checked in QGIS (group `Claude W13 A`). **The drawing
+settlement as one sub-network entering NAMA's corridor to the STP at its south-west corner, 3
+short links to the main pipe (no road between, under 150 m), no sink (basins drain over their
+rim with the extra depth marked), 11 islands; sub-mains are the long straight streets (chains,
+250 m minimum, a threshold the engineer may tune), heads at the first gate, 30 contiguous
+catchments, no loops, one outlet per node, checked in QGIS (group `Claude W13 A`). **The drawing
 to look at is `W13/dxf/W13_A_tree.dxf`**; `W13_A_ground.dxf` is the raw ground for reference;
 numbers `W13/run/stage_a.json` and `W13/docs/W13_EVIDENCE.md`. **Next is Stage B (rules 3–6
 routed).** The old test-boundary pipeline (`run_test_boundary.py`, `stages/tree.py`,

@@ -63,17 +63,26 @@ of designing can be tried and compared.
      drawn main pipe is not an entry; that is the main pipe's job. The settlement then reaches
      the entry by its own streets. Links are offered to basins before any basin is filled
      toward the main pipe: gravity with no extra depth beats climbing out.
+   - 2026-09-07 (engineer): **the corridor is only what lies outside the settlement.** NAMA's
+     trunk inside a settlement is a street of our network and becomes a sub-main by rule 4; the
+     entry join sits where the corridor leaves the settlement. **Gravity to the STP is judged
+     against the works inlet invert**, 323.0 m from the as-built manhole 5A-1-FL-STP where both
+     built trunks end, not against the ground at the plant, which reads 329 m.
 4. **Sub-mains first.** Long, straight, few bends. Low is the filter, long and straight is the
    choice. They earn their diameter from the houses they collect, and a bigger pipe reaches
    further on flat ground: about 2 km at DN200, 4 km at DN315, 5 km at DN400 before 12 m.
    - 2026-09-07: sub-mains are picked in Stage A, because the tree needs them: the long,
      straight, low street of each catchment, from the ground and the street geometry, made the
      spine to its join.
-   - 2026-09-07, Stage A method. The sub-main is read off the flood tree as the heaviest stem:
-     from the outlet, step to the child carrying the most street upstream, preferring the
-     straighter continuation where two children are within a quarter of each other, and stop
-     where less than **600 m** of street lies upstream. A side child carrying **1,500 m** or more
-     of its own is a sub-main too. Everything else is a lateral.
+   - 2026-09-07, Stage A method, superseded the same day: the sub-main was read off the flood
+     tree as the heaviest stem, which follows the terrain's steepest descent and so follows the
+     streams, winding, instead of the streets.
+   - 2026-09-07 (engineer): **the sub-mains are the long straight streets.** A street is a chain
+     of runs continuing through junctions within **25°** of deflection. From each outlet, the
+     longest chain whose lower end touches the outlet or a sub-main already chosen is taken,
+     cut at the first chosen node it meets, and so on until no chain of **250 m** or more
+     attaches. Direction along a chain is toward the outlet. Everything else is a lateral,
+     routed to the nearest sub-main by the least-depth search.
 5. **Then hang the rest off them.** Every street drains to the sub-main below it, every house to
    the street it fronts. On flat ground, the shortest run to the nearest sub-main.
    - 2026-09-07 (engineer): **one outlet per junction, and no loops.** Which pipe leaves a

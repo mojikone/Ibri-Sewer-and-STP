@@ -16,6 +16,10 @@ BUILT_SEWER = BASE + r"\Hydraulic\Claude\W7\shp\EXISTING_SEWERLINE.shp"
 BUILT_FORCE = BASE + r"\Hydraulic\Claude\W7\shp\EXISTING_FORCELINE.shp"
 MAIN_PIPE = BASE + r"\Hydraulic\SHP\Main Pipe\Main Pipe.shp"
 STP = (444387.0185, 2563352.4576)          # existing Ibri STP
+STP_INVERT_M = 323.0     # the inlet manhole 5A-1-FL-STP: both built trunks end there with a
+                         # downstream invert of 322.7-323.0 m and ground 325.0 m (as-built,
+                         # 2026-09-07). The terrain at the STP point reads 329.0 m; gravity is
+                         # judged against the invert, not the ground.
 TERRAIN = BASE + r"\Data\Terrain\Sat_0p5m\IBRI_0p5_VRT2.vrt"
 HAZARD = BASE + r"\Data\04 Lekhuwair\Hazard_T50y.tif"
 PLOTS_CLASS = BASE + r"\Hydraulic\Claude\W3\shp\MoH_Plots_class_v4.shp"
@@ -57,10 +61,12 @@ CORRIDOR_MAX_M = 6500.0      # NAMA's own western trunk runs 5.65 km along its c
 
 # ---- rules 3-5: the tree (Stage A rerun, 2026-09-07)
 JOIN_SPACING_M = 150.0    # a join is kept only this far from a bigger one (NAMA: median 167 m)
-STEM_MIN_M = 600.0        # a sub-main stops where less than this much street is upstream
-                          # (200 m gave 44 km of sub-main, a third of the network; NAMA's
-                          # sub mains are under a tenth — first run 2026-09-07)
-SIDE_STEM_MIN_M = 1500.0  # a child carrying this much street of its own is a sub-main too
+STEM_MIN_M = 600.0        # (heaviest-stem method, superseded 2026-09-07 by street chains)
+SIDE_STEM_MIN_M = 1500.0  # (idem)
+STRAIGHT_DEG = 25.0       # a street continues through a junction within this deflection
+CHAIN_MIN_M = 250.0       # a sub-main is a straight street chain at least this long that
+                          # attaches to the outlet or to a sub-main already chosen (engineer,
+                          # 2026-09-07: "long run with less bends")
 DEPTH_WEIGHT = 500.0      # route cost per metre of trench depth a street forces (W8)
 SMIN_PROXY = 0.005        # the DN200 minimum gradient the depth cost is measured against
 GATE_SEARCH_M = 45.0      # how far off a street a house gate may sit (W8)

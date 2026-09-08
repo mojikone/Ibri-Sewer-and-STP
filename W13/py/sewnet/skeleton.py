@@ -112,14 +112,14 @@ class Streets:
 
 def link_targets(sources, spill, z, ground, mp_union, stp_xy, min_grad, mp_invert_depth,
                  max_len, plots=None, existing=(), spacing_m=0.0, streets=None,
-                 mp_max_len=None):
+                 mp_max_len=None, stp_level=None):
     """Rule 3's direct link, as an outlet type. A basin or island low point whose ground can
     fall to the main pipe's invert, or to the STP, at min_grad over the straight distance, with
     no built or planned plot in the way and within max_len, is not a basin: it is an outlet with
     a direct link. The main pipe is measured at its invert, taken as mp_invert_depth below the
     ground at the foot of the link (a stated allowance). Returns {node: (type, plots crossed)}
     for the sources that qualify, preferring the main pipe when both work."""
-    zstp = float(ground.z_at([stp_xy[0]], [stp_xy[1]])[0])
+    zstp = stp_level if stp_level is not None else float(ground.z_at([stp_xy[0]], [stp_xy[1]])[0])
     ex_pts = [Point(e) for e in existing]
     out = {}
     for s in sorted(sources):
@@ -170,7 +170,8 @@ class TrunkCorridor:
     Built from the trunk lines (manhole IDs with -TM-, or the given project codes), merged,
     turned into a graph of their end points, with the STP as the node nearest to it."""
 
-    def __init__(self, built_gdf, stp_xy, codes=("8F-1",), snap_m=3.0, stp_reach_m=400.0):
+    def __init__(self, built_gdf, stp_xy, codes=("8F-1",), snap_m=3.0, stp_reach_m=400.0,
+                 envelope=None):
         from shapely.ops import linemerge, unary_union
         g = built_gdf
         tm = (g["US_MHID"].astype(str).str.contains("-TM-") |
@@ -178,9 +179,15 @@ class TrunkCorridor:
               g["PROJECTCOD"].astype(str).isin(codes))
         flat = [LineString([(c[0], c[1]) for c in geom.coords]) for geom in g[tm].geometry
                 if geom is not None and not geom.is_empty and geom.geom_type == "LineString"]
-        merged = linemerge(unary_union(flat))
+        merged = unary_union(flat)
+        # only the corridor OUTSIDE the settlements: NAMA's trunk inside a settlement is a
+        # street of our network and becomes a sub-main by rule 4 (engineer, 2026-09-07)
+        if envelope is not None:
+            merged = merged.difference(envelope)
+        merged = linemerge(merged) if not merged.is_empty else merged
         self.lines = [LineString([(c[0], c[1]) for c in ln.coords]) for ln in
-                      (merged.geoms if hasattr(merged, "geoms") else [merged])]
+                      (merged.geoms if hasattr(merged, "geoms") else [merged])
+                      if ln.geom_type == "LineString" and ln.length > 1.0]
         self.G = nx.Graph()
         key = lambda c: (round(c[0] / snap_m) * snap_m, round(c[1] / snap_m) * snap_m)  # noqa: E731
         self.key = key
@@ -249,7 +256,7 @@ class TrunkCorridor:
 
 
 def corridor_entry_targets(nodes, z, ground, corridor, streets, entry_m, spacing_m, min_grad,
-                           max_len, mp_union=None, mp_near_m=40.0, plots=None):
+                           max_len, mp_union=None, mp_near_m=40.0, plots=None, stp_level=None):
     """NAMA's trunk corridor as a second target. A street junction within entry_m of the
     corridor, with no street and no built or planned plot between it and the corridor, whose
     ground falls to the STP at min_grad along the corridor within max_len, is an entry join.
@@ -258,7 +265,8 @@ def corridor_entry_targets(nodes, z, ground, corridor, streets, entry_m, spacing
     Returns ({node: 'LINK-STP'}, {node: geometry})."""
     if corridor is None or not corridor.ok:
         return {}, {}
-    zstp = float(ground.z_at([corridor.stp_xy[0]], [corridor.stp_xy[1]])[0])
+    zstp = stp_level if stp_level is not None else \
+        float(ground.z_at([corridor.stp_xy[0]], [corridor.stp_xy[1]])[0])
     cands = []
     for n in nodes:
         p = Point(n)
@@ -289,7 +297,7 @@ def corridor_entry_targets(nodes, z, ground, corridor, streets, entry_m, spacing
 
 def corridor_links(sources, spill, z, ground, corridor, entry_m, min_grad, plots=None,
                    mp_union=None, mp_invert_depth=3.0, mp_near_m=40.0, max_len=4000.0,
-                   streets=None, mp_max_len=None):
+                   streets=None, mp_max_len=None, stp_level=None):
     """Rule 3 along NAMA's corridor: a basin or island low point that can reach the built
     trunk corridor within entry_m, crossing no built or planned plot on that leg, links along
     it. Where the corridor entry lies under the drawn main pipe (the eastern trunk), the link
@@ -298,7 +306,8 @@ def corridor_links(sources, spill, z, ground, corridor, entry_m, min_grad, plots
     Returns {node: (type, plots crossed, geometry)}."""
     if corridor is None or not corridor.ok:
         return {}
-    zstp = float(ground.z_at([corridor.stp_xy[0]], [corridor.stp_xy[1]])[0])
+    zstp = stp_level if stp_level is not None else \
+        float(ground.z_at([corridor.stp_xy[0]], [corridor.stp_xy[1]])[0])
     out = {}
     for s in sorted(sources):
         if s in spill and spill[s] == 0.0:
@@ -361,6 +370,176 @@ def sub_mains(runs, parent, seq, src, stem_min_m, side_min_m):
             prev, cur = cur, best
     km = sum(runs[i]["len"] for i in submain) / 1000.0
     return submain, stem_parent, {"stems": n_stems, "submain_runs": len(submain),
+                                  "submain_km": round(km, 2)}
+
+
+# ------------------------------------------------------ sub-mains by street
+def street_chains(runs, straight_deg):
+    """Streets as the draftsman meant them: a chain of runs that continues straight through
+    junctions, within straight_deg of deflection. At a junction the two runs that continue
+    most nearly straight are paired; every run belongs to exactly one chain.
+    Returns chains as lists of run indices, each with its node sequence."""
+    at = {}
+    for i, r in enumerate(runs):
+        at.setdefault(r["up"], []).append(i)
+        at.setdefault(r["dn"], []).append(i)
+
+    def other(i, n):
+        r = runs[i]
+        return r["dn"] if r["up"] == n else r["up"]
+
+    def heading(i, n):
+        """Bearing of run i leaving node n, taken over its first 12 m."""
+        g = runs[i]["geom"]
+        if _key(g.coords[0]) == n:
+            q = g.interpolate(min(g.length, 12.0))
+            return _bearing(g.coords[0], (q.x, q.y))
+        q = g.interpolate(max(0.0, g.length - 12.0))
+        return _bearing(g.coords[-1], (q.x, q.y))
+
+    pair = {}                       # (node, run) -> the run it continues into at that node
+    for n, idx in at.items():
+        if len(idx) < 2:
+            continue
+        cands = []
+        for a in range(len(idx)):
+            for b in range(a + 1, len(idx)):
+                i, j = idx[a], idx[b]
+                d = math.degrees(heading(i, n) - heading(j, n))
+                d = abs((d + 180.0) % 360.0 - 180.0)
+                turn = 180.0 - d          # 180 = straight through
+                if turn <= straight_deg:
+                    cands.append((turn, i, j))
+        used = set()
+        for turn, i, j in sorted(cands):
+            if i in used or j in used:
+                continue
+            pair[(n, i)] = j
+            pair[(n, j)] = i
+            used.add(i)
+            used.add(j)
+
+    seen = set()
+    chains = []
+    for i0 in range(len(runs)):
+        if i0 in seen:
+            continue
+        # walk both ways from i0
+        seq = [i0]
+        seen.add(i0)
+        for direction in (0, 1):
+            i = i0
+            n = runs[i]["dn"] if direction == 0 else runs[i]["up"]
+            while True:
+                j = pair.get((n, i))
+                if j is None or j in seen:
+                    break
+                seen.add(j)
+                if direction == 0:
+                    seq.append(j)
+                else:
+                    seq.insert(0, j)
+                i = j
+                n = other(j, n)
+        # node sequence along the chain
+        nodes = []
+        for k, i in enumerate(seq):
+            r = runs[i]
+            if k == 0:
+                nxt = runs[seq[1]] if len(seq) > 1 else None
+                if nxt is not None and r["up"] in (nxt["up"], nxt["dn"]):
+                    nodes += [r["dn"], r["up"]]
+                else:
+                    nodes += [r["up"], r["dn"]]
+            else:
+                nodes.append(other(i, nodes[-1]))
+        chains.append({"runs": seq, "nodes": nodes,
+                       "len": sum(runs[i]["len"] for i in seq)})
+    return chains
+
+
+def _key(pt, nd=2):
+    return (round(float(pt[0]), nd), round(float(pt[1]), nd))
+
+
+def sub_mains_by_chains(runs, chains, parent, src, chain_min_m):
+    """Rule 4 as the engineer drew it: the sub-mains are the long straight streets. From each
+    outlet, take the longest chain whose lower end touches the outlet or a sub-main already
+    chosen, cut it at the first chosen node it meets, and repeat until no chain of
+    chain_min_m or more attaches. A chain's lower end is the end nearer the outlet along the
+    flood tree. Returns the sub-main run set, the stem parent of every sub-main node, and a
+    report."""
+    edge = run_lookup(runs)
+    # distance to the outlet along the flood tree
+    dist = {}
+
+    def d_out(n):
+        if n in dist:
+            return dist[n]
+        path = []
+        m = n
+        while m not in dist:
+            p = parent.get(m)
+            if p is None:
+                dist[m] = 0.0
+                break
+            path.append(m)
+            m = p
+        for q in reversed(path):
+            p = parent[q]
+            i = edge.get((q, p))
+            dist[q] = dist[p] + (runs[i]["len"] if i is not None else 0.0)
+        return dist[n]
+
+    by_outlet = {}
+    for n, o in src.items():
+        by_outlet.setdefault(o, set()).add(n)
+    submain, stem_parent = set(), {}
+    n_chains = 0
+    for outlet, members in by_outlet.items():
+        S = {outlet}
+        cand = [c for c in chains if c["len"] >= chain_min_m
+                and any(n in members for n in c["nodes"])]
+        while True:
+            best = None
+            for c in cand:
+                nodes = c["nodes"]
+                if nodes[0] in S and nodes[-1] in S and all(n in S for n in nodes):
+                    continue
+                a, b = nodes[0], nodes[-1]
+                if d_out(a) <= d_out(b):
+                    seq_nodes, seq_runs = nodes[::-1], c["runs"][::-1]   # upstream first
+                else:
+                    seq_nodes, seq_runs = nodes, c["runs"]
+                # cut at the first chosen node from the upstream end; the lower end must be in S
+                cut = None
+                for k, n in enumerate(seq_nodes):
+                    if n in S:
+                        cut = k
+                        break
+                if cut is None or cut == 0:
+                    continue
+                part_nodes = seq_nodes[:cut + 1]
+                part_runs = seq_runs[:cut]
+                L = sum(runs[i]["len"] for i in part_runs)
+                if L < chain_min_m:
+                    continue
+                if best is None or L > best[0]:
+                    best = (L, part_nodes, part_runs, c)
+            if best is None:
+                break
+            L, part_nodes, part_runs, c = best
+            for k in range(len(part_nodes) - 1):
+                u, v = part_nodes[k], part_nodes[k + 1]
+                if u not in stem_parent and u != outlet:
+                    stem_parent[u] = v
+                S.add(u)
+            S.add(part_nodes[-1])
+            submain.update(part_runs)
+            n_chains += 1
+            cand = [x for x in cand if x is not c]
+    km = sum(runs[i]["len"] for i in submain) / 1000.0
+    return submain, stem_parent, {"chains_used": n_chains, "submain_runs": len(submain),
                                   "submain_km": round(km, 2)}
 
 
