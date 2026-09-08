@@ -69,7 +69,7 @@ USE_CORRIDOR = False    # NAMA's built trunk to the STP was a route with no desi
 
 # streets the engineer adds by hand, as (x, y) pairs, UTM 40N (2026-09-08: a 187 m link that
 # may let the low ground west of the settlement, C06, drain by gravity)
-EXTRA_LINES = [((444167.1, 2566069.5), (444189.8, 2565883.5))]
+EXTRA_LINES = []   # the 187 m link tried for C06 on 2026-09-08 did not help; withdrawn by the engineer
 
 # ---- rule 1: reading the ground
 SNAP_M = 3.0            # line ends this close are one node (57 gaps of 0.3-3 m in the DXF)
