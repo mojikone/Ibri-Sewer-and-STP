@@ -76,6 +76,21 @@ of designing can be tried and compared.
      entry join sits where the corridor leaves the settlement. **Gravity to the STP is judged
      against the works inlet invert**, 323.0 m from the as-built manhole 5A-1-FL-STP where both
      built trunks end, not against the ground at the plant, which reads 329 m.
+   - 2026-09-08 (engineer): **NAMA's built trunk is a connection with no design and is not a
+     route.** The corridor is switched off. A pocket is offered a **designed trunk along the
+     streets** instead: sized on the properties behind it, routed through the street graph at
+     that pipe's Table 11 gradient with rule 5's cost, to the cheapest target whose arrival
+     level the laid invert clears, the works inlet at **323.0 m** or a main-pipe join at its
+     invert, laid within 12 m everywhere; the biggest pocket first, later pockets joining an
+     accepted trunk. A refused trunk is reported with the reason: too long, 12 m passed at a
+     named node, or arrives so many metres under the level. The trunk runs carry the tier
+     **trunk** and are sized again by the flow in the lay.
+   - 2026-09-08: **the scope is the engineer's test boundary**, `SHP/temp/W13 test
+     boundary.shp`, 21.4 km² in two parts holding both settlements, the works and the roads
+     to it, 229 km of street; the built envelope stays as the comparison layer. The main
+     pipe as drawn on 2026-09-08 runs from the east's meeting point straight to the works,
+     so the west settlement has no main pipe to its north any more and drains to the works
+     or not at all.
 4. **Sub-mains first.** Long, straight, few bends. Low is the filter, long and straight is the
    choice. They earn their diameter from the houses they collect, and a bigger pipe reaches
    further on flat ground: about 2 km at DN200, 4 km at DN315, 5 km at DN400 before 12 m.
@@ -166,6 +181,14 @@ of designing can be tried and compared.
       nearest sub-main node instead of 850 m down the edge street (rule 5's sub-main length
       counting). No cut and no pump was needed on the built area. The mechanical form of
       this rule, an engine that reroutes on its own when the check fails, is not written yet.
+    - 2026-09-08: **the mechanical form is written, and it reports its refusals.** After the
+      lay, every catchment over 12 m is traced to the basin behind its deepest chamber, and
+      that basin is offered a designed trunk (rule 3) to any target it can reach within 12 m
+      and above the target's level; the tree is rebuilt and laid again, up to **three**
+      rounds. What it cannot fix it names, with the reason, so the engineer decides between
+      a pump, a bigger pipe than the flow needs, or a lower inlet. The lay also checks the
+      **arrival level at the works inlet**, which depth alone never showed: a catchment can
+      be within 12 m everywhere and still arrive under the inlet.
 11. **A closed hollow, or a ridge between a pocket and every neighbour, is a real pump.**
 12. **Chambers** (2026-09-07, from W8). A chamber sits at every junction, every head, and every
     change of gradient or diameter. **Spacing follows the guideline**, G203-p30 Table 12 by

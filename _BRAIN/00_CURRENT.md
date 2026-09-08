@@ -48,7 +48,13 @@ catchments, no loops, one outlet per node, checked in QGIS (group `Claude W13 A`
 now lays the tree and reports its depth (rule 9, `sewnet/quicklay.py`): 1,765 chambers, deepest
 11.47 m, none over 12 m, no pump, after five reroutes found by reading the governing path into
 the deepest chamber (20.0 m at first). Outlets are assigned by rule 5's least-depth cost, not the
-flood (`ASSIGN_BY_DEPTH`); the search runs from the outlets with sub-mains at half cost.** **The drawing
+flood (`ASSIGN_BY_DEPTH`); the search runs from the outlets with sub-mains at half cost.** **Since
+2026-09-08 the scope is the engineer's test boundary (21.4 km², `AREA_SHP`), NAMA's corridor is off, a
+pocket is offered a designed trunk along the streets, and rule 10 runs mechanically and reports its
+refusals. On the boundary the west settlement and the low ground at the works have NO gravity way to
+the existing inlet at 323.0 m (the road into the plant dips to 324.2 m; the interior's rim puts the
+corner 9.6 m deep): 3 pockets, 31 chambers over 12 m, deepest 19.4 m. The engineer decides: a lift at
+the works, NAMA's over-gradient trunk, or a pump at the west's corner.** **The drawing
 to look at is `W13/dxf/W13_A_tree.dxf`**; `W13_A_ground.dxf` is the raw ground for reference;
 numbers `W13/run/stage_a.json` and `W13/docs/W13_EVIDENCE.md`. **Next is Stage B (rules 3–6
 routed).** The old test-boundary pipeline (`run_test_boundary.py`, `stages/tree.py`,

@@ -217,3 +217,84 @@ the main pipe with nowhere else to go, where the rule says only sub-mains join; 
 share at 30 % against NAMA's tenth (the 250 m floor); the west rim at 11.5 m against NAMA's
 5.9 m on the same line; and the mechanical form of rule 10, which was not needed on this
 area and is not written.
+
+## The test boundary: the west has no gravity way to the existing inlet (2026-09-08)
+
+The engineer's seventh instruction: expand to `SHP/temp/W13 test boundary.shp`, connect the
+west's north part to the part that goes to the works, and design a gravity pipe to the works
+along the roads instead of taking NAMA's line. The main pipe was redrawn the same day. Same
+runner, 49 seconds.
+
+| Boundary | |
+|---|---|
+| Area | 21.37 km² in two parts; the east part 6.13 km², the west part 15.24 km² holding the west settlement, the works and the roads to it |
+| Streets | 229.2 km of DXF street, 2,596 runs, 85 crest and 67 sag splits (the built area had 119.8 km) |
+| Built network inside | 102.6 of the 111.6 km of 2006 sewer |
+| Main pipe | 84.9 km drawn across the wilayat, 13.1 km inside the boundary; its south-west leg runs from the east's meeting point to the works along a ridge at 331 to 341 m, above the land on both sides |
+| Plots | 7,643 built and planned plots served, 9,380 properties at saturation |
+
+**What the engine finds.** 35 sub-networks: 29 joins (129 km), 1 to the works (25.3 km, the
+low ground south-west of it), 3 pockets (55.6 km: the west settlement in two, 28.8 and 20.1
+km, and 6.7 km west of it), 2 islands. 31 chambers over 12 m, the deepest 19.4 m; 4
+catchments fail: the west interior (19.4 m), the basin south of the west settlement (17.8 m),
+the low ground at the works (17.3 m, and it arrives **12.3 m under the inlet**), and the
+basin between the west settlement and the ridge (14.0 m). The east settlement is as before:
+C01 33.6 km at 6.7 m.
+
+**Why the roads cannot deliver to the inlet at 323.0 m.** Measured along the streets from
+every failing pocket to the works node, laid at cover from the pocket at each Table 11
+gradient:
+
+| From | Ground | Length | DN315 0.270 % | DN400 0.205 % | DN500 0.155 % | DN600 0.125 % | DN700 0.100 % |
+|---|---|---|---|---|---|---|---|
+| west corner | 335.0 | 5.6 km | 318.3 | 321.2 | 321.7 | 322.0 | 322.1 |
+| west settlement low | 334.5 | 6.5 km | 315.4 | 319.6 | 321.7 | 322.0 | 322.1 |
+| west interior low | 333.7 | 6.5 km | 314.6 | 318.8 | 321.7 | 322.0 | 322.1 |
+| basin south (C05) | 330.9 | 4.2 km | 317.8 | 320.6 | 321.7 | 322.0 | 322.1 |
+| basin by the ridge (C09) | 337.8 | 6.6 km | 318.5 | 321.2 | 321.7 | 322.0 | 322.1 |
+| low ground SW (C03) | 326.7 | 3.8 km | 314.9 | 317.4 | 319.3 | 320.4 | 321.4 |
+| west of the settlement (C10) | 327.7 | 8.1 km | 304.3 | 309.5 | 313.6 | 316.0 | 318.0 |
+
+Arrival invert in metres against the inlet at 323.0. Every route from the west arrives at the
+same 321.7 to 322.1 m once the pipe is DN500 or larger, whatever the start: the arrival is not
+set by the gradient but by the road into the works, whose ground dips to **324.2 m about 800 m
+before the plant** (hazard class 1, not a wadi) and rises to 328 m at the gate. A pipe at
+cover under 324.2 m is at 322.6 m before the last stretch begins. NAMA's trunk alignment
+never drops below 325.2 m and its trunk arrives at 322.99 m; at its own 0.14 % it passes
+that low point with about 1.2 m to invert, under the guideline cover for its size.
+
+**And why a lower inlet is not enough.** Run again with the inlet at 321.5 m
+(`run/stage_a_scenario_inlet321.json`, `dxf/W13_A_tree_scenario_inlet321.dxf`): nothing
+changes. The west's pockets are sized on their own properties, a DN315 at 0.27 %, and at that
+gradient a 6.5 km trunk digs 12.7 m and arrives at 315 m. Only the whole west on one DN500
+makes 321.7 m, and only if it starts at cover at the corner; but the interior reaches the
+corner 9.6 m deep over its 4.9 m rim, and from that invert the trunk arrives near 317 m. The
+arithmetic: rim 4.9 m, plus 0.5 % over 850 m to the corner, plus 0.155 % over 5.6 km to the
+works, against 12 m of fall from the corner's ground to the inlet.
+
+**The sub-network arithmetic the check surfaced.** Judged against a main pipe invert of ground
+minus 3 m, 14 of the 29 join catchments arrive under it, by up to 11 m. The 3 m was an
+allowance for the direct-link test; the main pipe's profile is Stage C's and will be set by
+what arrives at its joins, so the check now applies at the works inlet only. It is a warning
+worth carrying: the main pipe on the ridge will be deep.
+
+**The mechanical rule 10, first use.** It ran three rounds, traced each failure to its basin,
+offered a trunk to every target, and refused each one with a reason (12 m passed at a named
+node on the ridge, or arrives under the inlet). One trunk it did accept, sized on pockets that
+were supposed to join it and never could, was laid two sizes smaller by the flow and dug
+deeper than the route was checked at; trunks are sized on their own flow only now.
+
+For the engineer, three ways out, none of them a rule change the engine can make alone:
+
+1. **One lift at the works.** Let everything arrive at the plant boundary as deep as gravity
+   brings it within 12 m, and lift once in an inlet pumping station, which a plant of this
+   size has anyway. The west's trunk then arrives at about 317 m, 8 to 11 m deep at the gate.
+2. **NAMA's way.** A single trunk from the west interior at a DN600 to DN700 gradient, 0.10 to
+   0.125 %, on NAMA's alignment for the last kilometre, a pipe two to three sizes above its
+   flow, declared as a deviation.
+3. **A pumping station at the west's corner**, lifting about 7 m into a DN500 trunk at
+   0.155 % along the roads, plus a second for the low ground south-west of the works, which
+   no inlet level short of 316 m reaches by gravity.
+
+The low ground south-west of the works (C03, 25 km, and C10, 7 km) is planned land at 323 to
+329 m, at the inlet's own level: it needs a pump under every option.
