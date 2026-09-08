@@ -125,6 +125,13 @@ of designing can be tried and compared.
      of level runs is pointed toward the outlet. A chain whose foot does not touch a chosen
      sub-main may still attach through a connector of at most **250 m** along the fall, and
      the connector becomes sub-main with it.
+   - 2026-09-08 (engineer): **a sub-main runs the whole street to the outlet, cut only at a
+     crest.** The cut wherever the fall turns is off. Two cuts the ground forces stay, as the
+     engine's reading of the ruling: at a sag more than 0.5 m below both sides where the
+     water leaves the street, and between two nodes that drain to different outlets. Measured
+     the same day on the boundary: sub-main strings of 3 to 4 km, and 31.9 m at the deepest,
+     where a whole street crosses the basin west of the settlement and climbs back into the
+     trunk. Kept for the engineer to see and to revert or improve.
 5. **Then hang the rest off them.** Every street drains to the sub-main below it, every house to
    the street it fronts. On flat ground, the shortest run to the nearest sub-main.
    - 2026-09-07 (engineer): **one outlet per junction, and no loops.** Which pipe leaves a
@@ -204,6 +211,11 @@ of designing can be tried and compared.
       for a pump**, rule 10's last step, so the rest is laid again without it. Up to **eight**
       rounds, and the best round is kept, not the last: a round that makes things worse is
       discarded and the best laid again.
+    - 2026-09-08 (engineer): **the gravity layout first, pumps later.** The rounds are off
+      (`REROUTE_ROUNDS = 0`): they had planted eight short DN200 trunks across the west. The
+      trunk tier is the spine to the works only. The lay still reports every failure. The
+      floor under the joins from the main pipe's profile is set aside with them: sub-networks
+      first, their levels at the main pipe later.
 11. **A closed hollow, or a ridge between a pocket and every neighbour, is a real pump.**
 12. **Chambers** (2026-09-07, from W8). A chamber sits at every junction, every head, and every
     change of gradient or diameter. **Spacing follows the guideline**, G203-p30 Table 12 by
@@ -254,6 +266,8 @@ How the engine treats it:
 - The SHP layer is kept only to draw where the dual carriageways are (`dual = 1`) as context.
 
 **Terrain:** the 0.5 m blend, read once over the area at a 2 m cell for the ground pass.
+**Streets the engineer adds by hand** go in `EXTRA_LINES` of the config as coordinate pairs
+and carry the layer `engineer-link` (first one 2026-09-08: a 187 m link west of the settlement).
 **Targets:** the main pipe as drawn (`SHP/Main Pipe`) and the existing STP.
 **The built network** (`W7/shp/EXISTING_SEWERLINE.shp`, `OP_STATUE = 1`) defines the area of
 this stage and is the comparison for every rule.

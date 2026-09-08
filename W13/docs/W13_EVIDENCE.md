@@ -332,3 +332,38 @@ and the trunk 7.8 m under an inlet that stays at 323.0 m. The 7.8 m is the low g
 south-west of the works at 323 to 329 m plus the interior's rim; the 16.1 m is the basins
 between the settlement and the ridge climbing into the trunk. The one pump is the low ground
 west of the settlement.
+
+## Whole-street sub-mains, and the link for C06 (2026-09-08, later still)
+
+The engineer's rulings after reading the all-gravity picture: gravity first, pumps later; the
+sub-networks first, their levels at the main pipe later; a sub-main runs the whole street,
+cut only at a hill; rule 10 must not build pipes; and try a 187 m street link from
+(444167.1, 2566069.5) to (444189.8, 2565883.5) for the low ground west of the settlement.
+Same runner, 47 seconds; the DXF written as `W13_A_tree_new.dxf` because the engineer had the
+other open.
+
+| | Fall turns cut (earlier) | Whole street, crest only | Whole street, crest, sag and outlet cuts |
+|---|---|---|---|
+| Sub-main strings, longest | fragments, rule 10 trunks of 130 to 1,300 m | 3.9, 3.9, 3.9, 3.7, 3.5 km | same order |
+| Sub-main km | 67.5 | 82.7 | 76.7 |
+| Chambers over 12 m | 27 | 75 | 88 |
+| Deepest | 16.1 m | 31.0 m | 31.9 m |
+| At the works | 7.8 m under | 23.0 m under | 24.5 m under |
+| Sub-networks | 35 | 21 | 30 |
+
+**Where the 31.9 m comes from.** One whole street from the west settlement's interior runs
+west into the low ground at 327.7 m (C06's basin), and back up east to the trunk head at
+335.3 m. As one sub-main it carries the basin's 6.5 m of fill plus 0.5 % over 1.5 km, and
+arrives at the trunk 26 m deep; the trunk then leaves the settlement at 30 m and reaches the
+works 24.5 m under the inlet. The second case is a street that rises 5 m to a join on the
+ridge, dragging its lower half up to 21 m. Cutting at a sag did not fire, because the flood's
+own answer for that basin is to leave it along the same street, over its 334.2 m rim.
+
+**The link for C06.** It connects: 30 m in the graph at 330.7 to 330.8 m. It does not rescue
+C06: its low at 327.7 m is 3 m below the link and 4 km from an inlet 4.7 m below it, so the
+route south costs 3 m of fill and 20 m of fall at 0.5 %, and the route east over the rim
+costs 6.5 m of fill and 1.5 km. Rule 5's cost picks east. Either way the basin drags whatever
+it joins past 12 m.
+
+For the engineer: C06 as a pump, or left out of the boundary; and the rule for a street
+that crosses a basin, since whole-street sub-mains give the strings asked for and 31.9 m.

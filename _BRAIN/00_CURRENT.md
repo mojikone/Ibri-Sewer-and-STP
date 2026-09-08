@@ -56,7 +56,10 @@ the existing inlet at 323.0 m (the road into the plant dips to 324.2 m; the inte
 corner 9.6 m deep). The engineer ruled everything on gravity, converging on the outlet, inlet unchanged,
 NAMA's last kilometre allowed: the run now puts the whole west side on one designed trunk to the works
 with one pump west of the settlement, 27 chambers over 12 m, deepest 16.1 m, the trunk 7.8 m under the
-inlet. That picture is the engineer's to read next.** **The drawing
+inlet. Then whole-street sub-mains as the engineer asked (cut only at a crest, a sag the water leaves,
+or a change of outlet; rule 10 builds no pipes; join floor set aside): strings of 3 to 4 km, but 31.9 m
+at the deepest because one street crosses C06's basin and climbs back. The engineer decides C06 and
+the rule for a street across a basin.** **The drawing
 to look at is `W13/dxf/W13_A_tree.dxf`**; `W13_A_ground.dxf` is the raw ground for reference;
 numbers `W13/run/stage_a.json` and `W13/docs/W13_EVIDENCE.md`. **Next is Stage B (rules 3–6
 routed).** The old test-boundary pipeline (`run_test_boundary.py`, `stages/tree.py`,
