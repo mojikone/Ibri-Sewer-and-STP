@@ -635,12 +635,16 @@ def main():
                 if len(seen_) >= getattr(cfg, "REROUTE_BASINS", 1):
                     break
         props_of = {s_: raw_props.get(s_, 0) for s_ in pockets}
-        acc, trunk_stem, trunk_runs, levels, ttype, refused = K.trunk_routes(
-            runs, znode, levels, ttype, pockets, props_of, cfg.DEPTH_WEIGHT, cfg.MAX_DEPTH_M,
-            cfg.TRUNK_COVER_M, cfg.PER_PROPERTY_M3D, stem=trunk_stem, trunk_runs=trunk_runs,
-            try_targets=cfg.TRUNK_TRY, max_len=cfg.TRUNK_MAX_M,
-            take_shortfall=getattr(cfg, 'TRUNK_TAKE_SHORTFALL', False),
-            violation_max=getattr(cfg, 'TRUNK_VIOLATION_MAX_M', 10.0))
+        if getattr(cfg, "REROUTE_MODE", "trunk") == "cut":
+            # the engineer's rule: no trunk is built; the basin is a pump candidate
+            acc, refused = {}, {}
+        else:
+            acc, trunk_stem, trunk_runs, levels, ttype, refused = K.trunk_routes(
+                runs, znode, levels, ttype, pockets, props_of, cfg.DEPTH_WEIGHT, cfg.MAX_DEPTH_M,
+                cfg.TRUNK_COVER_M, cfg.PER_PROPERTY_M3D, stem=trunk_stem, trunk_runs=trunk_runs,
+                try_targets=cfg.TRUNK_TRY, max_len=cfg.TRUNK_MAX_M,
+                take_shortfall=getattr(cfg, 'TRUNK_TAKE_SHORTFALL', False),
+                violation_max=getattr(cfg, 'TRUNK_VIOLATION_MAX_M', 10.0))
         rep["reroute"].append({"round": rr + 1, "over_limit": dict(over),
                                "pockets": [tuple(round(v, 1) for v in s_) for s_ in pockets],
                                "trunks": len(acc),

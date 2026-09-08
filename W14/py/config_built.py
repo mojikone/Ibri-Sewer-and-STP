@@ -38,10 +38,15 @@ TRUNK_VIOLATION_MAX_M = 10.0  # ... but not past this many metres of depth exces
 TRUNK_TAKE_SHORTFALL = True  # a pocket takes the route with the smallest arrival shortfall
                            # when none clears its target's level, within 12 m everywhere
                            # (engineer, 2026-09-08: everything on gravity, show the depth)
-REROUTE_ROUNDS = 0         # rule 10: rounds of reroute after the lay before a failure is reported.
+REROUTE_ROUNDS = 12        # (engineer, 2026-09-08: whatever reaches an outlet within 12 m connects,
+                           # the rest is a pump candidate) rounds after the lay in which the basin
+                           # behind each chamber past 12 m becomes a pump candidate and the rest is
+                           # laid again. Was 0: rule 10's rounds of reroute after the lay.
+REROUTE_MODE = "cut"      # "cut": no trunk is built for the basin, it becomes a pump candidate;
+                           # "trunk": W13's way, a designed trunk is tried first
                            # 0 since 2026-09-08 (engineer): the gravity layout first, pumps later;
                            # rule 10's rounds planted eight short DN200 trunks across the west
-REROUTE_BASINS = 3         # basins offered per failing catchment per round, largest fill first
+REROUTE_BASINS = 1         # basins per failing catchment per round, largest fill first
 
 OUT = BASE + r"\Hydraulic\Claude\W14"
 OUT_SHP = OUT + r"\shp"

@@ -399,3 +399,25 @@ Where the four remaining failures are: two streets climbing to joins on the ridg
 the west's spine at 15.7 m; and the low ground south-west of the works reaching the second
 works node 15.1 m deep and 6.5 m under. None of them is a layout fault; they are the ridge and
 the inlet.
+
+## The 12 m rule as the engineer stated it (2026-09-08, later)
+
+"In such flat areas, connect whatever can reach the outlet or the main pipe within 12 m;
+the rest remain candidates for a pump." Applied in W14 after the lay (`REROUTE_MODE = "cut"`,
+twelve rounds): the basin behind each chamber past 12 m becomes a pump candidate at its own
+low point, no trunk is built for it, and the rest is laid again; a round that makes things
+worse is discarded. Same ground, 50 seconds.
+
+| | Before the rule | After |
+|---|---|---|
+| Chambers over 12 m | 29, in four sub-networks | **20, all on the west's spine to the works** |
+| Deepest | 17.5 m, a street climbing to a join on the main pipe's rise | 15.7 m, the spine |
+| Pump candidates | 4, 25 km | **8, 32.9 km** |
+| At the works | 8.7 m under | 8.1 m under |
+
+The eight pump candidates, largest first: the low ground south-west of the works (11.5 km,
+326.7 m); the low ground west of the settlement (8.3 km, 327.7 m); the low by the main pipe's
+rise south-east of the settlement (6.9 km, 336.6 m); and five small ones of 0.2 to 1.9 km,
+two of them the tops of the streets that had been climbing to the ridge joins. What is left
+past 12 m is the spine from the west settlement to the works, whose depth is the interior's
+rim plus 6 km of fall against an inlet at 323.0 m: not a basin to cut, the inlet decision.
