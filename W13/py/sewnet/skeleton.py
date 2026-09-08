@@ -541,6 +541,42 @@ def cut_at_divides(chains, runs, src, filled=None, level_m=0.0):
     return out
 
 
+def cut_at_sags_and_outlets(chains, runs, z, src, parent, crest_m):
+    """Rule 4 as the engineer set it on 2026-09-08, a sub-main runs the whole street, with the
+    two cuts the ground forces: at a sag (an interior node more than crest_m below the ground
+    on both sides along the chain) where the water leaves the street, that is where the
+    flood's parent of the sag is not the next node along the chain; and between two nodes
+    that drain to different outlets. A flip of the arrow on level ground never cuts."""
+    out = []
+    for c in chains:
+        nodes, seq = c["nodes"], c["runs"]
+        zz = [z[n] for n in nodes]
+        cuts = set()
+        for i in range(1, len(nodes) - 1):
+            if zz[i] <= zz[i - 1] and zz[i] <= zz[i + 1]:
+                if min(zz[:i]) - zz[i] > crest_m and min(zz[i + 1:]) - zz[i] > crest_m:
+                    p_ = parent.get(nodes[i])
+                    if p_ not in (nodes[i - 1], nodes[i + 1]):
+                        cuts.add(i)
+        for k in range(len(seq)):
+            a, b = nodes[k], nodes[k + 1]
+            if src.get(a) != src.get(b):
+                # the run between them goes with the side the water leaves toward
+                cuts.add(k if runs[seq[k]]["up"] == a else k + 1)
+        cuts = sorted(x for x in cuts if 0 < x < len(nodes) - 1)
+        if not cuts:
+            out.append(c)
+            continue
+        bounds = [0] + cuts + [len(nodes) - 1]
+        for a, b in zip(bounds[:-1], bounds[1:]):
+            part_runs = seq[a:b]
+            if part_runs:
+                out.append({"runs": part_runs, "nodes": nodes[a:b + 1],
+                            "len": sum(runs[i]["len"] for i in part_runs),
+                            "cut": c.get("cut", False), "sag_or_outlet": True})
+    return out
+
+
 def sub_mains_by_chains(runs, chains, parent, src, chain_min_m, link_m=0.0, filled=None,
                         level_m=0.0):
     """Rule 4 as the engineer drew it: the sub-mains are the long straight streets. From each
@@ -788,6 +824,37 @@ def _trunk_try(runs, z, adj, levels, ttype, p0, n_prop, per_prop, depth_weight, 
                 continue
             return path, ridx, prof, t, length, mx, inv, dn, smin, 0.0
     return None
+
+
+def break_stem_cycles(stem, keep, runs, submain):
+    """A trunk's stems override a street chain's; where the chain pointed the other way the
+    two now chase each other. Walk every stem; on a cycle, drop the first stem in it that is
+    not in `keep` (the trunks), and take the run it stood on out of the sub-main set, so the
+    tree search routes it like any street (2026-09-08, after the divide cut came off)."""
+    stem = dict(stem)
+    edge = run_lookup(runs)
+    dropped = 0
+    changed = True
+    while changed:
+        changed = False
+        for start in list(stem):
+            seen, n = [], start
+            while n in stem and n not in seen:
+                seen.append(n)
+                n = stem[n]
+            if n in stem and n in seen:                 # a cycle through n
+                cyc = seen[seen.index(n):]
+                victim = next((u for u in cyc if u not in keep), None)
+                if victim is None:
+                    victim = cyc[0]
+                v = stem.pop(victim)
+                i = edge.get((victim, v))
+                if i is not None:
+                    submain.discard(i)
+                dropped += 1
+                changed = True
+                break
+    return stem, submain, dropped
 
 
 def build_tree(runs, z, submain, stem_parent, depth_weight, smin, outlets=(), free_w=0.01,

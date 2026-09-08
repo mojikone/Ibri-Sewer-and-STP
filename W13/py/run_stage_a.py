@@ -85,6 +85,12 @@ def main():
         lines += row
         rep["nama_row_km"] = round(sum(g.length for g, _ in row) / 1000, 2)
         log(f"   NAMA's right-of-way into the works: {rep['nama_row_km']} km of line added")
+    extra = [(LineString(pts), "engineer-link") for pts in getattr(cfg, "EXTRA_LINES", [])]
+    if extra:
+        extra = G.clip_lines(extra, envelope)
+        lines += extra
+        rep["engineer_links_m"] = round(sum(g.length for g, _ in extra), 1)
+        log(f"   engineer's added lines: {len(extra)}, {rep['engineer_links_m']} m")
     noded, snapped, srep = G.snap_and_node(lines, cfg.SNAP_M)
     rep["street_km_in_area"] = round(sum(g.length for g, _ in lines) / 1000, 1)
     rep["snap"] = srep
@@ -272,6 +278,8 @@ def main():
     _mp_dist = _nx.single_source_dijkstra_path_length(_Gm, _stp_v, weight="w")
 
     def mp_floor(pt):
+        if not getattr(cfg, "MP_PROFILE_GRAD", None):
+            return None
         foot = mp_union.interpolate(mp_union.project(Point(pt)))
         v = min(_Gm.nodes, key=lambda q: _math.dist(q, (foot.x, foot.y)))
         d = _mp_dist.get(v)
@@ -380,15 +388,22 @@ def main():
         log("sub-mains: the long straight streets that attach to the outlet ...")
         chains = K.street_chains(runs, cfg.STRAIGHT_DEG)
         chains = K.cut_at_crests(chains, runs, znode, cfg.CREST_M)      # rule 6: never over a hill
-        chains = K.cut_at_divides(chains, runs, src2, filled2, cfg.LEVEL_M)  # ... nor against it
+        # (2026-09-08, engineer: a sub-main runs the whole street to the outlet, cut only at a
+        # crest; the fall orients it, never cuts it. cut_at_divides is off.) Two cuts the
+        # ground forces stay: a sag where the water leaves the street, and a change of outlet
+        chains = K.cut_at_sags_and_outlets(chains, runs, znode, src2, parent2, cfg.CREST_M)
         submain, stem_parent, srep3 = K.sub_mains_by_chains(runs, chains, parent2, src2,
                                                             cfg.CHAIN_MIN_M, cfg.CHAIN_LINK_M,
                                                             filled2, cfg.LEVEL_M)
         stem_parent.update(trunk_stem)          # a designed trunk fixes its own direction
         submain = set(submain) | set(trunk_runs)
+        stem_parent, submain, n_cut = K.break_stem_cycles(stem_parent, set(trunk_stem), runs,
+                                                          submain)
+        srep3["stems_cut_for_a_cycle"] = n_cut
         srep3["street_chains"] = len(chains)
         srep3["chains_cut_at_a_crest"] = sum(1 for c in chains if c.get("cut"))
         srep3["chains_cut_at_a_divide"] = sum(1 for c in chains if c.get("divide"))
+        srep3["chains_cut_at_a_sag_or_outlet"] = sum(1 for c in chains if c.get("sag_or_outlet"))
         srep3["chains_over_min"] = sum(1 for c in chains if c["len"] >= cfg.CHAIN_MIN_M)
         rep["submains"] = srep3
         log(f"   {srep3}")
@@ -499,7 +514,8 @@ def main():
             znode_all.setdefault(b["up"], b["z_up"])
         # the works inlet is a fixed level, and every join is floored by the main pipe's
         # own gravity profile back from it (2026-09-08, engineer: everything on gravity)
-        floors = {t: lv for t, lv in levels.items() if ttype.get(t) in ("STP", "JOIN")}
+        floors = {t: lv for t, lv in levels.items()
+                  if ttype.get(t) == "STP" or (getattr(cfg, "MP_PROFILE_GRAD", None) and ttype.get(t) == "JOIN")}
         depth, governs, laid = Q.lay(pipes, props, znode_all, cfg.PER_PROPERTY_M3D,
                                      floors=floors)
         rep["depth"] = Q.report(pipes, depth, cfg.MAX_DEPTH_M)
@@ -620,9 +636,17 @@ def main():
              "BASIN marks (red rings, layer A_BASINS) = a dip the network drains OVER by depth: the "
              "number is the extra depth the pipe carries to leave it; these are inside a "
              "sub-network, not outlets · red thick = street too short for a head"]
-    dxf = XT.write_dxf(os.path.join(cfg.OUT_DXF, "W13_A_tree.dxf"), pipes, gaps, dropped_geoms,
-                       info2, polys2, colour2, joins, streams, wadis, main_pipe, built_geoms,
-                       envelope, cfg.STP, title, links=link_geoms, basins=basins)
+    try:
+        dxf = XT.write_dxf(os.path.join(cfg.OUT_DXF, "W13_A_tree.dxf"), pipes, gaps, dropped_geoms,
+                           info2, polys2, colour2, joins, streams, wadis, main_pipe, built_geoms,
+                           envelope, cfg.STP, title, links=link_geoms, basins=basins)
+    except PermissionError:
+        # the engineer has it open in AutoCAD: the run must not die for that
+        dxf = XT.write_dxf(os.path.join(cfg.OUT_DXF, "W13_A_tree_new.dxf"), pipes, gaps,
+                           dropped_geoms, info2, polys2, colour2, joins, streams, wadis,
+                           main_pipe, built_geoms, envelope, cfg.STP, title, links=link_geoms,
+                           basins=basins)
+        log("   W13_A_tree.dxf is open elsewhere; written as W13_A_tree_new.dxf")
     rep["basins"] = [{"xy": [round(b["xy"][0], 1), round(b["xy"][1], 1)],
                       "extra_m": round(b["extra_m"], 2)} for b in basins]
     XT.write_shapes(cfg.OUT_SHP, "W13_A_tree", pipes, gaps, info2, polys2, {**joins, **link_geoms},

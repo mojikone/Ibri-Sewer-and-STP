@@ -38,7 +38,9 @@ TRUNK_VIOLATION_MAX_M = 10.0  # ... but not past this many metres of depth exces
 TRUNK_TAKE_SHORTFALL = True  # a pocket takes the route with the smallest arrival shortfall
                            # when none clears its target's level, within 12 m everywhere
                            # (engineer, 2026-09-08: everything on gravity, show the depth)
-REROUTE_ROUNDS = 8         # rule 10: rounds of reroute after the lay before a failure is reported
+REROUTE_ROUNDS = 0         # rule 10: rounds of reroute after the lay before a failure is reported.
+                           # 0 since 2026-09-08 (engineer): the gravity layout first, pumps later;
+                           # rule 10's rounds planted eight short DN200 trunks across the west
 REROUTE_BASINS = 3         # basins offered per failing catchment per round, largest fill first
 
 OUT = BASE + r"\Hydraulic\Claude\W13"
@@ -57,11 +59,17 @@ AREA_BUFFER_M = 60.0    # the built envelope: every street within this of a 2006
 NAMA_ROW_M = 1500.0     # NAMA's built trunk within this of the works is a right-of-way the
                         # network may use for its last kilometre (engineer, 2026-09-08): the
                         # road into the plant dips to 324.2 m, NAMA's line never below 325.2
-MP_PROFILE_GRAD = 0.00125  # the main pipe's own gravity profile back from the inlet, a DN600
+MP_PROFILE_GRAD = None     # (set aside 2026-09-08, engineer: sub-networks first, their levels at
+                        # the main pipe later; was 0.00125) the main pipe's own gravity profile
+                        # back from the inlet, a DN600
                         # class trunk (G203-p29 Table 11); a join cannot sit below it. An
                         # optimistic floor: a bigger main pipe is flatter and the floor higher
 USE_CORRIDOR = False    # NAMA's built trunk to the STP was a route with no design (engineer,
                         # 2026-09-08); the STP is reached by a pipe designed along the roads
+
+# streets the engineer adds by hand, as (x, y) pairs, UTM 40N (2026-09-08: a 187 m link that
+# may let the low ground west of the settlement, C06, drain by gravity)
+EXTRA_LINES = [((444167.1, 2566069.5), (444189.8, 2565883.5))]
 
 # ---- rule 1: reading the ground
 SNAP_M = 3.0            # line ends this close are one node (57 gaps of 0.3-3 m in the DXF)
