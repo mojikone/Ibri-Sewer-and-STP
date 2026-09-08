@@ -44,9 +44,16 @@ TARGET_M = 30.0         # a junction this close to the drawn main pipe is a join
                         # pipe is an eyeballed line; a 24 km catchment ended 23 m short of
                         # it at 12 m — measured 2026-09-07)
 STP_M = 250.0           # a junction this close to the STP drains to the STP
-HOLLOW_M = 2.0          # a sink that spills with this much fill or less is a hollow the pipe
-                        # crosses by depth, not an outlet; deeper stays a SINK (Stage A method
-                        # choice, 2026-09-07 — Stage B decides what a real basin costs)
+HOLLOW_M = 2.0          # a dip needing this much fill or less is not even marked; deeper ones
+                        # are MARKED as basins with their extra depth, but still drain over
+                        # their rim into the neighbouring sub-network (engineer, 2026-09-07:
+                        # a sub-network is what connects to the main pipe, not a local sink)
+BASIN_MAX_M = 10.0      # a basin needing more than this stays a pocket for a pump or a cut:
+                        # with 1.3 m of cover it would pass the 12 m limit (rule 10)
+CORRIDOR_ENTRY_M = 600.0  # a direct link may reach NAMA's built trunk corridor within this
+                          # distance and follow it to the STP (rule 3, 2026-09-07)
+CORRIDOR_MIN_GRAD = 0.00125  # a trunk along the corridor is DN600 class: Table 11 minimum
+CORRIDOR_MAX_M = 6500.0      # NAMA's own western trunk runs 5.65 km along its corridor
 
 # ---- rules 3-5: the tree (Stage A rerun, 2026-09-07)
 JOIN_SPACING_M = 150.0    # a join is kept only this far from a bigger one (NAMA: median 167 m)

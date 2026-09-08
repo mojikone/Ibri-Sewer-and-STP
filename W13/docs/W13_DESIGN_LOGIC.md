@@ -20,13 +20,16 @@ of designing can be tried and compared.
    either where the falling streets meet the main pipe, or a sink where every street rises away.
    Each outlet is one catchment.
    - 2026-09-07, Stage A method. Hollows are filled on the street graph by priority flood from
-     the targets up to a spill of **2 m**: a dip that shallow is crossed by the pipe with a
-     little depth and is not an outlet. A sink needing more stays a **SINK** outlet; its spill is
-     the extra depth a pipe needs to leave it by gravity, a cost for Stage B, never a verdict of
-     "no gravity". A part of the graph with no street path to any target is an island: its
-     lowest node is a **LOW** outlet and the island is flooded from there. A junction within
-     **30 m** of the drawn main pipe is a join candidate. Inside a filled hollow the flow runs
-     against the ground: those runs are classed AGAINST and drawn dash-dot.
+     the targets. A dip needing **2 m** or less of fill is crossed by the pipe unremarked. A
+     junction within **30 m** of the drawn main pipe is a join candidate. Inside a filled hollow
+     the flow runs against the ground: those runs are classed AGAINST and drawn dash-dot.
+   - 2026-09-07 (engineer): **a basin is not an outlet. A sub-network is what connects to the
+     main pipe or the STP, never a local sink.** A basin deeper than 2 m is first offered a direct
+     link (rule 3); failing that it drains over its lowest rim into the neighbouring sub-network,
+     and the extra depth the pipe carries to leave it is marked on the drawing at the basin. Only
+     a basin that would need more than **10 m** stays a pocket, for a pump or a cut under rule
+     10, because with cover it would pass the 12 m limit. A part of the graph with no street path
+     to any target is an island: its lowest node is a **LOW** outlet, to be linked or reported.
 3. **From each outlet, the gravity path to the main pipe is the spine.** One join per catchment.
    The ground sets the number of joins, not a cap.
    - 2026-09-07: where the streets give the outlet no proper way to the main pipe, connect the
@@ -47,6 +50,15 @@ of designing can be tried and compared.
      fall and distance to both targets. A link is a join for the spacing rule: it keeps the
      join spacing from every existing join or link, unless its source is an island with no
      street path to anything.
+   - 2026-09-07: **a direct link may follow NAMA's built trunk corridor to the STP.** The
+     corridor is the built trunk mains, a right-of-way with no plot in it. A basin within
+     **600 m** of the corridor, with no built or planned plot on the leg to it, links along the
+     corridor when the whole way to the STP falls at **0.125 %** (the DN600 minimum, a trunk from
+     a settlement of this size) and is no longer than **6.5 km** (NAMA's own western trunk runs
+     5.65 km along it). Where the corridor entry lies under the drawn main pipe, the link is a
+     link to the main pipe at the entry, not a ride to the STP. Links are offered to basins
+     before any basin is filled toward the main pipe: gravity with no extra depth beats
+     climbing out.
 4. **Sub-mains first.** Long, straight, few bends. Low is the filter, long and straight is the
    choice. They earn their diameter from the houses they collect, and a bigger pipe reaches
    further on flat ground: about 2 km at DN200, 4 km at DN315, 5 km at DN400 before 12 m.

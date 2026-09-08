@@ -48,14 +48,14 @@ def outlet_label(cid, info):
 
 
 def write_dxf(path, pipes, gaps, dropped_geoms, catch_info, catch_polys, catch_colour, joins,
-              streams, wadis, main_pipe, built, envelope, stp, title, links=None):
+              streams, wadis, main_pipe, built, envelope, stp, title, links=None, basins=None):
     doc = ezdxf.new("R2010", setup=True)
     doc.header["$INSUNITS"] = 6                  # metres
     doc.header["$LTSCALE"] = 8.0                 # dashes visible at town scale, not a solid line
     doc.header["$PSLTSCALE"] = 0
     for name, col in (("A_SUBMAIN", 7), ("A_LATERAL", 7), ("A_BRANCH", 7), ("A_HEAD_GAP", 8),
                       ("A_HEADS", 8), ("A_ARROWS", 7), ("A_GRADIENT", 8), ("A_JOIN_LINK", 6),
-                      ("A_DIRECT_LINK", 6),
+                      ("A_DIRECT_LINK", 6), ("A_BASINS", 1),
                       ("A_OUTLETS", 7), ("A_OUTLET_LABEL", 7), ("A_CATCHMENTS", 7),
                       ("A_CATCH_LABEL", 7), ("A_DROPPED", 1), ("A_STREAMS", 5), ("A_WADI", 4),
                       ("A_MAIN_PIPE", 5), ("A_BUILT_2006", 252), ("A_ENVELOPE", 3),
@@ -100,6 +100,12 @@ def write_dxf(path, pipes, gaps, dropped_geoms, catch_info, catch_polys, catch_c
     for cid, g in (links or {}).items():
         msp.add_lwpolyline(list(g.coords), dxfattribs={"layer": "A_DIRECT_LINK", "color": 6,
                                                        "const_width": 2.0, "linetype": "DASHED"})
+    for b in (basins or []):
+        x, y = b["xy"]
+        msp.add_circle((x, y), 6.0, dxfattribs={"layer": "A_BASINS", "color": 1})
+        msp.add_text(f"basin: +{b['extra_m']:.1f} m to leave", height=3.0,
+                     dxfattribs={"layer": "A_BASINS", "color": 1}
+                     ).set_placement((x + 8, y - 6), align=TextEntityAlignment.LEFT)
 
     for cid, info in catch_info.items():
         x, y = info["outlet"]

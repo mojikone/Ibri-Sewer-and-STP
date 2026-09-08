@@ -94,6 +94,7 @@ def main():
                              cfg.STP_M)
     ptr = O.pointers(runs, targets)
     raw_term = O.terminals(node_keys, ptr, targets)
+    raw_sinks = {t for t in set(raw_term.values()) if t not in targets}
     src, filled, parent, seq, spill, iters = O.resolve_outlets(runs, znode, targets,
                                                                 cfg.HOLLOW_M, raw_term)
     runs = O.flood_direction(runs, parent, filled, seq, cfg.FLAT_PCT, cfg.LEVEL_M)
@@ -166,25 +167,54 @@ def main():
                     "restored_stranded": len(restored)}
     log(f"   {rep['joins']}")
 
-    log("direct links (rule 3): a basin whose ground reaches the main pipe's invert or the STP, "
-        "with no plot in the way ...")
+    log("direct links (rule 3): a basin whose ground reaches the main pipe's invert, the STP, "
+        "or NAMA's trunk corridor to the STP, with no plot in the way ...")
     gates = K.Gates(cfg.PLOTS_CLASS, envelope, cfg.GATE_SEARCH_M, cfg.LINK_PLOT_PAD_M)
-    links = {}
-    for _ in range(6):
+    corridor = K.TrunkCorridor(built, cfg.STP)
+    rep["corridor"] = {"lines": len(corridor.lines), "reaches_stp": corridor.ok,
+                       "ends_tied_to_stp": corridor.tied_ends}
+    links, corridor_paths = {}, {}
+    # 1. every basin deeper than HOLLOW_M is offered a direct link first: to the main pipe's
+    #    invert, or along NAMA's corridor to the STP. Gravity with no extra depth beats
+    #    climbing out of a basin (rule 5's least-depth logic; NAMA sent the west to the STP)
+    for _ in range(8):
+        src2, filled2, parent2, seq2, spill2, iters2 = O.resolve_outlets(
+            runs, znode, targets2, cfg.HOLLOW_M, raw_term)
         new = K.link_targets(set(src2.values()), spill2, znode, ground, mp_union, cfg.STP,
                              cfg.LINK_MIN_GRAD, cfg.MP_INVERT_DEPTH_M, cfg.LINK_MAX_M, gates,
                              existing=list(targets2), spacing_m=cfg.JOIN_SPACING_M)
         new = {n: v for n, v in new.items() if n not in targets2}
+        rest = {s for s in set(src2.values()) if s not in targets2 and s not in new}
+        cl = K.corridor_links(rest, spill2, znode, ground, corridor, cfg.CORRIDOR_ENTRY_M,
+                              cfg.CORRIDOR_MIN_GRAD, gates, mp_union=mp_union,
+                              mp_invert_depth=cfg.MP_INVERT_DEPTH_M, max_len=cfg.CORRIDOR_MAX_M)
+        for n, (t, ag, geom) in cl.items():
+            new[n] = (t, ag)
+            corridor_paths[n] = geom
         if not new:
             break
         targets2.update({n: v[0] for n, v in new.items()})
         links.update(new)
-        src2, filled2, parent2, seq2, spill2, iters2 = O.resolve_outlets(
-            runs, znode, targets2, cfg.HOLLOW_M, raw_term)
+    # 2. what is left drains over its rim into the neighbouring sub-network, up to
+    #    BASIN_MAX_M of extra depth; deeper than that is a pocket for a pump or a cut
+    src2, filled2, parent2, seq2, spill2, iters2 = O.resolve_outlets(
+        runs, znode, targets2, cfg.BASIN_MAX_M, raw_term)
     rep["links"] = {"to_stp": sum(1 for v in links.values() if v[0] == "LINK-STP"),
                     "to_main_pipe": sum(1 for v in links.values() if v[0] == "LINK-MP"),
                     "crossing_agricultural_plots": sum(1 for v in links.values() if v[1] > 0)}
-    log(f"   {rep['links']}")
+    log(f"   {rep['links']}; corridor {rep['corridor']}")
+    # basins: raw sinks that the flood fills by more than HOLLOW_M are marked with the extra
+    # depth the pipe carries to leave them; they are NOT outlets
+    basins = []
+    for s in raw_sinks:
+        if s in filled2 and s not in targets2:
+            sp = filled2[s] - znode[s]
+            if sp > cfg.HOLLOW_M:
+                basins.append({"xy": s, "extra_m": sp})
+    rep["basins_marked"] = {"count": len(basins),
+                            "extra_depth_m": {"median": round(float(__import__("numpy").median([b["extra_m"] for b in basins])), 2) if basins else None,
+                                              "max": round(max((b["extra_m"] for b in basins), default=0.0), 2)}}
+    log(f"   basins crossed by depth: {rep['basins_marked']}")
 
     log("sub-mains: the heaviest low stem of each catchment ...")
     submain, stem_parent, srep3 = K.sub_mains(runs, parent2, seq2, src2, cfg.STEM_MIN_M,
@@ -292,7 +322,7 @@ def main():
     polys2 = O.catchment_polygons(pipes, [p["catch"] for p in pipes], envelope)
     colour2 = O.colour_catchments(polys2)
     joins = K.connectors(info2, [c for c, i in info2.items() if i["type"] == "JOIN"], mp_union)
-    link_geoms = K.link_geometries(info2, mp_union, cfg.STP)
+    link_geoms = K.link_geometries(info2, mp_union, cfg.STP, corridor_paths)
     gaps = gaps_b + gaps_h
     dropped_geoms = [runs[i]["geom"] for i in dropped]
     title = [f"W13 STAGE A - THE NETWORK AS A TREE - built area - {date}",
@@ -300,12 +330,17 @@ def main():
              "· grey dotted = the head gap to the first gate · magenta = join connector to the main pipe",
              "dashed = flatter than 0.5 % · dash-dot = against the ground · gradient text is the "
              "GROUND fall along the flow, not a pipe gradient",
-             "outlets: JOIN (blue) · STP (magenta) · LINK, a direct link to the STP or the main pipe "
-             "by gravity, drawn dashed magenta (rule 3) · basin (red, labelled with the extra depth "
-             "to leave by gravity) · island low point (orange) · red thick = street too short for a head"]
+             "outlets: JOIN (blue) · LINK, a direct link to the main pipe or along NAMA's trunk "
+             "corridor to the STP, dashed magenta (rule 3) · SINK = pocket needing more than 10 m, "
+             "a pump or a cut (red) · island low point (orange)",
+             "BASIN marks (red rings, layer A_BASINS) = a dip the network drains OVER by depth: the "
+             "number is the extra depth the pipe carries to leave it; these are inside a "
+             "sub-network, not outlets · red thick = street too short for a head"]
     dxf = XT.write_dxf(os.path.join(cfg.OUT_DXF, "W13_A_tree.dxf"), pipes, gaps, dropped_geoms,
                        info2, polys2, colour2, joins, streams, wadis, main_pipe, built_geoms,
-                       envelope, cfg.STP, title, links=link_geoms)
+                       envelope, cfg.STP, title, links=link_geoms, basins=basins)
+    rep["basins"] = [{"xy": [round(b["xy"][0], 1), round(b["xy"][1], 1)],
+                      "extra_m": round(b["extra_m"], 2)} for b in basins]
     XT.write_shapes(cfg.OUT_SHP, "W13_A_tree", pipes, gaps, info2, polys2, {**joins, **link_geoms},
                     cfg.EPSG)
     b = envelope.bounds

@@ -126,14 +126,132 @@ def link_targets(sources, spill, z, ground, mp_union, stp_xy, min_grad, mp_inver
     return out
 
 
-def link_geometries(info, mp_union, stp_xy):
+def link_geometries(info, mp_union, stp_xy, corridor_paths=None):
     out = {}
     for cid, i in info.items():
         p = Point(i["outlet"])
         if i["type"] == "LINK-MP":
             out[cid] = LineString([p, mp_union.interpolate(mp_union.project(p))])
         elif i["type"] == "LINK-STP":
-            out[cid] = LineString([p, Point(stp_xy)])
+            cp = (corridor_paths or {}).get(i["outlet"])
+            out[cid] = cp if cp is not None else LineString([p, Point(stp_xy)])
+    return out
+
+
+class TrunkCorridor:
+    """NAMA's built trunk mains as a right-of-way a direct link may follow to the STP.
+    Built from the trunk lines (manhole IDs with -TM-, or the given project codes), merged,
+    turned into a graph of their end points, with the STP as the node nearest to it."""
+
+    def __init__(self, built_gdf, stp_xy, codes=("8F-1",), snap_m=3.0, stp_reach_m=400.0):
+        from shapely.ops import linemerge, unary_union
+        g = built_gdf
+        tm = (g["US_MHID"].astype(str).str.contains("-TM-") |
+              g["DS_MHID"].astype(str).str.contains("-TM-") |
+              g["PROJECTCOD"].astype(str).isin(codes))
+        flat = [LineString([(c[0], c[1]) for c in geom.coords]) for geom in g[tm].geometry
+                if geom is not None and not geom.is_empty and geom.geom_type == "LineString"]
+        merged = linemerge(unary_union(flat))
+        self.lines = [LineString([(c[0], c[1]) for c in ln.coords]) for ln in
+                      (merged.geoms if hasattr(merged, "geoms") else [merged])]
+        self.G = nx.Graph()
+        key = lambda c: (round(c[0] / snap_m) * snap_m, round(c[1] / snap_m) * snap_m)  # noqa: E731
+        self.key = key
+        for i, ln in enumerate(self.lines):
+            a, b = key(ln.coords[0]), key(ln.coords[-1])
+            self.G.add_edge(a, b, w=ln.length, i=i)
+        # the STP is one node, and every corridor end within reach of it is tied to it, so
+        # the western and the eastern trunk, which end at different points of the works,
+        # both lead there
+        stp = Point(stp_xy)
+        self.stp_node = ("STP",)
+        tied = 0
+        for n in list(self.G.nodes):
+            if n == self.stp_node:
+                continue
+            d = Point(n).distance(stp)
+            if d <= stp_reach_m:
+                self.G.add_edge(n, self.stp_node, w=d, i=-1)
+                tied += 1
+        self.ok = tied > 0
+        self.tied_ends = tied
+        self.stp_xy = stp_xy
+
+    def route(self, p, entry_m):
+        """(path length to the STP, geometry) from point p via the nearest corridor line, or
+        None if the corridor is farther than entry_m or does not lead to the STP."""
+        if not self.ok or not self.lines:
+            return None
+        # the corridor is in pieces, some of them stubs that lead nowhere: try every piece
+        # within reach, nearest first, and keep the shortest way to the STP
+        cands = sorted(((self.lines[i].distance(p), i) for i in range(len(self.lines))
+                        if self.lines[i].distance(p) <= entry_m))
+        best = None
+        for d1, k in cands:
+            ln = self.lines[k]
+            ch = ln.project(p)
+            entry = ln.interpolate(ch)
+            a, b = self.key(ln.coords[0]), self.key(ln.coords[-1])
+            for end, along, sub in ((a, ch, substring(ln, ch, 0) if ch > 0 else None),
+                                    (b, ln.length - ch, substring(ln, ch, ln.length))):
+                try:
+                    L = nx.shortest_path_length(self.G, end, self.stp_node, weight="w")
+                    path = nx.shortest_path(self.G, end, self.stp_node, weight="w")
+                except (nx.NetworkXNoPath, nx.NodeNotFound):
+                    continue
+                total = d1 + along + L
+                if best is None or total < best[0]:
+                    best = (total, end, path, sub, entry, d1)
+        if best is None:
+            return None
+        total, end, path, sub, entry, d1 = best
+        coords = [(p.x, p.y), (entry.x, entry.y)]
+        if sub is not None and not sub.is_empty:
+            coords += list(sub.coords)[1:]
+        for u, v in zip(path[:-1], path[1:]):
+            i = self.G[u][v]["i"]
+            if i < 0:                       # the tie from a corridor end to the STP
+                continue
+            seg = self.lines[i]
+            cs = list(seg.coords)
+            if self.key(cs[0]) != u:
+                cs = cs[::-1]
+            coords += cs[1:]
+        coords.append(self.stp_xy)
+        return total, LineString(coords), entry, d1
+
+
+def corridor_links(sources, spill, z, ground, corridor, entry_m, min_grad, plots=None,
+                   mp_union=None, mp_invert_depth=3.0, mp_near_m=40.0, max_len=4000.0):
+    """Rule 3 along NAMA's corridor: a basin or island low point that can reach the built
+    trunk corridor within entry_m, crossing no built or planned plot on that leg, links along
+    it. Where the corridor entry lies under the drawn main pipe (the eastern trunk), the link
+    is a LINK-MP to the main pipe's invert at the entry, not a ride to the STP; elsewhere the
+    whole way to the STP must fall at min_grad and be no longer than max_len.
+    Returns {node: (type, plots crossed, geometry)}."""
+    if corridor is None or not corridor.ok:
+        return {}
+    zstp = float(ground.z_at([corridor.stp_xy[0]], [corridor.stp_xy[1]])[0])
+    out = {}
+    for s in sorted(sources):
+        if s in spill and spill[s] == 0.0:
+            continue
+        p = Point(s)
+        r = corridor.route(p, entry_m)
+        if r is None:
+            continue
+        total, geom, entry, d1 = r
+        leg = LineString([(p.x, p.y), (entry.x, entry.y)])
+        crossed = plots.crossed(leg) if plots else (0, 0)
+        if crossed[0] != 0:
+            continue
+        if mp_union is not None and mp_union.distance(entry) <= mp_near_m:
+            zf = float(ground.z_at([entry.x], [entry.y])[0]) - mp_invert_depth
+            if d1 > 1.0 and (z[s] - zf) >= min_grad * d1:
+                out[s] = ("LINK-MP", crossed[1], leg)
+            continue
+        if total <= max_len and (z[s] - zstp) >= min_grad * total:
+            out[s] = ("LINK-STP", crossed[1], geom)
     return out
 
 

@@ -123,5 +123,23 @@ nowhere, no outlet labels within 20 m of another. Checks that report rather than
 sit inside a plot and 54 pipes run more than 2 m inside one (1.3 km, the draftsman's lines);
 12 head gaps exceed 45 m (max 81 m, no house near the start of the street).
 
-What Stage B has to do with it: route the west settlement's spine to the STP through open
-ground, as NAMA did, and decide the basins that remain.
+## Stage A, basins resolved and the west settlement sent to the STP (2026-09-07, evening)
+
+The engineer's third look: isolated groups are not sub-networks. Every basin now drains, and
+the west settlement links to the STP along NAMA's corridor. Same runner, 90 seconds.
+
+| | |
+|---|---|
+| Catchments | 39: **23 JOIN (78.0 km), 1 LINK to the STP along the corridor (25.2 km, the west settlement), 7 LINK to the main pipe (4.7 km), 0 SINK, 8 LOW islands (1.4 km)** |
+| Basins crossed by depth | 36 marked; extra depth to leave them median 3.0 m, maximum 5.1 m; none over the 10 m pocket limit |
+| West settlement | one sub-network of 25.2 km, outlet at its south edge (445219, 2566295); the corridor route to the STP falls 8.2 m over about 6 km, 0.14 %, within the DN600 class; NAMA's own western trunk (71 segments, 5A-5, with inverts) falls 0.219 % overall, median gradient 6.0 mm/m, depth median 2.7 m, max 6.9 m |
+| East settlement | C01 29.5 km and C02 27.0 km on the main pipe; the northern basin C04 3.9 km links to the main pipe over 189 m |
+| Tiers | sub main 21.9 km, lateral 61.7 km, branch 25.7 km |
+| Checks | no loops, one outlet per node, no pipe ends nowhere |
+
+On the way, two misfires of the corridor rule, both fixed: the eastern trunk corridor lies
+under the drawn main pipe, so basins entering it were sent 9 km to the STP instead of 189 m to
+the main pipe; and the western and eastern trunks end 37 m apart at the works, so only one of
+them counted as reaching the STP until both ends were tied to one STP node.
+
+What Stage B has to do with it: lay it, and decide the 36 basins on depth.
