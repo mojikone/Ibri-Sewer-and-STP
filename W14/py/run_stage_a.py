@@ -592,9 +592,15 @@ def main():
 
         # rule 10: over 12 m, reroute first. The basin behind each failure is offered a
         # designed trunk along the streets; then the tree is rebuilt and laid again
-        over = rep["depth"]["catchments_over_limit"]
-        score = (rep["depth"]["over_limit"], rep["depth"]["depth_max_m"],
-                 round(sum(rep["depth"]["arrives_under_level"].values()), 2))
+        over = dict(rep["depth"]["catchments_over_limit"])
+        under_ = rep["depth"]["arrives_under_level"]
+        if getattr(cfg, "LEVEL_IS_A_FAILURE", False):
+            # a pipe arriving under the works inlet fails like a pipe past 12 m: the basin
+            # behind the arrival becomes a pump candidate (scenario, 2026-09-08)
+            for c_ in under_:
+                over.setdefault(c_, 0.0)
+        score = (rep["depth"]["over_limit"] + (len(under_) if getattr(cfg, "LEVEL_IS_A_FAILURE", False) else 0),
+                 rep["depth"]["depth_max_m"], round(sum(under_.values()), 2))
         if restoring:
             break                        # the best round, laid again: done
         if best_round is None or score < best_round[0]:
@@ -614,6 +620,11 @@ def main():
         for cid in over:
             ps = [p for p in pipes if p["catch"] == cid]
             dp = max(ps, key=lambda p: p["depth_dn"])
+            if over[cid] == 0.0:
+                # a level failure: trace from the pipe arriving at the works instead
+                arr = [p for p in ps if p["dn"] in targets2 and targets2[p["dn"]] == "STP"]
+                if arr:
+                    dp = max(arr, key=lambda p: p["depth_dn"])
             # the basin that costs the depth: the raw sink on the governing path with the
             # largest fill, not the head's own hollow
             n, cands = dp["dn"], []

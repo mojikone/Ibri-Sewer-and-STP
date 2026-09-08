@@ -421,3 +421,39 @@ rise south-east of the settlement (6.9 km, 336.6 m); and five small ones of 0.2 
 two of them the tops of the streets that had been climbing to the ridge joins. What is left
 past 12 m is the spine from the west settlement to the works, whose depth is the interior's
 rim plus 6 km of fall against an inlet at 323.0 m: not a basin to cut, the inlet decision.
+
+## The works, measured for the engineer (2026-09-08, late)
+
+The engineer's questions: where are the two streets that climbed; what is the inlet level;
+where does the west's pipe meet the works if nothing is below 12 m; what if it must meet the
+inlet. And a correction taken on board: the 250 m sub-main floor was never the engineer's
+number, it was the engine's, approved in passing on 2026-09-07; the engineer's criterion is
+the main straight streets as sub-mains with the rest hung on them in a constructable way,
+and it stays as words until it can be measured.
+
+**The two streets** are drawn in QGIS as the scratch layer "SCRATCH the two climbing
+streets" (`W14/shp/scratch_two_climbing_streets.geojson`): street A, 949 m from a low at
+336.6 m up to the main pipe at 341.3 m, a 5.9 m climb; street B, 1,890 m from 337.8 m up to
+342.4 m, a 5.0 m climb. Both south-east of the west settlement, both to joins on the main
+pipe's rise. Their tops still join; their bottoms are pump candidates under the 12 m rule.
+
+**The inlet.** 323.0 m, the as-built invert at manhole 5A-1-FL-STP where both built trunks
+end; NAMA's ground there 325.0 m; the terrain reads 328.1 m at the works node and 328.7 to
+329 m on the plant, a platform. The pipe arrives at 314.9 m today.
+
+**Where the west's pipe meets the works.** The trunk is 6.2 km, from a head at 336.5 m over
+high ground at 338.4 m south of the settlement down to the plant, DN250 to DN600 by flow.
+
+| Case | At the high ground | At the works | Against the inlet |
+|---|---|---|---|
+| as run, the interior on the trunk | 15.7 m | 314.9 m | 8.1 m under |
+| nothing below 12 m anywhere | 12.0 m | 317.3 m | 5.7 m under |
+| meeting the inlet at 323.0 m | 6.3 m allowed, 3.3 m at the head | 323.0 m | met |
+| meeting it at NAMA's 0.14 % | 7.3 m allowed | 323.0 m | met |
+
+The interior of the west settlement reaches the trunk's head at 11.4 m today, over its own
+4.9 m rim, so meeting the inlet by gravity means that interior, the ground behind the rim,
+about 2,000 properties on 45 km of street, goes to a pump, and only the part of the
+settlement outside the rim stays on the trunk. A scenario run that treated the arrival
+shortfall as a failure to cut (`LEVEL_IS_A_FAILURE`, `run/stage_a_scenario_meet_inlet.json`)
+changed nothing, because the shortfall is not one basin but the rim plus six kilometres.
