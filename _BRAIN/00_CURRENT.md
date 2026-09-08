@@ -59,8 +59,9 @@ with one pump west of the settlement, 27 chambers over 12 m, deepest 16.1 m, the
 inlet. Then whole-street sub-mains as the engineer asked (cut only at a crest, a sag the water leaves,
 or a change of outlet; rule 10 builds no pipes; join floor set aside): strings of 3 to 4 km, but 31.9 m
 at the deepest because one street crosses C06's basin and climbs back. Then the W14 trial, sub-mains
-first (`W14/`, `SKELETON_FIRST`): every sub-network one clean block, the maze gone, 4 pumps, deepest
-17.5 m, the works 8.7 m under. W13 stays the record of the catchments-first line; W14 is where the
+first (`W14/`, `SKELETON_FIRST`): every sub-network one clean block, the maze gone; then the 12 m rule as
+the engineer stated it (`REROUTE_MODE = "cut"`): 8 pump candidates, 32.9 km, and nothing past 12 m except
+the west's spine to the works (15.7 m, 8.1 m under the inlet). W13 stays the record of the catchments-first line; W14 is where the
 engine grows now, nothing added to the logic until the engineer agrees the design.** **The drawing
 to look at is `W13/dxf/W13_A_tree.dxf`**; `W13_A_ground.dxf` is the raw ground for reference;
 numbers `W13/run/stage_a.json` and `W13/docs/W13_EVIDENCE.md`. **Next is Stage B (rules 3–6
