@@ -53,8 +53,10 @@ flood (`ASSIGN_BY_DEPTH`); the search runs from the outlets with sub-mains at ha
 pocket is offered a designed trunk along the streets, and rule 10 runs mechanically and reports its
 refusals. On the boundary the west settlement and the low ground at the works have NO gravity way to
 the existing inlet at 323.0 m (the road into the plant dips to 324.2 m; the interior's rim puts the
-corner 9.6 m deep): 3 pockets, 31 chambers over 12 m, deepest 19.4 m. The engineer decides: a lift at
-the works, NAMA's over-gradient trunk, or a pump at the west's corner.** **The drawing
+corner 9.6 m deep). The engineer ruled everything on gravity, converging on the outlet, inlet unchanged,
+NAMA's last kilometre allowed: the run now puts the whole west side on one designed trunk to the works
+with one pump west of the settlement, 27 chambers over 12 m, deepest 16.1 m, the trunk 7.8 m under the
+inlet. That picture is the engineer's to read next.** **The drawing
 to look at is `W13/dxf/W13_A_tree.dxf`**; `W13_A_ground.dxf` is the raw ground for reference;
 numbers `W13/run/stage_a.json` and `W13/docs/W13_EVIDENCE.md`. **Next is Stage B (rules 3–6
 routed).** The old test-boundary pipeline (`run_test_boundary.py`, `stages/tree.py`,

@@ -298,3 +298,37 @@ For the engineer, three ways out, none of them a rule change the engine can make
 
 The low ground south-west of the works (C03, 25 km, and C10, 7 km) is planned land at 323 to
 329 m, at the inlet's own level: it needs a pump under every option.
+
+## Everything on gravity: the west converges on the works (2026-09-08, later)
+
+The engineer's answer to the three ways out: none of them yet. The network converges on the
+outlet, everything on gravity, the inlet stays at 323.0 m, the last kilometre may use NAMA's
+alignment. Same runner, 51 seconds, rule 10 running for two rounds and keeping the better.
+
+Tried first without the pocket cap at all: the west settlement went 6 km east to a ridge join
+at 37 m, arriving 25.6 m under the main pipe's floor, because rule 5's cost prices every
+route at a DN200's 0.5 % and a 10 m climb is cheaper than 6.5 km of level street. The cap
+stays; a pocket takes its least-violation trunk instead.
+
+| The run | |
+|---|---|
+| Sub-networks | 35: 29 joins (106.8 km), 3 to the works (98.8 km: the whole west side on one designed trunk), **1 pump** (6.4 km, the low ground west of the settlement at 327.7 m, 246 plots, whose best route violated by 19 m), 2 islands |
+| The west's trunk | 11.9 km of trunk tier; checked from the settlement's low at DN315 and 0.27 %, 6.55 km, 12.8 m deep and 7.8 m under the inlet; laid by the flow at DN500 to DN600 for 8 km of it, 16.1 m at its deepest |
+| Depth | 2,634 chambers, median 1.55 m, 90th percentile 5.0 m, **27 chambers over 12 m, deepest 16.1 m**; 11 in the west settlement, 11 in the low ground west and south-west, 5 between the settlement and the ridge |
+| At the works | the trunk arrives at **315.2 m, 7.8 m under the inlet**, 12.9 m deep at the plant gate |
+| Joins | 35 of 35 floored by the main pipe's profile; 4 sub-networks arrive 1 to 2.4 m under their join's floor |
+| East | unchanged: 33.6 km at 6.7 m |
+| Basins crossed by depth | 84, median 2.9 m, max 6.5 m |
+
+What the mechanical rule 10 did: round 1 offered nine basins a trunk, routed eight and cut
+one for a pump, taking the deepest from 30.8 to 16.1 m; round 2 routed three more and made
+it worse, 19.1 m, so the best round was laid again. Two engine faults found and fixed on the
+way: every round trimmed the heads again on the same runs, shrinking the network by 90 plots
+a round; and a basin was being sized on the whole catchment's flow above its deepest chamber.
+
+**What the picture says.** The west can converge on the works by gravity along the roads and
+NAMA's last kilometre, at flow-sized pipes, but not within the rules: 27 chambers past 12 m,
+and the trunk 7.8 m under an inlet that stays at 323.0 m. The 7.8 m is the low ground
+south-west of the works at 323 to 329 m plus the interior's rim; the 16.1 m is the basins
+between the settlement and the ridge climbing into the trunk. The one pump is the low ground
+west of the settlement.

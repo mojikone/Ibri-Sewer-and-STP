@@ -91,6 +91,15 @@ of designing can be tried and compared.
      pipe as drawn on 2026-09-08 runs from the east's meeting point straight to the works,
      so the west settlement has no main pipe to its north any more and drains to the works
      or not at all.
+   - 2026-09-08 (engineer): **the network converges on the outlet, everything on gravity; the
+     inlet stays at 323.0 m; the last kilometre into the works may leave the road for NAMA's
+     alignment.** So: a basin over 10 m of fill is still a pocket, but the pocket takes the
+     trunk with the least violation when none passes, within a **10 m** cap of depth excess
+     plus arrival shortfall, and the violation is reported; past the cap the pocket is a pump.
+     NAMA's trunk within **1.5 km** of the works is in the street set as a right-of-way. And
+     **every join is floored by the main pipe's own gravity profile back from the inlet**, a
+     DN600 class at **0.125 %**, because a join cannot sit below the pipe it feeds; an
+     optimistic floor, a bigger main pipe is flatter.
 4. **Sub-mains first.** Long, straight, few bends. Low is the filter, long and straight is the
    choice. They earn their diameter from the houses they collect, and a bigger pipe reaches
    further on flat ground: about 2 km at DN200, 4 km at DN315, 5 km at DN400 before 12 m.
@@ -189,6 +198,12 @@ of designing can be tried and compared.
       a pump, a bigger pipe than the flow needs, or a lower inlet. The lay also checks the
       **arrival level at the works inlet**, which depth alone never showed: a catchment can
       be within 12 m everywhere and still arrive under the inlet.
+    - 2026-09-08 (later): the basin offered a trunk is the one that costs the depth, the raw
+      sink with the largest fill on the governing path, up to **three** per failing catchment
+      per round, sized on its own plots. **A basin no trunk can carry within the cap is cut
+      for a pump**, rule 10's last step, so the rest is laid again without it. Up to **eight**
+      rounds, and the best round is kept, not the last: a round that makes things worse is
+      discarded and the best laid again.
 11. **A closed hollow, or a ridge between a pocket and every neighbour, is a real pump.**
 12. **Chambers** (2026-09-07, from W8). A chamber sits at every junction, every head, and every
     change of gradient or diameter. **Spacing follows the guideline**, G203-p30 Table 12 by
