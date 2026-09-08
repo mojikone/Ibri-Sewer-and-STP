@@ -31,7 +31,15 @@ MAX_DEPTH_M = 12.0         # the hard limit (standing decision 2026-09-07)
 TRUNK_COVER_M = 1.55       # cover to invert a trunk starts with at its pocket (Stage A proxy)
 TRUNK_MAX_M = 8000.0       # no designed trunk longer than this (NAMA's own is 6.2 km)
 TRUNK_TRY = 0              # targets tried per pocket, cheapest first; 0 = every target
-REROUTE_ROUNDS = 3         # rule 10: rounds of reroute after the lay before a failure is reported
+TRUNK_VIOLATION_MAX_M = 10.0  # ... but not past this many metres of depth excess plus arrival
+                           # shortfall: beyond it no gravity story is credible and the pocket
+                           # stays a pocket for a pump (a 177-property pocket took a 19 m
+                           # violation over the west's trunk and dragged it to 26.8 m, 2026-09-08)
+TRUNK_TAKE_SHORTFALL = True  # a pocket takes the route with the smallest arrival shortfall
+                           # when none clears its target's level, within 12 m everywhere
+                           # (engineer, 2026-09-08: everything on gravity, show the depth)
+REROUTE_ROUNDS = 8         # rule 10: rounds of reroute after the lay before a failure is reported
+REROUTE_BASINS = 3         # basins offered per failing catchment per round, largest fill first
 
 OUT = BASE + r"\Hydraulic\Claude\W13"
 OUT_SHP = OUT + r"\shp"
@@ -46,6 +54,12 @@ AREA_SHP = BASE + r"\Hydraulic\SHP\temp\W13 test boundary.shp"   # the engineer'
                         # settlements, the STP and the roads to it. None: the built envelope.
 AREA_BUFFER_M = 60.0    # the built envelope: every street within this of a 2006 sewer; now
                         # the comparison layer, not the area
+NAMA_ROW_M = 1500.0     # NAMA's built trunk within this of the works is a right-of-way the
+                        # network may use for its last kilometre (engineer, 2026-09-08): the
+                        # road into the plant dips to 324.2 m, NAMA's line never below 325.2
+MP_PROFILE_GRAD = 0.00125  # the main pipe's own gravity profile back from the inlet, a DN600
+                        # class trunk (G203-p29 Table 11); a join cannot sit below it. An
+                        # optimistic floor: a bigger main pipe is flatter and the floor higher
 USE_CORRIDOR = False    # NAMA's built trunk to the STP was a route with no design (engineer,
                         # 2026-09-08); the STP is reached by a pipe designed along the roads
 
@@ -70,7 +84,13 @@ HOLLOW_M = 2.0          # a dip needing this much fill or less is not even marke
 ASSIGN_BY_DEPTH = True  # outlets by rule 5's least-depth cost (DEPTH_WEIGHT, SMIN_PROXY) rather
                         # than by the priority flood, which gives a whole slope to its lowest
                         # join (2026-09-07). False restores the flood.
-BASIN_MAX_M = 10.0      # a basin needing more than this stays a pocket for a pump or a cut:
+BASIN_MAX_M = 10.0      # a basin needing more than this becomes a pocket, and a pocket is
+                        # offered a designed trunk (rule 3) before it is allowed to drain
+                        # anywhere else; with everything on gravity (engineer, 2026-09-08) the
+                        # trunk is taken even when it arrives under the target's level, and
+                        # the shortfall is reported. Tried without the cap the same day: the
+                        # west went 6 km east to a ridge join at 37 m. Was: a pocket for a
+                        # pump or a cut:
                         # with 1.3 m of cover it would pass the 12 m limit (rule 10)
 CORRIDOR_ENTRY_M = 600.0  # a direct link may reach NAMA's built trunk corridor within this
                           # distance and follow it to the STP (rule 3, 2026-09-07)

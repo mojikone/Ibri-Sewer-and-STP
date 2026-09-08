@@ -658,7 +658,8 @@ def sub_mains_by_chains(runs, chains, parent, src, chain_min_m, link_m=0.0, fill
 
 # --------------------------------------------------------------------- tree
 def trunk_routes(runs, z, levels, ttype, pockets, props_of, depth_weight, max_depth, cover,
-                 per_prop, stem=None, trunk_runs=None, try_targets=6, max_len=8000.0):
+                 per_prop, stem=None, trunk_runs=None, try_targets=6, max_len=8000.0,
+                 take_shortfall=False, violation_max=10.0):
     """Rule 3 as a designed trunk along the streets (2026-09-08). A pocket, biggest first, is
     sized on the properties behind it, and a route is searched through the street graph at
     that pipe's Table 11 gradient with rule 5's cost, to the cheapest target whose arrival
@@ -689,11 +690,22 @@ def trunk_routes(runs, z, levels, ttype, pockets, props_of, depth_weight, max_de
                                         # that never join is laid two sizes smaller and digs
                                         # deeper than the route was checked at (2026-09-08)
         tried = []
+        nearly = []                       # routes within 12 m that arrive under the level
         for n_prop, basis in sizes:
             hit = _trunk_try(runs, z, adj, levels, ttype, p0, n_prop, per_prop, depth_weight,
-                             max_depth, cover, try_targets, max_len, tried)
+                             max_depth, cover, try_targets, max_len, tried, nearly)
+            if hit is None and take_shortfall and nearly:
+                # everything on gravity: the least violation is taken and reported, unless
+                # it is past violation_max, where the pocket is a pump and not a story
+                cand_ = min(nearly, key=lambda h: h[9])
+                if cand_[9] <= violation_max:
+                    hit = cand_
+                    basis = basis + ", with a violation"
+                else:
+                    tried.append(("least violation", f"{cand_[9]:.1f} m", "past the cap"))
             if hit is not None:
-                path, ridx, prof, t, length, mx, inv, dn, smin = hit
+                path, ridx, prof, t, length, mx, inv, dn, smin = hit[:9]
+                short = hit[9] if len(hit) > 9 else 0.0
                 for (a, b), i in zip(zip(path[:-1], path[1:]), ridx):
                     if a not in stem:
                         stem[a] = b
@@ -705,7 +717,8 @@ def trunk_routes(runs, z, levels, ttype, pockets, props_of, depth_weight, max_de
                                 "runs": ridx, "len": round(length), "dn": dn, "smin": smin,
                                 "max_depth": round(mx, 2), "arrives": round(inv, 2),
                                 "level": round(levels[t], 2), "props": n_prop,
-                                "sized_on": basis}
+                                "sized_on": basis, "under_m": round(max(0.0, levels[t] - inv), 2),
+                                "over_m": round(max(0.0, mx - max_depth), 2)}
                 break
         if p0 not in accepted:
             accepted.setdefault("_refused", {})[p0] = tried
@@ -714,7 +727,7 @@ def trunk_routes(runs, z, levels, ttype, pockets, props_of, depth_weight, max_de
 
 
 def _trunk_try(runs, z, adj, levels, ttype, p0, n_prop, per_prop, depth_weight, max_depth,
-               cover, try_targets, max_len, tried):
+               cover, try_targets, max_len, tried, nearly=None):
     """One sizing of a trunk from p0: the route search at that pipe's gradient, every
     reachable target tried cheapest first. Returns the accepted route or None."""
     from . import quicklay as Q
@@ -752,24 +765,28 @@ def _trunk_try(runs, z, adj, levels, ttype, p0, n_prop, per_prop, depth_weight, 
                 continue
             inv = z[p0] - cover
             prof = {p0: inv}
-            ok, mx, where = True, 0.0, None
+            mx, where = 0.0, None
             for (a, b), i in zip(zip(path[:-1], path[1:]), ridx):
                 inv = min(inv - smin * runs[i]["len"], z[b] - cover)
                 dep = z[b] - inv
-                if dep > max_depth:
-                    ok, where = False, b
-                    break
                 prof[b] = inv
-                mx = max(mx, dep)
-            if not ok:
+                if dep > mx:
+                    mx, where = dep, b
+            excess = max(0.0, mx - max_depth)
+            short = max(0.0, levels[t] - inv)
+            if excess > 0:
                 tried.append((f"DN{dn}", ttype.get(t), round(length),
-                              f"{max_depth} m passed at {tuple(round(v) for v in where)}"))
-                continue
-            if inv < levels[t]:
+                              f"{max_depth} m passed by {excess:.1f} m at {tuple(round(v) for v in where)}"))
+            if short > 0:
                 tried.append((f"DN{dn}", ttype.get(t), round(length),
-                              f"arrives {levels[t] - inv:.1f} m under the level"))
+                              f"arrives {short:.1f} m under the level"))
+            if excess > 0 or short > 0:
+                if nearly is not None:
+                    # the violation in metres: depth past the limit plus arrival shortfall
+                    nearly.append((path, ridx, prof, t, length, mx, inv, dn, smin,
+                                   excess + short))
                 continue
-            return path, ridx, prof, t, length, mx, inv, dn, smin
+            return path, ridx, prof, t, length, mx, inv, dn, smin, 0.0
     return None
 
 

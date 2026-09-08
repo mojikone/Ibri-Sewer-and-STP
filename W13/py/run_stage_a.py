@@ -19,7 +19,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import geopandas as gpd                                              # noqa: E402
-from shapely.geometry import Point                                   # noqa: E402
+from shapely.geometry import Point, LineString                                   # noqa: E402
 from shapely.ops import unary_union
 from shapely.strtree import STRtree                                  # noqa: E402
 
@@ -68,6 +68,23 @@ def main():
 
     log("streets: the draftsman's DXF, clipped, snapped, noded ...")
     lines = G.clip_lines(G.read_dxf_lines(cfg.ROADS_DXF, cfg.ROAD_LAYERS), envelope)
+    if getattr(cfg, "NAMA_ROW_M", 0):
+        # the last stretch into the works may leave the road for NAMA's trunk alignment
+        near_stp = Point(cfg.STP).buffer(cfg.NAMA_ROW_M)
+        tm = built[built["US_MHID"].astype(str).str.contains("-TM-")]
+        row = []
+        for g in tm.geometry:
+            if g is None or g.is_empty or not g.intersects(near_stp):
+                continue
+            c = g.intersection(near_stp)
+            parts = [c] if c.geom_type == "LineString" else \
+                [q for q in getattr(c, "geoms", []) if q.geom_type == "LineString"]
+            row += [(LineString([(x, y) for x, y, *_ in q.coords]), "nama-row")
+                    for q in parts if q.length > 0.5]          # the as-built carries a Z
+        row = G.clip_lines(row, envelope)
+        lines += row
+        rep["nama_row_km"] = round(sum(g.length for g, _ in row) / 1000, 2)
+        log(f"   NAMA's right-of-way into the works: {rep['nama_row_km']} km of line added")
     noded, snapped, srep = G.snap_and_node(lines, cfg.SNAP_M)
     rep["street_km_in_area"] = round(sum(g.length for g, _ in lines) / 1000, 1)
     rep["snap"] = srep
@@ -75,7 +92,7 @@ def main():
     log("ground: terrain at %.0f m over the area and both targets ..." % cfg.GROUND_RES_M)
     # the main pipe is 85 km across the wilayat; only its part near the area matters here
     mp0 = gpd.read_file(cfg.MAIN_PIPE)
-    near_area = envelope.buffer(500.0)
+    near_area = envelope.convex_hull.buffer(500.0)
     mp0 = mp0[mp0.geometry.intersects(near_area)].copy()
     mp0["geometry"] = mp0.geometry.intersection(near_area)
     mp0 = mp0[~mp0.geometry.is_empty]
@@ -243,12 +260,36 @@ def main():
     #    on what lies behind it, laid at that pipe's Table 11 gradient, to the works inlet
     #    or a join's invert, biggest pocket first, later pockets joining an accepted trunk
     log("trunks: every pocket is offered a designed gravity trunk along the streets ...")
+    # the main pipe's own gravity profile back from the inlet: a join cannot sit below it
+    import math as _math
+    import networkx as _nx
+    _Gm = _nx.Graph()
+    for g in main_pipe:
+        cs = [(round(x, 1), round(y, 1)) for x, y in g.coords]
+        for a, b in zip(cs[:-1], cs[1:]):
+            _Gm.add_edge(a, b, w=_math.dist(a, b))
+    _stp_v = min(_Gm.nodes, key=lambda v: _math.dist(v, cfg.STP))
+    _mp_dist = _nx.single_source_dijkstra_path_length(_Gm, _stp_v, weight="w")
+
+    def mp_floor(pt):
+        foot = mp_union.interpolate(mp_union.project(Point(pt)))
+        v = min(_Gm.nodes, key=lambda q: _math.dist(q, (foot.x, foot.y)))
+        d = _mp_dist.get(v)
+        if d is None:
+            return None
+        return cfg.STP_INVERT_M + cfg.MP_PROFILE_GRAD * (d + _math.dist(v, (foot.x, foot.y)))
+
     levels, ttype = {}, {}
     for t, typ in targets2.items():
         if typ == "STP":
             levels[t], ttype[t] = cfg.STP_INVERT_M, "STP"
         elif typ == "JOIN":
-            levels[t], ttype[t] = znode[t] - cfg.MP_INVERT_DEPTH_M, "JOIN"
+            fl = mp_floor(t)
+            levels[t] = znode[t] - cfg.MP_INVERT_DEPTH_M if fl is None else fl
+            ttype[t] = "JOIN"
+    rep["main_pipe_floor"] = {"joins_with_profile_floor": sum(1 for t, typ in targets2.items() if typ == "JOIN" and mp_floor(t) is not None),
+                              "joins_total": sum(1 for typ in targets2.values() if typ == "JOIN"),
+                              "grad": cfg.MP_PROFILE_GRAD}
     from shapely.prepared import prep as _prep0
     _near0 = _prep0(envelope.buffer(cfg.GATE_SEARCH_M))
     served_pts = [g.centroid for g, c in zip(gates.polys, gates.pcls) if c in ("B", "P")
@@ -278,7 +319,9 @@ def main():
         acc, trunk_stem, trunk_runs, levels, ttype, refused = K.trunk_routes(
             runs, znode, levels, ttype, pockets, props_of, cfg.DEPTH_WEIGHT, cfg.MAX_DEPTH_M,
             cfg.TRUNK_COVER_M, cfg.PER_PROPERTY_M3D, stem=trunk_stem, trunk_runs=trunk_runs,
-            try_targets=cfg.TRUNK_TRY, max_len=cfg.TRUNK_MAX_M)
+            try_targets=cfg.TRUNK_TRY, max_len=cfg.TRUNK_MAX_M,
+            take_shortfall=getattr(cfg, 'TRUNK_TAKE_SHORTFALL', False),
+            violation_max=getattr(cfg, 'TRUNK_VIOLATION_MAX_M', 10.0))
         refused_all.update(refused)
         if not acc:
             break
@@ -287,7 +330,9 @@ def main():
             trunks[s_] = a
             log(f"   trunk from {tuple(round(v) for v in s_)}: {a['len']} m DN{a['dn']} at "
                 f"{a['smin'] * 100:.3f} % to the {a['type']}, deepest {a['max_depth']} m, "
-                f"arrives {a['arrives']} against {a['level']} ({a['props']:.0f} properties)")
+                f"arrives {a['arrives']} against {a['level']} ({a['props']:.0f} properties)"
+                + (f" UNDER BY {a['under_m']} m" if a.get('under_m') else "")
+                + (f" OVER 12 m BY {a['over_m']} m" if a.get('over_m') else ""))
         src2, filled2, parent2, seq2, spill2, iters2 = O.resolve_outlets(
             runs, znode, targets2, cfg.BASIN_MAX_M, raw_term, **assign)
     for s_, tried in refused_all.items():
@@ -314,7 +359,14 @@ def main():
 
     # ------------------------------------------------------------ phase 3: assemble, lay, reroute
     rep["reroute"] = []
-    for rr in range(cfg.REROUTE_ROUNDS + 1):
+    import copy as _copy
+    best_round = None                    # (score, snapshot of the state that produced it)
+    restoring = False
+    runs_pristine = _copy.deepcopy(runs)  # the heads are trimmed in place by every round
+    for rr in range(cfg.REROUTE_ROUNDS + 2):
+        snapshot = (dict(targets2), dict(src2), dict(filled2), dict(parent2), dict(seq2),
+                    dict(spill2), dict(trunk_stem), set(trunk_runs), dict(trunks))
+        runs = _copy.deepcopy(runs_pristine)
         runs = O.flood_direction(runs, parent2, filled2, seq2, cfg.FLAT_PCT, cfg.LEVEL_M)
         basins = []
         for s_ in raw_sinks:
@@ -445,9 +497,9 @@ def main():
         znode_all = dict(znode)
         for b in branches:
             znode_all.setdefault(b["up"], b["z_up"])
-        # only the works inlet is a fixed level; the main pipe's own profile is Stage C's,
-        # set by what arrives at its joins (2026-09-08)
-        floors = {t: cfg.STP_INVERT_M for t, typ in targets2.items() if typ == "STP"}
+        # the works inlet is a fixed level, and every join is floored by the main pipe's
+        # own gravity profile back from it (2026-09-08, engineer: everything on gravity)
+        floors = {t: lv for t, lv in levels.items() if ttype.get(t) in ("STP", "JOIN")}
         depth, governs, laid = Q.lay(pipes, props, znode_all, cfg.PER_PROPERTY_M3D,
                                      floors=floors)
         rep["depth"] = Q.report(pipes, depth, cfg.MAX_DEPTH_M)
@@ -469,45 +521,85 @@ def main():
         # rule 10: over 12 m, reroute first. The basin behind each failure is offered a
         # designed trunk along the streets; then the tree is rebuilt and laid again
         over = rep["depth"]["catchments_over_limit"]
-        if not over or rr >= cfg.REROUTE_ROUNDS:
+        score = (rep["depth"]["over_limit"], rep["depth"]["depth_max_m"],
+                 round(sum(rep["depth"]["arrives_under_level"].values()), 2))
+        if restoring:
+            break                        # the best round, laid again: done
+        if best_round is None or score < best_round[0]:
+            best_round = (score, snapshot)
+        if not over or rr >= cfg.REROUTE_ROUNDS or score > best_round[0]:
+            if score > best_round[0]:
+                # this round made it worse: go back to the best and lay it once more
+                (targets2, src2, filled2, parent2, seq2, spill2, trunk_stem, trunk_runs,
+                 trunks) = (_copy.copy(x) for x in best_round[1])
+                rep["reroute"].append({"round": rr + 1, "kept": "the best round restored"})
+                log(f"   rule 10: round {rr + 1} was worse; the best round is laid again")
+                restoring = True
+                continue
             break
-        pockets, props_of = [], {}
+        pockets = []
+        raw_props = pocket_props(raw_term)       # the plots behind every raw sink
         for cid in over:
             ps = [p for p in pipes if p["catch"] == cid]
             dp = max(ps, key=lambda p: p["depth_dn"])
-            n, s_ = dp["dn"], None
+            # the basin that costs the depth: the raw sink on the governing path with the
+            # largest fill, not the head's own hollow
+            n, cands = dp["dn"], []
             while n in governs:
                 q = pipes[governs[n]]
                 if q["dn"] in raw_term:
                     s_ = raw_term[q["dn"]]
+                    if s_ not in targets2 and s_ not in trunk_stem and s_ not in pockets:
+                        cands.append((filled2.get(s_, znode.get(s_, 0.0)) - znode.get(s_, 0.0), s_))
                 n = q["up"]
-            if s_ is None or s_ in targets2 or s_ in trunk_stem or s_ in pockets:
+            if not cands:
                 continue
-            pockets.append(s_)
-            props_of[s_] = dp["props_up"]
+            seen_ = set()
+            for fill_, s_ in sorted(cands, reverse=True):
+                if s_ in seen_:
+                    continue
+                seen_.add(s_)
+                pockets.append(s_)
+                if len(seen_) >= getattr(cfg, "REROUTE_BASINS", 1):
+                    break
+        props_of = {s_: raw_props.get(s_, 0) for s_ in pockets}
         acc, trunk_stem, trunk_runs, levels, ttype, refused = K.trunk_routes(
             runs, znode, levels, ttype, pockets, props_of, cfg.DEPTH_WEIGHT, cfg.MAX_DEPTH_M,
             cfg.TRUNK_COVER_M, cfg.PER_PROPERTY_M3D, stem=trunk_stem, trunk_runs=trunk_runs,
-            try_targets=cfg.TRUNK_TRY, max_len=cfg.TRUNK_MAX_M)
+            try_targets=cfg.TRUNK_TRY, max_len=cfg.TRUNK_MAX_M,
+            take_shortfall=getattr(cfg, 'TRUNK_TAKE_SHORTFALL', False),
+            violation_max=getattr(cfg, 'TRUNK_VIOLATION_MAX_M', 10.0))
         rep["reroute"].append({"round": rr + 1, "over_limit": dict(over),
                                "pockets": [tuple(round(v, 1) for v in s_) for s_ in pockets],
                                "trunks": len(acc),
+                               "cut_for_a_pump": [tuple(round(v, 1) for v in s_) for s_ in pockets if s_ not in acc],
                                "refused": {str(tuple(round(v, 1) for v in k)): v[:3] for k, v in refused.items()}})
         log(f"   rule 10, round {rr + 1}: {dict(over)} -> {len(pockets)} pockets offered a trunk, {len(acc)} routed")
-        if not acc:
+        # rule 10's cut: a basin that no trunk can carry within the cap becomes a pocket
+        # for a pump, so the rest is laid again without it
+        cut = [s_ for s_ in pockets if s_ not in acc]
+        for s_ in cut:
+            targets2[s_] = "SINK"
+            log(f"   rule 10, cut: the basin at {tuple(round(v) for v in s_)} is a pocket for a pump "
+                f"({props_of.get(s_, 0)} plots)")
+        if not acc and not cut:
             break
         for s_, a in acc.items():
             targets2[s_] = {"STP": "LINK-STP", "JOIN": "LINK-MP"}.get(a["type"], "LINK-TRUNK")
             trunks[s_] = a
             log(f"   trunk from {tuple(round(v) for v in s_)}: {a['len']} m DN{a['dn']} at "
                 f"{a['smin'] * 100:.3f} % to the {a['type']}, deepest {a['max_depth']} m, "
-                f"arrives {a['arrives']} against {a['level']}")
+                f"arrives {a['arrives']} against {a['level']}"
+                + (f" UNDER BY {a['under_m']} m" if a.get('under_m') else "")
+                + (f" OVER 12 m BY {a['over_m']} m" if a.get('over_m') else ""))
         src2, filled2, parent2, seq2, spill2, iters2 = O.resolve_outlets(
             runs, znode, targets2, cfg.BASIN_MAX_M, raw_term, **assign)
     rep["trunks"] = [{"from": [round(v, 1) for v in k], "to": a["type"], "len_m": a["len"],
                       "dn": a["dn"], "grad_pct": round(a["smin"] * 100, 3),
                       "max_depth_m": a["max_depth"], "arrives_m": a["arrives"],
-                      "level_m": a["level"]} for k, a in trunks.items()]
+                      "level_m": a["level"], "under_m": a.get("under_m", 0.0),
+                      "over_m": a.get("over_m", 0.0), "sized_on": a.get("sized_on")}
+                     for k, a in trunks.items()]
     rep["tier_km"] = km_by(pipes, "tier", ("trunk", "sub main", "lateral", "branch"))
 
     log("catchment ground and the drawing ...")
