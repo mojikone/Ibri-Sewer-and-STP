@@ -17,8 +17,8 @@ from shapely.geometry import Point
 
 from .export_stage_a import PALETTE, OUTLET_COLOUR, _arrow, _poly_rings
 
-TIER_WIDTH = {"sub main": 2.5, "lateral": 0.8, "branch": 0.8}
-TIER_LAYER = {"sub main": "A_SUBMAIN", "lateral": "A_LATERAL", "branch": "A_BRANCH"}
+TIER_WIDTH = {"trunk": 4.0, "sub main": 2.5, "lateral": 0.8, "branch": 0.8}
+TIER_LAYER = {"trunk": "A_TRUNK", "sub main": "A_SUBMAIN", "lateral": "A_LATERAL", "branch": "A_BRANCH"}
 OUT_COL = dict(OUTLET_COLOUR, **{"LINK-STP": 6, "LINK-MP": 6})
 PNG_MARK = {"JOIN": "o", "STP": "*", "SINK": "v", "LOW": "s", "LINK-STP": "D", "LINK-MP": "D"}
 PNG_COL = {"JOIN": "blue", "STP": "magenta", "SINK": "red", "LOW": "darkorange",
@@ -75,7 +75,7 @@ def write_dxf(path, pipes, gaps, dropped_geoms, catch_info, catch_polys, catch_c
         g = p["geom"]
         msp.add_lwpolyline(list(g.coords), dxfattribs=attrs)
         if g.length >= 12:
-            _arrow(msp, g, "A_ARROWS", col, size=5.0 if p["tier"] == "sub main" else 4.0)
+            _arrow(msp, g, "A_ARROWS", col, size=5.0 if p["tier"] in ("sub main", "trunk") else 4.0)
         if g.length >= 60:
             m = g.interpolate(0.5 * g.length)
             q = g.interpolate(min(g.length, 0.5 * g.length + 1.0))
@@ -235,7 +235,7 @@ def write_png(path, bounds, pipes, gaps, catch_info, catch_polys, catch_colour, 
         ax.plot(*g.xy, color="#888888", lw=0.8, ls=":")
     for p in pipes:
         col = cmap(catch_colour.get(p["catch"], 0))
-        lw = {"sub main": 2.6, "lateral": 1.0, "branch": 1.0}[p["tier"]]
+        lw = {"trunk": 3.6, "sub main": 2.6, "lateral": 1.0, "branch": 1.0}[p["tier"]]
         ls = {"NORMAL": "-", "FLAT": "--", "LEVEL": "--", "AGAINST": ":"}[p["cls"]]
         ax.plot(*p["geom"].xy, color=col, lw=lw, ls=ls)
         if arrows and p["len"] >= 15:

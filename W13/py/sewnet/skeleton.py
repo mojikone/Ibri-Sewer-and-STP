@@ -17,6 +17,7 @@ Order of work, as agreed on 2026-09-07:
 5. connectors: each kept join is drawn from the outlet to the foot of the perpendicular on the
    main pipe.
 """
+import heapq
 import math
 
 import geopandas as gpd
@@ -656,6 +657,122 @@ def sub_mains_by_chains(runs, chains, parent, src, chain_min_m, link_m=0.0, fill
 
 
 # --------------------------------------------------------------------- tree
+def trunk_routes(runs, z, levels, ttype, pockets, props_of, depth_weight, max_depth, cover,
+                 per_prop, stem=None, trunk_runs=None, try_targets=6, max_len=8000.0):
+    """Rule 3 as a designed trunk along the streets (2026-09-08). A pocket, biggest first, is
+    sized on the properties behind it, and a route is searched through the street graph at
+    that pipe's Table 11 gradient with rule 5's cost, to the cheapest target whose arrival
+    level the laid invert clears: the works inlet, a main-pipe join's invert, or a trunk
+    already accepted. The lay along the route must stay within max_depth everywhere. An
+    accepted trunk fixes the stem of every node on it and offers its own inverts as levels
+    to later pockets, so a second pocket joins the first trunk rather than running its own.
+    Returns the accepted trunks, the stems, the trunk runs and the levels."""
+    from . import quicklay as Q
+    stem = dict(stem or {})
+    trunk_runs = set(trunk_runs or ())
+    levels = dict(levels)
+    ttype = dict(ttype)
+    adj = {}
+    for i, r in enumerate(runs):
+        u, v, L = r["up"], r["dn"], r["len"]
+        adj.setdefault(u, []).append((v, L, i))
+        adj.setdefault(v, []).append((u, L, i))
+    accepted = {}
+    total_props = float(sum(props_of.get(q, 0.0) for q in pockets))
+    for p0 in pockets:
+        if p0 in levels or p0 in stem or p0 not in adj:
+            continue
+        own = float(props_of.get(p0, 0.0))
+        # sized on the pocket alone first; then on every pocket still waiting, because the
+        # later ones join the first trunk and a bigger pipe takes a flatter gradient
+        sizes = [(own, "own")]          # sized on what drains to it; a pipe sized on pockets
+                                        # that never join is laid two sizes smaller and digs
+                                        # deeper than the route was checked at (2026-09-08)
+        tried = []
+        for n_prop, basis in sizes:
+            hit = _trunk_try(runs, z, adj, levels, ttype, p0, n_prop, per_prop, depth_weight,
+                             max_depth, cover, try_targets, max_len, tried)
+            if hit is not None:
+                path, ridx, prof, t, length, mx, inv, dn, smin = hit
+                for (a, b), i in zip(zip(path[:-1], path[1:]), ridx):
+                    if a not in stem:
+                        stem[a] = b
+                    trunk_runs.add(i)
+                    if a not in levels:
+                        levels[a] = prof[a]
+                        ttype[a] = "TRUNK"
+                accepted[p0] = {"target": t, "type": ttype.get(t, "?"), "path": path,
+                                "runs": ridx, "len": round(length), "dn": dn, "smin": smin,
+                                "max_depth": round(mx, 2), "arrives": round(inv, 2),
+                                "level": round(levels[t], 2), "props": n_prop,
+                                "sized_on": basis}
+                break
+        if p0 not in accepted:
+            accepted.setdefault("_refused", {})[p0] = tried
+    refused = accepted.pop("_refused", {})
+    return accepted, stem, trunk_runs, levels, ttype, refused
+
+
+def _trunk_try(runs, z, adj, levels, ttype, p0, n_prop, per_prop, depth_weight, max_depth,
+               cover, try_targets, max_len, tried):
+    """One sizing of a trunk from p0: the route search at that pipe's gradient, every
+    reachable target tried cheapest first. Returns the accepted route or None."""
+    from . import quicklay as Q
+    dn = Q.size_for(Q.peak_ls(n_prop, 0.0, per_prop))
+    smin = Q.T11[dn]
+    if True:
+        cost, prev = {p0: 0.0}, {}
+        heap = [(0.0, p0)]
+        while heap:
+            d, u = heapq.heappop(heap)
+            if d > cost[u]:
+                continue
+            if u in levels and u != p0:          # a route ends at a target or a trunk
+                continue
+            for v, L, i in adj.get(u, []):
+                w = L + depth_weight * max(0.0, smin * L - (z[u] - z[v]))
+                if d + w < cost.get(v, float("inf")):
+                    cost[v] = d + w
+                    prev[v] = (u, i)
+                    heapq.heappush(heap, (d + w, v))
+        cands = sorted((c, t) for t, c in cost.items() if t in levels and t != p0)
+        if try_targets:
+            cands = cands[:try_targets]
+        for c, t in cands:
+            path, ridx = [t], []
+            while path[-1] != p0:
+                u, i = prev[path[-1]]
+                path.append(u)
+                ridx.append(i)
+            path.reverse()
+            ridx.reverse()
+            length = sum(runs[i]["len"] for i in ridx)
+            if length > max_len:
+                tried.append((f"DN{dn}", ttype.get(t), round(length), "too long"))
+                continue
+            inv = z[p0] - cover
+            prof = {p0: inv}
+            ok, mx, where = True, 0.0, None
+            for (a, b), i in zip(zip(path[:-1], path[1:]), ridx):
+                inv = min(inv - smin * runs[i]["len"], z[b] - cover)
+                dep = z[b] - inv
+                if dep > max_depth:
+                    ok, where = False, b
+                    break
+                prof[b] = inv
+                mx = max(mx, dep)
+            if not ok:
+                tried.append((f"DN{dn}", ttype.get(t), round(length),
+                              f"{max_depth} m passed at {tuple(round(v) for v in where)}"))
+                continue
+            if inv < levels[t]:
+                tried.append((f"DN{dn}", ttype.get(t), round(length),
+                              f"arrives {levels[t] - inv:.1f} m under the level"))
+                continue
+            return path, ridx, prof, t, length, mx, inv, dn, smin
+    return None
+
+
 def build_tree(runs, z, submain, stem_parent, depth_weight, smin, outlets=(), free_w=0.01,
                src=None, submain_discount=0.5):
     """Route every junction to its outlet by the least-depth route, rule 5's cost: length

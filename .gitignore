@@ -27,3 +27,6 @@ W11b/
 W12/
 W13/run/*.pkl
 W13/run/*_log.txt
+*.dwl
+*.dwl2
+W13/dxf/*.dwg

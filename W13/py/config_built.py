@@ -28,6 +28,10 @@ ACCOUNTS = BASE + r"\Hydraulic\Claude\W4\shp\ELE_accounts.shp"   # counted prope
 # ---- rule 9, the depth check done on every run (quicklay.py)
 PER_PROPERTY_M3D = 0.911   # 5.32 people x 171.3 L/c/d, the locked load basis
 MAX_DEPTH_M = 12.0         # the hard limit (standing decision 2026-09-07)
+TRUNK_COVER_M = 1.55       # cover to invert a trunk starts with at its pocket (Stage A proxy)
+TRUNK_MAX_M = 8000.0       # no designed trunk longer than this (NAMA's own is 6.2 km)
+TRUNK_TRY = 0              # targets tried per pocket, cheapest first; 0 = every target
+REROUTE_ROUNDS = 3         # rule 10: rounds of reroute after the lay before a failure is reported
 
 OUT = BASE + r"\Hydraulic\Claude\W13"
 OUT_SHP = OUT + r"\shp"
@@ -37,7 +41,13 @@ OUT_RUN = OUT + r"\run"
 EPSG = 32640
 
 # ---- the area
-AREA_BUFFER_M = 60.0
+AREA_SHP = BASE + r"\Hydraulic\SHP\temp\W13 test boundary.shp"   # the engineer's test
+                        # boundary (2026-09-08): 21.4 km2 in two parts, holding the two
+                        # settlements, the STP and the roads to it. None: the built envelope.
+AREA_BUFFER_M = 60.0    # the built envelope: every street within this of a 2006 sewer; now
+                        # the comparison layer, not the area
+USE_CORRIDOR = False    # NAMA's built trunk to the STP was a route with no design (engineer,
+                        # 2026-09-08); the STP is reached by a pipe designed along the roads
 
 # ---- rule 1: reading the ground
 SNAP_M = 3.0            # line ends this close are one node (57 gaps of 0.3-3 m in the DXF)

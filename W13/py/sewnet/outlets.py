@@ -27,10 +27,12 @@ def find_targets(nodes_xy, main_pipe_geoms, stp_xy, target_m, stp_m):
     typ = {}
     for n, (x, y) in nodes_xy.items():
         p = Point(x, y)
-        if mp.distance(p) <= target_m:
-            typ[n] = "JOIN"
-        elif math.dist((x, y), stp_xy) <= stp_m:
+        # the works first: the main pipe ends there, and a join within 30 m of its last
+        # metres would be dropped by the join spacing and lose the STP (2026-09-08)
+        if math.dist((x, y), stp_xy) <= stp_m:
             typ[n] = "STP"
+        elif mp.distance(p) <= target_m:
+            typ[n] = "JOIN"
     return typ
 
 
