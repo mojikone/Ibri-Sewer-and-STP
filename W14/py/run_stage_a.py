@@ -446,7 +446,8 @@ def main():
                 targets2[pk] = "SINK"             # a basin no street may cross: a pump
             src_filter = None
         else:
-            chains = K.cut_at_sags_and_outlets(chains, runs, znode, src2, parent2, cfg.CREST_M)
+            if getattr(cfg, "SAG_OUTLET_CUTS", True):
+                chains = K.cut_at_sags_and_outlets(chains, runs, znode, src2, parent2, cfg.CREST_M)
             submain, stem_parent, srep3 = K.sub_mains_by_chains(runs, chains, parent2, src2,
                                                                 cfg.CHAIN_MIN_M, cfg.CHAIN_LINK_M,
                                                                 filled2, cfg.LEVEL_M)
@@ -696,7 +697,7 @@ def main():
     link_geoms = K.link_geometries(info2, mp_union, cfg.STP, corridor_paths)
     gaps = gaps_b + gaps_h
     dropped_geoms = [runs[i]["geom"] for i in dropped]
-    title = [f"W14 STAGE A TRIAL - SUB-MAINS FIRST - built area - {date}",
+    title = [f"W14 STAGE A - THE 7 SEPTEMBER RECIPE ON THE NEW MAIN PIPE - built area - {date}",
              "thick = sub-main · thin = lateral or branch · colour = catchment · arrow on every pipe "
              "· grey dotted = the head gap to the first gate · magenta = join connector to the main pipe",
              "dashed = flatter than 0.5 % · dash-dot = against the ground · gradient text is the "

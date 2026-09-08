@@ -457,3 +457,34 @@ about 2,000 properties on 45 km of street, goes to a pump, and only the part of 
 settlement outside the rim stays on the trunk. A scenario run that treated the arrival
 shortfall as a failure to cut (`LEVEL_IS_A_FAILURE`, `run/stage_a_scenario_meet_inlet.json`)
 changed nothing, because the shortfall is not one basin but the rim plus six kilometres.
+
+## The 7 September recipe on today's ground (2026-09-09)
+
+The engineer's frustration, and it was earned: the run of the evening of 7 September
+(commit 3897c0e) laid the west in a constructable way, and the later runs did not. Three
+additions of the same night broke it, each for a depth case: the cut wherever the flood's
+arrow turned, the per-node choice of outlet by rule 5's cost, and rule 10's trunks. The main
+pipe change only took away the west's exit.
+
+W14 now runs that evening's recipe, `RECIPE = "7 September evening"`: the long straight
+streets are whole sub-mains cut only at a crest, attached where they touch the outlet or a
+sub-main already chosen, no connectors, no skeleton-first, no rule 10 trunks. Two things
+settled since are kept: the trunk along the roads to the works instead of NAMA's line, and
+the engineer's 12 m rule, a basin that 12 m cannot carry out becomes a pump candidate. One
+thing from later had to stay, and the run without it shows why: with the low ground west of
+the settlement inside the boundary, the flood sends the whole west settlement into that low,
+the lowest hole it can reach, and the 12 m rule then pumps 112 km. The least-depth choice of
+outlet routes it to the works instead, so `ASSIGN_BY_DEPTH` stays on.
+
+| | 7 Sept evening (built area, old main pipe) | W14 recipe, today's boundary and main pipe |
+|---|---|---|
+| Sub-networks | 30 | 27, every one a single block |
+| Sub-main share | 31 % | 21 % |
+| The west | one sub-network to the corridor | one sub-network on a 6.8 km trunk to the works |
+| Pumps | none | 4 candidates, 34.8 km: the low ground west and south of the settlement, the low by the ridge, the low ground south-west of the works |
+| Chambers over 12 m | not laid then | 14: the west's trunk (13.4 m), the low ground at the works (16.0 m), one street to a ridge join (12.1 m) |
+| At the works | | 6.5 m under the inlet |
+
+The picture reads as the engineer's sketch: the long diagonals as sub-mains, the edge
+street down to the corner, the trunk on to the works. What is left over 12 m is the inlet
+question and the ridge, as before.
