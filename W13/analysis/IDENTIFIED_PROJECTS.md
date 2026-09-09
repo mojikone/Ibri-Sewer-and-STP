@@ -60,3 +60,15 @@ Sources: OSM via Overpass (ways 314948590, 456581689, 366934573, 1465668244, 830
 1100731219 and others in the shapefile); gem.wiki Ibri Independent power plant; Oman Observer
 1170935, 1178157, 1150140, 1193786; Madayn press release 2026-08; AIIB Ibri II ESIA; Muscat Daily
 2024-11-03; Wikipedia Northern Frontier Regiment; MoH Ibri Hospital page.
+
+## 5. Decisions (engineer, 2026-09-09) — the record for the concept report update
+
+| Item | Decision |
+|---|---|
+| Al Tayyeb and Tanam industrial areas | **Included as identified projects, additive, outside the 22 %.** Working workforce 4,500 and 1,800 (tagged assumptions from the meter count: ~5 shop meters per plot, 3–6 workers each). The workforce is **spread over the industrial plots by plot area**. Rate: Tab 12 dry industry, 93 l/d per employee (G1-p61); return 54 % (Tab 19) |
+| Ibri View resort, As Sulayf | **No load.** The plots are not planned and not in the MoH file. **Mentioned in the concept report** as a development to be added when its masterplan exists |
+| Army camp (NFR, 296 ha) | **Kept as a record only.** Not expected to connect to the STP. Revisit at the report update |
+| Hotels, schools, malls, banks, hospital, college, mosques | **Taken through the LPCD ratios**: non-domestic +22 %, governmental +14 % of domestic (Tab 11), placed by account tariff — the locked basis, unchanged |
+| Madayn city, IPP camp (outside) | Tanker candidates for GAP-19; STP influent only |
+
+In one line: **the two industrial sites are special and additive; everything else non-domestic and governmental stays in the LPCD percentages.**

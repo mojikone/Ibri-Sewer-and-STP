@@ -110,6 +110,7 @@ Concept→detailed design + supervision of sewer network, TE network and STP cap
 | Existing system | F2 PDF read-off only: NE district (Al Araqi) served, existing trunk to STP — as-builts still missing (GAP-6) |
 | Electricity accounts, CRT (2026-09-09) | The 499 CRT accounts (large consumers, tariff says nothing about use) were identified from OSM, Nominatim and Google satellite: commercial 205, government 67, education 37, religious 16, health 15, industrial 16, agricultural 28, telecom 6, **110 unresolved**; per-account USE/GUD_CAT/CONF/EVIDENCE in `W13/analysis/CRT_accounts_identified.csv`. Use it to place the CRT load on the right plots; treat the 110 as CRT_review still |
 | Identified projects (2026-09-09) | Two industrial estates inside the boundary on the Commercial tariff (Al Tayyeb 205 plots / 1,044 accounts, Tanam 106 / 410) — GAP-17 corrected; army camp 296 ha with no account; Ibri View 2 km² planned at As Sulayf; Madayn city and the IPP camp outside, tankered. Register: `W13/analysis/IDENTIFIED_PROJECTS.md` |
+| Plot classes vs meters (2026-09-09) | `W13/shp/PLOTS_derived_class.shp`: main use of every plot derived from the meters on it. 79 % of plots unmetered (Future); of the metered, MoH class holds on 85 %, differs on 12.5 %, and 431 are Government (a class MoH lacks). Load stays per account; the derived class is for placement and display. Decisions on identified projects in `W13/analysis/IDENTIFIED_PROJECTS.md` §5 |
 
 ## 4. Progress stages
 | Stage | State |
