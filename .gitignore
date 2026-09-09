@@ -35,3 +35,11 @@ W14/run/*_log.txt
 W14/dxf/*.dwg
 REF_7SEPT/run/*.pkl
 REF_7SEPT/run/*_log.txt
+# W13 trials live in W13/tmp1 (the 7 Sept engine on the new main pipe) and W13/tmp2 (the
+# constructable layout); their working state, console captures and scratch stay local
+W13/tmp*/run/*.pkl
+W13/tmp*/run/*_log.txt
+W13/tmp*/run/console_*.txt
+W13/tmp*/run/scratch/
+W13/tmp*/dxf/*.dwg
+*.bak
