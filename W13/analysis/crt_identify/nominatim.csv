@@ -1,0 +1,148 @@
+kind,key,lat,lon,name,category,type,display,suburb,road
+cl,1,23.3210676,56.612027999999995,,highway,residential,"Ad Dariz, Ibri Province, Ad Dhahirah Governorate, Oman",Ad Dariz,
+cl,6,23.317522874999998,56.615891375000004,,highway,residential,"Ad Dariz, Ibri Province, Ad Dhahirah Governorate, Oman",Ad Dariz,
+cl,14,23.283684,56.368993,,highway,unclassified,"Ibri Province, Ad Dhahirah Governorate, Oman",,
+cl,16,23.272361,56.38004,Ibri Police Headquarters,amenity,police,"Ibri Police Headquarters, Sultan Thuwaini bin Said Road, Bu Khabi, Ibri Province, Ad Dhahirah Governorate, Oman",Bu Khabi,Sultan Thuwaini bin Said Road
+cl,18,23.2756226,56.3831244,Ibri Police Headquarters,amenity,police,"Ibri Police Headquarters, Sultan Thuwaini bin Said Road, Bu Khabi, Ibri Province, Ad Dhahirah Governorate, Oman",Bu Khabi,Sultan Thuwaini bin Said Road
+cl,21,23.281234,56.376367,Ibri Police Headquarters,amenity,police,"Ibri Police Headquarters, Sultan Thuwaini bin Said Road, Bu Khabi, Ibri Province, Ad Dhahirah Governorate, Oman",Bu Khabi,Sultan Thuwaini bin Said Road
+cl,30,23.250585,56.556799,,highway,residential,"Ibri Province, Ad Dhahirah Governorate, Oman",,
+cl,33,23.169561,56.471101999999995,Ibri - Rub' al Khali Road,highway,trunk,"Ibri - Rub' al Khali Road, Mazra bin Khater, Ibri Province, Ad Dhahirah Governorate, Oman",Mazra bin Khater,Ibri - Rub' al Khali Road
+cl,35,23.159955125,56.46540975,,highway,residential,"صناعية تنعم, Al Mukhtobiyah, Ibri Province, Ad Dhahirah Governorate, Oman",Al Mukhtobiyah,
+cl,50,23.2427234,56.42129680000001,College of Technology,amenity,college,"College of Technology, Sultan Thuwaini bin Said Road, سيح المسرات, Ibri Province, Ad Dhahirah Governorate, Oman",سيح المسرات,Sultan Thuwaini bin Said Road
+cl,54,23.231064,56.4262015,Ibri Hospital,amenity,hospital,"Ibri Hospital, Sultan Thuwaini bin Said Road, سيح المسرات, Ibri Province, Ad Dhahirah Governorate, Oman",سيح المسرات,Sultan Thuwaini bin Said Road
+cl,57,23.258943,56.521828,,highway,tertiary,"Silmi, Ibri Province, Ad Dhahirah Governorate, Oman",Silmi,
+cl,58,23.259777,56.525399,,highway,tertiary,"Al Ghabbi, Ibri Province, Ad Dhahirah Governorate, Oman",Al Ghabbi,
+cl,64,23.273884250000002,56.54312625,,highway,residential,"Al Ghabbi, Ibri Province, Ad Dhahirah Governorate, Oman",Al Ghabbi,
+cl,65,23.291291,56.554294,,highway,residential,"Aynayn, Ibri Province, Ad Dhahirah Governorate, Oman",Aynayn,
+cl,67,23.278593,56.553279999999994,D618,highway,tertiary,"D618, Araqi, Ibri Province, Ad Dhahirah Governorate, Oman",Araqi,D618
+cl,68,23.286074,56.552052,,highway,tertiary,"Araqi, Ibri Province, Ad Dhahirah Governorate, Oman",Araqi,
+cl,69,23.282293,56.550356538461536,,highway,tertiary,"Araqi, Ibri Province, Ad Dhahirah Governorate, Oman",Araqi,
+cl,70,23.278973,56.549269,,highway,residential,"Araqi, Ibri Province, Ad Dhahirah Governorate, Oman",Araqi,
+cl,71,23.277751428571428,56.548358857142865,,highway,tertiary,"Araqi, Ibri Province, Ad Dhahirah Governorate, Oman",Araqi,
+cl,78,23.21670635,56.458615699999996,Chicking,amenity,fast_food,"Chicking, Sultan Thuwaini bin Said Road, Al Jahli, Ibri Province, Ad Dhahirah Governorate, Oman",Al Jahli,Sultan Thuwaini bin Said Road
+cl,79,23.21897525,56.4577585,Al Akhdar Health Center,amenity,doctors,"Al Akhdar Health Center, Sultan Thuwaini bin Said Road, Al Jahli, Ibri Province, Ad Dhahirah Governorate, Oman",Al Jahli,Sultan Thuwaini bin Said Road
+cl,80,23.219464666666667,56.45402633333333,,highway,unclassified,"Al Akhdar, Ibri Province, Ad Dhahirah Governorate, Oman",Al Akhdar,
+cl,81,23.22142081818182,56.45492018181819,University of Applied Sciences Ibri Al Akhdar Campus,amenity,college,"University of Applied Sciences Ibri Al Akhdar Campus, Sultan Thuwaini bin Said Road, Al Jahli, Ibri Province, Ad Dhahirah Governorate, Oman",Al Jahli,Sultan Thuwaini bin Said Road
+cl,87,23.20527275,56.513385,,highway,tertiary,"As Sulayf, Ibri Province, Ad Dhahirah Governorate, Oman",As Sulayf,
+cl,92,23.212888,56.519857,,highway,residential,"Hellat As'sad, Ibri Province, Ad Dhahirah Governorate, Oman",Hellat As'sad,
+cl,95,23.224625,56.515272,Pizza Hut,amenity,fast_food,"Pizza Hut, Al Musannah - Al Rustaq - Maskin - Ibri Road, AL Murtafa, Ibri Province, Ad Dhahirah Governorate, Oman",AL Murtafa,Al Musannah - Al Rustaq - Maskin - Ibri Road
+cl,96,23.223156,56.515907999999996,,highway,tertiary,"AL Murtafa, Ibri Province, Ad Dhahirah Governorate, Oman",AL Murtafa,
+cl,102,23.215898,56.51204633333333,Shell,amenity,fuel,"Shell, Sultan Thuwaini bin Said Road, Hayy Almazra, Ibri Province, Ad Dhahirah Governorate, Oman",Hayy Almazra,Sultan Thuwaini bin Said Road
+cl,106,23.229310263157895,56.51331389473685,Dar Al Andalus bookshop,shop,books,"Dar Al Andalus bookshop, Al Musannah - Al Rustaq - Maskin - Ibri Road, AL Murtafa, Ibri Province, Ad Dhahirah Governorate, Oman",AL Murtafa,Al Musannah - Al Rustaq - Maskin - Ibri Road
+cl,110,23.251863,56.514701,,highway,residential,"Silmi, Ibri Province, Ad Dhahirah Governorate, Oman",Silmi,
+cl,113,23.240787333333333,56.51917,,amenity,school,"Al Musannah - Al Rustaq - Maskin - Ibri Road, AL Murtafa, Ibri Province, Ad Dhahirah Governorate, Oman",AL Murtafa,Al Musannah - Al Rustaq - Maskin - Ibri Road
+cl,116,23.23913,56.514091,Al Yamama shoping centre,shop,supermarket,"Al Yamama shoping centre, Al Musannah - Al Rustaq - Maskin - Ibri Road, AL Murtafa, Ibri Province, Ad Dhahirah Governorate, Oman",AL Murtafa,Al Musannah - Al Rustaq - Maskin - Ibri Road
+cl,120,23.216777444444446,56.46949544444445,Bake it Bakery,shop,bakery,"Bake it Bakery, Sultan Thuwaini bin Said Road, Al Akhdar, Ibri Province, Ad Dhahirah Governorate, Oman",Al Akhdar,Sultan Thuwaini bin Said Road
+cl,122,23.231795,56.504815,,highway,residential,"Ibri Old village, Ibri Province, Ad Dhahirah Governorate, Oman",Ibri Old village,
+cl,126,23.214112,56.477011,,highway,residential,"Hellat Al Nahadah, Ibri Province, Ad Dhahirah Governorate, Oman",Hellat Al Nahadah,
+cl,127,23.21559,56.482066999999994,Ibri police Station,amenity,police,"Ibri police Station, Sultan Thuwaini bin Said Road, Al Akhdar, Ibri Province, Ad Dhahirah Governorate, Oman",Al Akhdar,Sultan Thuwaini bin Said Road
+cl,128,23.217196333333334,56.481920333333335,,highway,residential,"A'SSFA, Ibri Province, Ad Dhahirah Governorate, Oman",A'SSFA,
+cl,130,23.219065,56.50224425,MAX,shop,clothes,"MAX, Sultan Thuwaini bin Said Road, Hayy Almazra, Ibri Province, Ad Dhahirah Governorate, Oman",Hayy Almazra,Sultan Thuwaini bin Said Road
+cl,132,23.214292,56.485712,Ibri police Station,amenity,police,"Ibri police Station, Sultan Thuwaini bin Said Road, Al Akhdar, Ibri Province, Ad Dhahirah Governorate, Oman",Al Akhdar,Sultan Thuwaini bin Said Road
+cl,135,23.21732475,56.497327625,Omantel,office,telecommunication,"Omantel, Sultan Thuwaini bin Said Road, Hayy Almazra, Ibri Province, Ad Dhahirah Governorate, Oman",Hayy Almazra,Sultan Thuwaini bin Said Road
+cl,136,23.218363999999998,56.48495866666667,Indian School Ibri,amenity,school,"Indian School Ibri, Sultan Thuwaini bin Said Road, Al Akhdar, Ibri Province, Ad Dhahirah Governorate, Oman",Al Akhdar,Sultan Thuwaini bin Said Road
+cl,137,23.21783533333333,56.489564333333334,,highway,residential,"A'SSFA, Ibri Province, Ad Dhahirah Governorate, Oman",A'SSFA,
+cl,138,23.217350999999997,56.49230266666666,Muscat Pharmacy - Ibri branch,amenity,pharmacy,"Muscat Pharmacy - Ibri branch, Sultan Thuwaini bin Said Road, Hayy Almazra, Ibri Province, Ad Dhahirah Governorate, Oman",Hayy Almazra,Sultan Thuwaini bin Said Road
+cl,139,23.216414714285715,56.49362914285714,Al Hashar Automotive,shop,car,"Al Hashar Automotive, Sultan Thuwaini bin Said Road, Hayy Almazra, Ibri Province, Ad Dhahirah Governorate, Oman",Hayy Almazra,Sultan Thuwaini bin Said Road
+cl,145,23.227300666666668,56.49572833333334,Ibri Road,highway,secondary,"Ibri Road, Ibri Old village, Ibri Province, Ad Dhahirah Governorate, Oman",Ibri Old village,Ibri Road
+cl,149,23.220905285714284,56.49234671428571,,highway,residential,"A'SSFA, Ibri Province, Ad Dhahirah Governorate, Oman",A'SSFA,
+cl,153,23.234305,56.4971752,,highway,residential,"صناعية عبري, Al Orobah, Ibri Province, Ad Dhahirah Governorate, Oman",Al Orobah,
+cl,154,23.235865,56.50043,,highway,secondary,"Al Orobah, Ibri Province, Ad Dhahirah Governorate, Oman",Al Orobah,
+cl,156,23.235376,56.493543125,,highway,residential,"صناعية عبري, Al Orobah, Ibri Province, Ad Dhahirah Governorate, Oman",Al Orobah,
+cl,157,23.237945,56.49387066666667,,highway,residential,"Al Orobah, Ibri Province, Ad Dhahirah Governorate, Oman",Al Orobah,
+cl,175,23.273713,56.727773,MAYSA national shopping,shop,supermarket,"MAYSA national shopping, Maqniyat Road, Bat, Ibri Province, Ad Dhahirah Governorate, Oman",Bat,Maqniyat Road
+pt,1260,23.147847,56.476833,A9,highway,trunk,"A9, Tanaam, Ibri Province, Ad Dhahirah Governorate, Oman",Tanaam,A9
+pt,2153,23.272852,56.534175,,highway,tertiary,"Aynayn, Ibri Province, Ad Dhahirah Governorate, Oman",Aynayn,
+pt,3400,23.278926,56.544673,,highway,tertiary,"Aynayn, Ibri Province, Ad Dhahirah Governorate, Oman",Aynayn,
+pt,3465,23.261807,56.555965,,highway,residential,"صناعية الطيب, Al Ghabbi, Ibri Province, Ad Dhahirah Governorate, Oman",Al Ghabbi,
+pt,4460,23.278734,56.544245,,highway,tertiary,"Aynayn, Ibri Province, Ad Dhahirah Governorate, Oman",Aynayn,
+pt,4611,23.219172,56.514041,,amenity,parking,"Al Musannah - Al Rustaq - Maskin - Ibri Road, AL Murtafa, Ibri Province, Ad Dhahirah Governorate, Oman",AL Murtafa,Al Musannah - Al Rustaq - Maskin - Ibri Road
+pt,5023,23.217451,56.511372,,highway,residential,"AL Modhar, Ibri Province, Ad Dhahirah Governorate, Oman",AL Modhar,
+pt,5025,23.217451,56.511372,,highway,residential,"AL Modhar, Ibri Province, Ad Dhahirah Governorate, Oman",AL Modhar,
+pt,6969,23.143052,56.474698,A9,highway,trunk,"A9, Tanaam, Ibri Province, Ad Dhahirah Governorate, Oman",Tanaam,A9
+pt,7832,23.229354,56.516854,مدرسة عمــار بن ياسر للتعليم الاساسي للبنين5-8,amenity,school,"مدرسة عمــار بن ياسر للتعليم الاساسي للبنين5-8, Al Musannah - Al Rustaq - Maskin - Ibri Road, AL Murtafa, Ibri Province, Ad Dhahirah Governorate, Oman",AL Murtafa,Al Musannah - Al Rustaq - Maskin - Ibri Road
+pt,7849,23.318452,56.605195,,highway,unclassified,"Ad Dariz, Ibri Province, Ad Dhahirah Governorate, Oman",Ad Dariz,
+pt,8221,23.323851,56.611168,,highway,residential,"Ad Dariz, Ibri Province, Ad Dhahirah Governorate, Oman",Ad Dariz,
+pt,8437,23.240766,56.511491,Al Musannah - Al Rustaq - Maskin - Ibri Road,highway,trunk,"Al Musannah - Al Rustaq - Maskin - Ibri Road, Silmi, Ibri Province, Ad Dhahirah Governorate, Oman",Silmi,Al Musannah - Al Rustaq - Maskin - Ibri Road
+pt,8872,23.297401,56.558695,,highway,tertiary,"Aynayn, Ibri Province, Ad Dhahirah Governorate, Oman",Aynayn,
+pt,9093,23.246161,56.418773,,leisure,stadium,"Sultan Thuwaini bin Said Road, سيح المسرات, Ibri Province, Ad Dhahirah Governorate, Oman",سيح المسرات,Sultan Thuwaini bin Said Road
+pt,9094,23.246161,56.418773,,leisure,stadium,"Sultan Thuwaini bin Said Road, سيح المسرات, Ibri Province, Ad Dhahirah Governorate, Oman",سيح المسرات,Sultan Thuwaini bin Said Road
+pt,9389,23.224416,56.44256,,highway,residential,"Al Jahli, Ibri Province, Ad Dhahirah Governorate, Oman",Al Jahli,
+pt,10501,23.258018,56.499849,,highway,unclassified,"Silmi, Ibri Province, Ad Dhahirah Governorate, Oman",Silmi,
+pt,11658,23.255389,56.499016,,highway,residential,"Rayibah, Ibri Province, Ad Dhahirah Governorate, Oman",Rayibah,
+pt,13030,23.161742,56.468894,,highway,residential,"صناعية تنعم, Al Mukhtobiyah, Ibri Province, Ad Dhahirah Governorate, Oman",Al Mukhtobiyah,
+pt,13476,23.224243,56.4687,,highway,secondary,"Al Akhdar, Ibri Province, Ad Dhahirah Governorate, Oman",Al Akhdar,
+pt,13477,23.224283,56.468669,,highway,secondary,"Al Akhdar, Ibri Province, Ad Dhahirah Governorate, Oman",Al Akhdar,
+pt,13512,23.24143,56.511372,Al Musannah - Al Rustaq - Maskin - Ibri Road,highway,trunk,"Al Musannah - Al Rustaq - Maskin - Ibri Road, Silmi, Ibri Province, Ad Dhahirah Governorate, Oman",Silmi,Al Musannah - Al Rustaq - Maskin - Ibri Road
+pt,13757,23.16501,56.468181,,highway,residential,"صناعية تنعم, Al Mukhtobiyah, Ibri Province, Ad Dhahirah Governorate, Oman",Al Mukhtobiyah,
+pt,13795,23.158477,56.4654,,highway,residential,"صناعية تنعم, Al Mukhtobiyah, Ibri Province, Ad Dhahirah Governorate, Oman",Al Mukhtobiyah,
+pt,13804,23.162329,56.46918,,highway,residential,"صناعية تنعم, Al Mukhtobiyah, Ibri Province, Ad Dhahirah Governorate, Oman",Al Mukhtobiyah,
+pt,16354,23.223774,56.446261,,highway,residential,"Al Jahli, Ibri Province, Ad Dhahirah Governorate, Oman",Al Jahli,
+pt,17152,23.274439,56.724228,,amenity,school,"Maqniyat Road, Bat, Ibri Province, Ad Dhahirah Governorate, Oman",Bat,Maqniyat Road
+pt,17506,23.207942,56.479823,مدرسة خضراء عبري للتعليم الأساسي,amenity,school,"مدرسة خضراء عبري للتعليم الأساسي, Ibri - Rub' al Khali Road, Mazra bin Khater, Ibri Province, Ad Dhahirah Governorate, Oman",Mazra bin Khater,Ibri - Rub' al Khali Road
+pt,19215,23.236524,56.483494,,highway,tertiary,"صناعية عبري, Al Orobah, Ibri Province, Ad Dhahirah Governorate, Oman",Al Orobah,
+pt,20519,23.222144,56.516351,,highway,tertiary,"AL Murtafa, Ibri Province, Ad Dhahirah Governorate, Oman",AL Murtafa,
+pt,22436,23.21539,56.517806,,highway,residential,"Hellat As'sad, Ibri Province, Ad Dhahirah Governorate, Oman",Hellat As'sad,
+pt,22668,23.208949,56.511162,,highway,unclassified,"Hellat As'sad, Ibri Province, Ad Dhahirah Governorate, Oman",Hellat As'sad,
+pt,22903,23.275099,56.377092,Ibri Police Headquarters,amenity,police,"Ibri Police Headquarters, N2, سيح المسرات, Ibri Province, Ad Dhahirah Governorate, Oman",سيح المسرات,N2
+pt,22982,23.255133,56.753223,,highway,tertiary,"Bat, Ibri Province, Ad Dhahirah Governorate, Oman",Bat,
+pt,22995,23.198915,56.466715,,highway,residential,"Hellat Al Nahadah, Ibri Province, Ad Dhahirah Governorate, Oman",Hellat Al Nahadah,
+pt,23039,23.272447,56.388551,,highway,unclassified,"سيح المسرات, Ibri Province, Ad Dhahirah Governorate, Oman",سيح المسرات,
+pt,23097,23.32007,56.608361,,highway,residential,"Ad Dariz, Ibri Province, Ad Dhahirah Governorate, Oman",Ad Dariz,
+pt,23232,23.164503,56.467967,,highway,residential,"صناعية تنعم, Al Mukhtobiyah, Ibri Province, Ad Dhahirah Governorate, Oman",Al Mukhtobiyah,
+pt,23745,23.249843,56.513571,,highway,tertiary,"Al Ghabbi, Ibri Province, Ad Dhahirah Governorate, Oman",Al Ghabbi,
+pt,23750,23.237943,56.500412,,highway,secondary,"Al Orobah, Ibri Province, Ad Dhahirah Governorate, Oman",Al Orobah,
+pt,23758,23.231303,56.529417,,highway,residential,"Hayy Al Aqabah, Ibri Province, Ad Dhahirah Governorate, Oman",Hayy Al Aqabah,
+pt,23869,23.258143,56.484477,,highway,residential,"Rayibah, Ibri Province, Ad Dhahirah Governorate, Oman",Rayibah,
+pt,23998,23.198971,56.466708,,highway,residential,"Hellat Al Nahadah, Ibri Province, Ad Dhahirah Governorate, Oman",Hellat Al Nahadah,
+pt,24523,23.229119,56.576373,,highway,unclassified,"الجبية, Ibri Province, Ad Dhahirah Governorate, Oman",الجبية,
+pt,24609,23.1699,56.721178,Ibri Province,boundary,administrative,"Ibri Province, Ad Dhahirah Governorate, 500, Oman",,
+pt,26387,23.220789,56.495624,,amenity,place_of_worship,"Sultan Thuwaini bin Said Road, Hayy Almazra, Ibri Province, Ad Dhahirah Governorate, Oman",Hayy Almazra,Sultan Thuwaini bin Said Road
+pt,27008,23.261862,56.555874,,highway,residential,"صناعية الطيب, Al Ghabbi, Ibri Province, Ad Dhahirah Governorate, Oman",Al Ghabbi,
+pt,27465,23.211096,56.521098,,highway,tertiary,"Hellat As'sad, Ibri Province, Ad Dhahirah Governorate, Oman",Hellat As'sad,
+pt,27927,23.227666,56.42917,,highway,unclassified,"Hay Assa' adah, Ibri Province, Ad Dhahirah Governorate, Oman",Hay Assa' adah,
+pt,27944,23.272788,56.378681,Ibri Police Headquarters,amenity,police,"Ibri Police Headquarters, N2, سيح المسرات, Ibri Province, Ad Dhahirah Governorate, Oman",سيح المسرات,N2
+pt,27945,23.272788,56.378681,Ibri Police Headquarters,amenity,police,"Ibri Police Headquarters, N2, سيح المسرات, Ibri Province, Ad Dhahirah Governorate, Oman",سيح المسرات,N2
+pt,27946,23.275114,56.37711,Ibri Police Headquarters,amenity,police,"Ibri Police Headquarters, N2, سيح المسرات, Ibri Province, Ad Dhahirah Governorate, Oman",سيح المسرات,N2
+pt,27950,23.224925,56.445442,,highway,residential,"Al Jahli, Ibri Province, Ad Dhahirah Governorate, Oman",Al Jahli,
+pt,27972,23.214578,56.488721,,highway,residential,"Mazra bin Khater, Ibri Province, Ad Dhahirah Governorate, Oman",Mazra bin Khater,
+pt,27982,23.245307,56.421307,College of Technology,amenity,college,"College of Technology, Sultan Thuwaini bin Said Road, سيح المسرات, Ibri Province, Ad Dhahirah Governorate, Oman",سيح المسرات,Sultan Thuwaini bin Said Road
+pt,27983,23.245307,56.421307,College of Technology,amenity,college,"College of Technology, Sultan Thuwaini bin Said Road, سيح المسرات, Ibri Province, Ad Dhahirah Governorate, Oman",سيح المسرات,Sultan Thuwaini bin Said Road
+pt,27988,23.267538,56.53875,,highway,residential,"Al Ghabbi, Ibri Province, Ad Dhahirah Governorate, Oman",Al Ghabbi,
+pt,27989,23.267576,56.538718,,highway,residential,"Al Ghabbi, Ibri Province, Ad Dhahirah Governorate, Oman",Al Ghabbi,
+pt,27994,23.18571,56.704531,,highway,unclassified,"سويد الماء, Ibri Province, Ad Dhahirah Governorate, Oman",سويد الماء,
+pt,28340,23.21727,56.513052,,highway,residential,"Hellat As'sad, Ibri Province, Ad Dhahirah Governorate, Oman",Hellat As'sad,
+pt,29006,23.264294,56.53198,,highway,tertiary,"Al Ghabbi, Ibri Province, Ad Dhahirah Governorate, Oman",Al Ghabbi,
+pt,30137,23.323782,56.597854,,highway,residential,"Ad Dariz, Ibri Province, Ad Dhahirah Governorate, Oman",Ad Dariz,
+pt,30183,23.218721,56.51769,,highway,residential,"Hellat As'sad, Ibri Province, Ad Dhahirah Governorate, Oman",Hellat As'sad,
+pt,30325,23.291473,56.37171,,highway,speed_camera,"Sultan Thuwaini bin Said Road, Bu Khabi, Ibri Province, Ad Dhahirah Governorate, Oman",Bu Khabi,Sultan Thuwaini bin Said Road
+pt,30326,23.253802,56.424687,Ibri-Saih Al Masarrat Road,highway,secondary,"Ibri-Saih Al Masarrat Road, Hay Assa' adah, Ibri Province, Ad Dhahirah Governorate, Oman",Hay Assa' adah,Ibri-Saih Al Masarrat Road
+pt,31239,23.179921,56.721538,Sultan Thuwaini bin Said Road,highway,trunk,"Sultan Thuwaini bin Said Road, Limdaysah, لقيع, Ibri Province, Ad Dhahirah Governorate, Oman",لقيع,Sultan Thuwaini bin Said Road
+pt,31240,23.194526,56.679788,,highway,unclassified,"الجبية, Ibri Province, Ad Dhahirah Governorate, Oman",الجبية,
+pt,31804,23.314174,56.616398,,highway,residential,"Ad Dariz, Ibri Province, Ad Dhahirah Governorate, Oman",Ad Dariz,
+pt,31816,23.163424,56.745863,Sultan Thuwaini bin Said Road,highway,trunk,"Sultan Thuwaini bin Said Road, Limdaysah, لقيع, Ibri Province, Ad Dhahirah Governorate, Oman",لقيع,Sultan Thuwaini bin Said Road
+pt,31972,23.238477,56.481945,,highway,tertiary,"صناعية عبري, Al Orobah, Ibri Province, Ad Dhahirah Governorate, Oman",Al Orobah,
+pt,32059,23.24941,56.511713,,highway,tertiary,"Silmi, Ibri Province, Ad Dhahirah Governorate, Oman",Silmi,
+pt,32421,23.249497,56.513298,,highway,tertiary,"Al Ghabbi, Ibri Province, Ad Dhahirah Governorate, Oman",Al Ghabbi,
+pt,32495,23.228387,56.497303,,highway,residential,"Ibri Old village, Ibri Province, Ad Dhahirah Governorate, Oman",Ibri Old village,
+pt,32524,23.150684,56.465679,Ibri - Rub' al Khali Road,highway,trunk,"Ibri - Rub' al Khali Road, Al Mukhtobiyah, Ibri Province, Ad Dhahirah Governorate, Oman",Al Mukhtobiyah,Ibri - Rub' al Khali Road
+pt,32544,23.273962,56.384732,,amenity,parking,"Parade ground, سيح المسرات, Ibri Province, Ad Dhahirah Governorate, Oman",سيح المسرات,Parade ground
+pt,32578,23.223982,56.590514,Sultan Thuwaini bin Said Road,highway,trunk,"Sultan Thuwaini bin Said Road, AL Qurayn, Ibri Province, Ad Dhahirah Governorate, Oman",AL Qurayn,Sultan Thuwaini bin Said Road
+pt,32644,23.144359,56.474036,,highway,residential,"Tanaam, Ibri Province, Ad Dhahirah Governorate, Oman",Tanaam,
+pt,32756,23.20377,56.661178,,highway,unclassified,"الجبية, Ibri Province, Ad Dhahirah Governorate, Oman",الجبية,
+pt,32767,23.216352,56.611218,,highway,unclassified,"معيريد, Ibri Province, Ad Dhahirah Governorate, Oman",معيريد,
+pt,32855,23.22018,56.56647,,highway,residential,"الجبية, Ibri Province, Ad Dhahirah Governorate, Oman",الجبية,
+pt,32857,23.213613,56.626149,,highway,unclassified,"معيريد, Ibri Province, Ad Dhahirah Governorate, Oman",معيريد,
+pt,32864,23.207983,56.54083,,highway,residential,"AL Qurayn, Ibri Province, Ad Dhahirah Governorate, Oman",AL Qurayn,
+pt,32915,23.329369,56.613418,,highway,residential,"Ad Dariz, Ibri Province, Ad Dhahirah Governorate, Oman",Ad Dariz,
+pt,32917,23.311105,56.618593,,highway,residential,"Ad Dariz, Ibri Province, Ad Dhahirah Governorate, Oman",Ad Dariz,
+pt,33393,23.34106,56.622282,,highway,residential,"Ad Dariz, Ibri Province, Ad Dhahirah Governorate, Oman",Ad Dariz,
+pt,33741,23.212256,56.486033,Ibri police Station,amenity,police,"Ibri police Station, Sultan Thuwaini bin Said Road, Al Akhdar, Ibri Province, Ad Dhahirah Governorate, Oman",Al Akhdar,Sultan Thuwaini bin Said Road
+pt,33935,23.185559,56.475085,Ibri - Rub' al Khali Road,highway,trunk,"Ibri - Rub' al Khali Road, Mazra bin Khater, Ibri Province, Ad Dhahirah Governorate, Oman",Mazra bin Khater,Ibri - Rub' al Khali Road
+pt,33960,23.283464,56.534339,,highway,residential,"Al Ghabbi, Ibri Province, Ad Dhahirah Governorate, Oman",Al Ghabbi,
+pt,33961,23.135404,56.466874,,highway,unclassified,"Tanaam, Ibri Province, Ad Dhahirah Governorate, Oman",Tanaam,
+pt,33962,23.20137,56.472728,,highway,residential,"Hellat Al Nahadah, Ibri Province, Ad Dhahirah Governorate, Oman",Hellat Al Nahadah,
+pt,33963,23.282817,56.380926,Sultan Thuwaini bin Said Road,highway,trunk,"Sultan Thuwaini bin Said Road, Bu Khabi, Ibri Province, Ad Dhahirah Governorate, Oman",Bu Khabi,Sultan Thuwaini bin Said Road
+pt,33968,23.228914,56.433161,,highway,tertiary,"Hay Assa' adah, Ibri Province, Ad Dhahirah Governorate, Oman",Hay Assa' adah,
+pt,33969,23.133578,56.472765,,highway,residential,"Tanaam, Ibri Province, Ad Dhahirah Governorate, Oman",Tanaam,
+pt,33970,23.249177,56.570185,,highway,tertiary,"Al Ghabbi, Ibri Province, Ad Dhahirah Governorate, Oman",Al Ghabbi,

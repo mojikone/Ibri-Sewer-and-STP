@@ -108,6 +108,7 @@ Concept→detailed design + supervision of sewer network, TE network and STP cap
 | Terrain | **`Data/Terrain/Sat_0p5m/IBRI_0p5_VRT2.vrt` 0.5 m blend = authoritative (user 2026-08-18)**; DTM_terrain_mask.tif 5 m superseded (was W1–W3 source); NSA_DEM 4 m screening only; NO buildings in any DEM; "Sat_" folder name misleading — it is terrain |
 | Imagery (LOCAL ONLY, not in repo) | `Hydraulic/Imagery/`: esri_z17_mosaic_3857.tif (80 MB, full boundary, 1.19 m) + z17/z18 tile stores (6,550 + ~12,400 tiles). Esri XYZ streaming for remote QGIS |
 | Existing system | F2 PDF read-off only: NE district (Al Araqi) served, existing trunk to STP — as-builts still missing (GAP-6) |
+| Electricity accounts, CRT (2026-09-09) | The 499 CRT accounts (large consumers, tariff says nothing about use) were identified from OSM, Nominatim and Google satellite: commercial 205, government 67, education 37, religious 16, health 15, industrial 16, agricultural 28, telecom 6, **110 unresolved**; per-account USE/GUD_CAT/CONF/EVIDENCE in `W13/analysis/CRT_accounts_identified.csv`. Use it to place the CRT load on the right plots; treat the 110 as CRT_review still |
 
 ## 4. Progress stages
 | Stage | State |

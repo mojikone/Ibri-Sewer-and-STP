@@ -1,0 +1,501 @@
+fid,tariff,x,y,lon,lat,plot_name,plot_class,moh_class,build_st
+238,CRT Seasonal,56.5,23.2,56.516089,23.2169,Additional Account Tariff,Residential-Commercial,2,EXisting
+362,CRT Time of Use,56.5,23.2,56.454874,23.221065,CRT Time of Use,Residential-Commercial,2,EXisting
+363,CRT Time of Use,56.5,23.2,56.454874,23.221065,CRT Time of Use,Residential-Commercial,2,EXisting
+486,CRT Seasonal,56.5,23.2,56.514176,23.228757,Commercial,Residential-Commercial,2,EXisting
+728,CRT Seasonal,56.6,23.3,56.615369,23.317417,CRT Seasonal,Commercial,3,EXisting
+1260,CRT Seasonal,56.5,23.1,56.476833,23.147847,CRT Seasonal,Residential,99,EXisting
+1401,CRT Seasonal,56.6,23.3,56.550316,23.281995,CRT Seasonal,Residential,1,EXisting
+1402,CRT Seasonal,56.6,23.3,56.550316,23.281995,CRT Seasonal,Residential,1,EXisting
+1403,CRT Seasonal,56.6,23.3,56.550316,23.281995,CRT Seasonal,Residential,1,EXisting
+1404,CRT Seasonal,56.6,23.3,56.550316,23.281995,CRT Seasonal,Residential,1,EXisting
+1405,CRT Seasonal,56.6,23.3,56.550316,23.281995,CRT Seasonal,Residential,1,EXisting
+1406,CRT Seasonal,56.6,23.3,56.550316,23.281995,CRT Seasonal,Residential,1,EXisting
+1665,CRT Seasonal,56.5,23.2,56.516444,23.220173,Additional Account Tariff,Residential-Commercial,2,EXisting
+2000,CRT Seasonal,56.5,23.2,56.51782,23.212788,CRT Seasonal,Agricultural,4,EXisting
+2001,CRT Seasonal,56.5,23.2,56.518301,23.212689,CRT Seasonal,Agricultural,4,EXisting
+2130,CRT Seasonal,56.5,23.3,56.548071,23.278466,CRT Seasonal,Residential,99,EXisting
+2137,CRT Time of Use,56.5,23.3,56.542783,23.278802,CRT Time of Use,Agricultural,4,EXisting
+2153,CRT Seasonal,56.5,23.3,56.534175,23.272852,CRT Seasonal,Agricultural,4,EXisting
+2557,CRT Time of Use,56.6,23.3,56.552052,23.286074,CRT Time of Use,Residential,1,EXisting
+2558,CRT Time of Use,56.6,23.3,56.552052,23.286074,CRT Time of Use,Residential,1,EXisting
+2559,CRT Time of Use,56.6,23.3,56.552052,23.286074,CRT Time of Use,Residential,1,EXisting
+2560,CRT Time of Use,56.6,23.3,56.552052,23.286074,CRT Time of Use,Residential,1,EXisting
+3400,CRT Seasonal,56.5,23.3,56.544673,23.278926,CRT Seasonal,Agricultural,4,EXisting
+3465,CRT Time of Use,56.6,23.3,56.555965,23.261807,CRT Time of Use,Industrial,7,EXisting
+4018,CRT Time of Use,56.5,23.2,56.512265,23.215782,Government,Agricultural,4,EXisting
+4019,CRT Seasonal,56.5,23.2,56.512265,23.215782,Government,Agricultural,4,EXisting
+4460,CRT Seasonal,56.5,23.3,56.544245,23.278734,CRT Seasonal,Agricultural,4,EXisting
+4611,CRT Seasonal,56.5,23.2,56.514041,23.219172,CRT Seasonal,Residential,5,EXisting
+4752,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3,EXisting
+4754,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3,EXisting
+4755,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3,EXisting
+4756,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3,EXisting
+4757,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3,EXisting
+4758,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3,EXisting
+4759,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3,EXisting
+4760,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3,EXisting
+4761,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3,EXisting
+4762,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3,EXisting
+4763,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3,EXisting
+4764,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3,EXisting
+4765,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3,EXisting
+4766,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3,EXisting
+4767,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3,EXisting
+4768,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3,EXisting
+4770,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3,EXisting
+4771,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3,EXisting
+4997,CRT Seasonal,56.5,23.2,56.514014,23.217527,CRT Seasonal,Agricultural,4,EXisting
+5023,CRT Time of Use,56.5,23.2,56.511372,23.217451,Primary Account Tariff,Residential-Commercial,2,EXisting
+5025,CRT Seasonal,56.5,23.2,56.511372,23.217451,Primary Account Tariff,Residential-Commercial,2,EXisting
+5107,CRT Seasonal,56.5,23.2,56.497804,23.2408,CRT Seasonal,Residential,99,EXisting
+5547,CRT Time of Use,56.5,23.3,56.547826,23.277814,CRT Time of Use,Residential,0,EXisting
+5598,CRT Seasonal,56.5,23.2,56.50043,23.235865,Primary Account Tariff,Proposed,8,EXisting
+5599,CRT Seasonal,56.5,23.2,56.50043,23.235865,Primary Account Tariff,Proposed,8,EXisting
+5600,CRT Seasonal,56.5,23.2,56.50043,23.235865,Primary Account Tariff,Proposed,8,EXisting
+5632,CRT Seasonal,56.5,23.2,56.477011,23.214112,CRT Seasonal,Agricultural,4,EXisting
+5633,CRT Seasonal,56.5,23.2,56.477011,23.214112,CRT Seasonal,Agricultural,4,EXisting
+5634,CRT Seasonal,56.5,23.2,56.477011,23.214112,CRT Seasonal,Agricultural,4,EXisting
+5635,CRT Seasonal,56.5,23.2,56.477011,23.214112,CRT Seasonal,Agricultural,4,EXisting
+5859,CRT Seasonal,56.5,23.2,56.49799,23.240188,CRT Seasonal,Residential,0,EXisting
+5918,CRT Seasonal,56.5,23.2,56.478611,23.204681,CRT Seasonal,Agricultural,4,EXisting
+6584,CRT Seasonal,56.5,23.3,56.548523,23.277596,Additional Account Tariff,Residential-Commercial,2,EXisting
+6585,CRT Seasonal,56.5,23.3,56.548523,23.277596,Additional Account Tariff,Residential-Commercial,2,EXisting
+6586,CRT Seasonal,56.5,23.3,56.548523,23.277596,Additional Account Tariff,Residential-Commercial,2,EXisting
+6587,CRT Seasonal,56.5,23.3,56.548523,23.277596,Additional Account Tariff,Residential-Commercial,2,EXisting
+6588,CRT Seasonal,56.5,23.3,56.548523,23.277596,Additional Account Tariff,Residential-Commercial,2,EXisting
+6786,CRT Time of Use,56.6,23.3,56.554294,23.291291,CRT Time of Use,Agricultural,4,EXisting
+6787,CRT Time of Use,56.6,23.3,56.554294,23.291291,CRT Time of Use,Agricultural,4,EXisting
+6788,CRT Time of Use,56.6,23.3,56.554294,23.291291,CRT Time of Use,Agricultural,4,EXisting
+6789,CRT Time of Use,56.6,23.3,56.554294,23.291291,CRT Time of Use,Agricultural,4,EXisting
+6790,CRT Time of Use,56.6,23.3,56.554294,23.291291,CRT Time of Use,Agricultural,4,EXisting
+6791,CRT Time of Use,56.6,23.3,56.554294,23.291291,CRT Time of Use,Agricultural,4,EXisting
+6792,CRT Time of Use,56.6,23.3,56.554294,23.291291,CRT Time of Use,Agricultural,4,EXisting
+6793,CRT Time of Use,56.6,23.3,56.554294,23.291291,CRT Time of Use,Agricultural,4,EXisting
+6794,CRT Time of Use,56.6,23.3,56.554294,23.291291,CRT Time of Use,Agricultural,4,EXisting
+6896,CRT Time of Use,56.5,23.3,56.525399,23.259777,Government,Agricultural,4,EXisting
+6897,CRT Time of Use,56.5,23.3,56.525399,23.259777,Government,Agricultural,4,EXisting
+6898,CRT Time of Use,56.5,23.3,56.525399,23.259777,Government,Agricultural,4,EXisting
+6899,CRT Time of Use,56.5,23.3,56.525399,23.259777,Government,Agricultural,4,EXisting
+6901,CRT Time of Use,56.5,23.3,56.525399,23.259777,Government,Agricultural,4,EXisting
+6902,CRT Time of Use,56.5,23.3,56.525399,23.259777,Government,Agricultural,4,EXisting
+6969,CRT Seasonal,56.5,23.1,56.474698,23.143052,CRT Seasonal,Agricultural,4,EXisting
+7506,CRT Seasonal,56.6,23.3,56.560898,23.302439,CRT Seasonal,Agricultural,4,EXisting
+7730,CRT Seasonal,56.5,23.3,56.545789,23.287204,CRT Seasonal,Agricultural,4,EXisting
+7831,CRT Seasonal,56.5,23.2,56.514334,23.242372,CRT Seasonal,Residential,0,EXisting
+7832,CRT Seasonal,56.5,23.2,56.516854,23.229354,CRT Seasonal,Agricultural,4,EXisting
+7849,CRT Seasonal,56.6,23.3,56.605195,23.318452,CRT Seasonal,Residential-Commercial,2,EXisting
+8117,CRT Seasonal,56.5,23.3,56.549269,23.278973,CRT Seasonal,Residential-Commercial,2,EXisting
+8118,CRT Seasonal,56.5,23.3,56.549269,23.278973,CRT Seasonal,Residential-Commercial,2,EXisting
+8119,CRT Seasonal,56.5,23.3,56.549269,23.278973,CRT Seasonal,Residential-Commercial,2,EXisting
+8120,CRT Seasonal,56.5,23.3,56.549269,23.278973,CRT Seasonal,Residential-Commercial,2,EXisting
+8121,CRT Seasonal,56.5,23.3,56.549269,23.278973,CRT Seasonal,Residential-Commercial,2,EXisting
+8122,CRT Seasonal,56.5,23.3,56.549269,23.278973,CRT Seasonal,Residential-Commercial,2,EXisting
+8123,CRT Seasonal,56.5,23.3,56.549269,23.278973,CRT Seasonal,Residential-Commercial,2,EXisting
+8221,CRT Seasonal,56.6,23.3,56.611168,23.323851,Commercial,Agricultural,4,EXisting
+8437,CRT Seasonal,56.5,23.2,56.511491,23.240766,CRT Seasonal,Agricultural,4,EXisting
+8443,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0,EXisting
+8444,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0,EXisting
+8445,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0,EXisting
+8446,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0,EXisting
+8447,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0,EXisting
+8448,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0,EXisting
+8449,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0,EXisting
+8450,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0,EXisting
+8451,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0,EXisting
+8452,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0,EXisting
+8453,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0,EXisting
+8494,CRT Seasonal,56.6,23.3,56.550479,23.282436,Primary Account Tariff,Residential,0,EXisting
+8495,CRT Seasonal,56.6,23.3,56.550479,23.282436,Primary Account Tariff,Residential,0,EXisting
+8496,CRT Seasonal,56.6,23.3,56.550479,23.282436,Primary Account Tariff,Residential,0,EXisting
+8499,CRT Time of Use,56.6,23.3,56.550479,23.282436,Primary Account Tariff,Residential,0,EXisting
+8501,CRT Seasonal,56.6,23.3,56.550479,23.282436,Primary Account Tariff,Residential,0,EXisting
+8508,CRT Seasonal,56.6,23.3,56.550479,23.282436,Primary Account Tariff,Residential,0,EXisting
+8705,CRT Seasonal,56.6,23.3,56.55328,23.278593,CRT Seasonal,Residential,5,EXisting
+8706,CRT Seasonal,56.6,23.3,56.55328,23.278593,CRT Seasonal,Residential,5,EXisting
+8707,CRT Seasonal,56.6,23.3,56.55328,23.278593,CRT Seasonal,Residential,5,EXisting
+8712,CRT Seasonal,56.6,23.3,56.55328,23.278593,CRT Seasonal,Residential,5,EXisting
+8713,CRT Seasonal,56.6,23.3,56.55328,23.278593,CRT Seasonal,Residential,5,EXisting
+8759,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0,EXisting
+8760,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0,EXisting
+8761,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0,EXisting
+8762,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0,EXisting
+8763,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0,EXisting
+8764,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0,EXisting
+8765,CRT Seasonal,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0,EXisting
+8766,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0,EXisting
+8767,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0,EXisting
+8768,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0,EXisting
+8769,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0,EXisting
+8770,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0,EXisting
+8771,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0,EXisting
+8772,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0,EXisting
+8773,CRT Time of Use,56.5,23.3,56.543205,23.273795,Government,Residential,1,EXisting
+8774,CRT Seasonal,56.5,23.3,56.543205,23.273795,Government,Residential,1,EXisting
+8872,CRT Time of Use,56.6,23.3,56.558695,23.297401,CRT Time of Use,Agricultural,4,EXisting
+9093,CRT Seasonal,56.4,23.2,56.418773,23.246161,CRT Seasonal,Agricultural,4,EXisting
+9094,CRT Time of Use,56.4,23.2,56.418773,23.246161,CRT Seasonal,Agricultural,4,EXisting
+9114,CRT Time of Use,56.5,23.2,56.454892,23.22112,CRT Time of Use,Residential-Commercial,2,EXisting
+9115,CRT Time of Use,56.5,23.2,56.454892,23.22112,CRT Time of Use,Residential-Commercial,2,EXisting
+9116,CRT Time of Use,56.5,23.2,56.454892,23.22112,CRT Time of Use,Residential-Commercial,2,EXisting
+9117,CRT Time of Use,56.5,23.2,56.454892,23.22112,CRT Time of Use,Residential-Commercial,2,EXisting
+9118,CRT Time of Use,56.5,23.2,56.454892,23.22112,CRT Time of Use,Residential-Commercial,2,EXisting
+9230,CRT Seasonal,56.5,23.2,56.495041,23.216813,CRT Seasonal,Residential,0,EXisting
+9286,CRT Time of Use,56.5,23.2,56.48747,23.217121,CRT Time of Use,Residential,0,EXisting
+9309,CRT Seasonal,56.5,23.2,56.491746,23.217225,CRT Seasonal,Residential-Commercial,2,EXisting
+9311,CRT Time of Use,56.5,23.2,56.49034,23.217784,CRT Time of Use,Residential-Commercial,2,EXisting
+9389,CRT Time of Use,56.4,23.2,56.44256,23.224416,Commercial,Residential,0,EXisting
+9778,CRT Seasonal,56.5,23.2,56.458512,23.216572,CRT Seasonal,Residential,0,EXisting
+9779,CRT Seasonal,56.5,23.2,56.458512,23.216572,CRT Seasonal,Residential,0,EXisting
+9780,CRT Seasonal,56.5,23.2,56.458512,23.216572,CRT Seasonal,Residential,0,EXisting
+9781,CRT Seasonal,56.5,23.2,56.458512,23.216572,CRT Seasonal,Residential,0,EXisting
+9782,CRT Seasonal,56.5,23.2,56.458512,23.216572,CRT Seasonal,Residential,0,EXisting
+9783,CRT Seasonal,56.5,23.2,56.458512,23.216572,CRT Seasonal,Residential,0,EXisting
+9784,CRT Seasonal,56.5,23.2,56.458512,23.216572,CRT Seasonal,Residential,0,EXisting
+9785,CRT Seasonal,56.5,23.2,56.458512,23.216572,CRT Seasonal,Residential,0,EXisting
+9786,CRT Seasonal,56.5,23.2,56.458512,23.216572,CRT Seasonal,Residential,0,EXisting
+9787,CRT Seasonal,56.5,23.2,56.45849,23.216694,CRT Seasonal,Residential,0,EXisting
+9788,CRT Seasonal,56.5,23.2,56.45849,23.216694,CRT Seasonal,Residential,0,EXisting
+9790,CRT Seasonal,56.4,23.2,56.446459,23.221626,CRT Seasonal,Residential,0,EXisting
+10080,CRT Time of Use,56.5,23.2,56.487773,23.21571,Commercial,Residential-Commercial,2,EXisting
+10214,CRT Seasonal,56.5,23.2,56.497205,23.217314,Primary Account Tariff,Residential,0,EXisting
+10215,CRT Seasonal,56.5,23.2,56.497205,23.217314,Primary Account Tariff,Residential,0,EXisting
+10216,CRT Seasonal,56.5,23.2,56.497205,23.217314,Primary Account Tariff,Residential,0,EXisting
+10217,CRT Seasonal,56.5,23.2,56.497205,23.217314,Primary Account Tariff,Residential,0,EXisting
+10218,CRT Seasonal,56.5,23.2,56.497205,23.217314,Primary Account Tariff,Residential,0,EXisting
+10219,CRT Seasonal,56.5,23.2,56.497205,23.217314,Primary Account Tariff,Residential,0,EXisting
+10222,CRT Seasonal,56.5,23.2,56.497205,23.217314,Primary Account Tariff,Residential,0,EXisting
+10296,CRT Seasonal,56.5,23.2,56.494515,23.216746,CRT Seasonal,Residential,0,EXisting
+10501,CRT Seasonal,56.5,23.3,56.499849,23.258018,CRT Seasonal,Residential,0,EXisting
+10715,CRT Seasonal,56.6,23.3,56.556799,23.250585,CRT Seasonal,Commercial,3,EXisting
+10718,CRT Seasonal,56.6,23.3,56.556799,23.250585,CRT Seasonal,Commercial,3,EXisting
+10722,CRT Seasonal,56.6,23.3,56.556799,23.250585,CRT Seasonal,Commercial,3,EXisting
+10724,CRT Seasonal,56.6,23.3,56.556799,23.250585,CRT Seasonal,Commercial,3,EXisting
+10725,CRT Seasonal,56.6,23.3,56.556799,23.250585,CRT Seasonal,Commercial,3,EXisting
+10780,CRT Seasonal,56.5,23.2,56.50032,23.218979,Commercial,Residential,99,EXisting
+10848,CRT Seasonal,56.5,23.2,56.498186,23.2174,Additional Account Tariff,Residential,0,EXisting
+10987,CRT Seasonal,56.6,23.3,56.612464,23.321579,Commercial,Residential-Commercial,2,EXisting
+10990,CRT Seasonal,56.6,23.3,56.612464,23.321579,Commercial,Residential-Commercial,2,EXisting
+11127,CRT Seasonal,56.6,23.3,56.609308,23.319044,Commercial,Residential,5,EXisting
+11475,CRT Seasonal,56.5,23.2,56.488368,23.197366,Commercial,Residential,1,EXisting
+11658,CRT Seasonal,56.5,23.3,56.499016,23.255389,Primary Account Tariff (with National Subsidy),Residential,99,EXisting
+11676,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0,EXisting
+11677,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0,EXisting
+11678,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0,EXisting
+11679,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0,EXisting
+11680,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0,EXisting
+11681,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0,EXisting
+11682,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0,EXisting
+11683,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0,EXisting
+11684,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0,EXisting
+11685,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0,EXisting
+11686,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0,EXisting
+11687,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0,EXisting
+11688,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0,EXisting
+11689,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0,EXisting
+11721,CRT Time of Use,56.5,23.2,56.485712,23.214292,CRT Time of Use,Residential,0,EXisting
+11722,CRT Time of Use,56.5,23.2,56.485712,23.214292,CRT Time of Use,Residential,0,EXisting
+11723,CRT Time of Use,56.5,23.2,56.485712,23.214292,CRT Time of Use,Residential,0,EXisting
+11724,CRT Time of Use,56.5,23.2,56.485712,23.214292,CRT Time of Use,Residential,0,EXisting
+11725,CRT Time of Use,56.5,23.2,56.485712,23.214292,CRT Time of Use,Residential,0,EXisting
+11726,CRT Time of Use,56.5,23.2,56.485712,23.214292,CRT Time of Use,Residential,0,EXisting
+11727,CRT Time of Use,56.5,23.2,56.485712,23.214292,CRT Time of Use,Residential,0,EXisting
+11728,CRT Time of Use,56.5,23.2,56.485712,23.214292,CRT Time of Use,Residential,0,EXisting
+11828,CRT Time of Use,56.5,23.2,56.472184,23.216657,Commercial,Residential-Commercial,2,EXisting
+11992,CRT Seasonal,56.5,23.2,56.469835,23.216765,CRT Seasonal,Residential-Commercial,2,EXisting
+11993,CRT Seasonal,56.5,23.2,56.469835,23.216765,CRT Seasonal,Residential-Commercial,2,EXisting
+11994,CRT Seasonal,56.5,23.2,56.469835,23.216765,CRT Seasonal,Residential-Commercial,2,EXisting
+11998,CRT Seasonal,56.5,23.2,56.469835,23.216765,CRT Seasonal,Residential-Commercial,2,EXisting
+11999,CRT Seasonal,56.5,23.2,56.469835,23.216765,CRT Seasonal,Residential-Commercial,2,EXisting
+12038,CRT Seasonal,56.5,23.2,56.486851,23.217098,Commercial,Residential,0,EXisting
+12734,CRT Seasonal,56.5,23.2,56.484712,23.218928,CRT Seasonal,Residential,5,EXisting
+12966,CRT Seasonal,56.5,23.2,56.472914,23.162785,CRT Seasonal,Agricultural,4,EXisting
+13030,CRT Time of Use,56.5,23.2,56.468894,23.161742,Commercial,Industrial,7,EXisting
+13476,CRT Seasonal,56.5,23.2,56.4687,23.224243,CRT Seasonal,Residential,0,EXisting
+13477,CRT Seasonal,56.5,23.2,56.468669,23.224283,CRT Seasonal,Residential,0,EXisting
+13512,CRT Fixed Rate,56.5,23.2,56.511372,23.24143,CRT Seasonal,Agricultural,4,EXisting
+13715,CRT Seasonal,56.5,23.2,56.467135,23.15895,CRT Seasonal,Industrial,7,EXisting
+13757,CRT Seasonal,56.5,23.2,56.468181,23.16501,CRT Seasonal,Industrial,7,EXisting
+13795,CRT Seasonal,56.5,23.2,56.4654,23.158477,CRT Seasonal,Residential,0,EXisting
+13804,CRT Seasonal,56.5,23.2,56.46918,23.162329,CRT Seasonal,Industrial,7,EXisting
+13966,CRT Seasonal,56.5,23.2,56.492231,23.22095,CRT Seasonal,Residential,0,EXisting
+13969,CRT Seasonal,56.5,23.2,56.492231,23.22095,CRT Seasonal,Residential,0,EXisting
+13970,CRT Seasonal,56.5,23.2,56.492231,23.22095,CRT Seasonal,Residential,0,EXisting
+14007,CRT Seasonal,56.5,23.2,56.492231,23.22095,CRT Seasonal,Residential,0,EXisting
+14011,CRT Seasonal,56.5,23.2,56.492231,23.22095,CRT Seasonal,Residential,0,EXisting
+14072,CRT Seasonal,56.7,23.3,56.738873,23.26494,CRT Seasonal,Residential,0,EXisting
+14181,CRT Seasonal,56.5,23.2,56.498586,23.234862,Commercial,Residential,99,EXisting
+14272,CRT Seasonal,56.5,23.2,56.471102,23.169561,CRT Seasonal,Residential,0,EXisting
+14275,CRT Seasonal,56.5,23.2,56.471102,23.169561,CRT Seasonal,Residential,0,EXisting
+14276,CRT Seasonal,56.5,23.2,56.471102,23.169561,CRT Seasonal,Residential,0,EXisting
+14279,CRT Seasonal,56.5,23.2,56.471102,23.169561,CRT Seasonal,Residential,0,EXisting
+14283,CRT Seasonal,56.5,23.2,56.471102,23.169561,CRT Seasonal,Residential,0,EXisting
+14722,CRT Time of Use,56.5,23.2,56.464283,23.160194,CRT Time of Use,Industrial,7,EXisting
+14842,CRT Seasonal,56.4,23.2,56.413027,23.249698,CRT Seasonal,Residential-Commercial,2,EXisting
+14843,CRT Seasonal,56.4,23.2,56.413027,23.249698,CRT Seasonal,Residential-Commercial,2,EXisting
+15033,CRT Time of Use,56.5,23.2,56.488405,23.207842,Commercial,Residential,1,EXisting
+15036,CRT Seasonal,56.5,23.2,56.488405,23.207842,Commercial,Residential,1,EXisting
+15248,CRT Seasonal,56.6,23.2,56.597726,23.221075,CRT Seasonal,Residential,0,EXisting
+15787,CRT Seasonal,56.5,23.2,56.49778,23.234803,CRT Seasonal,Residential,99,EXisting
+16022,CRT Seasonal,56.5,23.2,56.495964,23.233307,Primary Account Tariff,Residential-Commercial,2,EXisting
+16334,CRT Seasonal,56.5,23.2,56.464519,23.160463,CRT Time of Use,Industrial,7,EXisting
+16335,CRT Seasonal,56.5,23.2,56.464519,23.160463,CRT Time of Use,Industrial,7,EXisting
+16354,CRT Seasonal,56.4,23.2,56.446261,23.223774,CRT Seasonal,Residential,5,EXisting
+16525,CRT Seasonal,56.5,23.2,56.493465,23.235349,CRT Seasonal,Residential,1,EXisting
+16526,CRT Seasonal,56.5,23.2,56.493465,23.235349,CRT Seasonal,Residential,1,EXisting
+16527,CRT Seasonal,56.5,23.2,56.493465,23.235349,CRT Seasonal,Residential,1,EXisting
+16528,CRT Seasonal,56.5,23.2,56.493465,23.235349,CRT Seasonal,Residential,1,EXisting
+16529,CRT Seasonal,56.5,23.2,56.493465,23.235349,CRT Seasonal,Residential,1,EXisting
+16530,CRT Seasonal,56.5,23.2,56.493465,23.235349,CRT Seasonal,Residential,1,EXisting
+16531,CRT Seasonal,56.5,23.2,56.493465,23.235349,CRT Seasonal,Residential,1,EXisting
+17152,CRT Seasonal,56.7,23.3,56.724228,23.274439,CRT Seasonal,Agricultural,4,EXisting
+17392,CRT Seasonal,56.5,23.2,56.49409,23.235565,CRT Seasonal,Residential,1,EXisting
+17394,CRT Time of Use,56.5,23.2,56.494114,23.237998,CRT Time of Use,Residential,99,EXisting
+17395,CRT Seasonal,56.5,23.2,56.494114,23.237998,CRT Time of Use,Residential,99,EXisting
+17506,CRT Seasonal,56.5,23.2,56.479823,23.207942,CRT Seasonal,Agricultural,4,EXisting
+17653,CRT Seasonal,56.5,23.2,56.495873,23.227175,CRT Seasonal,Agricultural,4,EXisting
+17674,CRT Seasonal,56.7,23.2,56.66358,23.20386,CRT Seasonal,Residential,0,EXisting
+17729,CRT Seasonal,56.5,23.2,56.52368,23.23111,Commercial,Residential,99,EXisting
+17754,CRT Seasonal,56.5,23.2,56.519392,23.24124,Government,Residential,0,EXisting
+17889,CRT Fixed Rate,56.5,23.3,56.488632,23.251959,Government,Agricultural,4,EXisting
+17890,CRT Fixed Rate,56.5,23.3,56.488632,23.251959,Government,Agricultural,4,EXisting
+18347,CRT Seasonal,56.5,23.2,56.514091,23.23913,CRT Seasonal,Residential-Commercial,2,EXisting
+18348,CRT Seasonal,56.5,23.2,56.514091,23.23913,CRT Seasonal,Residential-Commercial,2,EXisting
+18349,CRT Seasonal,56.5,23.2,56.514091,23.23913,CRT Seasonal,Residential-Commercial,2,EXisting
+18350,CRT Seasonal,56.5,23.2,56.514091,23.23913,CRT Seasonal,Residential-Commercial,2,EXisting
+18351,CRT Seasonal,56.5,23.2,56.514091,23.23913,CRT Seasonal,Residential-Commercial,2,EXisting
+18352,CRT Seasonal,56.5,23.2,56.514091,23.23913,CRT Seasonal,Residential-Commercial,2,EXisting
+18353,CRT Seasonal,56.5,23.2,56.514091,23.23913,CRT Seasonal,Residential-Commercial,2,EXisting
+18354,CRT Seasonal,56.5,23.2,56.514091,23.23913,CRT Seasonal,Residential-Commercial,2,EXisting
+18355,CRT Seasonal,56.5,23.2,56.514091,23.23913,CRT Seasonal,Residential-Commercial,2,EXisting
+18491,CRT Time of Use,56.5,23.2,56.513875,23.241166,Government,Residential,0,EXisting
+18748,CRT Seasonal,56.5,23.2,56.519085,23.240547,CRT Seasonal,Residential,0,EXisting
+18987,CRT Seasonal,56.7,23.3,56.680679,23.29417,Commercial,Residential,1,EXisting
+18989,CRT Seasonal,56.7,23.3,56.680679,23.29417,Commercial,Residential,1,EXisting
+19215,CRT Seasonal,56.5,23.2,56.483494,23.236524,CRT Seasonal,Residential,1,EXisting
+19427,CRT Time of Use,56.5,23.2,56.493384,23.237839,Commercial,Residential,0,EXisting
+19861,CRT Seasonal,56.6,23.3,56.615681,23.319839,CRT Seasonal,Residential,0,EXisting
+20519,CRT Seasonal,56.5,23.2,56.516351,23.222144,Primary Account Tariff (with National Subsidy),Residential-Commercial,2,EXisting
+20644,CRT Seasonal,56.5,23.2,56.464688,23.160727,CRT Seasonal,Industrial,7,EXisting
+20718,CRT Seasonal,56.6,23.3,56.611502,23.32053,Additional Account Tariff,Residential-Commercial,2,EXisting
+22050,CRT Seasonal,56.5,23.2,56.458526,23.217212,CRT Seasonal,Residential,0,EXisting
+22214,CRT Time of Use,56.4,23.3,56.368993,23.283684,CRT Time of Use,Agricultural,4,EXisting
+22215,CRT Seasonal,56.4,23.3,56.368993,23.283684,CRT Time of Use,Agricultural,4,EXisting
+22216,CRT Seasonal,56.4,23.3,56.368993,23.283684,CRT Time of Use,Agricultural,4,EXisting
+22217,CRT Time of Use,56.4,23.3,56.368993,23.283684,CRT Time of Use,Agricultural,4,EXisting
+22218,CRT Seasonal,56.4,23.3,56.368993,23.283684,CRT Time of Use,Agricultural,4,EXisting
+22219,CRT Time of Use,56.4,23.3,56.368993,23.283684,CRT Time of Use,Agricultural,4,EXisting
+22220,CRT Seasonal,56.4,23.3,56.368993,23.283684,CRT Time of Use,Agricultural,4,EXisting
+22221,CRT Seasonal,56.4,23.3,56.368993,23.283684,CRT Time of Use,Agricultural,4,EXisting
+22260,CRT Seasonal,56.4,23.3,56.383154,23.275625,CRT Seasonal,Residential,0,EXisting
+22365,CRT Time of Use,56.5,23.2,56.49229,23.220108,Additional Account Tariff,Residential,0,EXisting
+22436,CRT Seasonal,56.5,23.2,56.517806,23.21539,Additional Account Tariff,Residential,1,EXisting
+22635,CRT Time of Use,56.5,23.2,56.513383,23.205234,Commercial,Residential,5,EXisting
+22668,CRT Seasonal,56.5,23.2,56.511162,23.208949,CRT Seasonal,Residential,0,EXisting
+22718,CRT Time of Use,56.5,23.2,56.493697,23.216387,Commercial,Residential,0,EXisting
+22719,CRT Time of Use,56.5,23.2,56.493697,23.216387,Commercial,Residential,0,EXisting
+22736,CRT Seasonal,56.5,23.2,56.469071,23.216793,Commercial,Residential-Commercial,2,EXisting
+22737,CRT Seasonal,56.5,23.2,56.469071,23.216793,Commercial,Residential-Commercial,2,EXisting
+22738,CRT Seasonal,56.5,23.2,56.469071,23.216793,Commercial,Residential-Commercial,2,EXisting
+22740,CRT Seasonal,56.5,23.2,56.469071,23.216793,Commercial,Residential-Commercial,2,EXisting
+22895,CRT Seasonal,56.5,23.2,56.50009,23.23742,CRT Seasonal,Residential,0,EXisting
+22903,CRT Seasonal,56.4,23.3,56.377092,23.275099,CRT Seasonal,Residential,0,EXisting
+22977,CRT Seasonal,56.5,23.2,56.472937,23.162809,CRT Seasonal,Agricultural,4,EXisting
+22981,CRT Seasonal,56.5,23.2,56.495433,23.227712,CRT Seasonal,Residential,5,EXisting
+22982,CRT Seasonal,56.8,23.3,56.753223,23.255133,CRT Seasonal,Agricultural,4,EXisting
+22995,CRT Time of Use,56.5,23.2,56.466715,23.198915,Commercial,Residential,1,EXisting
+23023,CRT Seasonal,56.5,23.2,56.458481,23.216264,CRT Seasonal,Residential,0,EXisting
+23024,CRT Seasonal,56.5,23.2,56.458481,23.216264,CRT Seasonal,Residential,0,EXisting
+23039,CRT Seasonal,56.4,23.3,56.388551,23.272447,CRT Seasonal,Residential,0,EXisting
+23085,CRT Seasonal,56.6,23.3,56.616719,23.318665,CRT Seasonal,Residential,0,EXisting
+23097,CRT Seasonal,56.6,23.3,56.608361,23.32007,CRT Seasonal,Agricultural,4,EXisting
+23098,CRT Seasonal,56.6,23.3,56.552877,23.29049,CRT Time of Use,Agricultural,4,EXisting
+23108,CRT Seasonal,56.5,23.2,56.518929,23.238715,CRT Seasonal,Residential,0,EXisting
+23232,CRT Seasonal,56.5,23.2,56.467967,23.164503,CRT Seasonal,Industrial,7,EXisting
+23398,CRT Seasonal,56.5,23.2,56.458439,23.21709,CRT Seasonal,Residential,0,EXisting
+23400,CRT Seasonal,56.5,23.2,56.459445,23.217235,CRT Seasonal,Residential,0,EXisting
+23401,CRT Seasonal,56.5,23.2,56.459873,23.217362,CRT Seasonal,Residential,0,EXisting
+23523,CRT Time of Use,56.5,23.2,56.492982,23.221479,Additional Account Tariff,Residential,0,EXisting
+23525,CRT Time of Use,56.5,23.2,56.504815,23.231795,CRT Time of Use,Residential,99,EXisting
+23526,CRT Time of Use,56.5,23.2,56.504815,23.231795,CRT Time of Use,Residential,99,EXisting
+23527,CRT Time of Use,56.5,23.2,56.504815,23.231795,CRT Time of Use,Residential,99,EXisting
+23528,CRT Time of Use,56.5,23.2,56.504815,23.231795,CRT Time of Use,Residential,99,EXisting
+23636,CRT Time of Use,56.5,23.2,56.513384,23.205287,Commercial,Residential,5,EXisting
+23665,CRT Seasonal,56.5,23.2,56.513385,23.205263,Commercial,Residential,5,EXisting
+23745,CRT Time of Use,56.5,23.2,56.513571,23.249843,Primary Account Tariff,Residential,0,EXisting
+23750,CRT Seasonal,56.5,23.2,56.500412,23.237943,CRT Seasonal,Residential,0,EXisting
+23758,CRT Fixed Rate,56.5,23.2,56.529417,23.231303,CRT Fixed Rate,Residential,99,EXisting
+23869,CRT Seasonal,56.5,23.3,56.484477,23.258143,CRT Seasonal,Agricultural,4,EXisting
+23998,CRT Time of Use,56.5,23.2,56.466708,23.198971,Commercial,Residential,1,EXisting
+24523,CRT Seasonal,56.6,23.2,56.576373,23.229119,Commercial,Agricultural,4,EXisting
+24577,CRT Seasonal,56.7,23.2,56.653115,23.210956,CRT Seasonal,Residential,0,EXisting
+24609,CRT Seasonal,56.7,23.2,56.721178,23.1699,Government,Residential,5,EXisting
+24699,CRT Fixed Rate,56.5,23.2,56.487219,23.208072,Commercial,Residential,0,EXisting
+24756,CRT Seasonal,56.5,23.2,56.487255,23.208178,Primary Account Tariff,Residential,0,EXisting
+25123,CRT Seasonal,56.5,23.3,56.549865,23.283223,Commercial,Residential,1,EXisting
+25795,CRT Seasonal,56.5,23.2,56.481856,23.217068,Primary Account Tariff,Residential-Commercial,2,EXisting
+25920,CRT Seasonal,56.5,23.2,56.466807,23.159573,CRT Seasonal,Industrial,7,EXisting
+26046,CRT Seasonal,56.5,23.2,56.526432,23.213447,CRT Seasonal,Residential,0,EXisting
+26076,CRT Seasonal,56.5,23.2,56.478243,23.215876,Commercial,Residential,0,EXisting
+26077,CRT Seasonal,56.5,23.2,56.478243,23.215876,Commercial,Residential,0,EXisting
+26387,CRT Seasonal,56.5,23.2,56.495624,23.220789,Primary Account Tariff,Residential,0,EXisting
+26616,CRT Seasonal,56.5,23.2,56.484802,23.217651,CRT Seasonal,Residential,0,EXisting
+26748,CRT Time of Use,56.5,23.2,56.494991,23.223387,Commercial,Residential,99,EXisting
+27008,CRT Time of Use,56.6,23.3,56.555874,23.261862,CRT Time of Use,Industrial,7,EXisting
+27119,CRT Seasonal,56.5,23.2,56.519033,23.240575,CRT Seasonal,Residential,0,EXisting
+27274,CRT Seasonal,56.5,23.2,56.519857,23.212888,Additional Account Tariff,Residential,1,EXisting
+27276,CRT Seasonal,56.5,23.2,56.519857,23.212888,Additional Account Tariff,Residential,1,EXisting
+27278,CRT Seasonal,56.5,23.2,56.519857,23.212888,Additional Account Tariff,Residential,1,EXisting
+27279,CRT Seasonal,56.5,23.2,56.519857,23.212888,Additional Account Tariff,Residential,1,EXisting
+27281,CRT Seasonal,56.5,23.2,56.519857,23.212888,Additional Account Tariff,Residential,1,EXisting
+27465,CRT Seasonal,56.5,23.2,56.521098,23.211096,CRT Seasonal,Agricultural,4,EXisting
+27811,CRT Seasonal,56.5,23.2,56.513388,23.205307,Commercial,Residential,5,EXisting
+27927,CRT Time of Use,56.4,23.2,56.42917,23.227666,Commercial,Agricultural,4,EXisting
+27928,CRT Time of Use,56.4,23.3,56.376367,23.281234,CRT Time of Use,Residential,0,EXisting
+27929,CRT Time of Use,56.4,23.3,56.376367,23.281234,CRT Time of Use,Residential,0,EXisting
+27930,CRT Time of Use,56.4,23.3,56.376367,23.281234,CRT Time of Use,Residential,0,EXisting
+27931,CRT Time of Use,56.4,23.3,56.376367,23.281234,CRT Time of Use,Residential,0,EXisting
+27932,CRT Time of Use,56.4,23.3,56.376367,23.281234,CRT Time of Use,Residential,0,EXisting
+27933,CRT Time of Use,56.4,23.3,56.376367,23.281234,CRT Time of Use,Residential,0,EXisting
+27934,CRT Time of Use,56.4,23.3,56.376367,23.281234,CRT Time of Use,Residential,0,EXisting
+27935,CRT Time of Use,56.4,23.3,56.376367,23.281234,CRT Time of Use,Residential,0,EXisting
+27936,CRT Time of Use,56.4,23.3,56.376367,23.281234,CRT Time of Use,Residential,0,EXisting
+27937,CRT Time of Use,56.4,23.3,56.38004,23.272361,CRT Seasonal,Residential,0,EXisting
+27938,CRT Time of Use,56.4,23.3,56.38004,23.272361,CRT Seasonal,Residential,0,EXisting
+27939,CRT Time of Use,56.4,23.3,56.38004,23.272361,CRT Seasonal,Residential,0,EXisting
+27940,CRT Time of Use,56.4,23.3,56.383117,23.275622,CRT Seasonal,Residential,0,EXisting
+27941,CRT Time of Use,56.4,23.3,56.383117,23.275622,CRT Seasonal,Residential,0,EXisting
+27942,CRT Time of Use,56.4,23.3,56.383117,23.275622,CRT Seasonal,Residential,0,EXisting
+27943,CRT Time of Use,56.4,23.3,56.383117,23.275622,CRT Seasonal,Residential,0,EXisting
+27944,CRT Time of Use,56.4,23.3,56.378681,23.272788,CRT Seasonal,Residential,0,EXisting
+27945,CRT Time of Use,56.4,23.3,56.378681,23.272788,CRT Seasonal,Residential,0,EXisting
+27946,CRT Time of Use,56.4,23.3,56.37711,23.275114,CRT Seasonal,Residential,0,EXisting
+27947,CRT Time of Use,56.5,23.2,56.456641,23.219102,CRT Time of Use,Residential-Commercial,2,EXisting
+27948,CRT Time of Use,56.5,23.2,56.495054,23.218071,Commercial,Residential,99,EXisting
+27950,CRT Seasonal,56.4,23.2,56.445442,23.224925,Commercial,Residential,5,EXisting
+27951,CRT Time of Use,56.5,23.2,56.455088,23.222072,CRT Time of Use,Residential-Commercial,2,EXisting
+27952,CRT Time of Use,56.5,23.2,56.455055,23.222034,CRT Time of Use,Residential-Commercial,2,EXisting
+27953,CRT Time of Use,56.5,23.2,56.49578,23.225486,CRT Time of Use,Residential,99,EXisting
+27954,CRT Time of Use,56.5,23.2,56.485362,23.218513,Primary Account Tariff,Residential,1,EXisting
+27955,CRT Time of Use,56.5,23.2,56.515309,23.231911,Government,Agricultural,4,EXisting
+27956,CRT Time of Use,56.5,23.2,56.496835,23.233947,Commercial,Residential,99,EXisting
+27957,CRT Time of Use,56.4,23.2,56.426098,23.230933,Government,Residential,99,EXisting
+27958,CRT Time of Use,56.4,23.2,56.426181,23.231045,Government,Residential,99,EXisting
+27959,CRT Time of Use,56.4,23.2,56.426303,23.231182,Government,Residential,99,EXisting
+27960,CRT Time of Use,56.4,23.2,56.426223,23.231088,Government,Residential,99,EXisting
+27961,CRT Time of Use,56.4,23.2,56.426262,23.231141,Government,Residential,99,EXisting
+27962,CRT Time of Use,56.5,23.2,56.454179,23.219533,CRT Time of Use,Residential-Commercial,2,EXisting
+27963,CRT Time of Use,56.5,23.2,56.458492,23.218863,Commercial,Agricultural,4,EXisting
+27964,CRT Time of Use,56.5,23.2,56.45416,23.21955,CRT Time of Use,Residential-Commercial,2,EXisting
+27965,CRT Time of Use,56.5,23.2,56.454869,23.221899,CRT Time of Use,Residential-Commercial,2,EXisting
+27966,CRT Time of Use,56.5,23.2,56.454902,23.221894,CRT Time of Use,Residential-Commercial,2,EXisting
+27967,CRT Fixed Rate,56.5,23.3,56.521828,23.258943,Government,Commercial,3,EXisting
+27968,CRT Fixed Rate,56.5,23.3,56.521828,23.258943,Government,Commercial,3,EXisting
+27969,CRT Fixed Rate,56.5,23.3,56.521828,23.258943,Government,Commercial,3,EXisting
+27970,CRT Fixed Rate,56.5,23.3,56.521828,23.258943,Government,Commercial,3,EXisting
+27971,CRT Time of Use,56.5,23.2,56.458451,23.218902,Commercial,Agricultural,4,EXisting
+27972,CRT Time of Use,56.5,23.2,56.488721,23.214578,Commercial,Residential,1,EXisting
+27973,CRT Time of Use,56.5,23.2,56.502097,23.219311,Commercial,Residential-Commercial,2,EXisting
+27974,CRT Time of Use,56.5,23.2,56.502179,23.219306,Commercial,Residential-Commercial,2,EXisting
+27975,CRT Time of Use,56.5,23.2,56.502345,23.218806,Commercial,Residential-Commercial,2,EXisting
+27976,CRT Time of Use,56.5,23.2,56.502356,23.218837,Commercial,Residential-Commercial,2,EXisting
+27977,CRT Time of Use,56.4,23.2,56.426142,23.230995,Government,Residential,99,EXisting
+27978,CRT Time of Use,56.5,23.2,56.45745,23.219034,CRT Time of Use,Agricultural,4,EXisting
+27979,CRT Time of Use,56.4,23.2,56.447115,23.220633,CRT Time of Use,Residential,0,EXisting
+27980,CRT Time of Use,56.4,23.2,56.421335,23.242747,Commercial,Residential,0,EXisting
+27981,CRT Time of Use,56.4,23.2,56.421316,23.242734,Commercial,Residential,0,EXisting
+27982,CRT Time of Use,56.4,23.2,56.421307,23.245307,Commercial,Residential,0,EXisting
+27983,CRT Time of Use,56.4,23.2,56.421307,23.245307,Commercial,Residential,0,EXisting
+27984,CRT Time of Use,56.4,23.2,56.421298,23.242723,Commercial,Residential,0,EXisting
+27985,CRT Time of Use,56.4,23.2,56.421278,23.242713,Commercial,Residential,0,EXisting
+27986,CRT Time of Use,56.4,23.2,56.421257,23.2427,Commercial,Residential,0,EXisting
+27987,CRT Time of Use,56.5,23.2,56.465937,23.159445,CRT Time of Use,Industrial,7,EXisting
+27988,CRT Time of Use,56.5,23.3,56.53875,23.267538,Commercial,Residential-Commercial,2,EXisting
+27989,CRT Time of Use,56.5,23.3,56.538718,23.267576,Commercial,Residential-Commercial,2,EXisting
+27990,CRT Time of Use,56.5,23.2,56.489183,23.217861,CRT Time of Use,Residential,0,EXisting
+27991,CRT Seasonal,56.5,23.2,56.48042,23.217792,CRT Seasonal,Residential-Commercial,2,EXisting
+27992,CRT Time of Use,56.5,23.2,56.48917,23.217861,CRT Time of Use,Residential,0,EXisting
+27993,CRT Time of Use,56.5,23.2,56.481895,23.217102,Primary Account Tariff,Residential-Commercial,2,EXisting
+27994,CRT Time of Use,56.7,23.2,56.704531,23.18571,CRT Time of Use,Residential,0,EXisting
+27995,CRT Time of Use,56.5,23.2,56.48201,23.217419,CRT Time of Use,Residential-Commercial,2,EXisting
+27996,CRT Time of Use,56.5,23.2,56.458557,23.216455,CRT Seasonal,Residential,0,EXisting
+27997,CRT Seasonal,56.5,23.2,56.458458,23.216326,CRT Seasonal,Residential,0,EXisting
+28340,CRT Seasonal,56.5,23.2,56.513052,23.21727,Additional Account Tariff,Residential-Commercial,2,EXisting
+29006,CRT Time of Use,56.5,23.3,56.53198,23.264294,Commercial,Residential,0,EXisting
+29321,CRT Time of Use,56.5,23.3,56.514701,23.251863,Additional Account Tariff,Residential,0,EXisting
+29322,CRT Time of Use,56.5,23.3,56.514701,23.251863,Additional Account Tariff,Residential,0,EXisting
+29323,CRT Time of Use,56.5,23.3,56.514701,23.251863,Additional Account Tariff,Residential,0,EXisting
+29391,CRT Seasonal,56.5,23.2,56.488058,23.215679,,,,
+30137,CRT Seasonal,56.6,23.3,56.597854,23.323782,,,,
+30183,CRT Time of Use,56.5,23.2,56.51769,23.218721,CRT Time of Use,Residential,5,EXisting
+30325,CRT Seasonal,56.4,23.3,56.37171,23.291473,,,,
+30326,CRT Seasonal,56.4,23.3,56.424687,23.253802,,,,
+30468,CRT Seasonal,56.5,23.2,56.500187,23.231603,,,,
+30470,CRT Time of Use,56.5,23.2,56.489908,23.215821,,,,
+30662,CRT Seasonal,56.5,23.2,56.500146,23.231611,Primary Account Tariff,Residential,1,EXisting
+30707,CRT Seasonal,56.5,23.2,56.492582,23.217404,,,,
+31228,Industrial,56.5,23.2,56.496711,23.234606,Commercial,Residential,1,EXisting
+31239,CRT Seasonal,56.7,23.2,56.721538,23.179921,,,,
+31240,CRT Seasonal,56.7,23.2,56.679788,23.194526,,,,
+31255,CRT Seasonal,56.6,23.3,56.611855,23.320825,Commercial,Residential-Commercial,2,EXisting
+31256,CRT Seasonal,56.6,23.3,56.611855,23.320825,Commercial,Residential-Commercial,2,EXisting
+31446,CRT Seasonal,56.5,23.2,56.46539,23.159826,CRT Seasonal,Industrial,7,EXisting
+31624,CRT Seasonal,56.7,23.3,56.727773,23.273713,,,,
+31625,CRT Seasonal,56.7,23.3,56.727773,23.273713,,,,
+31626,CRT Seasonal,56.7,23.3,56.727773,23.273713,,,,
+31629,CRT Seasonal,56.7,23.3,56.727773,23.273713,,,,
+31630,CRT Seasonal,56.7,23.3,56.727773,23.273713,,,,
+31631,CRT Seasonal,56.7,23.3,56.727773,23.273713,,,,
+31632,CRT Seasonal,56.7,23.3,56.727773,23.273713,,,,
+31634,CRT Seasonal,56.7,23.3,56.727773,23.273713,,,,
+31766,CRT Time of Use,56.5,23.2,56.486,23.210902,,,,
+31767,CRT Time of Use,56.5,23.2,56.486,23.210902,,,,
+31804,CRT Seasonal,56.6,23.3,56.616398,23.314174,,,,
+31816,CRT Seasonal,56.7,23.2,56.745863,23.163424,,,,
+31972,CRT Seasonal,56.5,23.2,56.481945,23.238477,,,,
+32059,CRT Time of Use,56.5,23.2,56.511713,23.24941,,,,
+32082,CRT Seasonal,56.5,23.2,56.526973,23.230705,Commercial,Residential,99,EXisting
+32389,CRT Time of Use,56.6,23.3,56.615966,23.317538,Commercial,Residential,1,EXisting
+32392,CRT Time of Use,56.6,23.3,56.615966,23.317538,Commercial,Residential,1,EXisting
+32396,CRT Time of Use,56.6,23.3,56.615966,23.317538,Commercial,Residential,1,EXisting
+32398,CRT Time of Use,56.6,23.3,56.615966,23.317538,Commercial,Residential,1,EXisting
+32399,CRT Time of Use,56.6,23.3,56.615966,23.317538,Commercial,Residential,1,EXisting
+32401,CRT Time of Use,56.6,23.3,56.615966,23.317538,Commercial,Residential,1,EXisting
+32405,CRT Time of Use,56.6,23.3,56.615966,23.317538,Commercial,Residential,1,EXisting
+32421,CRT Seasonal,56.5,23.2,56.513298,23.249497,Commercial,Commercial,3,EXisting
+32495,CRT Seasonal,56.5,23.2,56.497303,23.228387,Commercial,Residential,1,EXisting
+32524,CRT Time of Use,56.5,23.2,56.465679,23.150684,CRT Time of Use,Residential,1,EXisting
+32544,CRT Seasonal,56.4,23.3,56.384732,23.273962,CRT Seasonal,Residential,0,EXisting
+32578,CRT Seasonal,56.6,23.2,56.590514,23.223982,,,,
+32644,CRT Seasonal,56.5,23.1,56.474036,23.144359,,,,
+32737,CRT Seasonal,56.5,23.2,56.492818,23.21619,Commercial,Residential,0,EXisting
+32738,CRT Seasonal,56.5,23.2,56.492818,23.21619,Commercial,Residential,0,EXisting
+32740,CRT Seasonal,56.5,23.2,56.492818,23.21619,Commercial,Residential,0,EXisting
+32756,CRT Seasonal,56.7,23.2,56.661178,23.20377,Additional Account Tariff,Residential,5,EXisting
+32767,CRT Seasonal,56.6,23.2,56.611218,23.216352,Primary Account Tariff,Residential,5,EXisting
+32844,CRT Seasonal,56.5,23.2,56.458466,23.217383,,,,
+32855,CRT Seasonal,56.6,23.2,56.56647,23.22018,,,,
+32857,CRT Seasonal,56.6,23.2,56.626149,23.213613,Primary Account Tariff,Residential,5,EXisting
+32864,CRT Seasonal,56.5,23.2,56.54083,23.207983,,,,
+32886,CRT Seasonal,56.5,23.2,56.490303,23.214898,,,,
+32915,CRT Seasonal,56.6,23.3,56.613418,23.329369,,,,
+32917,CRT Time of Use,56.6,23.3,56.618593,23.311105,Primary Account Tariff,Residential,1,EXisting
+32944,CRT Seasonal,56.5,23.2,56.515272,23.224625,Primary Account Tariff,Residential,0,EXisting
+32946,CRT Seasonal,56.5,23.2,56.515272,23.224625,Primary Account Tariff,Residential,0,EXisting
+32948,CRT Seasonal,56.5,23.2,56.515272,23.224625,Primary Account Tariff,Residential,0,EXisting
+33008,CRT Seasonal,56.4,23.3,56.3844,23.273603,CRT Seasonal,Residential,0,EXisting
+33393,CRT Time of Use,56.6,23.3,56.622282,23.34106,,,,
+33741,CRT Time of Use,56.5,23.2,56.486033,23.212256,,,,
+33806,CRT Time of Use,56.5,23.2,56.511609,23.21613,Commercial,Residential,0,EXisting
+33935,CRT Seasonal,56.5,23.2,56.475085,23.185559,Commercial,Residential,0,EXisting
+33960,CRT Seasonal,56.5,23.3,56.534339,23.283464,Government,Agricultural,4,EXisting
+33961,CRT Time of Use,56.5,23.1,56.466874,23.135404,,,,
+33962,CRT Time of Use,56.5,23.2,56.472728,23.20137,,,,
+33963,CRT Time of Use,56.4,23.3,56.380926,23.282817,,,,
+33964,CRT Time of Use,56.5,23.2,56.538587,23.245412,,,,
+33965,CRT Time of Use,56.5,23.2,56.495879,23.227015,,,,
+33966,CRT Time of Use,56.5,23.2,56.49258,23.217424,Commercial,Residential,0,EXisting
+33967,CRT Seasonal,56.5,23.2,56.45374,23.219311,,,,
+33968,CRT Time of Use,56.4,23.2,56.433161,23.228914,,,,
+33969,CRT Time of Use,56.5,23.1,56.472765,23.133578,,,,
+33970,CRT Time of Use,56.6,23.2,56.570185,23.249177,CRT Time of Use,Residential,1,EXisting
