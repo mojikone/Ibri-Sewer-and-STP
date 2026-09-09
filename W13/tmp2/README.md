@@ -35,3 +35,5 @@ works, whose inlet lies above their ground, not in a basin. One pocket by the fl
 basin at (443413, 2566163), 10.7 m of fill, 7.5 km. Drawing `dxf/W13_A_tree.dxf`, numbers
 `run/stage_a.json`, QGIS group `Claude W13 temp 2 (constructable layout)` with
 `tmp2 pipes by depth`.
+
+**Accepted by the engineer on 2026-09-09 and frozen.** Its logic is written in `docs/W13_TMP2_DESIGN_LOGIC.md`; the work goes on in `W13/tmp3`, a clone of this folder.
