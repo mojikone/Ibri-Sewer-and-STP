@@ -1,4 +1,4 @@
-# What is current, and what is not — checked 2026-09-07
+# What is current, and what is not — checked 2026-09-09
 
 ## READ THIS FIRST: W10, W11a, W11b AND W12 WERE REVERTED OUT OF THIS REPO
 
@@ -135,6 +135,7 @@ plainly which document is live and which is a record of past work.
 | File | What it holds | Last checked |
 |---|---|---|
 | `CLAUDE.md` | working rules, folder map, current state | 2026-08-19 |
+| `W13/analysis/CRT_accounts_identified.csv` | the 499 CRT electricity accounts placed by use from public data (110 still unresolved); shapefile in `W13/shp/` | 2026-09-09 |
 | `_BRAIN/07_PROJECT_STATE.md` | the one-page orientation: data, doctrine, progress | 2026-08-19 |
 | `_BRAIN/02_DESIGN_CRITERIA.md` | every design number with its guideline page | 2026-08-19 |
 | `W5/docs/CRITERIA_UPDATE_R1.md` | the register of rules agreed 18–19 Aug and what is built | 2026-08-19 |
