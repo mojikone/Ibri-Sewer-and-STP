@@ -64,8 +64,7 @@ the engineer stated it (`REROUTE_MODE = "cut"`): 8 pump candidates, 32.9 km, and
 the west's trunk to the works (15.7 m, 8.1 m under the inlet at 323.0 m). Measured for the engineer: with
 nothing below 12 m that trunk meets the works at 317.3 m; to meet the inlet it may be no deeper than 3.3 m
 at its head, where the west's interior arrives at 11.4 m, so meeting the inlet by gravity means a pump for
-that interior. The two streets that climbed to the main pipe are a scratch layer in QGIS. W13 stays the record of the catchments-first line; W14 is where the
-engine grows now, nothing added to the logic until the engineer agrees the design.** **The drawing
+that interior. The two streets that climbed to the main pipe are a scratch layer in QGIS. W13 stays the record of the catchments-first line; W14 was removed the same day (below) and the engine grows in `W13/tmp2` now, nothing added to the logic until the engineer agrees the design.** **The drawing
 to look at is `W13/dxf/W13_A_tree.dxf`**; `W13_A_ground.dxf` is the raw ground for reference;
 numbers `W13/run/stage_a.json` and `W13/docs/W13_EVIDENCE.md`. **Next is Stage B (rules 3–6
 routed).** The old test-boundary pipeline (`run_test_boundary.py`, `stages/tree.py`,
@@ -97,6 +96,8 @@ unchanged and the decision is recorded in `07_PROJECT_STATE.md` §6.
 git). The trial is `W13/tmp_compare`, the 7 September engine on the new main pipe. Reverted to `8529df6` the same
 day, and the 7 September network is a fixed reference: `REF_7SEPT/` is commit `3897c0e`'s W13 with the main pipe of that day recovered from the drawing,
 and it reproduces that run to the figure. Nothing later writes into it; later layouts are measured against it.**
+
+**The trials of 2026-09-08 (late), both inside W13 and neither the live design.** `W13/tmp1/` is the 7 September engine (`REF_7SEPT`) on the main pipe as redrawn: the layout survives the pipe (the west still converges on its south-west corner, 28.2 km) and the maze came from the engine's later additions. `W13/tmp2/` is **W13 temp 2, the constructable layout**: W13's engine laid the engineer's way, the outfall as the target, sub mains first on the straight streets, the smaller streets hung on them, nothing optimised, a pocket only where 12 m cannot reach. 42 sub-networks, one block each, sub mains 69.9 km, 2,637 chambers, deepest 16.36 m, 16 over 12 m, all in the two sub-networks that go to the works, whose inlet at 323.0 m lies above their ground (the west 3.5 m under, the settlement around the works 10.7 m under); the cut rule does not reach them because the depth is on the way to the works, not in a basin. Drawing `W13/tmp2/dxf/W13_A_tree.dxf`, numbers `W13/tmp2/run/stage_a.json`, QGIS group `Claude W13 temp 2 (constructable layout)`. Open for the engineer: how the 12 m rule cuts a sub-network whose depth is not in a basin, and the works' inlet.
 
 **Nothing is lost.**
 
