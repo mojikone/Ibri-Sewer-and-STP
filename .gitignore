@@ -33,3 +33,5 @@ W13/dxf/*.dwg
 W14/run/*.pkl
 W14/run/*_log.txt
 W14/dxf/*.dwg
+REF_7SEPT/run/*.pkl
+REF_7SEPT/run/*_log.txt

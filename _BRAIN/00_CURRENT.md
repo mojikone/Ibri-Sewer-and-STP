@@ -93,6 +93,10 @@ first and rebuild the document. **Known discrepancy it surfaced:** `criteria.py`
 (W8 inheritance) against the locked 5.32 — the gate figures were produced at 5.0, so the code is
 unchanged and the decision is recorded in `07_PROJECT_STATE.md` §6.
 
+**Reverted to `8529df6` on 2026-09-08 at the engineer's instruction, and the 7 September network is a fixed
+reference: `REF_7SEPT/` is commit `3897c0e`'s W13 with the main pipe of that day recovered from the drawing,
+and it reproduces that run to the figure. Nothing later writes into it; later layouts are measured against it.**
+
 **Nothing is lost.**
 
 | Where | What |
