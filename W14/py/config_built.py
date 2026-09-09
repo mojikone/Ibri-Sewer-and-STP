@@ -94,10 +94,7 @@ HOLLOW_M = 2.0          # a dip needing this much fill or less is not even marke
                         # are MARKED as basins with their extra depth, but still drain over
                         # their rim into the neighbouring sub-network (engineer, 2026-09-07:
                         # a sub-network is what connects to the main pipe, not a local sink)
-ASSIGN_BY_DEPTH = True  # kept from later (2026-09-09): with the low ground west of the settlement
-                        # inside the boundary, the flood sends the whole west into that low and
-                        # the 12 m rule pumps 112 km; the least-depth choice routes it to the works.
-                        # Outlets by rule 5's least-depth cost (DEPTH_WEIGHT, SMIN_PROXY) rather
+ASSIGN_BY_DEPTH = True  # outlets by rule 5's least-depth cost (DEPTH_WEIGHT, SMIN_PROXY) rather
                         # than by the priority flood, which gives a whole slope to its lowest
                         # join (2026-09-07). False restores the flood.
 BASIN_MAX_M = 10.0      # a basin needing more than this becomes a pocket, and a pocket is
@@ -114,16 +111,7 @@ CORRIDOR_MIN_GRAD = 0.00125  # a trunk along the corridor is DN600 class: Table 
 CORRIDOR_MAX_M = 6500.0      # NAMA's own western trunk runs 5.65 km along its corridor
 
 # ---- W14 trial (2026-09-08): sub-mains first, then hang the rest off them
-RECIPE = "7 September evening"  # the layout the engineer approved (commit 3897c0e): the flood
-                         # gives every street one outlet, a street is a whole sub-main cut only
-                         # at a crest, attached where it touches the outlet or a sub-main; no
-                         # connectors, no per-node outlet choice, no rule 10 trunks (2026-09-09)
-SAG_OUTLET_CUTS = False  # the cuts at a sag or a change of outlet (off in that recipe)
-TRUNK_FROM_EXIT = False  # (tried 2026-09-09, misfired: picked the south-east tip and sent the west to a ridge join at 24 m) a pocket's trunk starts at its exit, the member nearest the works in
-                         # depth terms, not at its lowest hollow (the 7 September picture)
-CHAIN_ORIENT = "fall"    # ("outlet" tried 2026-09-09: fewer sub-mains, 12 pumps; the theory that it restored the cross streets was wrong) a street's lower end is the end nearer the outlet along the flood
-                         # tree (the recipe); "fall" = the end its own decided runs fall to
-SKELETON_FIRST = False   # the long straight streets are attached to an outlet or to a bigger
+SKELETON_FIRST = True    # the long straight streets are attached to an outlet or to a bigger
                          # street first, longest first; every other street drains to the
                          # nearest skeleton node; catchments follow the skeleton. False = W13's
                          # way: every node picks its outlet first
@@ -140,7 +128,7 @@ STRAIGHT_DEG = 25.0       # a street continues through a junction within this de
 CHAIN_MIN_M = 250.0       # a sub-main is a straight street chain at least this long that
                           # attaches to the outlet or to a sub-main already chosen (engineer,
                           # 2026-09-07: "long run with less bends")
-CHAIN_LINK_M = 0.0        # (off in the 7 September recipe; was 250) a chain whose foot is within this of a sub-main along the flood
+CHAIN_LINK_M = 250.0      # a chain whose foot is within this of a sub-main along the flood
                           # tree attaches through that connector, which becomes sub-main too
 SUBMAIN_DISCOUNT = 0.5    # a sub-main run costs this fraction of a lateral run in the route
                           # search: the collector is preferred, its length still counts

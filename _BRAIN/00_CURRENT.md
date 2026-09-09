@@ -64,10 +64,7 @@ the engineer stated it (`REROUTE_MODE = "cut"`): 8 pump candidates, 32.9 km, and
 the west's trunk to the works (15.7 m, 8.1 m under the inlet at 323.0 m). Measured for the engineer: with
 nothing below 12 m that trunk meets the works at 317.3 m; to meet the inlet it may be no deeper than 3.3 m
 at its head, where the west's interior arrives at 11.4 m, so meeting the inlet by gravity means a pump for
-that interior. The two streets that climbed to the main pipe are a scratch layer in QGIS. On 2026-09-09 W14
-went back to the 7 September evening recipe (whole streets as sub-mains, no cuts at turns, no per-street
-connectors, no rule 10 trunks), keeping the road trunk to the works, the 12 m pump rule and the least-depth
-outlet choice: 27 single-block sub-networks, sub-mains 21 %, 4 pump candidates, 14 chambers over 12 m. W13 stays the record of the catchments-first line; W14 is where the
+that interior. The two streets that climbed to the main pipe are a scratch layer in QGIS. W13 stays the record of the catchments-first line; W14 is where the
 engine grows now, nothing added to the logic until the engineer agrees the design.** **The drawing
 to look at is `W13/dxf/W13_A_tree.dxf`**; `W13_A_ground.dxf` is the raw ground for reference;
 numbers `W13/run/stage_a.json` and `W13/docs/W13_EVIDENCE.md`. **Next is Stage B (rules 3–6

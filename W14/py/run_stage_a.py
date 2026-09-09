@@ -56,7 +56,6 @@ def main():
     envelope, built = G.built_envelope(cfg.BUILT_SEWER, cfg.AREA_BUFFER_M)
     built_geoms = list(built.geometry)
     rep["built_km"] = round(float(built.geometry.length.sum()) / 1000, 1)
-    built_env = envelope                      # the settlements, as the 2006 network drew them
     if getattr(cfg, "AREA_SHP", None):
         # the engineer's boundary is the area; the built envelope stays as the comparison
         envelope = unary_union([g for g in gpd.read_file(cfg.AREA_SHP).geometry
@@ -319,66 +318,12 @@ def main():
                 props_of[o] = props_of.get(o, 0) + 1
         return props_of
 
-    if getattr(cfg, "TRUNK_FROM_EXIT", False):
-        # a settlement with no join and no works node inside it gets its exit toward the
-        # works as a target BEFORE any street is assigned, as the corridor entry was on
-        # 7 September: its member nearest the works in depth terms at the trunk gradient.
-        # The sub-mains then converge on that exit and the interior drains to it over
-        # its rim (2026-09-09)
-        from shapely.prepared import prep as _prep1
-        stp_nodes = [t for t, ty in targets2.items() if ty == "STP"]
-        _, _, _, exit_cost = O.depth_search(runs, znode, stp_nodes, cfg.DEPTH_WEIGHT,
-                                            cfg.CORRIDOR_MIN_GRAD)
-        parts = list(getattr(built_env, "geoms", [built_env]))
-        exits = []
-        for part in parts:
-            pp = _prep1(part)
-            inside = [n for n in znode if pp.contains(Point(n))]
-            if len(inside) < 20 or any(t in targets2 for t in inside):
-                continue
-            ex = min(inside, key=lambda n: exit_cost.get(n, float("inf")))
-            if ex in exit_cost:
-                exits.append((ex, sum(1 for n in plot_node if pp.contains(Point(n)))))
-        if exits:
-            acc, trunk_stem, trunk_runs, levels, ttype, refused = K.trunk_routes(
-                runs, znode, levels, ttype, [e for e, _ in exits], dict(exits), cfg.DEPTH_WEIGHT,
-                cfg.MAX_DEPTH_M, cfg.TRUNK_COVER_M, cfg.PER_PROPERTY_M3D, stem=trunk_stem,
-                trunk_runs=trunk_runs, try_targets=cfg.TRUNK_TRY, max_len=cfg.TRUNK_MAX_M,
-                take_shortfall=getattr(cfg, 'TRUNK_TAKE_SHORTFALL', False),
-                violation_max=getattr(cfg, 'TRUNK_VIOLATION_MAX_M', 10.0))
-            refused_all.update(refused)
-            for s_, a in acc.items():
-                targets2[s_] = {"STP": "LINK-STP", "JOIN": "LINK-MP"}.get(a["type"], "LINK-TRUNK")
-                trunks[s_] = a
-                log(f"   settlement exit at {tuple(round(v) for v in s_)}: trunk {a['len']} m DN{a['dn']} at "
-                    f"{a['smin'] * 100:.3f} % to the {a['type']}, deepest {a['max_depth']} m, arrives "
-                    f"{a['arrives']} against {a['level']}"
-                    + (f" UNDER BY {a['under_m']} m" if a.get('under_m') else "")
-                    + (f" OVER 12 m BY {a['over_m']} m" if a.get('over_m') else ""))
-            src2, filled2, parent2, seq2, spill2, iters2 = O.resolve_outlets(
-                runs, znode, targets2, cfg.BASIN_MAX_M, raw_term, **assign)
     for _ in range(6):
         pockets = [s_ for s_ in set(src2.values()) if s_ not in targets2 and spill2.get(s_) is not None]
         props_of = pocket_props(src2)
         pockets.sort(key=lambda s_: -props_of.get(s_, 0))
         if not pockets:
             break
-        if False:
-            # the trunk starts at the settlement's exit, its member nearest the works in
-            # depth terms at the trunk gradient, not at its lowest hollow: on 7 September the
-            # west's outlet was the corner where NAMA's trunk leaves and every sub-main ran
-            # to it; the interior drains to the exit over its rim (2026-09-09)
-            _, _, _, exit_cost = O.depth_search(
-                runs, znode, [t for t, ty in targets2.items() if ty in ("STP", "JOIN")],
-                cfg.DEPTH_WEIGHT, cfg.CORRIDOR_MIN_GRAD)
-            remap = {}
-            for s_ in pockets:
-                members = [n for n, o in src2.items() if o == s_]
-                ex = min(members, key=lambda n: exit_cost.get(n, float("inf")))
-                if ex in exit_cost:
-                    remap[s_] = ex
-            props_of = {remap.get(s_, s_): v for s_, v in props_of.items()}
-            pockets = [remap.get(s_, s_) for s_ in pockets]
         acc, trunk_stem, trunk_runs, levels, ttype, refused = K.trunk_routes(
             runs, znode, levels, ttype, pockets, props_of, cfg.DEPTH_WEIGHT, cfg.MAX_DEPTH_M,
             cfg.TRUNK_COVER_M, cfg.PER_PROPERTY_M3D, stem=trunk_stem, trunk_runs=trunk_runs,
@@ -501,12 +446,10 @@ def main():
                 targets2[pk] = "SINK"             # a basin no street may cross: a pump
             src_filter = None
         else:
-            if getattr(cfg, "SAG_OUTLET_CUTS", True):
-                chains = K.cut_at_sags_and_outlets(chains, runs, znode, src2, parent2, cfg.CREST_M)
+            chains = K.cut_at_sags_and_outlets(chains, runs, znode, src2, parent2, cfg.CREST_M)
             submain, stem_parent, srep3 = K.sub_mains_by_chains(runs, chains, parent2, src2,
                                                                 cfg.CHAIN_MIN_M, cfg.CHAIN_LINK_M,
-                                                                filled2, cfg.LEVEL_M,
-                                                                orient=getattr(cfg, "CHAIN_ORIENT", "fall"))
+                                                                filled2, cfg.LEVEL_M)
             src_filter = src2
         stem_parent.update(trunk_stem)          # a designed trunk fixes its own direction
         submain = set(submain) | set(trunk_runs)
@@ -753,7 +696,7 @@ def main():
     link_geoms = K.link_geometries(info2, mp_union, cfg.STP, corridor_paths)
     gaps = gaps_b + gaps_h
     dropped_geoms = [runs[i]["geom"] for i in dropped]
-    title = [f"W14 STAGE A - THE 7 SEPTEMBER RECIPE ON THE NEW MAIN PIPE - built area - {date}",
+    title = [f"W14 STAGE A TRIAL - SUB-MAINS FIRST - built area - {date}",
              "thick = sub-main · thin = lateral or branch · colour = catchment · arrow on every pipe "
              "· grey dotted = the head gap to the first gate · magenta = join connector to the main pipe",
              "dashed = flatter than 0.5 % · dash-dot = against the ground · gradient text is the "

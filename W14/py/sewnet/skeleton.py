@@ -578,7 +578,7 @@ def cut_at_sags_and_outlets(chains, runs, z, src, parent, crest_m):
 
 
 def sub_mains_by_chains(runs, chains, parent, src, chain_min_m, link_m=0.0, filled=None,
-                        level_m=0.0, orient="fall"):
+                        level_m=0.0):
     """Rule 4 as the engineer drew it: the sub-mains are the long straight streets. From each
     outlet, take the longest chain whose lower end touches the outlet or a sub-main already
     chosen, cut it at the first chosen node it meets, and repeat until no chain of
@@ -630,17 +630,11 @@ def sub_mains_by_chains(runs, chains, parent, src, chain_min_m, link_m=0.0, fill
                 # the lower end is where the flood flows to along the chain's own DECIDED
                 # runs; a chain of level runs is pointed toward the outlet along the flood
                 fwd = 0
-                if orient == "outlet":
-                    # the 7 September recipe: the lower end is the end nearer the outlet
-                    # along the flood tree, so a cross street always points at the
-                    # sub-main it meets (2026-09-09)
-                    fwd = 1 if d_out(a) > d_out(b) else -1
-                else:
-                    for k, i in enumerate(c["runs"]):
-                        if filled is not None and abs(filled.get(nodes[k], 0.0)
-                                                      - filled.get(nodes[k + 1], 0.0)) <= level_m:
-                            continue
-                        fwd += 1 if runs[i]["up"] == nodes[k] else -1
+                for k, i in enumerate(c["runs"]):
+                    if filled is not None and abs(filled.get(nodes[k], 0.0)
+                                                  - filled.get(nodes[k + 1], 0.0)) <= level_m:
+                        continue
+                    fwd += 1 if runs[i]["up"] == nodes[k] else -1
                 if fwd < 0 or (fwd == 0 and d_out(a) <= d_out(b)):
                     seq_nodes, seq_runs = nodes[::-1], c["runs"][::-1]   # upstream first
                 else:
