@@ -21,13 +21,13 @@ Outputs: `W13/shp/ELE_meters_on_plots.shp`, `W13/shp/PLOTS_load.shp`, `W13/shp/S
 | 6 | A meter outside every plot snaps to the nearest plot within **15 m**; else it stays free and belongs to the nearest settlement | engineer |
 | 7 | Every plot belongs to the settlement outline it lies in, else the nearest; the two AL AYNAYN outlines are one; the merged boundary is the Voronoi partition of plot centroids clipped to the project boundary | engineer |
 | 8 | Growth: each settlement grows at its **own rate** from the workbook, applied to its metered population (base 2026) | engineer |
-| 9 | Growth fills the settlement's **empty plots ≤ 2,000 m² that are not farm (by meter or imagery) and not industrial**, at the settlement's own **properties per pure home plot**; all empty plots fill together in proportion; empty shapes above 2,000 m² take nothing | engineer |
-| 9a | **Plot class, farm first**: any farm meter → Agricultural, never overridden; green in the imagery (W3 rule: vegetation ≥ 55 % on ≥ 2,000 m², or ≥ 85 % on ≥ 800 m²; scored on all 77,265 plots from the z17 mosaic, 69,582 scorable) → Agricultural unless a shop or government majority (≥ ⅔) says otherwise | engineer, evening |
+| 9 | Growth fills the settlement's **empty plots ≤ 2,000 m² that are not farm (by meter) and not industrial**, at the settlement's own **properties per pure home plot**; all empty plots fill together in proportion; empty shapes above 2,000 m² take nothing | engineer |
+| 9a | **Plot class, farm first**: any farm meter → Agricultural, never overridden. **The imagery is not used** (engineer, 2026-09-10: it put farms where there are none). The vegetation score stays on every plot as `VEGFRAC` / `GREEN_IMG` for the record | engineer |
 | 9b | **Then proportion of the plot's meters**: more than ⅔ home → Residential; ≥ ⅔ government → Government; ≥ ⅔ shop → Commercial; in between → mixed. Large-user meters count with their identified use | engineer, evening |
 | 9c | **Properties per built plot** from pure home plots only: Residential by rule 9b, built, fewer than 15 dwelling meters | engineer, evening |
 | 10 | Overflow goes to the **nearest settlement with spare room among those with 2,000+ people today**; **IBRI → AL ARAQI → AD DARIZ** first | engineer |
 | 11 | A future plot's sewage = its people × (164 × 0.85 + 36 × 0.54 + 23 × 0.54) = **171.3 L/d per person**, all on the plot | rules 2, 5 |
-| 12 | **Ultimate** = the first year growth finds no empty plot among the receivers; **2080** | result |
+| 12 | **Ultimate** = the first year growth finds no empty plot among the receivers; **2081** | result |
 
 Peaking is not a plot property: the network engine sums the plots upstream of each pipe, adds
 infiltration per km, and applies Merrimack (>100 properties) or Peltier (G1-p71–72). The STP
@@ -42,8 +42,8 @@ takes average, maximum day and peak hour from the same accumulated flow plus tan
 | Water | 27,354 m³/d |
 | **Sewage (Qadf)** | **20,873 m³/d** |
 | Plot → settlement | 57,769 inside an outline, 19,496 by nearest |
-| Empty plots that can take people | 45,900 of 60,509 future plots (the rest are farms by meter or imagery, industrial, or shapes > 2,000 m²) |
-| Capacity of those plots | **359,811 people** (v1 with the loose class: 407,411) |
+| Empty plots that can take people | 46,500 of 60,509 future plots (the rest are industrial or shapes > 2,000 m²; an empty plot has no meter, so none is a farm) |
+| Capacity of those plots | **383,443 people** (v1 with the loose class: 407,411; with the imagery farm test: 359,811) |
 
 ## 3. Growth
 
@@ -51,19 +51,21 @@ takes average, maximum day and peak hour from the same accumulated flow plus tan
 |---|---|---|---|---|
 | 2030 | 12,753 | 132,768 | 0 | 23,057 |
 | 2055 | 113,021 | 233,036 | 0 | 40,231 |
-| **2080 ultimate** | 293,078 | **413,093** | 8,313 | **71,071** |
-| 2100 (workbook) | 306,587 | 426,602 | 250,572 | 73,385 |
+| **2081 ultimate** | 311,435 | **431,450** | 70 | **74,216** |
+| 2100 (workbook) | 324,423 | 444,438 | 232,736 | 76,440 |
 
-Settlements fill between 2067 (Ibri, Al Araqi, Hijar) and 2084 (Usaybuq); Ad Dariz 2068. Eleven small
+Settlements fill between 2067 (Al Akheedar) and 2086 (Usaybuq); **Ibri 2068**, Al Araqi 2069, Ad Dariz 2070. Eleven small
 settlements never fill by 2100 (they are not receivers). The workbook's 2100 population for the 25
-settlements is 690,000; the cadastre as drawn holds 480,000, so 250,000 of the workbook's 2100 people
+settlements is 690,000; the cadastre as drawn holds 503,000, so 233,000 of the workbook's 2100 people
 have no plot — reported, not placed.
 
-**Class v1 → v2 (2026-09-09 evening).** The first class read one shop meter as "mixed" and a house on a farm as
-"residential"; the engineer rejected both. Farm first and proportion moved 2,626 of 15,400 built metered plots,
-1,870 of them to farm. Properties per pure home plot fell from 1.60 to 1.33 in Ibri, capacity from 407,000 to
-360,000 people, ultimate from 2084 to 2080. The v1 class is kept in `DERIVED1` for the audit; `WHYC` says why
-(AGR farm meter, GRN imagery, RES/COM/GOV/RC proportion, EST estate, UNM unmetered).
+**How the class rule moved the answer.** v1 (one shop meter made a plot mixed, a house on a farm made it
+residential, ratio from every built plot with a dwelling): capacity 407,000, ultimate 2084. v2 with the imagery
+farm test: 360,000, 2080 — rejected, it put farms where there are none. **v3, the live one**: farm = farm meter
+only, then proportion (> ⅔ home → Residential, ≥ ⅔ government → Government, ≥ ⅔ shop → Commercial, between →
+mixed), ratio from pure home plots with fewer than 15 dwelling meters. 839 of 15,400 built metered plots
+change class from v1; Ibri's ratio 1.60 → 1.35; capacity 383,000; ultimate 2081. The v1 class is kept in
+`DERIVED1`; `WHYC` says why (AGR farm meter, RES/COM/GOV/RC proportion, EST estate, UNM unmetered).
 
 **The R0 figure of ≈ 49,700 m³/d ultimate was built on connected population and Tier A at OR 6;
 this table supersedes it for the concept report and should be reconciled there.**

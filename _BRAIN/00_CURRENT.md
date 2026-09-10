@@ -137,7 +137,7 @@ plainly which document is live and which is a record of past work.
 | `CLAUDE.md` | working rules, folder map, current state | 2026-08-19 |
 | `W13/analysis/CRT_accounts_identified.csv` | the 499 CRT electricity accounts placed by use from public data (110 still unresolved); shapefile in `W13/shp/` | 2026-09-09 |
 | `W13/analysis/IDENTIFIED_PROJECTS.md` | identified projects and special consumption: the two industrial estates, the army camp, Ibri View, the tanker sources outside | 2026-09-09 |
-| `W13/shp/PLOTS_load.shp` + `W13/docs/W13_LOAD_AND_GROWTH.md` | the load table: every plot's meters, people, water, sewage, and population/Qadf for 2030, 2055, ultimate 2080 (class v2); replaces `PLOTS_derived_class.shp` | 2026-09-09 |
+| `W13/shp/PLOTS_load.shp` + `W13/docs/W13_LOAD_AND_GROWTH.md` | the load table: every plot's meters, people, water, sewage, and population/Qadf for 2030, 2055, ultimate 2081 (class v3, farm by meter only); replaces `PLOTS_derived_class.shp` | 2026-09-09 |
 | `_BRAIN/07_PROJECT_STATE.md` | the one-page orientation: data, doctrine, progress | 2026-08-19 |
 | `_BRAIN/02_DESIGN_CRITERIA.md` | every design number with its guideline page | 2026-08-19 |
 | `W5/docs/CRITERIA_UPDATE_R1.md` | the register of rules agreed 18–19 Aug and what is built | 2026-08-19 |

@@ -1,6 +1,6 @@
 # W13 — apply plot class v2 to PLOTS_load.shp, refresh the settlement table, then re-run growth_by_settlement.py.
 # Rules (engineer, 2026-09-09 evening):
-#   farm first: any farm meter -> Agricultural (never overridden); green in the imagery -> Agricultural unless a shop or government majority says otherwise
+#   farm first: any farm meter -> Agricultural (never overridden). Imagery NOT used (engineer 2026-09-10); the score is kept in VEGFRAC / GREEN_IMG for the record
 #   more than two thirds of the meters home -> Residential; two thirds or more government -> Government; two thirds or more shop -> Commercial; between -> mixed
 #   properties per built plot from pure home plots only (Residential, fewer than 15 dwelling meters)
 #   capacity = future plots <= 2,000 m2 that are not farm, not industrial, not in an estate
@@ -11,7 +11,9 @@ plots = gpd.read_file(f"{W13}/shp/PLOTS_load.shp")
 veg = np.load(f"{W13}/analysis/vegfrac_plots.npy"); assert len(veg) == len(plots)
 plots['VEGFRAC'] = np.where(veg >= 0, veg, np.nan).round(3)
 a = plots['AREA_M2']; v = plots['VEGFRAC'].fillna(0)
-plots['GREEN'] = (((v >= 0.55) & (a >= 2000)) | ((v >= 0.85) & (a >= 800))).astype(int)
+plots['GREEN_IMG'] = (((v >= 0.55) & (a >= 2000)) | ((v >= 0.85) & (a >= 800))).astype(int)   # kept for the record only
+USE_IMAGERY = False   # engineer 2026-09-10: farm = farm meter only; the imagery test put farms where there are none
+plots['GREEN'] = plots['GREEN_IMG'] if USE_IMAGERY else 0
 est = plots.ESTATE.isin(['AL TAYYEB', 'TANAM'])
 
 def classify(r):
@@ -43,7 +45,7 @@ print('green plots', int(plots.GREEN.sum()), '| vegfrac known', int(plots.VEGFRA
 
 # write the plot layer with the same narrow schema
 props = {}
-ints = ['Moh_Classi', 'N_ACC', 'N_DOM', 'N_DOMADD', 'N_COM', 'N_GOV', 'N_AGR', 'N_CRT', 'N_IND', 'G_DOM', 'G_NDOM', 'G_GOV', 'G_SPEC', 'G_AGR', 'PROPS', 'FUT_CAP', 'SAT_YEAR', 'ULT_YEAR', 'GREEN', 'HIGH']
+ints = ['Moh_Classi', 'N_ACC', 'N_DOM', 'N_DOMADD', 'N_COM', 'N_GOV', 'N_AGR', 'N_CRT', 'N_IND', 'G_DOM', 'G_NDOM', 'G_GOV', 'G_SPEC', 'G_AGR', 'PROPS', 'FUT_CAP', 'SAT_YEAR', 'ULT_YEAR', 'GREEN', 'GREEN_IMG', 'HIGH']
 for c in plots.columns:
     if c == 'geometry': continue
     if c in ints: plots[c] = plots[c].fillna(0).astype(int); props[c] = 'int:6'
