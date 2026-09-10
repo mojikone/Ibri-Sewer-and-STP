@@ -86,6 +86,9 @@ FIGURES = {
     "M09_saturation": (
         "Average sewage flow per plot at saturation",
         ["Project Boundary updated", "Settlement boundary", "Average sewage flow of the plot at saturation"], True, "json"),
+    "M10_overflow": (
+        "Where the growth goes once a settlement is full",
+        ["Project Boundary updated", "Capacity taken by overflow", "Overflow, people"], True, "json"),
 }
 
 _R2 = {}
@@ -172,7 +175,42 @@ def _r2_layers():
     pal2.setFormat(tf2); pal2.placement = QgsPalLayerSettings.OrderedPositionsAroundPoint
     sp.setLabelsEnabled(True); sp.setLabeling(QgsVectorLayerSimpleLabeling(pal2))
 
-    for l in (s, po, me, fp, pu, pf, sp):
+    # the overflow map: receivers shaded by the share of their capacity that comes from outside, and one arrow per route
+    import json
+    from qgis.core import QgsLineSymbol, QgsArrowSymbolLayer, QgsGraduatedSymbolRenderer, QgsRendererRange
+    rj = json.load(open(os.path.join(OUT, "routes.json"), encoding="utf-8"))
+    sh = QgsVectorLayer(shp("Settlements_merged.shp"), "Capacity taken by overflow", "ogr")
+    pr = sh.dataProvider(); pr.addAttributes([QgsField('INSHARE', QVariant.Double)]); sh.updateFields()
+    sh.startEditing()
+    for f in sh.getFeatures():
+        sh.changeAttributeValue(f.id(), sh.fields().indexOf('INSHARE'), float(rj["inflow_share"].get(f['SETTLE'], 0.0)))
+    sh.commitChanges()
+    rngs = [(0.0, 0.05, 'under 5 %', None), (0.05, 0.25, '5 to 25 %', '254,224,210,150'), (0.25, 0.5, '25 to 50 %', '252,146,114,150'),
+            (0.5, 0.8, '50 to 80 %', '239,59,44,150'), (0.8, 1.01, 'over 80 %', '165,15,21,160')]
+    sh.setRenderer(QgsGraduatedSymbolRenderer('INSHARE', [
+        QgsRendererRange(lo, hi, QgsFillSymbol.createSimple(
+            {'color': c, 'outline_color': '#1F3B63', 'outline_width': '0.4', 'outline_width_unit': 'MM'} if c else
+            {'style': 'no', 'outline_color': '#1F3B63', 'outline_width': '0.4', 'outline_width_unit': 'MM'}), lab)
+        for lo, hi, lab, c in rngs]))
+    pal3 = QgsPalLayerSettings(); pal3.fieldName = 'title("SETTLE")'; pal3.isExpression = True; pal3.enabled = True
+    tf3 = QgsTextFormat(); tf3.setSize(7); tf3.setColor(QColor('#1F3B63')); b3 = QgsTextBufferSettings(); b3.setEnabled(True); b3.setSize(0.8); b3.setColor(QColor('#FFFFFF')); tf3.setBuffer(b3)
+    pal3.setFormat(tf3); sh.setLabelsEnabled(True); sh.setLabeling(QgsVectorLayerSimpleLabeling(pal3))
+    ar = QgsVectorLayer('LineString?crs=EPSG:32640&field=people:double&field=label:string(80)', "Overflow, people", 'memory')
+    apr = ar.dataProvider(); feats = []
+    for r in rj["routes"]:
+        if r["people"] < 500:
+            continue
+        f = QgsFeature(ar.fields()); f.setGeometry(QgsGeometry.fromPolylineXY([QgsPointXY(r["x1"], r["y1"]), QgsPointXY(r["x2"], r["y2"])]))
+        f.setAttributes([r["people"], f"{r['donor_name']} to {r['receiver_name']}"]); feats.append(f)
+    apr.addFeatures(feats); ar.updateExtents()
+    arngs = [(500, 2000, '500 to 2,000 people', 0.9), (2000, 5000, '2,000 to 5,000', 1.6), (5000, 10000, '5,000 to 10,000', 2.4), (10000, 1e9, 'over 10,000', 3.4)]
+    def arrow(w):
+        sym = QgsLineSymbol(); sym.deleteSymbolLayer(0)
+        a = QgsArrowSymbolLayer(); a.setArrowWidth(w); a.setArrowStartWidth(w * 0.5); a.setHeadLength(4.5); a.setHeadThickness(3.2)
+        a.setColor(QColor('#0b2a5b')); a.subSymbol().setColor(QColor('#0b2a5b'))
+        sym.appendSymbolLayer(a); sym.setOpacity(0.85); return sym
+    ar.setRenderer(QgsGraduatedSymbolRenderer('people', [QgsRendererRange(lo, hi, arrow(w), lab) for lo, hi, lab, w in arngs]))
+    for l in (s, po, me, fp, pu, pf, sp, sh, ar):
         proj.addMapLayer(l, False)
         _R2[l.name()] = l
     return _R2

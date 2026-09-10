@@ -76,22 +76,28 @@ def appendices(d):
 
     # ----------------------------------------------------------------- A3
     D.h(d, 1, "A3   Occupancy, properties per plot and home share by settlement")
-    D.tab_caption(d, "The settlement rates used in Part D")
-    D.table(d, ["Settlement", "Properties", "Pop. 2024", "Rate derived", "Rate adopted",
-                "Properties per home plot", "Home share", "Capacity, people"],
-            [[r["name"], F.fmt(r["properties"]), F.fmt(r["workbook_2024"]), f"{r['or_raw']:.2f}",
-              f"{r['or_used']:.2f}", f"{r['ratio']:.2f}", f"{r['home_share']:.2f}", F.fmt(r["cap_people"])] for r in st],
-            widths=[3.4, 1.9, 1.9, 1.7, 1.7, 2.2, 1.6, 2.1], font=7.8)
+    D.tab_caption(d, "The settlement rates used in Part D: derived from the data, and adopted")
+    D.table(d, ["Settlement", "Domestic properties, 2024", "Pop. 2024", "Empty plots", "of which counted as future homes",
+                "Occupancy derived", "Occupancy adopted", "Properties per home plot derived", "adopted",
+                "Home share derived", "adopted", "Capacity, people"],
+            [[r["name"], F.fmt(r["properties"]), F.fmt(r["workbook_2024"]), F.fmt(r["empty_plots"]), F.fmt(r["cap_plots"]),
+              f"{r['or_raw']:.2f}", f"{r['or_used']:.2f}", f"{r['ratio_raw']:.2f}", f"{r['ratio']:.2f}",
+              f"{r['home_share_raw']:.2f}", f"{r['home_share']:.2f}", F.fmt(r["cap_people"])] for r in st],
+            widths=[2.6, 1.5, 1.3, 1.2, 1.4, 1.2, 1.2, 1.3, 1.1, 1.2, 1.1, 1.4], font=6.8)
     D.p(d, "")
-    p = D.p(d, "The rate adopted is the rate derived, held to a floor of 4.0 "
-               "and a cap equal to the highest rate among the settlements of "
-               "two thousand or more people. A settlement with fewer than ten "
-               "built home-shaped plots takes the area-wide properties per "
-               "plot and home share.")
+    p = D.p(d, "The occupancy adopted is the rate derived, held to a floor of "
+               "4.0 and a cap equal to the highest rate among the settlements "
+               "of two thousand or more people. A settlement of fewer than a "
+               "thousand people in 2024 takes an occupancy of 4.0, one "
+               "property per plot and a home share of 0.9, whatever its "
+               "meters return: it has no sample to measure on, and it does "
+               "not attract second dwellings.")
     N.add(p, "Properties per home plot is measured over built plots whose "
              "meters are more than two thirds domestic and fewer than fifteen. "
              "Home share is the proportion of built, metered plots of home "
-             "shape that are homes.")
+             "shape that are homes. Empty plots counted as future homes are "
+             "those of 200 to 1,000 square metres, compact, not a strip, and "
+             "not a grove, an industrial plot or heritage.")
 
     # ----------------------------------------------------------------- A4
     D.h(d, 1, "A4   The plot layer delivered with this report")
@@ -114,3 +120,27 @@ def appendices(d):
         ["POP_2030, Q_2030, POP_2055, Q_2055, POP_ULT, Q_ULT", "people and sewage in 2030, 2055 and the saturation year"],
         ["SAT_YEAR, ULT_YEAR", "the year the plot's settlement fills, and the saturation year of the study area"],
     ], widths=[6.0, 10.5], font=8.5)
+
+    # ----------------------------------------------------------------- A5
+    D.h(d, 1, "A5   The overflow routes in full")
+    D.p(d, "Every route carrying fifty people or more at saturation. The "
+           "donor's year is the year its own empty plots are full; the "
+           "receiver starts taking in the first year its neighbour overflows "
+           "into it, and is itself full in the last column.")
+    D.tab_caption(d, "Overflow routes")
+    D.table(d, ["From", "To", "People at saturation", "Donor full", "Receiver starts", "Receiver full"],
+            [[r["donor_name"], r["receiver_name"], F.fmt(r["people"]), str(r["donor_full"] or ""),
+              str(r["starts"] or ""), str(r["receiver_full"] or "")] for r in F.routes()],
+            widths=[3.2, 3.2, 2.6, 2.3, 2.6, 2.6], font=7.8)
+
+    # ----------------------------------------------------------------- A6
+    D.h(d, 1, "A6   Saturation with and without the overflow", page_break=True)
+    D.p(d, "The year each settlement fills on its own growth alone, beside "
+           "the year it fills when its neighbours' overflow is allowed to "
+           "reach it. A settlement that would never fill on its own growth "
+           "before 2100 is marked accordingly.")
+    D.tab_caption(d, "Saturation year by settlement, own growth only and with overflow")
+    D.table(d, ["Settlement", "Capacity, people", "Full on own growth", "Full with overflow", "People received"],
+            [[r["name"], F.fmt(r["capacity"]), str(r["own"]) if r["own"] else "not before 2100",
+              str(r["with_spill"] or ""), F.fmt(r["inflow"])] for r in F.own_growth_saturation()],
+            widths=[4.0, 3.0, 3.2, 3.2, 3.1], font=8.2)

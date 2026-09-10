@@ -151,6 +151,8 @@ def settlement_table():
             or_raw=float(oc.at[s, "OR_raw"]), or_used=float(st.at[s, "OR_S"]),
             people_today=float(st.at[s, "POP_TODAY"]),
             ratio=float(st.at[s, "PROPS_PER_BUILT_PLOT"]), home_share=float(st.at[s, "HOME_SHARE"]),
+            ratio_raw=float(st.at[s, "PPP_RAW"]), home_share_raw=float(st.at[s, "HOME_SHARE_RAW"]),
+            small=bool(int(st.at[s, "SMALL"])), empty_plots=int(st.at[s, "EMPTY_PLOTS"]),
             home_plots=int(st.at[s, "DOM_PLOTS_BUILT"]),
             cap_plots=int(st.at[s, "FUT_CAP_PLOTS"]), cap_people=float(st.at[s, "FUT_CAP_POP"]),
             sat_year=int(sat) if sat == sat and sat else None,
@@ -181,11 +183,68 @@ def five_year_rows(kind="pop"):
     for _, r in df.iterrows():
         name = NAME.get(r.iloc[0], str(r.iloc[0]).title()) if r.iloc[0] != "TOTAL" else "Total"
         cells = []
-        for v in r.iloc[1:-1]:
+        for v in r.iloc[1:-2]:
             cells.append("" if v != v or v is None else (f"{v:,.0f}"))
-        sat = r.iloc[-1]
-        out.append([name] + cells + ["" if sat != sat else f"{int(sat)}"])
-    return list(df.columns), out
+        sat, val = r.iloc[-2], r.iloc[-1]
+        out.append([name] + cells + ["" if sat != sat else f"{int(sat)}", "" if val != val else f"{val:,.0f}"])
+    cols = list(df.columns)[:-1]
+    # a five-year column past the last saturation year is blank for every settlement: it is not printed
+    while len(cols) > 4 and all(r[len(cols) - 2] == "" for r in out if r[0] != "Total"):
+        k = len(cols) - 2          # the last five-year column: cols ends with the saturation year
+        cols.pop(k); [r.pop(k) for r in out]
+    return cols, out
+
+
+@lru_cache(None)
+def routes():
+    """Overflow routes: donor, receiver, people at ultimate, the year the donor is full,
+    the year the receiver starts taking and the year it is full. Sorted by people."""
+    g = growth(); r = g["Overflow routes"]; inflow = g["Inflow from overflow"]; S = g["Settlements"]
+    last = r.columns[-1]
+    first_in = {s: next((int(c) for c in inflow.columns if float(inflow.at[s, c]) > 0.5), None) for s in inflow.index}
+    sat = S["saturation_year"]
+    out = []
+    for _, x in r.sort_values(last, ascending=False).iterrows():
+        if float(x[last]) < 50:
+            continue
+        out.append(dict(donor=x["from"], receiver=x["to"], donor_name=NAME.get(x["from"], x["from"].title()),
+                        receiver_name=NAME.get(x["to"], x["to"].title()), people=float(x[last]),
+                        donor_full=int(sat[x["from"]]) if sat[x["from"]] == sat[x["from"]] else None,
+                        starts=first_in.get(x["to"]), receiver_full=int(sat[x["to"]]) if sat[x["to"]] == sat[x["to"]] else None))
+    return out
+
+
+@lru_cache(None)
+def own_growth_saturation():
+    """For every settlement: the year it would fill on its own growth alone, beside the year with overspill."""
+    import openpyxl
+    st = settlements(); S = growth()["Settlements"]
+    wb = openpyxl.load_workbook(os.path.join(os.path.dirname(W14), "_CLIENT", "Ibri Sewer Demand R0 2026 08 03.xlsx"), read_only=True, data_only=True)
+    ws = wb["Project Pop Settlements"]; rows = list(ws.iter_rows(values_only=True)); hdr = [str(h) for h in rows[0]]
+    yc = {int(h.split()[1]): i for i, h in enumerate(hdr) if h.startswith("Pop ")}
+    P = {str(r[1]).strip().upper(): {y: float(r[i]) for y, i in yc.items()} for r in rows[1:] if r[1] and str(r[1]).strip().upper() in st.index}
+    out = []
+    for s in st.sort_values("POP_TODAY", ascending=False).index:
+        pop0 = float(st.at[s, "POP_TODAY"]); cap = float(st.at[s, "FUT_CAP_POP"]); base = P[s][BASE_YEAR]
+        own = next((y for y in range(BASE_YEAR, 2101) if pop0 * (P[s][y] / base - 1) >= cap), None)
+        sat = S.at[s, "saturation_year"]
+        out.append(dict(key=s, name=NAME.get(s, s.title()), own=own, with_spill=int(sat) if sat == sat else None,
+                        inflow=float(S.at[s, "inflow_at_ultimate"]), capacity=cap))
+    return out
+
+
+def routes_json():
+    """Routes with settlement centroids, for the overflow map drawn in QGIS."""
+    import json, geopandas as gpd
+    sett = gpd.read_file(os.path.join(SHP, "Settlements_merged.shp")).set_index("SETTLE")
+    cent = sett.geometry.representative_point()
+    inflow_share = {s: (float(growth()["Settlements"].at[s, "inflow_at_ultimate"]) / max(float(settlements().at[s, "FUT_CAP_POP"]), 1)) for s in sett.index}
+    data = {"routes": [dict(r, x1=float(cent[r["donor"]].x), y1=float(cent[r["donor"]].y), x2=float(cent[r["receiver"]].x), y2=float(cent[r["receiver"]].y)) for r in routes()],
+            "inflow_share": inflow_share}
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "img", "routes.json")
+    with open(path, "w", encoding="utf-8") as fh:
+        json.dump(data, fh, indent=1)
+    return path
 
 
 def map_boxes():
@@ -213,7 +272,12 @@ def map_boxes():
         "M09_saturation": [["Saturation year", str(t["ultimate"])], ["People at saturation", fmt(t["pop_ult"])],
                            ["Sewage at saturation", f"{t['q_ult']:,.0f} m3/d"], [f"People, {BASE_YEAR}", fmt(t["pop_today"])],
                            ["Capacity of the empty plots", fmt(t["capacity"])], ["Ibri full", str(ib["sat_year"])]],
+        "M10_overflow": [["Ibri full", str(ib["sat_year"])], ["People Ibri sends out", fmt(sum(r["people"] for r in routes() if r["donor"] == "IBRI"))],
+                         ["Largest route", f"{routes()[0]['donor_name']} to {routes()[0]['receiver_name']}, {fmt(routes()[0]['people'])}"],
+                         ["Settlements that never fill alone", str(sum(1 for r in own_growth_saturation() if r["own"] is None))],
+                         ["Saturation, all", str(t["ultimate"])]],
     }
+    routes_json()
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "img", "map_boxes.json")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w", encoding="utf-8") as fh:

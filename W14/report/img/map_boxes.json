@@ -48,7 +48,7 @@
   ],
   [
    "People, 2024",
-   "119,978"
+   "119,886"
   ],
   [
    "Occupancy, Ibri",
@@ -122,27 +122,49 @@
  "M09_saturation": [
   [
    "Saturation year",
-   "2073"
+   "2070"
   ],
   [
    "People at saturation",
-   "369,930"
+   "349,019"
   ],
   [
    "Sewage at saturation",
-   "63,679 m3/d"
+   "60,097 m3/d"
   ],
   [
    "People, 2024",
-   "119,978"
+   "119,886"
   ],
   [
    "Capacity of the empty plots",
-   "249,952"
+   "229,133"
   ],
   [
    "Ibri full",
-   "2057"
+   "2056"
+  ]
+ ],
+ "M10_overflow": [
+  [
+   "Ibri full",
+   "2056"
+  ],
+  [
+   "People Ibri sends out",
+   "55,213"
+  ],
+  [
+   "Largest route",
+   "Ibri to At Tayyib, 22,074"
+  ],
+  [
+   "Settlements that never fill alone",
+   "7"
+  ],
+  [
+   "Saturation, all",
+   "2070"
   ]
  ]
 }

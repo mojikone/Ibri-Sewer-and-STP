@@ -290,11 +290,20 @@ def _box(par):
 
 # -------------------------------------------------------------------- tables
 def table(d, headers, rows, widths=None, font=9, header_fill="1F3B63",
-          align_right=None):
+          align_right=None, cell_margin=None):
     t = d.add_table(rows=1, cols=len(headers))
     t.style = "Table Grid"
     t.alignment = WD_TABLE_ALIGNMENT.CENTER
     align_right = align_right or set()
+    if cell_margin is not None:
+        # a dense table: the default 0.19 cm side margins would take a third
+        # of a one-centimetre column, so they are set explicitly, in cm
+        tw = int(round(cell_margin / 2.54 * 1440))
+        t.autofit = False
+        t._tbl.tblPr.append(parse_xml(
+            f'<w:tblCellMar xmlns:w="http://schemas.openxmlformats.org/'
+            f'wordprocessingml/2006/main"><w:left w:w="{tw}" w:type="dxa"/>'
+            f'<w:right w:w="{tw}" w:type="dxa"/></w:tblCellMar>'))
 
     for i, htxt in enumerate(headers):
         cell = t.rows[0].cells[i]

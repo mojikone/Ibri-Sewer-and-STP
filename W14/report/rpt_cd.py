@@ -300,7 +300,7 @@ def part_d(d):
                f"settlements with institutional housing on a handful of plots "
                f"return two or more, and five settlements have too few built "
                f"home plots to measure and take the area-wide value. The full "
-               f"table is given in Appendix A.")
+               f"table is given in Appendix A3.")
     N.add(p, f"{F.fmt(ps['pure_home_plots'])} home plots were measured across "
              f"the twenty-five settlements. A settlement with fewer than ten "
              f"takes the area-wide ratio.")
@@ -316,20 +316,29 @@ def part_d(d):
     _params(d, [
         ["OR", "occupancy rate", "persons per property"]])
 
-    p = D.p(d, f"A floor of {F.OR_FLOOR:.1f} persons per property is applied. "
-               f"Eleven small settlements would otherwise return between one "
-               f"and four, because their properties include the housing of the "
-               f"police headquarters, the college and similar institutions, "
-               f"whose occupants the census does not count as residents. Those "
-               f"meters discharge to the sewer whatever the census says, and "
-               f"the floor keeps them in the design. A cap at the highest rate "
-               f"among the settlements of two thousand or more people, "
-               f"{max(r['or_used'] for r in st):.2f}, holds three settlements "
-               f"with a handful of meters to a plausible value.")
-    N.add(p, "With the floor and the cap the study area holds 119,978 people "
-             "against 116,452 in the official series for the same twenty-five "
-             "settlements; the difference is the institutional housing. "
-             "Without them the two figures are identical.")
+    small = [r["name"] for r in st if r["small"]]
+    p = D.p(d, f"Two rules bound the derived rate. A floor of {F.OR_FLOOR:.1f} "
+               f"persons per property: some settlements would otherwise return "
+               f"between one and four, because their properties include the "
+               f"housing of the police headquarters, the college and similar "
+               f"institutions, whose occupants the census does not count as "
+               f"residents; those meters discharge to the sewer whatever the "
+               f"census says, and the floor keeps them in the design. And a cap "
+               f"at the highest rate among the settlements of two thousand or "
+               f"more people, {max(r['or_used'] for r in st):.2f}.")
+    N.add(p, f"With the floor and the cap the study area holds "
+             f"{F.fmt(t['pop_today'])} people against 116,452 in the official "
+             f"series for the same twenty-five settlements; the difference is "
+             f"the institutional housing.")
+    p = D.p(d, f"A settlement of fewer than a thousand people in 2024 is "
+               f"treated by one rule for all its rates: an occupancy of 4.0, "
+               f"one property per plot, and a home share of 0.9. It has too "
+               f"few meters to measure on, and a village of that size does not "
+               f"attract second dwellings on a plot. The rule applies to "
+               f"{len(small)} settlements: {', '.join(small)}.")
+    N.add(p, "4.0 is the rate measured at At Tayyib, 3,300 people, the "
+             "smallest settlement with a sample worth measuring. The nine "
+             "settlements of 800 to 5,000 people pool to 4.6.")
 
     D.tab_caption(d, "Occupancy rate by settlement")
     D.table(d, ["Settlement", "Domestic properties", "Population 2024",
@@ -465,10 +474,37 @@ def part_d(d):
     D.picture(d, os.path.join(IMG, "D7_saturation.png"), 14.5)
     D.fig_caption(d, "From the empty plot to the year each settlement fills.")
 
-    p = D.p(d, "Each settlement grows at the rate of the official population "
-               "series prepared at inception, applied to its counted "
-               "population, and its growth fills its empty plots together and "
-               "in proportion. When a settlement is full, its further growth "
+    D.h(d, 3, "The growth series")
+    p = D.p(d, "The population series of the Inception Report is used for its "
+               "growth rates. It is built in three parts. To 2040 it is the "
+               "National Centre for Statistics and Information forecast for "
+               "the Wilayat of Ibri, Omani and expatriate population "
+               "separately. From 2041 to 2050 it is an extrapolation of that "
+               "forecast, documented in the technical note on population "
+               "issued with the Inception Report. From 2051 it grows at a "
+               "constant 2.40 per cent a year to 2100, the planning horizon "
+               "instructed by Nama Water Services, the rate rising from 2.19 "
+               "per cent in 2051 to 2.40 by 2060. The wilayat population is "
+               "then split between settlements in fixed shares from the "
+               "census, so every settlement carries the same annual rate. "
+               "Over 2024 to 2030 that rate averages 2.6 per cent a year, "
+               "over the 2030s 2.5, over the 2040s 2.1, and 2.4 from the "
+               "2050s on. The series is not a saturation figure: the land "
+               "fills long before 2100.")
+    N.add(p, "Inception Report Revision 0, Section 6, and the demand workbook "
+             "issued with it, sheets Pop_Wilayat and Project Pop Settlements. "
+             "Wilayat population 183,564 in 2024; the twenty-five settlements "
+             "are 63.4 per cent of it in every year. The workbook total for "
+             "the settlements is 691,264 in 2100.")
+    D.chart(d, "C12_growth_rate", 14.0)
+    D.fig_caption(d, "The annual growth rate of the population series, by "
+                     "year: the census forecast to 2040, the extrapolation to "
+                     "2050, and the constant rate beyond.")
+
+    D.h(d, 3, "Filling the land")
+    p = D.p(d, "Each settlement grows at the rate of the series, applied to "
+               "its counted population, and its growth fills its empty plots "
+               "together and in proportion. When a settlement is full, its further growth "
                "moves to a neighbour. Ibri's overflow goes in parallel to Al "
                "Araqi, Al Qurayn and Shalashil, in the proportions seventy, "
                "twenty and ten per cent, then to Ad Dariz when those are full, "
@@ -485,19 +521,45 @@ def part_d(d):
 
     D.tab_caption(d, "Population at five-year intervals to saturation")
     cols, rows = F.five_year_rows("pop")
-    hdr = ["Settlement"] + [str(c) for c in cols[1:-1]] + ["Full"]
-    D.table(d, hdr, rows, widths=[2.9] + [1.0] * (len(hdr) - 2) + [1.0], font=6.6)
+    hdr = ["Settlement"] + [str(c) for c in cols[1:-1]] + ["Saturation year", "Saturation population"]
+    D.table(d, hdr, rows, widths=[2.3] + [0.95] * (len(hdr) - 3) + [1.5, 1.65], font=6.4, cell_margin=0.08)
     D.p(d, "")
-    p = D.p(d, f"Ibri and Al Araqi fill in {ib['sat_year']}, Al Qurayn in "
-               f"{[r for r in st if r['key'] == 'AL QURAYN'][0]['sat_year']}, "
-               f"Shalashil and Ad Dariz in "
-               f"{[r for r in st if r['key'] == 'AD DARIZ'][0]['sat_year']}. "
-               f"The last settlement fills in {ult}, which is the saturation "
-               f"year of the study area, with {F.fmt(t['pop_ult'])} people. "
-               f"A cell in the table is blank once the settlement is full.")
+    sy = {r["key"]: r["sat_year"] for r in st}
+    p = D.p(d, f"Ibri fills in {sy['IBRI']} and Al Araqi in {sy['AL ARAQI']}, "
+               f"Al Qurayn in {sy['AL QURAYN']}, Shalashil in {sy['SHALASHIL']} "
+               f"and Ad Dariz in {sy['AD DARIZ']}. The last settlement fills "
+               f"in {ult}, which is the saturation year of the study area, "
+               f"with {F.fmt(t['pop_ult'])} people. A cell in the table is "
+               f"blank once the settlement is full.")
     N.add(p, "A settlement's population after its saturation year is its "
              "capacity plus what it held in 2024; its growth beyond that is "
              "housed elsewhere or not at all.")
+
+    D.p(d, "The routes the overflow takes, and when, are set out below for "
+           "every route carrying more than a thousand people; the full list "
+           "is in Appendix A5, and the year each settlement would fill on "
+           "its own growth alone is in Appendix A6.")
+    D.tab_caption(d, "The main overflow routes")
+    rts = [r for r in F.routes() if r["people"] >= 1000]
+    D.table(d, ["From", "To", "People at saturation", "Donor full", "Receiver starts", "Receiver full"],
+            [[r["donor_name"], r["receiver_name"], F.fmt(r["people"]), str(r["donor_full"] or ""),
+              str(r["starts"] or ""), str(r["receiver_full"] or "")] for r in rts],
+            widths=[3.2, 3.2, 2.6, 2.3, 2.6, 2.6], font=8.2)
+    D.p(d, "")
+    own = F.own_growth_saturation(); never = [r["name"] for r in own if r["own"] is None]
+    p = D.p(d, f"The overflow matters. On its own growth alone, "
+               f"{len(never)} of the twenty-five settlements would not fill "
+               f"before 2100; with the overflow, every settlement fills by "
+               f"{ult}. A network in those settlements sized on their own "
+               f"growth would be sized for land that never fills; sized on "
+               f"the overflow, it serves the plots that Ibri's growth "
+               f"actually occupies.")
+    N.add(p, "The settlements that never fill on their own growth: " + ", ".join(never) + ".")
+    _fig(d, "M10_overflow",
+         "Where the growth goes once a settlement is full. Arrows show the "
+         "routes carrying five hundred people or more at saturation; the "
+         "shading shows how much of each settlement's capacity is taken by "
+         "its neighbours' overflow.")
 
     D.chart(d, "C08_growth", 15.0)
     D.fig_caption(d, "People by year to saturation, the six largest "
@@ -662,8 +724,8 @@ def part_d(d):
 
     D.tab_caption(d, "Average sewage flow at five-year intervals to saturation, m³/d")
     cols, rows = F.five_year_rows("q")
-    hdr = ["Settlement"] + [str(c) for c in cols[1:-1]] + ["Full"]
-    D.table(d, hdr, rows, widths=[2.9] + [1.0] * (len(hdr) - 2) + [1.0], font=6.6)
+    hdr = ["Settlement"] + [str(c) for c in cols[1:-1]] + ["Saturation year", "Saturation flow"]
+    D.table(d, hdr, rows, widths=[2.3] + [0.95] * (len(hdr) - 3) + [1.5, 1.65], font=6.4, cell_margin=0.08)
     D.p(d, "")
     D.chart(d, "C09_flow", 15.0)
     D.fig_caption(d, "Average sewage flow of the study area by year, from "

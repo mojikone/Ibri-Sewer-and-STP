@@ -216,7 +216,28 @@ def c11_streams():
     return _save(fig, "C11_streams")
 
 
-ALL = (c01_accounts, c02_occupancy, c04_population, c07_landuse, c08_growth, c09_flow, c10_fill_years, c11_streams)
+# ---------------------------------------------------------------- C12
+def c12_growth_rate():
+    """Annual growth rate of the inception population series, by year.
+    Source: the demand workbook, sheet Project Pop Settlements, total of the 25."""
+    import openpyxl
+    wb = openpyxl.load_workbook(os.path.join(os.path.dirname(F.W14), "_CLIENT", "Ibri Sewer Demand R0 2026 08 03.xlsx"), read_only=True, data_only=True)
+    ws = wb["Project Pop Settlements"]; rows = list(ws.iter_rows(values_only=True)); hdr = [str(h) for h in rows[0]]
+    yc = {int(h.split()[1]): i for i, h in enumerate(hdr) if h.startswith("Pop ")}
+    tot = {y: sum(float(r[i]) for r in rows[1:] if r[1] and isinstance(r[i], (int, float))) for y, i in yc.items()}
+    years = [y for y in sorted(tot) if y - 1 in tot]; rate = [(tot[y] / tot[y - 1] - 1) * 100 for y in years]
+    fig, ax = plt.subplots(figsize=(7.4, 2.8))
+    ax.axvspan(years[0], 2040, color=PALE, alpha=0.35, linewidth=0); ax.axvspan(2040, 2050, color=AMBER, alpha=0.18, linewidth=0)
+    ax.plot(years, rate, color=BLUE, linewidth=1.6)
+    for x, lab in ((2032, "census forecast\nto 2040"), (2045, "extrapolation\n2041 to 2050"), (2075, "constant 2.40 % a year\n2051 to 2100")):
+        ax.text(x, max(rate) * 0.08, lab, ha="center", va="bottom", fontsize=7.6, color=GREY)
+    ax.set_xlim(years[0], years[-1]); ax.set_ylim(0, max(rate) * 1.15)
+    ax.set_ylabel("Growth, per cent a year", fontsize=8.5, color=GREY)
+    _style(ax)
+    return _save(fig, "C12_growth_rate")
+
+
+ALL = (c01_accounts, c02_occupancy, c04_population, c07_landuse, c08_growth, c09_flow, c10_fill_years, c11_streams, c12_growth_rate)
 
 if __name__ == "__main__":
     os.makedirs(IMG, exist_ok=True)
