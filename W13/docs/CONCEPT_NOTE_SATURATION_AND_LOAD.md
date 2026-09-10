@@ -109,10 +109,17 @@ are excluded). Ibri 1.33, Al Araqi 1.32, Ad Dariz 1.20; small settlements with i
 2.5. The first reading, which counted every built plot with a dwelling, gave Ibri 1.60 and was rejected.
 
 **Occupancy rate**, per settlement: workbook population **2024** (the accounts' year, the report's base)
-÷ metered properties, **floored at 4.0**. Ibri 6.07, Bat 6.12, Ad Dariz 4.86, Al Araqi 4.34; eleven small
-settlements sit on the floor because the census does not count their institutional residents. This
-replaces the single measured 5.32 and makes today's population match the workbook settlement by
-settlement.
+÷ metered properties, **floored at 4.0 and capped at 6.12** (the highest value among the settlements with
+2,000 or more people, which is Bat's). Ibri 6.07, Bat 6.12, Ad Dariz 4.86, Al Araqi 4.34; eleven small
+settlements sit on the floor because the census does not count their institutional residents, three tiny
+ones on the cap. This replaces the single measured 5.32 and makes today's population match the workbook
+settlement by settlement.
+
+**The report must change with it.** Revision 1 states one occupancy rate, 5.32, measured over the whole
+area, and every population and flow in it descends from that figure. The next revision states the rate per
+settlement with the floor and the cap, explains the two in one sentence each (institutional residents the
+census does not see; tiny settlements with a handful of meters), and re-derives the tables. The area-wide
+average that results is 5.32 still, so the executive summary's headline does not move; the settlement rows do.
 
 ---
 
@@ -133,13 +140,48 @@ occupancy. Total **248,500 people** on top of today's 120,100.
 **Growth.** Each settlement grows at its own **rate** from the inception workbook (*Project Pop
 Settlements*, 2024–2100), applied to its metered population, and fills its capacity; all empty plots fill
 together in proportion. When a settlement is full its overflow moves: **Ibri in parallel to Al Araqi 70 %,
-Al Qurayn 20 %, Shalashil 10 %, then to Ad Dariz** (local knowledge); other settlements to the nearest
-neighbour with spare room among those with 2,000 or more people.
+Al Qurayn 20 %, Shalashil 10 %, then to Ad Dariz** (local knowledge), then to the nearest settlement with
+spare room; every other settlement to its nearest neighbour with spare room. Every settlement receives,
+whatever its size, so all 25 saturate.
 
-**Fill years.** Ibri and Al Araqi 2056, Al Qurayn 2060, Shalashil and Ad Dariz 2062; the last receiver
-fills in **2068, the saturation (ultimate) year**: 333,400 people. Seven small settlements never fill by
-2100. The workbook's 2100 population for the 25 settlements is 690,000; the cadastre as drawn holds
-369,000, so 361,000 of the workbook's 2100 people have no plot. The report should say so.
+**Fill years.** Ibri and Al Araqi 2057, Al Qurayn 2060, Shalashil and Ad Dariz 2062, Suwayda Al Ma last in
+**2073, the saturation (ultimate) year**: every settlement full, **367,650 people**. The workbook's 2100
+population for the 25 settlements is 690,000; the cadastre as drawn holds 367,650, so 322,000 of the
+workbook's 2100 people have no plot. The report should say so.
+
+**Five-year steps to saturation** (the table the report carries in the population section; the per-settlement
+version goes to Appendix A6):
+
+| Year | People | Qadf m³/d |
+|---|---|---|
+| 2024 (base) | 119,978 | 20,872 |
+| 2025 | 122,852 | 21,365 |
+| 2030 | 139,636 | 24,239 |
+| 2035 | 157,820 | 27,354 |
+| 2040 | 178,909 | 30,966 |
+| 2045 | 197,294 | 34,115 |
+| 2050 | 219,083 | 37,847 |
+| 2055 | 245,087 | 42,301 |
+| 2060 | 275,803 | 47,563 |
+| 2065 | 310,526 | 53,510 |
+| 2070 | 349,622 | 60,206 |
+| 2075 ≈ saturation | 367,649 | 63,294 |
+
+The ten largest settlements, people at five-year steps and the year each fills:
+
+| Settlement | 2024 | 2025 | 2030 | 2035 | 2040 | 2045 | 2050 | 2055 | 2060 | 2065 | 2070 | 2075 | full |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Ibri | 67,094 | 68,702 | 78,086 | 88,257 | 100,049 | 110,330 | 122,514 | 137,057 | 140,395 | 140,395 | 140,395 | 140,395 | 2057 |
+| Al Araqi | 10,698 | 10,954 | 12,451 | 14,072 | 15,953 | 17,592 | 19,535 | 21,854 | 22,529 | 22,529 | 22,529 | 22,529 | 2057 |
+| Ad Dariz | 11,852 | 12,136 | 13,794 | 15,590 | 17,673 | 19,490 | 21,642 | 24,211 | 27,246 | 28,704 | 28,704 | 28,704 | 2062 |
+| Al Aynayn | 4,553 | 4,662 | 5,299 | 5,989 | 6,789 | 7,487 | 8,314 | 9,301 | 12,012 | 12,012 | 12,012 | 12,012 | 2060 |
+| At Tayyib | 3,349 | 3,429 | 3,898 | 4,405 | 4,994 | 5,507 | 6,115 | 6,841 | 8,131 | 17,539 | 38,021 | 38,021 | 2069 |
+| Al Wahrah | 3,351 | 3,431 | 3,900 | 4,408 | 4,997 | 5,510 | 6,119 | 6,845 | 7,703 | 8,684 | 9,803 | 10,460 | 2071 |
+| Ad Dibayshi | 2,724 | 2,789 | 3,170 | 3,583 | 4,062 | 4,479 | 4,974 | 5,564 | 6,262 | 10,644 | 10,644 | 10,644 | 2063 |
+| Al Jibayyah | 2,684 | 2,749 | 3,128 | 3,538 | 4,014 | 4,429 | 4,921 | 5,508 | 6,201 | 6,985 | 8,694 | 13,990 | 2072 |
+| Bat | 2,558 | 2,619 | 2,977 | 3,365 | 3,814 | 4,206 | 4,671 | 4,785 | 4,785 | 4,785 | 4,785 | 4,785 | 2052 |
+| Tanam | 2,116 | 2,167 | 2,463 | 2,783 | 3,155 | 3,480 | 3,864 | 4,322 | 4,864 | 5,961 | 8,895 | 8,895 | 2070 |
+
 
 ---
 
@@ -172,10 +214,10 @@ pipe, adds infiltration per kilometre, and peaks there.
 
 | | People | Sewage m³/d |
 |---|---|---|
-| Today (2024) | 120,100 | 20,900 |
-| 2030 | 139,800 | 24,200 |
-| 2055 | 245,300 | 42,300 |
-| **Saturation 2068** | **333,400** | **57,400** |
+| Today (2024) | 120,000 | 20,900 |
+| 2030 | 139,600 | 24,200 |
+| 2055 | 245,100 | 42,300 |
+| **Saturation 2073** | **367,650** | **63,300** |
 
 The inception report's ≈ 49,700 m³/d ultimate was built on connected population and the old occupancy;
 this basis supersedes it and the report must reconcile the two in one paragraph.
@@ -192,7 +234,7 @@ this basis supersedes it and the report must reconcile the two in one paragraph.
 |---|---|---|
 | Existing situation: population and connections | today's people and properties per settlement; how they were counted | **Map 1** settlements with people today; **Chart 1** properties per settlement |
 | Land use | the derived land-use map and the seven classes; the two industrial estates as identified projects | **Map 2** land use per plot; **Flowchart A** "from meter to land use" |
-| Population projection | growth rate per settlement, capacity, fill years, saturation year; the gap between the workbook's 2100 and the cadastre | **Chart 2** population by year per settlement (stacked); **Chart 3** fill years; **Flowchart B** "from empty plot to saturation" |
+| Population projection | growth rate per settlement, capacity, fill years, saturation year, **the five-year table to saturation**; the occupancy per settlement replacing R1's 5.32; the gap between the workbook's 2100 and the cadastre | **Table** five-year steps; **Chart 2** population by year per settlement (stacked); **Chart 3** fill years; **Flowchart B** "from empty plot to saturation" |
 | Design flows | per-person rates, the three streams, return rates, the estates; totals today / 2030 / 2055 / saturation; peaking method | **Chart 4** sewage by year and by stream; **Map 3** Qadf per plot at saturation |
 | Basis of design (criteria) | the rules in one table with guideline pages | **Flowchart C** "from plot to pipe flow" (plot → pipe sum → peak → works) |
 
@@ -201,9 +243,9 @@ this basis supersedes it and the report must reconcile the two in one paragraph.
 - A1 Tariff-to-category table and the 499 large-consumer accounts with their identified use and evidence.
 - A2 Identified projects and special consumption register (the two estates, the army camp, Ibri View, the tanker sources).
 - A3 Land-use derivation: the rule order, the NDVI calibration (thresholds, the 489 farm-meter plots, the contact sheet), the class change table v1 → v6.
-- A4 Properties per plot and occupancy per settlement (table, 25 rows).
+- A4 Properties per plot and occupancy per settlement (table, 25 rows, with the floor and the cap and why).
 - A5 Empty plots: the home-shape rule, home share per settlement, capacity per settlement; the spread rule.
-- A6 Growth tables: population and sewage per settlement per year 2024–2100, overflow routes, fill years.
+- A6 Growth tables: population and sewage per settlement at five-year steps to saturation (and per year in the digital annex), overflow routes, fill years.
 - A7 The plot table field dictionary (`PLOTS_load.shp`), so the GIS deliverable is self-describing.
 
 **Figures.** Maps from QGIS on the satellite base at 30 %, plots coloured by class, settlements as the

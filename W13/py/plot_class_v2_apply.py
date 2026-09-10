@@ -95,7 +95,11 @@ wb = openpyxl.load_workbook(WB, read_only=True, data_only=True); ws = wb['Projec
 rows = list(ws.iter_rows(values_only=True)); hdr = [str(h) for h in rows[0]]; kb = hdr.index(f'Pop {BASE}')
 wb_base = {str(r[1]).strip().upper(): float(r[kb]) for r in rows[1:] if r[1]}
 props_s = plots.groupby('SETTLE').G_DOM.sum()
-or_s = pd.Series({st: (max(wb_base[st] / props_s[st], OR_FLOOR) if props_s.get(st, 0) > 0 and st in wb_base else OR_DEFAULT) for st in props_s.index}).round(3)
+or_raw = pd.Series({st: (wb_base[st] / props_s[st] if props_s.get(st, 0) > 0 and st in wb_base else OR_DEFAULT) for st in props_s.index})
+# ceiling (engineer 2026-09-10): the highest occupancy among the settlements with 2,000+ workbook people (Bat, 6.12); it touches only the tiny ones
+OR_CEIL = float(or_raw[[st for st in or_raw.index if wb_base.get(st, 0) >= 2000]].max())
+or_s = or_raw.clip(lower=OR_FLOOR, upper=OR_CEIL).round(3)
+print('occupancy ceiling %.2f (largest among settlements with 2,000+ people)' % OR_CEIL)
 plots['OR_S'] = plots.SETTLE.map(or_s).fillna(OR_DEFAULT)
 plots['POP'] = (plots.G_DOM * plots.OR_S).round(2)
 pop_s = plots.groupby('SETTLE').POP.sum(); nd_s = plots.groupby('SETTLE').G_NDOM.sum(); gv_s = plots.groupby('SETTLE').G_GOV.sum()

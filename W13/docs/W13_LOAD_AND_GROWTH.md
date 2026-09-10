@@ -13,7 +13,7 @@ Outputs: `W13/shp/ELE_meters_on_plots.shp`, `W13/shp/PLOTS_load.shp`, `W13/shp/S
 
 | # | Rule | Source |
 |---|---|---|
-| 1 | Every dwelling meter (primary, subsidised, additional tariff) is one property. **Occupancy per settlement** = workbook population **2024** (the accounts' year and the report's base) ÷ metered properties, **floored at 4.0**: Ibri 6.07, Ad Dariz 4.86, Al Araqi 4.34, Bat 6.12; eleven small settlements sit on the floor. The single 5.32 is superseded | engineer, 2026-09-10 |
+| 1 | Every dwelling meter (primary, subsidised, additional tariff) is one property. **Occupancy per settlement** = workbook population **2024** (the accounts' year and the report's base) ÷ metered properties, **floored at 4.0, capped at 6.12** (Bat's, the highest among settlements with 2,000+ people): Ibri 6.07, Ad Dariz 4.86, Al Araqi 4.34; eleven small settlements on the floor, three on the cap. The single 5.32 is superseded | engineer, 2026-09-10 |
 | 2 | Water per person: **164 L/d domestic**; non-domestic **0.22 × 164 = 36 L/d**; governmental **0.14 × 164 = 23 L/d**. Never compounded into one rate | G1-p59–61 Tab 11 |
 | 3 | Non-domestic and governmental water is a settlement pool from its people, landed on the settlement's shop and government meters in proportion; a settlement with none keeps it on its dwellings | locked basis, PROJECT-STATE §2 1b |
 | 4 | Special = the two industrial estates: **4,500 workers Al Tayyeb, 1,800 Tanam**, spread over their industrial plots by area, **93 L/d each** (dry industry) | Tab 12, G1-p61; engineer's assumption |
@@ -27,9 +27,9 @@ Outputs: `W13/shp/ELE_meters_on_plots.shp`, `W13/shp/PLOTS_load.shp`, `W13/shp/S
 | 9a | **Plot class, farm first**: any farm meter → Agricultural, never overridden. Then **Sentinel-2 NDVI** (scene 2026-09-09, 10 m, red and near-infrared from the public AWS bucket, `W13/py/ndvi_plots.py`): a grove = **≥ 1,000 m² of pixels at NDVI ≥ 0.30 with mean NDVI ≥ 0.20**, or a small plot ≥ 800 m² that is ≥ 60 % green at mean NDVI ≥ 0.40 → Agricultural unless ≥ ⅔ shop meters or a simple government majority says otherwise. Palms are evergreen, so one scene is enough. Calibrated on the 489 farm-meter plots (a quarter of them are bare pump sites) and checked on a 64-plot contact sheet (`W13/img/W13_ndvi_contact_sheet_T1000.png`). The old RGB excess-green test put farms on bare land and is kept only as `GREEN_IMG` | engineer, 2026-09-10 |
 | 9b | **Then proportion of the plot's meters**: more than ⅔ home → Residential; ≥ ⅔ government → Government; ≥ ⅔ shop → Commercial; in between → mixed. Large-user meters count with their identified use | engineer, evening |
 | 9c | **Properties per built plot** from pure home plots only: Residential by rule 9b, built, fewer than 15 dwelling meters | engineer, evening |
-| 10 | Overflow: **Ibri in parallel to Al Araqi 70 %, Al Qurayn 20 %, Shalashil 10 %; when those are full, Ad Dariz**; then the nearest settlement with spare room among those with 2,000+ people (a person who knows the area, via the engineer, 2026-09-10). Other settlements: nearest with spare room | engineer |
+| 10 | Overflow: **Ibri in parallel to Al Araqi 70 %, Al Qurayn 20 %, Shalashil 10 %; when those are full, Ad Dariz**; then the nearest settlement with spare room, any size (a person who knows the area, via the engineer, 2026-09-10). Other settlements: nearest with spare room, any size — **every settlement receives, so all 25 saturate** | engineer |
 | 11 | A future plot's sewage = its people × (164 × 0.85 + 36 × 0.54 + 23 × 0.54) = **171.3 L/d per person**, all on the plot | rules 2, 5 |
-| 12 | **Ultimate** = the first year growth finds no empty plot among the receivers; **2068** | result |
+| 12 | **Ultimate** = the year the last settlement fills; **2073** | result |
 
 Peaking is not a plot property: the network engine sums the plots upstream of each pipe, adds
 infiltration per km, and applies Merrimack (>100 properties) or Peltier (G1-p71–72). The STP
@@ -40,26 +40,26 @@ takes average, maximum day and peak hour from the same accumulated flow plus tan
 | | |
 |---|---|
 | Meters on plots | 30,931 inside, 2,914 snapped (≤ 15 m), 126 free |
-| Properties | 22,559 → **120,088 people** with the per-settlement occupancy (workbook 2024 for the 25: 116,452; the floor at 4.0 adds 3,600 in the small settlements) |
+| Properties | 22,559 → **119,978 people** with the per-settlement occupancy (workbook 2024 for the 25: 116,452; the floor at 4.0 adds 3,500 in the small settlements) |
 | Water | 27,354 m³/d |
-| **Sewage (Qadf)** | **20,885 m³/d** |
+| **Sewage (Qadf)** | **20,866 m³/d** |
 | Plot → settlement | 57,769 inside an outline, 19,496 by nearest |
 | Empty plots | 60,509; **46,109 home-shaped** count for capacity; 54,163 (all up to 2,000 m² except groves, industrial, heritage) receive the spread; slivers under 270 m² are 10 % of the plots but 1.3 % of the spread weight |
-| Capacity | **248,548 people** (at 5.32 everywhere: 274,565; all empty plots ≤ 2,000 m² at the ratio, v4: 369,172; v1 loose class: 407,411) |
+| Capacity | **247,671 people** (at 5.32 everywhere: 274,565; all empty plots ≤ 2,000 m² at the ratio, v4: 369,172; v1 loose class: 407,411) |
 
 ## 3. Growth
 
 | Year | New people housed | Total people | Nowhere to go | Qadf m³/d |
 |---|---|---|---|---|
-| 2030 | 19,674 | 139,763 | 0 | 24,242 |
-| 2055 | 125,225 | 245,314 | 0 | 42,321 |
-| **2068 ultimate** | 213,312 | **333,401** | 333 | **57,409** |
-| 2100 (workbook) | 231,568 | 351,657 | 361,193 | 60,536 |
+| 2030 | 19,656 | 139,634 | 0 | 24,239 |
+| 2055 | 125,109 | 245,087 | 0 | 42,301 |
+| **2073 ultimate** | 247,671 | **367,649** | 7,754 | **63,294** |
+| 2100 (workbook) | 247,671 | 367,649 | 344,542 | 63,294 |
 
-Settlements fill between 2039 (Al Akheedar) and 2094 (Suwayda Al Ma); **Ibri 2056**, Al Araqi 2056, Al Qurayn 2060,
-Shalashil 2062, Ad Dariz 2062. Seven small settlements never fill by 2100. The workbook's 2100 population for the
-25 settlements is 690,000; the home-shaped plots hold 369,000, so 361,000 of the workbook's 2100 people have no
-plot — reported, not placed.
+Settlements fill between 2039 (Al Akheedar) and 2073 (Suwayda Al Ma); **Ibri 2057**, Al Araqi 2057, Al Qurayn 2060,
+Shalashil 2062, Ad Dariz 2062. All 25 fill: every settlement receives its neighbours' overflow. The workbook's
+2100 population for the 25 settlements is 690,000; the home-shaped plots hold 367,650, so 322,000 of the
+workbook's 2100 people have no plot — reported, not placed.
 
 **How the class rule moved the answer.** v1 (one shop meter made a plot mixed, a house on a farm made it
 residential, ratio from every built plot with a dwelling): capacity 407,000, ultimate 2084. v2 with the RGB
@@ -71,7 +71,7 @@ metered plots change class from v1, 1,363 of them homes that are groves; Ibri's 
 369,000; ultimate 2080. **v5 (2026-09-10, live)**: same classes plus Heritage and the government
 majority, capacity from home-shaped plots × home share (rule 9), spread by capped area (rule 9d): capacity
 275,000; ultimate 2072. **v6 (2026-09-10 evening, live)**: occupancy per settlement from the 2024 workbook
-(floor 4), base year 2024, Ibri's parallel overspill; capacity 249,000; ultimate 2068. The v1 class is kept in `DERIVED1`; `WHYC` says why (AGR farm meter, GRN NDVI grove,
+(floor 4, cap 6.12), base year 2024, Ibri's parallel overspill, every settlement a receiver; capacity 248,000; ultimate 2073. The v1 class is kept in `DERIVED1`; `WHYC` says why (AGR farm meter, GRN NDVI grove,
 RES/COM/GOV/RC proportion, EST estate, UNM unmetered); `NDVI_MEAN`, `NDVI_SHARE`, `GREEN_M2`, `COMPACT`, `ASPECT`, `HOMESHAPE`, `SPREAD_W`, `OR_S` are on every plot.
 
 **The R0 figure of ≈ 49,700 m³/d ultimate was built on connected population and Tier A at OR 6;

@@ -24,3 +24,5 @@ Items 1 and 4 and the empty-plot logic (B) went into `plot_class_v2_apply.py` an
 2. Base year 2024, the electricity accounts' year and the concept report's base.
 3. Ibri overspills in parallel: Al Araqi 70 %, Al Qurayn 20 %, Shalashil 10 %; when full, Ad Dariz; then nearest big settlement (local knowledge, via the engineer).
 4. Settlement polygons: pure Voronoi partition, dissolved, clipped, coverage-smoothed; the union with the client's outlines that left gaps is gone.
+5. Occupancy also capped at 6.12 (Bat's, the highest among settlements with 2,000+ people); only Satwah, Miayrid, Wadi Al Mankas are touched.
+6. Every settlement receives overflow from its nearest neighbour with spare room, whatever its size, so all 25 saturate (2073).

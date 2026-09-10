@@ -12,9 +12,9 @@ WB = "D:/Mojtaba/Renardet/2621 Ibri Sewer STP/Hydraulic/Claude/_CLIENT/Ibri Sewe
 OR, LPCD, R_ND, R_GOV, RET_DOM, RET_ND = 5.32, 164.0, 0.22, 0.14, 0.85, 0.54
 BASE = 2024; YEARS = list(range(BASE, 2101)); DESIGN = [2030, 2055]   # 2024 = the electricity accounts' year and the concept report's base
 Q_PER_CAP = LPCD * (RET_DOM + R_ND * RET_ND + R_GOV * RET_ND) / 1000.0     # m3/d per person on a future plot (all three streams)
-BIG = 2000.0; RECEIVER_MIN_POP = 2000.0
+BIG = 2000.0; RECEIVER_MIN_POP = 0.0   # engineer 2026-09-10: every settlement receives overflow from its neighbours, so the small ones saturate too
 # engineer 2026-09-10, from a person who knows the area: Ibri overspills IN PARALLEL to Al Araqi 70 %, Al Qurayn 20 %, Shalashil 10 %;
-# when those are full, to Ad Dariz; after that the nearest settlement with spare room among those with 2,000+ people
+# when those are full, to Ad Dariz; after that the nearest settlement with spare room, any size
 SPILL = {'IBRI': [[('AL ARAQI', 0.7), ('AL QURAYN', 0.2), ('SHALASHIL', 0.1)], [('AD DARIZ', 1.0)]]}
 
 st = pd.read_csv(f"{W13}/analysis/settlements_today.csv").set_index('SETTLE')
@@ -104,7 +104,7 @@ rules = pd.DataFrame({'rule': [
     'each settlement grows at its own rate from the inception workbook sheet "Project Pop Settlements", applied to the metered population',
     'capacity = home-shaped empty plots (200-1,000 m2, compact, not a strip; not grove / industrial / heritage / estate) x home share x properties per home plot x 5.32, per settlement',
     'the housed people are spread over ALL the settlement empty plots <= 2,000 m2 (not grove / industrial / heritage / estate) by plot area capped at 1,000 m2; slivers take a sliver share',
-    f'overflow: IBRI in parallel to AL ARAQI 70 %, AL QURAYN 20 %, SHALASHIL 10 %, then AD DARIZ, then the nearest settlement with spare room among those with {RECEIVER_MIN_POP:.0f}+ people; other settlements: nearest with spare room',
+    f'overflow: IBRI in parallel to AL ARAQI 70 %, AL QURAYN 20 %, SHALASHIL 10 %, then AD DARIZ, then the nearest settlement with spare room, any size; other settlements: nearest with spare room, any size',
     f'water per person: {LPCD} L/d domestic, {R_ND} x {LPCD} non-domestic, {R_GOV} x {LPCD} governmental (never compounded); sewage {RET_DOM} / {RET_ND}',
     f'future plot sewage = {Q_PER_CAP*1000:.1f} L/d per person (all three streams on the plot, no better place known)',
     'existing plots keep today\'s load; the two industrial estates carry 4,500 and 1,800 workers at 93 L/d, 54 % return',
