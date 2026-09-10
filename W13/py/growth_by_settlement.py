@@ -10,9 +10,12 @@ import pandas as pd, numpy as np, geopandas as gpd, openpyxl, math, os
 W13 = "D:/Mojtaba/Renardet/2621 Ibri Sewer STP/Hydraulic/Claude/W13"
 WB = "D:/Mojtaba/Renardet/2621 Ibri Sewer STP/Hydraulic/Claude/_CLIENT/Ibri Sewer Demand R0 2026 08 03.xlsx"
 OR, LPCD, R_ND, R_GOV, RET_DOM, RET_ND = 5.32, 164.0, 0.22, 0.14, 0.85, 0.54
-BASE = 2026; YEARS = list(range(BASE, 2101)); DESIGN = [2030, 2055]
+BASE = 2024; YEARS = list(range(BASE, 2101)); DESIGN = [2030, 2055]   # 2024 = the electricity accounts' year and the concept report's base
 Q_PER_CAP = LPCD * (RET_DOM + R_ND * RET_ND + R_GOV * RET_ND) / 1000.0     # m3/d per person on a future plot (all three streams)
-BIG = 2000.0; RECEIVER_MIN_POP = 2000.0; SPILL = {'IBRI': ['AL ARAQI', 'AD DARIZ']}
+BIG = 2000.0; RECEIVER_MIN_POP = 2000.0
+# engineer 2026-09-10, from a person who knows the area: Ibri overspills IN PARALLEL to Al Araqi 70 %, Al Qurayn 20 %, Shalashil 10 %;
+# when those are full, to Ad Dariz; after that the nearest settlement with spare room among those with 2,000+ people
+SPILL = {'IBRI': [[('AL ARAQI', 0.7), ('AL QURAYN', 0.2), ('SHALASHIL', 0.1)], [('AD DARIZ', 1.0)]]}
 
 st = pd.read_csv(f"{W13}/analysis/settlements_today.csv").set_index('SETTLE')
 plots = gpd.read_file(f"{W13}/shp/PLOTS_load.shp")
@@ -36,10 +39,11 @@ demand = growth[YEARS].mul(pop0, axis=0).sub(pop0, axis=0).clip(lower=0)   # cum
 # receivers by distance, big settlements only
 order = {}
 for s in st.index:
-    pref = list(SPILL.get(s, []))
-    cands = [r for r in st.index if r != s and r not in pref and pop0[r] >= RECEIVER_MIN_POP]
+    stages = [list(stage) for stage in SPILL.get(s, [])]
+    named = {r for stage in stages for r, _ in stage}
+    cands = [r for r in st.index if r != s and r not in named and pop0[r] >= RECEIVER_MIN_POP]
     cands.sort(key=lambda r: cent[s].distance(cent[r]))
-    order[s] = pref + cands
+    order[s] = stages + [[(r, 1.0)] for r in cands]          # each later stage: one receiver, all of the remainder
 
 housed_own = pd.DataFrame(0.0, index=st.index, columns=YEARS)     # new people housed in their own settlement
 inflow = pd.DataFrame(0.0, index=st.index, columns=YEARS)         # new people housed here that came from elsewhere
@@ -53,11 +57,19 @@ for y in YEARS:
     for s in st.index.sort_values(key=lambda ix: -pop0[ix]):     # big donors first
         need = inc[s]
         spare = cap[s] - own_c[s] - in_c[s]; take = min(need, max(spare, 0.0)); own_c[s] += take; need -= take
-        for r in order[s]:
+        for stage in order[s]:
             if need <= 1e-9: break
-            spare = cap[r] - own_c[r] - in_c[r] - (demand[r][YEARS[-1]] - own_c[r] if False else 0)
-            take = min(need, max(spare, 0.0))
-            if take > 0: in_c[r] += take; pair_c[(s, r)] = pair_c.get((s, r), 0.0) + take; need -= take
+            # a stage splits the overflow by share; what a full receiver refuses is re-offered to the others of the same stage
+            todo = {r: need * sh for r, sh in stage}
+            for _ in range(len(stage)):
+                left = 0.0
+                for r in list(todo):
+                    spare = max(cap[r] - own_c[r] - in_c[r], 0.0); take = min(todo[r], spare)
+                    if take > 0: in_c[r] += take; pair_c[(s, r)] = pair_c.get((s, r), 0.0) + take; need -= take
+                    left += todo[r] - take; todo[r] = 0.0
+                    if spare - take <= 1e-9: todo.pop(r)
+                if left <= 1e-9 or not todo: break
+                for r in todo: todo[r] = left / len(todo)
         un_c[s] += need
     housed_own[y] = own_c.values; inflow[y] = in_c.values; unhoused[y] = un_c.values
     for k, v in pair_c.items(): inflow_from.setdefault(k, {})[y] = v
@@ -88,11 +100,11 @@ summ = pd.DataFrame({'pop_today_meters': pop0.round(), 'workbook_2026': P[BASE].
                      'Qadf_today_m3d': q0.round(1), 'Qadf_2030': q[2030].round(1), 'Qadf_2055': q[2055].round(1), f'Qadf_{ult}_ultimate': q[ult].round(1), 'Qadf_2100': q[2100].round(1)})
 spill_tab = pd.DataFrame([{'from': k[0], 'to': k[1], **{y: round(v.get(y, 0)) for y in DESIGN + [ult, 2100]}} for k, v in inflow_from.items()])
 rules = pd.DataFrame({'rule': [
-    f'base year {BASE}: today = dwelling meters x {OR} people (primary, subsidised and additional tariffs)',
+    f'base year {BASE}: today = dwelling meters (primary, subsidised and additional tariffs) x the settlement occupancy = workbook {BASE} people / metered properties, floored at 4.0',
     'each settlement grows at its own rate from the inception workbook sheet "Project Pop Settlements", applied to the metered population',
     'capacity = home-shaped empty plots (200-1,000 m2, compact, not a strip; not grove / industrial / heritage / estate) x home share x properties per home plot x 5.32, per settlement',
     'the housed people are spread over ALL the settlement empty plots <= 2,000 m2 (not grove / industrial / heritage / estate) by plot area capped at 1,000 m2; slivers take a sliver share',
-    f'overflow goes to the nearest settlement with spare room among those with {RECEIVER_MIN_POP:.0f}+ people today; IBRI -> AL ARAQI -> AD DARIZ first',
+    f'overflow: IBRI in parallel to AL ARAQI 70 %, AL QURAYN 20 %, SHALASHIL 10 %, then AD DARIZ, then the nearest settlement with spare room among those with {RECEIVER_MIN_POP:.0f}+ people; other settlements: nearest with spare room',
     f'water per person: {LPCD} L/d domestic, {R_ND} x {LPCD} non-domestic, {R_GOV} x {LPCD} governmental (never compounded); sewage {RET_DOM} / {RET_ND}',
     f'future plot sewage = {Q_PER_CAP*1000:.1f} L/d per person (all three streams on the plot, no better place known)',
     'existing plots keep today\'s load; the two industrial estates carry 4,500 and 1,800 workers at 93 L/d, 54 % return',
@@ -121,7 +133,17 @@ for y, tag in [(2030, '2030'), (2055, '2055'), (ult, 'ULT')]:
     plots[f'Q_{tag}'] = (plots['QADF'] + newpop * Q_PER_CAP).round(4)
 plots['SAT_YEAR'] = plots['SETTLE'].map(pd.Series(sat_year)).fillna(0).astype(int)
 plots['ULT_YEAR'] = ult
-plots.to_file(f"{W13}/shp/PLOTS_load.shp", encoding='utf-8')
+def narrow_schema(df):
+    ints = ['Moh_Classi', 'N_ACC', 'N_DOM', 'N_DOMADD', 'N_COM', 'N_GOV', 'N_AGR', 'N_CRT', 'N_IND', 'G_DOM', 'G_NDOM', 'G_GOV', 'G_SPEC', 'G_AGR', 'PROPS', 'FUT_CAP', 'SAT_YEAR', 'ULT_YEAR', 'GREEN', 'GREEN_IMG', 'HIGH', 'HOMESHAPE']
+    props = {}
+    for c in df.columns:
+        if c == 'geometry': continue
+        if c in ints: df[c] = df[c].fillna(0).astype(int); props[c] = 'int:6'
+        elif df[c].dtype.kind == 'f':
+            props[c] = 'float:12.1' if c == 'AREA_M2' else ('float:9.1' if c in ('WORKERS', 'POP', 'POP_2030', 'POP_2055', 'POP_ULT', 'GREEN_M2') else ('float:6.3' if c in ('VEGFRAC', 'FUT_PROPS', 'NDVI_MEAN', 'NDVI_SHARE', 'COMPACT', 'OR_S') else ('float:7.2' if c in ('ASPECT', 'SPREAD_W') else 'float:10.4')))
+        else: props[c] = f'str:{max(int(df[c].astype(str).str.len().max()), 1)}'
+    return {'geometry': 'Polygon', 'properties': props}
+plots.to_file(f"{W13}/shp/PLOTS_load.shp", schema=narrow_schema(plots), encoding='utf-8', engine='fiona')   # narrow widths: 35 MB, not 117
 for y, tag in [(2030, '2030'), (2055, '2055'), (ult, 'ULT')]:
     sett[f'POP_{tag}'] = pop_total[y].round(); sett[f'Q_{tag}'] = q[y].round(1)
 sett['SAT_YEAR'] = pd.Series(sat_year).fillna(0).astype(int); sett['ULT_YEAR'] = ult

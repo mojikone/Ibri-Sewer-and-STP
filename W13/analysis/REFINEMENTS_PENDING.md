@@ -17,3 +17,10 @@ Items 1 and 4 and the empty-plot logic (B) went into `plot_class_v2_apply.py` an
 2. Growth at the workbook rate fills that capacity; overflow to the nearest big neighbour; saturation year per settlement.
 3. The housed people are spread over ALL the settlement's empty plots up to 2,000 m² (not grove / industrial / heritage / estate) by area capped at 1,000 m². Slivers take a sliver's share (1.3 % of the weight for 10 % of the plots). Shapes above 2,000 m² take nothing.
 4. Load per plot per year from the people; the network is sized on saturation (2072); the works on the same yearly totals.
+
+## C. Population base (engineer, 2026-09-10 evening) — applied
+
+1. Occupancy per settlement = workbook population 2024 ÷ metered properties, floor 4.0. Ibri 6.07. Replaces the single 5.32. The load per property moves with it.
+2. Base year 2024, the electricity accounts' year and the concept report's base.
+3. Ibri overspills in parallel: Al Araqi 70 %, Al Qurayn 20 %, Shalashil 10 %; when full, Ad Dariz; then nearest big settlement (local knowledge, via the engineer).
+4. Settlement polygons: pure Voronoi partition, dissolved, clipped, coverage-smoothed; the union with the client's outlines that left gaps is gone.

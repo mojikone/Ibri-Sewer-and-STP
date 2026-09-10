@@ -10,7 +10,11 @@
 #     the growth is then SPREAD over every empty plot <= 2,000 m2 (not grove / industrial / heritage / estate) by area capped at 1,000 m2 (SPREAD_W)
 import geopandas as gpd, pandas as pd, numpy as np, csv
 W13 = "D:/Mojtaba/Renardet/2621 Ibri Sewer STP/Hydraulic/Claude/W13"
-OR, BIG, HIGH = 5.32, 2000.0, 15
+OR_DEFAULT, OR_FLOOR, BASE, BIG, HIGH = 5.32, 4.0, 2024, 2000.0, 15
+LPCD, R_ND, R_GOV, L_IND, RET_DOM, RET_ND = 164.0, 0.22, 0.14, 93.0, 0.85, 0.54
+WB = "D:/Mojtaba/Renardet/2621 Ibri Sewer STP/Hydraulic/Claude/_CLIENT/Ibri Sewer Demand R0 2026 08 03.xlsx"
+# engineer 2026-09-10: the electricity accounts are 2024, the concept report's base year; the occupancy rate is PER SETTLEMENT =
+# workbook population 2024 / metered properties, floored at 4.0 (small settlements with institutional housing would otherwise fall to 1-2)
 plots = gpd.read_file(f"{W13}/shp/PLOTS_load.shp")
 veg = np.load(f"{W13}/analysis/vegfrac_plots.npy"); assert len(veg) == len(plots)
 plots['VEGFRAC'] = np.where(veg >= 0, veg, np.nan).round(3)
@@ -76,22 +80,47 @@ print('green plots', int(plots.GREEN.sum()), '| vegfrac known', int(plots.VEGFRA
 # write the plot layer with the same narrow schema
 props = {}
 ints = ['Moh_Classi', 'N_ACC', 'N_DOM', 'N_DOMADD', 'N_COM', 'N_GOV', 'N_AGR', 'N_CRT', 'N_IND', 'G_DOM', 'G_NDOM', 'G_GOV', 'G_SPEC', 'G_AGR', 'PROPS', 'FUT_CAP', 'SAT_YEAR', 'ULT_YEAR', 'GREEN', 'GREEN_IMG', 'HIGH', 'HOMESHAPE']
+float3 = ('VEGFRAC', 'FUT_PROPS', 'NDVI_MEAN', 'NDVI_SHARE', 'COMPACT', 'OR_S')
 for c in plots.columns:
     if c == 'geometry': continue
     if c in ints: plots[c] = plots[c].fillna(0).astype(int); props[c] = 'int:6'
     elif plots[c].dtype.kind == 'f':
-        props[c] = 'float:12.1' if c == 'AREA_M2' else ('float:9.1' if c in ('WORKERS', 'POP', 'POP_2030', 'POP_2055', 'POP_ULT', 'GREEN_M2') else ('float:6.3' if c in ('VEGFRAC', 'FUT_PROPS', 'NDVI_MEAN', 'NDVI_SHARE', 'COMPACT') else ('float:7.2' if c in ('ASPECT', 'SPREAD_W') else 'float:10.4')))
+        props[c] = 'float:12.1' if c == 'AREA_M2' else ('float:9.1' if c in ('WORKERS', 'POP', 'POP_2030', 'POP_2055', 'POP_ULT', 'GREEN_M2') else ('float:6.3' if c in float3 else ('float:7.2' if c in ('ASPECT', 'SPREAD_W') else 'float:10.4')))
     else: props[c] = f'str:{max(int(plots[c].astype(str).str.len().max()), 1)}'
 plots.to_file(f"{W13}/shp/PLOTS_load.shp", schema={'geometry': 'Polygon', 'properties': props}, encoding='utf-8', engine='fiona')
 
+# ---------- occupancy per settlement and the loads, recomputed ----------
+import openpyxl
+wb = openpyxl.load_workbook(WB, read_only=True, data_only=True); ws = wb['Project Pop Settlements']
+rows = list(ws.iter_rows(values_only=True)); hdr = [str(h) for h in rows[0]]; kb = hdr.index(f'Pop {BASE}')
+wb_base = {str(r[1]).strip().upper(): float(r[kb]) for r in rows[1:] if r[1]}
+props_s = plots.groupby('SETTLE').G_DOM.sum()
+or_s = pd.Series({st: (max(wb_base[st] / props_s[st], OR_FLOOR) if props_s.get(st, 0) > 0 and st in wb_base else OR_DEFAULT) for st in props_s.index}).round(3)
+plots['OR_S'] = plots.SETTLE.map(or_s).fillna(OR_DEFAULT)
+plots['POP'] = (plots.G_DOM * plots.OR_S).round(2)
+pop_s = plots.groupby('SETTLE').POP.sum(); nd_s = plots.groupby('SETTLE').G_NDOM.sum(); gv_s = plots.groupby('SETTLE').G_GOV.sum()
+pool_nd = plots.SETTLE.map(pop_s * R_ND * LPCD / 1000.0); pool_gv = plots.SETTLE.map(pop_s * R_GOV * LPCD / 1000.0)
+nd_m = plots.SETTLE.map(nd_s); gv_m = plots.SETTLE.map(gv_s); p_s = plots.SETTLE.map(pop_s)
+plots['W_DOM'] = (plots.POP * LPCD / 1000.0).round(4)
+plots['W_NDOM'] = np.where(nd_m > 0, pool_nd * plots.G_NDOM / nd_m.replace(0, np.nan), np.where(p_s > 0, pool_nd * plots.POP / p_s.replace(0, np.nan), 0.0))
+plots['W_GOV'] = np.where(gv_m > 0, pool_gv * plots.G_GOV / gv_m.replace(0, np.nan), np.where(p_s > 0, pool_gv * plots.POP / p_s.replace(0, np.nan), 0.0))
+plots['W_NDOM'] = plots.W_NDOM.fillna(0).round(4); plots['W_GOV'] = plots.W_GOV.fillna(0).round(4)
+plots['W_SPEC'] = (plots.WORKERS.fillna(0) * L_IND / 1000.0).round(4)
+plots['W_TOT'] = (plots.W_DOM + plots.W_NDOM + plots.W_GOV + plots.W_SPEC).round(4)
+plots['S_DOM'] = (plots.W_DOM * RET_DOM).round(4); plots['S_NDOM'] = (plots.W_NDOM * RET_ND).round(4); plots['S_GOV'] = (plots.W_GOV * RET_ND).round(4); plots['S_SPEC'] = (plots.W_SPEC * RET_ND).round(4)
+plots['QADF'] = (plots.S_DOM + plots.S_NDOM + plots.S_GOV + plots.S_SPEC).round(4)
+plots['FUT_PROPS'] = np.where(cap, plots.SETTLE.map(ppp).fillna(0) * plots.SETTLE.map(home_share).fillna(0), 0.0).round(3)
+print('occupancy per settlement (workbook %d / metered properties, floor %.1f):' % (BASE, OR_FLOOR), or_s.round(2).to_dict())
+print('TODAY: people %.0f (workbook %d for the 25: %.0f) | Qadf %.0f m3/d' % (plots.POP.sum(), BASE, sum(wb_base.get(st, 0) for st in props_s.index), plots.QADF.sum()))
+
 # settlement table for the growth run
 g = plots.groupby('SETTLE')
-st = pd.DataFrame({'POP_TODAY': (g.G_DOM.sum() * OR).round(), 'DOM_PLOTS_BUILT': plots[pure].groupby('SETTLE').size(), 'PROPS_PER_BUILT_PLOT': ppp.round(3), 'HOME_SHARE': home_share.round(3),
+st = pd.DataFrame({'POP_TODAY': g.POP.sum().round(), 'OR_S': or_s, 'DOM_PLOTS_BUILT': plots[pure].groupby('SETTLE').size(), 'PROPS_PER_BUILT_PLOT': ppp.round(3), 'HOME_SHARE': home_share.round(3),
                    'NDOM_METERS': g.G_NDOM.sum(), 'GOV_METERS': g.G_GOV.sum(), 'FREE_METERS': 0,
                    'FUT_CAP_PLOTS': plots[cap].groupby('SETTLE').size(), 'SPREAD_PLOTS': plots[spread].groupby('SETTLE').size(), 'SPREAD_W_SUM': plots[spread].groupby('SETTLE').SPREAD_W.sum()}).fillna(0)
-st['FUT_CAP_PROPS'] = (st.FUT_CAP_PLOTS * st.PROPS_PER_BUILT_PLOT * st.HOME_SHARE).round(); st['FUT_CAP_POP'] = (st.FUT_CAP_PROPS * OR).round()
+st['FUT_CAP_PROPS'] = (st.FUT_CAP_PLOTS * st.PROPS_PER_BUILT_PLOT * st.HOME_SHARE).round(); st['FUT_CAP_POP'] = (st.FUT_CAP_PROPS * st.OR_S).round()
 st.index.name = 'SETTLE'; st.to_csv(f"{W13}/analysis/settlements_today.csv", encoding='utf-8-sig')
 sett = gpd.read_file(f"{W13}/shp/Settlements_merged.shp").set_index('SETTLE')
-sett['PPP'] = st.PROPS_PER_BUILT_PLOT; sett['HOME_SHARE'] = st.HOME_SHARE; sett['CAP_PLOTS'] = st.FUT_CAP_PLOTS.astype(int); sett['CAP_POP'] = st.FUT_CAP_POP
+sett['PPP'] = st.PROPS_PER_BUILT_PLOT; sett['HOME_SHARE'] = st.HOME_SHARE; sett['OR_S'] = st.OR_S; sett['POP_TODAY'] = st.POP_TODAY; sett['CAP_PLOTS'] = st.FUT_CAP_PLOTS.astype(int); sett['CAP_POP'] = st.FUT_CAP_POP
 sett.reset_index().to_file(f"{W13}/shp/Settlements_merged.shp", encoding='utf-8')
 print('capacity people:', int(st.FUT_CAP_POP.sum()), '| ratios:', st.PROPS_PER_BUILT_PLOT.round(2).to_dict())
