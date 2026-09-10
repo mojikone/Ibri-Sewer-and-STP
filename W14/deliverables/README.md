@@ -14,8 +14,8 @@ Renardet project 2621. Packaged 2026-09-10 from W14.
 | 03_gis | 5 files (ELE_meters_on_plots.cpg …) | Every electricity meter with its category, its plot and its settlement |
 | 03_gis | 5 files (Settlements_merged.cpg …) | The 25 settlements as a partition, with people, occupancy, capacity and fill year |
 | 03_gis | 5 files (Identified_projects_OSM.cpg …) | Footprints of the identified sites: the two estates, the army camp, the treatment plant, hotels |
-| 04_figures | 9 files (M01_location.png …) | Report maps |
-| 04_figures | 11 files (C01_accounts.png …) | Report charts |
+| 04_figures | 10 files (M01_location.png …) | Report maps |
+| 04_figures | 12 files (C01_accounts.png …) | Report charts |
 | 04_figures | 7 files (D1_process.png …) | Report flowcharts |
 | 04_figures | W14_ndvi_contact_sheet_T1000.png | The satellite calibration sheet for the farm test |
 | 05_method | CONCEPT_NOTE_SATURATION_AND_LOAD.md | The method note behind Part D of the report |

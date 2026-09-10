@@ -14,7 +14,7 @@ ITEMS = [
     ("shp/ELE_meters_on_plots.*", "03_gis", "Every electricity meter with its category, its plot and its settlement"),
     ("shp/Settlements_merged.*", "03_gis", "The 25 settlements as a partition, with people, occupancy, capacity and fill year"),
     ("shp/Identified_projects_OSM.*", "03_gis", "Footprints of the identified sites: the two estates, the army camp, the treatment plant, hotels"),
-    ("report/img/M0*.png", "04_figures", "Report maps"),
+    ("report/img/M[0-9]*.png", "04_figures", "Report maps"),
     ("report/img/C*.png", "04_figures", "Report charts"),
     ("report/img/D*.png", "04_figures", "Report flowcharts"),
     ("img/W14_ndvi_contact_sheet_T1000.png", "04_figures", "The satellite calibration sheet for the farm test"),
