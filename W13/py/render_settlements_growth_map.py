@@ -31,7 +31,7 @@ placed = []
 for f in sl.getFeatures():
     c = f.geometry().pointOnSurface().asPoint(); pt = px(c.x(), c.y())
     lab = f['SETTLE']; sat_y = int(f['SAT_YEAR']) if f['SAT_YEAR'] else 0
-    note = f"{int(f['POP_TODAY']):,} today -> {int(f['POP_ULT']):,} at 2081 | full {sat_y if sat_y else 'never'} | {f['Q_ULT']:.0f} m3/d"
+    note = f"{int(f['POP_TODAY']):,} today -> {int(f['POP_ULT']):,} at 2080 | full {sat_y if sat_y else 'never'} | {f['Q_ULT']:.0f} m3/d"
     p.setFont(fB); wl = p.fontMetrics().horizontalAdvance(lab); p.setFont(fS); wn = p.fontMetrics().horizontalAdvance(note)
     bw = max(wl, wn) + 14; bh = 38; bx, by = pt.x() - bw / 2, pt.y() - bh / 2
     bx = min(max(bx, 5), W - bw - 5); by = min(max(by, 45), H - bh - 5)
@@ -42,7 +42,7 @@ for f in sl.getFeatures():
     r = QRectF(bx, by, bw, bh); placed.append(r)
     p.setPen(QPen(QColor('#ffffff'), 1)); p.setBrush(QBrush(QColor(0, 0, 0, 180))); p.drawRoundedRect(r, 4, 4)
     p.setPen(QColor('#ffffff')); p.setFont(fB); p.drawText(QPointF(bx + 7, by + 15), lab); p.setFont(fS); p.setPen(QColor('#e8e8e8')); p.drawText(QPointF(bx + 7, by + 30), note)
-title = 'Settlements merged: people today and at ultimate (2081), the year each fills, sewage at ultimate. Plots: built by use, empty green = takes people'
+title = 'Settlements merged: people today and at ultimate (2080), the year each fills, sewage at ultimate. Plots: built by use, empty green = takes people'
 p.setFont(fT); p.setPen(QColor('#ffffff')); p.setBrush(QBrush(QColor(0, 0, 0, 170))); tw = p.fontMetrics().horizontalAdvance(title) + 20
 p.drawRect(QRectF(10, 10, tw, 32)); p.drawText(QPointF(20, 33), title)
 items = [('project boundary', '#00e5ff'), ('settlement, merged', '#ffffff'), ('Residential', '#FFE600'), ('Residential-Commercial', '#F5A742'), ('Commercial', '#E03C31'),

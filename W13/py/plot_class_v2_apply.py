@@ -1,6 +1,6 @@
 # W13 — apply plot class v2 to PLOTS_load.shp, refresh the settlement table, then re-run growth_by_settlement.py.
 # Rules (engineer, 2026-09-09 evening):
-#   farm first: any farm meter -> Agricultural (never overridden). Imagery NOT used (engineer 2026-09-10); the score is kept in VEGFRAC / GREEN_IMG for the record
+#   farm first: any farm meter -> Agricultural (never overridden); a grove by Sentinel-2 NDVI -> Agricultural unless a 2/3 shop or government majority says otherwise (RGB test kept in GREEN_IMG for the record only)
 #   more than two thirds of the meters home -> Residential; two thirds or more government -> Government; two thirds or more shop -> Commercial; between -> mixed
 #   properties per built plot from pure home plots only (Residential, fewer than 15 dwelling meters)
 #   capacity = future plots <= 2,000 m2 that are not farm, not industrial, not in an estate
@@ -12,8 +12,12 @@ veg = np.load(f"{W13}/analysis/vegfrac_plots.npy"); assert len(veg) == len(plots
 plots['VEGFRAC'] = np.where(veg >= 0, veg, np.nan).round(3)
 a = plots['AREA_M2']; v = plots['VEGFRAC'].fillna(0)
 plots['GREEN_IMG'] = (((v >= 0.55) & (a >= 2000)) | ((v >= 0.85) & (a >= 800))).astype(int)   # kept for the record only
-USE_IMAGERY = False   # engineer 2026-09-10: farm = farm meter only; the imagery test put farms where there are none
-plots['GREEN'] = plots['GREEN_IMG'] if USE_IMAGERY else 0
+# engineer 2026-09-10: the RGB test put farms on bare land, so it is off; Sentinel-2 NDVI (W13/py/ndvi_plots.py, scene 2026-09-09) is the green test:
+#   a grove = at least 1,000 m2 of pixels at NDVI >= 0.30 with mean NDVI >= 0.20, OR a small plot (>= 800 m2) that is at least 60 % green at mean NDVI >= 0.40
+nd = pd.read_csv(f"{W13}/analysis/ndvi_plots.csv").set_index('fid')
+for c in ('NDVI_MEAN', 'NDVI_SHARE', 'GREEN_M2'): plots[c] = nd[c].reindex(range(len(plots))).values
+nm, ns, ga = plots['NDVI_MEAN'].fillna(0), plots['NDVI_SHARE'].fillna(0), plots['GREEN_M2'].fillna(0)
+plots['GREEN'] = (((ga >= 1000) & (nm >= 0.20)) | ((ns >= 0.60) & (nm >= 0.40) & (a >= 800))).astype(int)
 est = plots.ESTATE.isin(['AL TAYYEB', 'TANAM'])
 
 def classify(r):
@@ -50,7 +54,7 @@ for c in plots.columns:
     if c == 'geometry': continue
     if c in ints: plots[c] = plots[c].fillna(0).astype(int); props[c] = 'int:6'
     elif plots[c].dtype.kind == 'f':
-        props[c] = 'float:12.1' if c == 'AREA_M2' else ('float:9.1' if c in ('WORKERS', 'POP', 'POP_2030', 'POP_2055', 'POP_ULT') else ('float:6.3' if c in ('VEGFRAC', 'FUT_PROPS') else 'float:10.4'))
+        props[c] = 'float:12.1' if c == 'AREA_M2' else ('float:9.1' if c in ('WORKERS', 'POP', 'POP_2030', 'POP_2055', 'POP_ULT', 'GREEN_M2') else ('float:6.3' if c in ('VEGFRAC', 'FUT_PROPS', 'NDVI_MEAN', 'NDVI_SHARE') else 'float:10.4'))
     else: props[c] = f'str:{max(int(plots[c].astype(str).str.len().max()), 1)}'
 plots.to_file(f"{W13}/shp/PLOTS_load.shp", schema={'geometry': 'Polygon', 'properties': props}, encoding='utf-8', engine='fiona')
 
