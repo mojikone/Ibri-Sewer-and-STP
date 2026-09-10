@@ -131,6 +131,36 @@ census residents. Those meters flush whether the census counts their occupants o
 The report states the difference, the reason, and the choice, in one paragraph next to the occupancy table
 (Appendix A4), so nobody reconciles the two totals by hand later.
 
+**The occupancy table the report carries** (Appendix A4, and the used column in the main text):
+
+| Settlement | Domestic properties | Workbook 2024 | Occupancy raw | Occupancy used | People used | Difference |
+|---|---|---|---|---|---|---|
+| IBRI | 11,052 | 67,105.51 | 6.07 | 6.07 | 58,663 | -8,443 |
+| AD DARIZ | 2,439 | 11,849.67 | 4.86 | 4.86 | 12,937 | 1,087 |
+| AL ARAQI | 2,466 | 10,695.68 | 4.34 | 4.34 | 13,087 | 2,391 |
+| AL AYNAYN | 889 | 4,554.03 | 5.12 | 5.12 | 4,716 | 162 |
+| AL WAHRAH | 716 | 3,351.08 | 4.68 | 4.68 | 3,799 | 448 |
+| AT TAYYIB | 833 | 3,348.08 | 4.02 | 4.02 | 4,418 | 1,070 |
+| AL JIBAYYAH | 524 | 2,685.66 | 5.13 | 5.12 | 2,780 | 94 |
+| BAT | 418 | 2,556.77 | 6.12 | 6.12 | 2,218 | -339 |
+| AD DIBAYSHI | 681 | 2,410.90 | 3.54 | 4 | 3,613 | 1,202 |
+| TANAM | 403 | 2,116.16 | 5.25 | 5.25 | 2,140 | 24 |
+| SUWAYDA AL MA | 301 | 1,558.64 | 5.18 | 5.18 | 1,598 | 39 |
+| HIJAR | 352 | 1,033.10 | 2.93 | 4 | 1,868 | 835 |
+| AL GHUBAYRAH | 161 | 631.45 | 3.92 | 4 | 854 | 223 |
+| AL QURAYN | 147 | 548.52 | 3.73 | 4 | 779 | 230 |
+| SAYH AL MASARRAT | 457 | 465.59 | 1.02 | 4 | 2,429 | 1,963 |
+| AL JAHLI | 344 | 414.64 | 1.21 | 4 | 1,828 | 1,413 |
+| SATWAH | 27 | 262.77 | 9.73 | 6.12 | 143 | -120 |
+| AL AKHEEDAR | 120 | 197.83 | 1.65 | 4 | 638 | 440 |
+| AL QALI | 56 | 190.83 | 3.41 | 4 | 297 | 106 |
+| SHALASHIL | 38 | 129.89 | 3.42 | 4 | 202 | 72 |
+| AL MAKHTIBYAH | 91 | 121.89 | 1.34 | 4 | 483 | 361 |
+| USAYBUQ | 21 | 90.92 | 4.33 | 4.33 | 111 | 20 |
+| WADI AL MANKAS | 8 | 51.95 | 6.49 | 6.12 | 42 | -10 |
+| ASH SHIAB | 11 | 46.96 | 4.27 | 4.27 | 58 | 11 |
+| MIAYRID | 4 | 33.97 | 8.49 | 6.12 | 21 | -13 |
+
 ---
 
 ## 5. Saturation: capacity, growth, fill year
@@ -160,11 +190,40 @@ for its growth rates only; its 2100 total (690,000 for the 25 settlements) is no
 saturation figure. Saturation is what the cadastre holds. Growth beyond it is not planned for in this
 concept, and the report says that in one sentence.
 
-**Five-year steps to saturation** (the table the report carries in the population section; the per-settlement
-version goes to Appendix A6):
+**Five-year steps to saturation, every settlement** (the table the report carries in the population section; a cell
+is empty once the settlement is full; the last column is the exact year it fills; the sewage version is the sheet
+*Five-year Qadf* of the growth workbook):
 
-| Year | People | Qadf m³/d |
-|---|---|---|
+| Settlement | 2024 | 2025 | 2030 | 2035 | 2040 | 2045 | 2050 | 2055 | 2060 | 2065 | 2070 | 2075 | Saturation year |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| IBRI | 67,094 | 68,702 | 78,086 | 88,257 | 100,049 | 110,330 | 122,514 | 137,057 |  |  |  |  | 2,057 |
+| AD DARIZ | 11,852 | 12,136 | 13,794 | 15,590 | 17,673 | 19,490 | 21,642 | 24,211 | 27,246 |  |  |  | 2,062 |
+| AL ARAQI | 10,698 | 10,954 | 12,451 | 14,072 | 15,953 | 17,592 | 19,535 | 21,854 |  |  |  |  | 2,057 |
+| AL AYNAYN | 4,553 | 4,662 | 5,299 | 5,989 | 6,789 | 7,487 | 8,314 | 9,301 | 12,012 |  |  |  | 2,060 |
+| AL WAHRAH | 3,351 | 3,431 | 3,900 | 4,408 | 4,997 | 5,510 | 6,119 | 6,845 | 7,703 | 8,684 | 9,803 |  | 2,071 |
+| AT TAYYIB | 3,349 | 3,429 | 3,898 | 4,405 | 4,994 | 5,507 | 6,115 | 6,841 | 8,131 | 17,539 |  |  | 2,069 |
+| AD DIBAYSHI | 2,724 | 2,789 | 3,170 | 3,583 | 4,062 | 4,479 | 4,974 | 5,564 | 6,262 |  |  |  | 2,063 |
+| AL JIBAYYAH | 2,684 | 2,749 | 3,128 | 3,538 | 4,014 | 4,429 | 4,921 | 5,508 | 6,201 | 6,985 | 8,694 |  | 2,072 |
+| BAT | 2,558 | 2,619 | 2,977 | 3,365 | 3,814 | 4,206 | 4,671 |  |  |  |  |  | 2,052 |
+| TANAM | 2,116 | 2,167 | 2,463 | 2,783 | 3,155 | 3,480 | 3,864 | 4,322 | 4,864 | 5,961 | 8,895 |  | 2,070 |
+| SAYH AL MASARRAT | 1,828 | 1,872 | 2,127 | 2,405 | 2,726 | 3,006 | 3,338 | 3,734 | 4,202 | 4,750 | 6,229 |  | 2,072 |
+| SUWAYDA AL MA | 1,559 | 1,596 | 1,814 | 2,051 | 2,325 | 2,564 | 2,847 | 3,185 | 3,584 | 4,035 | 4,543 |  | 2,073 |
+| HIJAR | 1,408 | 1,442 | 1,639 | 1,852 | 2,100 | 2,315 | 2,571 |  |  |  |  |  | 2,053 |
+| AL JAHLI | 1,376 | 1,409 | 1,601 | 1,810 | 2,052 | 2,263 | 2,513 | 2,811 | 3,163 | 8,264 |  |  | 2,065 |
+| AL GHUBAYRAH | 644 | 659 | 750 | 847 | 960 | 1,059 | 1,176 | 1,756 | 2,576 | 3,502 | 4,546 |  | 2,071 |
+| AL QURAYN | 588 | 602 | 684 | 773 | 877 | 967 | 1,074 | 1,201 | 8,376 |  |  |  | 2,060 |
+| AL AKHEEDAR | 480 | 492 | 559 | 631 |  |  |  |  |  |  |  |  | 2,039 |
+| AL MAKHTIBYAH | 364 | 373 | 424 | 479 | 543 | 599 | 665 | 744 | 837 | 1,140 | 5,288 |  | 2,070 |
+| AL QALI | 224 | 229 | 261 | 295 | 366 | 474 | 602 | 851 | 1,415 |  |  |  | 2,061 |
+| SATWAH | 165 | 169 | 192 | 217 | 246 | 271 | 301 | 337 | 625 |  |  |  | 2,061 |
+| SHALASHIL | 152 | 156 | 177 | 200 | 227 | 250 | 278 | 311 | 7,004 |  |  |  | 2,062 |
+| USAYBUQ | 91 | 93 | 106 | 120 | 136 | 150 | 166 |  |  |  |  |  | 2,054 |
+| WADI AL MANKAS | 49 | 50 | 57 | 64 | 73 | 81 | 89 | 100 | 113 | 2,903 | 8,576 |  | 2,070 |
+| ASH SHIAB | 47 | 48 | 55 | 62 | 70 | 77 | 86 | 96 | 107 |  |  |  | 2,060 |
+| MIAYRID | 24 | 24 | 24 | 24 | 24 | 24 | 24 | 24 | 24 | 24 | 24 | 24 |  |
+| TOTAL | 119,978 | 122,852 | 139,636 | 157,820 | 178,909 | 197,294 | 219,083 | 245,087 | 275,803 | 310,526 | 349,622 | 367,649 | 2,073 |
+
+---|---|---|
 | 2024 (base) | 119,978 | 20,872 |
 | 2025 | 122,852 | 21,365 |
 | 2030 | 139,636 | 24,239 |
