@@ -2,7 +2,7 @@
 #
 # Rules (engineer, 2026-09-09):
 #   today's people = dwelling meters x 5.32; each settlement grows at its own RATE from the inception workbook (Project Pop Settlements)
-#   growth fills the settlement's empty plots (<= 2,000 m2, not farm / industrial / proposed) at its own properties-per-built-plot, all together in proportion
+#   capacity from home-shaped empty plots x home share x ratio (plot_class_v2_apply.py); the housed people are spread over all empty plots <= 2,000 m2 by capped area
 #   when a settlement is full the overflow goes to the nearest settlement with spare room, among those with 2,000+ people today;
 #   IBRI overflows to AL ARAQI first, then AD DARIZ
 #   per person: 164 L/d domestic, 0.22 x 164 non-domestic, 0.14 x 164 governmental; sewage 85 % / 54 %
@@ -90,7 +90,8 @@ spill_tab = pd.DataFrame([{'from': k[0], 'to': k[1], **{y: round(v.get(y, 0)) fo
 rules = pd.DataFrame({'rule': [
     f'base year {BASE}: today = dwelling meters x {OR} people (primary, subsidised and additional tariffs)',
     'each settlement grows at its own rate from the inception workbook sheet "Project Pop Settlements", applied to the metered population',
-    f'growth fills the settlement\'s empty plots (<= {BIG:.0f} m2, not Agricultural / Industrial / Proposed class) at its own properties per built plot; all empty plots fill together in proportion',
+    'capacity = home-shaped empty plots (200-1,000 m2, compact, not a strip; not grove / industrial / heritage / estate) x home share x properties per home plot x 5.32, per settlement',
+    'the housed people are spread over ALL the settlement empty plots <= 2,000 m2 (not grove / industrial / heritage / estate) by plot area capped at 1,000 m2; slivers take a sliver share',
     f'overflow goes to the nearest settlement with spare room among those with {RECEIVER_MIN_POP:.0f}+ people today; IBRI -> AL ARAQI -> AD DARIZ first',
     f'water per person: {LPCD} L/d domestic, {R_ND} x {LPCD} non-domestic, {R_GOV} x {LPCD} governmental (never compounded); sewage {RET_DOM} / {RET_ND}',
     f'future plot sewage = {Q_PER_CAP*1000:.1f} L/d per person (all three streams on the plot, no better place known)',
@@ -111,10 +112,11 @@ with pd.ExcelWriter(xl, engine='openpyxl') as xw:
 print('excel:', xl)
 
 # ---------- design-year columns on the plots and the settlements ----------
-ff = fill.T   # years x settlements
+# spread: each settlement's housed new people go over ALL its empty plots <= 2,000 m2 (not grove / industrial / heritage / estate) by area capped at 1,000 m2
+wsum = plots.groupby('SETTLE')['SPREAD_W'].sum()
 for y, tag in [(2030, '2030'), (2055, '2055'), (ult, 'ULT')]:
-    f_s = plots['SETTLE'].map(ff.loc[y]).fillna(0.0)
-    newpop = plots['FUT_PROPS'] * OR * f_s * (plots['FUT_CAP'] == 1)
+    h_s = plots['SETTLE'].map(housed[y]).fillna(0.0); w_s = plots['SETTLE'].map(wsum).replace(0, np.nan)
+    newpop = (h_s * plots['SPREAD_W'] / w_s).fillna(0.0)
     plots[f'POP_{tag}'] = (plots['POP'] + newpop).round(2)
     plots[f'Q_{tag}'] = (plots['QADF'] + newpop * Q_PER_CAP).round(4)
 plots['SAT_YEAR'] = plots['SETTLE'].map(pd.Series(sat_year)).fillna(0).astype(int)
