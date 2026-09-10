@@ -135,7 +135,8 @@ plainly which document is live and which is a record of past work.
 | File | What it holds | Last checked |
 |---|---|---|
 | `CLAUDE.md` | working rules, folder map, current state | 2026-08-19 |
-| `W13/analysis/CRT_accounts_identified.csv` | the 499 CRT electricity accounts placed by use from public data (110 still unresolved); shapefile in `W13/shp/` | 2026-09-09 |
+| `W14/` (2026-09-10) | population, saturation, load and the concept report R2 build; W13 is pipe laying only | 2026-09-10 |
+| `W13/analysis/CRT_accounts_identified.csv` (copy in W14) | the 499 CRT electricity accounts placed by use from public data (110 still unresolved); shapefile in `W13/shp/` | 2026-09-09 |
 | `W13/analysis/IDENTIFIED_PROJECTS.md` | identified projects and special consumption: the two industrial estates, the army camp, Ibri View, the tanker sources outside | 2026-09-09 |
 | `W13/docs/CONCEPT_NOTE_SATURATION_AND_LOAD.md` | the note for the concept report: meters → categories → land use → ratio → saturation → load, and how it goes into the report | 2026-09-10 |
 | `W13/shp/PLOTS_load.shp` + `W13/docs/W13_LOAD_AND_GROWTH.md` | the load table: every plot's meters, people, water, sewage, and population/Qadf for 2030, 2055, ultimate 2073, all settlements full (class v6: per-settlement occupancy floor 4 cap 6.12 — `OR_S` on every plot, table in `W13/analysis/occupancy_by_settlement.csv` — base 2024, NDVI groves, home-shaped capacity, spread by capped area; the workbook gives growth rates only); replaces `PLOTS_derived_class.shp` | 2026-09-09 |

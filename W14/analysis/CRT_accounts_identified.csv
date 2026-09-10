@@ -1,0 +1,501 @@
+﻿fid,tariff,lon,lat,cl,plot_name,plot_class,USE,GUD_CAT,CONF,EVIDENCE
+238,CRT Seasonal,56.516089,23.2169,-1,Additional Account Tariff,Residential-Commercial,Commercial,non_domestic,Likely,ATM bank Muscat [amenity=atm] 6m
+362,CRT Time of Use,56.454874,23.221065,81,CRT Time of Use,Residential-Commercial,Education,government,Likely,"UTAS Ibri Al Akhdar campus, D Building, storage (OSM + Nominatim)"
+363,CRT Time of Use,56.454874,23.221065,81,CRT Time of Use,Residential-Commercial,Education,government,Likely,"UTAS Ibri Al Akhdar campus, D Building, storage (OSM + Nominatim)"
+486,CRT Seasonal,56.514176,23.228757,106,Commercial,Residential-Commercial,Commercial,non_domestic,Certain,"Souq street Al Murtafa: bookshop, Marjan supermarket, polyclinic (OSM + Google)"
+728,CRT Seasonal,56.615369,23.317417,6,CRT Seasonal,Commercial,Commercial,non_domestic,Certain,"Riad Al Driz Shopping Center, Ad Dariz (OSM)"
+1260,CRT Seasonal,56.476833,23.147847,-1,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,Tanaam: no POI within 80 m
+1401,CRT Seasonal,56.550316,23.281995,69,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Sana Ibri Shopping, Nizwa Islamic Bank, Araqi strip (Google)"
+1402,CRT Seasonal,56.550316,23.281995,69,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Sana Ibri Shopping, Nizwa Islamic Bank, Araqi strip (Google)"
+1403,CRT Seasonal,56.550316,23.281995,69,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Sana Ibri Shopping, Nizwa Islamic Bank, Araqi strip (Google)"
+1404,CRT Seasonal,56.550316,23.281995,69,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Sana Ibri Shopping, Nizwa Islamic Bank, Araqi strip (Google)"
+1405,CRT Seasonal,56.550316,23.281995,69,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Sana Ibri Shopping, Nizwa Islamic Bank, Araqi strip (Google)"
+1406,CRT Seasonal,56.550316,23.281995,69,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Sana Ibri Shopping, Nizwa Islamic Bank, Araqi strip (Google)"
+1665,CRT Seasonal,56.516444,23.220173,-1,Additional Account Tariff,Residential-Commercial,Health,government,Likely,AL Ariaf  Pharmacy [amenity=pharmacy;healthcare=pharmacy] 29m
+2000,CRT Seasonal,56.51782,23.212788,-1,CRT Seasonal,Agricultural,Education,government,Likely,? [amenity=school] 64m
+2001,CRT Seasonal,56.518301,23.212689,-1,CRT Seasonal,Agricultural,Agricultural,agricultural,Guessing,"Agricultural plot,  (no POI within 80 m)"
+2130,CRT Seasonal,56.548071,23.278466,71,CRT Seasonal,Residential,Commercial,non_domestic,Likely,"Araqi commercial strip, next to cluster 69 (Google)"
+2137,CRT Time of Use,56.542783,23.278802,-1,CRT Time of Use,Agricultural,Agricultural,agricultural,Guessing,"Agricultural plot,  (no POI within 80 m)"
+2153,CRT Seasonal,56.534175,23.272852,-1,CRT Seasonal,Agricultural,Agricultural,agricultural,Guessing,"Agricultural plot, Aynayn (no POI within 80 m)"
+2557,CRT Time of Use,56.552052,23.286074,68,CRT Time of Use,Residential,Commercial,non_domestic,Guessing,Araqi strip (Nominatim)
+2558,CRT Time of Use,56.552052,23.286074,68,CRT Time of Use,Residential,Commercial,non_domestic,Guessing,Araqi strip (Nominatim)
+2559,CRT Time of Use,56.552052,23.286074,68,CRT Time of Use,Residential,Commercial,non_domestic,Guessing,Araqi strip (Nominatim)
+2560,CRT Time of Use,56.552052,23.286074,68,CRT Time of Use,Residential,Commercial,non_domestic,Guessing,Araqi strip (Nominatim)
+3400,CRT Seasonal,56.544673,23.278926,-1,CRT Seasonal,Agricultural,Agricultural,agricultural,Guessing,"Agricultural plot, Aynayn (no POI within 80 m)"
+3465,CRT Time of Use,56.555965,23.261807,-1,CRT Time of Use,Industrial,Industrial,industrial,Likely,"Industrial plot, Al Ghabbi"
+4018,CRT Time of Use,56.512265,23.215782,102,Government,Agricultural,Commercial,non_domestic,Likely,"Retail building + Shell fuel, Hayy Almazra (OSM)"
+4019,CRT Seasonal,56.512265,23.215782,102,Government,Agricultural,Commercial,non_domestic,Likely,"Retail building + Shell fuel, Hayy Almazra (OSM)"
+4460,CRT Seasonal,56.544245,23.278734,-1,CRT Seasonal,Agricultural,Agricultural,agricultural,Guessing,"Agricultural plot, Aynayn (no POI within 80 m)"
+4611,CRT Seasonal,56.514041,23.219172,-1,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,AL Murtafa: no POI within 80 m
+4752,CRT Seasonal,56.513266,23.229341,106,Additional Account Tariff,Commercial,Commercial,non_domestic,Certain,"Souq street Al Murtafa: bookshop, Marjan supermarket, polyclinic (OSM + Google)"
+4754,CRT Seasonal,56.513266,23.229341,106,Additional Account Tariff,Commercial,Commercial,non_domestic,Certain,"Souq street Al Murtafa: bookshop, Marjan supermarket, polyclinic (OSM + Google)"
+4755,CRT Seasonal,56.513266,23.229341,106,Additional Account Tariff,Commercial,Commercial,non_domestic,Certain,"Souq street Al Murtafa: bookshop, Marjan supermarket, polyclinic (OSM + Google)"
+4756,CRT Seasonal,56.513266,23.229341,106,Additional Account Tariff,Commercial,Commercial,non_domestic,Certain,"Souq street Al Murtafa: bookshop, Marjan supermarket, polyclinic (OSM + Google)"
+4757,CRT Seasonal,56.513266,23.229341,106,Additional Account Tariff,Commercial,Commercial,non_domestic,Certain,"Souq street Al Murtafa: bookshop, Marjan supermarket, polyclinic (OSM + Google)"
+4758,CRT Seasonal,56.513266,23.229341,106,Additional Account Tariff,Commercial,Commercial,non_domestic,Certain,"Souq street Al Murtafa: bookshop, Marjan supermarket, polyclinic (OSM + Google)"
+4759,CRT Seasonal,56.513266,23.229341,106,Additional Account Tariff,Commercial,Commercial,non_domestic,Certain,"Souq street Al Murtafa: bookshop, Marjan supermarket, polyclinic (OSM + Google)"
+4760,CRT Seasonal,56.513266,23.229341,106,Additional Account Tariff,Commercial,Commercial,non_domestic,Certain,"Souq street Al Murtafa: bookshop, Marjan supermarket, polyclinic (OSM + Google)"
+4761,CRT Seasonal,56.513266,23.229341,106,Additional Account Tariff,Commercial,Commercial,non_domestic,Certain,"Souq street Al Murtafa: bookshop, Marjan supermarket, polyclinic (OSM + Google)"
+4762,CRT Seasonal,56.513266,23.229341,106,Additional Account Tariff,Commercial,Commercial,non_domestic,Certain,"Souq street Al Murtafa: bookshop, Marjan supermarket, polyclinic (OSM + Google)"
+4763,CRT Seasonal,56.513266,23.229341,106,Additional Account Tariff,Commercial,Commercial,non_domestic,Certain,"Souq street Al Murtafa: bookshop, Marjan supermarket, polyclinic (OSM + Google)"
+4764,CRT Seasonal,56.513266,23.229341,106,Additional Account Tariff,Commercial,Commercial,non_domestic,Certain,"Souq street Al Murtafa: bookshop, Marjan supermarket, polyclinic (OSM + Google)"
+4765,CRT Seasonal,56.513266,23.229341,106,Additional Account Tariff,Commercial,Commercial,non_domestic,Certain,"Souq street Al Murtafa: bookshop, Marjan supermarket, polyclinic (OSM + Google)"
+4766,CRT Seasonal,56.513266,23.229341,106,Additional Account Tariff,Commercial,Commercial,non_domestic,Certain,"Souq street Al Murtafa: bookshop, Marjan supermarket, polyclinic (OSM + Google)"
+4767,CRT Seasonal,56.513266,23.229341,106,Additional Account Tariff,Commercial,Commercial,non_domestic,Certain,"Souq street Al Murtafa: bookshop, Marjan supermarket, polyclinic (OSM + Google)"
+4768,CRT Seasonal,56.513266,23.229341,106,Additional Account Tariff,Commercial,Commercial,non_domestic,Certain,"Souq street Al Murtafa: bookshop, Marjan supermarket, polyclinic (OSM + Google)"
+4770,CRT Seasonal,56.513266,23.229341,106,Additional Account Tariff,Commercial,Commercial,non_domestic,Certain,"Souq street Al Murtafa: bookshop, Marjan supermarket, polyclinic (OSM + Google)"
+4771,CRT Seasonal,56.513266,23.229341,106,Additional Account Tariff,Commercial,Commercial,non_domestic,Certain,"Souq street Al Murtafa: bookshop, Marjan supermarket, polyclinic (OSM + Google)"
+4997,CRT Seasonal,56.514014,23.217527,-1,CRT Seasonal,Agricultural,Religious,government,Likely,مصلى النساء [building=yes] 19m
+5023,CRT Time of Use,56.511372,23.217451,-1,Primary Account Tariff,Residential-Commercial,Unresolved,CRT_review,Guessing,AL Modhar: no POI within 80 m
+5025,CRT Seasonal,56.511372,23.217451,-1,Primary Account Tariff,Residential-Commercial,Unresolved,CRT_review,Guessing,AL Modhar: no POI within 80 m
+5107,CRT Seasonal,56.497804,23.2408,-1,CRT Seasonal,Residential,Religious,government,Likely,? [amenity=place_of_worship] 79m
+5547,CRT Time of Use,56.547826,23.277814,71,CRT Time of Use,Residential,Commercial,non_domestic,Likely,"Araqi commercial strip, next to cluster 69 (Google)"
+5598,CRT Seasonal,56.50043,23.235865,154,Primary Account Tariff,Proposed,Unresolved,CRT_review,Guessing,"Al Orobah, Ibri Road, Proposed plots"
+5599,CRT Seasonal,56.50043,23.235865,154,Primary Account Tariff,Proposed,Unresolved,CRT_review,Guessing,"Al Orobah, Ibri Road, Proposed plots"
+5600,CRT Seasonal,56.50043,23.235865,154,Primary Account Tariff,Proposed,Unresolved,CRT_review,Guessing,"Al Orobah, Ibri Road, Proposed plots"
+5632,CRT Seasonal,56.477011,23.214112,126,CRT Seasonal,Agricultural,Commercial,non_domestic,Likely,"Morgan Muscat Bakery and Market, Hellat Al Nahadah (OSM 18 m)"
+5633,CRT Seasonal,56.477011,23.214112,126,CRT Seasonal,Agricultural,Commercial,non_domestic,Likely,"Morgan Muscat Bakery and Market, Hellat Al Nahadah (OSM 18 m)"
+5634,CRT Seasonal,56.477011,23.214112,126,CRT Seasonal,Agricultural,Commercial,non_domestic,Likely,"Morgan Muscat Bakery and Market, Hellat Al Nahadah (OSM 18 m)"
+5635,CRT Seasonal,56.477011,23.214112,126,CRT Seasonal,Agricultural,Commercial,non_domestic,Likely,"Morgan Muscat Bakery and Market, Hellat Al Nahadah (OSM 18 m)"
+5859,CRT Seasonal,56.49799,23.240188,-1,CRT Seasonal,Residential,Religious,government,Likely,? [amenity=place_of_worship] 69m
+5918,CRT Seasonal,56.478611,23.204681,-1,CRT Seasonal,Agricultural,Education,government,Likely,مركز الوفاء لتأهيل الأطفال المعاقين [amenity=school] 26m
+6584,CRT Seasonal,56.548523,23.277596,71,Additional Account Tariff,Residential-Commercial,Commercial,non_domestic,Likely,"Araqi commercial strip, next to cluster 69 (Google)"
+6585,CRT Seasonal,56.548523,23.277596,71,Additional Account Tariff,Residential-Commercial,Commercial,non_domestic,Likely,"Araqi commercial strip, next to cluster 69 (Google)"
+6586,CRT Seasonal,56.548523,23.277596,71,Additional Account Tariff,Residential-Commercial,Commercial,non_domestic,Likely,"Araqi commercial strip, next to cluster 69 (Google)"
+6587,CRT Seasonal,56.548523,23.277596,71,Additional Account Tariff,Residential-Commercial,Commercial,non_domestic,Likely,"Araqi commercial strip, next to cluster 69 (Google)"
+6588,CRT Seasonal,56.548523,23.277596,71,Additional Account Tariff,Residential-Commercial,Commercial,non_domestic,Likely,"Araqi commercial strip, next to cluster 69 (Google)"
+6786,CRT Time of Use,56.554294,23.291291,65,CRT Time of Use,Agricultural,Agricultural,agricultural,Likely,"Aynayn farms, agricultural plots, Time-of-Use tariff = pumping (Google sat)"
+6787,CRT Time of Use,56.554294,23.291291,65,CRT Time of Use,Agricultural,Agricultural,agricultural,Likely,"Aynayn farms, agricultural plots, Time-of-Use tariff = pumping (Google sat)"
+6788,CRT Time of Use,56.554294,23.291291,65,CRT Time of Use,Agricultural,Agricultural,agricultural,Likely,"Aynayn farms, agricultural plots, Time-of-Use tariff = pumping (Google sat)"
+6789,CRT Time of Use,56.554294,23.291291,65,CRT Time of Use,Agricultural,Agricultural,agricultural,Likely,"Aynayn farms, agricultural plots, Time-of-Use tariff = pumping (Google sat)"
+6790,CRT Time of Use,56.554294,23.291291,65,CRT Time of Use,Agricultural,Agricultural,agricultural,Likely,"Aynayn farms, agricultural plots, Time-of-Use tariff = pumping (Google sat)"
+6791,CRT Time of Use,56.554294,23.291291,65,CRT Time of Use,Agricultural,Agricultural,agricultural,Likely,"Aynayn farms, agricultural plots, Time-of-Use tariff = pumping (Google sat)"
+6792,CRT Time of Use,56.554294,23.291291,65,CRT Time of Use,Agricultural,Agricultural,agricultural,Likely,"Aynayn farms, agricultural plots, Time-of-Use tariff = pumping (Google sat)"
+6793,CRT Time of Use,56.554294,23.291291,65,CRT Time of Use,Agricultural,Agricultural,agricultural,Likely,"Aynayn farms, agricultural plots, Time-of-Use tariff = pumping (Google sat)"
+6794,CRT Time of Use,56.554294,23.291291,65,CRT Time of Use,Agricultural,Agricultural,agricultural,Likely,"Aynayn farms, agricultural plots, Time-of-Use tariff = pumping (Google sat)"
+6896,CRT Time of Use,56.525399,23.259777,58,Government,Agricultural,Government,government,Guessing,"Al Ghabbi, health complex / chamber of commerce compound near Lulu north (Google label)"
+6897,CRT Time of Use,56.525399,23.259777,58,Government,Agricultural,Government,government,Guessing,"Al Ghabbi, health complex / chamber of commerce compound near Lulu north (Google label)"
+6898,CRT Time of Use,56.525399,23.259777,58,Government,Agricultural,Government,government,Guessing,"Al Ghabbi, health complex / chamber of commerce compound near Lulu north (Google label)"
+6899,CRT Time of Use,56.525399,23.259777,58,Government,Agricultural,Government,government,Guessing,"Al Ghabbi, health complex / chamber of commerce compound near Lulu north (Google label)"
+6901,CRT Time of Use,56.525399,23.259777,58,Government,Agricultural,Government,government,Guessing,"Al Ghabbi, health complex / chamber of commerce compound near Lulu north (Google label)"
+6902,CRT Time of Use,56.525399,23.259777,58,Government,Agricultural,Government,government,Guessing,"Al Ghabbi, health complex / chamber of commerce compound near Lulu north (Google label)"
+6969,CRT Seasonal,56.474698,23.143052,-1,CRT Seasonal,Agricultural,Agricultural,agricultural,Guessing,"Agricultural plot, Tanaam (no POI within 80 m)"
+7506,CRT Seasonal,56.560898,23.302439,-1,CRT Seasonal,Agricultural,Agricultural,agricultural,Guessing,"Agricultural plot,  (no POI within 80 m)"
+7730,CRT Seasonal,56.545789,23.287204,-1,CRT Seasonal,Agricultural,Telecom/Utility,non_domestic,Likely,? [man_made=tower;building=yes] 36m
+7831,CRT Seasonal,56.514334,23.242372,-1,CRT Seasonal,Residential,Education,government,Likely,? [amenity=school] 32m
+7832,CRT Seasonal,56.516854,23.229354,-1,CRT Seasonal,Agricultural,Education,government,Guessing,"مدرسة عمــار بن ياسر للتعليم الاساسي للبنين5-8 (school, Nominatim)"
+7849,CRT Seasonal,56.605195,23.318452,-1,CRT Seasonal,Residential-Commercial,Unresolved,CRT_review,Guessing,Ad Dariz: no POI within 80 m
+8117,CRT Seasonal,56.549269,23.278973,70,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Likely,"Araqi commercial strip, next to cluster 69 (Google)"
+8118,CRT Seasonal,56.549269,23.278973,70,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Likely,"Araqi commercial strip, next to cluster 69 (Google)"
+8119,CRT Seasonal,56.549269,23.278973,70,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Likely,"Araqi commercial strip, next to cluster 69 (Google)"
+8120,CRT Seasonal,56.549269,23.278973,70,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Likely,"Araqi commercial strip, next to cluster 69 (Google)"
+8121,CRT Seasonal,56.549269,23.278973,70,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Likely,"Araqi commercial strip, next to cluster 69 (Google)"
+8122,CRT Seasonal,56.549269,23.278973,70,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Likely,"Araqi commercial strip, next to cluster 69 (Google)"
+8123,CRT Seasonal,56.549269,23.278973,70,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Likely,"Araqi commercial strip, next to cluster 69 (Google)"
+8221,CRT Seasonal,56.611168,23.323851,-1,Commercial,Agricultural,Agricultural,agricultural,Guessing,"Agricultural plot, Ad Dariz (no POI within 80 m)"
+8437,CRT Seasonal,56.511491,23.240766,-1,CRT Seasonal,Agricultural,Agricultural,agricultural,Guessing,"Agricultural plot, Silmi (no POI within 80 m)"
+8443,CRT Seasonal,56.515908,23.223156,96,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"Al Murtafa, dual carriageway frontage, walled compound (Google sat)"
+8444,CRT Seasonal,56.515908,23.223156,96,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"Al Murtafa, dual carriageway frontage, walled compound (Google sat)"
+8445,CRT Seasonal,56.515908,23.223156,96,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"Al Murtafa, dual carriageway frontage, walled compound (Google sat)"
+8446,CRT Seasonal,56.515908,23.223156,96,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"Al Murtafa, dual carriageway frontage, walled compound (Google sat)"
+8447,CRT Seasonal,56.515908,23.223156,96,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"Al Murtafa, dual carriageway frontage, walled compound (Google sat)"
+8448,CRT Seasonal,56.515908,23.223156,96,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"Al Murtafa, dual carriageway frontage, walled compound (Google sat)"
+8449,CRT Seasonal,56.515908,23.223156,96,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"Al Murtafa, dual carriageway frontage, walled compound (Google sat)"
+8450,CRT Seasonal,56.515908,23.223156,96,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"Al Murtafa, dual carriageway frontage, walled compound (Google sat)"
+8451,CRT Seasonal,56.515908,23.223156,96,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"Al Murtafa, dual carriageway frontage, walled compound (Google sat)"
+8452,CRT Seasonal,56.515908,23.223156,96,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"Al Murtafa, dual carriageway frontage, walled compound (Google sat)"
+8453,CRT Seasonal,56.515908,23.223156,96,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"Al Murtafa, dual carriageway frontage, walled compound (Google sat)"
+8494,CRT Seasonal,56.550479,23.282436,69,Primary Account Tariff,Residential,Commercial,non_domestic,Certain,"Sana Ibri Shopping, Nizwa Islamic Bank, Araqi strip (Google)"
+8495,CRT Seasonal,56.550479,23.282436,69,Primary Account Tariff,Residential,Commercial,non_domestic,Certain,"Sana Ibri Shopping, Nizwa Islamic Bank, Araqi strip (Google)"
+8496,CRT Seasonal,56.550479,23.282436,69,Primary Account Tariff,Residential,Commercial,non_domestic,Certain,"Sana Ibri Shopping, Nizwa Islamic Bank, Araqi strip (Google)"
+8499,CRT Time of Use,56.550479,23.282436,69,Primary Account Tariff,Residential,Commercial,non_domestic,Certain,"Sana Ibri Shopping, Nizwa Islamic Bank, Araqi strip (Google)"
+8501,CRT Seasonal,56.550479,23.282436,69,Primary Account Tariff,Residential,Commercial,non_domestic,Certain,"Sana Ibri Shopping, Nizwa Islamic Bank, Araqi strip (Google)"
+8508,CRT Seasonal,56.550479,23.282436,69,Primary Account Tariff,Residential,Commercial,non_domestic,Certain,"Sana Ibri Shopping, Nizwa Islamic Bank, Araqi strip (Google)"
+8705,CRT Seasonal,56.55328,23.278593,67,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"Araqi strip, road D618 (Nominatim)"
+8706,CRT Seasonal,56.55328,23.278593,67,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"Araqi strip, road D618 (Nominatim)"
+8707,CRT Seasonal,56.55328,23.278593,67,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"Araqi strip, road D618 (Nominatim)"
+8712,CRT Seasonal,56.55328,23.278593,67,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"Araqi strip, road D618 (Nominatim)"
+8713,CRT Seasonal,56.55328,23.278593,67,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"Araqi strip, road D618 (Nominatim)"
+8759,CRT Time of Use,56.543115,23.273897,64,CRT Time of Use,Residential,Commercial,non_domestic,Likely,Shop strip along Al Ghabbi dual carriageway (Google sat)
+8760,CRT Time of Use,56.543115,23.273897,64,CRT Time of Use,Residential,Commercial,non_domestic,Likely,Shop strip along Al Ghabbi dual carriageway (Google sat)
+8761,CRT Time of Use,56.543115,23.273897,64,CRT Time of Use,Residential,Commercial,non_domestic,Likely,Shop strip along Al Ghabbi dual carriageway (Google sat)
+8762,CRT Time of Use,56.543115,23.273897,64,CRT Time of Use,Residential,Commercial,non_domestic,Likely,Shop strip along Al Ghabbi dual carriageway (Google sat)
+8763,CRT Time of Use,56.543115,23.273897,64,CRT Time of Use,Residential,Commercial,non_domestic,Likely,Shop strip along Al Ghabbi dual carriageway (Google sat)
+8764,CRT Time of Use,56.543115,23.273897,64,CRT Time of Use,Residential,Commercial,non_domestic,Likely,Shop strip along Al Ghabbi dual carriageway (Google sat)
+8765,CRT Seasonal,56.543115,23.273897,64,CRT Time of Use,Residential,Commercial,non_domestic,Likely,Shop strip along Al Ghabbi dual carriageway (Google sat)
+8766,CRT Time of Use,56.543115,23.273897,64,CRT Time of Use,Residential,Commercial,non_domestic,Likely,Shop strip along Al Ghabbi dual carriageway (Google sat)
+8767,CRT Time of Use,56.543115,23.273897,64,CRT Time of Use,Residential,Commercial,non_domestic,Likely,Shop strip along Al Ghabbi dual carriageway (Google sat)
+8768,CRT Time of Use,56.543115,23.273897,64,CRT Time of Use,Residential,Commercial,non_domestic,Likely,Shop strip along Al Ghabbi dual carriageway (Google sat)
+8769,CRT Time of Use,56.543115,23.273897,64,CRT Time of Use,Residential,Commercial,non_domestic,Likely,Shop strip along Al Ghabbi dual carriageway (Google sat)
+8770,CRT Time of Use,56.543115,23.273897,64,CRT Time of Use,Residential,Commercial,non_domestic,Likely,Shop strip along Al Ghabbi dual carriageway (Google sat)
+8771,CRT Time of Use,56.543115,23.273897,64,CRT Time of Use,Residential,Commercial,non_domestic,Likely,Shop strip along Al Ghabbi dual carriageway (Google sat)
+8772,CRT Time of Use,56.543115,23.273897,64,CRT Time of Use,Residential,Commercial,non_domestic,Likely,Shop strip along Al Ghabbi dual carriageway (Google sat)
+8773,CRT Time of Use,56.543205,23.273795,64,Government,Residential,Commercial,non_domestic,Likely,Shop strip along Al Ghabbi dual carriageway (Google sat)
+8774,CRT Seasonal,56.543205,23.273795,64,Government,Residential,Commercial,non_domestic,Likely,Shop strip along Al Ghabbi dual carriageway (Google sat)
+8872,CRT Time of Use,56.558695,23.297401,-1,CRT Time of Use,Agricultural,Agricultural,agricultural,Guessing,"Agricultural plot, Aynayn (no POI within 80 m)"
+9093,CRT Seasonal,56.418773,23.246161,-1,CRT Seasonal,Agricultural,Government,government,Guessing," (stadium, Nominatim)"
+9094,CRT Time of Use,56.418773,23.246161,-1,CRT Seasonal,Agricultural,Government,government,Guessing," (stadium, Nominatim)"
+9114,CRT Time of Use,56.454892,23.22112,81,CRT Time of Use,Residential-Commercial,Education,government,Likely,"UTAS Ibri Al Akhdar campus, D Building, storage (OSM + Nominatim)"
+9115,CRT Time of Use,56.454892,23.22112,81,CRT Time of Use,Residential-Commercial,Education,government,Likely,"UTAS Ibri Al Akhdar campus, D Building, storage (OSM + Nominatim)"
+9116,CRT Time of Use,56.454892,23.22112,81,CRT Time of Use,Residential-Commercial,Education,government,Likely,"UTAS Ibri Al Akhdar campus, D Building, storage (OSM + Nominatim)"
+9117,CRT Time of Use,56.454892,23.22112,81,CRT Time of Use,Residential-Commercial,Education,government,Likely,"UTAS Ibri Al Akhdar campus, D Building, storage (OSM + Nominatim)"
+9118,CRT Time of Use,56.454892,23.22112,81,CRT Time of Use,Residential-Commercial,Education,government,Likely,"UTAS Ibri Al Akhdar campus, D Building, storage (OSM + Nominatim)"
+9230,CRT Seasonal,56.495041,23.216813,139,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Al Hashar Automotive, Al-huad Pharmacy, Muscat Bank, Oman Oil (OSM)"
+9286,CRT Time of Use,56.48747,23.217121,-1,CRT Time of Use,Residential,Commercial,non_domestic,Likely,رمال الظاهرة لغسيل السيارات [amenity=car_wash] 35m
+9309,CRT Seasonal,56.491746,23.217225,138,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Likely,"Photographer, Muscat Pharmacy, Ibri Road (OSM)"
+9311,CRT Time of Use,56.49034,23.217784,137,CRT Time of Use,Residential-Commercial,Commercial,non_domestic,Certain,"Makkah Hypermarket, Ramez Hypermarket (OSM)"
+9389,CRT Time of Use,56.44256,23.224416,-1,Commercial,Residential,Unresolved,CRT_review,Guessing,Al Jahli: no POI within 80 m
+9778,CRT Seasonal,56.458512,23.216572,78,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Ibri Bawadi Mall / Lulu Hypermarket, Chicking (Google sat + OSM)"
+9779,CRT Seasonal,56.458512,23.216572,78,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Ibri Bawadi Mall / Lulu Hypermarket, Chicking (Google sat + OSM)"
+9780,CRT Seasonal,56.458512,23.216572,78,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Ibri Bawadi Mall / Lulu Hypermarket, Chicking (Google sat + OSM)"
+9781,CRT Seasonal,56.458512,23.216572,78,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Ibri Bawadi Mall / Lulu Hypermarket, Chicking (Google sat + OSM)"
+9782,CRT Seasonal,56.458512,23.216572,78,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Ibri Bawadi Mall / Lulu Hypermarket, Chicking (Google sat + OSM)"
+9783,CRT Seasonal,56.458512,23.216572,78,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Ibri Bawadi Mall / Lulu Hypermarket, Chicking (Google sat + OSM)"
+9784,CRT Seasonal,56.458512,23.216572,78,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Ibri Bawadi Mall / Lulu Hypermarket, Chicking (Google sat + OSM)"
+9785,CRT Seasonal,56.458512,23.216572,78,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Ibri Bawadi Mall / Lulu Hypermarket, Chicking (Google sat + OSM)"
+9786,CRT Seasonal,56.458512,23.216572,78,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Ibri Bawadi Mall / Lulu Hypermarket, Chicking (Google sat + OSM)"
+9787,CRT Seasonal,56.45849,23.216694,78,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Ibri Bawadi Mall / Lulu Hypermarket, Chicking (Google sat + OSM)"
+9788,CRT Seasonal,56.45849,23.216694,78,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Ibri Bawadi Mall / Lulu Hypermarket, Chicking (Google sat + OSM)"
+9790,CRT Seasonal,56.446459,23.221626,-1,CRT Seasonal,Residential,Government,government,Likely,chamber of commerce and industry oman [building=yes] 21m
+10080,CRT Time of Use,56.487773,23.21571,-1,Commercial,Residential-Commercial,Commercial,non_domestic,Likely,New Al Yahar Yemeni Restaurant [amenity=restaurant] 6m
+10214,CRT Seasonal,56.497205,23.217314,135,Primary Account Tariff,Residential,Commercial,non_domestic,Certain,"Omantel office, Oxygen Pharmacy, Hayy Almazra (OSM)"
+10215,CRT Seasonal,56.497205,23.217314,135,Primary Account Tariff,Residential,Commercial,non_domestic,Certain,"Omantel office, Oxygen Pharmacy, Hayy Almazra (OSM)"
+10216,CRT Seasonal,56.497205,23.217314,135,Primary Account Tariff,Residential,Commercial,non_domestic,Certain,"Omantel office, Oxygen Pharmacy, Hayy Almazra (OSM)"
+10217,CRT Seasonal,56.497205,23.217314,135,Primary Account Tariff,Residential,Commercial,non_domestic,Certain,"Omantel office, Oxygen Pharmacy, Hayy Almazra (OSM)"
+10218,CRT Seasonal,56.497205,23.217314,135,Primary Account Tariff,Residential,Commercial,non_domestic,Certain,"Omantel office, Oxygen Pharmacy, Hayy Almazra (OSM)"
+10219,CRT Seasonal,56.497205,23.217314,135,Primary Account Tariff,Residential,Commercial,non_domestic,Certain,"Omantel office, Oxygen Pharmacy, Hayy Almazra (OSM)"
+10222,CRT Seasonal,56.497205,23.217314,135,Primary Account Tariff,Residential,Commercial,non_domestic,Certain,"Omantel office, Oxygen Pharmacy, Hayy Almazra (OSM)"
+10296,CRT Seasonal,56.494515,23.216746,139,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Al Hashar Automotive, Al-huad Pharmacy, Muscat Bank, Oman Oil (OSM)"
+10501,CRT Seasonal,56.499849,23.258018,-1,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,Silmi: no POI within 80 m
+10715,CRT Seasonal,56.556799,23.250585,30,CRT Seasonal,Commercial,Unresolved,CRT_review,Guessing,Isolated buildings on Commercial plots east of Araqi (Google sat)
+10718,CRT Seasonal,56.556799,23.250585,30,CRT Seasonal,Commercial,Unresolved,CRT_review,Guessing,Isolated buildings on Commercial plots east of Araqi (Google sat)
+10722,CRT Seasonal,56.556799,23.250585,30,CRT Seasonal,Commercial,Unresolved,CRT_review,Guessing,Isolated buildings on Commercial plots east of Araqi (Google sat)
+10724,CRT Seasonal,56.556799,23.250585,30,CRT Seasonal,Commercial,Unresolved,CRT_review,Guessing,Isolated buildings on Commercial plots east of Araqi (Google sat)
+10725,CRT Seasonal,56.556799,23.250585,30,CRT Seasonal,Commercial,Unresolved,CRT_review,Guessing,Isolated buildings on Commercial plots east of Araqi (Google sat)
+10780,CRT Seasonal,56.50032,23.218979,-1,Commercial,Residential,Commercial,non_domestic,Likely,المه‍ا [amenity=fuel] 18m
+10848,CRT Seasonal,56.498186,23.2174,135,Additional Account Tariff,Residential,Commercial,non_domestic,Certain,"Omantel office, Oxygen Pharmacy, Hayy Almazra (OSM)"
+10987,CRT Seasonal,56.612464,23.321579,1,Commercial,Residential-Commercial,Health,government,Likely,"Horizons Medical, veterinary, Ad Dariz (OSM)"
+10990,CRT Seasonal,56.612464,23.321579,1,Commercial,Residential-Commercial,Health,government,Likely,"Horizons Medical, veterinary, Ad Dariz (OSM)"
+11127,CRT Seasonal,56.609308,23.319044,-1,Commercial,Residential,Commercial,non_domestic,Likely,نفط عمان [amenity=fuel] 35m
+11475,CRT Seasonal,56.488368,23.197366,-1,Commercial,Residential,Religious,government,Likely,? [amenity=place_of_worship] 13m
+11658,CRT Seasonal,56.499016,23.255389,-1,Primary Account Tariff (with National Subsidy),Residential,Unresolved,CRT_review,Guessing,Rayibah: no POI within 80 m
+11676,CRT Time of Use,56.482067,23.21559,127,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11677,CRT Time of Use,56.482067,23.21559,127,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11678,CRT Time of Use,56.482067,23.21559,127,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11679,CRT Time of Use,56.482067,23.21559,127,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11680,CRT Time of Use,56.482067,23.21559,127,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11681,CRT Time of Use,56.482067,23.21559,127,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11682,CRT Time of Use,56.482067,23.21559,127,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11683,CRT Time of Use,56.482067,23.21559,127,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11684,CRT Time of Use,56.482067,23.21559,127,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11685,CRT Time of Use,56.482067,23.21559,127,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11686,CRT Time of Use,56.482067,23.21559,127,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11687,CRT Time of Use,56.482067,23.21559,127,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11688,CRT Time of Use,56.482067,23.21559,127,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11689,CRT Time of Use,56.482067,23.21559,127,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11721,CRT Time of Use,56.485712,23.214292,132,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11722,CRT Time of Use,56.485712,23.214292,132,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11723,CRT Time of Use,56.485712,23.214292,132,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11724,CRT Time of Use,56.485712,23.214292,132,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11725,CRT Time of Use,56.485712,23.214292,132,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11726,CRT Time of Use,56.485712,23.214292,132,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11727,CRT Time of Use,56.485712,23.214292,132,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11728,CRT Time of Use,56.485712,23.214292,132,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Station, Al Akhdar (Nominatim nearest)"
+11828,CRT Time of Use,56.472184,23.216657,-1,Commercial,Residential-Commercial,Commercial,non_domestic,Likely,Dhofar Insurance Company Ibri Branch [office=insurance] 34m
+11992,CRT Seasonal,56.469835,23.216765,120,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Certain,"Al Fawar and Tayyibat Al Sham restaurants, Bake it Bakery, Al Akhdar (OSM)"
+11993,CRT Seasonal,56.469835,23.216765,120,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Certain,"Al Fawar and Tayyibat Al Sham restaurants, Bake it Bakery, Al Akhdar (OSM)"
+11994,CRT Seasonal,56.469835,23.216765,120,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Certain,"Al Fawar and Tayyibat Al Sham restaurants, Bake it Bakery, Al Akhdar (OSM)"
+11998,CRT Seasonal,56.469835,23.216765,120,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Certain,"Al Fawar and Tayyibat Al Sham restaurants, Bake it Bakery, Al Akhdar (OSM)"
+11999,CRT Seasonal,56.469835,23.216765,120,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Certain,"Al Fawar and Tayyibat Al Sham restaurants, Bake it Bakery, Al Akhdar (OSM)"
+12038,CRT Seasonal,56.486851,23.217098,-1,Commercial,Residential,Commercial,non_domestic,Likely,مقهى الرونق الذهبي [amenity=fast_food] 12m
+12734,CRT Seasonal,56.484712,23.218928,136,CRT Seasonal,Residential,Education,government,Likely,Indian School Ibri (OSM 40 m)
+12966,CRT Seasonal,56.472914,23.162785,-1,CRT Seasonal,Agricultural,Education,government,Likely,? [amenity=school] 50m
+13030,CRT Time of Use,56.468894,23.161742,-1,Commercial,Industrial,Industrial,industrial,Likely,"Industrial plot, Al Mukhtobiyah"
+13476,CRT Seasonal,56.4687,23.224243,-1,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,Al Akhdar: no POI within 80 m
+13477,CRT Seasonal,56.468669,23.224283,-1,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,Al Akhdar: no POI within 80 m
+13512,CRT Fixed Rate,56.511372,23.24143,-1,CRT Seasonal,Agricultural,Agricultural,agricultural,Guessing,"Agricultural plot, Silmi (no POI within 80 m)"
+13715,CRT Seasonal,56.467135,23.15895,35,CRT Seasonal,Industrial,Industrial,industrial,Certain,"Al Mukhtobiyah industrial estate, warehouses, Industrial plots (Google sat)"
+13757,CRT Seasonal,56.468181,23.16501,-1,CRT Seasonal,Industrial,Industrial,industrial,Likely,"Industrial plot, Al Mukhtobiyah"
+13795,CRT Seasonal,56.4654,23.158477,-1,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,Al Mukhtobiyah: no POI within 80 m
+13804,CRT Seasonal,56.46918,23.162329,-1,CRT Seasonal,Industrial,Industrial,industrial,Likely,"Industrial plot, Al Mukhtobiyah"
+13966,CRT Seasonal,56.492231,23.22095,149,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"A SSFA, between Al Hashar Automotive and Ramez hypermarket strip (OSM)"
+13969,CRT Seasonal,56.492231,23.22095,149,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"A SSFA, between Al Hashar Automotive and Ramez hypermarket strip (OSM)"
+13970,CRT Seasonal,56.492231,23.22095,149,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"A SSFA, between Al Hashar Automotive and Ramez hypermarket strip (OSM)"
+14007,CRT Seasonal,56.492231,23.22095,149,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"A SSFA, between Al Hashar Automotive and Ramez hypermarket strip (OSM)"
+14011,CRT Seasonal,56.492231,23.22095,149,CRT Seasonal,Residential,Commercial,non_domestic,Guessing,"A SSFA, between Al Hashar Automotive and Ramez hypermarket strip (OSM)"
+14072,CRT Seasonal,56.738873,23.26494,-1,CRT Seasonal,Residential,Religious,government,Likely,? [amenity=place_of_worship;building=yes] 15m
+14181,CRT Seasonal,56.498586,23.234862,153,Commercial,Residential,Unresolved,CRT_review,Guessing,"Al Orobah, parking only (OSM)"
+14272,CRT Seasonal,56.471102,23.169561,33,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,"Mazra bin Khater, Ibri - Rub al Khali road"
+14275,CRT Seasonal,56.471102,23.169561,33,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,"Mazra bin Khater, Ibri - Rub al Khali road"
+14276,CRT Seasonal,56.471102,23.169561,33,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,"Mazra bin Khater, Ibri - Rub al Khali road"
+14279,CRT Seasonal,56.471102,23.169561,33,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,"Mazra bin Khater, Ibri - Rub al Khali road"
+14283,CRT Seasonal,56.471102,23.169561,33,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,"Mazra bin Khater, Ibri - Rub al Khali road"
+14722,CRT Time of Use,56.464283,23.160194,35,CRT Time of Use,Industrial,Industrial,industrial,Certain,"Al Mukhtobiyah industrial estate, warehouses, Industrial plots (Google sat)"
+14842,CRT Seasonal,56.413027,23.249698,-1,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Likely,? [amenity=restaurant] 16m
+14843,CRT Seasonal,56.413027,23.249698,-1,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Likely,? [amenity=restaurant] 16m
+15033,CRT Time of Use,56.488405,23.207842,-1,Commercial,Residential,Commercial,non_domestic,Likely,Alshaabiyah shopping center مركز الشعبية للتسوق [building=commercial] 25m
+15036,CRT Seasonal,56.488405,23.207842,-1,Commercial,Residential,Commercial,non_domestic,Likely,Alshaabiyah shopping center مركز الشعبية للتسوق [building=commercial] 25m
+15248,CRT Seasonal,56.597726,23.221075,-1,CRT Seasonal,Residential,Religious,government,Likely,? [amenity=place_of_worship] 16m
+15787,CRT Seasonal,56.49778,23.234803,153,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,"Al Orobah, parking only (OSM)"
+16022,CRT Seasonal,56.495964,23.233307,153,Primary Account Tariff,Residential-Commercial,Unresolved,CRT_review,Guessing,"Al Orobah, parking only (OSM)"
+16334,CRT Seasonal,56.464519,23.160463,35,CRT Time of Use,Industrial,Industrial,industrial,Certain,"Al Mukhtobiyah industrial estate, warehouses, Industrial plots (Google sat)"
+16335,CRT Seasonal,56.464519,23.160463,35,CRT Time of Use,Industrial,Industrial,industrial,Certain,"Al Mukhtobiyah industrial estate, warehouses, Industrial plots (Google sat)"
+16354,CRT Seasonal,56.446261,23.223774,-1,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,Al Jahli: no POI within 80 m
+16525,CRT Seasonal,56.493465,23.235349,156,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,"Al Orobah, parking + mosque nearby only (OSM)"
+16526,CRT Seasonal,56.493465,23.235349,156,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,"Al Orobah, parking + mosque nearby only (OSM)"
+16527,CRT Seasonal,56.493465,23.235349,156,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,"Al Orobah, parking + mosque nearby only (OSM)"
+16528,CRT Seasonal,56.493465,23.235349,156,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,"Al Orobah, parking + mosque nearby only (OSM)"
+16529,CRT Seasonal,56.493465,23.235349,156,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,"Al Orobah, parking + mosque nearby only (OSM)"
+16530,CRT Seasonal,56.493465,23.235349,156,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,"Al Orobah, parking + mosque nearby only (OSM)"
+16531,CRT Seasonal,56.493465,23.235349,156,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,"Al Orobah, parking + mosque nearby only (OSM)"
+17152,CRT Seasonal,56.724228,23.274439,-1,CRT Seasonal,Agricultural,Education,government,Guessing," (school, Nominatim)"
+17392,CRT Seasonal,56.49409,23.235565,156,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,"Al Orobah, parking + mosque nearby only (OSM)"
+17394,CRT Time of Use,56.494114,23.237998,157,CRT Time of Use,Residential,Unresolved,CRT_review,Guessing,"Al Orobah, parking only (OSM)"
+17395,CRT Seasonal,56.494114,23.237998,157,CRT Time of Use,Residential,Unresolved,CRT_review,Guessing,"Al Orobah, parking only (OSM)"
+17506,CRT Seasonal,56.479823,23.207942,-1,CRT Seasonal,Agricultural,Education,government,Guessing,"مدرسة خضراء عبري للتعليم الأساسي (school, Nominatim)"
+17653,CRT Seasonal,56.495873,23.227175,145,CRT Seasonal,Agricultural,Telecom/Utility,non_domestic,Likely,"PBX connections building, Ibri Old village (OSM)"
+17674,CRT Seasonal,56.66358,23.20386,-1,CRT Seasonal,Residential,Telecom/Utility,non_domestic,Likely,? [man_made=water_works] 4m
+17729,CRT Seasonal,56.52368,23.23111,-1,Commercial,Residential,Education,government,Likely,مدرسة عبري الخاصة [building=school] 36m
+17754,CRT Seasonal,56.519392,23.24124,113,Government,Residential,Education,government,Likely,Ibri basic education school for girls 5-9 (OSM)
+17889,CRT Fixed Rate,56.488632,23.251959,-1,Government,Agricultural,Education,government,Likely,مركز التدريب المهني [amenity=college] 27m
+17890,CRT Fixed Rate,56.488632,23.251959,-1,Government,Agricultural,Education,government,Likely,مركز التدريب المهني [amenity=college] 27m
+18347,CRT Seasonal,56.514091,23.23913,116,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Certain,"Al Yamama shopping centre (OSM, 2 m)"
+18348,CRT Seasonal,56.514091,23.23913,116,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Certain,"Al Yamama shopping centre (OSM, 2 m)"
+18349,CRT Seasonal,56.514091,23.23913,116,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Certain,"Al Yamama shopping centre (OSM, 2 m)"
+18350,CRT Seasonal,56.514091,23.23913,116,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Certain,"Al Yamama shopping centre (OSM, 2 m)"
+18351,CRT Seasonal,56.514091,23.23913,116,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Certain,"Al Yamama shopping centre (OSM, 2 m)"
+18352,CRT Seasonal,56.514091,23.23913,116,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Certain,"Al Yamama shopping centre (OSM, 2 m)"
+18353,CRT Seasonal,56.514091,23.23913,116,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Certain,"Al Yamama shopping centre (OSM, 2 m)"
+18354,CRT Seasonal,56.514091,23.23913,116,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Certain,"Al Yamama shopping centre (OSM, 2 m)"
+18355,CRT Seasonal,56.514091,23.23913,116,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Certain,"Al Yamama shopping centre (OSM, 2 m)"
+18491,CRT Time of Use,56.513875,23.241166,-1,Government,Residential,Health,government,Likely,? [building=hospital] 56m
+18748,CRT Seasonal,56.519085,23.240547,113,CRT Seasonal,Residential,Education,government,Likely,Ibri basic education school for girls 5-9 (OSM)
+18987,CRT Seasonal,56.680679,23.29417,-1,Commercial,Residential,Commercial,non_domestic,Likely,? [shop=convenience] 38m
+18989,CRT Seasonal,56.680679,23.29417,-1,Commercial,Residential,Commercial,non_domestic,Likely,? [shop=convenience] 38m
+19215,CRT Seasonal,56.483494,23.236524,-1,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,Al Orobah: no POI within 80 m
+19427,CRT Time of Use,56.493384,23.237839,157,Commercial,Residential,Unresolved,CRT_review,Guessing,"Al Orobah, parking only (OSM)"
+19861,CRT Seasonal,56.615681,23.319839,-1,CRT Seasonal,Residential,Commercial,non_domestic,Likely,Bank Muscat [amenity=bank] 25m
+20519,CRT Seasonal,56.516351,23.222144,-1,Primary Account Tariff (with National Subsidy),Residential-Commercial,Unresolved,CRT_review,Guessing,AL Murtafa: no POI within 80 m
+20644,CRT Seasonal,56.464688,23.160727,35,CRT Seasonal,Industrial,Industrial,industrial,Certain,"Al Mukhtobiyah industrial estate, warehouses, Industrial plots (Google sat)"
+20718,CRT Seasonal,56.611502,23.32053,1,Additional Account Tariff,Residential-Commercial,Health,government,Likely,"Horizons Medical, veterinary, Ad Dariz (OSM)"
+22050,CRT Seasonal,56.458526,23.217212,78,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Ibri Bawadi Mall / Lulu Hypermarket, Chicking (Google sat + OSM)"
+22214,CRT Time of Use,56.368993,23.283684,14,CRT Time of Use,Agricultural,Government,government,Guessing,"Fenced compound of blue-roofed halls next to Police HQ, Bu Khabi (Google sat)"
+22215,CRT Seasonal,56.368993,23.283684,14,CRT Time of Use,Agricultural,Government,government,Guessing,"Fenced compound of blue-roofed halls next to Police HQ, Bu Khabi (Google sat)"
+22216,CRT Seasonal,56.368993,23.283684,14,CRT Time of Use,Agricultural,Government,government,Guessing,"Fenced compound of blue-roofed halls next to Police HQ, Bu Khabi (Google sat)"
+22217,CRT Time of Use,56.368993,23.283684,14,CRT Time of Use,Agricultural,Government,government,Guessing,"Fenced compound of blue-roofed halls next to Police HQ, Bu Khabi (Google sat)"
+22218,CRT Seasonal,56.368993,23.283684,14,CRT Time of Use,Agricultural,Government,government,Guessing,"Fenced compound of blue-roofed halls next to Police HQ, Bu Khabi (Google sat)"
+22219,CRT Time of Use,56.368993,23.283684,14,CRT Time of Use,Agricultural,Government,government,Guessing,"Fenced compound of blue-roofed halls next to Police HQ, Bu Khabi (Google sat)"
+22220,CRT Seasonal,56.368993,23.283684,14,CRT Time of Use,Agricultural,Government,government,Guessing,"Fenced compound of blue-roofed halls next to Police HQ, Bu Khabi (Google sat)"
+22221,CRT Seasonal,56.368993,23.283684,14,CRT Time of Use,Agricultural,Government,government,Guessing,"Fenced compound of blue-roofed halls next to Police HQ, Bu Khabi (Google sat)"
+22260,CRT Seasonal,56.383154,23.275625,18,CRT Seasonal,Residential,Government,government,Likely,Ibri Police Headquarters (Nominatim)
+22365,CRT Time of Use,56.49229,23.220108,149,Additional Account Tariff,Residential,Commercial,non_domestic,Guessing,"A SSFA, between Al Hashar Automotive and Ramez hypermarket strip (OSM)"
+22436,CRT Seasonal,56.517806,23.21539,-1,Additional Account Tariff,Residential,Unresolved,CRT_review,Guessing,Hellat As'sad: no POI within 80 m
+22635,CRT Time of Use,56.513383,23.205234,87,Commercial,Residential,Unresolved,CRT_review,Guessing,As Sulayf
+22668,CRT Seasonal,56.511162,23.208949,-1,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,Hellat As'sad: no POI within 80 m
+22718,CRT Time of Use,56.493697,23.216387,139,Commercial,Residential,Commercial,non_domestic,Certain,"Al Hashar Automotive, Al-huad Pharmacy, Muscat Bank, Oman Oil (OSM)"
+22719,CRT Time of Use,56.493697,23.216387,139,Commercial,Residential,Commercial,non_domestic,Certain,"Al Hashar Automotive, Al-huad Pharmacy, Muscat Bank, Oman Oil (OSM)"
+22736,CRT Seasonal,56.469071,23.216793,120,Commercial,Residential-Commercial,Commercial,non_domestic,Certain,"Al Fawar and Tayyibat Al Sham restaurants, Bake it Bakery, Al Akhdar (OSM)"
+22737,CRT Seasonal,56.469071,23.216793,120,Commercial,Residential-Commercial,Commercial,non_domestic,Certain,"Al Fawar and Tayyibat Al Sham restaurants, Bake it Bakery, Al Akhdar (OSM)"
+22738,CRT Seasonal,56.469071,23.216793,120,Commercial,Residential-Commercial,Commercial,non_domestic,Certain,"Al Fawar and Tayyibat Al Sham restaurants, Bake it Bakery, Al Akhdar (OSM)"
+22740,CRT Seasonal,56.469071,23.216793,120,Commercial,Residential-Commercial,Commercial,non_domestic,Certain,"Al Fawar and Tayyibat Al Sham restaurants, Bake it Bakery, Al Akhdar (OSM)"
+22895,CRT Seasonal,56.50009,23.23742,-1,CRT Seasonal,Residential,Health,government,Likely,Amal pharmacy [amenity=pharmacy;healthcare=pharmacy] 57m
+22903,CRT Seasonal,56.377092,23.275099,-1,CRT Seasonal,Residential,Government,government,Guessing,"Ibri Police Headquarters (police, Nominatim)"
+22977,CRT Seasonal,56.472937,23.162809,-1,CRT Seasonal,Agricultural,Education,government,Likely,? [amenity=school] 52m
+22981,CRT Seasonal,56.495433,23.227712,145,CRT Seasonal,Residential,Telecom/Utility,non_domestic,Likely,"PBX connections building, Ibri Old village (OSM)"
+22982,CRT Seasonal,56.753223,23.255133,-1,CRT Seasonal,Agricultural,Agricultural,agricultural,Guessing,"Agricultural plot, Bat (no POI within 80 m)"
+22995,CRT Time of Use,56.466715,23.198915,-1,Commercial,Residential,Unresolved,CRT_review,Guessing,Hellat Al Nahadah: no POI within 80 m
+23023,CRT Seasonal,56.458481,23.216264,78,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Ibri Bawadi Mall / Lulu Hypermarket, Chicking (Google sat + OSM)"
+23024,CRT Seasonal,56.458481,23.216264,78,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Ibri Bawadi Mall / Lulu Hypermarket, Chicking (Google sat + OSM)"
+23039,CRT Seasonal,56.388551,23.272447,-1,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,سيح المسرات: no POI within 80 m
+23085,CRT Seasonal,56.616719,23.318665,-1,CRT Seasonal,Residential,Education,government,Likely,? [amenity=school] 57m
+23097,CRT Seasonal,56.608361,23.32007,-1,CRT Seasonal,Agricultural,Agricultural,agricultural,Guessing,"Agricultural plot, Ad Dariz (no POI within 80 m)"
+23098,CRT Seasonal,56.552877,23.29049,-1,CRT Time of Use,Agricultural,Agricultural,agricultural,Guessing,"Agricultural plot,  (no POI within 80 m)"
+23108,CRT Seasonal,56.518929,23.238715,-1,CRT Seasonal,Residential,Education,government,Likely,مدرسة المسرات للتعليم الاساسي 1-4 [building=school] 59m
+23232,CRT Seasonal,56.467967,23.164503,-1,CRT Seasonal,Industrial,Industrial,industrial,Likely,"Industrial plot, Al Mukhtobiyah"
+23398,CRT Seasonal,56.458439,23.21709,78,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Ibri Bawadi Mall / Lulu Hypermarket, Chicking (Google sat + OSM)"
+23400,CRT Seasonal,56.459445,23.217235,78,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Ibri Bawadi Mall / Lulu Hypermarket, Chicking (Google sat + OSM)"
+23401,CRT Seasonal,56.459873,23.217362,78,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Ibri Bawadi Mall / Lulu Hypermarket, Chicking (Google sat + OSM)"
+23523,CRT Time of Use,56.492982,23.221479,149,Additional Account Tariff,Residential,Commercial,non_domestic,Guessing,"A SSFA, between Al Hashar Automotive and Ramez hypermarket strip (OSM)"
+23525,CRT Time of Use,56.504815,23.231795,122,CRT Time of Use,Residential,Unresolved,CRT_review,Guessing,Ibri Old village
+23526,CRT Time of Use,56.504815,23.231795,122,CRT Time of Use,Residential,Unresolved,CRT_review,Guessing,Ibri Old village
+23527,CRT Time of Use,56.504815,23.231795,122,CRT Time of Use,Residential,Unresolved,CRT_review,Guessing,Ibri Old village
+23528,CRT Time of Use,56.504815,23.231795,122,CRT Time of Use,Residential,Unresolved,CRT_review,Guessing,Ibri Old village
+23636,CRT Time of Use,56.513384,23.205287,87,Commercial,Residential,Unresolved,CRT_review,Guessing,As Sulayf
+23665,CRT Seasonal,56.513385,23.205263,87,Commercial,Residential,Unresolved,CRT_review,Guessing,As Sulayf
+23745,CRT Time of Use,56.513571,23.249843,-1,Primary Account Tariff,Residential,Unresolved,CRT_review,Guessing,Al Ghabbi: no POI within 80 m
+23750,CRT Seasonal,56.500412,23.237943,-1,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,Al Orobah: no POI within 80 m
+23758,CRT Fixed Rate,56.529417,23.231303,-1,CRT Fixed Rate,Residential,Unresolved,CRT_review,Guessing,Hayy Al Aqabah: no POI within 80 m
+23869,CRT Seasonal,56.484477,23.258143,-1,CRT Seasonal,Agricultural,Agricultural,agricultural,Guessing,"Agricultural plot, Rayibah (no POI within 80 m)"
+23998,CRT Time of Use,56.466708,23.198971,-1,Commercial,Residential,Unresolved,CRT_review,Guessing,Hellat Al Nahadah: no POI within 80 m
+24523,CRT Seasonal,56.576373,23.229119,-1,Commercial,Agricultural,Agricultural,agricultural,Guessing,"Agricultural plot, الجبية (no POI within 80 m)"
+24577,CRT Seasonal,56.653115,23.210956,-1,CRT Seasonal,Residential,Religious,government,Likely,? [amenity=place_of_worship;building=mosque] 17m
+24609,CRT Seasonal,56.721178,23.1699,-1,Government,Residential,Unresolved,CRT_review,Guessing,no POI within 80 m
+24699,CRT Fixed Rate,56.487219,23.208072,-1,Commercial,Residential,Religious,government,Likely,مسجد الشعبية [amenity=place_of_worship;building=yes] 59m
+24756,CRT Seasonal,56.487255,23.208178,-1,Primary Account Tariff,Residential,Religious,government,Likely,مسجد الشعبية [amenity=place_of_worship;building=yes] 48m
+25123,CRT Seasonal,56.549865,23.283223,69,Commercial,Residential,Commercial,non_domestic,Certain,"Sana Ibri Shopping, Nizwa Islamic Bank, Araqi strip (Google)"
+25795,CRT Seasonal,56.481856,23.217068,128,Primary Account Tariff,Residential-Commercial,Commercial,non_domestic,Guessing,"A SSFA, Res-Com plots on Sultan Thuwaini road"
+25920,CRT Seasonal,56.466807,23.159573,35,CRT Seasonal,Industrial,Industrial,industrial,Certain,"Al Mukhtobiyah industrial estate, warehouses, Industrial plots (Google sat)"
+26046,CRT Seasonal,56.526432,23.213447,-1,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,no POI within 80 m
+26076,CRT Seasonal,56.478243,23.215876,-1,Commercial,Residential,Commercial,non_domestic,Likely,Arabian Center [shop=variety_store] 23m
+26077,CRT Seasonal,56.478243,23.215876,-1,Commercial,Residential,Commercial,non_domestic,Likely,Arabian Center [shop=variety_store] 23m
+26387,CRT Seasonal,56.495624,23.220789,-1,Primary Account Tariff,Residential,Religious,government,Guessing," (place_of_worship, Nominatim)"
+26616,CRT Seasonal,56.484802,23.217651,136,CRT Seasonal,Residential,Education,government,Likely,Indian School Ibri (OSM 40 m)
+26748,CRT Time of Use,56.494991,23.223387,-1,Commercial,Residential,Health,government,Likely,Aster Hospital Pharmacy [amenity=pharmacy] 79m
+27008,CRT Time of Use,56.555874,23.261862,-1,CRT Time of Use,Industrial,Industrial,industrial,Likely,"Industrial plot, Al Ghabbi"
+27119,CRT Seasonal,56.519033,23.240575,113,CRT Seasonal,Residential,Education,government,Likely,Ibri basic education school for girls 5-9 (OSM)
+27274,CRT Seasonal,56.519857,23.212888,92,Additional Account Tariff,Residential,Unresolved,CRT_review,Guessing,"Hellat As sad, residential"
+27276,CRT Seasonal,56.519857,23.212888,92,Additional Account Tariff,Residential,Unresolved,CRT_review,Guessing,"Hellat As sad, residential"
+27278,CRT Seasonal,56.519857,23.212888,92,Additional Account Tariff,Residential,Unresolved,CRT_review,Guessing,"Hellat As sad, residential"
+27279,CRT Seasonal,56.519857,23.212888,92,Additional Account Tariff,Residential,Unresolved,CRT_review,Guessing,"Hellat As sad, residential"
+27281,CRT Seasonal,56.519857,23.212888,92,Additional Account Tariff,Residential,Unresolved,CRT_review,Guessing,"Hellat As sad, residential"
+27465,CRT Seasonal,56.521098,23.211096,-1,CRT Seasonal,Agricultural,Agricultural,agricultural,Guessing,"Agricultural plot, Hellat As'sad (no POI within 80 m)"
+27811,CRT Seasonal,56.513388,23.205307,87,Commercial,Residential,Unresolved,CRT_review,Guessing,As Sulayf
+27927,CRT Time of Use,56.42917,23.227666,-1,Commercial,Agricultural,Agricultural,agricultural,Guessing,"Agricultural plot, Hay Assa' adah (no POI within 80 m)"
+27928,CRT Time of Use,56.376367,23.281234,21,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Headquarters campus, Bu Khabi (Nominatim + Google sat)"
+27929,CRT Time of Use,56.376367,23.281234,21,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Headquarters campus, Bu Khabi (Nominatim + Google sat)"
+27930,CRT Time of Use,56.376367,23.281234,21,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Headquarters campus, Bu Khabi (Nominatim + Google sat)"
+27931,CRT Time of Use,56.376367,23.281234,21,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Headquarters campus, Bu Khabi (Nominatim + Google sat)"
+27932,CRT Time of Use,56.376367,23.281234,21,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Headquarters campus, Bu Khabi (Nominatim + Google sat)"
+27933,CRT Time of Use,56.376367,23.281234,21,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Headquarters campus, Bu Khabi (Nominatim + Google sat)"
+27934,CRT Time of Use,56.376367,23.281234,21,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Headquarters campus, Bu Khabi (Nominatim + Google sat)"
+27935,CRT Time of Use,56.376367,23.281234,21,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Headquarters campus, Bu Khabi (Nominatim + Google sat)"
+27936,CRT Time of Use,56.376367,23.281234,21,CRT Time of Use,Residential,Government,government,Likely,"Ibri Police Headquarters campus, Bu Khabi (Nominatim + Google sat)"
+27937,CRT Time of Use,56.38004,23.272361,16,CRT Seasonal,Residential,Government,government,Likely,Ibri Police Headquarters (Nominatim)
+27938,CRT Time of Use,56.38004,23.272361,16,CRT Seasonal,Residential,Government,government,Likely,Ibri Police Headquarters (Nominatim)
+27939,CRT Time of Use,56.38004,23.272361,16,CRT Seasonal,Residential,Government,government,Likely,Ibri Police Headquarters (Nominatim)
+27940,CRT Time of Use,56.383117,23.275622,18,CRT Seasonal,Residential,Government,government,Likely,Ibri Police Headquarters (Nominatim)
+27941,CRT Time of Use,56.383117,23.275622,18,CRT Seasonal,Residential,Government,government,Likely,Ibri Police Headquarters (Nominatim)
+27942,CRT Time of Use,56.383117,23.275622,18,CRT Seasonal,Residential,Government,government,Likely,Ibri Police Headquarters (Nominatim)
+27943,CRT Time of Use,56.383117,23.275622,18,CRT Seasonal,Residential,Government,government,Likely,Ibri Police Headquarters (Nominatim)
+27944,CRT Time of Use,56.378681,23.272788,-1,CRT Seasonal,Residential,Government,government,Guessing,"Ibri Police Headquarters (police, Nominatim)"
+27945,CRT Time of Use,56.378681,23.272788,-1,CRT Seasonal,Residential,Government,government,Guessing,"Ibri Police Headquarters (police, Nominatim)"
+27946,CRT Time of Use,56.37711,23.275114,-1,CRT Seasonal,Residential,Government,government,Guessing,"Ibri Police Headquarters (police, Nominatim)"
+27947,CRT Time of Use,56.456641,23.219102,79,CRT Time of Use,Residential-Commercial,Government,government,Certain,"Al Akhdar Post Office, Health Center, Directorate-General for Education (OSM)"
+27948,CRT Time of Use,56.495054,23.218071,-1,Commercial,Residential,Commercial,non_domestic,Likely,Two Rials [shop=variety_store] 44m
+27950,CRT Seasonal,56.445442,23.224925,-1,Commercial,Residential,Unresolved,CRT_review,Guessing,Al Jahli: no POI within 80 m
+27951,CRT Time of Use,56.455088,23.222072,81,CRT Time of Use,Residential-Commercial,Education,government,Likely,"UTAS Ibri Al Akhdar campus, D Building, storage (OSM + Nominatim)"
+27952,CRT Time of Use,56.455055,23.222034,81,CRT Time of Use,Residential-Commercial,Education,government,Likely,"UTAS Ibri Al Akhdar campus, D Building, storage (OSM + Nominatim)"
+27953,CRT Time of Use,56.49578,23.225486,-1,CRT Time of Use,Residential,Unresolved,CRT_review,Guessing,no POI within 80 m
+27954,CRT Time of Use,56.485362,23.218513,136,Primary Account Tariff,Residential,Education,government,Likely,Indian School Ibri (OSM 40 m)
+27955,CRT Time of Use,56.515309,23.231911,-1,Government,Agricultural,Government,government,Likely,بلدية عبري [building=yes] 74m
+27956,CRT Time of Use,56.496835,23.233947,153,Commercial,Residential,Unresolved,CRT_review,Guessing,"Al Orobah, parking only (OSM)"
+27957,CRT Time of Use,56.426098,23.230933,54,Government,Residential,Health,government,Likely,Ibri Hospital (Nominatim nearest)
+27958,CRT Time of Use,56.426181,23.231045,54,Government,Residential,Health,government,Likely,Ibri Hospital (Nominatim nearest)
+27959,CRT Time of Use,56.426303,23.231182,54,Government,Residential,Health,government,Likely,Ibri Hospital (Nominatim nearest)
+27960,CRT Time of Use,56.426223,23.231088,54,Government,Residential,Health,government,Likely,Ibri Hospital (Nominatim nearest)
+27961,CRT Time of Use,56.426262,23.231141,54,Government,Residential,Health,government,Likely,Ibri Hospital (Nominatim nearest)
+27962,CRT Time of Use,56.454179,23.219533,80,CRT Time of Use,Residential-Commercial,Religious,government,Likely,"College Mosque, Al Akhdar (OSM 14 m)"
+27963,CRT Time of Use,56.458492,23.218863,79,Commercial,Agricultural,Government,government,Certain,"Al Akhdar Post Office, Health Center, Directorate-General for Education (OSM)"
+27964,CRT Time of Use,56.45416,23.21955,80,CRT Time of Use,Residential-Commercial,Religious,government,Likely,"College Mosque, Al Akhdar (OSM 14 m)"
+27965,CRT Time of Use,56.454869,23.221899,81,CRT Time of Use,Residential-Commercial,Education,government,Likely,"UTAS Ibri Al Akhdar campus, D Building, storage (OSM + Nominatim)"
+27966,CRT Time of Use,56.454902,23.221894,81,CRT Time of Use,Residential-Commercial,Education,government,Likely,"UTAS Ibri Al Akhdar campus, D Building, storage (OSM + Nominatim)"
+27967,CRT Fixed Rate,56.521828,23.258943,57,Government,Commercial,Commercial,non_domestic,Certain,"LuLu Hypermarket Silmi, CRT Fixed Rate (OSM 45 m)"
+27968,CRT Fixed Rate,56.521828,23.258943,57,Government,Commercial,Commercial,non_domestic,Certain,"LuLu Hypermarket Silmi, CRT Fixed Rate (OSM 45 m)"
+27969,CRT Fixed Rate,56.521828,23.258943,57,Government,Commercial,Commercial,non_domestic,Certain,"LuLu Hypermarket Silmi, CRT Fixed Rate (OSM 45 m)"
+27970,CRT Fixed Rate,56.521828,23.258943,57,Government,Commercial,Commercial,non_domestic,Certain,"LuLu Hypermarket Silmi, CRT Fixed Rate (OSM 45 m)"
+27971,CRT Time of Use,56.458451,23.218902,79,Commercial,Agricultural,Government,government,Certain,"Al Akhdar Post Office, Health Center, Directorate-General for Education (OSM)"
+27972,CRT Time of Use,56.488721,23.214578,-1,Commercial,Residential,Unresolved,CRT_review,Guessing,Mazra bin Khater: no POI within 80 m
+27973,CRT Time of Use,56.502097,23.219311,130,Commercial,Residential-Commercial,Commercial,non_domestic,Certain,"Karama Building Materials, MAX (OSM)"
+27974,CRT Time of Use,56.502179,23.219306,130,Commercial,Residential-Commercial,Commercial,non_domestic,Certain,"Karama Building Materials, MAX (OSM)"
+27975,CRT Time of Use,56.502345,23.218806,130,Commercial,Residential-Commercial,Commercial,non_domestic,Certain,"Karama Building Materials, MAX (OSM)"
+27976,CRT Time of Use,56.502356,23.218837,130,Commercial,Residential-Commercial,Commercial,non_domestic,Certain,"Karama Building Materials, MAX (OSM)"
+27977,CRT Time of Use,56.426142,23.230995,54,Government,Residential,Health,government,Likely,Ibri Hospital (Nominatim nearest)
+27978,CRT Time of Use,56.45745,23.219034,79,CRT Time of Use,Agricultural,Government,government,Certain,"Al Akhdar Post Office, Health Center, Directorate-General for Education (OSM)"
+27979,CRT Time of Use,56.447115,23.220633,-1,CRT Time of Use,Residential,Government,government,Likely,Directorate General Of Manpower [building=yes] 56m
+27980,CRT Time of Use,56.421335,23.242747,50,Commercial,Residential,Education,government,Likely,"College of Technology, Saih Al Masarrat (Nominatim)"
+27981,CRT Time of Use,56.421316,23.242734,50,Commercial,Residential,Education,government,Likely,"College of Technology, Saih Al Masarrat (Nominatim)"
+27982,CRT Time of Use,56.421307,23.245307,-1,Commercial,Residential,Education,government,Guessing,"College of Technology (college, Nominatim)"
+27983,CRT Time of Use,56.421307,23.245307,-1,Commercial,Residential,Education,government,Guessing,"College of Technology (college, Nominatim)"
+27984,CRT Time of Use,56.421298,23.242723,50,Commercial,Residential,Education,government,Likely,"College of Technology, Saih Al Masarrat (Nominatim)"
+27985,CRT Time of Use,56.421278,23.242713,50,Commercial,Residential,Education,government,Likely,"College of Technology, Saih Al Masarrat (Nominatim)"
+27986,CRT Time of Use,56.421257,23.2427,50,Commercial,Residential,Education,government,Likely,"College of Technology, Saih Al Masarrat (Nominatim)"
+27987,CRT Time of Use,56.465937,23.159445,35,CRT Time of Use,Industrial,Industrial,industrial,Certain,"Al Mukhtobiyah industrial estate, warehouses, Industrial plots (Google sat)"
+27988,CRT Time of Use,56.53875,23.267538,-1,Commercial,Residential-Commercial,Unresolved,CRT_review,Guessing,Al Ghabbi: no POI within 80 m
+27989,CRT Time of Use,56.538718,23.267576,-1,Commercial,Residential-Commercial,Unresolved,CRT_review,Guessing,Al Ghabbi: no POI within 80 m
+27990,CRT Time of Use,56.489183,23.217861,137,CRT Time of Use,Residential,Commercial,non_domestic,Certain,"Makkah Hypermarket, Ramez Hypermarket (OSM)"
+27991,CRT Seasonal,56.48042,23.217792,-1,CRT Seasonal,Residential-Commercial,Commercial,non_domestic,Likely,Changan Auto [shop=car;building=yes] 37m
+27992,CRT Time of Use,56.48917,23.217861,137,CRT Time of Use,Residential,Commercial,non_domestic,Certain,"Makkah Hypermarket, Ramez Hypermarket (OSM)"
+27993,CRT Time of Use,56.481895,23.217102,128,Primary Account Tariff,Residential-Commercial,Commercial,non_domestic,Guessing,"A SSFA, Res-Com plots on Sultan Thuwaini road"
+27994,CRT Time of Use,56.704531,23.18571,-1,CRT Time of Use,Residential,Unresolved,CRT_review,Guessing,سويد الماء: no POI within 80 m
+27995,CRT Time of Use,56.48201,23.217419,128,CRT Time of Use,Residential-Commercial,Commercial,non_domestic,Guessing,"A SSFA, Res-Com plots on Sultan Thuwaini road"
+27996,CRT Time of Use,56.458557,23.216455,78,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Ibri Bawadi Mall / Lulu Hypermarket, Chicking (Google sat + OSM)"
+27997,CRT Seasonal,56.458458,23.216326,78,CRT Seasonal,Residential,Commercial,non_domestic,Certain,"Ibri Bawadi Mall / Lulu Hypermarket, Chicking (Google sat + OSM)"
+28340,CRT Seasonal,56.513052,23.21727,-1,Additional Account Tariff,Residential-Commercial,Unresolved,CRT_review,Guessing,Hellat As'sad: no POI within 80 m
+29006,CRT Time of Use,56.53198,23.264294,-1,Commercial,Residential,Unresolved,CRT_review,Guessing,Al Ghabbi: no POI within 80 m
+29321,CRT Time of Use,56.514701,23.251863,110,Additional Account Tariff,Residential,Unresolved,CRT_review,Guessing,"Silmi, residential"
+29322,CRT Time of Use,56.514701,23.251863,110,Additional Account Tariff,Residential,Unresolved,CRT_review,Guessing,"Silmi, residential"
+29323,CRT Time of Use,56.514701,23.251863,110,Additional Account Tariff,Residential,Unresolved,CRT_review,Guessing,"Silmi, residential"
+29391,CRT Seasonal,56.488058,23.215679,-1,,,Commercial,non_domestic,Likely,Burthukal Juices [amenity=fast_food] 9m
+30137,CRT Seasonal,56.597854,23.323782,-1,,,Unresolved,CRT_review,Guessing,Ad Dariz: no POI within 80 m
+30183,CRT Time of Use,56.51769,23.218721,-1,CRT Time of Use,Residential,Unresolved,CRT_review,Guessing,Hellat As'sad: no POI within 80 m
+30325,CRT Seasonal,56.37171,23.291473,-1,,,Unresolved,CRT_review,Guessing,Bu Khabi: no POI within 80 m
+30326,CRT Seasonal,56.424687,23.253802,-1,,,Unresolved,CRT_review,Guessing,Hay Assa' adah: no POI within 80 m
+30468,CRT Seasonal,56.500187,23.231603,-1,,,Religious,government,Likely,? [amenity=place_of_worship] 75m
+30470,CRT Time of Use,56.489908,23.215821,-1,,,Commercial,non_domestic,Likely,نور الخليج [amenity=fast_food] 7m
+30662,CRT Seasonal,56.500146,23.231611,-1,Primary Account Tariff,Residential,Religious,government,Likely,? [amenity=place_of_worship] 79m
+30707,CRT Seasonal,56.492582,23.217404,138,,,Commercial,non_domestic,Likely,"Photographer, Muscat Pharmacy, Ibri Road (OSM)"
+31228,Industrial,56.496711,23.234606,153,Commercial,Residential,Industrial,industrial,Certain,"Industrial tariff; Al Orobah, parking only (OSM)"
+31239,CRT Seasonal,56.721538,23.179921,-1,,,Unresolved,CRT_review,Guessing,لقيع: no POI within 80 m
+31240,CRT Seasonal,56.679788,23.194526,-1,,,Unresolved,CRT_review,Guessing,الجبية: no POI within 80 m
+31255,CRT Seasonal,56.611855,23.320825,1,Commercial,Residential-Commercial,Health,government,Likely,"Horizons Medical, veterinary, Ad Dariz (OSM)"
+31256,CRT Seasonal,56.611855,23.320825,1,Commercial,Residential-Commercial,Health,government,Likely,"Horizons Medical, veterinary, Ad Dariz (OSM)"
+31446,CRT Seasonal,56.46539,23.159826,35,CRT Seasonal,Industrial,Industrial,industrial,Certain,"Al Mukhtobiyah industrial estate, warehouses, Industrial plots (Google sat)"
+31624,CRT Seasonal,56.727773,23.273713,175,,,Commercial,non_domestic,Likely,"MAYSA national shopping, Bat village centre (OSM + Google)"
+31625,CRT Seasonal,56.727773,23.273713,175,,,Commercial,non_domestic,Likely,"MAYSA national shopping, Bat village centre (OSM + Google)"
+31626,CRT Seasonal,56.727773,23.273713,175,,,Commercial,non_domestic,Likely,"MAYSA national shopping, Bat village centre (OSM + Google)"
+31629,CRT Seasonal,56.727773,23.273713,175,,,Commercial,non_domestic,Likely,"MAYSA national shopping, Bat village centre (OSM + Google)"
+31630,CRT Seasonal,56.727773,23.273713,175,,,Commercial,non_domestic,Likely,"MAYSA national shopping, Bat village centre (OSM + Google)"
+31631,CRT Seasonal,56.727773,23.273713,175,,,Commercial,non_domestic,Likely,"MAYSA national shopping, Bat village centre (OSM + Google)"
+31632,CRT Seasonal,56.727773,23.273713,175,,,Commercial,non_domestic,Likely,"MAYSA national shopping, Bat village centre (OSM + Google)"
+31634,CRT Seasonal,56.727773,23.273713,175,,,Commercial,non_domestic,Likely,"MAYSA national shopping, Bat village centre (OSM + Google)"
+31766,CRT Time of Use,56.486,23.210902,-1,,,Unresolved,CRT_review,Guessing,no POI within 80 m
+31767,CRT Time of Use,56.486,23.210902,-1,,,Unresolved,CRT_review,Guessing,no POI within 80 m
+31804,CRT Seasonal,56.616398,23.314174,-1,,,Unresolved,CRT_review,Guessing,Ad Dariz: no POI within 80 m
+31816,CRT Seasonal,56.745863,23.163424,-1,,,Unresolved,CRT_review,Guessing,لقيع: no POI within 80 m
+31972,CRT Seasonal,56.481945,23.238477,-1,,,Unresolved,CRT_review,Guessing,Al Orobah: no POI within 80 m
+32059,CRT Time of Use,56.511713,23.24941,-1,,,Unresolved,CRT_review,Guessing,Silmi: no POI within 80 m
+32082,CRT Seasonal,56.526973,23.230705,-1,Commercial,Residential,Religious,government,Likely,جامع حي العقبة [amenity=place_of_worship] 58m
+32389,CRT Time of Use,56.615966,23.317538,6,Commercial,Residential,Commercial,non_domestic,Certain,"Riad Al Driz Shopping Center, Ad Dariz (OSM)"
+32392,CRT Time of Use,56.615966,23.317538,6,Commercial,Residential,Commercial,non_domestic,Certain,"Riad Al Driz Shopping Center, Ad Dariz (OSM)"
+32396,CRT Time of Use,56.615966,23.317538,6,Commercial,Residential,Commercial,non_domestic,Certain,"Riad Al Driz Shopping Center, Ad Dariz (OSM)"
+32398,CRT Time of Use,56.615966,23.317538,6,Commercial,Residential,Commercial,non_domestic,Certain,"Riad Al Driz Shopping Center, Ad Dariz (OSM)"
+32399,CRT Time of Use,56.615966,23.317538,6,Commercial,Residential,Commercial,non_domestic,Certain,"Riad Al Driz Shopping Center, Ad Dariz (OSM)"
+32401,CRT Time of Use,56.615966,23.317538,6,Commercial,Residential,Commercial,non_domestic,Certain,"Riad Al Driz Shopping Center, Ad Dariz (OSM)"
+32405,CRT Time of Use,56.615966,23.317538,6,Commercial,Residential,Commercial,non_domestic,Certain,"Riad Al Driz Shopping Center, Ad Dariz (OSM)"
+32421,CRT Seasonal,56.513298,23.249497,-1,Commercial,Commercial,Unresolved,CRT_review,Guessing,Al Ghabbi: no POI within 80 m
+32495,CRT Seasonal,56.497303,23.228387,-1,Commercial,Residential,Unresolved,CRT_review,Guessing,Ibri Old village: no POI within 80 m
+32524,CRT Time of Use,56.465679,23.150684,-1,CRT Time of Use,Residential,Unresolved,CRT_review,Guessing,Al Mukhtobiyah: no POI within 80 m
+32544,CRT Seasonal,56.384732,23.273962,-1,CRT Seasonal,Residential,Unresolved,CRT_review,Guessing,سيح المسرات: no POI within 80 m
+32578,CRT Seasonal,56.590514,23.223982,-1,,,Unresolved,CRT_review,Guessing,AL Qurayn: no POI within 80 m
+32644,CRT Seasonal,56.474036,23.144359,-1,,,Unresolved,CRT_review,Guessing,Tanaam: no POI within 80 m
+32737,CRT Seasonal,56.492818,23.21619,139,Commercial,Residential,Commercial,non_domestic,Certain,"Al Hashar Automotive, Al-huad Pharmacy, Muscat Bank, Oman Oil (OSM)"
+32738,CRT Seasonal,56.492818,23.21619,139,Commercial,Residential,Commercial,non_domestic,Certain,"Al Hashar Automotive, Al-huad Pharmacy, Muscat Bank, Oman Oil (OSM)"
+32740,CRT Seasonal,56.492818,23.21619,139,Commercial,Residential,Commercial,non_domestic,Certain,"Al Hashar Automotive, Al-huad Pharmacy, Muscat Bank, Oman Oil (OSM)"
+32756,CRT Seasonal,56.661178,23.20377,-1,Additional Account Tariff,Residential,Unresolved,CRT_review,Guessing,الجبية: no POI within 80 m
+32767,CRT Seasonal,56.611218,23.216352,-1,Primary Account Tariff,Residential,Unresolved,CRT_review,Guessing,معيريد: no POI within 80 m
+32844,CRT Seasonal,56.458466,23.217383,78,,,Commercial,non_domestic,Certain,"Ibri Bawadi Mall / Lulu Hypermarket, Chicking (Google sat + OSM)"
+32855,CRT Seasonal,56.56647,23.22018,-1,,,Unresolved,CRT_review,Guessing,الجبية: no POI within 80 m
+32857,CRT Seasonal,56.626149,23.213613,-1,Primary Account Tariff,Residential,Unresolved,CRT_review,Guessing,معيريد: no POI within 80 m
+32864,CRT Seasonal,56.54083,23.207983,-1,,,Unresolved,CRT_review,Guessing,AL Qurayn: no POI within 80 m
+32886,CRT Seasonal,56.490303,23.214898,-1,,,Unresolved,CRT_review,Guessing,no POI within 80 m
+32915,CRT Seasonal,56.613418,23.329369,-1,,,Unresolved,CRT_review,Guessing,Ad Dariz: no POI within 80 m
+32917,CRT Time of Use,56.618593,23.311105,-1,Primary Account Tariff,Residential,Unresolved,CRT_review,Guessing,Ad Dariz: no POI within 80 m
+32944,CRT Seasonal,56.515272,23.224625,95,Primary Account Tariff,Residential,Commercial,non_domestic,Certain,"Pizza Hut, Al Murtafa (OSM)"
+32946,CRT Seasonal,56.515272,23.224625,95,Primary Account Tariff,Residential,Commercial,non_domestic,Certain,"Pizza Hut, Al Murtafa (OSM)"
+32948,CRT Seasonal,56.515272,23.224625,95,Primary Account Tariff,Residential,Commercial,non_domestic,Certain,"Pizza Hut, Al Murtafa (OSM)"
+33008,CRT Seasonal,56.3844,23.273603,-1,CRT Seasonal,Residential,Industrial,industrial,Likely,MOT Centre [landuse=industrial] 80m
+33393,CRT Time of Use,56.622282,23.34106,-1,,,Unresolved,CRT_review,Guessing,Ad Dariz: no POI within 80 m
+33741,CRT Time of Use,56.486033,23.212256,-1,,,Government,government,Guessing,"Ibri police Station (police, Nominatim)"
+33806,CRT Time of Use,56.511609,23.21613,102,Commercial,Residential,Commercial,non_domestic,Likely,"Retail building + Shell fuel, Hayy Almazra (OSM)"
+33935,CRT Seasonal,56.475085,23.185559,-1,Commercial,Residential,Unresolved,CRT_review,Guessing,Mazra bin Khater: no POI within 80 m
+33960,CRT Seasonal,56.534339,23.283464,-1,Government,Agricultural,Agricultural,agricultural,Guessing,"Agricultural plot, Al Ghabbi (no POI within 80 m)"
+33961,CRT Time of Use,56.466874,23.135404,-1,,,Unresolved,CRT_review,Guessing,Tanaam: no POI within 80 m
+33962,CRT Time of Use,56.472728,23.20137,-1,,,Unresolved,CRT_review,Guessing,Hellat Al Nahadah: no POI within 80 m
+33963,CRT Time of Use,56.380926,23.282817,-1,,,Unresolved,CRT_review,Guessing,Bu Khabi: no POI within 80 m
+33964,CRT Time of Use,56.538587,23.245412,-1,,,Telecom/Utility,non_domestic,Likely,? [man_made=tower] 27m
+33965,CRT Time of Use,56.495879,23.227015,145,,,Telecom/Utility,non_domestic,Likely,"PBX connections building, Ibri Old village (OSM)"
+33966,CRT Time of Use,56.49258,23.217424,138,Commercial,Residential,Commercial,non_domestic,Likely,"Photographer, Muscat Pharmacy, Ibri Road (OSM)"
+33967,CRT Seasonal,56.45374,23.219311,80,,,Religious,government,Likely,"College Mosque, Al Akhdar (OSM 14 m)"
+33968,CRT Time of Use,56.433161,23.228914,-1,,,Unresolved,CRT_review,Guessing,Hay Assa' adah: no POI within 80 m
+33969,CRT Time of Use,56.472765,23.133578,-1,,,Unresolved,CRT_review,Guessing,Tanaam: no POI within 80 m
+33970,CRT Time of Use,56.570185,23.249177,-1,CRT Time of Use,Residential,Unresolved,CRT_review,Guessing,Al Ghabbi: no POI within 80 m
