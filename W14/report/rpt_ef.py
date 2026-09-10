@@ -168,7 +168,7 @@ def part_f(d):
                   "How each option is costed and compared. The three cost "
                   "streams are established separately for every option, "
                   "discounted to present value together, and only then scored "
-                  "against the seven criteria.", size="A3")
+                  "against the seven criteria.", size="A4")
 
     D.p(d, "The options are compared on capital and operating cost, life cycle "
            "cost, carbon footprint over the project lifetime, resource "

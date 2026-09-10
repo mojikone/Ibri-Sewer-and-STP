@@ -66,29 +66,92 @@ def d2_data():
 
 
 def d3_flow():
+    """Revision 2: from the plot to the pipe. The plot carries an average
+    flow for each year; peaking belongs to the pipe and the plant."""
     c = Chart(3, 5, cw=254, rh=100, gx=42, gy=30,
               title="Derivation of the design flow")
-    c.node("pl", 0, 0, "Plots and counted|properties", "start")
-    c.node("po", 1, 0, "Population")
-    c.node("de", 2, 0, "Water demand|domestic, non-domestic|and governmental")
-    c.node("rt", 2, 1, "Return rates|85 % and 54 %")
-    c.node("ww", 2, 2, "Wastewater generated")
-    c.node("cr", 1, 2, "Connection ratio|for the design year")
-    c.node("pk", 0, 2, "Peak factor")
-    c.node("inf", 0, 3, "Infiltration allowance")
-    c.node("f", 1, 4, "DESIGN FLOW", "accent")
+    c.node("pl", 0, 0, "Plot: dwelling meters|x occupancy = people", "start")
+    c.node("de", 1, 0, "Water per person|164, 36 and 23 l/d")
+    c.node("rt", 2, 0, "Return rates|85 % and 54 %")
+    c.node("sp", 2, 1, "Industrial estates|workers x 93 l/d", "tint")
+    c.node("ww", 1, 1, "Average sewage|per plot, each year")
+    c.node("gr", 0, 1, "Growth: empty plots|fill to saturation")
+    c.node("su", 1, 2, "Sum of the plots|upstream of each pipe")
+    c.node("inf", 0, 2, "Infiltration|720 l/d per km")
+    c.node("pk", 2, 2, "Peak factor|Merrimack")
+    c.node("f", 1, 3, "DESIGN FLOW|in each pipe", "accent")
     c.node("tk", 2, 3, "Tanker deliveries", "tint")
+    c.node("st", 1, 4, "Treatment plant: average,|maximum day, peak hour", "accent")
 
-    c.edge("pl", "po")
-    c.edge("po", "de")
+    c.edge("pl", "de")
     c.edge("de", "rt")
     c.edge("rt", "ww")
-    c.edge("ww", "cr")
-    c.edge("cr", "pk")
-    c.edge("pk", "inf")
-    c.edge("inf", "f")
-    c.edge("tk", "f")
+    c.edge("sp", "ww")
+    c.edge("gr", "ww")
+    c.edge("ww", "su")
+    c.edge("inf", "su")
+    c.edge("su", "pk")
+    c.edge("pk", "f")
+    c.edge("f", "st")
+    c.edge("tk", "st")
     return render(c, "D3_flow", IMG)
+
+
+def d6_landuse():
+    """Revision 2: from the electricity meter to the use of the plot."""
+    c = Chart(3, 5, cw=256, rh=104, gx=40, gy=32,
+              title="From the electricity meter to the use of each plot")
+    c.node("m", 0, 0, "33,971 electricity|meters, tariff only", "start")
+    c.node("cat", 1, 0, "Tariff to category|domestic, non-domestic,|governmental, farm")
+    c.node("crt", 2, 0, "499 large consumers|placed by public data", "tint")
+    c.node("snap", 1, 1, "Meter to plot|inside, or nearest|within 15 m")
+    c.node("est", 0, 2, "Inside an industrial|estate: industrial", "tint")
+    c.node("farm", 1, 2, "Farm meter, or a grove|by satellite: farm")
+    c.node("her", 2, 2, "Old quarter:|heritage, no load", "tint")
+    c.node("prop", 1, 3, "Two thirds of the meters|decide: home, shop|or government")
+    c.node("lu", 1, 4, "USE OF THE PLOT|seven classes", "accent")
+    c.node("none", 2, 4, "No meter:|empty plot", "tint")
+
+    c.edge("m", "cat")
+    c.edge("crt", "cat")
+    c.edge("cat", "snap")
+    c.edge("snap", "est")
+    c.edge("snap", "farm")
+    c.edge("snap", "her")
+    c.edge("farm", "prop")
+    c.edge("prop", "lu")
+    c.edge("est", "lu")
+    c.edge("her", "lu")
+    return render(c, "D6_landuse", IMG)
+
+
+def d7_saturation():
+    """Revision 2: from the empty plot to the saturation year."""
+    c = Chart(3, 5, cw=256, rh=104, gx=40, gy=32,
+              title="From the empty plot to the saturation year")
+    c.node("b", 0, 0, "Built home plots|of the settlement", "start")
+    c.node("r", 0, 1, "Properties per|home plot")
+    c.node("hs", 1, 1, "Home share among|home-shaped plots")
+    c.node("o", 2, 1, "Occupancy|2024 people / properties")
+    c.node("e", 2, 0, "Empty plots|200 to 1,000 m2, compact", "start")
+    c.node("cap", 1, 2, "CAPACITY|plots x share x ratio|x occupancy", "accent")
+    c.node("g", 0, 3, "Growth rate|per settlement")
+    c.node("fill", 1, 3, "Fill to capacity;|overflow to the|nearest neighbour")
+    c.node("sat", 2, 3, "Year each|settlement fills", "accent")
+    c.node("spr", 1, 4, "People spread over|all empty plots|by capped area")
+
+    c.edge("b", "r")
+    c.edge("b", "hs")
+    c.edge("e", "hs")
+    c.edge("e", "o")
+    c.edge("r", "cap")
+    c.edge("hs", "cap")
+    c.edge("o", "cap")
+    c.edge("g", "fill")
+    c.edge("cap", "fill")
+    c.edge("fill", "sat")
+    c.edge("fill", "spr")
+    return render(c, "D7_saturation", IMG)
 
 
 def d4_network():
@@ -134,5 +197,6 @@ def d5_options():
 
 
 if __name__ == "__main__":
-    for fn in (d1_process, d2_data, d3_flow, d4_network, d5_options):
+    for fn in (d1_process, d2_data, d3_flow, d4_network, d5_options,
+               d6_landuse, d7_saturation):
         fn()

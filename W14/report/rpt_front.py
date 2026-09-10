@@ -122,8 +122,8 @@ def executive_summary(d):
     D.bullet(d, "the PAEW dataset provides 647.8 kilometres of water mains "
                 "within the study area, and is adopted as the source for "
                 "utility interfaces.", lead="Potable water — ")
-    D.bullet(d, "33,970 accounts have been used to establish the number of "
-                "properties on each plot and the category of use.",
+    D.bullet(d, "33,971 meters have been placed on the plots to establish "
+                "the number of properties on each and its use.",
              lead="Electricity accounts — ")
     D.bullet(d, "a topographic and utility survey covering the whole study "
                 "area is in progress and will confirm levels, diameters and "
@@ -143,23 +143,63 @@ def executive_summary(d):
              "absence of updated figures and should be validated by NAMA "
              "before design.")
 
-    p = D.p(d, "An occupancy rate of 5.32 persons per domestic property has "
-               "been derived from the settlement populations and the counted "
-               "domestic electricity accounts. Section 15 sets out the "
-               "derivation and the checks applied to it.")
+    p = D.p(d, "The occupancy rate is set for each settlement as its 2024 "
+               "population divided by the domestic electricity meters counted "
+               "in it, with a floor of four persons per property where "
+               "institutional housing distorts the count. Ibri returns 6.07. "
+               "Revision 1 used a single rate of 5.32 for the whole area; the "
+               "rate per settlement replaces it. Section 14 sets out the "
+               "derivation.")
     N.add(p, "The guideline derives occupancy from population and housing "
              "units published by NCSI. Housing units are not published at "
-             "settlement level, and counted domestic accounts have been used "
+             "settlement level, and counted domestic meters have been used "
              "in their place. The departure is recorded in Section 10.")
 
+    D.h(d, 2, "Population and flows")
+    import facts_w14 as F
+    t = F.totals(); ps = F.plot_summary()
+    st = F.settlement_table(); ib = [r for r in st if r["key"] == "IBRI"][0]
+    p = D.p(d, f"Every plot in the study area now carries a population and an "
+               f"average sewage flow, for 2024 and for every year to the year "
+               f"its settlement is full. The use of each plot is read from the "
+               f"meters on it and from a satellite image of September 2026; "
+               f"the capacity of the empty land is read from the built plots "
+               f"around it; each settlement grows at the rate of the official "
+               f"series and fills its own land before overflowing to its "
+               f"neighbours. The study area holds {F.fmt(t['pop_today'])} "
+               f"people in 2024 and generates {F.fmt(t['q_today'])} cubic "
+               f"metres of sewage a day. Ibri's land is full in "
+               f"{ib['sat_year']}; the last settlement fills in {t['ultimate']}, "
+               f"with {F.fmt(t['pop_ult'])} people and {F.fmt(t['q_ult'])} "
+               f"cubic metres a day. That is the saturation the Terms of "
+               f"Reference ask for, and the network is sized on it.")
+    N.add(p, "Average daily flows before infiltration and before the plant "
+             "margin. The five-year series for every settlement is in "
+             "Sections 14.7 and 15.7.")
+    D.table(d, ["Year", "People", "Average sewage flow, m³/d"], [
+        ["2024, base", F.fmt(t["pop_today"]), F.fmt(t["q_today"])],
+        ["2030", F.fmt(t["pop"][2030]), F.fmt(t["q"][2030])],
+        ["2055", F.fmt(t["pop"][2055]), F.fmt(t["q"][2055])],
+        [f"{t['ultimate']}, saturation", F.fmt(t["pop_ult"]), F.fmt(t["q_ult"])],
+    ], widths=[5.0, 5.5, 6.0], font=9.5)
+    D.p(d, "")
+    p = D.p(d, "Two industrial estates inside the town, at Al Tayyeb and "
+               "Tanam, were found under the commercial tariff and are treated "
+               "as special consumption. The army camp, a planned resort and "
+               "two sources of tankered sewage outside the boundary are "
+               "recorded in Section 16.")
+    N.add(p, "The workforce of the two estates is an assumption, to be "
+             "replaced by the estates' records.")
+
     D.h(d, 2, "State of the work")
-    D.p(d, "The design basis, the data assessment and the assessment "
-           "framework are complete. The network design has been developed and "
-           "tested over a representative area of the town and is being "
-           "extended to the whole study area as the survey data becomes "
-           "available. The options for the sewer network, the treated effluent "
-           "network and the treatment plant are presented as a framework in "
-           "Part F and will be completed in the next revision.")
+    D.p(d, "The design basis, the data assessment, the population and flow "
+           "series and the assessment framework are complete. The network "
+           "design has been developed and tested over a representative area "
+           "of the town and is being extended to the whole study area as the "
+           "survey data becomes available. The options for the sewer network, "
+           "the treated effluent network and the treatment plant are "
+           "presented as a framework in Part F and will be completed in the "
+           "next revision.")
 
     D.h(d, 2, "How the options are developed and compared")
     D.p(d, "Three options are developed for each of the sewer network, the "

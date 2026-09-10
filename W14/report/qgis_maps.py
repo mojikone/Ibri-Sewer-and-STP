@@ -68,7 +68,121 @@ FIGURES = {
          ("Densest cell", "237 persons"),
          ("Total in study area", "127,210"),
          ("In named settlements", "122,817")]),
+    # ---- Revision 2: the data boxes below are filled from img/map_boxes.json,
+    # written by facts_w14.map_boxes(), so the map and the text agree
+    "M04_electricity": (
+        "Electricity meters by category, placed on the plots",
+        ["Project Boundary updated", "Electricity meter"], True, "json"),
+    "M05_settlements": (
+        "Settlements and cadastral plots",
+        ["Project Boundary updated", "Settlement boundary", "Cadastral plot"], True, "json"),
+    "M07_landuse": (
+        "Use of each plot, derived from the meters and the satellite",
+        ["Project Boundary updated", "Settlement boundary", "Use of the plot"], True, "json"),
+    "M08_special": (
+        "Identified projects and special consumption",
+        ["Project Boundary updated", "Settlement boundary", "Identified site",
+         "Identified project"], True, "json"),
+    "M09_saturation": (
+        "Average sewage flow per plot at saturation",
+        ["Project Boundary updated", "Settlement boundary", "Average sewage flow of the plot at saturation"], True, "json"),
 }
+
+_R2 = {}
+
+
+def _r2_layers():
+    """Styled copies for the Revision 2 maps, added to the project but not to
+    the layer tree, so the user's own layers keep their styling."""
+    from qgis.core import (QgsVectorLayer, QgsFillSymbol, QgsMarkerSymbol,
+                           QgsCategorizedSymbolRenderer, QgsRendererCategory,
+                           QgsGraduatedSymbolRenderer, QgsRendererRange,
+                           QgsPalLayerSettings, QgsVectorLayerSimpleLabeling,
+                           QgsTextFormat, QgsTextBufferSettings, QgsFeature,
+                           QgsGeometry, QgsPointXY, QgsField, QgsFields)
+    from qgis.PyQt.QtCore import QVariant
+    if _R2:
+        return _R2
+    proj = QgsProject.instance()
+    W14 = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    shp = lambda n: os.path.join(W14, "shp", n)
+
+    s = QgsVectorLayer(shp("Settlements_merged.shp"), "Settlement boundary", "ogr")
+    s.setRenderer(type(s.renderer())(QgsFillSymbol.createSimple(
+        {'style': 'no', 'outline_color': '#1F3B63', 'outline_width': '0.55', 'outline_width_unit': 'MM'})))
+    pal = QgsPalLayerSettings(); pal.fieldName = 'title("SETTLE")'; pal.isExpression = True; pal.enabled = True
+    tf = QgsTextFormat(); tf.setSize(7); tf.setColor(QColor('#1F3B63'))
+    b = QgsTextBufferSettings(); b.setEnabled(True); b.setSize(0.8); b.setColor(QColor('#FFFFFF')); tf.setBuffer(b)
+    pal.setFormat(tf); s.setLabelsEnabled(True); s.setLabeling(QgsVectorLayerSimpleLabeling(pal))
+
+    po = QgsVectorLayer(shp("PLOTS_load.shp"), "Cadastral plot", "ogr")
+    po.setRenderer(type(po.renderer())(QgsFillSymbol.createSimple(
+        {'color': '255,242,122,90', 'outline_color': '#8a7a1a', 'outline_width': '0.05', 'outline_width_unit': 'MM'})))
+
+    # the meters, with the category names the report uses
+    me = QgsVectorLayer(shp("ELE_meters_on_plots.shp"), "Electricity meter", "ogr")
+    mc = [('domestic', 'Domestic', '#7fb3d5'), ('non_domestic', 'Non-domestic', '#e67e22'),
+          ('government', 'Governmental', '#8e44ad'), ('special', 'Special: industrial', '#641e16'),
+          ('agricultural', 'Agricultural, no sewage', '#52be80')]
+    me.setRenderer(QgsCategorizedSymbolRenderer('GUD', [
+        QgsRendererCategory(k, QgsMarkerSymbol.createSimple(
+            {'name': 'circle', 'color': c, 'outline_color': '#ffffff', 'outline_width': '0.12', 'size': '1.3'}), lab)
+        for k, lab, c in mc]))
+
+    # the OSM footprints, named for the reader and without their own labels
+    fp = QgsVectorLayer(shp("Identified_projects_OSM.shp"), "Identified site", "ogr")
+    fc = [('landuse=industrial', 'Industrial area', '#9B59B6'), ('landuse=military', 'Army camp', '#6b8e23'),
+          ('man_made=wastewater_plant', 'Treatment plant', '#1f77b4'), ('tourism=hotel', 'Hotel', '#e67e22')]
+    fp.setRenderer(QgsCategorizedSymbolRenderer('kind', [
+        QgsRendererCategory(k, QgsFillSymbol.createSimple(
+            {'color': '%d,%d,%d,70' % (int(c[1:3], 16), int(c[3:5], 16), int(c[5:7], 16)), 'outline_color': c,
+             'outline_width': '0.6', 'outline_width_unit': 'MM'}), lab) for k, lab, c in fc]))
+
+    pu = QgsVectorLayer(shp("PLOTS_load.shp"), "Use of the plot", "ogr")
+    cols = [('Residential', 'Home', '#FFE600'), ('Residential-Commercial', 'Home and shop', '#F5A742'),
+            ('Commercial', 'Shop', '#E03C31'), ('Government', 'Government', '#3498DB'),
+            ('Agricultural', 'Farm', '#4CAF50'), ('Industrial', 'Industrial', '#9B59B6'),
+            ('Heritage', 'Heritage, old quarter', '#8d6e63'), ('Unmetered', 'Empty plot', '158,158,158,60')]
+    pu.setRenderer(QgsCategorizedSymbolRenderer('DERIVED', [
+        QgsRendererCategory(k, QgsFillSymbol.createSimple(
+            {'color': c, 'outline_color': '#333333', 'outline_width': '0.04', 'outline_width_unit': 'MM'}), lab)
+        for k, lab, c in cols]))
+
+    pf = QgsVectorLayer(shp("PLOTS_load.shp"), "Average sewage flow of the plot at saturation", "ogr")
+    ranges = [(0.0001, 0.5, 'up to 0.5', '#deebf7'), (0.5, 1.0, '0.5 to 1', '#9ecae1'), (1.0, 2.0, '1 to 2', '#4292c6'),
+              (2.0, 5.0, '2 to 5', '#2171b5'), (5.0, 1e9, 'over 5', '#08306b')]
+    pf.setRenderer(QgsGraduatedSymbolRenderer('Q_ULT', [
+        QgsRendererRange(lo, hi, QgsFillSymbol.createSimple(
+            {'color': c, 'outline_style': 'no'}), f"{lab} m3/d") for lo, hi, lab, c in ranges]))
+
+    # the special sites that have no footprint layer: points with a label
+    fields = QgsFields(); fields.append(QgsField('name', QVariant.String))
+    sp = QgsVectorLayer('Point?crs=EPSG:32640&field=name:string(60)', 'Identified project', 'memory')
+    pr = sp.dataProvider(); feats = []
+    for name, e, n in (("Al Tayyeb industrial area", 455400, 2572700), ("Tanam industrial area", 445300, 2561300),
+                       ("Army camp", 442010, 2565140), ("Ibri View resort, planned", 451081, 2566161),
+                       ("Existing treatment plant", 444387, 2563352)):
+        f = QgsFeature(sp.fields()); f.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(e, n))); f.setAttributes([name]); feats.append(f)
+    pr.addFeatures(feats); sp.updateExtents()
+    sp.setRenderer(type(sp.renderer())(QgsMarkerSymbol.createSimple(
+        {'name': 'circle', 'color': '#a61b1b', 'outline_color': '#ffffff', 'outline_width': '0.3', 'size': '2.6'})))
+    pal2 = QgsPalLayerSettings(); pal2.fieldName = "name"; pal2.enabled = True
+    tf2 = QgsTextFormat(); tf2.setSize(7.5); tf2.setColor(QColor('#a61b1b'))
+    b2 = QgsTextBufferSettings(); b2.setEnabled(True); b2.setSize(0.9); b2.setColor(QColor('#FFFFFF')); tf2.setBuffer(b2)
+    pal2.setFormat(tf2); pal2.placement = QgsPalLayerSettings.OrderedPositionsAroundPoint
+    sp.setLabelsEnabled(True); sp.setLabeling(QgsVectorLayerSimpleLabeling(pal2))
+
+    for l in (s, po, me, fp, pu, pf, sp):
+        proj.addMapLayer(l, False)
+        _R2[l.name()] = l
+    return _R2
+
+
+def _boxes_json():
+    import json
+    p = os.path.join(OUT, "map_boxes.json")
+    with open(p, encoding="utf-8") as fh:
+        return json.load(fh)
 
 
 # a population grid is mostly empty, and the ramp paints zero a solid pale
@@ -170,9 +284,13 @@ def build(keys=None, dpi=200):
     ext.scale(1.06)
 
     made = []
+    _r2_layers()
+    boxes = _boxes_json()
     for key, (title, names, basemap, box) in FIGURES.items():
         if keys and key not in keys:
             continue
+        if box == "json":
+            box = [tuple(r) for r in boxes[key]]
         print(key)
         lay = _clone("RPT " + key)
         legends = []

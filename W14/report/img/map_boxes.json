@@ -1,0 +1,148 @@
+{
+ "M04_electricity": [
+  [
+   "Meters",
+   "33,971"
+  ],
+  [
+   "Domestic",
+   "22,589"
+  ],
+  [
+   "Non-domestic",
+   "9,713"
+  ],
+  [
+   "Governmental",
+   "1,102"
+  ],
+  [
+   "Agricultural",
+   "551"
+  ],
+  [
+   "Special",
+   "16"
+  ],
+  [
+   "On a plot",
+   "33,845 (126 free)"
+  ]
+ ],
+ "M05_settlements": [
+  [
+   "Settlements",
+   "25"
+  ],
+  [
+   "Plots",
+   "77,265"
+  ],
+  [
+   "Built, with meters",
+   "16,756"
+  ],
+  [
+   "Empty",
+   "60,509"
+  ],
+  [
+   "People, 2024",
+   "119,978"
+  ],
+  [
+   "Occupancy, Ibri",
+   "6.07"
+  ]
+ ],
+ "M07_landuse": [
+  [
+   "Built plots with meters",
+   "16,756"
+  ],
+  [
+   "Homes",
+   "12,464"
+  ],
+  [
+   "Shops",
+   "1,321"
+  ],
+  [
+   "Home and shop",
+   "614"
+  ],
+  [
+   "Government",
+   "409"
+  ],
+  [
+   "Farms",
+   "1,685"
+  ],
+  [
+   "Industrial",
+   "263"
+  ],
+  [
+   "Heritage",
+   "177"
+  ]
+ ],
+ "M08_special": [
+  [
+   "Industrial estates",
+   "2"
+  ],
+  [
+   "Al Tayyeb workforce",
+   "4,500"
+  ],
+  [
+   "Tanam workforce",
+   "1,800"
+  ],
+  [
+   "Rate",
+   "93 l/d per worker"
+  ],
+  [
+   "Army camp",
+   "296 ha, no meter"
+  ],
+  [
+   "Resort, planned",
+   "2 km2, no load yet"
+  ],
+  [
+   "Sewage from the estates",
+   "316 m3/d"
+  ]
+ ],
+ "M09_saturation": [
+  [
+   "Saturation year",
+   "2073"
+  ],
+  [
+   "People at saturation",
+   "369,930"
+  ],
+  [
+   "Sewage at saturation",
+   "63,679 m3/d"
+  ],
+  [
+   "People, 2024",
+   "119,978"
+  ],
+  [
+   "Capacity of the empty plots",
+   "249,952"
+  ],
+  [
+   "Ibri full",
+   "2057"
+  ]
+ ]
+}

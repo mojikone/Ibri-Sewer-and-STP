@@ -379,10 +379,13 @@ def part_h(d):
            "268.2 kilometres of gravity sewer, pumping main and treated "
            "effluent main recorded as proposed. The potable water "
            "network within the area comprises 647.8 kilometres of mains. The "
-           "number of properties on each plot and the category of use have "
-           "been established from 33,970 electricity accounts, and an "
-           "occupancy rate of 5.32 persons per property has been derived and "
-           "checked.")
+           "number of properties on each plot and the use of each plot have "
+           "been established from 33,971 electricity meters and a satellite "
+           "image, the occupancy rate has been derived for each settlement, "
+           "and every plot carries a population and an average sewage flow "
+           "for 2024 and for every year to the saturation of its settlement. "
+           "The study area is saturated in 2073 at 369,930 people and 63,679 "
+           "cubic metres of sewage a day.")
     D.p(d, "A topographic and utility survey covering the whole study area is "
            "in progress. It will establish the levels, diameters and condition "
            "that the supplied datasets do not carry, and its completion is the "
@@ -398,11 +401,13 @@ def part_h(d):
     # --------------------------------------------------------------- 43
     D.h(d, 1, "43   Appendices")
     D.table(d, ["Appendix", "Content"], [
-        ["A", "Data register and sources"],
-        ["B", "Design criteria, with references"],
-        ["C", "Population and demand calculations"],
-        ["D", "Drawings and figures"],
-        ["E", "Register of matters requiring confirmation"],
+        ["A", "Population, land use and flow: the working behind Part D. "
+              "Issued with this revision"],
+        ["B", "Design criteria, with references. Next revision"],
+        ["C", "Drawings and figures. Next revision"],
+        ["D", "Register of matters requiring confirmation. Next revision"],
     ], widths=[3.0, 13.5], font=9.5)
     D.p(d, "")
-    _pending(d, "The appendices will be issued with the next revision.")
+    D.p(d, "The plot layer, the settlement layer, the meter layer, the "
+           "register of large-consumer accounts and the growth workbook "
+           "accompany this report in digital form.")

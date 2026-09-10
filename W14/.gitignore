@@ -1,0 +1,4 @@
+report/R2/pages/
+report/__pycache__/
+analysis/*.log
+analysis/vegfrac_plots.npy

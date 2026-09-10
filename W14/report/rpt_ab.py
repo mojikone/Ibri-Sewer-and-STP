@@ -9,9 +9,9 @@ IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "img")
 
 
 def _fig(d, name, caption, w=16.0):
-    """A map goes on its own A3 landscape page. At 16 cm in a portrait
+    """A map goes on its own A4 landscape page. At 16 cm in a portrait
     column the legend and the data box are not readable."""
-    D.wide_figure(d, os.path.join(IMG, name + ".png"), caption, size="A3")
+    D.wide_figure(d, os.path.join(IMG, name + ".png"), caption, size="A4")
 
 
 # ===================================================== PART A
@@ -107,7 +107,8 @@ def part_a(d):
         ["Data collection report and assessment of the data", "Issued"],
         ["Design criteria and design basis", "Issued"],
         ["Population forecasting and flow projection at five-year intervals",
-         "Basis issued; series follows confirmation of the design horizon"],
+         "Issued: population and flow per settlement at five-year intervals "
+         "to saturation, and per plot"],
         ["Topographic survey and geotechnical investigation",
          "Survey in progress"],
         ["As-built records and GIS for the existing systems",
@@ -350,59 +351,67 @@ def part_b(d):
          "Potable water network within the study area, from the PAEW dataset.")
 
     D.h(d, 2, "7.3   Electricity accounts")
-    p = D.p(d, "The electricity account dataset contains 33,970 records. Each "
-               "record carries a tariff name and a coordinate. The dataset "
-               "does not record land use, floor area or consumption, and the "
-               "wilayat field is empty on every record. It therefore "
-               "establishes the number and category of connections at a "
-               "location, and is used for that purpose in Section 14.")
+    p = D.p(d, "The electricity account dataset contains 33,971 records, each "
+               "carrying a tariff name and a coordinate. It records neither "
+               "land use, floor area nor consumption, and the wilayat field is "
+               "empty on every record. It establishes the number and category "
+               "of connections at a location, and is used for that purpose in "
+               "Section 14. The data is of 2024, which is the base year of "
+               "this report.")
     N.add(p, "Fields present: identifier, tariff, coordinates in projected and "
              "geographic form, governorate and wilayat. The governorate is "
              "recorded as Dahira on all records; the wilayat field is empty on "
-             "all records.")
+             "all records. The positions were adjusted onto the cadastre by "
+             "the client before issue.")
 
-    D.tab_caption(d, "Electricity accounts by tariff")
+    D.tab_caption(d, "Electricity accounts by tariff and the category adopted")
     D.table(d, ["Tariff", "Accounts", "Category adopted"], [
-        ["Primary Account", "10,972", "Domestic"],
-        ["Primary Account with National Subsidy", "5,272", "Domestic"],
-        ["Additional Account", "6,344", "Domestic, additional dwelling"],
-        ["Commercial", "9,385", "Non-domestic"],
-        ["Government", "966", "Governmental"],
-        ["Agricultural", "523", "Agricultural"],
-        ["Cost Reflective Tariff", "499", "Large consumer, category to be confirmed"],
-        ["Fisheries, Tourism, Industrial, Defence", "9", "Non-domestic and governmental"],
-        ["**Total**", "**33,970**", ""],
+        ["Primary Account", "10,973", "Domestic: one property"],
+        ["Primary Account with National Subsidy", "5,272", "Domestic: one property"],
+        ["Additional Account", "6,344", "Domestic: one property, an additional dwelling"],
+        ["Commercial, Fisheries, Tourism", "9,392", "Non-domestic"],
+        ["Government, Defence", "967", "Governmental"],
+        ["Agricultural", "523", "Agricultural: an irrigation pump, no sewage"],
+        ["Industrial", "1", "Special consumption"],
+        ["Cost Reflective Tariff", "499", "Large consumer; use established in Section 16"],
+        ["**Total**", "**33,971**", ""],
     ], widths=[6.8, 2.6, 7.1], font=9)
 
     D.p(d, "")
     p = D.p(d, "The Cost Reflective Tariff is applied to consumers above a "
                "consumption threshold and is therefore a measure of size "
-               "rather than of use. The 499 accounts carrying it are being "
-               "resolved against the plot layer and by inspection.")
+               "rather than of use. The 499 accounts carrying it have been "
+               "placed one by one against public records, and each carries "
+               "the use found and the evidence for it. Section 16.1 gives the "
+               "result.")
     N.add(p, "The tariff comprises three variants in the dataset: fixed rate "
              "(9 accounts), seasonal (298) and time of use (192).")
 
     D.chart(d, "C01_accounts", 14.5)
-    D.fig_caption(d, "Electricity accounts by the category adopted for each "
-                     "tariff. Domestic connections, including additional "
-                     "dwellings on the same plot, account for two thirds of "
-                     "the total.")
+    D.fig_caption(d, "Electricity meters by the category adopted, after the "
+                     "large consumers were placed. Domestic connections, "
+                     "including additional dwellings on the same plot, are two "
+                     "thirds of the total.")
 
     _fig(d, "M04_electricity",
-         "Electricity accounts by consumption category. The pattern of "
-         "connections defines the developed extent of each settlement.")
+         "Electricity meters by category, placed on the plots. The pattern "
+         "of connections defines the developed extent of each settlement.")
 
     D.h(d, 2, "7.4   Cadastral and settlement data")
     D.p(d, "The cadastral plot layer supplied by the Ministry of Housing and "
-           "Urban Planning provides plot geometry. It does not distinguish "
-           "developed from undeveloped plots, does not record land use, and "
-           "does not record the number of dwellings on a plot. Plots present "
-           "on the ground are absent from the layer in places. A corrected "
-           "layer is in preparation and the survey now in progress will "
-           "establish the cadastral boundaries including plot gates.")
-
-    _fig(d, "M05_settlements",
-         "Settlements and cadastral plots within the study area.")
+           "Urban Planning, in the issue of September 2026, holds 77,265 "
+           "plots with a built-or-future flag and a land-use class. The "
+           "flag follows the electricity meters and is reliable. The class "
+           "is not: it carries no government category, records whole "
+           "districts under codes that mean unclassified, and disagrees with "
+           "the meters on one built plot in seven. The use of each plot is "
+           "therefore derived from the meters and the satellite, as Section "
+           "14.5 sets out. The survey now in progress will establish the "
+           "cadastral boundaries including plot gates.")
+    D.p(d, "The settlement boundaries supplied with the Inception Report "
+           "outline the built cores and leave the land between them "
+           "unassigned. Section 14.2 describes how every plot has been "
+           "assigned to a settlement and the boundaries redrawn to meet.")
 
     D.h(d, 2, "7.5   Other datasets supplied")
     D.tab_caption(d, "Further datasets received")

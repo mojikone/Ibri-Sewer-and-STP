@@ -45,16 +45,16 @@ def reload_w13(render_map=False):
     root = proj.layerTreeRoot(); grp = root.findGroup('Claude W14 load') or root.insertGroup(0, 'Claude W14 load')
     def add(lyr):
         proj.addMapLayer(lyr, False); grp.addLayer(lyr); return lyr
-    s = add(QgsVectorLayer(f"{W13}/shp/Settlements_merged.shp", "Settlements merged (W13)", "ogr"))
+    s = add(QgsVectorLayer(f"{W13}/shp/Settlements_merged.shp", "Settlements merged (W14)", "ogr"))
     s.renderer().setSymbol(QgsFillSymbol.createSimple({'style': 'no', 'outline_color': '#ffffff', 'outline_width': '0.7', 'outline_width_unit': 'MM'}))
     pal = QgsPalLayerSettings(); pal.fieldName = "SETTLE || '\\n' || \"POP_TODAY\" || ' -> ' || \"POP_ULT\" || '\\nfull ' || CASE WHEN \"SAT_YEAR\" > 0 THEN \"SAT_YEAR\" ELSE 'never' END"; pal.isExpression = True; pal.enabled = True
     tf = QgsTextFormat(); tf.setSize(9); tf.setColor(QColor('#ffffff')); b = QgsTextBufferSettings(); b.setEnabled(True); b.setSize(1); b.setColor(QColor('#000000')); tf.setBuffer(b); pal.setFormat(tf)
     s.setLabelsEnabled(True); s.setLabeling(QgsVectorLayerSimpleLabeling(pal))
-    p = add(QgsVectorLayer(f"{W13}/shp/PLOTS_load.shp", "PLOTS load (W13)", "ogr"))
+    p = add(QgsVectorLayer(f"{W13}/shp/PLOTS_load.shp", "PLOTS load (W14)", "ogr"))
     cols = {'Residential': '#FFE600', 'Residential-Commercial': '#F5A742', 'Commercial': '#E03C31', 'Industrial': '#9B59B6', 'Government': '#3498DB',
             'Agricultural': '#4CAF50', 'Heritage': '#8d6e63', 'Unresolved': '#ff00ff', 'Unmetered': '#9E9E9E'}
     p.setRenderer(QgsCategorizedSymbolRenderer('DERIVED', [QgsRendererCategory(k, QgsFillSymbol.createSimple({'color': v if k != 'Unmetered' else '158,158,158,70', 'outline_color': '#333333', 'outline_width': '0.08', 'outline_width_unit': 'MM'}), k) for k, v in cols.items()]))
-    m = add(QgsVectorLayer(f"{W13}/shp/ELE_meters_on_plots.shp", "Electricity meters on plots (W13)", "ogr"))
+    m = add(QgsVectorLayer(f"{W13}/shp/ELE_meters_on_plots.shp", "Electricity meters on plots (W14)", "ogr"))
     mc = {'domestic': '#7fb3d5', 'non_domestic': '#e67e22', 'government': '#8e44ad', 'special': '#641e16', 'agricultural': '#52be80'}
     m.setRenderer(QgsCategorizedSymbolRenderer('GUD', [QgsRendererCategory(k, QgsMarkerSymbol.createSimple({'name': 'circle', 'color': v, 'outline_color': '#ffffff', 'outline_width': '0.15', 'size': '1.6'}), k) for k, v in mc.items()]))
     # the plot layer is heavy: leave it unchecked until the user wants it, so the canvas is not asked to draw 77,000 polygons on every pan

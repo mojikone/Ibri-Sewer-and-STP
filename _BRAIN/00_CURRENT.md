@@ -135,7 +135,7 @@ plainly which document is live and which is a record of past work.
 | File | What it holds | Last checked |
 |---|---|---|
 | `CLAUDE.md` | working rules, folder map, current state | 2026-08-19 |
-| `W14/` (2026-09-10) | population, saturation, load and the concept report R2 build; W13 is pipe laying only | 2026-09-10 |
+| `W14/` (2026-09-10) | population, saturation, load and the **Concept Design Report R2** (`W14/report/R2/`, built; `W14/deliverables/` packaged); W13 is pipe laying only. R1 in `W9/report/R1/` is superseded | 2026-09-10 |
 | `W13/analysis/CRT_accounts_identified.csv` (copy in W14) | the 499 CRT electricity accounts placed by use from public data (110 still unresolved); shapefile in `W13/shp/` | 2026-09-09 |
 | `W13/analysis/IDENTIFIED_PROJECTS.md` | identified projects and special consumption: the two industrial estates, the army camp, Ibri View, the tanker sources outside | 2026-09-09 |
 | `W13/docs/CONCEPT_NOTE_SATURATION_AND_LOAD.md` | the note for the concept report: meters → categories → land use → ratio → saturation → load, and how it goes into the report | 2026-09-10 |

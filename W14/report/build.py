@@ -43,6 +43,9 @@ def main(render_pdf=False):
         for fn in fns:
             getattr(m, fn)(d)
 
+    import rpt_app
+    rpt_app.appendices(d)
+
     D.footer_pagenum(d, f"Ibri Concept Design Report  ·  Revision "
                         f"{REV[1:]}  ·  Renardet Project 2621")
 
