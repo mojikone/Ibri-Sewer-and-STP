@@ -145,9 +145,10 @@ spare room; every other settlement to its nearest neighbour with spare room. Eve
 whatever its size, so all 25 saturate.
 
 **Fill years.** Ibri and Al Araqi 2057, Al Qurayn 2060, Shalashil and Ad Dariz 2062, Suwayda Al Ma last in
-**2073, the saturation (ultimate) year**: every settlement full, **367,650 people**. The workbook's 2100
-population for the 25 settlements is 690,000; the cadastre as drawn holds 367,650, so 322,000 of the
-workbook's 2100 people have no plot. The report should say so.
+**2073, the saturation (ultimate) year**: every settlement full, **367,650 people**. The workbook is used
+for its growth rates only; its 2100 total (690,000 for the 25 settlements) is not a target and not a
+saturation figure. Saturation is what the cadastre holds. Growth beyond it is not planned for in this
+concept, and the report says that in one sentence.
 
 **Five-year steps to saturation** (the table the report carries in the population section; the per-settlement
 version goes to Appendix A6):

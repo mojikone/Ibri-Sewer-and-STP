@@ -77,18 +77,6 @@ print('home-shaped empty plots counted:', int(cap.sum()), '| empty plots that re
 print('changed from v1 (built, metered):', int((built & (plots.N_ACC > 0) & (plots.DERIVED != plots.DERIVED1)).sum()))
 print('green plots', int(plots.GREEN.sum()), '| vegfrac known', int(plots.VEGFRAC.notna().sum()))
 
-# write the plot layer with the same narrow schema
-props = {}
-ints = ['Moh_Classi', 'N_ACC', 'N_DOM', 'N_DOMADD', 'N_COM', 'N_GOV', 'N_AGR', 'N_CRT', 'N_IND', 'G_DOM', 'G_NDOM', 'G_GOV', 'G_SPEC', 'G_AGR', 'PROPS', 'FUT_CAP', 'SAT_YEAR', 'ULT_YEAR', 'GREEN', 'GREEN_IMG', 'HIGH', 'HOMESHAPE']
-float3 = ('VEGFRAC', 'FUT_PROPS', 'NDVI_MEAN', 'NDVI_SHARE', 'COMPACT', 'OR_S')
-for c in plots.columns:
-    if c == 'geometry': continue
-    if c in ints: plots[c] = plots[c].fillna(0).astype(int); props[c] = 'int:6'
-    elif plots[c].dtype.kind == 'f':
-        props[c] = 'float:12.1' if c == 'AREA_M2' else ('float:9.1' if c in ('WORKERS', 'POP', 'POP_2030', 'POP_2055', 'POP_ULT', 'GREEN_M2') else ('float:6.3' if c in float3 else ('float:7.2' if c in ('ASPECT', 'SPREAD_W') else 'float:10.4')))
-    else: props[c] = f'str:{max(int(plots[c].astype(str).str.len().max()), 1)}'
-plots.to_file(f"{W13}/shp/PLOTS_load.shp", schema={'geometry': 'Polygon', 'properties': props}, encoding='utf-8', engine='fiona')
-
 # ---------- occupancy per settlement and the loads, recomputed ----------
 import openpyxl
 wb = openpyxl.load_workbook(WB, read_only=True, data_only=True); ws = wb['Project Pop Settlements']
@@ -116,6 +104,18 @@ plots['QADF'] = (plots.S_DOM + plots.S_NDOM + plots.S_GOV + plots.S_SPEC).round(
 plots['FUT_PROPS'] = np.where(cap, plots.SETTLE.map(ppp).fillna(0) * plots.SETTLE.map(home_share).fillna(0), 0.0).round(3)
 print('occupancy per settlement (workbook %d / metered properties, floor %.1f):' % (BASE, OR_FLOOR), or_s.round(2).to_dict())
 print('TODAY: people %.0f (workbook %d for the 25: %.0f) | Qadf %.0f m3/d' % (plots.POP.sum(), BASE, sum(wb_base.get(st, 0) for st in props_s.index), plots.QADF.sum()))
+
+# write the plot layer with the same narrow schema
+props = {}
+ints = ['Moh_Classi', 'N_ACC', 'N_DOM', 'N_DOMADD', 'N_COM', 'N_GOV', 'N_AGR', 'N_CRT', 'N_IND', 'G_DOM', 'G_NDOM', 'G_GOV', 'G_SPEC', 'G_AGR', 'PROPS', 'FUT_CAP', 'SAT_YEAR', 'ULT_YEAR', 'GREEN', 'GREEN_IMG', 'HIGH', 'HOMESHAPE']
+float3 = ('VEGFRAC', 'FUT_PROPS', 'NDVI_MEAN', 'NDVI_SHARE', 'COMPACT', 'OR_S')
+for c in plots.columns:
+    if c == 'geometry': continue
+    if c in ints: plots[c] = plots[c].fillna(0).astype(int); props[c] = 'int:6'
+    elif plots[c].dtype.kind == 'f':
+        props[c] = 'float:12.1' if c == 'AREA_M2' else ('float:9.1' if c in ('WORKERS', 'POP', 'POP_2030', 'POP_2055', 'POP_ULT', 'GREEN_M2') else ('float:6.3' if c in float3 else ('float:7.2' if c in ('ASPECT', 'SPREAD_W') else 'float:10.4')))
+    else: props[c] = f'str:{max(int(plots[c].astype(str).str.len().max()), 1)}'
+plots.to_file(f"{W13}/shp/PLOTS_load.shp", schema={'geometry': 'Polygon', 'properties': props}, encoding='utf-8', engine='fiona')
 
 # settlement table for the growth run
 g = plots.groupby('SETTLE')

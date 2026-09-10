@@ -57,9 +57,9 @@ takes average, maximum day and peak hour from the same accumulated flow plus tan
 | 2100 (workbook) | 247,671 | 367,649 | 344,542 | 63,294 |
 
 Settlements fill between 2039 (Al Akheedar) and 2073 (Suwayda Al Ma); **Ibri 2057**, Al Araqi 2057, Al Qurayn 2060,
-Shalashil 2062, Ad Dariz 2062. All 25 fill: every settlement receives its neighbours' overflow. The workbook's
-2100 population for the 25 settlements is 690,000; the home-shaped plots hold 367,650, so 322,000 of the
-workbook's 2100 people have no plot — reported, not placed.
+Shalashil 2062, Ad Dariz 2062. All 25 fill: every settlement receives its neighbours' overflow. The workbook supplies
+growth rates only; its 2100 total is neither a target nor a saturation figure (engineer, 2026-09-10). Saturation
+is what the cadastre holds.
 
 **How the class rule moved the answer.** v1 (one shop meter made a plot mixed, a house on a farm made it
 residential, ratio from every built plot with a dwelling): capacity 407,000, ultimate 2084. v2 with the RGB
