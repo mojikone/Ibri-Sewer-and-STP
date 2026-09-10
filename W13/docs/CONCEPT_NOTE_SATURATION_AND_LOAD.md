@@ -119,7 +119,17 @@ settlement by settlement.
 area, and every population and flow in it descends from that figure. The next revision states the rate per
 settlement with the floor and the cap, explains the two in one sentence each (institutional residents the
 census does not see; tiny settlements with a handful of meters), and re-derives the tables. The area-wide
-average that results is 5.32 still, so the executive summary's headline does not move; the settlement rows do.
+average on today's 22,559 domestic properties is 5.16, not 5.32 (R1 divided by the 21,889 meters that fell inside a
+plot, before the off-plot meters were snapped in); the settlement rows move, and so does the headline by three
+percent.
+
+**Say this in the report.** The rate is built on **domestic meters only**: the primary, subsidised and additional
+dwelling tariffs. Shop, government, farm and large-consumer meters carry no people. And the floor at 4.0 puts
+**3,300 people above the census** in eleven small settlements — Sayh Al Masarrat (+1,960) and Al Jahli (+1,410)
+above all, where the police headquarters housing and the college housing carry 800 dwelling meters against 880
+census residents. Those meters flush whether the census counts their occupants or not, so the design keeps them.
+The report states the difference, the reason, and the choice, in one paragraph next to the occupancy table
+(Appendix A4), so nobody reconciles the two totals by hand later.
 
 ---
 
