@@ -93,6 +93,15 @@ or_raw = pd.Series({st: (wb_base[st] / props_s[st] if props_s.get(st, 0) > 0 and
 # ceiling (engineer 2026-09-10): the highest occupancy among the settlements with 2,000+ workbook people (Bat, 6.12); it touches only the tiny ones
 OR_CEIL = float(or_raw[[st for st in or_raw.index if wb_base.get(st, 0) >= 2000]].max())
 or_s = or_raw.clip(lower=OR_FLOOR, upper=OR_CEIL).round(3)
+# engineer 2026-09-10: a settlement under 1,000 people (workbook 2024) is not attractive enough for second dwellings and has no sample to
+# measure on: occupancy 4.0, one property per plot, home share 0.9. The derived values are kept beside the adopted ones for the report.
+SMALL_POP = 1000.0
+small = pd.Series({st: wb_base.get(st, 0) < SMALL_POP for st in props_s.index})
+ppp_raw = ppp.copy(); share_raw = home_share.copy()
+or_s = or_s.where(~small, 4.0)
+ppp = ppp.where(~small.reindex(ppp.index).fillna(False), 1.0)
+home_share = home_share.where(~small.reindex(home_share.index).fillna(False), 0.9)
+print('small settlements (under %d people): occupancy 4.0, ratio 1, share 0.9:' % SMALL_POP, sorted(small[small].index.tolist()))
 print('occupancy ceiling %.2f (largest among settlements with 2,000+ people)' % OR_CEIL)
 plots['OR_S'] = plots.SETTLE.map(or_s).fillna(OR_DEFAULT)
 plots['POP'] = (plots.G_DOM * plots.OR_S).round(2)
@@ -107,7 +116,7 @@ plots['W_SPEC'] = (plots.WORKERS.fillna(0) * L_IND / 1000.0).round(4)
 plots['W_TOT'] = (plots.W_DOM + plots.W_NDOM + plots.W_GOV + plots.W_SPEC).round(4)
 plots['S_DOM'] = (plots.W_DOM * RET_DOM).round(4); plots['S_NDOM'] = (plots.W_NDOM * RET_ND).round(4); plots['S_GOV'] = (plots.W_GOV * RET_ND).round(4); plots['S_SPEC'] = (plots.W_SPEC * RET_ND).round(4)
 plots['QADF'] = (plots.S_DOM + plots.S_NDOM + plots.S_GOV + plots.S_SPEC).round(4)
-plots['FUT_PROPS'] = np.where(cap, plots.SETTLE.map(ppp).fillna(0) * plots.SETTLE.map(home_share).fillna(0), 0.0).round(3)
+plots['FUT_PROPS'] = np.where(cap, plots.SETTLE.map(ppp).fillna(0) * plots.SETTLE.map(home_share).fillna(0), 0.0).round(3)   # adopted ratio and share
 print('occupancy per settlement (workbook %d / metered properties, floor %.1f):' % (BASE, OR_FLOOR), or_s.round(2).to_dict())
 print('TODAY: people %.0f (workbook %d for the 25: %.0f) | Qadf %.0f m3/d' % (plots.POP.sum(), BASE, sum(wb_base.get(st, 0) for st in props_s.index), plots.QADF.sum()))
 
@@ -125,7 +134,9 @@ plots.to_file(f"{W13}/shp/PLOTS_load.shp", schema={'geometry': 'Polygon', 'prope
 
 # settlement table for the growth run
 g = plots.groupby('SETTLE')
-st = pd.DataFrame({'POP_TODAY': g.POP.sum().round(), 'OR_S': or_s, 'DOM_PLOTS_BUILT': plots[pure].groupby('SETTLE').size(), 'PROPS_PER_BUILT_PLOT': ppp.round(3), 'HOME_SHARE': home_share.round(3),
+empty_all = plots[plots.Buiding_St == 'Future'].groupby('SETTLE').size()
+st = pd.DataFrame({'POP_TODAY': g.POP.sum().round(), 'OR_RAW': or_raw.round(3), 'OR_S': or_s, 'SMALL': small.astype(int), 'DOM_PLOTS_BUILT': plots[pure].groupby('SETTLE').size(),
+                   'PPP_RAW': ppp_raw.round(3), 'PROPS_PER_BUILT_PLOT': ppp.round(3), 'HOME_SHARE_RAW': share_raw.round(3), 'HOME_SHARE': home_share.round(3), 'EMPTY_PLOTS': empty_all,
                    'NDOM_METERS': g.G_NDOM.sum(), 'GOV_METERS': g.G_GOV.sum(), 'FREE_METERS': 0,
                    'FUT_CAP_PLOTS': plots[cap].groupby('SETTLE').size(), 'SPREAD_PLOTS': plots[spread].groupby('SETTLE').size(), 'SPREAD_W_SUM': plots[spread].groupby('SETTLE').SPREAD_W.sum()}).fillna(0)
 st['FUT_CAP_PROPS'] = (st.FUT_CAP_PLOTS * st.PROPS_PER_BUILT_PLOT * st.HOME_SHARE).round(); st['FUT_CAP_POP'] = (st.FUT_CAP_PROPS * st.OR_S).round()

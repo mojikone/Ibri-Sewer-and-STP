@@ -94,7 +94,7 @@ print('ultimate (all full or 2100):', ult)
 
 # ---------- Excel ----------
 xl = f"{W13}/analysis/W14_growth_by_settlement.xlsx"
-summ = pd.DataFrame({'pop_today_meters': pop0.round(), 'workbook_2026': P[BASE].round(), 'props_per_built_plot': st['PROPS_PER_BUILT_PLOT'],
+summ = pd.DataFrame({'pop_today_meters': pop0.round(), 'workbook_2024': P[BASE].round(), 'props_per_built_plot': st['PROPS_PER_BUILT_PLOT'],
                      'cap_plots': st['FUT_CAP_PLOTS'], 'cap_people': cap.round(), 'saturation_year': pd.Series(sat_year),
                      'pop_2030': pop_total[2030].round(), 'pop_2055': pop_total[2055].round(), f'pop_{ult}_ultimate': pop_total[ult].round(), 'pop_2100': pop_total[2100].round(),
                      'inflow_at_ultimate': inflow[ult].round(), 'unhoused_2100': unhoused[2100].round(),
@@ -122,6 +122,21 @@ with pd.ExcelWriter(xl, engine='openpyxl') as xw:
     P[YEARS].round().to_excel(xw, sheet_name='Workbook projection')
     spill_tab.to_excel(xw, sheet_name='Overflow routes', index=False)
     rules.to_excel(xw, sheet_name='Rules', index=False)
+# the report tables: five-year steps to saturation (blank once full, the saturation year and value last), and the occupancy table
+def _five(tab, nd):
+    yrs = [BASE] + [y for y in range(2025, 2101, 5) if y <= ult]; out = []
+    order = sorted(tab.index, key=lambda s: -float(tab.at[s, BASE]))
+    for s in order:
+        sat = sat_year.get(s); r = [s]
+        for y in yrs: r.append(round(float(tab.at[s, y]), nd) if (sat is None or y <= sat) else None)
+        r += [sat, round(float(tab.at[s, sat]), nd) if sat else None]; out.append(r)
+    out.append(['TOTAL'] + [round(float(tab[y].sum()), nd) for y in yrs] + [ult, round(float(tab[ult].sum()), nd)])
+    return pd.DataFrame(out, columns=['Settlement'] + [str(y) for y in yrs] + ['Saturation year', 'Saturation value'])
+occ = st[['OR_RAW', 'OR_S', 'SMALL', 'PPP_RAW', 'PROPS_PER_BUILT_PLOT', 'HOME_SHARE_RAW', 'HOME_SHARE', 'EMPTY_PLOTS', 'FUT_CAP_PLOTS', 'FUT_CAP_POP']].copy()
+with pd.ExcelWriter(xl, engine='openpyxl', mode='a', if_sheet_exists='replace') as xw:
+    _five(pop_total, 0).to_excel(xw, sheet_name='Five-year to saturation', index=False)
+    _five(q, 1).to_excel(xw, sheet_name='Five-year Qadf', index=False)
+    occ.to_excel(xw, sheet_name='Occupancy')
 print('excel:', xl)
 
 # ---------- design-year columns on the plots and the settlements ----------
