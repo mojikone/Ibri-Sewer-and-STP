@@ -1,4 +1,6 @@
-# What is current, and what is not — checked 2026-09-09
+# What is current, and what is not — checked 2026-09-10
+
+**Population, saturation and load per plot live in `W14/` (class v7, 2026-09-10); W13 stays the pipe-laying engine.** `W14/` holds the meter-to-plot chain, the plot class, the per-settlement occupancy (floor 4.0, cap 6.12, the under-1,000 rule), the growth to saturation and the **Concept Design Report Revision 2** (`W14/report/R2/`, 88 pages; `W14/deliverables/` is the packaged hand-over). Numbers: today 119,886 people / 20,851 m³/d; saturation **2070 at 349,019 people / 60,097 m³/d**; Ibri full 2056. Read `W14/docs/CONCEPT_NOTE_SATURATION_AND_LOAD.md` first. The `W14/` named below as a sub-mains-first trial was removed on 2026-09-07; the folder name was reused for the population work on 2026-09-10.
 
 ## READ THIS FIRST: W10, W11a, W11b AND W12 WERE REVERTED OUT OF THIS REPO
 

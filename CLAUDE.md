@@ -61,7 +61,7 @@ Concept→detailed design + supervision of wastewater network, treated-effluent 
 | `W5/` | The run before the trunk was placed and before the 12 m limit was enforced. **Superseded by W6** — its depth and pumping numbers are wrong; `docs/CRITERIA_UPDATE_R1.md` is still the live rule register |
 | `W6/` | The run with a GUESSED trunk: 4 pumping stations, chambers to 11.9 m. **Superseded by W7** |
 | `W7/` | Main pipe placed correctly and zero pumping stations, but NO sub-main tier — 30 things touched the trunk. **Superseded by W8**; `docs/CALIBRATION_vs_EXISTING.md` still valid |
-| **`W14/`** | **Population, saturation and load per plot (class v6), the Concept Design Report R2 (`report/R2/`, live; R0 and R1 frozen alongside) and `deliverables/`.** Read `W14/docs/CONCEPT_NOTE_SATURATION_AND_LOAD.md` first; the report reads its numbers from `W14/report/facts_w14.py` |
+| **`W14/`** | **Population, saturation and load per plot (class v7), the Concept Design Report R2 (`report/R2/`, live; R0 and R1 frozen alongside) and `deliverables/`.** Read `W14/docs/CONCEPT_NOTE_SATURATION_AND_LOAD.md` first; the report reads its numbers from `W14/report/facts_w14.py` |
 | **`W13/`** | The live pipe-laying engine (test boundary gate), plus the first population work that W14 now carries |
 | **`W8/`** | **CURRENT design.** `py/sewnet/` (one class per step), `report/` (Word + PDF, rebuilt on every run), `docs/LEARNING_FROM_ASBUILT.md`, `shp/ dxf/ img/ sewergems/ run/`, `W8_sewer_design.kmz` for Google Earth |
 | `../QGIS/QGIS 2621 ibri sewer stp.qgz` | Live QGIS project (layers + saved layouts W2 M1–M6) |
