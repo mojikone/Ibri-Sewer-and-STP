@@ -385,3 +385,9 @@ def census_rate():
     """Persons per domestic property over the study area on the census figure alone."""
     st = settlement_table()
     return sum(r["workbook_2024"] for r in st) / sum(r["properties"] for r in st)
+
+
+def cadastre_disagreement():
+    """Share of the built, metered plots whose cadastral class differs from the use derived from their meters."""
+    p = plots(); m = (p.Buiding_St == "EXisting") & (p.N_ACC > 0)
+    return float((p.loc[m, "Classes"] != p.loc[m, "DERIVED"]).mean())

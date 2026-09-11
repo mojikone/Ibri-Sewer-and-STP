@@ -76,7 +76,7 @@ and by category (`ELE_meters_on_plots.shp`, `PLOTS_load.shp` fields `N_*` and `G
 ## 3. The land-use layer: every plot's main use
 
 The MoH file (77,265 plots, 7 September 2026) carries a class, but on the plots with meters it is wrong
-one time in seven, has no government class, and calls whole districts "Residential" under codes that mean
+on 24 per cent of them, has no government class, and calls whole districts "Residential" under codes that mean
 "unclassified". The use was therefore **derived**, plot by plot, in this order:
 
 1. **Estate.** Inside the Al Tayyeb or Tanam footprint → Industrial.
@@ -94,8 +94,8 @@ one time in seven, has no government class, and calls whole districts "Residenti
    Commercial**. Large-consumer meters count with the use found in 2.2.
 6. **No meter** → Unmetered (all the empty plots).
 
-Result on the 15,400 built, metered plots: 12,464 homes, 1,321 shops, 614 mixed, 409 government,
-3,399 farms (489 by meter, 2,910 by satellite), 467 industrial, 177 heritage. The first, naive reading
+Result on the 16,756 built, metered plots: 12,464 homes, 1,321 shops, 614 mixed, 409 government,
+1,685 farms (489 by meter, 1,196 by satellite), 263 industrial; plus the 177 heritage plots, which carry no meter. The first, naive reading
 (one shop meter made a plot "mixed", a house on a farm made it "residential") is kept in `DERIVED1` for the
 audit; `WHYC` records which rule fired.
 

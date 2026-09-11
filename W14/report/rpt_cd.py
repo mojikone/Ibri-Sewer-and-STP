@@ -405,8 +405,8 @@ def part_d(d):
     D.p(d, "The cadastral layer received in September 2026 holds 77,265 "
            "plots. Its land-use field does not carry a government class, "
            "records whole districts under codes that mean unclassified, and "
-           "on the plots that carry meters disagrees with the meters one time "
-           "in seven. The use of every plot has therefore been derived, in a "
+           "on the plots that carry meters disagrees with the meters on "
+           f"{F.fmt(F.cadastre_disagreement() * 100)} per cent of them. The use of every plot has therefore been derived, in a "
            "fixed order, from what is on it.")
     D.picture(d, os.path.join(IMG, "D6_landuse.png"), 14.5)
     D.fig_caption(d, "How the use of each plot is derived from the "
