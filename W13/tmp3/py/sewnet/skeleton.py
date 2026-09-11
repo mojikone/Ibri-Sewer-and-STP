@@ -955,6 +955,22 @@ def _point(r, up, dn, z, level_m, flat_pct):
 
 
 # ----------------------------------------------------------------- branches
+def plot_class(gdf):
+    """B built, P planned, A agricultural. W3's class file carries CLASS; W14's PLOTS_load
+    (temp 3, 2026-09-11: the same MoH plots, the missing ones added, the attributes updated)
+    carries its status instead: a plot whose use is derived Agricultural is A, a metered
+    ("EXisting") plot is B, the rest P."""
+    if "CLASS" in gdf.columns:
+        return list(gdf["CLASS"].astype(str).values)
+    if "Buiding_St" in gdf.columns:
+        der = (gdf["DERIVED"].astype(str).values if "DERIVED" in gdf.columns
+               else [""] * len(gdf))
+        st = gdf["Buiding_St"].astype(str).str.lower().values
+        return ["A" if d == "Agricultural" else "B" if t == "existing" else "P"
+                for d, t in zip(der, st)]
+    return ["?"] * len(gdf)
+
+
 class Gates:
     """Where the first house gate sits along a street: the first plot centroid within
     search_m, dropped square onto the street."""
@@ -967,12 +983,27 @@ class Gates:
         self.tree = STRtree(self.pts) if self.pts else None
         self.search = search_m
         wide = envelope.buffer(link_pad_m)
-        cls = gdf["CLASS"].astype(str).values if "CLASS" in gdf.columns else ["?"] * len(gdf)
-        self.polys, self.pcls = [], []
-        for g, c in zip(gdf.geometry, cls):
+        cls = plot_class(gdf)
+        # temp 3 (2026-09-11): W14's PLOTS_load carries each plot's own flow, so a plot is
+        # served when it carries flow, and the flow is what the pipes are sized on
+        self.has_loads = all(f in gdf.columns for f in ("Q_ULT", "Q_2030", "G_DOM", "POP",
+                                                        "POP_2030", "POP_ULT", "OR_S"))
+        if self.has_loads:
+            orr = gdf["OR_S"].astype(float).clip(lower=1e-9)
+            g_dom, pop = gdf["G_DOM"].astype(float), gdf["POP"].astype(float)
+            # properties per plot in a year: G_DOM + (POP_year - POP) / OR_S (handoff 3)
+            p_ult = (g_dom + (gdf["POP_ULT"].astype(float) - pop) / orr).clip(lower=0.0)
+            p_30 = (g_dom + (gdf["POP_2030"].astype(float) - pop) / orr).clip(lower=0.0)
+            rows = list(zip(gdf["Q_ULT"].astype(float), gdf["Q_2030"].astype(float), p_ult, p_30))
+        else:
+            rows = [(0.0, 0.0, 0.0, 0.0)] * len(gdf)
+        self.polys, self.pcls, self.loads, self.served = [], [], [], []
+        for g, c, ld in zip(gdf.geometry, cls, rows):
             if g.intersects(wide):
                 self.polys.append(g)
                 self.pcls.append(c)
+                self.loads.append(ld)
+                self.served.append(ld[0] > 0.0 if self.has_loads else c in ("B", "P"))
         self.ptree = STRtree(self.polys) if self.polys else None
 
     def crossed(self, line):

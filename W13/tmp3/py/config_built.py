@@ -22,8 +22,8 @@ STP_INVERT_M = 323.0     # the inlet manhole 5A-1-FL-STP: both built trunks end 
                          # judged against the invert, not the ground.
 TERRAIN = BASE + r"\Data\Terrain\Sat_0p5m\IBRI_0p5_VRT2.vrt"
 HAZARD = BASE + r"\Data\04 Lekhuwair\Hazard_T50y.tif"
-PLOTS_CLASS = BASE + r"\Hydraulic\Claude\W3\shp\MoH_Plots_class_v4.shp"
-ACCOUNTS = BASE + r"\Hydraulic\Claude\W4\shp\ELE_accounts.shp"   # counted properties
+PLOTS_CLASS = BASE + r"\Hydraulic\Claude\W14\shp\PLOTS_load.shp"   # temp 3 (2026-09-11): W14's plots for everything plot-related (heads, served plots, the no-plot-in-the-way test) and each plot's own flow, Q_ULT and Q_2030. Was W3's MoH_Plots_class_v4
+ACCOUNTS = None   # temp 3: the plot carries its own flow, the counted accounts are inside it (was W4 ELE_accounts)
 
 # ---- rule 9, the depth check done on every run (quicklay.py)
 PER_PROPERTY_M3D = 0.911   # 5.32 people x 171.3 L/c/d, the locked load basis
@@ -144,3 +144,7 @@ SAG_OUTLET_CUTS = True   # temp 2: the engine's 2026-09-08 reading of rule 4, cu
 POCKET_TRUNKS = False   # temp 2: a pocket stays a pocket; no trunk is built for it
 REROUTE_MODE = "cut"   # temp 2: whatever cannot reach within 12 m remains a pocket; no reroute
 OUTLET_CUT_ONLY = True   # temp 2: a sub main belongs to one sub-network; cut where the outlet changes, never at a sag
+
+# ---- W13 temp 3 (2026-09-11): the plots' own flows, the self-cleansing audit
+INFIL_L_D_KM = 720.0        # infiltration per km of new sewer, by the pipe's own length (G1-p72)
+LOW_CASE_CONNECTED = 0.61   # the low case: Q_2030 x the Inception R0 connection ratio (handoff 2)

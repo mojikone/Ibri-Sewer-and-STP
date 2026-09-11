@@ -46,6 +46,41 @@ def peak_ls(n_prop, km, per_prop_m3d, pf_hold=100.0, infil_l_d_km=720.0):
     return qp * 1e6 / 86400.0 + infil_l_d_km * km / 86400.0
 
 
+def peak_flow_ls(qadf_m3d, props, km=0.0, infil_l_d_km=720.0):
+    """The peak of an average dry-weather flow (temp 3, 2026-09-11, handoff 3): Merrimack
+    for more than 100 properties, Qpdf = 2.65 Qadf^0.879 in Ml/d (G1-p71); Peltier for 100
+    or fewer, PF = 1.5 + 1/sqrt(Qm), Qm in l/s (G1-p72), not capped; infiltration by the
+    pipe length upstream, unpeaked (G1-p72). Returns (peak l/s, peak factor)."""
+    if qadf_m3d <= 0.0:
+        base, pf = 0.0, 0.0
+    elif props > 100.0:
+        base = 2.65 * (qadf_m3d / 1000.0) ** 0.879 * 1e6 / 86400.0
+        pf = base / (qadf_m3d / 86.4)
+    else:
+        qm = qadf_m3d / 86.4
+        pf = 1.5 + 1.0 / math.sqrt(qm)
+        base = qm * pf
+    return base + infil_l_d_km * km / 86400.0, pf
+
+
+def loads_per_pipe(pipes, plots, loads, reach_m=45.0):
+    """Every plot that carries flow loads its nearest pipe within reach_m with its own flows:
+    Q_ULT and Q_2030 (m3/d) and its properties at saturation and in 2030. Returns the four
+    per-pipe arrays and the plots loaded."""
+    geoms = [q["geom"] for q in pipes]
+    tree = STRtree(geoms)
+    out = np.zeros((4, len(pipes)))
+    n_plots = 0
+    for g, ld in zip(plots, loads):
+        c = g.centroid
+        k = tree.nearest(c)
+        if k is None or geoms[k].distance(c) > reach_m:
+            continue
+        out[:, k] += ld
+        n_plots += 1
+    return out, n_plots
+
+
 def properties_per_pipe(pipes, plots, acc_points, reach_m=60.0):
     """Every built or planned plot loads its nearest pipe within reach_m with the accounts
     counted on it, or one property at saturation where it has none."""
@@ -67,7 +102,8 @@ def properties_per_pipe(pipes, plots, acc_points, reach_m=60.0):
     return props, n_plots
 
 
-def lay(pipes, props, z, per_prop_m3d, cover_to_invert=1.55, floors=None):
+def lay(pipes, props, z, per_prop_m3d, cover_to_invert=1.55, floors=None, loads=None,
+        infil_l_d_km=720.0):
     """Accumulate properties down the tree, size, lay at each pipe's own Table 11 gradient.
     Writes dn, q_peak_ls, depth_up, depth_dn onto each pipe; returns node depths and the
     governing upstream pipe of every node. floors: node -> the invert the pipe must arrive
@@ -80,6 +116,9 @@ def lay(pipes, props, z, per_prop_m3d, cover_to_invert=1.55, floors=None):
     up_props = np.zeros(len(pipes))
     up_km = np.zeros(len(pipes))
     node_props, node_km, arrived = collections.Counter(), collections.Counter(), collections.Counter()
+    # temp 3: the plots' own flows, accumulated the same way (q_ult, q_2030, p_ult, p_2030)
+    up_ld = np.zeros((4, len(pipes)))
+    node_ld = collections.defaultdict(lambda: np.zeros(4))
     order = []
     queue = [i for i, q in enumerate(pipes) if n_in[q["up"]] == 0]
     while queue:
@@ -90,6 +129,9 @@ def lay(pipes, props, z, per_prop_m3d, cover_to_invert=1.55, floors=None):
         up_km[i] = node_km[q["up"]] + q["len"] / 1000.0
         node_props[q["dn"]] += up_props[i]
         node_km[q["dn"]] += up_km[i]
+        if loads is not None:
+            up_ld[:, i] = node_ld[q["up"]] + loads[:, i]
+            node_ld[q["dn"]] = node_ld[q["dn"]] + up_ld[:, i]
         arrived[q["dn"]] += 1
         if arrived[q["dn"]] == n_in[q["dn"]]:
             queue.extend(out_of[q["dn"]])
@@ -97,9 +139,15 @@ def lay(pipes, props, z, per_prop_m3d, cover_to_invert=1.55, floors=None):
     governs = {}
     for i in order:
         q = pipes[i]
-        q["q_peak_ls"] = peak_ls(up_props[i], up_km[i], per_prop_m3d)
+        if loads is None:
+            q["q_peak_ls"] = peak_ls(up_props[i], up_km[i], per_prop_m3d)
+            q["props_up"] = float(up_props[i])
+        else:
+            q["q_ult_up"], q["q_2030_up"] = float(up_ld[0, i]), float(up_ld[1, i])
+            q["props_up"], q["props_2030_up"] = float(up_ld[2, i]), float(up_ld[3, i])
+            q["q_peak_ls"], q["pf"] = peak_flow_ls(q["q_ult_up"], q["props_up"], up_km[i],
+                                                   infil_l_d_km)
         q["dn_mm"] = size_for(q["q_peak_ls"])
-        q["props_up"] = float(up_props[i])
         s = T11[q["dn_mm"]]
         idn = min(invert[q["up"]] - s * q["len"], z[q["dn"]] - cover_to_invert)
         if idn < invert[q["dn"]]:

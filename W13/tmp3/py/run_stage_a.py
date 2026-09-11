@@ -404,7 +404,7 @@ def main():
                               "grad": cfg.MP_PROFILE_GRAD}
     from shapely.prepared import prep as _prep0
     _near0 = _prep0(envelope.buffer(cfg.GATE_SEARCH_M))
-    served_pts = [g.centroid for g, c in zip(gates.polys, gates.pcls) if c in ("B", "P")
+    served_pts = [g.centroid for g, sv in zip(gates.polys, gates.served) if sv
                   and _near0.contains(g.centroid)]
     _rtree = STRtree([r["geom"] for r in runs])
     plot_node = []
@@ -612,13 +612,35 @@ def main():
         from sewnet import quicklay as Q
         from shapely.prepared import prep as _prep
         near = _prep(envelope.buffer(cfg.GATE_SEARCH_M))
-        served_plots = [g for g, c in zip(gates.polys, gates.pcls) if c in ("B", "P")
-                        and near.contains(g.centroid)]
-        acc_pts = []
-        if getattr(cfg, "ACCOUNTS", None):
-            acc_pts = [g for g in gpd.read_file(cfg.ACCOUNTS).geometry
-                       if g is not None and near.contains(g)]
-        props, n_plots = Q.properties_per_pipe(pipes, served_plots, acc_pts, cfg.GATE_SEARCH_M)
+        sel = [k for k, (g, sv) in enumerate(zip(gates.polys, gates.served))
+               if sv and near.contains(g.centroid)]
+        served_plots = [gates.polys[k] for k in sel]
+        loads = None
+        load_rep = {}
+        if gates.has_loads:
+            # temp 3: each plot's own flow (W14 PLOTS_load) to its nearest pipe
+            loads, n_plots = Q.loads_per_pipe(pipes, served_plots, [gates.loads[k] for k in sel],
+                                              cfg.GATE_SEARCH_M)
+            props = loads[2]
+            inside = _prep(envelope)
+            area_q = [gates.loads[k] for k, g in enumerate(gates.polys)
+                      if gates.served[k] and inside.contains(g.centroid)]
+            load_rep = {"plots_file": os.path.basename(cfg.PLOTS_CLASS),
+                        "plots_with_flow_in_area": len(area_q),
+                        "q_ult_in_area_m3d": round(sum(x[0] for x in area_q)),
+                        "q_2030_in_area_m3d": round(sum(x[1] for x in area_q)),
+                        "plots_loaded": n_plots,
+                        "q_ult_loaded_m3d": round(float(loads[0].sum())),
+                        "q_2030_loaded_m3d": round(float(loads[1].sum())),
+                        "properties_ult_loaded": round(float(loads[2].sum())),
+                        "properties_2030_loaded": round(float(loads[3].sum()))}
+            log(f"   loads: {load_rep}")
+        else:
+            acc_pts = []
+            if getattr(cfg, "ACCOUNTS", None):
+                acc_pts = [g for g in gpd.read_file(cfg.ACCOUNTS).geometry
+                           if g is not None and near.contains(g)]
+            props, n_plots = Q.properties_per_pipe(pipes, served_plots, acc_pts, cfg.GATE_SEARCH_M)
         znode_all = dict(znode)
         for b in branches:
             znode_all.setdefault(b["up"], b["z_up"])
@@ -627,10 +649,12 @@ def main():
         floors = {t: lv for t, lv in levels.items()
                   if ttype.get(t) == "STP" or (getattr(cfg, "MP_PROFILE_GRAD", None) and ttype.get(t) == "JOIN")}
         depth, governs, laid = Q.lay(pipes, props, znode_all, cfg.PER_PROPERTY_M3D,
-                                     floors=floors)
+                                     floors=floors, loads=loads,
+                                     infil_l_d_km=getattr(cfg, "INFIL_L_D_KM", 720.0))
         rep["depth"] = Q.report(pipes, depth, cfg.MAX_DEPTH_M)
         rep["depth"]["plots_served"] = n_plots
         rep["depth"]["properties_at_saturation"] = int(props.sum())
+        rep["loads"] = load_rep
         log(f"   {rep['depth']}")
         rep["tier_km"] = km_by(pipes, "tier", ("sub main", "lateral", "branch"))
         rep["class_km"] = km_by(pipes, "cls", ("NORMAL", "FLAT", "LEVEL", "AGAINST"))
