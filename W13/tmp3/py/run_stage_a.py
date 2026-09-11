@@ -656,6 +656,10 @@ def main():
         rep["depth"]["plots_served"] = n_plots
         rep["depth"]["properties_at_saturation"] = int(props.sum())
         rep["loads"] = load_rep
+        if loads is not None:
+            # temp 3: the self-cleansing audit on the low case; it changes nothing
+            from sewnet import cleansing as CL
+            rep["cleansing"] = CL.audit(pipes, getattr(cfg, "LOW_CASE_CONNECTED", 0.61))
         log(f"   {rep['depth']}")
         rep["tier_km"] = km_by(pipes, "tier", ("sub main", "lateral", "branch"))
         rep["class_km"] = km_by(pipes, "cls", ("NORMAL", "FLAT", "LEVEL", "AGAINST"))

@@ -184,6 +184,10 @@ def write_shapes(out_dir, prefix, pipes, gaps, catch_info, catch_polys, joins, e
         "Q30_M3D": [round(p.get("q_2030_up", 0.0), 2) for p in pipes],
         "PROPS_30": [round(p.get("props_2030_up", 0.0), 1) for p in pipes],
         "PF": [round(p.get("pf", 0.0), 2) for p in pipes],
+        "Q_LOW_LS": [round(p.get("q_low_ls", 0.0), 3) for p in pipes],
+        "V_LOW": [round(p.get("v_low", 0.0), 3) for p in pipes],
+        "S_MARA_PC": [round(min(p.get("s_mara", 0.0), 9.99) * 100, 3) for p in pipes],
+        "CLEANSE": [p.get("cleanse", "") for p in pipes],
         "DEPTH_UP": [round(p.get("depth_up", 0.0), 2) for p in pipes],
         "DEPTH_DN": [round(p.get("depth_dn", 0.0), 2) for p in pipes],
     }, geometry=[p["geom"] for p in pipes], crs=crs).to_file(
