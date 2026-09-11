@@ -1,0 +1,58 @@
+{
+  "subnetworks": [
+    42,
+    42
+  ],
+  "by_type": [
+    {
+      "JOIN": 34,
+      "STP": 2,
+      "LINK-STP": 3,
+      "LINK-MP": 0,
+      "SINK": 1,
+      "LOW": 2
+    },
+    {
+      "JOIN": 34,
+      "STP": 1,
+      "LINK-STP": 3,
+      "LINK-MP": 1,
+      "SINK": 1,
+      "LOW": 2
+    }
+  ],
+  "deepest_m": [
+    16.36,
+    16.38
+  ],
+  "over_12m": [
+    16,
+    14
+  ],
+  "chambers": [
+    2637,
+    2638
+  ],
+  "roles": {
+    "sub main": {
+      "km_tmp2": 69.9,
+      "km_tmp3": 69.8,
+      "tmp3_on_tmp2_same_role_pct": 99.1,
+      "tmp2_on_tmp3_same_role_pct": 98.9
+    },
+    "lateral": {
+      "km_tmp2": 93.2,
+      "km_tmp3": 92.6,
+      "tmp3_on_tmp2_same_role_pct": 99.8,
+      "tmp2_on_tmp3_same_role_pct": 99.2
+    },
+    "branch": {
+      "km_tmp2": 49.8,
+      "km_tmp3": 50.8,
+      "tmp3_on_tmp2_same_role_pct": 97.9,
+      "tmp2_on_tmp3_same_role_pct": 99.9
+    }
+  },
+  "tmp3_on_any_tmp2_pipe_pct": 99.7,
+  "tmp2_on_any_tmp3_pipe_pct": 99.9
+}

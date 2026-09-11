@@ -798,6 +798,11 @@ def main():
         log("   W13_A_tree.dxf is open elsewhere; written as W13_A_tree_new.dxf")
     rep["basins"] = [{"xy": [round(b["xy"][0], 1), round(b["xy"][1], 1)],
                       "extra_m": round(b["extra_m"], 2)} for b in basins]
+    if rep.get("cleansing"):
+        from sewnet import cleansing as CL
+        n_w = CL.write_tables(pipes, rep["cleansing"], cfg.OUT_RUN,
+                              getattr(cfg, "LOW_CASE_CONNECTED", 0.61))
+        log(f"   self-cleansing: {rep['cleansing']['by_class']}; washing list {n_w} pipes")
     XT.write_shapes(cfg.OUT_SHP, "W13_A_tree", pipes, gaps, info2, polys2, {**joins, **link_geoms},
                     cfg.EPSG)
     b = envelope.bounds

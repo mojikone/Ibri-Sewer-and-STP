@@ -94,3 +94,51 @@ def audit(pipes, connected=0.61, v_min=V_MIN, tau=TAU_PA, k=MARA_K):
             rep[name][t] = {c: {"pipes": d[c][0], "km": round(d[c][1] / 1000.0, 1)}
                             for c in CLASSES}
     return rep
+
+
+def write_tables(pipes, rep, out_dir, connected=0.61):
+    """The audit's table (pipes and km by class and by tier, and by role) as markdown and
+    CSV, and the washing list: every pipe on it with why. PIPE_ID matches the shapefile."""
+    import csv
+    import os
+    from .export_tree import TIER_NAME
+    os.makedirs(out_dir, exist_ok=True)
+    rows = []
+    for key in ("by_tier", "by_role"):
+        for t, d in rep[key].items():
+            rows.append([key[3:], t] + [x for c in CLASSES for x in (d[c]["pipes"], d[c]["km"])])
+    with open(os.path.join(out_dir, "cleansing_table.csv"), "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["by", "name"] + [f"{c}_{u}" for c in CLASSES for u in ("pipes", "km")])
+        w.writerows(rows)
+        w.writerow(["all", "all"] + [x for c in CLASSES
+                                     for x in (rep["by_class"][c]["pipes"], rep["by_class"][c]["km"])])
+    lines = ["# Self-cleansing audit, W13 temp 3", "",
+             f"Low case: {rep['flow']}. Velocity pass at {rep['v_min_ms']} m/s; tractive pass at "
+             f"Mara's slope, tau {rep['tau_pa']} Pa, K {rep['mara_k']} (Q in m3/s), no floor. "
+             "Nothing is regraded or upsized.", "",
+             "| By | Name | Velocity pipes | km | Tractive pipes | km | Washing pipes | km |",
+             "|---|---|---|---|---|---|---|---|"]
+    for r in rows:
+        lines.append("| " + " | ".join(str(x) for x in r) + " |")
+    a = rep["by_class"]
+    lines.append("| **all** | | " + " | ".join(f"**{a[c]['pipes']}** | **{a[c]['km']}**" for c in CLASSES) + " |")
+    lines += ["", "Share of length: " + ", ".join(f"{c} {a[c]['pct_length']} %" for c in CLASSES)]
+    open(os.path.join(out_dir, "cleansing_table.md"), "w", encoding="utf-8").write("\n".join(lines) + "\n")
+    with open(os.path.join(out_dir, "washing_list.csv"), "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["PIPE_ID", "CATCH", "TIER", "ROLE", "DN_MM", "LEN_M", "SLOPE_PCT",
+                    "Q_LOW_LS", "V_LOW_MS", "S_MARA_PCT", "CONNECTED_2030", "WHY"])
+        n = 0
+        for i, q in enumerate(pipes):
+            if q.get("cleanse") != "washing":
+                continue
+            n += 1
+            sm = q["s_mara"]
+            w.writerow([f"P{i + 1:05d}", q.get("catch", ""), TIER_NAME.get(q["tier"], q["tier"]),
+                         q["tier"], q["dn_mm"], round(q["len"], 1),
+                         round(q["grad_laid"] * 100, 3), round(q["q_low_ls"], 3),
+                         round(q["v_low"], 3), "" if sm == float("inf") else round(sm * 100, 3),
+                         round(q.get("props_2030_up", 0.0) * connected, 1),
+                         "no flow in 2030" if q["q_low_ls"] <= 0 else "below Mara's slope"])
+    return n
