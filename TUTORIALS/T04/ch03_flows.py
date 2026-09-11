@@ -18,7 +18,7 @@ import facts_w14 as F
 UP, R = M.up, M.r
 IMG = os.path.join(HERE, "img")
 
-import json
+import json, re
 from functools import lru_cache
 
 REPO = os.path.dirname(os.path.dirname(HERE))
@@ -107,6 +107,47 @@ def _r0_connection():
                 if isinstance(y, (int, float)) and i < len(con) and isinstance(con[i], (int, float))}
     except Exception:
         return None
+
+
+@lru_cache(None)
+def _engine():
+    """The network engine's design constants, W13/py/sewnet/criteria.py, loaded by file
+    path (standard library only), so the tutorial quotes the engine's own values."""
+    import importlib.util
+    path = os.path.join(REPO, "W13", "py", "sewnet", "criteria.py")
+    spec = importlib.util.spec_from_file_location("t04_sewnet_criteria", path)
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = mod          # dataclasses resolves the module by name
+    spec.loader.exec_module(mod)
+    return mod.DEFAULT
+
+
+_SUP = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁵⁶⁷⁸⁹")
+
+
+def _sci(x, nd=2):
+    """2.33e-4 -> '2.33 × 10⁻⁴'."""
+    m, e = f"{x:.{nd}e}".split("e")
+    return f"{m} × 10" + str(int(e)).translate(_SUP)
+
+
+def _rulings():
+    """The engineer's confirmed rulings of 2026-09-11, as recorded in design_flows.json.
+    Chapter 8 teaches exactly these; the build stops if the record says otherwise."""
+    rc = _flows()["rules"]["rulings_confirmed"]
+    assert rc["status"].startswith("confirmed"), rc["status"]
+    assert rc["classes"] == ["velocity pass", "tractive pass", "needs washing"], rc["classes"]
+    assert rc["regrade_class"] == "none" and rc["low_flow_threshold"] == "none"
+    assert rc["low_case_infiltration"] == "left out", rc["low_case_infiltration"]
+    assert "connected" in rc["low_case_property_count"], rc["low_case_property_count"]
+    assert rc["tractive_sets_gradient"].startswith("no"), rc["tractive_sets_gradient"]
+    k_rec = float(re.search(r"K = ([\d.eE+-]+)", rc["mara_constant"]).group(1))
+    assert "m3/s" in rc["mara_constant"] and "no floor" in rc["mara_constant"]
+    assert abs(k_rec - _engine().TRACTIVE_K) < 1e-12, (k_rec, _engine().TRACTIVE_K)
+    steps = [float(s) for s in re.findall(r"([\d.]+) %", rc["concept_gradients"])]
+    dn = int(re.search(r"DN(\d+)", rc["concept_gradients"]).group(1))
+    assert len(steps) == 2 and steps[0] > steps[1], rc["concept_gradients"]
+    return dict(rc, k=k_rec, step_sec=steps[0], step_trunk=steps[1], dn_trunk=dn)
 
 
 # per-person rates, from the constants alone
@@ -758,76 +799,116 @@ def c08_time(d):
               "low_case_2030_m3d and settlements[].q_2030_low.")
 
     # ------------------------------------------------------------ 8.5
+    rc = _rulings(); E = _engine()
+    tau = float(rc["tau_pa"])
     D.h(d, 2, "8.5   The two design cases")
     _for(d, "Every pipe is checked twice, on two different flows, because the two checks fail in opposite "
             "directions.")
     _rule(d, "Size and capacity on the saturation flow, fully connected. Self-cleansing on the 2030 flow at the "
              "connection ratio. Each is summed over the plots upstream of the pipe, then peaked for that pipe.")
-    eq = D.next_eq()
-    M.display(d, M.seq(_q("Q", "size"), M.EQ, M.nary("∑", R("i"), "", _q("Q", "ULT,i"), hide_hi=True)), number=eq)
-    eq = D.next_eq()
+    eq_size = D.next_eq()
+    M.display(d, M.seq(_q("Q", "size"), M.EQ, M.nary("∑", R("i"), "", _q("Q", "ULT,i"), hide_hi=True)),
+              number=eq_size)
+    eq_low = D.next_eq()
     M.display(d, M.seq(_q("Q", "low"), M.EQ, R(f"{c:.2f}"), M.TIMES,
-                       M.nary("∑", R("i"), "", _q("Q", "2030,i"), hide_hi=True)), number=eq)
+                       M.nary("∑", R("i"), "", _q("Q", "2030,i"), hide_hi=True)), number=eq_low)
     _params(d, [["Q size", "average flow for sizing: the sum over the upstream plots", "m³/d"],
                 ["Q low", "average flow for the self-cleansing check", "m³/d"],
                 ["Q ULT,i, Q 2030,i", "fields Q_ULT and Q_2030 of upstream plot i", "m³/d"],
                 [f"{c:.2f}", "connection ratio in the opening year", "—"]])
-    D.p(d, "Both averages are then peaked per pipe. Over 100 properties upstream, the Merrimack formula gives "
-           "the peak daily flow, Qpdf = 2.65 Qadf^0.879, both in Ml/d. At 100 properties or fewer, the Peltier "
-           "alternative gives the peak factor, PF = 1.5 + 1/√Qm, with the average in l/s. The properties "
-           "upstream in a year are counted as G_DOM + (POP_year − POP) / OR_S per plot. The sizing case counts "
+    D.p(d, f"Both averages are then peaked per pipe. Over 100 properties upstream, the Merrimack formula gives "
+           f"the peak daily flow, Qpdf = 2.65 Qadf^0.879, both in Ml/d. At 100 properties or fewer, the Peltier "
+           f"alternative gives the peak factor, PF = 1.5 + 1/√Qm, with the average in l/s. The properties "
+           f"upstream in a year are counted as G_DOM + (POP_year − POP) / OR_S per plot. The sizing case counts "
            f"the properties at saturation. The low case counts the connected properties, those standing in 2030 "
            f"× {c:.2f}, so that the count choosing the formula describes the same customers as the flow it "
            f"peaks. A pipe with more than 100 properties standing can therefore still take Peltier in the low "
-           f"case; the lower count gives the lower peak at small flows, the safe direction for self-cleansing. "
-           f"This connected count is recommended in the design-flow handoff, to be confirmed by the engineer. "
-           "The sizing case then takes infiltration at 720 l/d per kilometre of the pipe's own length, added "
-           "along the run.")
-    D.tab_caption(d, "Which flow for which check")
+           f"case; the lower count gives the lower peak at small flows, the safe direction for self-cleansing.")
+    D.p(d, f"The sizing case adds infiltration at 720 l/d per kilometre of the pipe's own length, along the run. "
+           f"The low case adds none. The guideline's infiltration clause says nothing about the opening years, "
+           f"and its coverage clause asks only that self-cleansing velocities be secured at the initial stage "
+           f"of operation. Leaving infiltration out gives the smaller flow, which is the safe side for this "
+           f"check (Section 8.7). So the low case of Equation {eq_low}, peaked on the connected count and "
+           f"with no infiltration, is the one flow that feeds both self-cleansing tests.")
+    n_which = D.tab_caption(d, "Which flow for which check")
     D.table(d, ["Check", "Flow", "Why this flow"], [
         ["Pipe size and capacity: d/D and velocity limits", "Q_ULT upstream, peaked, plus infiltration",
          "saturation and full connection; an under-estimate surcharges the pipe"],
-        ["Self-cleansing: velocity and tractive slope", f"Q_2030 × {c:.2f} upstream, peaked",
+        ["Self-cleansing: velocity and tractive slope",
+         f"Q_2030 × {c:.2f} upstream, peaked on the connected properties; no infiltration",
          "the opening years; an over-estimate declares a silting pipe self-cleansing"],
         ["Plant capacity and phasing", "settlement totals by year, plus infiltration, plus 10 %",
          "the growth curve decides when each stage is needed"],
     ], widths=[5.0, 5.2, 6.3], font=8.5)
     D.p(d, "")
-    D.p(d, "The self-cleansing check applies both approaches the guideline requires, velocity and tractive "
-           "force, and the steeper gradient governs. At the head of a system, where the velocity cannot be "
-           "reached, tractive force alone sets the gradient. Each pipe falls in one of four classes on the low "
-           "case:")
-    D.tab_caption(d, "The self-cleansing classes on the low case")
+
+    D.p(d, "The guideline asks for two approaches to self-cleansing, the self-cleansing velocity and the "
+           "minimum tractive force. It makes the steeper of the two gradients the minimum gradient of the pipe, "
+           "and at the head of a system, where the velocity cannot be reached, it lets the tractive force alone "
+           "set the gradient. Its wording is \"shall\".")
+    D.p(d, f"At the concept stage the project does not use the tractive force to set any gradient. Every pipe "
+           f"is laid at the minimum gradient of G203 Table 11, tertiary pipes at G203 Table 5, on steps of "
+           f"{rc['step_sec']:g} % for secondary pipes and {rc['step_trunk']:g} % for primary trunks of "
+           f"DN{rc['dn_trunk']} and up (Chapter 11). The tractive force is then the second test of the audit "
+           f"below. It will be applied to the gradients at the preliminary design, once Nama Water Services "
+           f"confirms the tractive tension. The reason is that tension: the guideline gives no value for it, "
+           f"so a gradient set on it now would rest on a number nobody has agreed.")
+    D.callout(d, "Departure: the tractive force sets no gradient at the concept stage.",
+              f"G203 §4.2.2.1 requires the steeper of the velocity and the tractive-force gradients. At the "
+              f"concept stage the gradients are the Table 11 minimum and the tractive force only classifies "
+              f"the pipes, at {tau:g} Pa. The departure is declared in report R2 §10.1, row \"Minimum "
+              f"gradient\", for Nama Water Services to confirm, together with the tension.")
+
+    D.p(d, "The audit gives every pipe one of three classes on the low case.")
+    n_cls = D.tab_caption(d, "The self-cleansing classes on the low case")
     D.table(d, ["Class", "Test", "Action"], [
         ["Velocity pass", "at least 0.75 m/s at the low-case peak", "none"],
-        ["Tractive pass", "gradient at or above the tractive-force minimum at the low-case peak", "none"],
-        ["Early cleansing", "flow too small for either test", "on the flushing list; not upsized"],
-        ["Fails both: regrade", "real flow, but too flat for either test", "a design fault: steepen the pipe"],
-    ], widths=[3.3, 8.2, 5.0], font=9)
+        ["Tractive pass",
+         f"laid gradient at or above the Mara minimum, Smin = K τ^1.23 Q^−0.461, with τ = {tau:g} Pa, "
+         f"K = {_sci(rc['k'])} and Q the true low-case peak in m³/s, with no floor", "none"],
+        ["Needs washing", "everything else", "on the flushing list; not regraded, not upsized"],
+    ], widths=[3.0, 8.9, 4.6], font=9)
     D.p(d, "")
+    D.p(d, f"The classes are tried in the order of Table {n_cls}, and the first test a pipe passes gives its "
+           f"class. There is no regrade class. A pipe laid to the guideline gradient that still carries too "
+           f"little flow needs washing, not a steeper pipe. That is the guideline's own remedy: in the early "
+           f"phases, when the flow is below the design flow, it asks the operator for more frequent inspection "
+           f"and cleansing. Chapter 12 works the classes pipe by pipe.")
     D.callout(d, "Two values the guideline does not give.",
-              "The guideline sets no numeric tractive tension, so it is carried as a parameter and the class "
-              "counts are reported against it until Nama Water Services confirms a value. Nor does it give a "
-              "low-flow threshold for the early-cleansing class: the 1.5 l/s often quoted comes from the "
-              "literature (Mara), not from PAM-GUD-203, and is used only as a tagged outside assumption.")
-    _src(d, "Project rule, the two flow cases (engineer, 2026-09-11). G201-p71 §7.4.2 (Merrimack, over 100 "
-            "properties), G201-p72 (Peltier alternative; hourly peak factor not to exceed 5.0, a "
-            "recommendation), G201-p72 §7.4.3 (infiltration 720 l/d per km), G201-p73 §7.4.5 (plant +10 %). "
-            "G203 §4.2.2.1 pp 25–27 (two approaches, the steeper governs; tractive force alone at the head); "
-            "G203 §4.2.6 p28 (no threshold). Tractive tension: GAP-9. Low-case property count: the connected "
-            "count, recommended in the design-flow handoff (W14/docs/DESIGN_FLOWS_FOR_NETWORK.md §8), to be "
-            "confirmed by the engineer.")
+              f"The tractive tension: G203 gives no value. The concept stage uses {tau:g} Pa, the class is "
+              f"decided at that value, and Nama Water Services is asked to confirm it before the preliminary "
+              f"design. A low-flow threshold: G203 gives none, and the 1.5 l/s often quoted from the Mara "
+              f"literature is not in PAM-GUD-203. It is not used. The tractive test runs on the true low-case "
+              f"flow, however small.", fill="EAF1F8", colour=D.MID)
+    _src(d, f"Project rules (engineer, 2026-09-11, confirmed): the two flow cases; the connected property count "
+            f"and no infiltration in the low case; the three classes with no regrade class and no low-flow "
+            f"threshold; K = {_sci(rc['k'])} with Q in m³/s and τ = {tau:g} Pa; gradients at the Table 11 "
+            f"minimum on {rc['step_sec']:g} % and {rc['step_trunk']:g} % steps, the tractive force a test only "
+            f"until the preliminary design. G201-p71 §7.4.2 (Merrimack, over 100 properties), G201-p72 (Peltier "
+            f"alternative; hourly peak factor not to exceed 5.0, a recommendation), G201-p72 §7.4.3 "
+            f"(infiltration 720 l/d per km; silent on the early years), G201-p73 §7.4.4 (self-cleansing at the "
+            f"initial stage), G201-p73 §7.4.5 (plant +10 %). G203-p26 (0.75 m/s at peak flow); G203 §4.2.2.1 "
+            f"pp 25–27 (two approaches shall be used, the steeper governs, tractive force alone at the head; "
+            f"the Mara formula and K on p27); G203-p29 Table 11; G203-p18 Table 5; G203 §4.2.6 p28 (more frequent inspection and "
+            f"cleansing in the early phases; no threshold). Tractive tension: none in G203 (GAP-9), NWS to "
+            f"confirm. Departure from §4.2.2.1: report R2 §10.1, row \"Minimum gradient\", NWS to confirm.")
     _worked(d, f"For the whole study area the sizing average is {F.fmt(q_ult)} m³/d and the low-case average "
-               f"{F.fmt(low)} m³/d, before peaking. Properties number {F.fmt(props['y2024'])} in "
-               f"{F.BASE_YEAR}, {F.fmt(props['y2030'])} in 2030 and {F.fmt(props['ultimate'])} at saturation. "
-               f"The low case counts {F.fmt(props['y2030'])} × {c:.2f} = {F.fmt(props['y2030'] * c)} of them "
-               f"as connected. "
+               f"{F.fmt(low)} m³/d, before peaking and before infiltration. Properties number "
+               f"{F.fmt(props['y2024'])} in {F.BASE_YEAR}, {F.fmt(props['y2030'])} in 2030 and "
+               f"{F.fmt(props['ultimate'])} at saturation. The low case counts {F.fmt(props['y2030'])} × "
+               f"{c:.2f} = {F.fmt(props['y2030'] * c)} of them as connected. "
                f"The plant, before infiltration, takes {F.fmt(fl['stp_ultimate_with_margin_m3d'])} m³/d at "
                f"saturation with its margin.")
-    _lives(d, "W14/analysis/design_flows.json (rules, totals, properties, low_case_2030_m3d, "
-              "stp_ultimate_with_margin_m3d; the low-case count under "
-              "rules.open_rulings_recommended.low_case_property_count); the handoff note W14/docs/DESIGN_FLOWS_FOR_NETWORK.md §2 to §4. "
-              "The network engine must read Q_ULT and Q_2030 from W14/shp/PLOTS_load.shp.")
+    _lives(d, f"W14/analysis/design_flows.json: rules, totals, properties, low_case_2030_m3d and "
+              f"stp_ultimate_with_margin_m3d; the confirmed rulings under rules.rulings_confirmed "
+              f"(low_case_property_count, low_case_infiltration, classes, regrade_class, low_flow_threshold, "
+              f"mara_constant, tau_pa, concept_gradients, tractive_sets_gradient). The handoff note "
+              f"W14/docs/DESIGN_FLOWS_FOR_NETWORK.md §2 to §4 and §8. The network engine must read Q_ULT and "
+              f"Q_2030 from W14/shp/PLOTS_load.shp. In W13/py/sewnet/criteria.py, TRACTIVE_K = "
+              f"{E.TRACTIVE_K:g} is the Mara constant; TRACTIVE_QMIN = {E.TRACTIVE_QMIN:g} m³/s is the old "
+              f"{E.TRACTIVE_QMIN * 1000:g} l/s floor that W13/py/sewnet/hydra.py applies before the tractive "
+              f"test, and the audit must not apply it; SLOPE_STEP = {E.SLOPE_STEP:g} is a single "
+              f"{E.SLOPE_STEP * 100:g} % step, to be set by pipe size.")
 
     # ------------------------------------------------------------ 8.6
     D.h(d, 2, "8.6   Why never the saturation flow times the ratio")
@@ -843,7 +924,7 @@ def c08_time(d):
     for k in ("IBRI", "AD DARIZ", "AT TAYYIB", "AL QURAYN", "SHALASHIL", "WADI AL MANKAS"):
         s = S[k]
         rows.append([s["settlement"], F.fmt(s["q_2030"]), F.fmt(s["q_2030_low"]), F.fmt(s["q_ult"]),
-                     F.fmt(s["q_ult"] * c), f"{s['q_ult'] * c / s['q_2030_low']:.1f}"])
+                     F.fmt(s["q_ult"] * c), f"{s['q_ult'] / s['q_2030']:.1f}"])
     rows.append(["**Study area**", f"**{F.fmt(q30)}**", f"**{F.fmt(low)}**", f"**{F.fmt(q_ult)}**",
                  f"**{F.fmt(wrong)}**", f"**{wrong / low:.1f}**"])
     D.table(d, ["Settlement", "Q 2030", f"Q 2030 × {c:.2f} (right)", "Q saturation",
@@ -853,9 +934,9 @@ def c08_time(d):
     sh = S["SHALASHIL"]
     _worked(d, f"Over the study area the shortcut gives {F.fmt(q_ult)} × {c:.2f} = {F.fmt(wrong)} m³/d against "
                f"{F.fmt(low)} m³/d really expected in 2030, {wrong / low:.1f} times too much. In Ibri, already "
-               f"built up, the shortcut is {S['IBRI']['q_ult'] * c / S['IBRI']['q_2030_low']:.1f} times too "
+               f"built up, the shortcut is {S['IBRI']['q_ult'] / S['IBRI']['q_2030']:.1f} times too "
                f"much. In Shalashil, which is mostly empty plots today, it is "
-               f"{sh['q_ult'] * c / sh['q_2030_low']:.0f} times too much: the pipes of its new district would be "
+               f"{sh['q_ult'] / sh['q_2030']:.0f} times too much: the pipes of its new district would be "
                f"declared self-cleansing on a flow that will not arrive for decades.")
     _lives(d, "W14/analysis/design_flows.json, settlements[] (q_2030, q_2030_low, q_ult); "
               "W14/docs/DESIGN_FLOWS_FOR_NETWORK.md §2.")
@@ -899,6 +980,11 @@ def c08_time(d):
         "2024, 2028 and 2030.",
         "Pick a settlement that is mostly empty today and compare Q_ULT × 0.61 with Q_2030 × 0.61. The gap "
         "is the error the shortcut would put into its pipes.",
+        f"Open rules.rulings_confirmed in design_flows.json. The classes must be the three of Table {n_cls}, "
+        f"regrade_class and low_flow_threshold must read none, and low_case_infiltration must read left out.",
+        f"Pick a pipe with between 101 and {int(100 / c)} properties standing upstream in 2030. Times "
+        f"{c:.2f}, that is 100 or fewer connected, so its low-case peak must come from Peltier, with no "
+        f"infiltration added.",
         "Read the Terms of Reference, page 14, for the design years and page 15, item 12, for the five-year "
         "interval.",
     ])

@@ -16,6 +16,7 @@ UP, R = M.up, M.r
 IMG = os.path.join(HERE, "img")
 
 import json  # noqa: E402
+import math  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(HERE))
 FLOWS = os.path.join(REPO, "W14", "analysis", "design_flows.json")
@@ -30,9 +31,15 @@ CO2_TSE = 1.17e-3       # NWS emission intensity, tCO2e per m3 of treated efflue
 LARGE_STP = 20000.0     # m3/d, G203 p65
 CW_M3D, CW_PE = 500.0, 4000   # constructed wetlands, "approximately up to", G203 p101
 K_LS, K_M3S = 5.5e-3, 2.33e-4  # tractive-slope coefficient for Q in l/s and in m3/s, G203 p27
-TAU_INTERIM = 1.0       # Pa: interim value tagged GAP-9 in _BRAIN/05_GAPS.md, NOT a guideline value
-Q_MARA = 1.5            # l/s: Mara minimum peak flow, outside assumption, not in G203
+TAU = 1.0               # Pa: concept-stage tractive tension, project rule (engineer 2026-09-11); no value
+                        # in G203 or G201 (GAP-9), NWS to confirm. NOT a guideline value
 S_DN200 = 5.00          # mm/m, minimum gradient of a DN200 sewer, G203 Table 11 p29
+S_DN900 = 0.75          # mm/m, minimum gradient of a DN900 and larger sewer, G203 Table 11 p29
+STEP_SEC, STEP_TRUNK = 0.5, 0.25   # mm/m gradient steps: secondary pipes; trunk mains DN500 and up
+                                   # (project rule, engineer 2026-09-11)
+TOL_MM = 20.0           # mm, allowed deviation of a laid pipe from its design level, G203 §4.3.1 p29
+V_SC = 0.75             # m/s, self-cleansing velocity at peak flow, G203 p26 (Table 11 is set on it, p29)
+_EQ = {}                # equation numbers stored as they are issued, for the appendix
 
 
 # --------------------------------------------------------------------- helpers
@@ -60,6 +67,24 @@ def _k_conv():
 def _k_gap():
     """Per cent by which the printed l/s constant gives a flatter gradient than the m3/s one."""
     return (1 - K_LS / _k_conv()) * 100
+
+
+def _q_tractive(s_mmm, tau=TAU):
+    """The peak flow (l/s) at which the tractive slope, K 2.33e-4 with Q in m3/s, equals s_mmm:
+    a pipe laid at s_mmm passes the tractive test at that flow or above."""
+    return (K_M3S * tau ** 1.23 / (s_mmm / 1000.0)) ** (1.0 / 0.461) * 1000.0
+
+
+def _peltier_avg(q_peak_ls):
+    """The average flow (l/s) whose Peltier peak, PF = 1.5 + 1/sqrt(Qm) as printed at G201 p72,
+    is q_peak_ls: solves 1.5 Qm + sqrt(Qm) = q_peak."""
+    x = (-1.0 + math.sqrt(1.0 + 6.0 * q_peak_ls)) / 3.0
+    return x * x
+
+
+def _laid(s_mmm, step):
+    """A gradient rounded UP to the step (mm/m): never flatter than the minimum."""
+    return math.ceil(s_mmm / step - 1e-9) * step
 
 
 K_M3S_TXT = f"{K_M3S * 1e4:.2f} × 10⁻⁴"
@@ -596,7 +621,8 @@ def c22_financial(d):
         ["Chemicals", "dose rate times flow treated", "where applicable (G201 p96)"],
         ["Maintenance and repairs", "asset type and condition", "annual provision (G201 p96)"],
         ["Sludge handling and disposal", "tonnes of dry solids a year", "treatment, haulage, gate fees (ours)"],
-        ["Network cleansing", "pipes on the early-cleansing list", "jetting and CCTV by year (ours; Chapter 12)"],
+        ["Network washing", "length in the needs-washing class of the self-cleansing audit",
+         "jetting and CCTV while the early flows are small (ours; G203 §4.2.6 p28; Chapter 12)"],
         ["Monitoring", "sampling regime", "laboratory, odour, effluent compliance (ours)"],
     ], widths=[4.2, 6.2, 6.1], font=9)
     D.p(d, "", space_after=2)
@@ -604,6 +630,15 @@ def c22_financial(d):
            "emissions come from electricity (G201 p99), so the energy line drives "
            "the operating cost and the carbon score together, and the two move in "
            "the same direction rather than trading off.")
+    D.p(d, "Network washing is the line the concept gradients put into the "
+           "operating cost. The gradients are the G203 Table 11 minimum and are "
+           "not steepened for the tractive force (Section 24.2), so a pipe whose "
+           "early flow is too small to keep it clean is washed, not laid deeper. "
+           "The length to wash is the needs-washing class of the self-cleansing "
+           "audit on the 2030 low case. The guideline asks for more frequent "
+           "cleansing in the early years but sets no frequency and no duration "
+           "(G203 §4.2.6 p28), so the schedule is proposed to NWS and agreed, and "
+           "the appraisal carries its cost year by year.")
     _src(d, "G201 §12.3 p96 lists the six components marked; the guideline says "
             "\"shall include, but not be limited to\". Duty-based, never a "
             "percentage of capital: project rule (engineer, 2026-09-01).")
@@ -614,9 +649,10 @@ def c22_financial(d):
              f"same {q_end / q_open:.2f} times as the flow inside the window, and "
              f"the haulage is longer because the plant also receives other plants' "
              f"sludge.")
-    _where(d, "Report R2 §35.3 (W14/report/rpt_gh.py). The early-cleansing list "
-              "comes from the self-cleansing classes of the network run (Chapter "
-              "12; W14/docs/DESIGN_FLOWS_FOR_NETWORK.md §4).")
+    _where(d, "Report R2 §35.3 (W14/report/rpt_gh.py). The washing list is the "
+              "needs-washing class of the self-cleansing audit (Chapter 12; "
+              "W14/docs/DESIGN_FLOWS_FOR_NETWORK.md §4); the network engine does "
+              "not produce it yet.")
 
     # ------------------------------------------------------------------ 22.5
     D.h(d, 2, "22.5   Benefits: avoided cost comes first")
@@ -1032,11 +1068,29 @@ def c24_limits(d):
     conn = rules["connection_ratio_2030"]
     low = j["low_case_2030_m3d"]
     wrong = t["q_ult"] * conn
-    q_dwell = F.RET_DOM * F.LPCD * ib["or_used"]            # l/d, one Ibri dwelling
-    n_dwell = Q_MARA / (q_dwell / 86400.0)
-    s_ls = K_LS * TAU_INTERIM ** 1.23 * Q_MARA ** -0.461 * 1000    # mm/m, l/s constant (comparison only)
-    s_m3 = K_M3S * TAU_INTERIM ** 1.23 * (Q_MARA / 1000) ** -0.461 * 1000   # mm/m, the constant used
+    # the tractive test on a DN200 at its G203 Table 11 minimum: the low-case peak at which it passes
+    q_t = {tau: _q_tractive(S_DN200, tau) for tau in (TAU, 1.5, 2.0)}       # l/s
+    s_back = K_M3S * TAU ** 1.23 * (q_t[TAU] / 1000) ** -0.461 * 1000       # mm/m, must return S_DN200
+    s_ls = K_LS * TAU ** 1.23 * q_t[TAU] ** -0.461 * 1000   # mm/m, the l/s constant (comparison only)
     k_conv, k_gap = _k_conv(), _k_gap()
+    q_full = V_SC * math.pi / 4 * 0.200 ** 2 * 1000         # l/s, DN200 full bore at 0.75 m/s
+    assert abs(s_back - S_DN200) < 1e-6
+    assert q_t[TAU] < 0.25 * q_full, "24.2 says the velocity at that flow is far below 0.75 m/s"
+    assert q_t[1.5] > q_t[TAU] and q_t[2.0] > q_t[1.5]
+    # ... the same flow as Ibri dwellings on the low case: Q_2030 x connection ratio, no infiltration
+    q_dwell = F.RET_DOM * F.LPCD * ib["or_used"]            # l/d, one Ibri dwelling
+    qm_t = _peltier_avg(q_t[TAU])                            # l/s, the average behind that peak
+    pf_t = 1.5 + 1 / math.sqrt(qm_t)
+    n_conn = qm_t / (q_dwell / 86400.0)                      # connected dwellings upstream
+    n_street = n_conn / conn                                 # dwellings on the street in 2030
+    assert n_conn <= 100, "24.4 peaks with Peltier: the connected count must be 100 or fewer"
+    assert pf_t <= 5.0, "24.4 applies no cap: the Peltier factor must stay under 5.0 (G201 p72)"
+    # gradient steps: a DN900 trunk on the trunk step, on one 0.05 % grid, and at a tenth of its minimum
+    s900_trunk, s900_grid = _laid(S_DN900, STEP_TRUNK), _laid(S_DN900, STEP_SEC)
+    assert abs(s900_trunk - S_DN900) < 1e-9 and s900_grid > S_DN900, "24.2: DN900 steps"
+    deeper_km = (s900_grid - S_DN900) * 1000                 # mm of extra depth per km of trunk
+    tenth900 = S_DN900 / 10                                  # mm/m, the superseded step
+    assert tenth900 * 100 < TOL_MM, "24.2 says a tenth of the minimum is finer than the tolerance"
     area_or = t["pop_today"] / ps["properties"]
     cap_or = max(r["or_used"] for r in st)
     n_small = sum(1 for r in st if r["small"])
@@ -1087,7 +1141,6 @@ def c24_limits(d):
         ["Surge vessel volume", "none", "a 20 % minimum allowance (G201 p147)"],
         ["Emergency storage at a pumping station", "none", "nothing; propose and obtain approval"],
         ["Roughness of a raw sewage force main", "none", "potable and treated effluent values only"],
-        ["Minimum low flow for self-cleansing", "Mara, Sleigh and Taylor", "nothing (24.4)"],
         ["Aquifer recharge criteria", "none", "absent from all three documents"],
     ], widths=[5.2, 4.6, 6.7], font=8.5)
     D.p(d, "", space_after=2)
@@ -1097,14 +1150,15 @@ def c24_limits(d):
     # ------------------------------------------------------------------ 24.2
     D.h(d, 2, "24.2   A mandatory method that cannot be completed: tractive force")
     _for(d, "At the head of a system the flow is too small to reach the "
-            "self-cleansing velocity, and the tractive-force gradient is the only "
-            "defence against silting.")
-    _rule(d, "Two approaches shall be used for the sediment-carrying capacity of a "
-             "sewer: the self-cleansing velocity and the minimum tractive force. "
-             "The steeper of the two gradients is adopted as the minimum. At the "
-             "head of a system, where the velocity cannot be reached, the gradient "
-             "is set by the tractive force alone:")
+            "self-cleansing velocity, and the guideline's defence against silting "
+            "there is the tractive-force gradient.")
+    _rule(d, "What the guideline says. Two approaches shall be used for the "
+             "sediment-carrying capacity of a sewer: the self-cleansing velocity and "
+             "the minimum tractive force. The steeper of the two gradients is adopted "
+             "as the minimum. At the head of a system, where the velocity cannot be "
+             "reached, the gradient is set by the tractive force alone:")
     eq = D.next_eq()
+    _EQ["smin"] = eq
     M.display(d, M.seq(M.sub(R("S"), UP("min")), M.EQ, R("K"),
                        M.sup(R("τ"), R("1.23")), M.sup(R("Q"), R("−0.461"))),
               number=eq)
@@ -1113,7 +1167,8 @@ def c24_limits(d):
         ["K", f"coefficient, {K_M3S_TXT} with Q in m³/s (G203 p27); the "
               f"guideline's second constant, for Q in l/s, is discussed below", "—"],
         ["τ", "tractive tension the flow must exert on the wall", "Pa"],
-        ["Q", "peak flow in the pipe", "m³/s"]])
+        ["Q", "peak flow in the pipe; in the self-cleansing audit, the low-case "
+              "peak of Chapter 12", "m³/s"]])
     D.callout(d, "The value of τ is not in the guidelines.",
               "The check is mandatory and the equation is given, but no value of "
               "tractive tension in pascals appears anywhere in the wastewater "
@@ -1121,35 +1176,68 @@ def c24_limits(d):
               "used comes from the literature and must be agreed with NWS in "
               "writing. This is the largest hole in the gravity design chain.")
     _src(d, "G203 §4.2.2.1 pp 25–27; the equation and K at p27, printed only as an "
-            "image. No τ in G203 or G201: open item GAP-9. Interim handling: τ is "
-            "a parameter; 1 Pa (Mara literature) is tagged [GAP-9] wherever it is "
-            "used, never quoted as an NWS value.")
-    _ibri(d, f"At τ = {TAU_INTERIM:.0f} Pa [GAP-9] and the {Q_MARA} l/s low flow "
-             f"[outside assumption, 24.4], entered as {Q_MARA / 1000:.4f} m³/s with "
-             f"K = {K_M3S_TXT}, S min = {s_m3:.2f} mm/m: flatter than the "
-             f"{S_DN200:.2f} mm/m minimum for a DN200 sewer in G203 Table 11 (p29). "
-             f"At that τ a DN200 laid at its G203 Table 11 minimum already meets "
-             f"the tractive test; at a higher τ it may not. The exponent makes τ "
-             f"decisive: doubling it multiplies S min by 2^1.23 = {2 ** 1.23:.2f}, "
-             f"to {s_m3 * 2 ** 1.23:.1f} mm/m. The count of pipes in each "
-             f"self-cleansing class swings with a number nobody has fixed, which "
-             f"is why the classes are always reported against the τ used.")
+            "image. No τ in G203 or G201: open item GAP-9.")
+    _lead(d, "The rule of this project at the concept stage.",
+          f"The tractive force sets no gradient. Every gradient is laid at the "
+          f"G203 Table 11 minimum for its diameter (G203 Table 5 for tertiary "
+          f"pipes), or at the ground where that is steeper, on steps of "
+          f"{STEP_SEC:.2f} mm/m (0.05 %) for secondary pipes and {STEP_TRUNK:.2f} "
+          f"mm/m (0.025 %) for trunk mains of DN500 and above. Equation {eq} is "
+          f"used only as the second test of the self-cleansing audit, at "
+          f"τ = {TAU:.0f} Pa, and it is applied to the gradients at the preliminary "
+          f"design, once NWS confirms τ.")
+    D.p(d, f"The reason is the missing τ. A gradient set by equation {eq} is set by "
+           f"whatever τ is entered, and the exponent makes τ decisive, as the "
+           f"worked number below shows. Steepening the network for a value nobody "
+           f"has confirmed would put permanent depth into every pipe against a "
+           f"silting risk the guideline itself places in the early years (G203 "
+           f"§4.2.6 p28). A pipe laid to the guideline gradient that still carries "
+           f"too little flow needs washing, not a steeper pipe. This departs from "
+           f"G203 §4.2.2.1, which says shall; it is declared in Section 24.6 and put "
+           f"to NWS for confirmation.")
+    D.p(d, f"The steps make a gradient that can be built and read on a profile. A "
+           f"step of a tenth of the minimum would be {tenth900:.3f} mm/m at DN900: "
+           f"{tenth900 * 100:.1f} mm of fall in 100 m of pipe, finer than the "
+           f"{TOL_MM:.0f} mm a laid pipe may deviate from its design level (G203 "
+           f"§4.3.1 p29). One 0.05 % grid for every size would lay a DN900 trunk at "
+           f"{s900_grid:.2f} mm/m instead of its {S_DN900:.2f} mm/m minimum, "
+           f"{deeper_km:.0f} mm deeper for every kilometre; the 0.025 % step lays it "
+           f"at {s900_trunk:.2f} mm/m.")
+    _ibri(d, f"With τ = {TAU:.0f} Pa and K = {K_M3S_TXT}, equation {eq} returns the "
+             f"DN200 minimum of {S_DN200:.2f} mm/m (G203 Table 11 p29) at a peak flow "
+             f"of {q_t[TAU]:.2f} l/s. A DN200 laid at its minimum is therefore a "
+             f"tractive pass once its low-case peak reaches {q_t[TAU]:.2f} l/s. At so "
+             f"small a flow, about {q_t[TAU] / q_full * 100:.1f} % of the {q_full:.1f} l/s "
+             f"it carries running full at {V_SC:.2f} m/s, the velocity is far below {V_SC:.2f} m/s, so the tractive test "
+             f"is the one that decides. The same pipe needs {q_t[1.5]:.1f} l/s at "
+             f"τ = 1.5 Pa and {q_t[2.0]:.1f} l/s at 2 Pa, {q_t[2.0] / q_t[TAU]:.1f} "
+             f"times as much, because doubling τ multiplies S min by 2^1.23 = "
+             f"{2 ** 1.23:.2f}. The class is decided at {TAU:.0f} Pa; the other two "
+             f"values are shown for information until NWS confirms τ.")
     D.p(d, f"Two cautions on the formula itself. G203 p27 prints two coefficients, "
            f"{K_M3S_TXT} for Q in m³/s and {K_LS_TXT} for Q in l/s, and they agree "
            f"only to {k_gap:.1f} %: restated for Q in l/s, {K_M3S_TXT} becomes "
            f"{k_conv * 1000:.2f} × 10⁻³, not {K_LS_TXT}. The l/s constant therefore "
-           f"gives gradients {k_gap:.1f} % flatter; in the example above it gives "
-           f"{s_ls:.2f} mm/m instead of {s_m3:.2f}. This tutorial uses K = "
-           f"{K_M3S_TXT} with Q in m³/s everywhere, which gives the steeper "
-           f"gradient and so errs on the safe side. That choice is recommended in "
-           f"the design-flow handoff, to be confirmed by the engineer. And the "
-           f"formula assumes a flow depth of 0.2 D and n = 0.013; outside those it "
-           f"is an approximation.")
+           f"gives gradients {k_gap:.1f} % flatter; at the {q_t[TAU]:.2f} l/s above "
+           f"it gives {s_ls:.2f} mm/m instead of {S_DN200:.2f}. This method uses "
+           f"K = {K_M3S_TXT} with Q in m³/s everywhere, which gives the steeper "
+           f"gradient and so errs on the safe side. And the formula assumes a flow "
+           f"depth of 0.2 D and n = 0.013; outside those it is an approximation.")
+    _src(d, "project rules (engineer, 2026-09-11, confirmed): the concept gradients "
+            "and their steps; the tractive force as the audit's second test only; "
+            "τ = 1 Pa, NWS to confirm (GAP-9); K = 2.33 × 10⁻⁴ with Q in m³/s. The "
+            "departure from G203 §4.2.2.1 is recorded in report R2 §10.1, NWS to "
+            "confirm. Construction tolerance: G203 §4.3.1 p29.")
     _where(d, "_BRAIN/05_GAPS.md, GAP-9; _BRAIN/02_DESIGN_CRITERIA.md, \"Min "
-              "tractive force method\"; design_flows.json, "
-              "rules.tractive_tension and rules.open_rulings_recommended.mara_constant; "
-              "W14/docs/DESIGN_FLOWS_FOR_NETWORK.md §4 (the four classes) and §8 "
-              "(the constant).")
+              "tractive force method\" and \"PROJECT RULE — gradients at the concept "
+              "stage\"; design_flows.json, rules.tractive_tension and "
+              "rules.rulings_confirmed (concept_gradients, tractive_sets_gradient, "
+              "mara_constant, tau_pa); W14/docs/DESIGN_FLOWS_FOR_NETWORK.md §4 (the "
+              "gradients and the three classes) and §8 (the rulings). A step of a "
+              "tenth of the minimum was W13/docs/W13_DESIGN_LOGIC.md rule 8, now "
+              "superseded. The engine still lays every gradient on one grid, "
+              "SLOPE_STEP = 0.0005 in W13/py/sewnet/criteria.py, to be set by pipe "
+              "size; its TRACTIVE_QMIN floor is not applied in the audit.")
 
     # ------------------------------------------------------------------ 24.3
     D.h(d, 2, "24.3   Errors of substance")
@@ -1181,29 +1269,43 @@ def c24_limits(d):
     D.p(d, "", space_after=2)
 
     # ------------------------------------------------------------------ 24.4
-    D.h(d, 2, "24.4   The 1.5 l/s low-flow threshold")
-    _for(d, "A pipe whose flow is too small for either self-cleansing test is "
-            "neither regraded nor upsized; it goes on the flushing list. Some "
-            "threshold has to say when the flow is too small.")
-    _rule(d, f"Below a peak flow of {Q_MARA} l/s on the early-year case, a pipe "
-             f"that passes neither test is classed early cleansing and flagged for "
-             f"flushing, not upsized; the DN200 minimum governs its size.")
-    _src(d, "not in PAM-GUD-203: the whole document was searched on 2026-09-11. "
-            "It is the minimum peak flow of the Mara simplified-sewerage "
-            "literature, a WC flush, which G203 cites only for the tractive-slope "
-            "formula (p27). G203 §4.2.6 p28 asks for more frequent inspection and "
-            "cleansing of pipes that cannot self-cleanse and gives no threshold. "
-            "Tagged outside assumption; to be confirmed with NWS.")
-    _ibri(d, f"One Ibri dwelling at the settlement's occupancy of "
+    D.h(d, 2, "24.4   Cleansing in the early years: a requirement with no threshold")
+    _for(d, "Some pipes cannot clean themselves in the first years, whatever "
+            "gradient the guideline gives them. The guideline asks the operator to "
+            "wash them; the design has to say which ones.")
+    _rule(d, f"The self-cleansing audit puts every pipe in one of three classes on "
+             f"its low-case peak flow. Velocity pass: at least {V_SC:.2f} m/s. "
+             f"Tractive pass: the laid gradient at least the S min of equation {eq} "
+             f"at τ = {TAU:.0f} Pa, on the true flow. Needs washing: everything else, "
+             f"and that class is the flushing list. No minimum flow excuses a pipe "
+             f"from the tractive test, and no class relays a pipe steeper: a pipe "
+             f"laid to the guideline gradient that still carries too little flow is "
+             f"washed.")
+    _src(d, "G203 §4.2.6 p28: in the early development phases the flow is usually "
+            "below the design flow, so the operator should inspect and cleanse more "
+            "often. It gives no flow threshold, no frequency and no duration. "
+            "Velocity, G203 p26. The low case carries no infiltration: G201 §7.4.3 "
+            "p72 is silent on it, and §7.4.4 p73 asks only that self-cleansing "
+            "velocities be ensured at the initial stage of operations. The three "
+            "classes, the connected count and the absence of a threshold: project "
+            "rule (engineer, 2026-09-11, confirmed).")
+    _ibri(d, f"Take a DN200 at its {S_DN200:.2f} mm/m minimum draining a street of "
+             f"Ibri dwellings. One dwelling at the settlement's occupancy of "
              f"{ib['or_used']:.2f} returns {F.RET_DOM} × {F.LPCD:.0f} × "
              f"{ib['or_used']:.2f} = {F.fmt(q_dwell)} l/d, or "
-             f"{q_dwell / 86400:.4f} l/s. Unpeaked and fully connected, a pipe "
-             f"needs about {F.fmt(n_dwell)} such dwellings upstream before its "
-             f"average flow alone reaches {Q_MARA} l/s; peaking lowers that count, "
-             f"the connection ratio of {conn:.2f} raises it. Either way, the "
-             f"threshold decides how many pipe heads land on the flushing list.")
-    _where(d, "design_flows.json, rules.low_flow_1_5_l_s; "
-              "_BRAIN/02_DESIGN_CRITERIA.md, \"1.5 L/s is NOT in PAM-GUD-203\".")
+             f"{q_dwell / 86400:.4f} l/s. The tractive pass of Section 24.2 needs a "
+             f"low-case peak of {q_t[TAU]:.2f} l/s. With 100 or fewer properties "
+             f"connected the peak is Peltier's, as printed at G201 p72: "
+             f"{q_t[TAU]:.2f} l/s is the peak of {qm_t:.2f} l/s average at a factor "
+             f"of {pf_t:.2f}, which is {F.fmt(n_conn)} connected dwellings. At the "
+             f"2030 connection ratio of {conn:.2f} that is about {F.fmt(n_street)} "
+             f"dwellings on the street. A DN200 head with fewer upstream in 2030, "
+             f"and no other load, goes on the washing list, and the length of that "
+             f"list is what the operating cost prices (Section 22.4).")
+    _where(d, "design_flows.json, rules.rulings_confirmed (classes, "
+              "low_case_property_count, low_case_infiltration); "
+              "W14/docs/DESIGN_FLOWS_FOR_NETWORK.md §4; the audit is Chapter 12. "
+              "The network engine does not run the three classes yet.")
 
     # ------------------------------------------------------------------ 24.5
     D.h(d, 2, "24.5   Cross-references that do not resolve")
@@ -1230,6 +1332,7 @@ def c24_limits(d):
     _rule(d, "Every departure is stated in the report with the guideline position, "
              "the position adopted and the reason, and confirmation is requested.")
     D.tab_caption(d, "Departures and the positions adopted")
+    tab_dep = D._counters["tab"]
     D.table(d, ["Subject", "Guideline position", "Position adopted", "Reason"], [
         ["Occupancy rate (G201 p58–59)",
          "Population divided by housing units, both from NCSI",
@@ -1267,6 +1370,13 @@ def c24_limits(d):
          "standard such as BS EN 752",
          "The planning ratios and return rates of the guideline, plot by plot",
          "The quantities a detailed method needs are not held"],
+        ["Minimum gradient (G203 §4.2.2.1 pp 25–27)",
+         "The steeper of the self-cleansing and the minimum tractive force gradients",
+         "G203 Table 11 minimum gradients; the tractive force used at the concept "
+         "stage only to identify the pipes needing early washing, at a tractive "
+         "tension of 1 Pa",
+         "The tractive tension is not stated in the guidelines; the tractive force "
+         "sets gradients at the preliminary design once NWS confirms it"],
         ["Growth beyond the forecast (G201 p58)",
          "Not extrapolated more than ten years beyond the available forecast",
          "The Inception Report series to 2100, used for its growth rates only",
@@ -1278,7 +1388,8 @@ def c24_limits(d):
             "Dated project rules behind the rows: load basis locked "
             "(engineer, 2026-08-30); occupancy per settlement with floor and cap "
             "(engineer, 2026-09-10); the estates (engineer, 2026-09-09 and -10); "
-            "the two flow cases (engineer, 2026-09-11).")
+            "the two flow cases and the concept-stage gradients (engineer, "
+            "2026-09-11).")
     _ibri(d, f"The occupancy rows in figures: over the study area "
              f"{F.fmt(t['pop_today'])} people on {F.fmt(ps['properties'])} "
              f"domestic properties is {area_or:.2f} persons per property; Ibri "
@@ -1301,9 +1412,13 @@ def c24_limits(d):
            "left out and said to be left out.")
     D.tab_caption(d, "Pending items and what closes them")
     D.table(d, ["Item", "Status", "What closes it"], [
-        ["Tractive tension τ (GAP-9)", "no value in G203 or G201; a parameter; 1 Pa "
-         "tagged where used", "NWS confirms a value in writing"],
-        ["1.5 l/s low-flow threshold", "not in G203; Mara, tagged", "NWS confirms or sets another"],
+        ["Tractive tension τ (GAP-9)", "no value in G203 or G201; 1 Pa at the concept "
+         "stage, used only in the self-cleansing audit", "NWS confirms a value in "
+         "writing before the preliminary design"],
+        ["Minimum gradient at the concept stage", f"G203 Table 11 minimum; the tractive "
+         f"force sets no gradient yet: a departure from G203 §4.2.2.1 (Table {tab_dep})",
+         "NWS confirms the departure; the tractive force applied to the gradients at "
+         "the preliminary design"],
         ["Tanker supply and sewage tankers (GAP-19, GAP-20)",
          "not in any flow; the governorate tanker ratio is unusable (24.3)",
          "filling-station and delivery records"],
@@ -1346,7 +1461,7 @@ def c24_limits(d):
          f"{F.RET_DOM * 100:.0f} % and {F.RET_ND * 100:.0f} %", "consistent"],
         ["Infiltration", "720 l/d/km, new network (G201 p72)", "10 % of the flow",
          f"{rules['infiltration_l_per_day_per_km']:.0f} l/d/km per pipe, never "
-         f"on the plot", "confirm with NWS"],
+         f"on the plot; not in the low case", "confirm with NWS"],
         ["Peak", "Merrimack over 100 properties, Peltier alternative; hourly "
          "factor ≤ 5.0 recommended (G201 p71–72)", "Peltier plus a 20 % weekly peak",
          "Merrimack or Peltier per pipe; no weekly peak", "confirm: peaking twice"],
@@ -1384,14 +1499,26 @@ def c24_limits(d):
            "formula is not NWS's, attribute it to whoever it belongs to. And where "
            "the guideline is silent on something it makes mandatory, propose a "
            "value, say where it came from, and obtain agreement in writing before "
-           "the design depends on it.")
+           "the design depends on it. The concept gradients follow that rule: they "
+           "do not depend on τ, and the one place τ enters, the washing list, is "
+           "reported against the value used.")
 
     _check(d, "24.10   Check it yourself", [
         "Pick any guideline value in the report and open the page it cites. If the "
         "value is not on that page, the citation is wrong, whatever the value.",
         "Search the report for τ. Every use must carry its value and the tag "
         "[GAP-9].",
-        "Search the report for 1.5 l/s. It must never be attributed to PAM-GUD-203.",
+        f"Pick any concept gradient and check that it is the G203 Table 11 minimum "
+        f"for its diameter, or the ground where steeper, on a step of "
+        f"{STEP_SEC:.2f} mm/m, or {STEP_TRUNK:.2f} mm/m on a trunk main of DN500 and "
+        f"above, and "
+        f"that none was steepened for the tractive force.",
+        f"For a pipe classed tractive pass, recompute S min by equation {eq} with "
+        f"τ = {TAU:.0f} Pa, K = {K_M3S_TXT} and its low-case peak in m³/s. The laid "
+        f"gradient must be at least that.",
+        "Check that no pipe was excused from the tractive test for a small flow and "
+        "that none is listed for relaying steeper: the audit has three classes, and "
+        "a pipe that passes neither test is on the washing list.",
         f"Recompute the early-year flow two ways: {F.fmt(t['q_ult'])} × {conn:.2f} = "
         f"{F.fmt(wrong)} m³/d is wrong; the sum of Q_2030 × {conn:.2f} over the "
         f"plots, {F.fmt(low)} m³/d, is right.",
@@ -1409,6 +1536,7 @@ def appendix(d):
     conn = rules["connection_ratio_2030"]
     q_cap = F.LPCD * (F.RET_DOM + F.R_ND * F.RET_ND + F.R_GOV * F.RET_ND)
     cap_or = max(r["or_used"] for r in st)
+    eq_smin = (f"Equation {_EQ['smin']}, Section 24.2" if "smin" in _EQ else "Section 24.2")
 
     D.h(d, 1, "Appendix A   Equations, fields and the rerun order", page_break=True)
     D.p(d, "The reference half of the tutorial: every equation with its source, "
@@ -1442,8 +1570,9 @@ def appendix(d):
         ["17", "W = ρ g a L", "G203 p26", "companion to 16"],
         ["18", "S min = K τ^1.23 Q^−0.461", "G203 p27",
          f"image only; K printed as {K_M3S_TXT} (Q in m³/s) and {K_LS_TXT} (Q in l/s), "
-         f"{_k_gap():.1f} % apart; this method uses {K_M3S_TXT} with Q in m³/s "
-         f"(Section 24.2); no τ, defect D4"],
+         f"{_k_gap():.1f} % apart; this method uses {K_M3S_TXT} with Q in m³/s at "
+         f"τ = {TAU:.0f} Pa, as the audit's second test only: it sets no gradient at "
+         f"the concept stage (Section 24.2); no τ, defect D4"],
         ["19", "H L = β (w/b)^(4/3) h sin θ (Kirschmer)", "G203 p104", "exponent printed as 1.33"],
         ["20", "V = 0.25 Q T (wet well live volume)", "G203 p48", "T = 3600 ÷ starts per hour; 10 starts/h up to 30 kW"],
         ["21", "NPSHa = Ha − Hvpa − Hst − Hf", "G203 p47", "margin ≥ 1 m"],
@@ -1487,13 +1616,13 @@ def appendix(d):
          "growth_by_settlement.py; Q_2030, Q_2055, Q_ULT"],
         ["M7", "Properties in year y = G_DOM + (POP y − POP) ÷ OR_S",
          "project rule", "make_design_flows.py; design_flows.json properties"],
-        ["M8", f"Q low = Q 2030 × {conn:.2f}, summed per pipe, then peaked on the "
-               f"connected count, properties of 2030 × {conn:.2f} (Merrimack over "
-               f"100, Peltier at or under)",
-         "project rule 2026-09-11; ratio from the Inception Report; the connected "
-         "count recommended in the design-flow handoff, to be confirmed by the engineer",
+        ["M8", f"Q low = Q 2030 × {conn:.2f}, summed per pipe, no infiltration, then "
+               f"peaked on the connected count, properties of 2030 × {conn:.2f} "
+               f"(Merrimack over 100, Peltier at or under)",
+         "project rule 2026-09-11; ratio from the Inception Report",
          "design_flows.json low_case_2030_m3d"],
-        ["M9", "Infiltration = 720 l/d/km × pipe length, added per pipe", "G201 p72",
+        ["M9", "Infiltration = 720 l/d/km × pipe length, added per pipe; not in the "
+               "low case", "G201 p72",
          "the network engine, never the plot"],
         ["M10", "Plant capacity = (settlement total + network infiltration + "
                 "tankers when known) × 1.10", "G201 p73",
@@ -1506,6 +1635,16 @@ def appendix(d):
         ["M14", "S j = Σ w k s jk, Σ w k = 1", "ours, to agree with NWS", "Section 23.3"],
         ["M15", "(LCC j − LCC min) ÷ LCC min ≤ 0.10", "G201 p106; the base is ours",
          "Section 23.5"],
+        ["M16", f"S laid = G203 Table 11 minimum (G203 Table 5 for tertiary pipes), or "
+                f"the ground where steeper, rounded up to a step of {STEP_SEC:.2f} mm/m; "
+                f"{STEP_TRUNK:.2f} mm/m for trunk mains DN500 and above",
+         "G203 p29, p18; steps project rule 2026-09-11",
+         "Section 24.2; engine SLOPE_STEP, still one 0.0005 grid, to be set by size"],
+        ["M17", f"Class on the low-case peak Q sc: velocity pass if v ≥ {V_SC:.2f} m/s; "
+                f"else tractive pass if S laid ≥ {K_M3S_TXT} × τ^1.23 × Q sc^−0.461 "
+                f"(Q sc in m³/s, τ = {TAU:.0f} Pa, true flow, no floor); else needs washing",
+         "G203 p26, p27, §4.2.6 p28; project rule 2026-09-11; τ NWS to confirm (GAP-9)",
+         eq_smin + "; Chapter 12; not yet run by the engine"],
     ], widths=[1.1, 7.6, 4.0, 3.8], font=8, keep_together=False)
     D.p(d, "", space_after=2)
     D.p(d, "The formulae that are not in the guidelines, and what to cite instead, "

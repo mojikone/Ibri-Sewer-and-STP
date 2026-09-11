@@ -18,6 +18,7 @@ IMG = os.path.join(HERE, "img")
 import json
 import math
 from functools import lru_cache
+from collections import Counter
 
 REPO = os.path.dirname(os.path.dirname(HERE))
 W8 = os.path.join(REPO, "W8")
@@ -40,7 +41,16 @@ MK_C, MK_E = 2.65, 0.879      # Merrimack, G201-p71
 PT_A, PT_B = 1.5, 1.0         # Peltier as printed, G201-p72
 PF_REC = 5.0                  # hourly peak factor recommendation, G201-p72
 N_THRESH = 100                # properties, G201-p71
-TAB11_MIN = {200: 5.00, 315: 2.70, 900: 0.75}   # minimum gradient, mm/m, G203-p29 Table 11 (DN900 and over)
+TAB11_MIN = {200: 5.00, 250: 3.75, 315: 2.70, 400: 2.05, 500: 1.55,
+             600: 1.25, 700: 1.00, 800: 0.85, 900: 0.75}   # minimum gradient, mm/m, G203-p29 Table 11 (DN900 and over)
+STEP_SEC, STEP_TRUNK, TRUNK_DN = 0.5, 0.25, 500   # gradient steps, mm/m: 0.05 % for secondary pipes, 0.025 % for
+                                                  # primary trunks of DN500 and up (project rule, engineer 2026-09-11)
+TOL_MM = 20.0                 # line and level of a laid pipe, G203-p29 section 4.3.1
+V_SC = 0.75                   # m/s at the peak, G203-p26
+KS, NU, GRAV = 0.0015, 1.141e-6, 9.81   # Colebrook-White roughness, m (G203-p24, p28); viscosity at 15 C, m2/s (G203-p25 Table 9)
+PVC_SDR = 34.0                # PVC-U SN8 bore up to DN315, as the design engine (W8 criteria.internal_diameter)
+K_M3S = 2.33e-4               # Mara, Sleigh and Taylor constant with Q in m3/s, G203-p27 (engineer, 2026-09-11)
+TAU = float(FLOWS["rules"]["rulings_confirmed"]["tau_pa"])   # Pa; none in G203 (GAP-9); NWS to confirm
 LS = 86.4                     # m3/d per l/s
 MK_M3D = MK_C * 1000 ** (1 - MK_E)   # Merrimack constant when both flows are in m3/d
 Q_FUT = F.RET_DOM * F.LPCD + F.RET_ND * (F.R_ND + F.R_GOV) * F.LPCD   # l/d per future resident
@@ -102,6 +112,64 @@ def inf_m3d(length_m):
     return INF * (length_m / 1000.0) / 1000.0
 
 
+# ------------------------------------------ gradients and the self-cleansing audit
+def grid_step(dn):
+    """Gradient step, mm/m, by pipe size: 0.25 from DN500 (the primary trunks), 0.5 below."""
+    return STEP_TRUNK if dn >= TRUNK_DN else STEP_SEC
+
+
+def on_grid(s_mmm, step):
+    """A gradient in mm/m rounded UP to the step: never flatter than the minimum."""
+    return math.ceil(s_mmm / step - 1e-9) * step
+
+
+def _bore(dn):
+    """True bore, m, as the design engine: PVC-U is OD-designated to DN315, GRP is ID-designated."""
+    return dn / 1000.0 * (1.0 - 2.0 / PVC_SDR) if dn <= 315 else dn / 1000.0
+
+
+def _v_cw(r_m, s):
+    """Colebrook-White velocity, m/s, part full (the diameter replaced by 4R)."""
+    k = math.sqrt(8.0 * GRAV * r_m * s)
+    return -2.0 * k * math.log10(KS / (14.8 * r_m) + 2.51 * NU / (4.0 * r_m * k))
+
+
+def velocity(dn, s_mmm, q_ls):
+    """Velocity, m/s, of q_ls running part full in dn laid at s_mmm; None if the pipe cannot carry it."""
+    D_m, s = _bore(dn), s_mmm / 1000.0
+
+    def ar(y):
+        th = 2.0 * math.acos(1.0 - 2.0 * y)
+        a = D_m * D_m / 8.0 * (th - math.sin(th))
+        return a, a / (D_m * th / 2.0)
+
+    def q_at(y):
+        a, r = ar(y)
+        return a * _v_cw(r, s) * 1000.0
+    if q_at(0.93) < q_ls:
+        return None
+    lo, hi = 1e-7, 0.93
+    for _ in range(100):
+        mid = 0.5 * (lo + hi)
+        lo, hi = (mid, hi) if q_at(mid) < q_ls else (lo, mid)
+    return _v_cw(ar(0.5 * (lo + hi))[1], s)
+
+
+def smin_mara(q_ls, tau=TAU):
+    """Mara, Sleigh and Taylor minimum gradient, mm/m, on the true flow (no floor), Q in m3/s (G203-p27)."""
+    return K_M3S * tau ** 1.23 * (q_ls / 1000.0) ** -0.461 * 1000.0
+
+
+def audit_class(dn, s_mmm, q_ls, tau=TAU):
+    """The three classes of the self-cleansing audit (engineer, 2026-09-11), on the low-case peak."""
+    v = velocity(dn, s_mmm, q_ls)
+    if v is not None and v >= V_SC:
+        return "velocity pass", v
+    if s_mmm >= smin_mara(q_ls, tau):
+        return "tractive pass", v
+    return "needs washing", v
+
+
 # ------------------------------------------------------ the test-area network
 @lru_cache(None)
 def _net():
@@ -142,8 +210,8 @@ def _net():
     meta = street.set_index("LABEL")[["TIER", "DN_MM", "SLOPE_PCT", "ND_UP", "ND_DN", "IS_JOIN", "LEN_M"]]
     up = up.join(meta)
     up["Q_LOW"] = up.Q_2030 * CONN
-    # low-case property count: the connected count, properties of 2030 x CONN, as recommended in
-    # design_flows.json rules.open_rulings_recommended.low_case_property_count (to be confirmed)
+    # low-case property count: the connected count, properties of 2030 x CONN
+    # (engineer, 2026-09-11; design_flows.json rules.rulings_confirmed.low_case_property_count)
     up["PR_LOW"] = up.PR_30 * CONN
     # the worked pipe: the street main sewer with most properties at saturation that is not itself a join
     mains = up[(up.TIER == "lateral") & (up.IS_JOIN == 0)].copy()
@@ -165,6 +233,24 @@ def _net():
     a, b = stats["low_standing"], stats["low"]
     flip = [(pa, pb) for pa, pb, ha, hb in zip(a["peaks"], b["peaks"], a["how"], b["how"]) if ha != hb]
     stats["flip"] = dict(n=len(flip), lower=sum(1 for pa, pb in flip if pb < pa))
+    # the audit class of every pipe whose uncapped low-case factor passes 5.0, on its laid gradient,
+    # and again with the factor held to 5.0
+    lo = up[up.Q_LOW > 0]
+    o5 = []
+    for dn, s_pct, q, pr in zip(lo.DN_MM, lo.SLOPE_PCT, lo.Q_LOW, lo.PR_LOW):
+        qp, pf, _ = peak(q, pr)
+        if pf > PF_REC:
+            o5.append((int(dn), s_pct * 10.0, audit_class(int(dn), s_pct * 10.0, qp / LS)[0],
+                       audit_class(int(dn), s_pct * 10.0, q * PF_REC / LS)[0]))
+    stats["over5_cls"] = Counter(x[2] for x in o5)
+    stats["over5_cls_capped"] = Counter(x[3] for x in o5)
+    stats["over5_dn"] = sorted({x[0] for x in o5})
+    # the test-area design raised the tractive flow to 1.5 l/s (its TRACTIVE_QMIN), so its tractive slope
+    # never passed the DN200 Table 11 minimum: its DN200 gradients are the concept-stage gradients
+    assert smin_mara(1.5, 1.0) < TAB11_MIN[200]
+    assert all(s >= on_grid(TAB11_MIN[dn], grid_step(dn)) - 1e-9
+               and abs(s / grid_step(dn) - round(s / grid_step(dn))) < 1e-6 for dn, s, _, _ in o5), \
+        "a pipe of the Section 9.6 group is off its Table 11 step: rewrite Section 9.6"
     jp = [peak(q, p)[0] for q, p in zip(joins.Q_ULT, joins.PR_ULT)]
     return dict(up=up, worked=worked, header=header, stats=stats, outdeg=outdeg,
                 plots_in=len(pts), q_ult_in=float(pts.Q_ULT.sum()), q_today_in=float(pts.QADF.sum()),
@@ -389,10 +475,19 @@ def c09_peak(d):
           f"uncapped factor above 5.0 at saturation and {f(st['low']['over5'])} in the {OPEN_YEAR} low "
           f"case. They are the first pipes below a head. A single Ibri plot at saturation makes about "
           f"one cubic metre a day, and Peltier gives it a factor of {peltier_pf(1.0):.1f}. The capacity "
-          "test on these pipes is not affected, because the minimum diameter governs them; the "
-          "self-cleansing audit places them in the early-cleansing class.")
-    _where(d, "Peak factor per pipe: function peak in this chapter's script, uncapped. The class list: "
-              "W14/docs/DESIGN_FLOWS_FOR_NETWORK.md §4.")
+          "test on these pipes is not affected, because the minimum diameter governs them.")
+    oc, occ = st["over5_cls"], st["over5_cls_capped"]
+    assert oc["velocity pass"] == 0 and st["over5_dn"] == [200], "the Section 9.6 group has changed: rewrite it"
+    D.p(d, f"The self-cleansing audit of Chapter 12 judges these pipes on their uncapped low-case peak, "
+           f"at τ = {TAU:g} Pa, on the gradients the test-area design laid. All {f(st['low']['over5'])} are "
+           f"DN200 secondary main sewers, at the G203 Table 11 minimum or steeper, on the {STEP_SEC / 10:g} % "
+           f"step. None reaches 0.75 m/s. {f(oc['tractive pass'])} are laid at or above their tractive "
+           f"minimum and pass on the second test; the other {f(oc['needs washing'])} need washing and go "
+           "on the flushing list. Held to a factor of 5.0 the peak would be smaller, and "
+           f"{f(occ['needs washing'] - oc['needs washing'])} more pipes would need washing.")
+    _where(d, "Peak factor per pipe: function peak in this chapter's script, uncapped. The class of each "
+              "pipe: function audit_class in the same script. The class rule: "
+              "W14/docs/DESIGN_FLOWS_FOR_NETWORK.md §4 and design_flows.json rules.rulings_confirmed.classes.")
 
     # ---------------------------------------------------------------- 9.7
     D.h(d, 2, "9.7   Units")
@@ -465,10 +560,12 @@ def c09_peak(d):
           "credited with flow it does not get is declared self-cleansing while it silts.")
     _lead(d, "The rule.  ", f"Size on the saturation flow, Q_ULT, fully connected. Check "
           f"self-cleansing on the opening-year flow, Q_{OPEN_YEAR}, times the connection ratio "
-          f"{CONN:.2f}. Sum each case upstream, count its properties (in the low case the connected "
-          "ones, see the box below), and peak it by its own formula. "
-          "The low-case peak feeds both the velocity test and the tractive-slope test. Never use "
-          "saturation times the ratio.")
+          f"{CONN:.2f}. Sum each case upstream, count its properties and peak it by its own formula. "
+          f"In the low case the properties counted are the connected ones, those standing in "
+          f"{OPEN_YEAR} times {CONN:.2f}, and no infiltration is added. The low-case peak feeds the two "
+          "tests of the self-cleansing audit, velocity first and tractive force second (Chapter 12), "
+          "which put every pipe in one of three classes: velocity pass, tractive pass or needs washing. "
+          "Never use saturation times the ratio.")
     _eq(d, M.sub(R("Q"), UP("low")), M.EQ, R(f"{CONN:.2f}"), M.TIMES,
         M.nary("∑", M.seq(R("i"), R(" ∈ "), UP("up")), "", M.sub(R("q"), UP(f"{OPEN_YEAR},i")), hide_hi=True))
     _sym(d, [["Q low", "low-case average flow for the self-cleansing test", "m³/d"],
@@ -484,28 +581,31 @@ def c09_peak(d):
     _src(d, "Project rule (engineer, 2026-09-11), _BRAIN/02_DESIGN_CRITERIA.md §1, the two-flow-case "
             "row. Coverage 100 % by the end of the planning period: G201-p73 §7.4.4. The opening year "
             "is the construction year or 2030 (Terms of Reference). The self-cleansing tests: G203 "
-            "§4.2.2.1, pp 25–27; early phases: G203 §4.2.6, p28. Property count in the low case: "
-            "recommended in the design-flow handoff, to be confirmed by the engineer "
-            "(W14/docs/DESIGN_FLOWS_FOR_NETWORK.md §8).")
+            "§4.2.2.1, pp 25–27; early phases: G203 §4.2.6, p28. The connected count, no infiltration "
+            "in the low case and the three classes: project rules (engineer, 2026-09-11), "
+            "W14/docs/DESIGN_FLOWS_FOR_NETWORK.md §8. G201 §7.4.3 (p72) sets the infiltration allowance "
+            "and says nothing of the early years; G201 §7.4.4 (p73) asks only that the early flow be "
+            "considered at the initial stage of operations, to ensure self-cleaning velocities.")
     fl = st["flip"]
     band_hi = N_THRESH / CONN
     fl_dir = ("every one of them gets a lower low-case peak" if fl["lower"] == fl["n"]
               else f"{f(fl['lower'])} of them get a lower low-case peak")
-    D.callout(d, "A point to confirm: the property count in the low case.",
-              f"The low case counts the connected properties: those standing in {OPEN_YEAR} times "
-              f"{CONN:.2f}. This is recommended in the design-flow handoff, to be confirmed by the "
-              "engineer. Near the threshold the count decides the formula. A pipe with more than 100 "
+    D.callout(d, "Why the connected count, and no infiltration.",
+              "A property that is not yet connected sends nothing down the pipe, so counting it would "
+              "choose the formula for flow the pipe does not carry. Near the threshold the count "
+              "decides the formula. A pipe with more than 100 "
               f"and up to about {band_hi:.1f} properties standing ({N_THRESH + 1} to "
               f"{math.floor(band_hi)} in whole properties) has 100 or fewer connected, so it takes "
               f"Peltier instead of Merrimack. On the test area {f(fl['n'])} pipes sit in that band and "
               f"{fl_dir}, which is the cautious direction for this test. Counted on the properties "
               f"standing, {f(st['low_standing']['merr'])} pipes would take Merrimack in the low case "
-              f"instead of {f(st['low']['merr'])}. The ruling should be made before the self-cleansing "
-              "audit runs.",
+              f"instead of {f(st['low']['merr'])}. Infiltration is left out for the same reason: a "
+              "steady leak credited to the pipe would count as flow that cleans it, and adding flow is "
+              "the unsafe direction for this test.",
               fill="EAF1F8", colour=D.MID)
     _where(d, f"W14/shp/PLOTS_load.shp fields Q_ULT and Q_{OPEN_YEAR}; design_flows.json keys "
               "rules.size_on, rules.self_cleansing_on, rules.connection_ratio_2030, low_case_2030_m3d and "
-              "rules.open_rulings_recommended.low_case_property_count.")
+              "rules.rulings_confirmed (low_case_property_count, low_case_infiltration, classes).")
 
     # ---------------------------------------------------------------- 9.10
     D.h(d, 2, "9.10   A worked pipe in Ibri")
@@ -538,7 +638,7 @@ def c09_peak(d):
         ["Peak flow, l/s", f"{cu['qp'] / LS:.2f}", f"{cl['qp'] / LS:.2f}"],
         [f"Infiltration, {f(w.LEN)} m at {INF:.0f} l/d per km, l/s", f"{cu['qi'] / LS:.4f}", "not added"],
         ["**Design flow, l/s**", f"**{(cu['qp'] + cu['qi']) / LS:.2f}**", f"**{cl['qp'] / LS:.2f}**"],
-        ["Used for", "capacity: d/D and maximum velocity", "velocity and tractive-slope tests"],
+        ["Used for", "capacity: d/D and maximum velocity", "the audit: velocity, then tractive force"],
     ]
     D.tab_caption(d, f"Design flows of {ww}, a secondary main sewer in Ibri")
     D.table(d, ["Step", "Sizing case, saturation", f"Low case, {OPEN_YEAR}"], rows,
@@ -565,10 +665,24 @@ def c09_peak(d):
            f"low-case factor {alt_l:.2f} instead of {cl['pf']:.2f}. The low-case figure is the one "
            f"that matters: the self-cleansing tests on this pipe are judged on {cl['qp'] / LS:.2f} "
            f"l/s, and the other formula would have credited it with {alt_l * cl['q'] / LS:.2f} l/s.")
-    D.p(d, f"The low case is taken without infiltration: recommended in the design-flow handoff, to be "
-           f"confirmed by the engineer. Here the allowance would add "
-           f"{cl_inf / LS:.4f} l/s to {cl['qp'] / LS:.2f} l/s and cannot change the result; on a long "
-           "pipe with very little flow it could, and adding flow is the unsafe direction for this test.")
+    D.p(d, f"The low case is taken without infiltration (Section 9.9). Here the allowance would add "
+           f"{cl_inf / LS:.4f} l/s to {cl['qp'] / LS:.2f} l/s and could not change the result; on a long "
+           "pipe with very little flow it could.")
+    dn_w, s_w, q_w = int(w.DN_MM), w.SLOPE_PCT * 10.0, cl["qp"] / LS
+    cls_w, v_w = audit_class(dn_w, s_w, q_w)
+    sm_w = {t: smin_mara(q_w, t) for t in (TAU, 1.5, 2.0)}
+    assert abs(s_w - on_grid(TAB11_MIN[dn_w], grid_step(dn_w))) < 1e-9, f"{ww} is no longer at its Table 11 step"
+    assert cls_w == "tractive pass" and audit_class(dn_w, s_w, q_w, 1.5)[0] == "needs washing", \
+        f"{ww} has moved out of its stated class ({cls_w}): rewrite Section 9.10"
+    D.p(d, f"The audit then judges {q_w:.2f} l/s on the gradient the pipe is laid at, {w.SLOPE_PCT:.2f} % "
+           f"or {s_w:.1f} mm/m: the G203 Table 11 minimum for DN{dn_w}, on the {grid_step(dn_w) / 10:g} % "
+           f"step of Section 10.6. Part full at that flow it runs at {v_w:.2f} m/s, short of 0.75 m/s, so "
+           f"it is not a velocity pass. Its tractive minimum at τ = {TAU:g} Pa, with Q in m³/s, is "
+           f"{K_M3S * 1e4:.2f} × 10⁻⁴ × {TAU:g}^1.23 × {q_w / 1000:.6f}^−0.461 = {sm_w[TAU] / 1000:.5f}, "
+           f"or {sm_w[TAU]:.2f} mm/m. The pipe is laid steeper than that, so it is a tractive pass. The "
+           f"margin is thin: at 1.5 Pa it would need {sm_w[1.5]:.2f} mm/m, and at 2 Pa {sm_w[2.0]:.2f} "
+           f"mm/m, and would go on the flushing list. The class is decided at {TAU:g} Pa, the value NWS "
+           "is asked to confirm.")
     hu = _case(hd.Q_ULT, hd.PR_ULT, hd.LEN)
     hl = _case(hd.Q_LOW, hd.PR_LOW)
     D.p(d, f"For scale, the same steps on {N['header']}, the header at the largest join of the test "
@@ -586,7 +700,10 @@ def c09_peak(d):
     D.p(d, f"The header's factor is {hu['pf']:.2f} against {cu['pf']:.2f} for the street sewer, on "
            f"{hu['q'] / cu['q']:.0f} times the flow. Its infiltration, {hu['qi'] / LS:.3f} l/s, is "
            f"{hu['qi'] / hu['qp'] * 100:.1f} % of its peak.")
-    _src(d, "Formulas G201-p71–72; infiltration G201-p72; cases and threshold as in Sections 9.3 and 9.9.")
+    _src(d, "Formulas G201-p71–72; infiltration G201-p72; cases and threshold as in Sections 9.3 and 9.9. "
+            "Self-cleansing velocity 0.75 m/s G203-p26; tractive minimum G203-p27, with K for Q in m³/s "
+            f"and τ = {TAU:g} Pa by project rule (engineer, 2026-09-11), τ for NWS to confirm; minimum "
+            "gradient G203-p29 Table 11.")
     _where(d, f"Pipes {ww} and {N['header']} in W8/shp/W8_pipes.shp (fields LABEL, ND_UP, ND_DN, "
               "DN_MM, SLOPE_PCT, LEN_M, TIER, IS_JOIN); plots in W14/shp/PLOTS_load.shp; the "
               "allocation and summation in _net() of this chapter's script. The test-area design's own "
@@ -662,6 +779,9 @@ def c09_peak(d):
     D.numbered(d, f"Select pipe {ww} in W8/shp/W8_pipes.shp and every pipe upstream of chamber "
                   f"{w.ND_UP}, then the plots of the test area whose nearest street pipe is in that set. "
                   f"You should find {int(round(w.ONE))} plots and {f(w.Q_ULT, 2)} m³/d of Q_ULT.")
+    D.numbered(d, f"For the same pipe, enter ={K_M3S:g}*{TAU:g}^1.23*{q_w / 1000:.6f}^-0.461*1000 in a "
+                  f"spreadsheet. You should get {sm_w[TAU]:.2f} mm/m, below the {s_w:.1f} mm/m it is laid "
+                  f"at: a tractive pass at {TAU:g} Pa.")
     D.numbered(d, f"Check that the low case of the study area is {f(tot[str(OPEN_YEAR)]['qadf_m3d'])} × "
                   f"{CONN:.2f} = {f(FLOWS['low_case_2030_m3d'])} m³/d, and that no calculation uses "
                   f"{f(wrong)} m³/d instead.")
@@ -774,7 +894,7 @@ def c10_tiers(d):
     for old, later, new, what in (
             ("trunk main", "trunk", "Primary: trunk main", "the pipe to the plant, including the main pipe"),
             ("sub main", "sub main", "Secondary: header", "the collecting main of a district; the only pipe that joins the trunk"),
-            ("lateral", "lateral", "Secondary: main sewer", "the street sewer every plot connects to")):
+            ("lateral", "lateral, branch", "Secondary: main sewer", "the street sewer every plot connects to")):
         rows.append([old, later, f"**{new}**", what, f(by.loc[old, "count"]), f(by.loc[old, "sum"] / 1000, 2)])
     rows.append(["—", "—", "**Tertiary: rider, lateral**", "house connection chamber to main sewer, at most 45 m", "0", "0"])
     D.tab_caption(d, "Tier values in the engine outputs and the names used from now on")
@@ -782,13 +902,14 @@ def c10_tiers(d):
             rows, widths=[2.4, 2.1, 3.4, 5.6, 1.3, 1.4], font=8.5, align_right={4, 5})
     D.p(d, "", space_after=2)
     _src(d, "_BRAIN/02_DESIGN_CRITERIA.md §2, the tier-names row (engineer, 2026-09-11); "
-            "W14/docs/DESIGN_FLOWS_FOR_NETWORK.md §5. Guideline wording G203-p17, p21.")
+            "W14/docs/DESIGN_FLOWS_FOR_NETWORK.md §5 and §8: the engine values lateral and branch are "
+            "both secondary main sewers. Guideline wording G203-p17, p21.")
     _lead(d, "Ibri number.  ", f"The test-area design is {f(tot_m / 1000, 2)} km of pipe: "
           f"{by.loc['lateral', 'sum'] / tot_m * 100:.1f} % main sewers, "
           f"{by.loc['sub main', 'sum'] / tot_m * 100:.1f} % headers and "
           f"{by.loc['trunk main', 'sum'] / tot_m * 100:.1f} % trunk.")
     _where(d, "Field TIER in W8/shp/W8_pipes.shp (values trunk main, sub main, lateral) and in the "
-              "later engine's shapefile and DXF exports (trunk, sub main, lateral). The renaming is "
+              "later engine's shapefile and DXF exports (trunk, sub main, lateral, branch). The renaming is "
               "applied in the engine copy from W13/tmp3 on.")
 
     # ---------------------------------------------------------------- 10.5
@@ -842,7 +963,6 @@ def c10_tiers(d):
     _lead(d, "What it is for.  ", "To make a layout that is good, not only legal. The guideline "
           "says whether a pipe complies; these rules say how the network is arranged.")
     _lead(d, "The rule.  ", "Twelve rules, agreed as the reasoning the design engine is built against:")
-    steps = ", ".join(f"{v / 10:g} mm/m at DN{dn}" for dn, v in TAB11_MIN.items())
     rules = (
             ("Sewage runs downhill. ", "Read the ground along every street and point each street downhill."),
             ("Follow the arrows. ", "Where the falling streets stop is an outlet. A basin is not an outlet: "
@@ -859,9 +979,11 @@ def c10_tiers(d):
             ("Gradient follows the ground in three bands. ", "Flatter than the minimum: lay at the minimum. "
              "Between the minimum and the velocity limit: parallel to the ground at cover. Steeper than "
              "3 m/s at peak: hold the gradient and take the rest as drops."),
-            ("Gradients in steps. ", f"One tenth of the pipe's minimum gradient in G203-p29 Table 11: "
-             f"{steps}. One gradient per run until the cover runs out. The diameter comes from the flow, "
-             "never chosen to flatten a gradient."),
+            ("Gradients in steps. ", "Where a pipe is laid at its minimum, the minimum is G203-p29 Table 11 "
+             "(G203-p18 Table 5 for a tertiary pipe). Every gradient is rounded up to a step of "
+             f"{STEP_SEC / 10:g} % ({STEP_SEC:g} mm/m) for a secondary pipe and {STEP_TRUNK / 10:g} % "
+             f"({STEP_TRUNK:g} mm/m) for a primary trunk of DN{TRUNK_DN} and up. One gradient per run until "
+             "the cover runs out. The diameter comes from the flow, never chosen to flatten a gradient."),
             ("Lay from the heads. ", "That is the shallowest the route can ever be."),
             ("Over 12 m: reroute first. ", "A different join, a helpful street, or the neighbouring "
              "catchment. Then cut for a pumping station where the pipe would pass 12 m, and restart at "
@@ -876,21 +998,59 @@ def c10_tiers(d):
            "and main sewers. The 12 m is a limit on depth, ground to invert, at every chamber and "
            "along every trench, with no exceptions: where a gravity sewer would pass it, a pumping "
            "station goes in before that point.")
-    D.p(d, f"Rule {r_step} is the rule to design to. The design engine still lays every pipe on a fixed "
-           f"grid of {ENGINE_STEP * 100:.2f} % ({ENGINE_STEP * 1000:g} mm/m) whatever its size, which is "
-           "how the test-area design was laid, and is to be aligned with the rule.")
+    ex_dn = (200, 315, TRUNK_DN, 900)
+    rows = [[f"DN{dn}", "secondary" if dn < TRUNK_DN else "primary trunk", f"{TAB11_MIN[dn]:.2f}",
+             f"{grid_step(dn):g}", f"**{on_grid(TAB11_MIN[dn], grid_step(dn)):.2f}**",
+             f"{on_grid(TAB11_MIN[dn], grid_step(dn)) / 10:.3f}",
+             f"{on_grid(TAB11_MIN[dn], STEP_SEC):.2f}", f"{TAB11_MIN[dn] / 10:.3f}"] for dn in ex_dn]
+    tn = D.tab_caption(d, "Minimum gradients laid on their steps, mm/m")
+    D.table(d, ["Pipe", "Tier", "G203 Table 11 minimum", "Step", "Laid at", "Laid at, %",
+                "On one 0.05 % grid", "A tenth of the minimum (old step)"], rows,
+            widths=[1.5, 2.3, 2.2, 1.3, 1.6, 1.7, 2.3, 3.0], font=8.5, align_right={2, 3, 4, 5, 6, 7})
+    D.p(d, "", space_after=2)
+    s9, s9_one = on_grid(TAB11_MIN[900], grid_step(900)), on_grid(TAB11_MIN[900], STEP_SEC)
+    D.p(d, f"Rule {r_step} was amended on 2026-09-11; it used to step each pipe by a tenth of its own "
+           "minimum. The steps are chosen so that a gradient can be built and read: the number on a "
+           "profile or a map is a number a setting-out engineer can use. A tenth of the minimum is finer "
+           f"than the construction can hold. On DN900 it is {TAB11_MIN[900] / 10:g} mm/m, which is "
+           f"{TAB11_MIN[900] / 10 * 100:g} mm of fall over 100 m, while the guideline lets the line and "
+           f"level of a laid pipe deviate by {TOL_MM:g} mm. One 0.05 % grid for every size is too coarse "
+           f"at the other end: DN900, whose minimum is {TAB11_MIN[900]:.2f} mm/m, would go in at "
+           f"{s9_one:.2f} mm/m instead of {s9:.2f}, {(s9_one - s9) * 1000:.0f} mm deeper for every "
+           f"kilometre of trunk. Table {tn} lays the minimums on their steps.")
+    D.p(d, "The tractive force sets no gradient at this stage. It is the audit's second test (Chapter "
+           "12), and it is applied to the gradients at the preliminary design, once NWS confirms the "
+           "tractive tension. G203 §4.2.2.1 says the steeper gradient of the two methods shall be adopted "
+           "as the minimum, so this is a departure: it is recorded in report R2 §10.1 for NWS to confirm.")
+    big = pipes[pipes.DN_MM >= TRUNK_DN]
+    assert sorted(big.DN_MM.unique()) == [TRUNK_DN] and \
+        (abs(big.SLOPE_PCT * 10 - on_grid(TAB11_MIN[TRUNK_DN], STEP_SEC)) < 1e-6).all(), \
+        "the test area's large pipes have changed: rewrite the engine paragraph of Section 10.6"
+    s_old, s_new = on_grid(TAB11_MIN[TRUNK_DN], STEP_SEC), on_grid(TAB11_MIN[TRUNK_DN], STEP_TRUNK)
+    D.p(d, f"The design engine still lays every pipe on one grid of {ENGINE_STEP * 100:.2f} % "
+           f"(SLOPE_STEP = {ENGINE_STEP:g}) whatever its size, and that is how the test-area design was "
+           f"laid. The setting is to be made by pipe size: {STEP_SEC / 1000:g} below DN{TRUNK_DN} and "
+           f"{STEP_TRUNK / 1000:g} from DN{TRUNK_DN}. On the test area it changes one thing. The "
+           f"{f(len(big))} trunk pipes of DN{TRUNK_DN}, {f(big.LEN_M.sum() / 1000, 2)} km, are laid at "
+           f"their minimum on the single grid, {s_old / 10:.2f} %; on the trunk step they go in at "
+           f"{s_new / 10:.3f} %, which is {f(big.LEN_M.sum() * (s_old - s_new) / 1000, 2)} m less fall "
+           "along that length.")
     _src(d, "Project rules, W13/docs/W13_DESIGN_LOGIC.md (agreed 2026-09-07, with dated amendments to "
             "2026-09-08). 12 m: project doctrine of 2026-09-07 in the context of G203-p33 §4.6.3, which "
             "recommends a cover of about 10 to 12 m and makes excavation cost the trigger for pumping. "
-            "Gradient steps: rule 8 of W13_DESIGN_LOGIC.md (2026-09-07); minimum gradients G203-p29 "
-            "Table 11. Chamber spacing: G203-p30 Table 12.")
+            "Gradient steps and the concept-stage minimum: project rule (engineer, 2026-09-11), "
+            f"_BRAIN/02_DESIGN_CRITERIA.md §1, superseding rule {r_step} of W13_DESIGN_LOGIC.md as agreed "
+            "on 2026-09-07. Minimum gradients G203-p29 Table 11; tertiary G203-p18 Table 5; construction "
+            "tolerance G203-p29 §4.3.1; the steeper-governs clause G203-p27 §4.2.2.1, the departure for "
+            "NWS to confirm. Chamber spacing: G203-p30 Table 12.")
     _lead(d, "Ibri number.  ", f"The test-area design is the benchmark every change must still meet on "
           f"its {W8RUN['s1']['boundary_ha'] / 100:.2f} km²: {f(W8RUN['net_km'], 1)} km of sewer, "
           f"{f(W8RUN['n_nodes'])} chambers and {W8RUN['stations']['count']} pumping stations, deepest "
           f"chamber {W8RUN['max_depth_m']:.2f} m. The network NAMA built there needs no pumping either.")
     _where(d, "W13/docs/W13_DESIGN_LOGIC.md; the benchmark run is W13/py/run_test_boundary.py "
               "(about 26 seconds), which reproduces W8/run/summary.json. The engine's gradient grid: "
-              "SLOPE_STEP in W13/tmp3/py/sewnet/criteria.py.")
+              "SLOPE_STEP in W13/tmp3/py/sewnet/criteria.py, applied by rounding up in "
+              "W13/tmp3/py/sewnet/stages/hydraulic.py. Pipe gradients: SLOPE_PCT in W8/shp/W8_pipes.shp.")
 
     # ---------------------------------------------------------------- 10.7
     D.h(d, 2, "10.7   The main pipe is an input")
@@ -976,6 +1136,9 @@ def c10_tiers(d):
                   "identifiers: TM, SM.n and the zone codes are the built network's tiers.")
     D.numbered(d, "Filter Road centerline 2 on dual = 1, buffer it by 4 m and intersect it with the "
                   "design's pipes. Only short crossings at right angles may remain.")
+    D.numbered(d, f"In the same pipe layer filter DN_MM = {TRUNK_DN} and read SLOPE_PCT. Every pipe is at "
+                  f"{s_old / 10:.2f} %, the minimum on the single grid; on the trunk step of rule {r_step} "
+                  f"it would be {s_new / 10:.3f} %.")
     D.numbered(d, "Run python W13/py/run_test_boundary.py. It must still give about "
                   f"{f(W8RUN['net_km'], 1)} km, {f(W8RUN['n_nodes'])} chambers and "
                   f"{W8RUN['stations']['count']} pumping stations.")

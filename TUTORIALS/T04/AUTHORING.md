@@ -33,11 +33,16 @@ End each chapter with a short **"Check it yourself"** list: how the reader verif
 - Load chain, W14 class v7: `W14/docs/CONCEPT_NOTE_SATURATION_AND_LOAD.md`, report R2 §14–15 (`W14/report/rpt_cd.py`).
 - Existing plot, l/d: **Q = 0.85 × 164 × OR × N_dom + 0.54 × (U_nd × N_nd + U_gov × N_gov + 93 × N_w)**; U_nd = 0.22 × 164 × P_s /
   N_nd,s; U_gov = 0.14 × 164 × P_s / N_gov,s (meters outside the estates). Future plot = people × 171.3 l/d.
-- **Two flow cases (engineer, 2026-09-11): size on `Q_ULT`; self-cleansing on `Q_2030` × 0.61**, peaked per pipe (Merrimack
-  over 100 properties in Ml/d; Peltier at or under 100, in l/s), fed to both the velocity and the tractive-slope tests. Never
-  saturation × a ratio. Four classes: velocity pass, tractive pass, early cleansing, fails both → regrade.
+- **Two flow cases (engineer, 2026-09-11, confirmed): size on `Q_ULT`; self-cleansing audit on `Q_2030` × 0.61**, peaked per pipe
+  with the properties counted connected (Merrimack over 100 in Ml/d; Peltier at or under 100, in l/s), no infiltration. Never
+  saturation × a ratio. **Three classes: velocity pass (≥ 0.75 m/s); tractive pass (laid gradient ≥ Mara Smin at τ = 1 Pa, K = 2.33e-4
+  with Q in m³/s, true flow); needs washing.** No regrade class, no low-flow threshold.
+- **Gradients at the concept stage (engineer, 2026-09-11)**: G203 Table 11 minimum (tertiary: Table 5) in steps of 0.05 % for secondary
+  pipes and 0.025 % for trunks of DN500 and up; the tractive force sets no gradient until preliminary design (a departure from
+  G203 §4.2.2.1, in R2 §10.1 for NWS). W13 rule 8 (a tenth of the minimum) is superseded.
 - **G203 §4.2.2.1 (pp 25–27)**: two approaches shall be used; the steeper gradient governs; at the head of a system tractive
-  force alone. **τ has no value in G203 (GAP-9)**. **§4.2.6 (p28)** gives no threshold. **1.5 L/s is not in G203** — Mara, tagged.
+  force alone — taught as the guideline's rule, with the concept-stage departure above. **τ has no value in G203 (GAP-9): 1 Pa at
+  concept.** **§4.2.6 (p28)** gives no threshold. **1.5 L/s is not in G203** and is not used.
 - **Tier names (G203 p17, p21)**: primary = trunk mains; secondary = headers and main sewers under the streets; tertiary =
   rider and lateral sewers (lateral ≤ 45 m, min 1 %). **Say "secondary main sewer" for the street pipe; "lateral" only for the
   tertiary pipe.** State the mapping from the old engine `TIER` values once.

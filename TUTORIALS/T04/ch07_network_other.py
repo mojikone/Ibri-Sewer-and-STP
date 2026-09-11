@@ -1077,10 +1077,13 @@ def c16_modelling(d):
                   f"fewer, Peltier, with the average in l/s. The hourly peak factor should not "
                   f"exceed 5.0; that is a recommendation, not a cap to apply silently. In the "
                   f"self-cleansing case the count that chooses the formula is the connected one, "
-                  f"the 2030 properties × {fl['rules']['connection_ratio_2030']:.2f}, as "
-                  f"recommended in the design-flow handoff, to be confirmed by the engineer.")
+                  f"the 2030 properties × {fl['rules']['connection_ratio_2030']:.2f} (project rule, "
+                  f"engineer, 2026-09-11, confirmed; design_flows.json "
+                  f"rules.rulings_confirmed.low_case_property_count).")
     D.numbered(d, "Add infiltration of 720 l/d per km of new sewer, by each pipe's own length, "
-                  "accumulated downstream. It is added unpeaked; the guideline does not state "
+                  "accumulated downstream, to the capacity run only. The self-cleansing run "
+                  "carries no infiltration (project rule, engineer, 2026-09-11, confirmed; "
+                  "rules.rulings_confirmed.low_case_infiltration). It is added unpeaked; the guideline does not state "
                   "the order, so that is our reading, to be confirmed. Storm water is not "
                   "considered.")
     D.numbered(d, "Load each plot at the manhole it drains to, from the plot layer, never spread "
@@ -1137,8 +1140,11 @@ def c16_modelling(d):
     D.table(d, ["Run", "Load", "What it decides"],
             [["Capacity", "Q_ULT upstream, peaked per pipe, plus infiltration",
               "pipe size; depth of flow and 3.0 m/s maximum (G203 p27)"],
-             ["Self-cleansing", "Q_2030 × 0.61 upstream, peaked per pipe",
-              "velocity test (0.75 m/s at peak) and tractive-slope test; the four classes"],
+             ["Self-cleansing", "Q_2030 × 0.61 upstream, peaked per pipe on the connected property "
+              "count (2030 properties × 0.61), no infiltration",
+              "velocity test (0.75 m/s at the low-case peak), then tractive-slope test (τ = 1 Pa, "
+              "K = 2.33 × 10⁻⁴, Q in m³/s, true flow); the three classes: velocity pass, tractive "
+              "pass, needs washing"],
              ["Model years", "Q_2030 and Q_2055, peaked", "pump staging, surcharge in between"],
              ["Plant", "settlement totals by year, plus network infiltration and 10 %",
               "plant capacity and phasing"],
