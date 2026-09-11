@@ -32,15 +32,24 @@
   "stp_margin": 0.1,
   "tankers": "pending: no filling-station records held; not in any flow",
   "properties_per_plot_in_year": "G_DOM + (POP_year - POP) / OR_S",
-  "tractive_tension": "GAP-9: no value in G203; a parameter until NWS confirms",
-  "low_flow_1_5_l_s": "not in PAM-GUD-203; an outside (Mara) assumption to be tagged",
-  "open_rulings_recommended": {
+  "tractive_tension": "1 Pa at the concept stage (engineer 2026-09-11); no value in G203 (GAP-9), NWS to confirm",
+  "low_flow_1_5_l_s": "not in PAM-GUD-203 and not used",
+  "rulings_confirmed": {
    "low_case_property_count": "properties of 2030 x 0.61 (connected)",
    "low_case_infiltration": "left out",
-   "test_order": "velocity, low-flow threshold, tractive, regrade",
-   "mara_constant": "K = 2.33e-4 with Q in m3/s (G203 p27 prints two constants 2.3 % apart)",
-   "engine_tier_branch": "secondary main sewer",
-   "status": "recommended, to be confirmed by the engineer"
+   "classes": [
+    "velocity pass",
+    "tractive pass",
+    "needs washing"
+   ],
+   "regrade_class": "none",
+   "low_flow_threshold": "none",
+   "mara_constant": "K = 2.33e-4 with Q in m3/s, true flow, no floor",
+   "tau_pa": 1.0,
+   "concept_gradients": "G203 Table 11 minimum; steps 0.05 % for secondary pipes, 0.025 % for trunks DN500 and up",
+   "tractive_sets_gradient": "no, at the concept stage; applied at preliminary design once NWS confirms tau",
+   "engine_tier_lateral_and_branch": "secondary main sewer",
+   "status": "confirmed by the engineer, 2026-09-11"
   }
  },
  "totals": {

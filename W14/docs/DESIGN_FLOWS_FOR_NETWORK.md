@@ -44,25 +44,27 @@ area: 60,099 × 0.61 = 36,660 m³/d, against 14,772 m³/d really expected in 203
    peak factor not exceed 5.0; it is a recommendation, not a cap to apply silently.
 3. **Infiltration**: 720 l/d per km of new sewer, by the pipe's own length, added along the run; never a plot load (G1-p72).
    Storm water is not considered.
-4. **Early-year check**: the same summation on `Q_2030` × 0.61, peaked the same way, gives the flow for the
-   velocity test and for the tractive-slope test.
+4. **Early-year check**: the same summation on `Q_2030` × 0.61, peaked the same way with the properties counted
+   **connected** (2030 × 0.61), and **no infiltration**, gives the flow for the velocity test and the tractive test.
 
-## 4. The self-cleansing classes (G203 §4.2.2.1, pp 25–27; §4.2.6, p28)
+## 4. Gradients and the self-cleansing audit (engineer, 2026-09-11)
 
-The guideline requires **two approaches**: the self-cleansing velocity and the minimum tractive force, the steeper gradient
-governing; at the head of a system, where the velocity cannot be reached, the tractive force alone sets the gradient. Every pipe
-takes one class on the low case:
+**Gradients at the concept stage** are the G203 Table 11 minimum (tertiary pipes: Table 5), laid in **steps of 0.05 % (0.5 mm/m)
+for secondary pipes and 0.025 % (0.25 mm/m) for primary trunks of DN500 and up**. **The tractive force sets no gradient at this
+stage**; it is applied to the gradients at the preliminary design, once NWS confirms the tractive tension. G203 §4.2.2.1 (pp 25–27)
+asks for both approaches to set the minimum gradient, so this is a departure, recorded in report R2 §10.1 for NWS confirmation.
+
+**The audit**, on the low case (§3.4), gives every pipe one of three classes:
 
 | Class | Test | Action |
 |---|---|---|
-| **Velocity pass** | ≥ 0.75 m/s at the low-case peak | none |
-| **Tractive pass** | gradient ≥ Mara Smin = K·τ^1.23·Q^−0.461 at the low-case peak | none |
-| **Early cleansing** | flow too small for either (see the threshold note) | on the flushing list (§4.2.6: more frequent inspection and cleansing); **not upsized** — DN200 minimum governs |
-| **Fails both — regrade** | real flow, but too flat for either test | a design fault: steepen the pipe |
+| **Velocity pass** | ≥ 0.75 m/s at the low-case peak (G203-p26) | none |
+| **Tractive pass** | laid gradient ≥ Mara Smin = K·τ^1.23·Q^−0.461 with **τ = 1 Pa**, **K = 2.33 × 10⁻⁴, Q in m³/s**, on the true flow (no floor) (G203-p27) | none |
+| **Needs washing** | everything else | on the flushing list (G203 §4.2.6, p28: more frequent inspection and cleansing in the early years); **not regraded, not upsized** |
 
-- **τ has no value in G203** (GAP-9). Carry it as a parameter and report the class counts against it.
-- **The 1.5 L/s low-flow threshold is not in PAM-GUD-203** (whole PDF searched). It is the Mara literature's minimum peak flow
-  (a WC flush). Use it only as a tagged outside assumption, and confirm with NWS.
+- **No regrade class**: a pipe laid to the guideline gradient that still carries too little flow needs washing, not a steeper pipe.
+- **No low-flow threshold.** 1.5 L/s is not in PAM-GUD-203 and is not used. The engine's `TRACTIVE_QMIN` floor must not be applied in the audit.
+- **τ = 1 Pa is the concept-stage value** (G203 gives none, GAP-9); NWS is asked to confirm it before preliminary design.
 
 ## 5. Pipe tiers — the guideline's words (G203 p17, p21)
 
@@ -127,15 +129,16 @@ Properties: 22,559 in 2024, 26,255 in 2030, 70,328 at saturation.
 | Usaybuq | 14 | 17 | 10 | 38 | 38 | 2054 | 78 |
 | Ash Shiab | 8 | 9 | 5 | 15 | 16 | 2056 | 76 |
 
-## 8. Open rulings — recommended here, to be confirmed by the engineer
+## 8. Rulings (engineer, 2026-09-11, confirmed)
 
-| Question | Recommendation | Why |
-|---|---|---|
-| Which property count picks Merrimack or Peltier in the **low case**? | the **connected** count: properties of 2030 × 0.61 | the low case is about connected flow; the lower count picks Peltier more often, which gives the lower peak at small flows — the safe direction for self-cleansing |
-| Infiltration in the **low case**? | **left out** | adding flow is the unsafe direction for self-cleansing; on a new pipe it is a few thousandths of a l/s |
-| Order of the tests | velocity → low-flow threshold → tractive → regrade | the Mara slope is not extrapolated below its flow range |
-| Which Mara constant? | **K = 2.33 × 10⁻⁴ with Q in m³/s** | G203 p27 prints two constants that disagree by 2.3 % once units are converted (2.33e-4 in m³/s = 5.63e-3 in l/s, against the printed 5.5e-3); the m³/s form gives the steeper slope, the safe direction, and is what the engine uses. State the constant on every result |
-| Engine `TIER` value `branch` (W13 Stage A exports) | **secondary main sewer** | it is a street pipe feeding the network, like the old "lateral" |
+| Question | Ruling |
+|---|---|
+| Property count for Merrimack or Peltier in the low case | **connected**: properties of 2030 × 0.61 |
+| Infiltration in the low case | **left out** (G201 is silent; §7.4.4 p73 asks only that the early flow be checked for self-cleansing) |
+| Classes | **velocity pass, tractive pass, needs washing**; no regrade, no low-flow threshold |
+| Mara constant | **K = 2.33 × 10⁻⁴ with Q in m³/s**, τ = 1 Pa at the concept stage |
+| Gradients at concept | **Table 11 minimum, steps 0.05 % (secondary) and 0.025 % (trunks DN500 and up)**; tractive sets no gradient until preliminary |
+| Engine `TIER` values `lateral` and `branch` | **secondary main sewer** |
 
 ## 9. What is not in the flows, and must not be assumed
 
