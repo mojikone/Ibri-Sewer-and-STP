@@ -93,6 +93,14 @@ def part_c(d):
          "by plot",
          "The quantities a detailed method requires are not held; the "
          "standard will be stated when they are"],
+        ["Minimum gradient",
+         "The steeper of the self-cleansing and the minimum tractive force "
+         "gradients",
+         "Table 11 minimum gradients; the tractive force used at the concept "
+         "stage only to identify the pipes needing early washing, at a "
+         "tractive tension of 1 Pa",
+         "The tractive tension is not stated in the guidelines; the method "
+         "sets gradients at the preliminary design once it is confirmed"],
         ["Growth beyond the forecast",
          "Not extrapolated more than ten years beyond the available forecast",
          "The Inception Report series to 2100, used for its growth rates "
@@ -192,11 +200,15 @@ def part_c(d):
              "flow.")
 
     D.h(d, 2, "12.2   Sediment transport")
-    D.p(d, "Two checks are applied together, and the steeper gradient "
-           "resulting from them governs: the self-cleansing velocity above, "
-           "and the minimum tractive force. At the head of the system, where "
-           "the self-cleansing velocity cannot be achieved, the gradient is "
-           "set by the tractive force method.")
+    D.p(d, "The guideline applies two checks, the self-cleansing velocity "
+           "above and the minimum tractive force, and the steeper gradient "
+           "resulting from them governs. At the concept stage the minimum "
+           "gradients are those of Table 11, laid in steps of 0.05 per cent "
+           "for the secondary network and 0.025 per cent for trunk mains of "
+           "DN500 and above. The tractive force method is used at this stage "
+           "to identify the pipes that will not scour at the early-year flow "
+           "and need scheduled washing; it will be applied to the gradients at "
+           "the preliminary design, once the tractive tension is confirmed.")
     eq = D.next_eq()
     M.display(d, M.seq(M.sub(R("S"), UP("min")), M.EQ, R("K"),
                        M.sup(R("τ"), R("1.23")),
@@ -207,8 +219,9 @@ def part_c(d):
         ["Q", "flow", "m³/s or l/s, with K taken to suit"],
         ["K", "coefficient, 2.33 × 10⁻⁴ for Q in m³/s", "—"]])
     p = D.p(d, "The value of tractive tension to be adopted is not stated in "
-               "the guidelines. A value will be proposed with its basis and "
-               "confirmation requested before the gradients are fixed.")
+               "the guidelines. A tractive tension of 1 pascal is used for the "
+               "concept-stage check, and confirmation is requested before the "
+               "preliminary design.")
     N.add(p, "The equation and its coefficient are given at PAM-GUD-203, "
              "page 27. No corresponding value of tractive tension in pascals "
              "is stated in PAM-GUD-203 or PAM-GUD-201.")
