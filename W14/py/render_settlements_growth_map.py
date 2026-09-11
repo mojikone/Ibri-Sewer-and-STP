@@ -31,7 +31,7 @@ placed = []
 for f in sl.getFeatures():
     c = f.geometry().pointOnSurface().asPoint(); pt = px(c.x(), c.y())
     lab = f['SETTLE']; sat_y = int(f['SAT_YEAR']) if f['SAT_YEAR'] else 0
-    note = f"{int(f['POP_TODAY']):,} today -> {int(f['POP_ULT']):,} at 2073 | full {sat_y if sat_y else 'never'} | {f['Q_ULT']:.0f} m3/d"
+    note = f"{int(f['POP_2024']):,} today -> {int(f['POP_ULT']):,} at {int(f['ULT_YEAR'])} | full {sat_y if sat_y else 'never'} | {f['Q_ULT']:.0f} m3/d"
     p.setFont(fB); wl = p.fontMetrics().horizontalAdvance(lab); p.setFont(fS); wn = p.fontMetrics().horizontalAdvance(note)
     bw = max(wl, wn) + 14; bh = 38; bx, by = pt.x() - bw / 2, pt.y() - bh / 2
     bx = min(max(bx, 5), W - bw - 5); by = min(max(by, 45), H - bh - 5)

@@ -47,7 +47,7 @@ def reload_w13(render_map=False):
         proj.addMapLayer(lyr, False); grp.addLayer(lyr); return lyr
     s = add(QgsVectorLayer(f"{W13}/shp/Settlements_merged.shp", "Settlements merged (W14)", "ogr"))
     s.renderer().setSymbol(QgsFillSymbol.createSimple({'style': 'no', 'outline_color': '#ffffff', 'outline_width': '0.7', 'outline_width_unit': 'MM'}))
-    pal = QgsPalLayerSettings(); pal.fieldName = "SETTLE || '\\n' || \"POP_TODAY\" || ' -> ' || \"POP_ULT\" || '\\nfull ' || CASE WHEN \"SAT_YEAR\" > 0 THEN \"SAT_YEAR\" ELSE 'never' END"; pal.isExpression = True; pal.enabled = True
+    pal = QgsPalLayerSettings(); pal.fieldName = "SETTLE || '\\n' || \"POP_2024\" || ' -> ' || \"POP_ULT\" || '\\nfull ' || CASE WHEN \"SAT_YEAR\" > 0 THEN \"SAT_YEAR\" ELSE 'never' END"; pal.isExpression = True; pal.enabled = True
     tf = QgsTextFormat(); tf.setSize(9); tf.setColor(QColor('#ffffff')); b = QgsTextBufferSettings(); b.setEnabled(True); b.setSize(1); b.setColor(QColor('#000000')); tf.setBuffer(b); pal.setFormat(tf)
     s.setLabelsEnabled(True); s.setLabeling(QgsVectorLayerSimpleLabeling(pal))
     p = add(QgsVectorLayer(f"{W13}/shp/PLOTS_load.shp", "PLOTS load (W14)", "ogr"))
