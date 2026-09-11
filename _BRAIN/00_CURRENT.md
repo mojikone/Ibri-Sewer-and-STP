@@ -105,6 +105,8 @@ and it reproduces that run to the figure. Nothing later writes into it; later la
 
 **2026-09-09: temp 2 is accepted and frozen, the work goes on in `W13/tmp3`.** The engineer accepted the temp 2 network as it is. Its logic is `W13/tmp2/docs/W13_TMP2_DESIGN_LOGIC.md` (also in `tmp3/docs`): nine rules in his words, the target the outfall and the main pipe, what was kept from W13's logic and what was dropped, and the engine's own choices flagged. `W13/tmp3/` is the clone and reproduces temp 2 to the digit; QGIS group `Claude W13 temp 3`. Standing instructions: the route to the works below 12 m stays as is, to be discussed later; subnetworks first, the overall network when all are prepared; nothing added to the logic without telling the engineer first. **W13 is still the live design folder; the engine's line is tmp2 → tmp3.**
 
+**2026-09-11: temp 3 carries the plots' own flows, the gradient grid and the self-cleansing audit.** Plots: W14's `PLOTS_load` for everything. Sizing on `Q_ULT`, Merrimack above 100 properties, Peltier at or below; gradients at Table 11 or rounded up to 0.05 % (0.025 % from DN500); the audit on `Q_2030` × 0.61 (connected houses, no infiltration, 0.75 m/s or Mara at 1 Pa with no floor) gives **70 % of the length needing washing**, every such pipe DN200 under 1.29 l/s. Tiers in the guideline's names, `ROLE` in the engine's. One outlet moved: the 59 km around the works now links to the main pipe across a farm that PLOTS_load calls agricultural; its arrival there is unchecked because main-pipe joins are not floored. Logic `W13/tmp3/docs/W13_TMP3_DESIGN_LOGIC.md` (tmp2's stays frozen).
+
 **Nothing is lost.**
 
 | Where | What |
