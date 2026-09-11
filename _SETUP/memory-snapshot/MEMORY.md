@@ -7,3 +7,7 @@
 - [Load basis locked: Tier A volume](load-basis-locked-tier-a-volume.md) — ratios set the volume, land use sets the placement, Table 12 unused
 - [Asset GIS holds proposals too](asset-gis-holds-proposals.md) — filter on the status field before quoting any length from a client dataset
 - [Response depth: AUTO by default](response-depth-auto-default.md) — no ceiling unless the user invokes L1-L5; always lead with a headline line
+- [Show drawings, not tables](show-drawings-not-tables.md) — he finds by eye what the checks miss; ship a light KMZ/DXF early
+- [List tasks before multi-step work](list-tasks-before-multistep-work.md) — "clear?" is a check, not a go; list the tasks, wait for approval
+- [Concept saturation population and load](concept-saturation-population-and-load.md) — class v7 chain with unit-rate loads: meters, NDVI groves, per-settlement occupancy, home-shaped capacity, spread by capped area; reuse, do not re-derive
+- [Design flows handoff](design-flows-handoff.md) — size on Q_ULT, self-cleansing on Q_2030 x 0.61; read W14/docs/DESIGN_FLOWS_FOR_NETWORK.md before any network design

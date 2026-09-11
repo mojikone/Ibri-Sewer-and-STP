@@ -1,4 +1,6 @@
-# What is current, and what is not — checked 2026-09-10
+# What is current, and what is not — checked 2026-09-11
+
+**Design flows: `W14/docs/DESIGN_FLOWS_FOR_NETWORK.md`** — size on `Q_ULT`, self-cleansing on `Q_2030` × 0.61, peaked per pipe; the W13 engine still carries a flat 5.0 per plot and must be wired to these loads before any design run. **The method, taught: `TUTORIALS/T04/`** (T01, T02, T03_R01 frozen).
 
 **Population, saturation and load per plot live in `W14/` (class v7, 2026-09-10); W13 stays the pipe-laying engine.** `W14/` holds the meter-to-plot chain, the plot class, the per-settlement occupancy (floor 4.0, cap 6.12, the under-1,000 rule), the growth to saturation and the **Concept Design Report Revision 2** (`W14/report/R2/`, 89 pages; `W14/deliverables/` is the packaged hand-over). Numbers: today 119,893 people / 20,852 m³/d; saturation **2070 at 349,029 people / 60,099 m³/d**; Ibri full 2056. Every plot's flow is one equation (report 15.4: 0.85 × 164 × OR × N_dom + 0.54 × (U_nd × N_nd + U_gov × N_gov + 93 × workers)) and the plots sum to the settlement layer in every column. Read `W14/docs/CONCEPT_NOTE_SATURATION_AND_LOAD.md` first. The `W14/` named below as a sub-mains-first trial was removed on 2026-09-07; the folder name was reused for the population work on 2026-09-10.
 
