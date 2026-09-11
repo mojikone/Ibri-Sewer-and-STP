@@ -177,6 +177,7 @@ def write_shapes(out_dir, prefix, pipes, gaps, catch_info, catch_polys, joins, e
         "HEAD_OFF": [round(p.get("head_offset", 0.0), 1) for p in pipes],
         "LAYER": [p.get("layer", "") for p in pipes],
         "DN_MM": [int(p.get("dn_mm", 0)) for p in pipes],
+        "SLOPE_PCT": [round(p.get("grad_laid", 0.0) * 100, 3) for p in pipes],
         "Q_PEAK_LS": [round(p.get("q_peak_ls", 0.0), 2) for p in pipes],
         "PROPS_UP": [round(p.get("props_up", 0.0), 1) for p in pipes],
         "Q_ULT_M3D": [round(p.get("q_ult_up", 0.0), 2) for p in pipes],

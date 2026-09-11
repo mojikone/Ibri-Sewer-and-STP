@@ -148,3 +148,4 @@ OUTLET_CUT_ONLY = True   # temp 2: a sub main belongs to one sub-network; cut wh
 # ---- W13 temp 3 (2026-09-11): the plots' own flows, the self-cleansing audit
 INFIL_L_D_KM = 720.0        # infiltration per km of new sewer, by the pipe's own length (G1-p72)
 LOW_CASE_CONNECTED = 0.61   # the low case: Q_2030 x the Inception R0 connection ratio (handoff 2)
+SLOPE_GRID = (0.0005, 0.00025, 500)   # a gradient steeper than Table 11 is rounded up: 0.05 % steps, 0.025 % from DN500 (engineer 2026-09-11)

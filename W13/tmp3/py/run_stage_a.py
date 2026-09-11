@@ -650,7 +650,8 @@ def main():
                   if ttype.get(t) == "STP" or (getattr(cfg, "MP_PROFILE_GRAD", None) and ttype.get(t) == "JOIN")}
         depth, governs, laid = Q.lay(pipes, props, znode_all, cfg.PER_PROPERTY_M3D,
                                      floors=floors, loads=loads,
-                                     infil_l_d_km=getattr(cfg, "INFIL_L_D_KM", 720.0))
+                                     infil_l_d_km=getattr(cfg, "INFIL_L_D_KM", 720.0),
+                                     grid=getattr(cfg, "SLOPE_GRID", None))
         rep["depth"] = Q.report(pipes, depth, cfg.MAX_DEPTH_M)
         rep["depth"]["plots_served"] = n_plots
         rep["depth"]["properties_at_saturation"] = int(props.sum())

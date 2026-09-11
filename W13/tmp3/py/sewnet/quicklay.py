@@ -102,8 +102,21 @@ def properties_per_pipe(pipes, plots, acc_points, reach_m=60.0):
     return props, n_plots
 
 
+def laid_gradient(g_needed, dn, grid=None):
+    """temp 3 (2026-09-11, engineer): the Table 11 minimum is laid as it is; a gradient
+    steeper than the minimum, where the ground forces it, is rounded UP to the grid, so no
+    random value is laid: 0.05 % steps for secondary pipes, 0.025 % for DN500 and up. Up,
+    never down, because down would lose the cover."""
+    s = T11[dn]
+    g = max(s, g_needed)
+    if grid and g > s + 1e-7:
+        step = grid[1] if dn >= grid[2] else grid[0]
+        g = max(s, math.ceil(g / step - 1e-9) * step)
+    return g
+
+
 def lay(pipes, props, z, per_prop_m3d, cover_to_invert=1.55, floors=None, loads=None,
-        infil_l_d_km=720.0):
+        infil_l_d_km=720.0, grid=None):
     """Accumulate properties down the tree, size, lay at each pipe's own Table 11 gradient.
     Writes dn, q_peak_ls, depth_up, depth_dn onto each pipe; returns node depths and the
     governing upstream pipe of every node. floors: node -> the invert the pipe must arrive
@@ -148,8 +161,10 @@ def lay(pipes, props, z, per_prop_m3d, cover_to_invert=1.55, floors=None, loads=
             q["q_peak_ls"], q["pf"] = peak_flow_ls(q["q_ult_up"], q["props_up"], up_km[i],
                                                    infil_l_d_km)
         q["dn_mm"] = size_for(q["q_peak_ls"])
-        s = T11[q["dn_mm"]]
-        idn = min(invert[q["up"]] - s * q["len"], z[q["dn"]] - cover_to_invert)
+        L = max(q["len"], 1e-6)
+        g = laid_gradient((invert[q["up"]] - (z[q["dn"]] - cover_to_invert)) / L, q["dn_mm"], grid)
+        q["grad_laid"] = g
+        idn = invert[q["up"]] - g * L
         if idn < invert[q["dn"]]:
             invert[q["dn"]] = idn
             governs[q["dn"]] = i
