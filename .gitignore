@@ -43,3 +43,7 @@ W13/tmp*/run/console_*.txt
 W13/tmp*/run/scratch/
 W13/tmp*/dxf/*.dwg
 *.bak
+
+# T04 build scratch: smoke tests and verification renders
+TUTORIALS/T04/_test/
+TUTORIALS/T04/_verify/
