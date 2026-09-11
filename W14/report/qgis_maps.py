@@ -66,8 +66,7 @@ FIGURES = {
         ["Project Boundary updated", "GHS POP 2025 IBRI"], True,
         [("Source", "GHS-POP 2025"), ("Grid cell", "100 m"),
          ("Densest cell", "237 persons"),
-         ("Total in study area", "127,210"),
-         ("In named settlements", "122,817")]),
+         ("Use", "where people are, not how many")]),
     # ---- Revision 2: the data boxes below are filled from img/map_boxes.json,
     # written by facts_w14.map_boxes(), so the map and the text agree
     "M04_electricity": (
@@ -180,11 +179,7 @@ def _r2_layers():
     from qgis.core import QgsLineSymbol, QgsArrowSymbolLayer, QgsGraduatedSymbolRenderer, QgsRendererRange
     rj = json.load(open(os.path.join(OUT, "routes.json"), encoding="utf-8"))
     sh = QgsVectorLayer(shp("Settlements_merged.shp"), "Capacity taken by overflow", "ogr")
-    pr = sh.dataProvider(); pr.addAttributes([QgsField('INSHARE', QVariant.Double)]); sh.updateFields()
-    sh.startEditing()
-    for f in sh.getFeatures():
-        sh.changeAttributeValue(f.id(), sh.fields().indexOf('INSHARE'), float(rj["inflow_share"].get(f['SETTLE'], 0.0)))
-    sh.commitChanges()
+    # INSHARE (inflow at saturation / capacity) is written on the layer by growth_by_settlement.py; the routes file carries the same value
     rngs = [(0.0, 0.05, 'under 5 %', None), (0.05, 0.25, '5 to 25 %', '254,224,210,150'), (0.25, 0.5, '25 to 50 %', '252,146,114,150'),
             (0.5, 0.8, '50 to 80 %', '239,59,44,150'), (0.8, 1.01, 'over 80 %', '165,15,21,160')]
     sh.setRenderer(QgsGraduatedSymbolRenderer('INSHARE', [
@@ -251,7 +246,7 @@ def _zero_transparent(layer):
     fmt.setShowTrailingZeros(False)
     st.setNumericFormat(fmt)
     st.setMinimumLabel("0   none")
-    st.setMaximumLabel("130   densest")
+    st.setMaximumLabel("130 and above")
     shader.setLegendSettings(st)
     shader.setLabelPrecision(0)
 
@@ -345,6 +340,8 @@ def build(keys=None, dpi=200):
                 it.setKeepLayerSet(True)
                 it.zoomToExtent(ext)
             elif isinstance(it, QgsLayoutItemLegend):
+                it.setBackgroundEnabled(True)
+                it.setBackgroundColor(QColor(255, 255, 255, 248))   # opaque: a label must not show through
                 legends.append(it)
             elif isinstance(it, QgsLayoutItemLabel):
                 t = it.text()

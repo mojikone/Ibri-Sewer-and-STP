@@ -79,7 +79,7 @@ def part_e(d):
              "recorded as Asset Planning.")
 
     D.p(d, "The comparison depends on the design horizon, which is the subject "
-           "of Section 5.1, and on the flow series described in Section 15.5. "
+           "of Section 5.1, and on the flow series described in Section 15.7. "
            "It will be presented in the next revision.")
 
     D.p(d, "The data required by Nama Water Services Asset Management Planning "
@@ -163,19 +163,19 @@ def part_f(d):
              "to works of approximately 500 cubic metres per day.")
 
     D.h(d, 2, "21.3   Basis of comparison")
+    D.p(d, "The options are compared on capital and operating cost, life cycle "
+           "cost, carbon footprint over the project lifetime, resource "
+           "efficiency, in-country value and the degree to which they employ "
+           "nature-based solutions. The evaluation period is twenty-five "
+           "years. The weighting applied to each parameter is set by Nama "
+           "Water Services. The figure on the following page shows how each "
+           "option is costed and compared.")
 
     D.wide_figure(d, os.path.join(IMG, "appraisal_method.png"),
                   "How each option is costed and compared. The three cost "
                   "streams are established separately for every option, "
                   "discounted to present value together, and only then scored "
                   "against the seven criteria.", size="A4")
-
-    D.p(d, "The options are compared on capital and operating cost, life cycle "
-           "cost, carbon footprint over the project lifetime, resource "
-           "efficiency, in-country value and the degree to which they employ "
-           "nature-based solutions. The evaluation period is twenty-five "
-           "years. The weighting applied to each parameter is set by Nama "
-           "Water Services.")
 
     D.h(d, 2, "21.4   Selection")
     p = D.p(d, "A weighted multi-criteria analysis compares the options "
@@ -189,7 +189,7 @@ def part_f(d):
     N.add(p, "PAM-GUD-201, Sections 12.6 to 12.9, pages 104 to 106.")
 
     # --------------------------------------------------------------- 22
-    D.h(d, 1, "22   Sewer network options", page_break=True)
+    D.h(d, 1, "22   Sewer network options")
 
     D.picture(d, os.path.join(IMG, "D4_network.png"), 15.5)
     D.fig_caption(d, "The network design approach, and the point at which a lifting station becomes necessary.")

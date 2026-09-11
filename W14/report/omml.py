@@ -110,14 +110,14 @@ def display(doc, inner, number=None, anchor=None):
     """Centred display equation. `number` prints right-aligned as (n)."""
     if number is None:
         xml = (f'<w:p {NSDECL}><w:pPr><w:jc w:val="center"/>'
-               f'<w:spacing w:before="120" w:after="120"/></w:pPr>'
+               f'<w:keepNext/><w:spacing w:before="120" w:after="120"/></w:pPr>'
                f'<m:oMathPara><m:oMath>{inner}</m:oMath></m:oMathPara></w:p>')
     else:
         # tab-stopped so the equation centres and the number sits at the margin
         xml = (f'<w:p {NSDECL}><w:pPr><w:tabs>'
                f'<w:tab w:val="center" w:pos="4320"/>'
                f'<w:tab w:val="right" w:pos="8640"/></w:tabs>'
-               f'<w:spacing w:before="120" w:after="120"/></w:pPr>'
+               f'<w:keepNext/><w:spacing w:before="120" w:after="120"/></w:pPr>'
                f'<w:r><w:tab/></w:r>'
                f'<m:oMath>{inner}</m:oMath>'
                f'<w:r><w:tab/><w:t>({esc(number)})</w:t></w:r></w:p>')

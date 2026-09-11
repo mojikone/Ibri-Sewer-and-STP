@@ -61,8 +61,10 @@ def c02_occupancy():
     cap = max(used)
     ax.axhline(F.OR_FLOOR, color=RED, linewidth=1.0, linestyle="--", zorder=3)
     ax.axhline(cap, color=RED, linewidth=1.0, linestyle=":", zorder=3)
-    ax.text(len(names) - 0.4, F.OR_FLOOR + 0.12, f"floor {F.OR_FLOOR:.1f}", ha="right", va="bottom", fontsize=7.6, color=RED)
-    ax.text(len(names) - 0.4, cap + 0.12, f"cap {cap:.2f}", ha="right", va="bottom", fontsize=7.6, color=RED)
+    # both labels sit to the right of the last bar, clear of every bar
+    ax.set_xlim(-0.6, len(names) + 1.3)
+    ax.text(len(names) - 0.3, F.OR_FLOOR + 0.1, f"floor {F.OR_FLOOR:.1f}", ha="left", va="bottom", fontsize=7.6, color=RED)
+    ax.text(len(names) - 0.3, cap + 0.1, f"cap {cap:.2f}", ha="left", va="bottom", fontsize=7.6, color=RED)
     ax.set_xticks(list(x)); ax.set_xticklabels(names)
     ax.set_ylabel("Persons per domestic property", fontsize=8.5, color=GREY)
     ax.set_ylim(0, max(max(raw), cap) * 1.15)
@@ -102,7 +104,7 @@ def c07_landuse():
     ps = F.plot_summary(); cls = ps["classes"]
     order = [("Residential", BLUE), ("Agricultural", GREEN), ("Commercial", RED), ("Residential-Commercial", ORANGE),
              ("Government", AMBER), ("Industrial", PURPLE)]
-    names = [o[0].replace("Residential-Commercial", "Home and shop") for o in order]
+    names = [{"Residential": "Home", "Agricultural": "Farm", "Commercial": "Shop", "Residential-Commercial": "Home and shop"}.get(o[0], o[0]) for o in order]
     vals = [cls.get(o[0], 0) for o in order]; cols = [o[1] for o in order]
     total = sum(vals)
     fig, ax = plt.subplots(figsize=(7.4, 3.2))
@@ -158,7 +160,7 @@ def c09_flow():
     t = F.totals(); q = t["q"]; ult = t["ultimate"]
     years = [y for y in t["years"] if y <= ult]
     fig, ax = plt.subplots(figsize=(7.4, 3.3))
-    ax.fill_between(years, 0, [t["q_today"]] * len(years), color=PALE, linewidth=0, label=f"today's plots, {t['q_today']:,.0f} m³/d")
+    ax.fill_between(years, 0, [t["q_today"]] * len(years), color=PALE, linewidth=0, label=f"today's plots, {F.fmt(t['q_today'])} m³/d")
     ax.fill_between(years, [t["q_today"]] * len(years), [q[y] for y in years], color=MID, linewidth=0, label="empty plots as they fill")
     fy = [y for y in years if (y - 2025) % 5 == 0 or y == ult]
     ax.plot(fy, [q[y] for y in fy], "o", color=BLUE, markersize=3.5)
@@ -179,7 +181,7 @@ def c10_fill_years():
     rows = sorted(rows, key=lambda r: r["sat_year"])
     names = [r["name"] for r in rows]; ys = [r["sat_year"] for r in rows]
     fig, ax = plt.subplots(figsize=(7.4, 4.2))
-    big = {"Ibri", "Al Araqi", "Ad Dariz", "Al Qurayn", "Shalashil"}
+    big = {"Ibri"} | {r["receiver_name"] for r in F.ibri_receivers(1000)}
     cols = [BLUE if n in big else PALE for n in names]
     ax.barh(names, [y - F.BASE_YEAR for y in ys], left=F.BASE_YEAR, color=cols, height=0.62, edgecolor="white", linewidth=0.6)
     for n, y in zip(names, ys):
@@ -189,9 +191,9 @@ def c10_fill_years():
     ax.invert_yaxis()
     _style(ax, xgrid=True, ygrid=False)
     plt.setp(ax.get_yticklabels(), fontsize=7.2)
-    ax.legend(handles=[Patch(facecolor=BLUE, label="Ibri and the settlements that take its overflow"),
+    ax.legend(handles=[Patch(facecolor=BLUE, label="Ibri and the settlements that take 1,000 or more of its people"),
                        Patch(facecolor=PALE, label="other settlements")],
-              loc="upper right", frameon=False, fontsize=7.4)
+              loc="upper center", bbox_to_anchor=(0.5, -0.13), ncol=2, frameon=False, fontsize=7.4)
     return _save(fig, "C10_fill_years")
 
 
@@ -206,13 +208,14 @@ def c11_streams():
     left = 0
     for label, v, c in data:
         ax.barh([0], [v], left=left, color=c, height=0.5, edgecolor="white", linewidth=1.2)
-        if v / total > 0.06:
-            ax.text(left + v / 2, 0, f"{v:,.0f}", ha="center", va="center", fontsize=9, color="white", fontweight="bold")
+        if v / total > 0.09:          # a wide segment carries its value inside
+            ax.text(left + v / 2, 0, F.fmt(v), ha="center", va="center", fontsize=9, color="white", fontweight="bold")
         left += v
     ax.set_xlim(0, total); ax.set_ylim(-0.3, 0.48); ax.axis("off")
-    ax.legend(handles=[Patch(facecolor=c, label=f"{l} {v / total * 100:.0f} %") for l, v, c in data],
-              loc="lower center", ncol=4, frameon=False, fontsize=7.6, bbox_to_anchor=(0.5, -0.32))
-    ax.text(0, 0.40, f"{total:,.0f} m³/d today", fontsize=8.5, color=GREY)
+    # every value is in the legend, so a narrow segment needs no label of its own
+    ax.legend(handles=[Patch(facecolor=c, label=f"{l}: {F.fmt(v)} m³/d, {v / total * 100:.0f} %") for l, v, c in data],
+              loc="upper center", ncol=2, frameon=False, fontsize=7.6, bbox_to_anchor=(0.5, -0.02))
+    ax.text(0, 0.40, f"{F.fmt(total)} m³/d today", fontsize=8.5, color=GREY)
     return _save(fig, "C11_streams")
 
 
@@ -229,7 +232,7 @@ def c12_growth_rate():
     fig, ax = plt.subplots(figsize=(7.4, 2.8))
     ax.axvspan(years[0], 2040, color=PALE, alpha=0.35, linewidth=0); ax.axvspan(2040, 2050, color=AMBER, alpha=0.18, linewidth=0)
     ax.plot(years, rate, color=BLUE, linewidth=1.6)
-    for x, lab in ((2032, "census forecast\nto 2040"), (2045, "extrapolation\n2041 to 2050"), (2075, "constant 2.40 % a year\n2051 to 2100")):
+    for x, lab in ((2032, "census forecast\nto 2040"), (2045, "extrapolation\n2041 to 2050"), (2075, "rising to 2.40 % a year by 2058,\nthen constant to 2100")):
         ax.text(x, max(rate) * 0.08, lab, ha="center", va="bottom", fontsize=7.6, color=GREY)
     ax.set_xlim(years[0], years[-1]); ax.set_ylim(0, max(rate) * 1.15)
     ax.set_ylabel("Growth, per cent a year", fontsize=8.5, color=GREY)

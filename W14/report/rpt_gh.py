@@ -2,6 +2,7 @@
 import doc as D
 import notes as N
 import omml as M
+import facts_w14 as F
 
 UP, R = M.up, M.r
 
@@ -98,7 +99,7 @@ def part_g(d):
     D.p(d, "The scope required at this stage is the subject of Section 5.5.")
 
     # --------------------------------------------------------------- 33
-    D.h(d, 1, "33   Utility interfaces and approvals", page_break=True)
+    D.h(d, 1, "33   Utility interfaces and approvals")
 
     D.h(d, 2, "33.1   Approach")
     D.p(d, "The proposed alignments are superimposed on the service records of "
@@ -147,6 +148,7 @@ def part_g(d):
            "authorities listed below. A register is maintained recording the "
            "authority, the consent required, the date of application and the "
            "current position, and is reported to Nama Water Services.")
+    D.tab_caption(d, "Authorities from which approvals are required")
     D.table(d, ["Authority"], [
         ["Ministry of Housing and Urban Planning"],
         ["Environment Authority"],
@@ -268,9 +270,9 @@ def part_g(d):
         ["NPV", "net present value of the option", "OMR"],
         ["C t", "net cash flow in year t: revenue and avoided cost less "
                 "capital, replacement and operating cost", "OMR"],
-        ["r", "discount rate, 0.05", "-"],
-        ["t", "year, counted from the base date", "-"],
-        ["n", "evaluation period, 25 years", "-"]])
+        ["r", "discount rate, 0.05", "—"],
+        ["t", "year, counted from the base date", "—"],
+        ["n", "evaluation period, 25 years", "—"]])
 
     D.p(d, "")
     p = D.p(d, "Total life cycle cost is the present value of capital, "
@@ -317,19 +319,8 @@ def part_g(d):
            "against each of the remaining criteria, together with the results "
            "of the sensitivity tests.")
 
-    eq = D.next_eq()
-    M.display(d, M.seq(UP("NPV"), M.EQ,
-                       M.nary("∑", M.seq(R("t"), R("=0")), R("n"),
-                              M.frac(M.sub(R("C"), R("t")),
-                                     M.sup(M.delim(M.seq(R("1"), M.PLUS, R("i"))),
-                                           R("t"))))), number=eq)
-    D.table(d, ["Symbol", "Meaning", "Value"], [
-        ["C t", "net cost in year t", "—"],
-        ["i", "discount rate", "5 per cent"],
-        ["n", "evaluation period", "25 years"],
-    ], widths=[2.6, 9.4, 4.5], font=9)
-
-    D.p(d, "")
+    D.p(d, "The net present value of each option is computed by the equation "
+           "of Section 35.4, at five per cent over twenty-five years.")
     _pending(d, "The comparison and the recommended option will be presented "
                 "in the next revision.")
 
@@ -384,16 +375,17 @@ def part_h(d):
            "image, the occupancy rate has been derived for each settlement, "
            "and every plot carries a population and an average sewage flow "
            "for 2024 and for every year to the saturation of its settlement. "
-           "The study area is saturated in 2073 at 369,930 people and 63,679 "
-           "cubic metres of sewage a day.")
+           f"The study area is saturated in {F.totals()['ultimate']} at "
+           f"{F.fmt(F.totals()['pop_ult'])} people and "
+           f"{F.fmt(F.totals()['q_ult'])} cubic metres of sewage a day.")
     D.p(d, "A topographic and utility survey covering the whole study area is "
            "in progress. It will establish the levels, diameters and condition "
            "that the supplied datasets do not carry, and its completion is the "
            "principal step between this revision and the next.")
 
     D.h(d, 2, "42.1   Recommendations")
-    D.p(d, "It is recommended that Nama Water Services confirm the six matters "
-           "set out in Section 5, and that the datasets identified in Section "
+    D.p(d, "It is recommended that Nama Water Services confirm the seven matters "
+           "set out in Section 5 and the departures in Section 10.1, and that the datasets identified in Section "
            "7 as requiring correction or clarification be resolved, so that "
            "the flow series, the options and the appraisal can be completed on "
            "an agreed basis.")

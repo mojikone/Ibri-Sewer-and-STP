@@ -215,8 +215,8 @@ def part_a(d):
                "report to follow item 2.1 of Section 05 of the Wastewater "
                "Design Manual. The current revision of PAM-GUD-203 consolidated "
                "and renumbered the former manuals, and the corresponding "
-               "content is now Section 10.1, Site Selection. The report follows "
-               "Section 10.1, and confirmation is requested.")
+               "content is now Section 10.1 of PAM-GUD-203, Site Selection. The "
+               "report follows that section, and confirmation is requested.")
     N.add(p, "PAM-GUD-203 Revision 01, page 2, records the consolidation of "
              "the former manuals. Site selection is at pages 63 and 64.")
 

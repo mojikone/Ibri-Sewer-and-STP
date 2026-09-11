@@ -13,8 +13,8 @@ PROJECT = ("Consultancy Services for Design and Supervision for STP, Sewer "
            "and TE Networks Systems in Ibri")
 TENDER = "Tender No. T/2719110/2025"
 TITLE = "Concept Design Report"
-REV = "Revision 1"
-DATE = "August 2026"
+REV = "Revision 2"
+DATE = "September 2026"
 
 
 def cover(d):
@@ -146,7 +146,9 @@ def executive_summary(d):
     p = D.p(d, "The occupancy rate is set for each settlement as its 2024 "
                "population divided by the domestic electricity meters counted "
                "in it, with a floor of four persons per property where "
-               "institutional housing distorts the count. Ibri returns 6.07. "
+               "institutional housing distorts the count and a cap at the "
+               "highest rate among the larger settlements, 6.12; a settlement "
+               "of fewer than a thousand people takes four. Ibri returns 6.07. "
                "Revision 1 used a single rate of 5.32 for the whole area; the "
                "rate per settlement replaces it. Section 14 sets out the "
                "derivation.")
@@ -230,16 +232,20 @@ def executive_summary(d):
     D.h(d, 2, "Deliverables")
     D.p(d, "The Terms of Reference set out forty numbered deliverables for the "
            "concept stage. This report issues the design basis, the assessment "
-           "of the data, the design criteria and the framework for the options "
-           "and their appraisal. The flow series, the options themselves, the "
-           "cost estimate and the comparison follow in the next revision, once "
+           "of the data, the design criteria, the population and flow series "
+           "to saturation and the framework for the options and their "
+           "appraisal. The options themselves, the cost estimate and the "
+           "comparison follow in the next revision, once "
            "the design horizon is confirmed and the survey is complete. "
            "Section 3.1 lists each deliverable and its position.")
 
     D.h(d, 2, "Matters requiring confirmation")
-    D.p(d, "Six matters require confirmation from Nama Water Services. They "
+    D.p(d, "Seven matters require confirmation from Nama Water Services. They "
            "are set out in Section 5 with the relevant references, and are "
-           "summarised here.")
+           "summarised here. Section 10.1 lists the departures from the "
+           "guidelines and the items awaiting data, among them tanker supply, "
+           "private water sources and the connection ratio, for which "
+           "confirmation is also requested.")
     D.table(d, ["", "Matter"], [
         ["1", "The design horizon to be adopted"],
         ["2", "The approved project boundary"],
@@ -247,6 +253,7 @@ def executive_summary(d):
         ["4", "The hydraulic modelling software to be used"],
         ["5", "The timing of the environmental impact assessment"],
         ["6", "The convention for the term TE"],
+        ["7", "The design manual reference for site selection"],
     ], widths=[1.2, 15.3], font=9.5)
 
     D.pagebreak(d)

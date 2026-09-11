@@ -149,7 +149,7 @@ def part(d, letter, title):
         p(d, "", space_after=0)
     rule = p(d, "", align=WD_ALIGN_PARAGRAPH.CENTER, space_after=2)
     _rule(rule)
-    lab = p(d, "PART " + letter, align=WD_ALIGN_PARAGRAPH.CENTER,
+    lab = p(d, ("" if letter.startswith("Appendix") else "PART ") + letter, align=WD_ALIGN_PARAGRAPH.CENTER,
             bold=True, size=15, colour=MID, space_after=10)
     ttl = d.add_paragraph()
     ttl.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -239,8 +239,9 @@ def numbered(d, text, lead=None, restart=False):
     par = d.add_paragraph()
     par.paragraph_format.left_indent = Cm(0.9)
     par.paragraph_format.first_line_indent = Cm(-0.9)
+    par.paragraph_format.tab_stops.add_tab_stop(Cm(0.9))   # the text starts where the wrapped lines do
     par.paragraph_format.space_after = Pt(3)
-    r = par.add_run(f"{_step['n']}.   ")
+    r = par.add_run(f"{_step['n']}.\t")
     r.bold = True
     if lead:
         par.add_run(lead).bold = True
@@ -289,8 +290,15 @@ def _box(par):
 
 
 # -------------------------------------------------------------------- tables
+def _mark_size(par, font):
+    """Set the paragraph-mark font size, which sets the line height of an empty paragraph."""
+    ppr = par._p.get_or_add_pPr()
+    ppr.append(parse_xml(f'<w:rPr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+                         f'<w:sz w:val="{int(round(font * 2))}"/><w:szCs w:val="{int(round(font * 2))}"/></w:rPr>'))
+
+
 def table(d, headers, rows, widths=None, font=9, header_fill="1F3B63",
-          align_right=None, cell_margin=None):
+          align_right=None, cell_margin=None, keep_together=None):
     t = d.add_table(rows=1, cols=len(headers))
     t.style = "Table Grid"
     t.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -309,6 +317,7 @@ def table(d, headers, rows, widths=None, font=9, header_fill="1F3B63",
         cell = t.rows[0].cells[i]
         cell.text = ""
         par = cell.paragraphs[0]
+        _mark_size(par, font)
         par.paragraph_format.space_after = Pt(2)
         r = par.add_run(str(htxt))
         r.bold = True
@@ -328,6 +337,11 @@ def table(d, headers, rows, widths=None, font=9, header_fill="1F3B63",
             if i in align_right:
                 par.alignment = WD_ALIGN_PARAGRAPH.RIGHT
             txt = "" if val is None else str(val)
+            # the paragraph mark carries the table's size too: an empty cell
+            # otherwise takes the document default and the row doubles in height
+            _mark_size(par, font)
+            for r0 in par.runs:
+                r0.font.size = Pt(font)
             # **segments** render bold, wherever they sit in the cell
             for k, seg in enumerate(txt.split("**")):
                 if not seg:
@@ -340,6 +354,17 @@ def table(d, headers, rows, widths=None, font=9, header_fill="1F3B63",
         for row in t.rows:
             for i, w in enumerate(widths):
                 row.cells[i].width = Cm(w)
+
+    # a short table stays on one page: a single row carried over under a
+    # repeated header reads as an error
+    if keep_together is None:
+        keep_together = len(rows) <= 16
+    # a long table may break, but never leave its last two rows alone on a page
+    chain = t.rows[:-1] if keep_together else t.rows[-3:-1]
+    for row in chain:
+        for cell in row.cells:
+            for par in cell.paragraphs:
+                par.paragraph_format.keep_with_next = True
 
     # repeat the header on every page, and never split a row across a page:
     # a broken row orphans its label and the table stops being readable
@@ -371,6 +396,7 @@ def tab_caption(d, text):
     par = d.add_paragraph()
     par.paragraph_format.space_before = Pt(8)
     par.paragraph_format.space_after = Pt(3)
+    par.paragraph_format.keep_with_next = True      # a caption never ends a page
     r = par.add_run(f"Table {_counters['tab']}   {text}")
     r.font.size = Pt(9)
     r.bold = True
@@ -399,6 +425,7 @@ def picture(d, path, width_cm=16.0):
     par.alignment = WD_ALIGN_PARAGRAPH.CENTER
     par.paragraph_format.space_before = Pt(8)
     par.paragraph_format.space_after = Pt(2)
+    par.paragraph_format.keep_with_next = True     # the caption stays with its figure
     par.add_run().add_picture(path, width=Cm(width_cm))
     return par
 

@@ -68,14 +68,14 @@ def d2_data():
 def d3_flow():
     """Revision 2: from the plot to the pipe. The plot carries an average
     flow for each year; peaking belongs to the pipe and the plant."""
-    c = Chart(3, 5, cw=254, rh=100, gx=42, gy=30,
+    c = Chart(3, 5, cw=340, rh=104, gx=42, gy=30,
               title="Derivation of the design flow")
-    c.node("pl", 0, 0, "Plot: dwelling meters|x occupancy = people", "start")
-    c.node("de", 1, 0, "Water per person|164, 36 and 23 l/d")
-    c.node("rt", 2, 0, "Return rates|85 % and 54 %")
-    c.node("sp", 2, 1, "Industrial estates|workers x 93 l/d", "tint")
+    c.node("pl", 0, 0, "Existing plot: domestic meters|x occupancy = people", "start")
+    c.node("de", 1, 0, "Existing plot, l/d:|0.85 · 164 · OR · N dom|+ 0.54 · (U nd · N nd|+ U gov · N gov)")
+    c.node("rt", 2, 0, "Unit rates per meter:|the settlement's 22 % and 14 % shares")
+    c.node("sp", 2, 1, "Estate plot, l/d:|0.54 · 93 · workers|+ its dwellings, no shop share", "tint")
     c.node("ww", 1, 1, "Average sewage|per plot, each year")
-    c.node("gr", 0, 1, "Growth: empty plots|fill to saturation")
+    c.node("gr", 0, 1, "Future plot, l/d:|171.3 · people housed")
     c.node("su", 1, 2, "Sum of the plots|upstream of each pipe")
     c.node("inf", 0, 2, "Infiltration|720 l/d per km")
     c.node("pk", 2, 2, "Peak factor|Merrimack")
@@ -84,8 +84,8 @@ def d3_flow():
     c.node("st", 1, 4, "Treatment plant: average,|maximum day, peak hour", "accent")
 
     c.edge("pl", "de")
-    c.edge("de", "rt")
-    c.edge("rt", "ww")
+    c.edge("rt", "de")
+    c.edge("de", "ww")
     c.edge("sp", "ww")
     c.edge("gr", "ww")
     c.edge("ww", "su")
@@ -108,7 +108,7 @@ def d6_landuse():
     c.node("est", 0, 2, "Inside an industrial|estate: industrial", "tint")
     c.node("farm", 1, 2, "Farm meter, or a grove|by satellite: farm")
     c.node("her", 2, 2, "Old quarter:|heritage, no load", "tint")
-    c.node("prop", 1, 3, "Two thirds of the meters|decide: home, shop|or government")
+    c.node("prop", 1, 3, "The meters decide|by two thirds: home,|shop or government")
     c.node("lu", 1, 4, "USE OF THE PLOT|seven classes", "accent")
     c.node("none", 2, 4, "No meter:|empty plot", "tint")
 
@@ -184,7 +184,7 @@ def d5_options():
     c.node("e", 1, 1, "Equivalent function,|reliability and redundancy")
     c.node("cost", 0, 2, "Capital and operating|cost, life cycle cost")
     c.node("sus", 2, 2, "Carbon, resource use|and in-country value")
-    c.node("m", 1, 3, "Weighted comparison and|recommended option", "accent")
+    c.node("m", 1, 3, "Weighted comparison,|recommended option", "accent")
 
     c.edge("a", "e")
     c.edge("b", "e")

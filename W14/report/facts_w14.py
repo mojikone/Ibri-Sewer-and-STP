@@ -30,6 +30,8 @@ L_IND = 93.0
 OR_FLOOR = 4.0
 WORKERS = {"Al Tayyeb": 4500, "Tanam": 1800}
 HOME_LO, HOME_HI, BIG = 200, 1000, 2000
+HIGH_METERS = 15                      # a plot with this many dwelling meters is a block, not a home
+LPCD, R_ND, R_GOV, L_IND, RET_DOM, RET_ND = 164.0, 0.22, 0.14, 93.0, 0.85, 0.54   # PAM-GUD-201 Tab 11 p60, Tab 12 p61, Tab 19 p71
 
 NAME = {  # settlement names as the report writes them
     "IBRI": "Ibri", "AD DARIZ": "Ad Dariz", "AL ARAQI": "Al Araqi", "AL AYNAYN": "Al Aynayn",
@@ -43,6 +45,8 @@ NAME = {  # settlement names as the report writes them
 
 
 def fmt(n, nd=0):
+    """Thousands separator, rounded half up so a .5 total prints the same everywhere."""
+    n = float(n); n = round(n + (1e-9 if n >= 0 else -1e-9), nd)
     return f"{n:,.{nd}f}"
 
 
@@ -134,7 +138,7 @@ def plot_summary():
                 w_today=float(p.W_TOT.sum()),
                 s_dom=float(p.S_DOM.sum()), s_nd=float(p.S_NDOM.sum()), s_gov=float(p.S_GOV.sum()),
                 s_spec=float(p.S_SPEC.sum()),
-                pure_home_plots=int((built & (p.DERIVED == "Residential") & (p.HIGH == 0) & (p.G_DOM > 0)).sum()))
+                pure_home_plots=int((built & (p.DERIVED == "Residential") & (p.G_DOM < HIGH_METERS) & (p.G_DOM > 0)).sum()))
 
 
 # ------------------------------------------------------------ settlements
@@ -143,12 +147,12 @@ def settlement_table():
     """One row per settlement, largest first: the numbers the report tables use."""
     st = settlements(); oc = occupancy(); g = growth()["Settlements"]
     rows = []
-    for s in oc.sort_values("workbook_2024", ascending=False).index:
+    for s in st.sort_values("WB_2024", ascending=False).index:
         sat = g.at[s, "saturation_year"] if s in g.index else None
         rows.append(dict(
             key=s, name=NAME.get(s, s.title()),
-            properties=int(oc.at[s, "properties"]), workbook_2024=float(oc.at[s, "workbook_2024"]),
-            or_raw=float(oc.at[s, "OR_raw"]), or_used=float(st.at[s, "OR_S"]),
+            properties=int(st.at[s, "PROPS"]), workbook_2024=float(st.at[s, "WB_2024"]),
+            or_raw=round(float(st.at[s, "WB_2024"]) / max(int(st.at[s, "PROPS"]), 1), 2), or_used=float(st.at[s, "OR_S"]),
             people_today=float(st.at[s, "POP_TODAY"]),
             ratio=float(st.at[s, "PROPS_PER_BUILT_PLOT"]), home_share=float(st.at[s, "HOME_SHARE"]),
             ratio_raw=float(st.at[s, "PPP_RAW"]), home_share_raw=float(st.at[s, "HOME_SHARE_RAW"]),
@@ -158,6 +162,13 @@ def settlement_table():
             sat_year=int(sat) if sat == sat and sat else None,
             pop_2030=float(g.at[s, "pop_2030"]), pop_2055=float(g.at[s, "pop_2055"]),
             q_2030=float(g.at[s, "Qadf_2030"]), q_2055=float(g.at[s, "Qadf_2055"]),
+            built_plots=int(st.at[s, "BUILT_PLOTS"]), g_ndom=int(st.at[s, "NDOM_METERS"]), nd_pool=int(st.at[s, "NDOM_POOL"]),
+            g_gov=int(st.at[s, "GOV_METERS"]), gov_pool=int(st.at[s, "GOV_POOL"]), workers=float(st.at[s, "WORKERS"]),
+            u_nd=float(st.at[s, "U_NDOM"]), u_gov=float(st.at[s, "U_GOV"]),
+            w_dom=float(st.at[s, "W_DOM"]), w_nd=float(st.at[s, "W_NDOM"]), w_gov=float(st.at[s, "W_GOV"]),
+            w_spec=float(st.at[s, "W_SPEC"]), w_tot=float(st.at[s, "W_TOT"]),
+            s_dom=float(st.at[s, "S_DOM"]), s_nd=float(st.at[s, "S_NDOM"]), s_gov=float(st.at[s, "S_GOV"]),
+            s_spec=float(st.at[s, "S_SPEC"]), q_2024=float(st.at[s, "Q_2024"]),
         ))
     return rows
 
@@ -184,9 +195,9 @@ def five_year_rows(kind="pop"):
         name = NAME.get(r.iloc[0], str(r.iloc[0]).title()) if r.iloc[0] != "TOTAL" else "Total"
         cells = []
         for v in r.iloc[1:-2]:
-            cells.append("" if v != v or v is None else (f"{v:,.0f}"))
+            cells.append("" if v != v or v is None else fmt(v))
         sat, val = r.iloc[-2], r.iloc[-1]
-        out.append([name] + cells + ["" if sat != sat else f"{int(sat)}", "" if val != val else f"{val:,.0f}"])
+        out.append([name] + cells + ["" if sat != sat else f"{int(sat)}", "" if val != val else fmt(val)])
     cols = list(df.columns)[:-1]
     # a five-year column past the last saturation year is blank for every settlement: it is not printed
     while len(cols) > 4 and all(r[len(cols) - 2] == "" for r in out if r[0] != "Total"):
@@ -196,16 +207,17 @@ def five_year_rows(kind="pop"):
 
 
 @lru_cache(None)
-def routes():
+def routes(min_people=50):
     """Overflow routes: donor, receiver, people at ultimate, the year the donor is full,
-    the year the receiver starts taking and the year it is full. Sorted by people."""
+    the year the receiver starts taking and the year it is full. Sorted by people; routes
+    under min_people are left out (the appendix prints those of fifty or more)."""
     g = growth(); r = g["Overflow routes"]; inflow = g["Inflow from overflow"]; S = g["Settlements"]
     last = r.columns[-1]
     first_in = {s: next((int(c) for c in inflow.columns if float(inflow.at[s, c]) > 0.5), None) for s in inflow.index}
     sat = S["saturation_year"]
     out = []
     for _, x in r.sort_values(last, ascending=False).iterrows():
-        if float(x[last]) < 50:
+        if float(x[last]) < min_people:
             continue
         out.append(dict(donor=x["from"], receiver=x["to"], donor_name=NAME.get(x["from"], x["from"].title()),
                         receiver_name=NAME.get(x["to"], x["to"].title()), people=float(x[last]),
@@ -252,6 +264,7 @@ def map_boxes():
     the QGIS side, which has no pandas. Numbers come from the same functions
     the text uses."""
     import json
+    import geopandas as gpd
     t = totals(); ps = plot_summary(); mc = meter_counts(); cs = crt_summary()
     st = settlement_table(); ib = [r for r in st if r["key"] == "IBRI"][0]
     boxes = {
@@ -268,13 +281,14 @@ def map_boxes():
                         ["Industrial", fmt(ps["classes"].get("Industrial", 0))], ["Heritage", fmt(ps["heritage"])]],
         "M08_special": [["Industrial estates", "2"], ["Al Tayyeb workforce", fmt(WORKERS["Al Tayyeb"])], ["Tanam workforce", fmt(WORKERS["Tanam"])],
                         ["Rate", f"{L_IND:.0f} l/d per worker"], ["Army camp", "296 ha, no meter"], ["Resort, planned", "2 km2, no load yet"],
-                        ["Sewage from the estates", f"{ps['s_spec']:,.0f} m3/d"]],
+                        ["Sewage from the estates", f"{fmt(ps['s_spec'])} m3/d"]],
         "M09_saturation": [["Saturation year", str(t["ultimate"])], ["People at saturation", fmt(t["pop_ult"])],
-                           ["Sewage at saturation", f"{t['q_ult']:,.0f} m3/d"], [f"People, {BASE_YEAR}", fmt(t["pop_today"])],
+                           ["Sewage at saturation", f"{fmt(t['q_ult'])} m3/d"], [f"People, {BASE_YEAR}", fmt(t["pop_today"])],
                            ["Capacity of the empty plots", fmt(t["capacity"])], ["Ibri full", str(ib["sat_year"])]],
-        "M10_overflow": [["Ibri full", str(ib["sat_year"])], ["People Ibri sends out", fmt(sum(r["people"] for r in routes() if r["donor"] == "IBRI"))],
-                         ["Largest route", f"{routes()[0]['donor_name']} to {routes()[0]['receiver_name']}, {fmt(routes()[0]['people'])}"],
-                         ["Settlements that never fill alone", str(sum(1 for r in own_growth_saturation() if r["own"] is None))],
+        "M10_overflow": [["Ibri full", str(ib["sat_year"])], ["Ibri sends out", fmt(gpd.read_file(os.path.join(SHP, "Settlements_merged.shp"), ignore_geometry=True).set_index("SETTLE").at["IBRI", "OUT_PEOPLE"])],
+                         ["Largest route", f"{routes()[0]['donor_name']} to {routes()[0]['receiver_name']}"],
+                         ["People on it", fmt(routes()[0]['people'])],
+                         ["Never fill alone", str(sum(1 for r in own_growth_saturation() if r["own"] is None))],
                          ["Saturation, all", str(t["ultimate"])]],
     }
     routes_json()
@@ -294,3 +308,80 @@ if __name__ == "__main__":
     print("classes", ps["classes"]); print("farms by", ps["farms_by"])
     for r in settlement_table()[:5]:
         print(r["name"], r["or_raw"], r["or_used"], r["people_today"], r["sat_year"])
+
+
+# ------------------------------------------------------- the flow per plot
+def unit_rate_rows():
+    """Water shares and unit rates by settlement, 2024 (the table in 15.4).
+    Source: settlements_today.csv, every column a sum over the plots."""
+    st = settlement_table(); rows = []
+    for r in st:
+        rows.append([r["name"], fmt(r["people_today"]), fmt(r["w_dom"]), fmt(r["w_nd"]), fmt(r["w_gov"]),
+                     fmt(r["nd_pool"]), fmt(r["gov_pool"]),
+                     fmt(r["u_nd"]) if r["nd_pool"] > 0 else "on dwellings",
+                     fmt(r["u_gov"]) if r["gov_pool"] > 0 else "on dwellings",
+                     fmt(r["w_spec"]) if r["w_spec"] > 0 else "–", fmt(r["q_2024"])])
+    T = lambda k: sum(r[k] for r in st)
+    rows.append(["Total", fmt(T("people_today")), fmt(T("w_dom")), fmt(T("w_nd")), fmt(T("w_gov")),
+                 fmt(T("nd_pool")), fmt(T("gov_pool")), fmt(T("w_nd") * 1000 / T("nd_pool")),
+                 fmt(T("w_gov") * 1000 / T("gov_pool")), fmt(T("w_spec")), fmt(T("q_2024"))])
+    return rows
+
+
+def example_plot(key="IBRI", n_dom=4, n_nd=2, n_gov=1):
+    """One plot worked from its meters with the settlement's adopted rates: the rows of the table in 15.4."""
+    r = next(x for x in settlement_table() if x["key"] == key)
+    w_dom = n_dom * r["or_used"] * LPCD; w_nd = n_nd * r["u_nd"]; w_gov = n_gov * r["u_gov"]
+    s_dom, s_nd, s_gov = w_dom * RET_DOM, w_nd * RET_ND, w_gov * RET_ND
+    q = s_dom + s_nd + s_gov
+    rows = [[f"Domestic: {n_dom} meters × {r['or_used']:.2f} persons × 164 l/d", fmt(w_dom), "0.85", fmt(s_dom)],
+            [f"Non-domestic: {n_nd} meters × {fmt(r['u_nd'])} l/d", fmt(w_nd), "0.54", fmt(s_nd)],
+            [f"Governmental: {n_gov} meter × {fmt(r['u_gov'])} l/d", fmt(w_gov), "0.54", fmt(s_gov)],
+            ["Plot", fmt(w_dom + w_nd + w_gov), "", f"{fmt(q)} = {q / 1000:.2f} m³/d"]]
+    return dict(rows=rows, name=r["name"], or_used=r["or_used"], u_nd=r["u_nd"], u_gov=r["u_gov"],
+                people=n_dom * r["or_used"], q=q)
+
+
+# ------------------------------------------------------ figures the prose quotes
+@lru_cache(None)
+def growth_rates():
+    """The growth series' year-on-year rate: decade means (per cent) and the ramp
+    after 2050. Source: the demand workbook, sheet Project Pop Settlements, the 25 settlements."""
+    import openpyxl
+    wb = openpyxl.load_workbook(os.path.join(os.path.dirname(W14), "_CLIENT", "Ibri Sewer Demand R0 2026 08 03.xlsx"), read_only=True, data_only=True)
+    ws = wb["Project Pop Settlements"]; rows = list(ws.iter_rows(values_only=True)); hdr = [str(h) for h in rows[0]]
+    yc = {int(h.split()[1]): i for i, h in enumerate(hdr) if h.startswith("Pop ")}
+    keys = set(settlements().index)
+    tot = {y: sum(float(r[i]) for r in rows[1:] if r[1] and str(r[1]).strip().upper() in keys) for y, i in yc.items()}
+    rate = {y: (tot[y] / tot[y - 1] - 1) * 100 for y in sorted(tot) if y - 1 in tot}
+    mean = lambda a, b: ((tot[b] / tot[a]) ** (1 / (b - a)) - 1) * 100
+    at240 = next(y for y in sorted(rate) if y > 2050 and rate[y] >= 2.395)
+    return dict(d2024_2030=mean(2024, 2030), d2030s=mean(2030, 2040), d2040s=mean(2040, 2050), d2050s=mean(2050, 2060),
+                d2060on=mean(2060, 2100), r2051=rate[2051], year_240=at240, rate=rate)
+
+
+@lru_cache(None)
+def farm_bare_share():
+    """Share of the plots with a farm meter that fail the satellite grove test: pump sites without a crop."""
+    p = plots(); farm = p.G_AGR > 0
+    nm, ns, ga = p.NDVI_MEAN.fillna(0), p.NDVI_SHARE.fillna(0), p.GREEN_M2.fillna(0)
+    green = ((ga >= 1000) & (nm >= 0.20)) | ((ns >= 0.60) & (nm >= 0.40) & (p.AREA_M2 >= 800))
+    return float((farm & ~green).sum() / max(int(farm.sum()), 1))
+
+
+def home_share_range():
+    """Measured home share among the settlements of a thousand people or more: (low, name, high, name)."""
+    rows = [r for r in settlement_table() if not r["small"]]
+    lo = min(rows, key=lambda r: r["home_share_raw"]); hi = max(rows, key=lambda r: r["home_share_raw"])
+    return lo["home_share_raw"], lo["name"], hi["home_share_raw"], hi["name"]
+
+
+def ibri_receivers(min_people=1000):
+    """Settlements that take min_people or more of Ibri's overflow, largest first."""
+    return [r for r in routes(0) if r["donor"] == "IBRI" and r["people"] >= min_people]
+
+
+def census_rate():
+    """Persons per domestic property over the study area on the census figure alone."""
+    st = settlement_table()
+    return sum(r["workbook_2024"] for r in st) / sum(r["properties"] for r in st)
