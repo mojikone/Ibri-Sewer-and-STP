@@ -170,6 +170,10 @@ of designing can be tried and compared.
    closer chambers if needed.
 8. **Gradients are laid in steps of a tenth of that pipe's minimum gradient:** 0.5 mm/m at
    DN200, finer for bigger pipes. The diameter is earned by the flow, never chosen to flatten.
+   - **Superseded 2026-09-11 (engineer): gradients step 0.05 % (0.5 mm/m) for secondary pipes and 0.025 % (0.25 mm/m) for
+     trunks of DN500 and up** — constructable and readable on profiles; a tenth of the minimum is finer than the 20 mm
+     construction tolerance on large pipes. At the concept stage gradients are the G203 Table 11 minimum on these steps;
+     the tractive force sets no gradient until preliminary design. See `_BRAIN/02_DESIGN_CRITERIA.md`.
    - 2026-09-07 (engineer): **one gradient per street run, held until the cover is no longer
      enough.** The gradient changes only at a junction, or where holding it would breach the
      minimum cover or the maximum depth. G203-p29: "uniform slopes must be maintained between
