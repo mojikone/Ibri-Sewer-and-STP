@@ -1,7 +1,9 @@
-# W13 tmp2 design logic
+# W13 tmp3 design logic
 
-The logic of the network the engineer accepted on 2026-09-09 (`W13/tmp2`, run of 2026-09-08
-23:14). Written so it can be followed: one rule per item, in the engineer's words, the number
+The logic of `W13/tmp3`. It starts from the logic of the network the engineer accepted on
+2026-09-09 (`W13/tmp2/docs/W13_TMP2_DESIGN_LOGIC.md`, frozen with tmp2) and carries the
+engineer's rulings of 2026-09-11: the plots' own flows, the gradient grid, the self-cleansing
+audit and the guideline's tier names (rules 7 and 10, and the names in rules 5 and 6). Written so it can be followed: one rule per item, in the engineer's words, the number
 that defines a rule next to it. No history inside a rule. When a rule changes, the rule is
 rewritten and one dated line at its head says what moved. Run results live in the run folder's
 `README.md` and `run/stage_a.json`, never here. Nothing is added to this logic without the
@@ -19,6 +21,9 @@ engineer's agreement first.
   rule; it matters on flat ground.
 - **Sub mains first. Then hang the laterals on them, constructably.**
 - **No optimization.** No reroute, no trunk built for a pocket, no cost deciding an outlet.
+- **Tier names are the guideline's** (engineer, 2026-09-11; G203 p17, p21): the trunk is
+  **primary**, a sub main is a **secondary header**, a street pipe is a **secondary main
+  sewer**. "Lateral" is the tertiary pipe. The engineer's words above are kept as he said them.
 - **Constructability first does not mean go deep. 12 m is the maximum.** Whatever cannot reach
   a target within 12 m remains a pocket. A reroute is possible only if constructability is kept.
 
@@ -33,7 +38,7 @@ engineer's agreement first.
 
 2. **The targets.**
    - **Joins on the main pipe.** A junction within **30 m** of the drawn main pipe is a join
-     candidate. Only sub mains join; a street that touches the main pipe does not. Joins are
+     candidate. Only headers join; a street that touches the main pipe does not. Joins are
      kept biggest first, and a candidate within **150 m** of a kept one drains into its
      neighbour, unless its streets then have no path to any target, in which case it gets its
      join back.
@@ -65,36 +70,44 @@ engineer's agreement first.
    drains into it, to the same pump. A pocket floods nothing and pulls no neighbour in. No
    trunk is built for it; it remains a pump candidate, reported with its plots.
 
-5. **Sub mains are the long straight streets.** A street is a chain of runs continuing
+5. **Secondary headers are the long straight streets.** 2026-09-11: the guideline's name for
+   the sub main; the engine's role is still `sub main`. A street is a chain of runs continuing
    through junctions within **25°** of deflection. A chain is cut where the ground forces it:
    at a crest (rule 1), at a sag more than **0.5 m** below both sides where the water leaves
    the street, and between two junctions that drain to different outlets. From each outlet,
-   the longest chain whose lower end touches the outlet or a sub main already chosen is
+   the longest chain whose lower end touches the outlet or a header already chosen is
    taken, cut at the first chosen junction it meets, and so on until nothing attaches. A
-   street shorter than **250 m** is not a sub main; of a longer street, a piece of at least a
+   street shorter than **250 m** is not a header; of a longer street, a piece of at least a
    fifth of that attaches. A chain whose foot does not touch may attach through a connector
-   of at most **250 m** along the fall, and the connector becomes sub main with it. A chain
-   points toward the outlet; a chain of level runs is pointed by the outlet's distance. A sub
-   main stays on its own outlet's ground: the boundary run into the next catchment is a
+   of at most **250 m** along the fall, and the connector becomes header with it. A chain
+   points toward the outlet; a chain of level runs is pointed by the outlet's distance. A header
+   stays on its own outlet's ground: the boundary run into the next catchment is a
    branch, never part of the stem.
 
-6. **Hang the laterals.** One outlet per junction, no loops. The run that leaves a junction is
-   the sub main's own run, or else the cheapest route to the nearest sub main: length plus
-   **500 m** per metre of trench a pipe at **0.5 %** is forced to, a sub main run at **half**
-   that cost, searched from the outlets, inside the junction's own catchment. A leftover
-   street drains to its lower end, or to the end nearer a sub main where the ends are level.
+6. **Hang the secondary main sewers.** 2026-09-11: the guideline's name for the laterals;
+   the engine's roles are still `lateral` and `branch`. One outlet per junction, no loops. The
+   run that leaves a junction is the header's own run, or else the cheapest route to the
+   nearest header: length plus **500 m** per metre of trench a pipe at **0.5 %** is forced
+   to, a header run at **half** that cost, searched from the outlets, inside the junction's
+   own catchment. A leftover street (a branch) drains to its lower end, or to the end nearer
+   a header where the ends are level.
    Every other street at a junction starts as a head at the first house gate, the first plot
    centroid within **45 m** dropped square onto the street, or **10 m** along where no plot
    faces it; a street under **15 m** cannot carry a head and is reported. The catchment of a
    pipe is the outlet its tree path ends at.
 
-7. **Lay it heads-down and report the depth.** Each pipe is sized on the built and planned
-   plots it serves at saturation, **0.911 m³/d** per property, Merrimack peak, infiltration
-   on length; laid at its own Table 11 minimum gradient with **1.55 m** of cover to invert.
-   The diameter comes from the flow. It is never chosen to flatten the gradient. Depth is
-   reported at every chamber, and the arrival level at the works inlet is checked. Not yet in
-   the lay: drops, chamber spacing, gradient steps, the tertiary. This is the check of where
-   the layout digs, not the Stage C design.
+7. **Lay it heads-down and report the depth.** 2026-09-11 (engineer): sized on the plots'
+   own flows, and gradients on a grid above the minimum. Every plot that carries flow in W14's
+   `PLOTS_load` loads its nearest pipe within **45 m** with its own **`Q_ULT`** (saturation,
+   average dry-weather, m³/d). Summed down the tree, then peaked per pipe: **Merrimack** for
+   more than **100** properties, Qpdf = 2.65 Qadf^0.879 in Ml/d (G1-p71); **Peltier** for 100
+   or fewer, PF = 1.5 + 1/√Qm, Qm in l/s (G1-p72); properties per plot G_DOM + (POP_year −
+   POP) / OR_S. Infiltration **720 l/d per km** by the pipe length upstream, unpeaked
+   (G1-p72). The diameter comes from the flow; it is never chosen to flatten the gradient.
+   Laid at the **G203 Table 11 minimum** as it is; where the ground forces a steeper pipe, the
+   gradient is **rounded up** to steps of **0.05 %**, or **0.025 %** from DN500, so no random
+   value is laid. **1.55 m** of cover to invert. Depth is reported at every chamber. Not yet in
+   the lay: drops, chamber spacing, the tertiary.
 
 8. **The 12 m rule.** After the lay, in every subnetwork with a chamber past **12 m**, the
    basin behind its deepest chamber (the one with the largest fill on the path into it)
@@ -106,21 +119,40 @@ engineer's agreement first.
    not acted on. The overall network, the inlet and the way to the works are checked later,
    when all the subnetworks are prepared.
 
+10. **The self-cleansing audit, on the low case** (engineer, 2026-09-11). The flow is
+    **`Q_2030` × 0.61** of the plots upstream, peaked as in rule 7 with the properties counted
+    **connected** (2030 × 0.61), and **no infiltration**. Each pipe takes one class:
+    **velocity pass**, at least **0.75 m/s** at the low-case peak (G203-p26); else **tractive
+    pass**, the laid gradient at least Mara's slope Smin = K·τ^1.23·Q^−0.461 with **τ = 1 Pa**
+    and **K = 2.33 × 10⁻⁴**, Q in m³/s, on the true flow with no floor (G203-p27); else **needs
+    washing** (G203 §4.2.6, p28). The audit changes no size and no gradient. No regrade class,
+    no low-flow threshold. The tractive force sets no gradient at the concept stage.
+
 ## Where the engine's reading needed a choice
 
 Flags for the engineer, not rules. Each is one line of configuration or one function.
 
-- **250 m** as the shortest street that is a sub main: the engine's number, never the
+- **250 m** as the shortest street that is a header: the engine's number, never the
   engineer's.
 - **The 12 m rule knows only basins.** A depth that grows on the way to the works, with no
   basin behind it, is not cut. That is the case of the two subnetworks that go to the works.
 - **Bends in laterals**: the engine has no rule; the least-depth route decides.
 - **A pocket is the lake below its spill level**, and what is cut off behind it drains into it:
   the engine's reading of "whatever cannot reach remains a pocket".
-- **A sub main stays on its own outlet's ground**: the engine's reading, after a pocket's sub
+- **A header stays on its own outlet's ground**: the engine's reading, after a pocket's sub
   main had hoisted 40 km of the works' catchment into the pocket.
 - **One entry per settlement, the lowest**: the engine's choice among 134 candidates.
-- **1.55 m** cover and **0.911 m³/d** per property: Stage A proxies from W13's evidence.
+- **1.55 m** cover to invert: a Stage A proxy from W13's evidence.
+- **A plot's class from `PLOTS_load`** (2026-09-11): derived use Agricultural is agricultural,
+  even when metered; a metered plot is built; the rest planned. A plot is served when it
+  carries flow. Measured: a 29 ha metered farm south of the works, built in W3's file, is
+  agricultural here, so a 120 m link to the main pipe may cross it, and the 59 km around the
+  works now leaves by that link instead of the STP.
+- **A main-pipe join is not floored** (set aside until the main pipe is sized), so the depth
+  at which the 59 km arrives at the main pipe is not checked. In tmp2 it arrived 10.7 m under
+  the STP inlet; the shortfall moved, it did not go away.
+- **Peltier is not capped** at the guideline's recommended 5.0; below about 8 houses the
+  factor passes 5, and those pipes need washing whatever the factor.
 
 ## What was kept from W13's logic
 
@@ -159,13 +191,18 @@ Streets `Hydraulic/DWG/road network 03092026 eyeballed.dxf`; terrain
 redrawn on 2026-09-08; the works at (444387, 2563352), inlet 323.0 m; the scope
 `SHP/temp/W13 test boundary.shp`; the 2006 network (`W7/shp/EXISTING_SEWERLINE.shp`,
 `OP_STATUE = 1`) only to define the settlements and as the comparison; plots
-`W3/shp/MoH_Plots_class_v4.shp` and the counted accounts `W4/shp/ELE_accounts.shp` for the
-sizing. Settings in `py/config_built.py`, block "W13 temp 2".
+`W14/shp/PLOTS_load.shp` for everything plot-related: heads, served plots, the
+no-plot-in-the-way test, and each plot's own flow (`Q_ULT`, `Q_2030`). Settings in
+`py/config_built.py`, blocks "W13 temp 2" and "W13 temp 3".
 
 ## Outputs
 
 `dxf/W13_A_tree.dxf`: one layer per class, pipes coloured by subnetwork, thickness by
 diameter, an arrow on every pipe, chambers in fixed depth bands (0–2, 2–4, 4–6, 6–8, 8–10,
 10–12 m, red past 12 m), a stats text at each outlet, the ground behind. `shp/` the same as
-shapefiles, `img/` the overview and the two settlements, `run/stage_a.json` the numbers. In
-QGIS, group `Claude W13 temp 2 (constructable layout)` with `tmp2 pipes by depth`.
+shapefiles, `img/` the overview and the two settlements, `run/stage_a.json` the numbers.
+The pipe shapefile carries `TIER` (guideline name), `ROLE` (the engine's), `SLOPE_PCT`, the
+flows and the audit (`Q_LOW_LS`, `V_LOW`, `S_MARA_PC`, `CLEANSE`); `run/cleansing_table.md`
+and `run/washing_list.csv` the audit's table and list; `run/gate_vs_tmp2.json` the layout
+against tmp2. In QGIS, group `Claude W13 temp 3` with the self-cleansing layer and
+`tmp3 pipes by depth`.
