@@ -6,8 +6,12 @@ electricity meters (33,971) and the inception workbook (`_CLIENT/Ibri Sewer Dema
 sheet *Project Pop Settlements*, 25 settlements, 2023–2100).
 
 Scripts: `W14/py/plots_meters_load.py` (QGIS, steps 1–4) then `W14/py/growth_by_settlement.py` (step 5).
-Outputs: `W14/shp/ELE_meters_on_plots.shp`, `W14/shp/PLOTS_load.shp`, `W14/shp/Settlements_merged.shp`,
-`W14/analysis/W14_growth_by_settlement.xlsx`; QGIS group *Claude W13 load*.
+Outputs: `W14/shp/ELE_meters_on_plots.shp`, `W14/shp/PLOTS_load.shp` (56 fields: cadastre, meters by tariff and category,
+use and rule, shape and satellite tests, the settlement's adopted rates `OR_S` `PPP_S` `HOMESH_S` `U_NDOM` `U_GOV`, people,
+water and sewage by stream, `QADF`, people and flow 2030 / 2055 / saturation; the test and audit fields are in
+`W14/analysis/plot_class_audit.csv`), `W14/shp/Settlements_merged.shp` (69 fields: derived and adopted rates, meter counts,
+shares and unit rates, five-year steps, saturation with and without overflow, people sent and received),
+`W14/analysis/W14_growth_by_settlement.xlsx`; QGIS group *Claude W14 load*. Field dictionaries: report Appendix A4.
 
 ## 1. Rules
 
@@ -15,10 +19,10 @@ Outputs: `W14/shp/ELE_meters_on_plots.shp`, `W14/shp/PLOTS_load.shp`, `W14/shp/S
 |---|---|---|
 | 1 | Every dwelling meter (primary, subsidised, additional tariff) is one property. **Occupancy per settlement** = workbook population **2024** (the accounts' year and the report's base) ÷ metered properties, **floored at 4.0, capped at 6.12** (Bat's, the highest among settlements with 2,000+ people): Ibri 6.07, Ad Dariz 4.86, Al Araqi 4.34; ten settlements are lifted by the floor, none is cut by the cap (Bat sets it). **A settlement under 1,000 people in 2024 takes 4.0 outright, one property per plot and a home share of 0.9** — it has too few meters to measure on and does not attract second dwellings (13 settlements, At Tayyib's 4.02 at 3,300 people being the reference). The single 5.32 is superseded | engineer, 2026-09-10 |
 | 2 | Water per person: **164 L/d domestic**; non-domestic **0.22 × 164 = 36 L/d**; governmental **0.14 × 164 = 23 L/d**. Never compounded into one rate | G1-p59–61 Tab 11 |
-| 3 | Non-domestic and governmental water is a settlement pool from its people, landed on the settlement's shop and government meters in proportion; a settlement with none keeps it on its dwellings | locked basis, PROJECT-STATE §2 1b |
-| 4 | Special = the two industrial estates: **4,500 workers Al Tayyeb, 1,800 Tanam**, spread over their industrial plots by area, **93 L/d each** (dry industry) | Tab 12, G1-p61; engineer's assumption |
+| 3 | Non-domestic and governmental water is a settlement pool from its people (× 0.22 × 164 and × 0.14 × 164), landed on the settlement's shop and government meters in equal shares per meter — a **unit rate per meter** (`U_NDOM`, `U_GOV`, L/d; Ibri 510 and 3,342); **the two estates' meters stay out of the pool** (engineer 2026-09-10); a settlement with no such meter keeps the share on its dwellings. Per existing plot, L/d: **Q = 0.85 × 164 × OR × N_dom + 0.54 × (U_nd × N_nd + U_gov × N_gov + 93 × workers)** | locked basis, PROJECT-STATE §2 1b; report 15.4 |
+| 4 | Special = the two industrial estates: **4,500 workers Al Tayyeb, 1,800 Tanam**, spread over their industrial plots by area, **93 L/d each** (dry industry); an estate plot also carries any dwelling meters on it at the domestic rate (60 plots, 129 meters), and no share of the shop pool | Tab 12, G1-p61; engineer's assumption |
 | 5 | Sewage = **85 %** of domestic water, **54 %** of the rest; farm meters carry no load; large-user (CRT) meters carry the use identified in `CRT_accounts_identified.csv` | Tab 19, G1-p72 |
-| 6 | A meter outside every plot snaps to the nearest plot within **15 m**; else it stays free and belongs to the nearest settlement | engineer |
+| 6 | A meter outside every plot snaps to the nearest plot within **15 m**; else it stays free, belongs to the nearest settlement and **carries no load in the plot table** (126 meters: 30 dwellings, 47 government, 44 shop, 5 farm; about 130 people, 0.1 % of the flow — snapping them regardless of distance is the engineer's call) | engineer |
 | 7 | Every plot belongs to the settlement outline it lies in, else the nearest; the two AL AYNAYN outlines are one; the merged boundary is the **Voronoi partition of plot centroids, dissolved by settlement, clipped to the project boundary, shared edges smoothed as a coverage** — no gaps, no overlaps (`W14/py/settlements_partition.py`) | engineer |
 | 8 | Growth: each settlement grows at its **own rate** from the workbook, applied to its metered population (base **2024**) | engineer |
 | 9 | **Empty plots, capacity**: a settlement's capacity = its **home-shaped empty plots** (200–1,000 m², compactness ≥ 0.6 against the rotated bounding box, aspect ≤ 3; not grove, industrial, heritage or estate) × its **home share** (pure homes among its built, metered, home-shaped plots; Ibri 0.87) × its **properties per home plot** × its **occupancy** (rule 1); a settlement under 1,000 people takes one property per plot and a home share of 0.9. Slivers under 200 m², odd shapes and everything above 1,000 m² are not counted as homes | engineer, 2026-09-10 |
@@ -41,21 +45,21 @@ takes average, maximum day and peak hour from the same accumulated flow plus tan
 | | |
 |---|---|
 | Meters on plots | 30,931 inside, 2,914 snapped (≤ 15 m), 126 free |
-| Properties | 22,559 → **119,886 people** with the per-settlement occupancy (workbook 2024 for the 25: 116,452; the floor at 4.0 and the under-1,000 rule add 3,434 net) |
-| Water | 27,325 m³/d |
-| **Sewage (Qadf)** | **20,851 m³/d** |
+| Properties | 22,559 → **119,893 people** with the per-settlement occupancy (workbook 2024 for the 25: 116,452; the floor at 4.0 and the under-1,000 rule add 3,441 net) |
+| Water | 27,327 m³/d |
+| **Sewage (Qadf)** | **20,852 m³/d** |
 | Plot → settlement | 57,769 inside an outline, 19,496 by nearest |
 | Empty plots | 60,509; **46,109 home-shaped** count for capacity; 54,163 (all up to 2,000 m² except groves, industrial, heritage) receive the spread; slivers under 270 m² are 10 % of the plots but 1.3 % of the spread weight |
-| Capacity | **229,133 people** (v6 before the under-1,000 rule: 247,671; at 5.32 everywhere: 274,565; all empty plots ≤ 2,000 m² at the ratio, v4: 369,172; v1 loose class: 407,411) |
+| Capacity | **229,136 people** (v6 before the under-1,000 rule: 247,671; at 5.32 everywhere: 274,565; all empty plots ≤ 2,000 m² at the ratio, v4: 369,172; v1 loose class: 407,411) |
 
 ## 3. Growth
 
 | Year | New people housed | Total people | Nowhere to go | Qadf m³/d |
 |---|---|---|---|---|
-| 2030 | 19,641 | 139,527 | 0 | 24,215 |
-| 2055 | 125,013 | 244,899 | 0 | 42,263 |
-| **2070 ultimate** | 229,133 | **349,019** | 333 | **60,097** |
-| 2100 (workbook) | 229,133 | 349,019 | 362,625 | 60,097 |
+| 2030 | 19,643 | 139,535 | 0 | 24,216 |
+| 2055 | 125,020 | 244,914 | 0 | 42,266 |
+| **2070 ultimate** | 229,136 | **349,029** | 344 | **60,099** |
+| 2100 (workbook) | 229,136 | 349,029 | 362,659 | 60,099 |
 
 Settlements fill between 2036 (Al Akheedar) and 2070 (Al Wahrah, Al Jibayyah, Suwayda al Ma, Al Ghubayrah, Miayrid); **Ibri 2056**, Al Araqi 2057, Al Qurayn 2060,
 Shalashil 2061, Ad Dariz 2062. All 25 fill: every settlement receives its neighbours' overflow. The workbook supplies
@@ -72,7 +76,7 @@ metered plots change class from v1, 1,363 of them homes that are groves; Ibri's 
 369,000; ultimate 2080. **v5 (2026-09-10, live)**: same classes plus Heritage and the government
 majority, capacity from home-shaped plots × home share (rule 9), spread by capped area (rule 9d): capacity
 275,000; ultimate 2072. **v6 (2026-09-10 evening, live)**: occupancy per settlement from the 2024 workbook
-(floor 4, cap 6.12), base year 2024, Ibri's parallel overspill, every settlement a receiver; capacity 248,000; ultimate 2073. **v7 (2026-09-10 night, live)**: a settlement under 1,000 people in 2024 takes occupancy 4.0, one property per plot and a home share of 0.9 (13 settlements, Al Jahli and Sayh al Masarrat among them); At Tayyib overflows to Miayrid first; capacity 229,133; ultimate 2070, 349,019 people, 60,097 m³/d; Ibri full 2056. The report's five-year tables stop at saturation and carry the saturation year and value; the growth-series provenance, the overflow routes and the saturation year with and without overflow are in the report (14.7, A5, A6, map M10). The v1 class is kept in `DERIVED1`; `WHYC` says why (AGR farm meter, GRN NDVI grove,
+(floor 4, cap 6.12), base year 2024, Ibri's parallel overspill, every settlement a receiver; capacity 248,000; ultimate 2073. **v7 (2026-09-10 night, live)**: a settlement under 1,000 people in 2024 takes occupancy 4.0, one property per plot and a home share of 0.9 (13 settlements, Al Jahli and Sayh al Masarrat among them); At Tayyib overflows to Miayrid first; capacity 229,133; ultimate 2070, 349,019 people, 60,097 m³/d; Ibri full 2056. **Same day, unit-rate loads and four-decimal storage (live)**: the estates' meters out of the pool, people and occupancy to four decimals so the plots sum to the settlements: capacity 229,136; ultimate 2070, 349,029 people, 60,099 m³/d. The report's five-year tables stop at saturation and carry the saturation year and value; the growth-series provenance, the overflow routes and the saturation year with and without overflow are in the report (14.7, A5, A6, map M10). The v1 class is kept in `DERIVED1`; `WHYC` says why (AGR farm meter, GRN NDVI grove,
 RES/COM/GOV/RC proportion, EST estate, UNM unmetered); `NDVI_MEAN`, `NDVI_SHARE`, `GREEN_M2`, `COMPACT`, `ASPECT`, `HOMESHAPE`, `SPREAD_W`, `OR_S` are on every plot.
 
 **The R0 figure of ≈ 49,700 m³/d ultimate was built on connected population and Tier A at OR 6;
