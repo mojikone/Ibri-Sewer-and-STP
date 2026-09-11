@@ -119,7 +119,7 @@ The floor lifts Ad Dibayshi (3.54), Hijar (2.93); no settlement is cut by the ca
 2024 workbook takes **occupancy 4.0, one property per home plot and a home share of 0.9**, whatever its meters
 return. Two reasons: it has too few meters to measure on (Miayrid 4, Wadi al Mankas 8, Ash Shiab 11 return
 4.3 to 8.5 on a handful of accounts), and a village of that size does not attract second dwellings on a plot.
-The 4.0 is At Tayyib's measured 4.02 at 3,300 people, the smallest settlement whose rate is trusted. The rule
+The 4.0 is At Tayyib's measured 4.02 at 3,300 people, the lowest rate measured in any settlement whose derived rate is used without a bound. The rule
 applies to 13 settlements: Al Akheedar, Al Ghubayrah, Al Jahli, Al Makhtibyah, Al Qali, Al Qurayn, Ash Shiab, Miayrid, Satwah, Sayh al Masarrat, Shalashil, Usaybuq, Wadi al Mankas. Sayh al Masarrat and
 Al Jahli are among them although their meters say 457 and 344 properties: the census counts 466 and
 415 residents there, because the police headquarters housing and the college housing are not
