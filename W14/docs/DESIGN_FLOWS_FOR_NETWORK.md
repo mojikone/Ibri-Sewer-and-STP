@@ -127,14 +127,24 @@ Properties: 22,559 in 2024, 26,255 in 2030, 70,328 at saturation.
 | Usaybuq | 14 | 17 | 10 | 38 | 38 | 2054 | 78 |
 | Ash Shiab | 8 | 9 | 5 | 15 | 16 | 2056 | 76 |
 
-## 8. What is not in the flows, and must not be assumed
+## 8. Open rulings — recommended here, to be confirmed by the engineer
+
+| Question | Recommendation | Why |
+|---|---|---|
+| Which property count picks Merrimack or Peltier in the **low case**? | the **connected** count: properties of 2030 × 0.61 | the low case is about connected flow; the lower count picks Peltier more often, which gives the lower peak at small flows — the safe direction for self-cleansing |
+| Infiltration in the **low case**? | **left out** | adding flow is the unsafe direction for self-cleansing; on a new pipe it is a few thousandths of a l/s |
+| Order of the tests | velocity → low-flow threshold → tractive → regrade | the Mara slope is not extrapolated below its flow range |
+| Which Mara constant? | **K = 2.33 × 10⁻⁴ with Q in m³/s** | G203 p27 prints two constants that disagree by 2.3 % once units are converted (2.33e-4 in m³/s = 5.63e-3 in l/s, against the printed 5.5e-3); the m³/s form gives the steeper slope, the safe direction, and is what the engine uses. State the constant on every result |
+| Engine `TIER` value `branch` (W13 Stage A exports) | **secondary main sewer** | it is a street pipe feeding the network, like the old "lateral" |
+
+## 9. What is not in the flows, and must not be assumed
 
 - **Tanker supply and sewage tankers**: no filling-station or delivery records held; not in any flow (report §10.1).
 - **Private wells and other non-network water**: not assessed; every flow is on the network-accounted basis (report §10.1).
 - **The 126 meters more than 15 m from any plot** (30 dwellings, about 130 people): no load in the plot table. Open with the engineer.
 - **Peak, infiltration and the plant margin**: added in the design, never stored on the plot.
 
-## 9. Rerun order
+## 10. Rerun order
 
 `W14/py/plots_meters_load.py` (in QGIS) → `W14/py/plot_class_v2_apply.py` → `W14/py/growth_by_settlement.py` →
 `W14/py/make_design_flows.py` → `W14/report/build.py --pdf`.

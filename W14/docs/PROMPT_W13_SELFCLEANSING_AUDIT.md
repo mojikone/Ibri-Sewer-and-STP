@@ -17,7 +17,7 @@ changing any code, and run the test-boundary gate after each step.
 3. **Size on `Q_ULT`**: sum upstream, peak (Merrimack over 100 properties, both flows in Ml/d; Peltier at or under 100, flow in
    l/s), add infiltration 720 l/d per km by pipe length.
 4. **Add the G203 §4.2.2.1 self-cleansing audit on the low case `Q_2030` × 0.61**, peaked the same way and fed to both the
-   velocity test (0.75 m/s at peak) and the Mara tractive slope (Smin = K·τ^1.23·Q^−0.461, K = 5.5e-3 with Q in l/s). **τ has no
+   velocity test (0.75 m/s at peak) and the Mara tractive slope (Smin = K·τ^1.23·Q^−0.461; use **K = 2.33e-4 with Q in m³/s** — G203 p27's l/s constant 5.5e-3 is 2.3 % flatter — and state it on every result). Test in the order velocity → low-flow threshold → tractive → regrade; count properties for the peak formula as connected (2030 × 0.61); leave infiltration out of the low case (recommended in the handoff §8, confirm with the engineer). **τ has no
    value in G203 (GAP-9): make it a parameter, report the class counts against it, and do not present one τ as the guideline's.**
    The audit changes no pipe size or gradient.
 5. **Class every pipe** (primary, secondary header, secondary main sewer — not only one tier): **velocity pass**, **tractive
@@ -28,3 +28,6 @@ changing any code, and run the test-boundary gate after each step.
    `lateral` → secondary main sewer. "Lateral" is reserved for the tertiary pipe (G203 p17, p21). W8 and older keep their values.
 7. **Map it**: the pipes coloured by class, in QGIS in the `Claude W13 temp 3` group, plus a shapefile field `CLEANSE` and a
    table of counts and lengths per class and per tier.
+8. **Correct the rising-main velocity limits** in `sewnet/stages/hydraulic.py` (`_size_rising_mains`, `V_MAX = 3.0`, docstring
+   "0.75 and 3.0 m/s (G203-p50 8.1)"). G203 p50 §8.1 says: at least 0.75 m/s at design minimum flow, **1.0 m/s for intermittent
+   (start-stop) flow**, 1.2 m/s in a vertical main, and **not greater than 2.5 m/s**. 3.0 m/s is the gravity sewer limit (p27).

@@ -64,7 +64,11 @@ data = dict(
                stp_margin=MARGIN, tankers="pending: no filling-station records held; not in any flow",
                properties_per_plot_in_year="G_DOM + (POP_year - POP) / OR_S",
                tractive_tension="GAP-9: no value in G203; a parameter until NWS confirms",
-               low_flow_1_5_l_s="not in PAM-GUD-203; an outside (Mara) assumption to be tagged"),
+               low_flow_1_5_l_s="not in PAM-GUD-203; an outside (Mara) assumption to be tagged",
+               open_rulings_recommended=dict(low_case_property_count=f"properties of {OPEN_YEAR} x {CONNECT_2030} (connected)",
+                                             low_case_infiltration="left out", test_order="velocity, low-flow threshold, tractive, regrade",
+                                             mara_constant="K = 2.33e-4 with Q in m3/s (G203 p27 prints two constants 2.3 % apart)",
+                                             engine_tier_branch="secondary main sewer", status="recommended, to be confirmed by the engineer")),
     totals={str(y): dict(people=round(pop[y]), qadf_m3d=round(q[y], 1)) for y in (2024, 2030, 2055, ult)},
     low_case_2030_m3d=round(low, 1), stp_ultimate_with_margin_m3d=round(q[ult] * (1 + MARGIN), 1),
     properties=dict(y2024=round(props_now), y2030=round(props_2030), ultimate=round(props_ult)),
@@ -185,14 +189,24 @@ Properties: {fmt(props_now)} in 2024, {fmt(props_2030)} in {OPEN_YEAR}, {fmt(pro
 
 {sett}
 
-## 8. What is not in the flows, and must not be assumed
+## 8. Open rulings — recommended here, to be confirmed by the engineer
+
+| Question | Recommendation | Why |
+|---|---|---|
+| Which property count picks Merrimack or Peltier in the **low case**? | the **connected** count: properties of {OPEN_YEAR} × {CONNECT_2030} | the low case is about connected flow; the lower count picks Peltier more often, which gives the lower peak at small flows — the safe direction for self-cleansing |
+| Infiltration in the **low case**? | **left out** | adding flow is the unsafe direction for self-cleansing; on a new pipe it is a few thousandths of a l/s |
+| Order of the tests | velocity → low-flow threshold → tractive → regrade | the Mara slope is not extrapolated below its flow range |
+| Which Mara constant? | **K = 2.33 × 10⁻⁴ with Q in m³/s** | G203 p27 prints two constants that disagree by 2.3 % once units are converted (2.33e-4 in m³/s = 5.63e-3 in l/s, against the printed 5.5e-3); the m³/s form gives the steeper slope, the safe direction, and is what the engine uses. State the constant on every result |
+| Engine `TIER` value `branch` (W13 Stage A exports) | **secondary main sewer** | it is a street pipe feeding the network, like the old "lateral" |
+
+## 9. What is not in the flows, and must not be assumed
 
 - **Tanker supply and sewage tankers**: no filling-station or delivery records held; not in any flow (report §10.1).
 - **Private wells and other non-network water**: not assessed; every flow is on the network-accounted basis (report §10.1).
 - **The 126 meters more than 15 m from any plot** (30 dwellings, about 130 people): no load in the plot table. Open with the engineer.
 - **Peak, infiltration and the plant margin**: added in the design, never stored on the plot.
 
-## 9. Rerun order
+## 10. Rerun order
 
 `W14/py/plots_meters_load.py` (in QGIS) → `W14/py/plot_class_v2_apply.py` → `W14/py/growth_by_settlement.py` →
 `W14/py/make_design_flows.py` → `W14/report/build.py --pdf`.
