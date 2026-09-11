@@ -761,6 +761,11 @@ def main():
                       "over_m": a.get("over_m", 0.0), "sized_on": a.get("sized_on")}
                      for k, a in trunks.items()]
     rep["tier_km"] = km_by(pipes, "tier", ("trunk", "sub main", "lateral", "branch"))
+    # temp 3: the same lengths under the guideline's tier names (the keys above are the roles)
+    from sewnet.export_tree import TIER_NAME as _TN
+    rep["tier_km_guideline"] = {}
+    for _r, _k in rep["tier_km"].items():
+        rep["tier_km_guideline"][_TN[_r]] = round(rep["tier_km_guideline"].get(_TN[_r], 0.0) + _k, 1)
 
     log("catchment ground and the drawing ...")
     polys2 = O.catchment_polygons(pipes, [p["catch"] for p in pipes], envelope)

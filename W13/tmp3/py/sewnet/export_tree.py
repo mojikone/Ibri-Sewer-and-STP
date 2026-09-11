@@ -18,7 +18,13 @@ from shapely.geometry import Point
 from .export_stage_a import PALETTE, OUTLET_COLOUR, _arrow, _poly_rings
 
 TIER_WIDTH = {"trunk": 4.0, "sub main": 2.5, "lateral": 0.8, "branch": 0.8}
-TIER_LAYER = {"trunk": "A_TRUNK", "sub main": "A_SUBMAIN", "lateral": "A_LATERAL", "branch": "A_BRANCH"}
+# temp 3 (2026-09-11, engineer): the guideline's tier names (G203 p17, p21). "Lateral" is the
+# tertiary pipe, so the street pipe is a secondary main sewer. The engine's own roles stay in
+# the ROLE field and the layers, so a branch (a leftover street, its head at a gate) still shows
+TIER_NAME = {"trunk": "primary", "sub main": "secondary header",
+             "lateral": "secondary main sewer", "branch": "secondary main sewer"}
+TIER_LAYER = {"trunk": "A_PRIMARY", "sub main": "A_SECONDARY_HEADER",
+              "lateral": "A_SECONDARY_MAIN", "branch": "A_SECONDARY_MAIN_BRANCH"}
 OUT_COL = dict(OUTLET_COLOUR, **{"LINK-STP": 6, "LINK-MP": 6})
 PNG_MARK = {"JOIN": "o", "STP": "*", "SINK": "v", "LOW": "s", "LINK-STP": "D", "LINK-MP": "D"}
 PNG_COL = {"JOIN": "blue", "STP": "magenta", "SINK": "red", "LOW": "darkorange",
@@ -164,7 +170,8 @@ def write_shapes(out_dir, prefix, pipes, gaps, catch_info, catch_polys, joins, e
     crs = f"EPSG:{epsg}"
     gpd.GeoDataFrame({
         "PIPE_ID": [f"P{i + 1:05d}" for i in range(len(pipes))],
-        "TIER": [p["tier"] for p in pipes],
+        "TIER": [TIER_NAME[p["tier"]] for p in pipes],
+        "ROLE": [p["tier"] for p in pipes],
         "CATCH": [p["catch"] for p in pipes],
         "OUT_TYPE": [catch_info[p["catch"]]["type"] for p in pipes],
         "LEN_M": [round(p["len"], 1) for p in pipes],

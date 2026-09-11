@@ -70,22 +70,27 @@ def audit(pipes, connected=0.61, v_min=V_MIN, tau=TAU_PA, k=MARA_K):
         q["q_low_ls"], q["pf_low"], q["v_low"], q["yd_low"] = peak, pf, v, yd
         q["s_mara"] = sm
         q["cleanse"] = ("velocity" if v >= v_min else "tractive" if S >= sm else "washing")
+    from .export_tree import TIER_NAME
     rep = {"flow": f"Q_2030 x {connected}, properties connected, no infiltration",
-           "v_min_ms": v_min, "tau_pa": tau, "mara_k": k, "by_class": {}, "by_tier": {}}
+           "v_min_ms": v_min, "tau_pa": tau, "mara_k": k, "by_class": {}, "by_tier": {},
+           "by_role": {}}
     by = collections.defaultdict(lambda: [0, 0.0])
     byt = collections.defaultdict(lambda: collections.defaultdict(lambda: [0, 0.0]))
+    byr = collections.defaultdict(lambda: collections.defaultdict(lambda: [0, 0.0]))
     for q in pipes:
         by[q["cleanse"]][0] += 1
         by[q["cleanse"]][1] += q["len"]
-        t = q.get("tier", "?")
-        byt[t][q["cleanse"]][0] += 1
-        byt[t][q["cleanse"]][1] += q["len"]
+        r = q.get("tier", "?")
+        for d, key in ((byt, TIER_NAME.get(r, r)), (byr, r)):
+            d[key][q["cleanse"]][0] += 1
+            d[key][q["cleanse"]][1] += q["len"]
     total = sum(v[1] for v in by.values()) or 1.0
     for c in CLASSES:
         n, L = by.get(c, [0, 0.0])
         rep["by_class"][c] = {"pipes": n, "km": round(L / 1000.0, 1),
                               "pct_length": round(100.0 * L / total, 1)}
-    for t, d in byt.items():
-        rep["by_tier"][t] = {c: {"pipes": d[c][0], "km": round(d[c][1] / 1000.0, 1)}
-                             for c in CLASSES}
+    for name, src in (("by_tier", byt), ("by_role", byr)):
+        for t, d in src.items():
+            rep[name][t] = {c: {"pipes": d[c][0], "km": round(d[c][1] / 1000.0, 1)}
+                            for c in CLASSES}
     return rep
