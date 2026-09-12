@@ -29,6 +29,13 @@ subnetworks are grouped by that into major groups, and the QGIS groups follow th
 **B** each subnetwork's hydraulic design once the layout is accepted; **C** the whole on the
 main pipe and the works.
 
+**Google Earth**: `python export_kmz.py` (from `py/`) writes `kmz/W15_A_network.kmz` from the last run:
+a folder per convergence group, a folder per subnetwork inside it (its outlet, its sub mains one
+placemark each with size, gradient, flow and depth in the balloon, its laterals merged), one colour
+per subnetwork with neighbours within 150 m coloured apart, sub mains thick, the main pipe yellow,
+the guide magenta, the pockets' sink points in a folder of their own; three overlays off until
+ticked (flow arrows on the sub mains, pipes deeper than 12 m, the group outlines).
+
 Rerun with `python run_stage_a.py` from `py/`; it writes here only. The logic is
 `docs/W15_DESIGN_LOGIC.md` (tmp4's, carried on; a changed rule is rewritten with one dated line
 at its head). The pipe style is `qgis/W15_pipes.qml`.
