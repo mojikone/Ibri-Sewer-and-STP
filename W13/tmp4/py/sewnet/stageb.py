@@ -284,6 +284,19 @@ class StageB:
                 dn = max(dn, H.size_for(qd))
             p["dn_mm"] = dn
             cov = self.cover + H.outside(dn)
+            # the run's line starts and ends on its chambers: stage A noded the streets within
+            # 3 m without moving the line ends, so the node could sit a metre off the pipe end
+            pu = self.pos.get(u, u if not (isinstance(u, tuple) and u and u[0] == "H") else None)
+            pd = d
+            coords = list(p["geom"].coords)
+            if pu is not None and math.dist(coords[0], pu) > 0.01:
+                coords[0] = (float(pu[0]), float(pu[1]))
+            if math.dist(coords[-1], pd) > 0.01:
+                coords[-1] = (float(pd[0]), float(pd[1]))
+            if coords != list(p["geom"].coords):
+                p["geom"] = LineString(coords)
+                p["len"] = p["geom"].length
+                L = p["len"]
             # the ground along the run, the node levels at the ends
             ch, zg = profile(self.ground, p["geom"], self.step)
             zg = np.array(zg, dtype=float)
