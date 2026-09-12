@@ -296,23 +296,23 @@
   },
   "stage_b": {
     "km": 212.8,
-    "reaches": 3688,
-    "chambers": 3730,
+    "reaches": 3673,
+    "chambers": 3715,
     "short_head_pipes_removed": 10,
-    "heads_on_a_bend": 9,
+    "heads_on_a_bend": 10,
     "chambers_by_kind": {
       "spacing": 715,
-      "bend": 383,
-      "drop": 7,
+      "bend": 369,
+      "drop": 6,
       "head": 1103,
       "junction": 1480,
       "outlet": 42
     },
-    "depth_median_m": 1.86,
+    "depth_median_m": 1.85,
     "depth_max_m": 16.8,
     "chambers_over_12m": 32,
     "trench_over_12m": 38,
-    "drops": 578,
+    "drops": 577,
     "backdrops_over_0p6": 569,
     "drops_over_2m": 268,
     "steep_runs": 0,
@@ -334,8 +334,8 @@
     "by_catch": {
       "C01": {
         "km": 58.99,
-        "reaches": 840,
-        "chambers": 841,
+        "reaches": 837,
+        "chambers": 838,
         "deepest": 16.8,
         "trench_max": 16.93,
         "over_12": 26,
@@ -386,8 +386,8 @@
       },
       "C02": {
         "km": 41.1,
-        "reaches": 614,
-        "chambers": 615,
+        "reaches": 613,
+        "chambers": 614,
         "deepest": 13.83,
         "trench_max": 13.83,
         "over_12": 6,
@@ -503,8 +503,8 @@
       },
       "C04": {
         "km": 26.67,
-        "reaches": 614,
-        "chambers": 615,
+        "reaches": 610,
+        "chambers": 611,
         "deepest": 8.56,
         "trench_max": 8.61,
         "over_12": 0,
@@ -555,8 +555,8 @@
       },
       "C05": {
         "km": 12.97,
-        "reaches": 239,
-        "chambers": 240,
+        "reaches": 236,
+        "chambers": 237,
         "deepest": 8.37,
         "trench_max": 8.37,
         "over_12": 0,
@@ -568,12 +568,12 @@
       },
       "C09": {
         "km": 3.24,
-        "reaches": 100,
-        "chambers": 101,
+        "reaches": 99,
+        "chambers": 100,
         "deepest": 6.58,
         "trench_max": 6.6,
         "over_12": 0,
-        "drops": 2,
+        "drops": 1,
         "washing_km": 1.6,
         "cap_fail": 0,
         "wadi": 9,
@@ -646,8 +646,8 @@
       },
       "C03": {
         "km": 27.15,
-        "reaches": 511,
-        "chambers": 512,
+        "reaches": 508,
+        "chambers": 509,
         "deepest": 5.9,
         "trench_max": 5.92,
         "over_12": 0,
@@ -880,11 +880,11 @@
       }
     },
     "issues": {
-      "close chambers": 9,
+      "close chambers": 2,
       "short head pipe removed": 10,
       "head not at a gate": 28
     },
-    "heads_moved_from_junction": 127
+    "heads_moved_from_junction": 128
   },
   "basins": [
     {
@@ -2017,5 +2017,5 @@
       "area_km2": 0.127
     }
   ],
-  "seconds": 70.7
+  "seconds": 68.8
 }

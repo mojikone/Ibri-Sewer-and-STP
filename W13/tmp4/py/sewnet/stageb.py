@@ -96,8 +96,8 @@ def bend_cuts(geom, bend_deg=5.0, wide_deg=45.0, max_per_60m=3, sep_m=10.0):
             since = 0.0
     out = []
     for c, corner in cuts:
-        if c < 1.0 or c > L - 1.0:
-            continue
+        if c < sep_m or c > L - sep_m:
+            continue                          # the end chamber takes this bend
         if not corner:
             if out and c - out[-1] < sep_m:
                 continue
@@ -212,8 +212,8 @@ class StageB:
                 # the gate, but never closer than sep to a junction chamber, so it moves
                 # along its own street to sep from that junction
                 g = q["geom"]
-                bends_here = bend_cuts(g, bend_deg, sep_m=sep)
-                first_bend = min([c for c in bends_here if c <= sep], default=None)
+                bends_here = bend_cuts(g, bend_deg, sep_m=0.0)
+                first_bend = min([c for c in bends_here if 0.5 < c <= sep], default=None)
                 pt = Point(c0)
                 near = [junctions[int(j)] for j in jtree.query(pt.buffer(sep)) if junctions[int(j)].distance(pt) < sep]
                 cut_at = 0.0
@@ -514,6 +514,30 @@ class StageB:
                              for c, d in by_catch.items()}}
 
 
+def write_pipes(out_dir, prefix, pipes, catch_info, epsg=32640):
+    """The pipes as stage B laid them: stage A's records with the head moved, the ends on the
+    chambers, the short head pipes gone; the fields the pipe style reads."""
+    import os
+    import geopandas as gpd
+    from .export_tree import TIER_NAME
+    live = [(i, p) for i, p in enumerate(pipes) if not p.get("dropped")]
+    gpd.GeoDataFrame({
+        "PIPE_ID": [f"P{i + 1:05d}" for i, _ in live],
+        "TIER": [TIER_NAME.get(p["tier"], p["tier"]) for _, p in live],
+        "ROLE": [p["tier"] for _, p in live],
+        "CATCH": [p["catch"] for _, p in live],
+        "OUT_TYPE": [catch_info[p["catch"]]["type"] for _, p in live],
+        "LEN_M": [round(p["len"], 1) for _, p in live],
+        "DN_MM": [int(p.get("dn_mm", 0)) for _, p in live],
+        "SLOPE_PCT": [round(p.get("slope_b", 0.0) * 100, 3) for _, p in live],
+        "Q_PEAK_LS": [round(p.get("q_peak_ls", 0.0), 2) for _, p in live],
+        "INV_UP": [round(p.get("inv_up_b", 0.0), 3) for _, p in live],
+        "INV_DN": [round(p.get("inv_dn_b", 0.0), 3) for _, p in live],
+        "DEPTH_DN": [round(p.get("z_dn", 0.0) - p.get("inv_dn_b", 0.0), 2) for _, p in live],
+        "HEAD_MOVED": [round(p.get("head_moved_m", 0.0), 1) for _, p in live],
+    }, geometry=[p["geom"] for _, p in live], crs=f"EPSG:{epsg}").to_file(os.path.join(out_dir, f"{prefix}_pipes.shp"))
+
+
 def write_shapes(out_dir, prefix, reaches, chambers, epsg=32640):
     import os
     import geopandas as gpd
@@ -623,7 +647,10 @@ def find_issues(reaches, chambers, pipes, cfg, cover_crown=1.3, cover_wadi=1.5):
             if turn > bend_deg:
                 v = Point(coords[i])
                 near = [int(j) for j in ch_tree.query(v.buffer(1.5)) if pts[int(j)].distance(v) < 1.5]
-                if not near:
+                sep = float(getattr(cfg, "CHAMBER_SEP_M", 10.0))
+                taken = [int(j) for j in ch_tree.query(v.buffer(sep)) if pts[int(j)].distance(v) < sep
+                         and chambers[int(j)]["kind"] in ("junction", "outlet", "head")]
+                if not near and not taken:      # a bend within sep of an end chamber is that chamber's
                     issues.append((v.x, v.y, "bend without chamber", f"{turn:.0f} degrees"))
     # 4b. a gentle bend absorbed into the chamber at its end (within the separation)
     #     is not an issue; a sharp one is caught above. Nothing to add here.

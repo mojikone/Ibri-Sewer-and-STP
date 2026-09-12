@@ -784,6 +784,7 @@ def main():
         reaches_b, chambers_b, rep["stage_b"] = sb.run()
         log(f"   {dict((k, v) for k, v in rep['stage_b'].items() if k != 'by_catch')}")
         SB.write_shapes(cfg.OUT_SHP, "W13_B", reaches_b, chambers_b, cfg.EPSG)
+        SB.write_pipes(cfg.OUT_SHP, "W13_B", pipes_b, info2, cfg.EPSG)
         issues_b, rep["stage_b"]["issues"] = SB.find_issues(reaches_b, chambers_b, pipes_b, cfg,
                                                               cfg.COVER_CROWN_M, cfg.COVER_WADI_M)
         rep["stage_b"]["heads_moved_from_junction"] = sb.heads_moved
