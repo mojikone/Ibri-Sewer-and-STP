@@ -1,6 +1,6 @@
 """export_kmz — the stage A network as a KMZ for Google Earth (engineer, 2026-09-12): every
 subnetwork in its own folder under its convergence group, one colour per subnetwork, sub
-mains thick, the main pipe, the guide, and every pocket's sink point in a folder of its own.
+mains thick, the main pipe, the guide, and every outlet in a Points layer mirroring the tree.
 
     python export_kmz.py [run folder]              writes <run folder>/kmz/W15_A_network.kmz
     python export_kmz.py --no-labels [run folder]  the same with no label on any point,
@@ -119,10 +119,10 @@ def main():
     parts.append('<Style id="mainpipe"><LineStyle><color>ff00ffff</color><width>7</width></LineStyle></Style>')
     parts.append('<Style id="guide"><LineStyle><color>ffff00ff</color><width>5</width></LineStyle></Style>')
     parts.append(f'<Style id="join">{LABEL}<IconStyle><color>ffff7f00</color><scale>0.9</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href></Icon></IconStyle></Style>')
-    parts.append(f'<Style id="sink">{LABEL}<IconStyle><color>ff0000ff</color><scale>1.3</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/triangle.png</href></Icon></IconStyle></Style>')
-    parts.append(f'<Style id="low">{LABEL}<IconStyle><color>ff00a5ff</color><scale>1.1</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/square.png</href></Icon></IconStyle></Style>')
-    parts.append(f'<Style id="stp">{LABEL}<IconStyle><color>ffff00ff</color><scale>1.4</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/star.png</href></Icon></IconStyle></Style>')
-    parts.append(f'<Style id="link">{LABEL}<IconStyle><color>ffff00ff</color><scale>1.0</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/diamond.png</href></Icon></IconStyle></Style>')
+    parts.append(f'<Style id="sink">{LABEL}<IconStyle><color>ff0000ff</color><scale>0.9</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/triangle.png</href></Icon></IconStyle></Style>')
+    parts.append(f'<Style id="low">{LABEL}<IconStyle><color>ff00a5ff</color><scale>0.9</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/square.png</href></Icon></IconStyle></Style>')
+    parts.append(f'<Style id="stp">{LABEL}<IconStyle><color>ffff00ff</color><scale>0.9</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/star.png</href></Icon></IconStyle></Style>')
+    parts.append(f'<Style id="link">{LABEL}<IconStyle><color>ffff00ff</color><scale>0.9</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/diamond.png</href></Icon></IconStyle></Style>')
     # the main pipe and the guide
     mp = gpd.read_file(cfg.MAIN_PIPE)
     parts.append("<Folder><name>Main pipe (as drawn, %.1f km)</name>" % (mp.length.sum() / 1000))
@@ -137,23 +137,15 @@ def main():
         for i, g in enumerate(gd.geometry):
             parts.append(f"<Placemark><name>guide {i + 1}</name><styleUrl>#guide</styleUrl>{line_xml(g)}</Placemark>")
         parts.append("</Folder>")
-    # the pockets' sink points, in one folder
-    pockets = outlets[outlets.OUT_TYPE.isin(["SINK", "LOW"])]
-    parts.append(f"<Folder><name>Pockets: sink points ({len(pockets)}, {pockets.KM.sum():.0f} km)</name>")
-    for r in pockets.sort_values("KM", ascending=False).itertuples():
-        t = table.get(r.CATCH, {})
-        desc = (f"{r.CATCH}: {r.OUT_TYPE}, {r.KM:.1f} km, sub mains {r.SUBMAIN_KM:.1f} km"
-                + (f", needs {r.SPILL_M:.1f} m of fill to leave" if r.SPILL_M is not None and not np.isnan(r.SPILL_M) else ", an island")
-                + (f"; to the main pipe {t['to_mp'][0]:+.1f} m over {t['to_mp'][1]:.0f} m" if t.get("to_mp") else ""))
-        parts.append(f"<Placemark><name>{r.CATCH} {r.OUT_TYPE} {r.KM:.1f} km</name><description>{esc(desc)}</description>"
-                     f"<styleUrl>#{'sink' if r.OUT_TYPE == 'SINK' else 'low'}</styleUrl>{point_xml(r.geometry.x, r.geometry.y)}</Placemark>")
-    parts.append("</Folder>")
+    points_at = len(parts)                 # the Points layer goes here, after the main pipe and the guide
     # the subnetworks, by convergence group
     by_catch = {c: df for c, df in pipes.groupby("CATCH")}
     out_by = {r.CATCH: r for r in outlets.itertuples()}
     n_sub = 0
+    pts = ["<Folder><name>Points: the outlets, by group and subnetwork</name>"]   # one layer to manage
     for gname, ginfo in groups["groups"].items():
         parts.append(f"<Folder><name>{esc(gname)}: {ginfo['subnetworks']} subnetworks, {ginfo['km']} km</name>")
+        pts.append(f"<Folder><name>{esc(gname)}</name>")
         ids = sorted(ginfo["ids"], key=lambda c: -table.get(c, {}).get("km", 0))
         for cid in ids:
             df = by_catch.get(cid)
@@ -165,14 +157,14 @@ def main():
             typ = t.get("type", "")
             name = f"{cid} · {typ} · {t.get('km', 0):.1f} km"
             parts.append(f"<Folder><name>{esc(name)}</name>")
-            # the outlet
+            # the outlet, in the Points layer
             if o is not None:
                 style = {"JOIN": "join", "SINK": "sink", "LOW": "low", "STP": "stp"}.get(typ, "link")
                 desc = (f"{cid}: outlet {typ}; {t.get('km', 0):.1f} km, {t.get('pipes', 0)} pipes, sub mains {t.get('submain_km', 0):.1f} km"
                         + (f"; spill {t['spill_m']:.1f} m" if t.get("spill_m") else "")
                         + (f"; to the main pipe {t['to_mp'][0]:+.1f} m over {t['to_mp'][1]:.0f} m" if t.get("to_mp") else ""))
-                parts.append(f"<Placemark><name>{esc(cid + ' outlet ' + typ)}</name><description>{esc(desc)}</description>"
-                             f"<styleUrl>#{style}</styleUrl>{point_xml(o.geometry.x, o.geometry.y)}</Placemark>")
+                pts.append(f"<Folder><name>{esc(name)}</name><Placemark><name>{esc(cid + ' outlet ' + typ)}</name><description>{esc(desc)}</description>"
+                           f"<styleUrl>#{style}</styleUrl>{point_xml(o.geometry.x, o.geometry.y)}</Placemark></Folder>")
             # sub mains, one placemark each
             sm = df[df[role_col].isin(["sub main", "trunk"])]
             for p in sm.itertuples():
@@ -190,6 +182,9 @@ def main():
             parts.append("</Folder>")
             n_sub += 1
         parts.append("</Folder>")
+        pts.append("</Folder>")
+    pts.append("</Folder>")
+    parts[points_at:points_at] = pts
     # --- overlays, switched off, for reading the drawing ---------------------------------
     # flow arrows: one per sub main at its midpoint, heading from its last segment (the
     # geometry runs upstream to downstream)

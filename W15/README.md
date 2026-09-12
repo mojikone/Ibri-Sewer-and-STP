@@ -33,7 +33,8 @@ main pipe and the works.
 a folder per convergence group, a folder per subnetwork inside it (its outlet, its sub mains one
 placemark each with size, gradient, flow and depth in the balloon, its laterals merged), one colour
 per subnetwork with neighbours within 150 m coloured apart, sub mains thick, the main pipe yellow,
-the guide magenta, the pockets' sink points in a folder of their own; three overlays off until
+the guide magenta, every outlet in one Points layer that mirrors group and subnetwork (engineer,
+2026-09-12: one layer to manage, icons at the join's size); three overlays off until
 ticked (flow arrows on the sub mains, pipes deeper than 12 m, the group outlines). `--no-labels`
 writes the same as `W15_A_network_nolabels.kmz`, no label on any point.
 
