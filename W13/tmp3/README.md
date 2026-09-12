@@ -33,3 +33,7 @@ or washing and changes nothing; `TIER` in the guideline's names, `ROLE` in the e
 One outlet moved: a 29 ha metered farm south of the works is agricultural in `PLOTS_load`
 (built in W3's file), so a 120 m link to the main pipe may cross it and the 59 km around the
 works now leaves by it; the main-pipe join is not floored, so that arrival is not checked.
+
+**Accepted by the engineer on 2026-09-12 and frozen**: the plots' own flows, the gradient grid, the
+audit and the QGIS style (`qgis/tmp3_pipes.qml`, widths and arrow sizes by ROLE, arrows mid-pipe).
+The work goes on in `W13/tmp4`, a clone of this folder. The QGIS project is now `stp2.qgz`.
