@@ -887,11 +887,13 @@
     "heads_moved_from_junction": 128
   },
   "pumps": {
-    "stations": 3,
+    "stations": 2,
     "routed": 1,
     "unrouted": [
-      "C32",
       "C29"
+    ],
+    "no_flow_pockets": [
+      "C32"
     ],
     "total_q_ls": 11.7,
     "total_kw": 2.7,
@@ -904,19 +906,6 @@
       "max_friction_m_per_km": 10.0
     },
     "stations_list": [
-      {
-        "catch": "C32",
-        "z": 335.17,
-        "q_ls": 0.0,
-        "own_peak_ls": 0.0,
-        "pf": 0.0,
-        "q_ult_m3d": 0.0,
-        "props": 0.0,
-        "well_inv": 332.37,
-        "plots": 0.0,
-        "disch_catch": "",
-        "note": "no header chamber reachable by street"
-      },
       {
         "catch": "C07",
         "z": 327.73,
@@ -2088,5 +2077,5 @@
       "area_km2": 0.127
     }
   ],
-  "seconds": 71.7
+  "seconds": 74.6
 }

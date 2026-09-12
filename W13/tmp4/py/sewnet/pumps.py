@@ -127,8 +127,12 @@ def plan(pipes, reaches, chambers, runs, znode, ground, catch_info, cfg, log=pri
     overrides = dict(getattr(cfg, "PUMP_DISCHARGE", {}) or {})
     pocket_types = ("SINK", "LOW")
     pockets = {c: i for c, i in catch_info.items() if i["type"] in pocket_types}
+    # a pocket with no flow gets no station (engineer, 2026-09-12): it is reported, not pumped
+    no_flow = [c for c, i in pockets.items()
+               if sum(q.get("q_ult_up", 0.0) for q in pipes if q["dn"] == i["outlet"] and not q.get("dropped")) <= 0.0]
+    pockets = {c: i for c, i in pockets.items() if c not in no_flow}
     if not pockets:
-        return [], [], {}, {"stations": 0}
+        return [], [], {}, {"stations": 0, "no_flow_pockets": no_flow}
     adj, edges_geom = _graph(reaches, runs)
     # every header chamber of a network that is not a pocket, by its position: a chamber on a
     # sub main or trunk (an interior one on such a pipe, or a junction one of them ends at)
@@ -234,6 +238,7 @@ def plan(pipes, reaches, chambers, runs, znode, ground, catch_info, cfg, log=pri
         if n_in is not None:
             extra[n_in] = extra.get(n_in, 0.0) + q
     rep = {"stations": len(stations), "routed": len(mains), "unrouted": [s["catch"] for s in stations if not s.get("disch_catch")],
+           "no_flow_pockets": no_flow,
            "total_q_ls": round(float(sum(s["q_ls"] for s in stations)), 1), "total_kw": round(float(sum(s.get("kw", 0.0) for s in stations)), 1),
            "main_km": round(sum(m["len"] for m in mains) / 1000.0, 2),
            "assumptions": {"ks_mm_pumping_main": ks * 1000, "minor_losses": minor, "efficiency": eff, "sump_below_invert_m": sump,
