@@ -12,3 +12,4 @@
 - [Concept saturation population and load](concept-saturation-population-and-load.md) — class v7 chain with unit-rate loads: meters, NDVI groves, per-settlement occupancy, home-shaped capacity, spread by capped area; reuse, do not re-derive
 - [Design flows handoff](design-flows-handoff.md) — size on Q_ULT, self-cleansing on Q_2030 x 0.61; read W14/docs/DESIGN_FLOWS_FOR_NETWORK.md before any network design
 - [PyQGIS MCP crash: dangling symbol](pyqgis-mcp-crash-dangling-symbol.md) — never chain renderer().categories()[i].symbol(); bind names or style through QML
+- [Long runs detached](long-runs-detached.md) — the whole-network engine run outlives the 10-minute Bash cap; Start-Process it and Monitor the console file

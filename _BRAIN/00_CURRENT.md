@@ -121,6 +121,8 @@ and it reproduces that run to the figure. Nothing later writes into it; later la
 
 **2026-09-12 (night): temp 4 is accepted and frozen; `W15/` is the main working folder for the whole network.** A complete copy of tmp4; the area is every street of the DXF (45 x 25 km, test boundary included), settlements the dense parts of the buffered streets, ground 4 m; the engineer's sub main guide for the west is in the network as forced sub mains tied to the redrawn main pipe (rule 17 of `W15/docs/W15_DESIGN_LOGIC.md`); the 2006 network stays a reference until the survey. First stage A run over the whole in progress; the subnetworks will be grouped by where they converge on the main pipe and the works, and the QGIS groups follow those groups. **The live engine line is now W15**; W13's tmp folders are the record.
 
+**2026-09-12 (night, later): the first whole-network stage A ran in six minutes.** 1,690 km of network in 310 subnetworks, 117 pockets (256 km), 13,164 chambers, deepest 25.9 m, 216 over 12 m. Grouped by convergence into seven groups (`W15/run/groups.json`): NE branch, trunk, E branch, and three unconnected main-pipe pieces (the west legs among them). Flags: two direct links carry 246 and 213 km; the road-corridor rule is idle over the whole (the streets form one settlement). QGIS `Claude W15` built by `W15/py/qgis_groups.py`; the grouping awaits the engineer's yes before the proper run.
+
 **Nothing is lost.**
 
 | Where | What |
