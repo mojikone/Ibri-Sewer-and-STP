@@ -201,11 +201,22 @@ A's layout). Every number below is the guideline's unless it says the engineer's
     6) carries the 1.5 m cover and the flag; a reach crossing a dual carriageway (`dual = 1` in
     the road file) carries the flag. Every line is the draftsman's, so his crossings are the only
     crossings (engineer).
-16. **Pumps as candidates** (rule text to follow the brainstorm's answers of 2026-09-12: the
-    lowest header chamber of the neighbour within 1,000 m by street, or the chamber the engineer
-    names; the pocket's design peak plus infiltration as the rate; the station at the pocket's
-    low junction; the pumping main along the streets at 1.0 to 2.5 m/s; flow, static head,
-    friction head, DN, length and kW reported). Not built yet.
+16. **Pumps as candidates** (engineer, 2026-09-12). Every pocket is a candidate station, at
+    its low junction, its own network laid to it by gravity. **Rate**: the pocket's design peak
+    with its infiltration, plus what another pocket pumps into it. **Discharge**: the lowest
+    header chamber of a neighbouring network within **1,000 m** by street, or the chamber the
+    engineer names (`PUMP_DISCHARGE`); when no header lies within 1,000 m, the lowest within the
+    nearest header's distance and a tenth more, and the main is flagged as long. **The pumping
+    main** follows the streets by the shortest path, uphill allowed, its high points counted for
+    air valves (G203 p54); sized to the smallest standard bore that runs under **2.5 m/s** (G203
+    p50) and loses under **10 m per km** (a stated assumption), never under 75 mm; **1.0 m/s**
+    for start-stop pumping (p50) is checked and its shortfall reported. **Reported per station**:
+    flow, static head from a pump-off level **1 m** below the lowest incoming invert (assumption)
+    to the discharge invert, friction head by Colebrook-White at **ks 1.5 mm** plus **10 %** for
+    fittings (assumptions), bore, length, velocity, kW at **65 %** overall efficiency
+    (assumption). The pumped flow enters the receiving network at the chamber and that network
+    is laid again with it. An island with no street path to any network stays unrouted and says
+    so. Stage C may move, merge or drop any candidate.
 
 ## Where the engine's reading needed a choice
 

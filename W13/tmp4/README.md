@@ -50,10 +50,12 @@ Open with the engineer:
   draftsman's lines; 28 heads at a 10 m offset with no gate; 10 short head pipes removed, listed for
   the engineer's check). Every bend has its chamber or is within 10 m of the junction chamber that
   takes it; a head within 10 m of a bend sits on the bend. `shp/W13_B_pipes.shp` is the pipes as laid
-  (QGIS `tmp4 pipes (as laid, stage B)`), stage A's `W13_A_tree_pipes.shp` the layout. QGIS: `Claude W13 temp 4 / B check`, twelve
+  (QGIS `tmp4 pipes (as laid, stage B)`), stage A's `W13_A_tree_pipes.shp` the layout. **Pumps as
+  candidates built (rule 16)**: `shp/W13_B_pumps.shp`, `shp/W13_B_pmains.shp`; on the boundary C07
+  pumps 10.9 l/s through 1.58 km of DN150 into the west's header (7.5 m static, 8.7 m friction,
+  2.7 kW, under 1.0 m/s, longer than 1,000 m), the two LOW islands stay unrouted. QGIS: `Claude W13 temp 4 / B check`, twelve
   layers, one per question (gradient, size, velocity, length, against the ground, flow direction,
-  depth; chamber depth, drops, kind, levels; issues). **Still to build in B**: the pumps as
-  candidates (the brainstorm's answers are in), the SewerGEMS export (after C, or on request);
+  depth; chamber depth, drops, kind, levels; issues). **Still to build in B**: the SewerGEMS export (after C, or on request);
 - **stage C, after every area has A and B**: the main pipe sized and laid, the joins floored on
   it, the connection to the works and the inlet, the pumps of the whole, the trunk crossings.
 
