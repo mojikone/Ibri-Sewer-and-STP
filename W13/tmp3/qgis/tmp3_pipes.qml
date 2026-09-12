@@ -135,7 +135,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -143,7 +143,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -254,7 +260,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -262,7 +268,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -373,7 +385,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -381,7 +393,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -492,7 +510,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -500,7 +518,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -611,7 +635,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -619,7 +643,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -730,7 +760,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -738,7 +768,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -849,7 +885,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -857,7 +893,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -968,7 +1010,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -976,7 +1018,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -1087,7 +1135,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -1095,7 +1143,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -1206,7 +1260,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -1214,7 +1268,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -1325,7 +1385,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -1333,7 +1393,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -1444,7 +1510,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -1452,7 +1518,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -1563,7 +1635,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -1571,7 +1643,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -1682,7 +1760,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -1690,7 +1768,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -1801,7 +1885,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -1809,7 +1893,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -1920,7 +2010,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -1928,7 +2018,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -2039,7 +2135,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -2047,7 +2143,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -2158,7 +2260,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -2166,7 +2268,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -2277,7 +2385,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -2285,7 +2393,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -2396,7 +2510,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -2404,7 +2518,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -2515,7 +2635,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -2523,7 +2643,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -2634,7 +2760,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -2642,7 +2768,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -2753,7 +2885,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -2761,7 +2893,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -2872,7 +3010,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -2880,7 +3018,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -2991,7 +3135,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -2999,7 +3143,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -3110,7 +3260,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -3118,7 +3268,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -3229,7 +3385,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -3237,7 +3393,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
@@ -3348,7 +3510,7 @@
                     <Option value="3x:0,0,0,0,0,0" name="outline_width_map_unit_scale" type="QString"/>
                     <Option value="MM" name="outline_width_unit" type="QString"/>
                     <Option value="diameter" name="scale_method" type="QString"/>
-                    <Option value="1.8" name="size" type="QString"/>
+                    <Option value="3.4" name="size" type="QString"/>
                     <Option value="3x:0,0,0,0,0,0" name="size_map_unit_scale" type="QString"/>
                     <Option value="MM" name="size_unit" type="QString"/>
                     <Option value="1" name="vertical_anchor_point" type="QString"/>
@@ -3356,7 +3518,13 @@
                   <data_defined_properties>
                     <Option type="Map">
                       <Option value="" name="name" type="QString"/>
-                      <Option name="properties"/>
+                      <Option name="properties" type="Map">
+                        <Option name="size" type="Map">
+                          <Option value="true" name="active" type="bool"/>
+                          <Option value="CASE WHEN &quot;ROLE&quot;='trunk' THEN 5.5 WHEN &quot;ROLE&quot;='sub main' THEN 3.4 WHEN &quot;ROLE&quot;='lateral' THEN 1.8 ELSE 1.6 END" name="expression" type="QString"/>
+                          <Option value="3" name="type" type="int"/>
+                        </Option>
+                      </Option>
                       <Option value="collection" name="type" type="QString"/>
                     </Option>
                   </data_defined_properties>
