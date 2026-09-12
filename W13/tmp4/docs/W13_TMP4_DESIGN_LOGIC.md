@@ -154,6 +154,43 @@ engineer's agreement first.
     no low-flow threshold in the audit. The tractive force sets no gradient at the concept stage;
     the 1.5 l/s floor of rule 7 applies to the attribute, not to this audit.
 
+## Stage B, the hydraulic design of each subnetwork (engineer, 2026-09-12)
+
+Stage A's tree is taken as it is: the same pipes, sizes and outlets (the gate: B must reproduce
+A's layout). Every number below is the guideline's unless it says the engineer's.
+
+11. **The real lay, heads-down, one gradient per street run, junction to junction.** The run
+    is laid at the **Table 11** minimum, or steeper where the cover at its far end asks for it
+    (parallel to the ground on a slope), rounded up to the grid of rule 7. **Cover 1.3 m to the
+    crown** (G203 p33), **1.5 m in a wadi** (p52). The one exception the engineer allowed: a dip
+    inside the run steepens only the reach that holds it; the reaches after it return to the
+    run's gradient from the deeper invert the dip left them. A pipe is **never laid steeper than
+    3 m/s** (p27), at its own peak or at its design depth; where the ground falls faster, the
+    run is laid at that ceiling and the rest of the fall is taken in **drops of 2 m at most**
+    (p30), the chambers closer where a drop would pass it. Hydraulics by **Colebrook-White,
+    ks 1.5 mm** (p24, p28), sizing at Table 11 as in stage A.
+12. **Chambers** at every junction, head and outlet; along a run by **Table 12** spacing (100 m
+    to DN315, 120 m to DN900, p30) with W8's setting-out rule, now the current rule: the fewest
+    chambers, evenly spaced, rounded to **10 m** (5 m where 10 leaves an odd remainder); at a
+    corner sharper than **30°**, or where a curve has turned **45°**, never more than three on
+    one bend. The head chamber sits at the first gate. **No clearance from plots**: the streets
+    are the draftsman's (engineer). A head trimmed to its gate is its own node, at the terrain's
+    level there.
+13. **Backdrops.** An incoming pipe arriving more than **0.6 m** above the outgoing invert gets
+    a backdrop; over **2 m** it is flagged (a vortex drop shaft, p30).
+14. **The check at the laid gradient**, every reach: d/D within **Table 10** (0.65 to DN350,
+    0.50 above) and v within **3 m/s** at the design peak; the self-cleansing class of rule 10
+    read again at the laid gradient.
+15. **Crossings recorded, not designed here:** a reach in a wadi (the hazard grid, classes 4 to
+    6) carries the 1.5 m cover and the flag; a reach crossing a dual carriageway (`dual = 1` in
+    the road file) carries the flag. Every line is the draftsman's, so his crossings are the only
+    crossings (engineer).
+16. **Pumps as candidates** (rule text to follow the brainstorm's answers of 2026-09-12: the
+    lowest header chamber of the neighbour within 1,000 m by street, or the chamber the engineer
+    names; the pocket's design peak plus infiltration as the rate; the station at the pocket's
+    low junction; the pumping main along the streets at 1.0 to 2.5 m/s; flow, static head,
+    friction head, DN, length and kW reported). Not built yet.
+
 ## Where the engine's reading needed a choice
 
 Flags for the engineer, not rules. Each is one line of configuration or one function.
@@ -177,6 +214,12 @@ Flags for the engineer, not rules. Each is one line of configuration or one func
 - **A main-pipe join is not floored** (set aside until the main pipe is sized), so the depth
   at which the 59 km arrives at the main pipe is not checked. In tmp2 it arrived 10.7 m under
   the STP inlet; the shortfall moved, it did not go away.
+- **A dip in the first 10 m of a run deepens its chamber**, not the run's gradient: the node
+  level is a median on a 4 m disc and the terrain right beside it can sit lower; a run laid to
+  that over 5 m would be 30 % steep. The engine's reading (stage B).
+- **The practical ceiling on a gradient** is 3 m/s at the pipe's design depth (7.1 % for a
+  DN200, 2.4 % for a DN500): the guideline caps velocity, not gradient, and a pipe carrying
+  almost nothing could otherwise be laid at any slope. The engine's reading (stage B).
 - **Peltier is not capped** at the guideline's recommended 5.0; below about 8 houses the
   factor passes 5, and those pipes need washing whatever the factor.
 

@@ -38,10 +38,14 @@ Open with the engineer:
 - **the metered farm south of the works**: agricultural in `PLOTS_load`, so a 120 m link to the
   main pipe crosses it and the 59 km around the works leaves by that link instead of the STP;
   its arrival at the main pipe is not checked (joins not floored);
-- **stage B, still to build**: the real lay (three gradient bands, one gradient between
-  chambers, drops), chambers and Table 12 spacing, the capacity check at the laid gradient, the
-  subnetwork's pumps as candidates (after the brainstorm), its crossings, the SewerGEMS export
-  and referee run;
+- **stage B, step 1 built (2026-09-12)**: the real lay, chambers, the check at the laid
+  gradient, crossings recorded (rules 11 to 15 of the logic; `STAGE = "AB"`, outputs
+  `shp/W13_B_reaches.shp`, `shp/W13_B_chambers.shp`, `run/stage_a.json["stage_b"]`). On the test
+  boundary: 3,614 reaches, 3,656 chambers, 133.6 km at Table 11 and 79.7 km steeper by cover,
+  deepest chamber 16.8 m against stage A's 16.4, 32 chambers over 12 m, 570 backdrops of which
+  272 over 2 m (laterals joining deep headers), no capacity failure, 150 reaches in a wadi, one
+  dual-carriageway crossing. **Still to build in B**: the pumps as candidates (the brainstorm's
+  answers are in), the SewerGEMS export (after C, or on request);
 - **stage C, after every area has A and B**: the main pipe sized and laid, the joins floored on
   it, the connection to the works and the inlet, the pumps of the whole, the trunk crossings.
 
