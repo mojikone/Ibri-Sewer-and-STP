@@ -123,7 +123,7 @@ and it reproduces that run to the figure. Nothing later writes into it; later la
 
 **2026-09-12 (night, later): the first whole-network stage A ran in six minutes.** 1,690 km of network in 310 subnetworks, 117 pockets (256 km), 13,164 chambers, deepest 25.9 m, 216 over 12 m. Grouped by convergence into seven groups (`W15/run/groups.json`): NE branch, trunk, E branch, and three unconnected main-pipe pieces (the west legs among them). Flags: two direct links carry 246 and 213 km; the road-corridor rule is idle over the whole (the streets form one settlement). QGIS `Claude W15` built by `W15/py/qgis_groups.py`; the grouping awaits the engineer's yes before the proper run.
 
-**2026-09-12 (night, latest): the whole network in Google Earth.** `W15/kmz/W15_A_network.kmz` from `W15/py/export_kmz.py`: a folder per convergence group and per subnetwork, one colour each with neighbours apart, sub mains thick, main pipe yellow, guide magenta, the 117 sink points in one folder, and three overlays off until ticked (flow arrows, pipes deeper than 12 m, group outlines).
+**2026-09-12 (night, latest): the whole network in Google Earth.** `W15/kmz/W15_A_network.kmz` from `W15/py/export_kmz.py`: a folder per convergence group and per subnetwork, one colour each with neighbours apart, sub mains thick, main pipe yellow, guide magenta, the 117 sink points in one folder, and three overlays off until ticked (flow arrows, pipes deeper than 12 m, group outlines); `W15_A_network_nolabels.kmz` the same without point labels.
 
 **Nothing is lost.**
 

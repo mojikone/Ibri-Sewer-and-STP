@@ -2,7 +2,9 @@
 subnetwork in its own folder under its convergence group, one colour per subnetwork, sub
 mains thick, the main pipe, the guide, and every pocket's sink point in a folder of its own.
 
-    python export_kmz.py [run folder]      writes <run folder>/kmz/W15_A_network.kmz
+    python export_kmz.py [run folder]              writes <run folder>/kmz/W15_A_network.kmz
+    python export_kmz.py --no-labels [run folder]  the same with no label on any point,
+                                                   as W15_A_network_nolabels.kmz
 
 Plain KML, no library: lines in WGS84 with six decimals, laterals and branches merged into
 one placemark per subnetwork to keep the file light, sub mains one placemark each with their
@@ -25,7 +27,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import config_built as cfg   # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = sys.argv[1] if len(sys.argv) > 1 else os.path.dirname(HERE)
+NO_LABELS = "--no-labels" in sys.argv
+ARGS = [a for a in sys.argv[1:] if not a.startswith("--")]
+OUT = ARGS[0] if ARGS else os.path.dirname(HERE)
+LABEL = "<LabelStyle><scale>0</scale></LabelStyle>" if NO_LABELS else ""   # Google Earth labels points only
 TO_WGS = Transformer.from_crs(f"EPSG:{cfg.EPSG}", "EPSG:4326", always_xy=True)
 
 # ten strong colours for the subnetworks; red is kept for the sink points and the deep overlay,
@@ -113,11 +118,11 @@ def main():
         parts.append(f'<Style id="lat{i}"><LineStyle><color>{kml_colour(c, "dd")}</color><width>1.6</width></LineStyle></Style>')
     parts.append('<Style id="mainpipe"><LineStyle><color>ff00ffff</color><width>7</width></LineStyle></Style>')
     parts.append('<Style id="guide"><LineStyle><color>ffff00ff</color><width>5</width></LineStyle></Style>')
-    parts.append('<Style id="join"><IconStyle><color>ffff7f00</color><scale>0.9</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href></Icon></IconStyle></Style>')
-    parts.append('<Style id="sink"><IconStyle><color>ff0000ff</color><scale>1.3</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/triangle.png</href></Icon></IconStyle></Style>')
-    parts.append('<Style id="low"><IconStyle><color>ff00a5ff</color><scale>1.1</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/square.png</href></Icon></IconStyle></Style>')
-    parts.append('<Style id="stp"><IconStyle><color>ffff00ff</color><scale>1.4</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/star.png</href></Icon></IconStyle></Style>')
-    parts.append('<Style id="link"><IconStyle><color>ffff00ff</color><scale>1.0</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/diamond.png</href></Icon></IconStyle></Style>')
+    parts.append(f'<Style id="join">{LABEL}<IconStyle><color>ffff7f00</color><scale>0.9</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href></Icon></IconStyle></Style>')
+    parts.append(f'<Style id="sink">{LABEL}<IconStyle><color>ff0000ff</color><scale>1.3</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/triangle.png</href></Icon></IconStyle></Style>')
+    parts.append(f'<Style id="low">{LABEL}<IconStyle><color>ff00a5ff</color><scale>1.1</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/square.png</href></Icon></IconStyle></Style>')
+    parts.append(f'<Style id="stp">{LABEL}<IconStyle><color>ffff00ff</color><scale>1.4</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/star.png</href></Icon></IconStyle></Style>')
+    parts.append(f'<Style id="link">{LABEL}<IconStyle><color>ffff00ff</color><scale>1.0</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/diamond.png</href></Icon></IconStyle></Style>')
     # the main pipe and the guide
     mp = gpd.read_file(cfg.MAIN_PIPE)
     parts.append("<Folder><name>Main pipe (as drawn, %.1f km)</name>" % (mp.length.sum() / 1000))
@@ -188,7 +193,7 @@ def main():
     # --- overlays, switched off, for reading the drawing ---------------------------------
     # flow arrows: one per sub main at its midpoint, heading from its last segment (the
     # geometry runs upstream to downstream)
-    parts.append('<Style id="arrow"><IconStyle><color>ff000000</color><scale>0.6</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/arrow.png</href></Icon></IconStyle></Style>')
+    parts.append(f'<Style id="arrow">{LABEL}<IconStyle><color>ff000000</color><scale>0.6</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/arrow.png</href></Icon></IconStyle></Style>')
     sm_all = pipes[pipes[role_col].isin(["sub main", "trunk"])]
     parts.append(f"<Folder><name>Flow arrows on the sub mains ({len(sm_all)})</name><visibility>0</visibility>")
     for pr in sm_all.itertuples():
@@ -225,7 +230,7 @@ def main():
         parts.append("</Folder>")
     parts.append("</Document></kml>")
     os.makedirs(os.path.join(OUT, "kmz"), exist_ok=True)
-    path = os.path.join(OUT, "kmz", "W15_A_network.kmz")
+    path = os.path.join(OUT, "kmz", "W15_A_network_nolabels.kmz" if NO_LABELS else "W15_A_network.kmz")
     with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as z:
         z.writestr("doc.kml", "\n".join(parts))
     print(f"{path}: {n_sub} subnetworks, {os.path.getsize(path) / 1e6:.1f} MB")

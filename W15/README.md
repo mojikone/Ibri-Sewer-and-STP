@@ -34,7 +34,8 @@ a folder per convergence group, a folder per subnetwork inside it (its outlet, i
 placemark each with size, gradient, flow and depth in the balloon, its laterals merged), one colour
 per subnetwork with neighbours within 150 m coloured apart, sub mains thick, the main pipe yellow,
 the guide magenta, the pockets' sink points in a folder of their own; three overlays off until
-ticked (flow arrows on the sub mains, pipes deeper than 12 m, the group outlines).
+ticked (flow arrows on the sub mains, pipes deeper than 12 m, the group outlines). `--no-labels`
+writes the same as `W15_A_network_nolabels.kmz`, no label on any point.
 
 Rerun with `python run_stage_a.py` from `py/`; it writes here only. The logic is
 `docs/W15_DESIGN_LOGIC.md` (tmp4's, carried on; a changed rule is rewritten with one dated line
