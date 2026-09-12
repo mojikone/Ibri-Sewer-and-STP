@@ -96,6 +96,30 @@ def audit(pipes, connected=0.61, v_min=V_MIN, tau=TAU_PA, k=MARA_K):
     return rep
 
 
+def tractive_attributes(pipes, q_floor_ls=1.5, tau=TAU_PA, k=MARA_K):
+    """The tractive-force minimum gradient every pipe would need (engineer, 2026-09-12): Mara at
+    the design peak and at the low-case peak, each with the flow floored at q_floor_ls, against
+    its Table 11 minimum. Nothing is regraded: a DN200 always passes with the floor, a bigger
+    pipe keeps Table 11 and carries the answer as an attribute. Writes s_trac_design, s_trac_low
+    (m/m) and trac_over ('', 'design', 'low', 'both') onto each pipe; returns km over by size."""
+    from .quicklay import T11
+    over = collections.defaultdict(lambda: collections.defaultdict(float))
+    for q in pipes:
+        t11 = T11[q["dn_mm"]]
+        qd = max(q.get("q_peak_ls", 0.0), q_floor_ls) / 1000.0
+        ql = max(q.get("q_low_ls", 0.0), q_floor_ls) / 1000.0
+        sd, sl = mara_slope(qd, tau, k), mara_slope(ql, tau, k)
+        q["s_trac_design"], q["s_trac_low"] = sd, sl
+        od, ol = sd > t11 + 1e-9, sl > t11 + 1e-9
+        q["trac_over"] = "both" if od and ol else "design" if od else "low" if ol else ""
+        if od:
+            over["design"][q["dn_mm"]] += q["len"] / 1000.0
+        if ol:
+            over["low"][q["dn_mm"]] += q["len"] / 1000.0
+    return {"q_floor_ls": q_floor_ls, "tau_pa": tau,
+            "km_over_table11": {case: {int(dn): round(v, 2) for dn, v in d.items()} for case, d in over.items()}}
+
+
 def write_tables(pipes, rep, out_dir, connected=0.61):
     """The audit's table (pipes and km by class and by tier, and by role) as markdown and
     CSV, and the washing list: every pipe on it with why. PIPE_ID matches the shapefile."""

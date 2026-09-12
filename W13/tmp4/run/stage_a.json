@@ -252,6 +252,11 @@
       }
     }
   },
+  "tractive": {
+    "q_floor_ls": 1.5,
+    "tau_pa": 1.0,
+    "km_over_table11": {}
+  },
   "tier_km": {
     "trunk": 0.0,
     "sub main": 69.8,
@@ -1420,5 +1425,5 @@
       "area_km2": 0.127
     }
   ],
-  "seconds": 65.7
+  "seconds": 63.8
 }

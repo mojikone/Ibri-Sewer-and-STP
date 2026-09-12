@@ -660,6 +660,9 @@ def main():
             # temp 3: the self-cleansing audit on the low case; it changes nothing
             from sewnet import cleansing as CL
             rep["cleansing"] = CL.audit(pipes, getattr(cfg, "LOW_CASE_CONNECTED", 0.61))
+            # temp 4 (engineer 2026-09-12): the tractive minimum gradient with the 1.5 l/s floor is an
+            # attribute, never a regrade; the lay stays at Table 11
+            rep["tractive"] = CL.tractive_attributes(pipes, getattr(cfg, "TRACTIVE_QMIN_LS", 1.5))
         log(f"   {rep['depth']}")
         rep["tier_km"] = km_by(pipes, "tier", ("sub main", "lateral", "branch"))
         rep["class_km"] = km_by(pipes, "cls", ("NORMAL", "FLAT", "LEVEL", "AGAINST"))
@@ -803,6 +806,8 @@ def main():
         n_w = CL.write_tables(pipes, rep["cleansing"], cfg.OUT_RUN,
                               getattr(cfg, "LOW_CASE_CONNECTED", 0.61))
         log(f"   self-cleansing: {rep['cleansing']['by_class']}; washing list {n_w} pipes")
+        log(f"   tractive with the {rep['tractive']['q_floor_ls']} l/s floor, km steeper than Table 11: "
+            f"{rep['tractive']['km_over_table11'] or 'none'}")
     XT.write_shapes(cfg.OUT_SHP, "W13_A_tree", pipes, gaps, info2, polys2, {**joins, **link_geoms},
                     cfg.EPSG)
     b = envelope.bounds

@@ -195,6 +195,9 @@ def write_shapes(out_dir, prefix, pipes, gaps, catch_info, catch_polys, joins, e
         "V_LOW": [round(p.get("v_low", 0.0), 3) for p in pipes],
         "S_MARA_PC": [round(min(p.get("s_mara", 0.0), 9.99) * 100, 3) for p in pipes],
         "CLEANSE": [p.get("cleanse", "") for p in pipes],
+        "S_TRAC_PC": [round(p.get("s_trac_design", 0.0) * 100, 3) for p in pipes],
+        "S_TRACL_PC": [round(p.get("s_trac_low", 0.0) * 100, 3) for p in pipes],
+        "TRAC_OVER": [p.get("trac_over", "") for p in pipes],
         "DEPTH_UP": [round(p.get("depth_up", 0.0), 2) for p in pipes],
         "DEPTH_DN": [round(p.get("depth_dn", 0.0), 2) for p in pipes],
     }, geometry=[p["geom"] for p in pipes], crs=crs).to_file(

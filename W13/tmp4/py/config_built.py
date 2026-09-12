@@ -149,3 +149,7 @@ OUTLET_CUT_ONLY = True   # temp 2: a sub main belongs to one sub-network; cut wh
 INFIL_L_D_KM = 720.0        # infiltration per km of new sewer, by the pipe's own length (G1-p72)
 LOW_CASE_CONNECTED = 0.61   # the low case: Q_2030 x the Inception R0 connection ratio (handoff 2)
 SLOPE_GRID = (0.0005, 0.00025, 500)   # a gradient steeper than Table 11 is rounded up: 0.05 % steps, 0.025 % from DN500 (engineer 2026-09-11)
+TRACTIVE_QMIN_LS = 1.5      # the design floor on the peak flow for the tractive check (engineer 2026-09-12, Mara's
+                            # minimum flow; not in G203, stated in the concept report for NWS to confirm). With it, a
+                            # DN200 always passes at Table 11 (0.47 % < 0.5 %); a bigger pipe is never regraded,
+                            # it carries the attribute instead (S_TRAC_PC, S_TRACL_PC, TRAC_OVER)

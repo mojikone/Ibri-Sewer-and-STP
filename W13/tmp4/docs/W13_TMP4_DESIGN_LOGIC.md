@@ -109,6 +109,16 @@ engineer's agreement first.
    gradient is **rounded up** to steps of **0.05 %**, or **0.025 %** from DN500, so no random
    value is laid. **1.55 m** of cover to invert. Depth is reported at every chamber. Not yet in
    the lay: drops, chamber spacing, the tertiary.
+   - 2026-09-12 (engineer): **the tractive-force minimum gradient is checked with a design floor
+     of 1.5 l/s on the peak flow**, Mara's own minimum flow (G203 p27 gives none; stated in the
+     concept report with the curve, for NWS to confirm). A pipe carrying less is checked as if it
+     carried 1.5 l/s, so Mara's slope never exceeds **0.47 %** and a DN200 always passes at its
+     Table 11 minimum. **No pipe is regraded for tractive force**: a bigger pipe keeps its Table 11
+     gradient and carries the answer as an attribute (`S_TRAC_PC` at the design peak, `S_TRACL_PC`
+     at the low case, `TRAC_OVER` where either is steeper than Table 11), so it can be tabled and
+     mapped. The guideline's "head of the sewerage system" is defined nowhere; read as the reach
+     where 0.75 m/s cannot be reached at the minimum gradient, which is every DN200 under about
+     12 l/s, so the velocity approach of G203 §4.2.2.1 never governs a secondary pipe.
 
 8. **The 12 m rule.** After the lay, in every subnetwork with a chamber past **12 m**, the
    basin behind its deepest chamber (the one with the largest fill on the path into it)
@@ -127,7 +137,8 @@ engineer's agreement first.
     pass**, the laid gradient at least Mara's slope Smin = K·τ^1.23·Q^−0.461 with **τ = 1 Pa**
     and **K = 2.33 × 10⁻⁴**, Q in m³/s, on the true flow with no floor (G203-p27); else **needs
     washing** (G203 §4.2.6, p28). The audit changes no size and no gradient. No regrade class,
-    no low-flow threshold. The tractive force sets no gradient at the concept stage.
+    no low-flow threshold in the audit. The tractive force sets no gradient at the concept stage;
+    the 1.5 l/s floor of rule 7 applies to the attribute, not to this audit.
 
 ## Where the engine's reading needed a choice
 

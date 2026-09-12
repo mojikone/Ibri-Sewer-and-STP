@@ -39,3 +39,11 @@ Open with the engineer:
 - **Stage C, still to build**: the real lay (three gradient bands, one gradient between
   chambers, drops), chambers and Table 12 spacing, the hydraulic check with SewerGEMS as the
   referee, the overall network and the inlet, pumps and rising mains, crossings.
+
+For the concept report (engineer, 2026-09-12):
+
+- the **1.5 l/s design floor** on the peak flow for the tractive-force check, as our assumption
+  (Mara's minimum flow; G203 gives none), to be changed if NWS disagrees;
+- the **curve** `img/mara_curve.png`: Mara's minimum gradient at τ = 1 Pa against the Table 11
+  minima, the floor marked, and where each pipe size's minimum meets the curve;
+- no pipe is regraded for tractive force; a pipe bigger than DN200 carries `TRAC_OVER` instead.
