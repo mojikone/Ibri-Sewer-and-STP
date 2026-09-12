@@ -177,10 +177,14 @@ A's layout). Every number below is the guideline's unless it says the engineer's
     the bends were being drawn as straight reaches with chambers at the spacing arithmetic). The
     head chamber sits at the first gate. **No clearance from plots**: the streets are the
     draftsman's (engineer). A head trimmed to its gate is its own node, at the terrain's level
-    there. **Two chambers are never closer than 10 m** (engine's reading): a head chamber that
-    close to a junction moves along its street to 10 m, a spacing chamber keeps clear of the
-    ends and the bends, a gentle bend that close to an end chamber is absorbed by it, a sharp one
-    (over 45°) keeps its own. Every run's chambers, reaches and the eight checks are written
+    there. **A bend always keeps its chamber** (engineer, 2026-09-12): two consecutive corners
+    both, and a chamber 10 m away never swallows one. Where a head chamber lies within 10 m of
+    a bend, the head moves onto the bend; a head pipe left shorter than 10 m is not worth a
+    chamber of its own and is removed, its plot connecting at the chamber at its foot (each one
+    listed in the issues for the engineer's check). A head chamber within 10 m of a junction
+    chamber, with no bend between, moves along its street to 10 m; a spacing chamber keeps clear
+    of the ends and the bends. A sharp corner close to a junction gives two chambers close
+    together, reported as such. Every run's chambers, reaches and the eight checks are written
     (`shp/W13_B_chambers.shp`, `shp/W13_B_reaches.shp`, `shp/W13_B_issues.shp`); a reach or
     chamber placed for the 3 m/s ceiling carries `CAP3MS`.
 13. **Backdrops.** An incoming pipe arriving more than **0.6 m** above the outgoing invert gets

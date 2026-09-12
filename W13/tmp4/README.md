@@ -46,8 +46,9 @@ Open with the engineer:
   272 over 2 m (laterals joining deep headers), no capacity failure, 150 reaches in a wadi, one
   dual-carriageway crossing. Bends at 5° with one chamber on the corner (383 bend chambers),
   chambers never closer than 10 m (103 heads moved clear of their junction), the eight checks in
-  `shp/W13_B_issues.shp` (left: 11 close pairs at sharp bends, 9 gentle bends absorbed into an end
-  chamber, 31 heads at a 10 m offset with no gate). QGIS: `Claude W13 temp 4 / B check`, twelve
+  `shp/W13_B_issues.shp` (left: 9 close pairs, a sharp corner next to a junction chamber; 28 heads
+  at a 10 m offset with no gate; 10 short head pipes removed, listed for the engineer's check). Every
+  bend has its chamber; a head within 10 m of a bend sits on the bend. QGIS: `Claude W13 temp 4 / B check`, twelve
   layers, one per question (gradient, size, velocity, length, against the ground, flow direction,
   depth; chamber depth, drops, kind, levels; issues). **Still to build in B**: the pumps as
   candidates (the brainstorm's answers are in), the SewerGEMS export (after C, or on request);
