@@ -46,9 +46,11 @@ Open with the engineer:
   272 over 2 m (laterals joining deep headers), no capacity failure, 150 reaches in a wadi, one
   dual-carriageway crossing. Bends at 5° with one chamber on the corner (383 bend chambers),
   chambers never closer than 10 m (103 heads moved clear of their junction), the eight checks in
-  `shp/W13_B_issues.shp` (left: 9 close pairs, a sharp corner next to a junction chamber; 28 heads
-  at a 10 m offset with no gate; 10 short head pipes removed, listed for the engineer's check). Every
-  bend has its chamber; a head within 10 m of a bend sits on the bend. QGIS: `Claude W13 temp 4 / B check`, twelve
+  `shp/W13_B_issues.shp` (left: 2 close pairs, two street junctions 3.6 and 4.6 m apart in the
+  draftsman's lines; 28 heads at a 10 m offset with no gate; 10 short head pipes removed, listed for
+  the engineer's check). Every bend has its chamber or is within 10 m of the junction chamber that
+  takes it; a head within 10 m of a bend sits on the bend. `shp/W13_B_pipes.shp` is the pipes as laid
+  (QGIS `tmp4 pipes (as laid, stage B)`), stage A's `W13_A_tree_pipes.shp` the layout. QGIS: `Claude W13 temp 4 / B check`, twelve
   layers, one per question (gradient, size, velocity, length, against the ground, flow direction,
   depth; chamber depth, drops, kind, levels; issues). **Still to build in B**: the pumps as
   candidates (the brainstorm's answers are in), the SewerGEMS export (after C, or on request);

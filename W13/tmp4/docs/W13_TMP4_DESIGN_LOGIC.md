@@ -183,9 +183,11 @@ A's layout). Every number below is the guideline's unless it says the engineer's
     chamber of its own and is removed, its plot connecting at the chamber at its foot (each one
     listed in the issues for the engineer's check). A head chamber within 10 m of a junction
     chamber, with no bend between, moves along its street to 10 m; a spacing chamber keeps clear
-    of the ends and the bends. Two chambers close together stand only at consecutive bends or
-    at a bend beside a junction (engineer, 2026-09-12); anywhere else the one on the bend stays
-    and the other goes. Every run's line starts and ends exactly on its chambers: stage A noded
+    of the ends and the bends. **A corner within 10 m of a junction or outlet chamber is that
+    chamber's** (engineer, 2026-09-12: a bend chamber a couple of metres from a junction is
+    unnecessary); two consecutive corners further apart both stand; anywhere else the chamber on
+    the bend stays and the other goes. The pipes as laid, with the heads moved and the ends on
+    the chambers, are written to `shp/W13_B_pipes.shp`; stage A's record is the layout. Every run's line starts and ends exactly on its chambers: stage A noded
     the streets within 3 m without moving the line ends, so stage B moves the ends onto the
     nodes. Every run's chambers, reaches and the eight checks are written
     (`shp/W13_B_chambers.shp`, `shp/W13_B_reaches.shp`, `shp/W13_B_issues.shp`); a reach or
