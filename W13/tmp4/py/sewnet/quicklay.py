@@ -23,11 +23,10 @@ def bore(dn):
 
 
 def capacity_ls(dn):
-    """Design capacity at the Table 11 gradient with d/D 0.65 (<= 350) or 0.50 (> 350)."""
-    D = bore(dn)
-    A = math.pi * D * D / 4.0
-    q_full = (1.0 / MANNING_N) * A * (D / 4.0) ** (2.0 / 3.0) * T11[dn] ** 0.5
-    return q_full * (0.735 if dn <= 350 else 0.5) * 1000.0
+    """Design capacity at the Table 11 gradient with d/D 0.65 (<= 350) or 0.50 (> 350),
+    Colebrook-White with ks 1.5 mm (engineer 2026-09-12; was Manning 0.013)."""
+    from . import hydraulics as H
+    return H.capacity(dn, T11[dn]) * 1000.0
 
 
 def size_for(q_ls):

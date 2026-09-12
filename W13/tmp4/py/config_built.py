@@ -155,7 +155,16 @@ TRACTIVE_QMIN_LS = 1.5      # the design floor on the peak flow for the tractive
                             # it carries the attribute instead (S_TRAC_PC, S_TRACL_PC, TRAC_OVER)
 
 # ---- the stages, in the engineer's words (2026-09-12)
-STAGE = "A"     # "A": the layout only (everything run_stage_a.py does today); "AB": the layout and then the
+STAGE = "AB"    # "A": the layout only (everything run_stage_a.py does today); "AB": the layout and then the
                 # hydraulic design of each subnetwork (the real lay, chambers, capacity, pumps as candidates,
                 # crossings) in one run. Stage C, the whole network on the main pipe and the works, is a
                 # separate run when every area is ready. Stage B is not built yet: "AB" runs A and says so.
+
+# ---- stage B (2026-09-12): the hydraulic design of each subnetwork
+COVER_CROWN_M = 1.3         # minimum cover to the crown (G203 p33 4.6.3)
+COVER_WADI_M = 1.5          # at a wadi crossing (G203 p52 8.2.4, gravity and force main alike)
+DROP_MAX_M = 2.0            # a backdrop at most this high; beyond it a vortex drop shaft, flagged (G203 p30)
+BACKDROP_MIN_M = 0.6        # an invert drop above this at a chamber needs a backdrop (G203 p30)
+BEND_DEG = 30.0             # a corner sharper than this needs a chamber (W8's rule, kept 2026-09-12)
+V_MAX_MS = 3.0              # gravity sewer, at the design depth of flow (G203 p27)
+ROADS_DUAL_SHP = BASE + r"\Hydraulic\SHP\Road centerline 2\Road_Centercline.shp"   # dual = 1 marks a dual carriageway; a reach crossing one is recorded

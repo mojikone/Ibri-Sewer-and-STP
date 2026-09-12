@@ -24,31 +24,25 @@ TAU_PA = 1.0          # concept-stage value, NWS to confirm (GAP-9)
 CLASSES = ("velocity", "tractive", "washing")
 
 
-def _flow(D, S, theta, n=MANNING_N):
-    A = D * D / 8.0 * (theta - math.sin(theta))
-    P = D * theta / 2.0
-    return A * (1.0 / n) * (A / P) ** (2.0 / 3.0) * math.sqrt(S), A
-
-
 def part_full(D, S, q_m3s):
-    """Depth ratio and velocity of a flow in a circular pipe at gradient S, by Manning.
-    The flow rises with depth up to 0.938 D; a flow above that maximum is returned at it."""
+    """Depth ratio and velocity of a flow in a circular pipe of bore D at gradient S, by
+    Colebrook-White with ks 1.5 mm (engineer 2026-09-12; was Manning 0.013). Past the
+    pipe's greatest part-full flow it is read as full."""
+    from . import hydraulics as H
     if q_m3s <= 0.0 or S <= 0.0:
         return 0.0, 0.0
-    th_max = 5.278
-    q_max, a_max = _flow(D, S, th_max)
-    if q_m3s >= q_max:
-        return (1.0 - math.cos(th_max / 2.0)) / 2.0, q_m3s / a_max
-    lo, hi = 1e-6, th_max
+    if q_m3s >= H.flow(D, S, H.Y_PEAK):
+        A, _ = H.section(D, 1.0)
+        return 1.0, q_m3s / A
+    lo, hi = 1e-4, H.Y_PEAK
     for _ in range(60):
         mid = 0.5 * (lo + hi)
-        if _flow(D, S, mid)[0] < q_m3s:
+        if H.flow(D, S, mid) < q_m3s:
             lo = mid
         else:
             hi = mid
-    th = 0.5 * (lo + hi)
-    _, A = _flow(D, S, th)
-    return (1.0 - math.cos(th / 2.0)) / 2.0, q_m3s / A
+    y = 0.5 * (lo + hi)
+    return y, H.velocity(D, S, y)
 
 
 def mara_slope(q_m3s, tau=TAU_PA, k=MARA_K):

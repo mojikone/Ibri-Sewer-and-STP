@@ -771,8 +771,18 @@ def main():
         rep["tier_km_guideline"][_TN[_r]] = round(rep["tier_km_guideline"].get(_TN[_r], 0.0) + _k, 1)
 
     if "B" in str(getattr(cfg, "STAGE", "A")).upper():
-        log("stage B, the hydraulic design of each subnetwork: not built yet; stage A's outputs stand")
-        rep["stage_b"] = "not built"
+        log("stage B: the hydraulic design of each subnetwork on stage A's layout ...")
+        from sewnet import stageb as SB
+        duals = []
+        try:
+            _rd = gpd.read_file(cfg.ROADS_DUAL_SHP, bbox=envelope.buffer(200).bounds)
+            duals = [g_ for g_, dv in zip(_rd.geometry, _rd["dual"]) if g_ is not None and int(dv or 0) == 1]
+        except Exception as e_:
+            rep["dual_read_error"] = str(e_)
+        sb = SB.StageB(pipes, znode_all, ground, cfg, wadis=wadis, duals=duals, log=log)
+        reaches_b, chambers_b, rep["stage_b"] = sb.run()
+        log(f"   {dict((k, v) for k, v in rep['stage_b'].items() if k != 'by_catch')}")
+        SB.write_shapes(cfg.OUT_SHP, "W13_B", reaches_b, chambers_b, cfg.EPSG)
     log("catchment ground and the drawing ...")
     polys2 = O.catchment_polygons(pipes, [p["catch"] for p in pipes], envelope)
     colour2 = O.colour_catchments(polys2)
