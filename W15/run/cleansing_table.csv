@@ -1,0 +1,7 @@
+by,name,velocity_pipes,velocity_km,tractive_pipes,tractive_km,washing_pipes,washing_km
+tier,secondary header,4,0.4,816,125.2,2868,522.3
+tier,secondary main sewer,6,0.2,1267,115.3,7890,926.4
+role,sub main,4,0.4,816,125.2,2868,522.3
+role,lateral,6,0.2,825,76.0,5154,576.3
+role,branch,0,0.0,442,39.3,2736,350.0
+all,all,10,0.6,2083,240.5,10758,1448.6
