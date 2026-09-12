@@ -171,11 +171,18 @@ A's layout). Every number below is the guideline's unless it says the engineer's
     ks 1.5 mm** (p24, p28), sizing at Table 11 as in stage A.
 12. **Chambers** at every junction, head and outlet; along a run by **Table 12** spacing (100 m
     to DN315, 120 m to DN900, p30) with W8's setting-out rule, now the current rule: the fewest
-    chambers, evenly spaced, rounded to **10 m** (5 m where 10 leaves an odd remainder); at a
-    corner sharper than **30°**, or where a curve has turned **45°**, never more than three on
-    one bend. The head chamber sits at the first gate. **No clearance from plots**: the streets
-    are the draftsman's (engineer). A head trimmed to its gate is its own node, at the terrain's
-    level there.
+    chambers, evenly spaced, rounded to **10 m** (5 m where 10 leaves an odd remainder); **at a
+    bend over 5° one chamber on the corner, on a curve one every 45° of turn, never more than
+    three on one bend** (2026-09-12: the engineer's rule; the engine had W8's 30° road rule, and
+    the bends were being drawn as straight reaches with chambers at the spacing arithmetic). The
+    head chamber sits at the first gate. **No clearance from plots**: the streets are the
+    draftsman's (engineer). A head trimmed to its gate is its own node, at the terrain's level
+    there. **Two chambers are never closer than 10 m** (engine's reading): a head chamber that
+    close to a junction moves along its street to 10 m, a spacing chamber keeps clear of the
+    ends and the bends, a gentle bend that close to an end chamber is absorbed by it, a sharp one
+    (over 45°) keeps its own. Every run's chambers, reaches and the eight checks are written
+    (`shp/W13_B_chambers.shp`, `shp/W13_B_reaches.shp`, `shp/W13_B_issues.shp`); a reach or
+    chamber placed for the 3 m/s ceiling carries `CAP3MS`.
 13. **Backdrops.** An incoming pipe arriving more than **0.6 m** above the outgoing invert gets
     a backdrop; over **2 m** it is flagged (a vortex drop shaft, p30).
 14. **The check at the laid gradient**, every reach: d/D within **Table 10** (0.65 to DN350,

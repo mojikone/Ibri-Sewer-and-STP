@@ -44,8 +44,13 @@ Open with the engineer:
   boundary: 3,614 reaches, 3,656 chambers, 133.6 km at Table 11 and 79.7 km steeper by cover,
   deepest chamber 16.8 m against stage A's 16.4, 32 chambers over 12 m, 570 backdrops of which
   272 over 2 m (laterals joining deep headers), no capacity failure, 150 reaches in a wadi, one
-  dual-carriageway crossing. **Still to build in B**: the pumps as candidates (the brainstorm's
-  answers are in), the SewerGEMS export (after C, or on request);
+  dual-carriageway crossing. Bends at 5° with one chamber on the corner (383 bend chambers),
+  chambers never closer than 10 m (103 heads moved clear of their junction), the eight checks in
+  `shp/W13_B_issues.shp` (left: 11 close pairs at sharp bends, 9 gentle bends absorbed into an end
+  chamber, 31 heads at a 10 m offset with no gate). QGIS: `Claude W13 temp 4 / B check`, twelve
+  layers, one per question (gradient, size, velocity, length, against the ground, flow direction,
+  depth; chamber depth, drops, kind, levels; issues). **Still to build in B**: the pumps as
+  candidates (the brainstorm's answers are in), the SewerGEMS export (after C, or on request);
 - **stage C, after every area has A and B**: the main pipe sized and laid, the joins floored on
   it, the connection to the works and the inlet, the pumps of the whole, the trunk crossings.
 

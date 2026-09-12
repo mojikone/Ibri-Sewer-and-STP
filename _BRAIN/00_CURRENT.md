@@ -115,6 +115,8 @@ and it reproduces that run to the figure. Nothing later writes into it; later la
 
 **2026-09-12 (evening): stage B, step 1, is built in `W13/tmp4`.** `STAGE = "AB"` lays every subnetwork for real on stage A's unchanged layout: Colebrook-White (ks 1.5 mm), one gradient per street run (Table 11, or the cover at the far end, a dip steepening only its reach), cover 1.3 m / 1.5 m in a wadi, 3 m/s ceiling with drops of 2 m at most, chambers by Table 12 with W8's setting-out rule and at bends, backdrops, the check at the laid gradient, crossings recorded. Test boundary: 3,656 chambers, deepest 16.8 m, 32 over 12 m, 570 backdrops of which 272 over 2 m. Rules 11 to 15 of `W13/tmp4/docs/W13_TMP4_DESIGN_LOGIC.md`. Next: pumps as candidates (the engineer answered the brainstorm on 2026-09-12: lowest header chamber within 1,000 m or a chamber he names, rate = the pocket's peak plus infiltration, station at the low junction, pumping main along the streets at 1.0 to 2.5 m/s, kW reported; CLAUDE.md rule 9's cascade and 50-plot deferral dropped, every pocket a candidate).
 
+**2026-09-12 (late): stage B checked against the engineer's eye.** Bends at 5° with one chamber on the corner (rule 12; the engine had W8's 30°), chambers never closer than 10 m, `CAP3MS` on what the 3 m/s ceiling placed, eight checks written to `W13/tmp4/shp/W13_B_issues.shp` (11 close pairs at sharp bends, 9 gentle bends absorbed, 31 heads at a 10 m offset; nothing else), and a QGIS check group `Claude W13 temp 4 / B check` with one layer per question. Layout 100 % on temp 3.
+
 **Nothing is lost.**
 
 | Where | What |
