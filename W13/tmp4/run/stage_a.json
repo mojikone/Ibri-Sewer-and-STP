@@ -16,7 +16,7 @@
     "crest": 87,
     "sag": 69
   },
-  "main_pipe_km_near_area": 18.8,
+  "main_pipe_km_near_area": 16.8,
   "ground_catchments": {
     "count": 142,
     "by_type": {
@@ -314,22 +314,22 @@
     "trench_over_12m": 38,
     "drops": 577,
     "backdrops_over_0p6": 569,
-    "drops_over_2m": 268,
+    "drops_over_2m": 269,
     "steep_runs": 0,
     "capacity_fail": 0,
     "km_at_table11": 133.6,
     "km_steeper_by_cover": 79.3,
     "km_at_3ms_with_drops": 0.0,
     "cleanse_km": {
-      "washing": 147.8,
-      "tractive": 64.9,
+      "washing": 148.4,
+      "tractive": 64.3,
       "velocity": 0.2
     },
     "wadi_reaches": 155,
     "dual_crossings": 1,
     "flags": {
       "trench over 12 m": 38,
-      "junction drop over 2 m": 268
+      "junction drop over 2 m": 269
     },
     "by_catch": {
       "C01": {
@@ -392,7 +392,7 @@
         "trench_max": 13.83,
         "over_12": 6,
         "drops": 1,
-        "washing_km": 29.18,
+        "washing_km": 29.77,
         "cap_fail": 0,
         "wadi": 0,
         "dual_x": 0
@@ -885,6 +885,77 @@
       "head not at a gate": 28
     },
     "heads_moved_from_junction": 128
+  },
+  "pumps": {
+    "stations": 3,
+    "routed": 1,
+    "unrouted": [
+      "C32",
+      "C29"
+    ],
+    "total_q_ls": 11.7,
+    "total_kw": 2.7,
+    "main_km": 1.58,
+    "assumptions": {
+      "ks_mm_pumping_main": 1.5,
+      "minor_losses": 0.1,
+      "efficiency": 0.65,
+      "sump_below_invert_m": 1.0,
+      "max_friction_m_per_km": 10.0
+    },
+    "stations_list": [
+      {
+        "catch": "C32",
+        "z": 335.17,
+        "q_ls": 0.0,
+        "own_peak_ls": 0.0,
+        "pf": 0.0,
+        "q_ult_m3d": 0.0,
+        "props": 0.0,
+        "well_inv": 332.37,
+        "plots": 0.0,
+        "disch_catch": "",
+        "note": "no header chamber reachable by street"
+      },
+      {
+        "catch": "C07",
+        "z": 327.73,
+        "q_ls": 10.91,
+        "own_peak_ls": 10.91,
+        "pf": 3.06,
+        "q_ult_m3d": 306.37,
+        "props": 304.09,
+        "well_inv": 322.31,
+        "plots": 0.0,
+        "disch_catch": "C02",
+        "disch_x": 444780.81,
+        "disch_y": 2566240.33,
+        "disch_inv": 329.8,
+        "static_m": 7.49,
+        "friction_m": 8.68,
+        "head_m": 16.17,
+        "main_dn": 150.0,
+        "main_len": 1577.93,
+        "v_ms": 0.62,
+        "kw": 2.66,
+        "high_points": 0.0,
+        "forced": false,
+        "note": "under 1.0 m/s even at the smallest size; main longer than 1000 m"
+      },
+      {
+        "catch": "C29",
+        "z": 332.9,
+        "q_ls": 0.84,
+        "own_peak_ls": 0.84,
+        "pf": 3.56,
+        "q_ult_m3d": 20.3,
+        "props": 23.2,
+        "well_inv": 329.96,
+        "plots": 0.0,
+        "disch_catch": "",
+        "note": "no header chamber reachable by street"
+      }
+    ]
   },
   "basins": [
     {
@@ -1727,8 +1798,8 @@
       "submain_km": 10.59,
       "spill_m": 0.0,
       "to_mp": [
-        -5.1,
-        1798.0
+        1.2,
+        1705.6
       ],
       "to_stp": [
         11.2,
@@ -1880,8 +1951,8 @@
       "submain_km": 0.0,
       "spill_m": null,
       "to_mp": [
-        -4.0,
-        2463.6
+        2.2,
+        597.3
       ],
       "to_stp": [
         12.2,
@@ -1901,8 +1972,8 @@
       "submain_km": 5.73,
       "spill_m": 10.67,
       "to_mp": [
-        2.0,
-        2986.2
+        -21.6,
+        5933.8
       ],
       "to_stp": [
         4.7,
@@ -2017,5 +2088,5 @@
       "area_km2": 0.127
     }
   ],
-  "seconds": 68.8
+  "seconds": 71.7
 }

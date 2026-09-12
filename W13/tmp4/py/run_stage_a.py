@@ -782,6 +782,22 @@ def main():
         pipes_b = [dict(p_) for p_ in pipes]      # stage B writes on copies; stage A's records stand
         sb = SB.StageB(pipes_b, znode_all, ground, cfg, wadis=wadis, duals=duals, log=log)
         reaches_b, chambers_b, rep["stage_b"] = sb.run()
+        # the pump candidates: every pocket a station, its main to the lowest header chamber of a
+        # neighbour, the pumped flow added to that neighbour and the neighbour laid again
+        from sewnet import pumps as PU
+        stations, pmains, extra_in, rep["pumps"] = PU.plan(pipes_b, reaches_b, chambers_b, runs, znode_all, ground,
+                                                           info2, cfg, log=log)
+        log(f"   pumps: {dict((k, v) for k, v in rep['pumps'].items() if k != 'stations_list')}")
+        for s_ in rep["pumps"].get("stations_list", []):
+            log(f"      {s_['catch']}: {s_['q_ls']} l/s (pf {s_['pf']}) -> {s_.get('disch_catch') or '-'}; static {s_.get('static_m', 0)} m, "
+                f"friction {s_.get('friction_m', 0)} m, DN{s_.get('main_dn', 0)} x {s_.get('main_len', 0)} m at {s_.get('v_ms', 0)} m/s, "
+                f"{s_.get('kw', 0)} kW, high points {s_.get('high_points', 0)}{'; ' + s_['note'] if s_.get('note') else ''}")
+        if extra_in:
+            pipes_b = [dict(p_) for p_ in pipes]
+            sb = SB.StageB(pipes_b, znode_all, ground, cfg, wadis=wadis, duals=duals, extra_inflow=extra_in, log=log)
+            reaches_b, chambers_b, rep["stage_b"] = sb.run()
+            log(f"   laid again with the pumped flows: {dict((k, v) for k, v in rep['stage_b'].items() if k != 'by_catch')}")
+        PU.write_shapes(cfg.OUT_SHP, "W13_B", stations, pmains, cfg.EPSG)
         log(f"   {dict((k, v) for k, v in rep['stage_b'].items() if k != 'by_catch')}")
         SB.write_shapes(cfg.OUT_SHP, "W13_B", reaches_b, chambers_b, cfg.EPSG)
         SB.write_pipes(cfg.OUT_SHP, "W13_B", pipes_b, info2, cfg.EPSG)

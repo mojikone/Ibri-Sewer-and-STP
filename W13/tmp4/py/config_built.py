@@ -171,3 +171,15 @@ ROADS_DUAL_SHP = BASE + r"\Hydraulic\SHP\Road centerline 2\Road_Centercline.shp"
 CHAMBER_SEP_M = 10.0        # two chambers closer than this are one: a bend cut this close to another is dropped, and a
                             # head chamber this close to its junction is moved to this distance along its street (engine's reading, 2026-09-12)
 CLOSE_CHAMBER_M = 5.0       # the check: chambers closer than this are reported
+
+# ---- stage B pumps as candidates (engineer's answers of 2026-09-12)
+PUMP_MAIN_MAX_M = 1000.0    # the discharge chamber: the lowest header chamber of a neighbour within this by street (engineer)
+PUMP_DISCHARGE = {}         # the engineer names a chamber: {"C07": (x, y)} or {(outlet x, y): (x, y)}; overrides the search
+PUMP_V_MIN_MS = 1.0         # start-stop pumping (G203 p50 8.1)
+PUMP_V_MAX_MS = 2.5         # (G203 p50)
+PUMP_MAIN_SIZES_MM = (80, 100, 150, 200, 250, 300)   # inside diameters tried, never under 75 mm (G203 p50)
+PUMP_KS_MM = 1.5            # ASSUMPTION: the gravity ks used for the pumping main too, conservative
+PUMP_MINOR_LOSS = 0.10      # ASSUMPTION: fittings as 10 % of the friction head
+PUMP_EFFICIENCY = 0.65      # ASSUMPTION: overall pump and motor efficiency for the kW
+PUMP_SUMP_M = 1.0           # ASSUMPTION: the pump-off level this far below the lowest incoming invert
+PUMP_MAX_FRICTION = 0.01    # ASSUMPTION: a pumping main is sized so its friction stays under 10 m per km at the pump rate
