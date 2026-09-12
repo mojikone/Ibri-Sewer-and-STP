@@ -11,3 +11,4 @@
 - [List tasks before multi-step work](list-tasks-before-multistep-work.md) — "clear?" is a check, not a go; list the tasks, wait for approval
 - [Concept saturation population and load](concept-saturation-population-and-load.md) — class v7 chain with unit-rate loads: meters, NDVI groves, per-settlement occupancy, home-shaped capacity, spread by capped area; reuse, do not re-derive
 - [Design flows handoff](design-flows-handoff.md) — size on Q_ULT, self-cleansing on Q_2030 x 0.61; read W14/docs/DESIGN_FLOWS_FOR_NETWORK.md before any network design
+- [PyQGIS MCP crash: dangling symbol](pyqgis-mcp-crash-dangling-symbol.md) — never chain renderer().categories()[i].symbol(); bind names or style through QML

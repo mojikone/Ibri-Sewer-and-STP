@@ -11,7 +11,7 @@ Copy `mcp.json` from this folder into the project as `.mcp.json` (project scope)
 | `civil3d-mcp` | Civil 3D automation (alignments, pipe networks, surfaces) — for later design stages | `node C:\Civil3D-mcp\build\index.js` (install path machine-specific) |
 | `autocad-mcp` | Plain AutoCAD drawing automation (was available; reinstall if needed) | — |
 
-QGIS project to open before starting the qgis MCP: `Hydraulic/QGIS/QGIS 2621 ibri sewer stp.qgz` (QGIS 3.44.x). Layouts "W2 M1..M6" are saved inside it.
+QGIS project to open before starting the qgis MCP: `Hydraulic/QGIS/QGIS 2621 ibri sewer stp2.qgz` (QGIS 3.44.x; rebuilt by the engineer on 2026-09-12, `stp.qgz` is the older copy). In `execute_code`, never chain `renderer().categories()[i].symbol()`: bind each step to a name, or style through a QML file (three QGIS aborts on 2026-09-12). Layouts "W2 M1..M6" are saved inside it.
 
 ## 2. Python (system 3.12, NOT QGIS python)
 ```

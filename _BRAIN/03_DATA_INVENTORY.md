@@ -1,5 +1,5 @@
 # DATA INVENTORY & QUALITY FLAGS
-Project CRS: **EPSG:32640** (WGS84 / UTM 40N). QGIS project: `Hydraulic/QGIS/QGIS 2621 ibri sewer stp.qgz` (open, MCP-connected).
+Project CRS: **EPSG:32640** (WGS84 / UTM 40N). QGIS project: `Hydraulic/QGIS/QGIS 2621 ibri sewer stp2.qgz` (open, MCP-connected; since 2026-09-12, `stp.qgz` is the older copy).
 
 | Layer | Source | Features | Key facts | Flags |
 |---|---|---|---|---|

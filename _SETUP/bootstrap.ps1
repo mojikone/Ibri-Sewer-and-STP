@@ -68,7 +68,7 @@ $paths = @(
   "$root\Data\sample report\Sample.docx",
   "$root\Hydraulic\Terrain\DTM_terrain_mask.tif",
   "$root\Hydraulic\SHP\Landuse\Landuse.shp",
-  "$root\Hydraulic\QGIS\QGIS 2621 ibri sewer stp.qgz",
+  "$root\Hydraulic\QGIS\QGIS 2621 ibri sewer stp2.qgz",
   "$root\Hydraulic\Claude\W1\shp\roads_graph.shp",
   "$root\Hydraulic\Claude\W2\shp\zones.shp")
 foreach ($p in $paths) {
