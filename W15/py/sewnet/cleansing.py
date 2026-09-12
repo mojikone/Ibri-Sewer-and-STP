@@ -1,0 +1,162 @@
+"""sewnet.cleansing — the self-cleansing audit on the low case (W13 temp 3, 2026-09-11).
+
+The engineer's ruling (W14/docs/DESIGN_FLOWS_FOR_NETWORK.md, sections 3.4, 4 and 8): the
+flow is Q_2030 x 0.61 of the plots upstream, peaked with the properties counted connected
+(2030 x 0.61) to choose Merrimack or Peltier, and no infiltration. Each pipe takes one
+class, and the audit changes no size and no gradient:
+
+- velocity: at least 0.75 m/s at the low-case peak (G203-p26);
+- tractive: the laid gradient at least Mara's Smin = K tau^1.23 Q^-0.461, tau = 1 Pa,
+  K = 2.33e-4 with Q in m3/s, on the true flow with no floor (G203-p27);
+- washing: everything else, the flushing list (G203 4.2.6, p28).
+
+No regrade class and no low-flow threshold: a pipe laid to the guideline gradient that
+still carries too little flow needs washing, not a steeper pipe.
+"""
+import collections
+import math
+
+from .quicklay import MANNING_N, bore, peak_flow_ls
+
+V_MIN = 0.75          # m/s at the low-case peak (G203-p26)
+MARA_K = 2.33e-4      # Q in m3/s (engineer, 2026-09-11)
+TAU_PA = 1.0          # concept-stage value, NWS to confirm (GAP-9)
+CLASSES = ("velocity", "tractive", "washing")
+
+
+def part_full(D, S, q_m3s):
+    """Depth ratio and velocity of a flow in a circular pipe of bore D at gradient S, by
+    Colebrook-White with ks 1.5 mm (engineer 2026-09-12; was Manning 0.013). Past the
+    pipe's greatest part-full flow it is read as full."""
+    from . import hydraulics as H
+    if q_m3s <= 0.0 or S <= 0.0:
+        return 0.0, 0.0
+    if q_m3s >= H.flow(D, S, H.Y_PEAK):
+        A, _ = H.section(D, 1.0)
+        return 1.0, q_m3s / A
+    lo, hi = 1e-4, H.Y_PEAK
+    for _ in range(60):
+        mid = 0.5 * (lo + hi)
+        if H.flow(D, S, mid) < q_m3s:
+            lo = mid
+        else:
+            hi = mid
+    y = 0.5 * (lo + hi)
+    return y, H.velocity(D, S, y)
+
+
+def mara_slope(q_m3s, tau=TAU_PA, k=MARA_K):
+    """Mara's minimum slope for the tractive tension tau (m/m); infinite with no flow."""
+    return k * tau ** 1.23 * q_m3s ** -0.461 if q_m3s > 0.0 else float("inf")
+
+
+def audit(pipes, connected=0.61, v_min=V_MIN, tau=TAU_PA, k=MARA_K):
+    """Classes every pipe on the low case and writes q_low_ls, v_low, yd_low, s_mara and
+    cleanse onto it. Returns the counts and lengths by class and by tier."""
+    for q in pipes:
+        qadf = q.get("q_2030_up", 0.0) * connected
+        props = q.get("props_2030_up", 0.0) * connected
+        peak, pf = peak_flow_ls(qadf, props, 0.0, 0.0)
+        q_m3s = peak / 1000.0
+        S = q.get("grad_laid", 0.0)
+        yd, v = part_full(bore(q["dn_mm"]), S, q_m3s)
+        sm = mara_slope(q_m3s, tau, k)
+        q["q_low_ls"], q["pf_low"], q["v_low"], q["yd_low"] = peak, pf, v, yd
+        q["s_mara"] = sm
+        q["cleanse"] = ("velocity" if v >= v_min else "tractive" if S >= sm else "washing")
+    from .export_tree import TIER_NAME
+    rep = {"flow": f"Q_2030 x {connected}, properties connected, no infiltration",
+           "v_min_ms": v_min, "tau_pa": tau, "mara_k": k, "by_class": {}, "by_tier": {},
+           "by_role": {}}
+    by = collections.defaultdict(lambda: [0, 0.0])
+    byt = collections.defaultdict(lambda: collections.defaultdict(lambda: [0, 0.0]))
+    byr = collections.defaultdict(lambda: collections.defaultdict(lambda: [0, 0.0]))
+    for q in pipes:
+        by[q["cleanse"]][0] += 1
+        by[q["cleanse"]][1] += q["len"]
+        r = q.get("tier", "?")
+        for d, key in ((byt, TIER_NAME.get(r, r)), (byr, r)):
+            d[key][q["cleanse"]][0] += 1
+            d[key][q["cleanse"]][1] += q["len"]
+    total = sum(v[1] for v in by.values()) or 1.0
+    for c in CLASSES:
+        n, L = by.get(c, [0, 0.0])
+        rep["by_class"][c] = {"pipes": n, "km": round(L / 1000.0, 1),
+                              "pct_length": round(100.0 * L / total, 1)}
+    for name, src in (("by_tier", byt), ("by_role", byr)):
+        for t, d in src.items():
+            rep[name][t] = {c: {"pipes": d[c][0], "km": round(d[c][1] / 1000.0, 1)}
+                            for c in CLASSES}
+    return rep
+
+
+def tractive_attributes(pipes, q_floor_ls=1.5, tau=TAU_PA, k=MARA_K):
+    """The tractive-force minimum gradient every pipe would need (engineer, 2026-09-12): Mara at
+    the design peak and at the low-case peak, each with the flow floored at q_floor_ls, against
+    its Table 11 minimum. Nothing is regraded: a DN200 always passes with the floor, a bigger
+    pipe keeps Table 11 and carries the answer as an attribute. Writes s_trac_design, s_trac_low
+    (m/m) and trac_over ('', 'design', 'low', 'both') onto each pipe; returns km over by size."""
+    from .quicklay import T11
+    over = collections.defaultdict(lambda: collections.defaultdict(float))
+    for q in pipes:
+        t11 = T11[q["dn_mm"]]
+        qd = max(q.get("q_peak_ls", 0.0), q_floor_ls) / 1000.0
+        ql = max(q.get("q_low_ls", 0.0), q_floor_ls) / 1000.0
+        sd, sl = mara_slope(qd, tau, k), mara_slope(ql, tau, k)
+        q["s_trac_design"], q["s_trac_low"] = sd, sl
+        od, ol = sd > t11 + 1e-9, sl > t11 + 1e-9
+        q["trac_over"] = "both" if od and ol else "design" if od else "low" if ol else ""
+        if od:
+            over["design"][q["dn_mm"]] += q["len"] / 1000.0
+        if ol:
+            over["low"][q["dn_mm"]] += q["len"] / 1000.0
+    return {"q_floor_ls": q_floor_ls, "tau_pa": tau,
+            "km_over_table11": {case: {int(dn): round(v, 2) for dn, v in d.items()} for case, d in over.items()}}
+
+
+def write_tables(pipes, rep, out_dir, connected=0.61):
+    """The audit's table (pipes and km by class and by tier, and by role) as markdown and
+    CSV, and the washing list: every pipe on it with why. PIPE_ID matches the shapefile."""
+    import csv
+    import os
+    from .export_tree import TIER_NAME
+    os.makedirs(out_dir, exist_ok=True)
+    rows = []
+    for key in ("by_tier", "by_role"):
+        for t, d in rep[key].items():
+            rows.append([key[3:], t] + [x for c in CLASSES for x in (d[c]["pipes"], d[c]["km"])])
+    with open(os.path.join(out_dir, "cleansing_table.csv"), "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["by", "name"] + [f"{c}_{u}" for c in CLASSES for u in ("pipes", "km")])
+        w.writerows(rows)
+        w.writerow(["all", "all"] + [x for c in CLASSES
+                                     for x in (rep["by_class"][c]["pipes"], rep["by_class"][c]["km"])])
+    lines = ["# Self-cleansing audit, W13 temp 3", "",
+             f"Low case: {rep['flow']}. Velocity pass at {rep['v_min_ms']} m/s; tractive pass at "
+             f"Mara's slope, tau {rep['tau_pa']} Pa, K {rep['mara_k']} (Q in m3/s), no floor. "
+             "Nothing is regraded or upsized.", "",
+             "| By | Name | Velocity pipes | km | Tractive pipes | km | Washing pipes | km |",
+             "|---|---|---|---|---|---|---|---|"]
+    for r in rows:
+        lines.append("| " + " | ".join(str(x) for x in r) + " |")
+    a = rep["by_class"]
+    lines.append("| **all** | | " + " | ".join(f"**{a[c]['pipes']}** | **{a[c]['km']}**" for c in CLASSES) + " |")
+    lines += ["", "Share of length: " + ", ".join(f"{c} {a[c]['pct_length']} %" for c in CLASSES)]
+    open(os.path.join(out_dir, "cleansing_table.md"), "w", encoding="utf-8").write("\n".join(lines) + "\n")
+    with open(os.path.join(out_dir, "washing_list.csv"), "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["PIPE_ID", "CATCH", "TIER", "ROLE", "DN_MM", "LEN_M", "SLOPE_PCT",
+                    "Q_LOW_LS", "V_LOW_MS", "S_MARA_PCT", "CONNECTED_2030", "WHY"])
+        n = 0
+        for i, q in enumerate(pipes):
+            if q.get("cleanse") != "washing":
+                continue
+            n += 1
+            sm = q["s_mara"]
+            w.writerow([f"P{i + 1:05d}", q.get("catch", ""), TIER_NAME.get(q["tier"], q["tier"]),
+                         q["tier"], q["dn_mm"], round(q["len"], 1),
+                         round(q["grad_laid"] * 100, 3), round(q["q_low_ls"], 3),
+                         round(q["v_low"], 3), "" if sm == float("inf") else round(sm * 100, 3),
+                         round(q.get("props_2030_up", 0.0) * connected, 1),
+                         "no flow in 2030" if q["q_low_ls"] <= 0 else "below Mara's slope"])
+    return n
