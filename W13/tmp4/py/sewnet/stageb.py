@@ -70,11 +70,13 @@ def split_lengths(L, max_len, step=10.0, fallback=5.0):
     return [L / n] * n
 
 
-def bend_cuts(geom, bend_deg=30.0, wide_deg=45.0, max_per_60m=3):
-    """Chainages where a bend needs a chamber: on a corner sharper than bend_deg, or where a
-    sweeping curve has turned wide_deg since the last chamber; never more than max_per_60m
-    inside 60 m (W8's rule, kept)."""
+def bend_cuts(geom, bend_deg=5.0, wide_deg=45.0, max_per_60m=3, sep_m=10.0):
+    """Chainages where a bend needs a chamber (the engineer's rule 12): up to bend_deg none;
+    a corner turning more gets one chamber on it; a sweeping curve gets one every wide_deg of
+    turn, never more than max_per_60m inside 60 m. Two cuts closer than sep_m are one, and a
+    cut within sep_m of either end is left to the end chamber."""
     coords = list(geom.coords)
+    L = geom.length
     if len(coords) < 3:
         return []
     cuts, acc, since = [], 0.0, 0.0
@@ -86,10 +88,16 @@ def bend_cuts(geom, bend_deg=30.0, wide_deg=45.0, max_per_60m=3):
         turn = min(d, 360.0 - d)
         since += turn
         if turn > bend_deg or since >= wide_deg:
-            cuts.append(acc)
+            cuts.append((acc, turn > 45.0))
             since = 0.0
     out = []
-    for c in cuts:
+    for c, sharp in cuts:
+        if (c < sep_m or c > L - sep_m) and not sharp:
+            continue
+        if c < 1.0 or c > L - 1.0:
+            continue
+        if out and c - out[-1] < sep_m and not sharp:
+            continue
         if len([x for x in out if abs(x - c) <= 60.0]) >= max_per_60m:
             continue
         out.append(c)
@@ -184,8 +192,28 @@ class StageB:
         # stage A interpolated for it, so it starts at cover there and not at the junction
         self.pos = {}
         U = []
+        sep = float(getattr(self.cfg, "CHAMBER_SEP_M", 10.0))
+        self.heads_moved = 0
+        n_in0 = collections.Counter(q["dn"] for q in pipes)
+        junctions = [Point(q["dn"]) for q in pipes] + [Point(q["up"]) for q in pipes if n_in0[q["up"]] > 0]
+        jtree = STRtree(junctions)
         for i, q in enumerate(pipes):
             c0 = q["geom"].coords[0]
+            if n_in0[q["up"]] == 0:
+                # a head chamber (at the gate, or 10 m along) is never closer than sep to a
+                # junction chamber, so two chambers do not sit a few metres apart: it moves
+                # along its own street to sep from that junction
+                pt = Point(c0)
+                near = [junctions[int(j)] for j in jtree.query(pt.buffer(sep)) if junctions[int(j)].distance(pt) < sep]
+                if near and q["geom"].length > sep + 5.0:
+                    dj = min(j_.distance(pt) for j_ in near)
+                    g = q["geom"]
+                    cut_at = sep - dj
+                    q["geom"] = self._piece(g, cut_at, g.length)
+                    q["len"] = q["geom"].length
+                    q["head_moved_m"] = cut_at
+                    c0 = q["geom"].coords[0]
+                    self.heads_moved += 1
             if math.dist(c0, q["up"]) > 1.0:
                 key = ("H", i)
                 self.z[key] = float(self.ground.z_node(c0[0], c0[1]))
@@ -279,8 +307,10 @@ class StageB:
             p["slope_b"] = s_run
             p["steep"] = steep
             spacing = spacing_for(dn)
-            bends = bend_cuts(p["geom"], float(getattr(self.cfg, "BEND_DEG", 30.0)))
-            cuts = list(bends)
+            bends = bend_cuts(p["geom"], float(getattr(self.cfg, "BEND_DEG", 5.0)),
+                              sep_m=float(getattr(self.cfg, "CHAMBER_SEP_M", 10.0)))
+            sep = float(getattr(self.cfg, "CHAMBER_SEP_M", 10.0))
+            cuts = list(bends)                      # a bend chamber stands where the bend is
             anchors = [0.0] + bends + [L]
             for a0, b0 in zip(anchors[:-1], anchors[1:]):
                 if b0 - a0 <= spacing + 1e-6:
@@ -288,7 +318,8 @@ class StageB:
                 run_ = a0
                 for piece in split_lengths(b0 - a0, spacing)[:-1]:
                     run_ += piece
-                    cuts.append(run_)
+                    if run_ > sep and run_ < L - sep and all(abs(run_ - x) >= sep for x in bends):
+                        cuts.append(run_)           # a spacing chamber keeps clear of the ends and the bends
             pieces = _cut(p["geom"], cuts)
             inv_arr = inv_u
             k = 0
@@ -349,7 +380,9 @@ class StageB:
             drops = [pipes[i].get("drop_at_junction", 0.0) for i in [j for j, q in enumerate(pipes) if q["dn"] == node]]
             x_, y_ = self.pos.get(node, (node[0], node[1]) if not (isinstance(node, tuple) and node and node[0] == "H") else (0.0, 0.0))
             self.chambers.append({"node": node, "x": x_, "y": y_, "kind": kind, "z": zg,
-                                  "invert": level, "depth": zg - level,
+                                  "invert": level, "depth": zg - level, "cap3ms": False,
+                                  "pipe": (outs[0] if outs else None),
+                                  "head_how": (pipes[outs[0]].get("head_how", "") if outs and kind == "head" else ""),
                                   "drop": max(drops) if drops else 0.0,
                                   "catch": (pipes[outs[0]]["catch"] if outs else
                                             next((q["catch"] for q in pipes if q["dn"] == node), ""))})
@@ -378,7 +411,11 @@ class StageB:
         sm = mara_slope(ql, TAU_PA, MARA_K)
         cleanse = "velocity" if vl >= V_SELF else ("tractive" if s >= sm else "washing")
         wadi = bool(any(w for c, w in zip(ch, wadi_k) if a - 1e-6 <= c <= b + 1e-6))
+        cov_min = min(depths) - H.outside(dn) if depths else float("nan")
+        short = max(((inv_a - s * (c - a)) - f for c, f in zip(ch, floor) if a - 1e-6 <= c <= b + 1e-6), default=0.0)
         r = {"pipe": i, "reach": k, "catch": p["catch"], "tier": p["tier"], "dn": dn, "geom": g,
+             "cover_min": cov_min, "cover_short": max(0.0, short),
+             "cap3ms": bool(p.get("steep", False)) or kind == "drop",
              "a": a, "b": b, "len": b - a, "slope": s, "inv_up": inv_a, "inv_dn": inv_b,
              "z_up": za, "z_dn": zb, "depth_up": za - inv_a, "depth_dn": zb - inv_b,
              "trench_max": trench, "q_peak_ls": qd * 1000.0, "yd": y, "v": v, "cap_ok": cap_ok,
@@ -390,7 +427,7 @@ class StageB:
             # an interior chamber at the reach's head
             self.chambers.append({"node": None, "x": g.coords[0][0], "y": g.coords[0][1], "kind": kind,
                                   "z": za, "invert": inv_a, "depth": za - inv_a, "drop": drop_at_start,
-                                  "catch": p["catch"]})
+                                  "catch": p["catch"], "cap3ms": kind == "drop", "pipe": i})
         if trench > self.max_depth:
             self.flags["trench over 12 m"] += 1
         if not cap_ok:
@@ -470,6 +507,11 @@ def write_shapes(out_dir, prefix, reaches, chambers, epsg=32640):
         "KIND": [r["kind"] for r in reaches],
         "DROP_M": [round(r["drop"], 2) for r in reaches],
         "STEEP": [int(r["steep"]) for r in reaches],
+        "CAP3MS": [int(r.get("cap3ms", False)) for r in reaches],
+        "COVER_MIN": [round(r.get("cover_min", 0.0), 2) for r in reaches],
+        "COV_SHORT": [round(r.get("cover_short", 0.0), 2) for r in reaches],
+        "AGAINST": [int(r["z_dn"] > r["z_up"] + 0.05) for r in reaches],
+        "LEN_OVER": [int(r["len"] > spacing_for(r["dn"]) + 0.05) for r in reaches],
         "WADI": [int(r["wadi"]) for r in reaches],
         "DUAL_X": [int(r["dual_x"]) for r in reaches],
     }, geometry=[r["geom"] for r in reaches], crs=crs).to_file(os.path.join(out_dir, f"{prefix}_reaches.shp"))
@@ -483,4 +525,95 @@ def write_shapes(out_dir, prefix, reaches, chambers, epsg=32640):
         "DROP_M": [round(c["drop"], 2) for c in chambers],
         "BACKDROP": [int(c["drop"] > 0.6) for c in chambers],
         "OVER_12": [int(c["depth"] > 12.0) for c in chambers],
+        "CAP3MS": [int(c.get("cap3ms", False)) for c in chambers],
+        "HEAD_HOW": [c.get("head_how", "") for c in chambers],
     }, geometry=[Point(c["x"], c["y"]) for c in chambers], crs=crs).to_file(os.path.join(out_dir, f"{prefix}_chambers.shp"))
+
+
+def find_issues(reaches, chambers, pipes, cfg, cover_crown=1.3, cover_wadi=1.5):
+    """The eight checks the engineer asked for on 2026-09-12. Returns point issues
+    (x, y, type, detail) and the counts by type."""
+    import collections as _c
+    close_m = float(getattr(cfg, "CLOSE_CHAMBER_M", 5.0))
+    bend_deg = float(getattr(cfg, "BEND_DEG", 5.0))
+    issues = []
+    # 1. chambers closer than close_m
+    pts = [Point(c["x"], c["y"]) for c in chambers]
+    tree = STRtree(pts)
+    seen = set()
+    for i, pt in enumerate(pts):
+        for j in tree.query(pt.buffer(close_m)):
+            j = int(j)
+            if j <= i or (i, j) in seen:
+                continue
+            d = pt.distance(pts[j])
+            if d < close_m:
+                seen.add((i, j))
+                issues.append((pt.x, pt.y, "close chambers", f"{d:.1f} m apart ({chambers[i]['kind']} / {chambers[j]['kind']})"))
+    # 2. a reach longer than its spacing
+    for r in reaches:
+        if r["len"] > spacing_for(r["dn"]) + 0.05:
+            m = r["geom"].interpolate(0.5, normalized=True)
+            issues.append((m.x, m.y, "reach over spacing", f"{r['len']:.0f} m, DN{r['dn']} allows {spacing_for(r['dn']):.0f}"))
+    # 3. an invert rising along the flow, or a junction outlet above an inlet
+    for r in reaches:
+        if r["inv_dn"] > r["inv_up"] + 1e-6:
+            m = r["geom"].interpolate(0.5, normalized=True)
+            issues.append((m.x, m.y, "invert rises", f"{r['inv_up']:.2f} -> {r['inv_dn']:.2f}"))
+    arr = _c.defaultdict(list)
+    for p in pipes:
+        if "inv_dn_b" in p:
+            arr[p["dn"]].append(p["inv_dn_b"])
+    for p in pipes:
+        u = p["up"]
+        if u in arr and "inv_up_b" in p and p["inv_up_b"] > min(arr[u]) + 1e-6:
+            issues.append((u[0], u[1], "outlet above inlet", f"out {p['inv_up_b']:.2f} above in {min(arr[u]):.2f}"))
+    # 4. a bend with no chamber
+    ch_tree = STRtree(pts)
+    for p in pipes:
+        coords = list(p["geom"].coords)
+        acc = 0.0
+        for i in range(1, len(coords) - 1):
+            acc += math.dist(coords[i - 1], coords[i])
+            a1 = math.atan2(coords[i][1] - coords[i - 1][1], coords[i][0] - coords[i - 1][0])
+            a2 = math.atan2(coords[i + 1][1] - coords[i][1], coords[i + 1][0] - coords[i][0])
+            d = abs(math.degrees(a2 - a1)) % 360.0
+            turn = min(d, 360.0 - d)
+            if turn > bend_deg:
+                v = Point(coords[i])
+                near = [int(j) for j in ch_tree.query(v.buffer(1.5)) if pts[int(j)].distance(v) < 1.5]
+                if not near:
+                    issues.append((v.x, v.y, "bend without chamber", f"{turn:.0f} degrees"))
+    # 4b. a gentle bend absorbed into the chamber at its end (within the separation)
+    #     is not an issue; a sharp one is caught above. Nothing to add here.
+    # 5. cover short along a trench, each point against its own requirement (1.5 m inside a wadi)
+    for r in reaches:
+        if r.get("cover_short", 0.0) > 0.05:
+            m = r["geom"].interpolate(0.5, normalized=True)
+            issues.append((m.x, m.y, "cover short in trench", f"short by {r['cover_short']:.2f} m"))
+    # 6. a chamber shallower than cover plus pipe
+    for c in chambers:
+        dn = pipes[c["pipe"]]["dn_mm"] if c.get("pipe") is not None else 200
+        need = cover_crown + H.outside(dn)
+        if c["depth"] < need - 0.05:
+            issues.append((c["x"], c["y"], "chamber shallower than cover", f"{c['depth']:.2f} m against {need:.2f}"))
+    # 7. capacity or velocity failing
+    for r in reaches:
+        if not r["cap_ok"]:
+            m = r["geom"].interpolate(0.5, normalized=True)
+            issues.append((m.x, m.y, "capacity or 3 m/s failed", f"d/D {r['yd']:.2f}, v {r['v']:.2f} m/s"))
+    # 8. a head not at a gate
+    for c in chambers:
+        if c["kind"] == "head" and c.get("head_how", "") not in ("gate", ""):
+            issues.append((c["x"], c["y"], "head not at a gate", c.get("head_how", "")))
+    counts = dict(_c.Counter(t for _, _, t, _ in issues))
+    return issues, counts
+
+
+def write_issues(out_dir, prefix, issues, epsg=32640):
+    import os
+    import geopandas as gpd
+    crs = f"EPSG:{epsg}"
+    gpd.GeoDataFrame({"TYPE": [t for _, _, t, _ in issues], "DETAIL": [d for _, _, _, d in issues]},
+                     geometry=[Point(x, y) for x, y, _, _ in issues], crs=crs).to_file(
+        os.path.join(out_dir, f"{prefix}_issues.shp"))

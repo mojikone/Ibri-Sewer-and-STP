@@ -779,10 +779,16 @@ def main():
             duals = [g_ for g_, dv in zip(_rd.geometry, _rd["dual"]) if g_ is not None and int(dv or 0) == 1]
         except Exception as e_:
             rep["dual_read_error"] = str(e_)
-        sb = SB.StageB(pipes, znode_all, ground, cfg, wadis=wadis, duals=duals, log=log)
+        pipes_b = [dict(p_) for p_ in pipes]      # stage B writes on copies; stage A's records stand
+        sb = SB.StageB(pipes_b, znode_all, ground, cfg, wadis=wadis, duals=duals, log=log)
         reaches_b, chambers_b, rep["stage_b"] = sb.run()
         log(f"   {dict((k, v) for k, v in rep['stage_b'].items() if k != 'by_catch')}")
         SB.write_shapes(cfg.OUT_SHP, "W13_B", reaches_b, chambers_b, cfg.EPSG)
+        issues_b, rep["stage_b"]["issues"] = SB.find_issues(reaches_b, chambers_b, pipes_b, cfg,
+                                                              cfg.COVER_CROWN_M, cfg.COVER_WADI_M)
+        rep["stage_b"]["heads_moved_from_junction"] = sb.heads_moved
+        SB.write_issues(cfg.OUT_SHP, "W13_B", issues_b, cfg.EPSG)
+        log(f"   stage B checks: {rep['stage_b']['issues'] or 'nothing found'}; heads moved clear of their junction: {sb.heads_moved}")
     log("catchment ground and the drawing ...")
     polys2 = O.catchment_polygons(pipes, [p["catch"] for p in pipes], envelope)
     colour2 = O.colour_catchments(polys2)

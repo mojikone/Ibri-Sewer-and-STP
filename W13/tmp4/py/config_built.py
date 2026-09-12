@@ -165,6 +165,9 @@ COVER_CROWN_M = 1.3         # minimum cover to the crown (G203 p33 4.6.3)
 COVER_WADI_M = 1.5          # at a wadi crossing (G203 p52 8.2.4, gravity and force main alike)
 DROP_MAX_M = 2.0            # a backdrop at most this high; beyond it a vortex drop shaft, flagged (G203 p30)
 BACKDROP_MIN_M = 0.6        # an invert drop above this at a chamber needs a backdrop (G203 p30)
-BEND_DEG = 30.0             # a corner sharper than this needs a chamber (W8's rule, kept 2026-09-12)
+BEND_DEG = 5.0              # a bend over this gets one chamber at the corner; over 45 degrees two or three on chords (engineer, rule 12; was W8's 30 degree road rule, wrong here)
 V_MAX_MS = 3.0              # gravity sewer, at the design depth of flow (G203 p27)
 ROADS_DUAL_SHP = BASE + r"\Hydraulic\SHP\Road centerline 2\Road_Centercline.shp"   # dual = 1 marks a dual carriageway; a reach crossing one is recorded
+CHAMBER_SEP_M = 10.0        # two chambers closer than this are one: a bend cut this close to another is dropped, and a
+                            # head chamber this close to its junction is moved to this distance along its street (engine's reading, 2026-09-12)
+CLOSE_CHAMBER_M = 5.0       # the check: chambers closer than this are reported
