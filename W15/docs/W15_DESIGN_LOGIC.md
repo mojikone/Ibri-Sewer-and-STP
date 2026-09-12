@@ -1,10 +1,11 @@
-# W13 tmp4 design logic
+# W15 design logic
 
-The logic of `W13/tmp4`. It starts from tmp3's (`W13/tmp3/docs/W13_TMP3_DESIGN_LOGIC.md`,
-frozen with tmp3 on 2026-09-12), which itself carries the network the engineer accepted on
-2026-09-09 (tmp2) and his rulings of 2026-09-11: the plots' own flows, the gradient grid, the
-self-cleansing audit and the guideline's tier names. No rule has changed since; the pending
-questions (the pockets, the metered farm, stages B and C) are listed in this folder's `README.md`. Written so it can be followed: one rule per item, in the engineer's words, the number
+The logic of `W15/`, the main working folder for the whole network. It is tmp4's logic
+(`W13/tmp4/docs/W13_TMP4_DESIGN_LOGIC.md`, frozen with tmp4 on 2026-09-12) carried on: the network
+the engineer accepted on 2026-09-09 (tmp2), his rulings of 2026-09-11 (the plots' own flows, the
+gradient grid, the self-cleansing audit, the tier names) and of 2026-09-12 (stage B: the real lay,
+chambers, the checks, the pumps as candidates). W15 adds rule 17 below for the whole network and the
+engineer's sub main guide. The pending questions are in this folder's `README.md`. Written so it can be followed: one rule per item, in the engineer's words, the number
 that defines a rule next to it. No history inside a rule. When a rule changes, the rule is
 rewritten and one dated line at its head says what moved. Run results live in the run folder's
 `README.md` and `run/stage_a.json`, never here. Nothing is added to this logic without the
@@ -217,6 +218,18 @@ A's layout). Every number below is the guideline's unless it says the engineer's
     (assumption). The pumped flow enters the receiving network at the chamber and that network
     is laid again with it. An island with no street path to any network stays unrouted and says
     so. Stage C may move, merge or drop any candidate.
+
+17. **The whole network** (engineer, 2026-09-12). The area is every street the draftsman drew;
+    the towns are administrative, networks follow gravity and roads. The settlements, for the
+    one-road-entry-per-settlement rule, are the dense parts of the buffered streets (**20 ha** and
+    more). The ground is read at **4 m** over the whole. **The engineer's sub main guide** for the
+    west (`SHP/Main Pipe/Sub Main Pipe guide.shp`) is part of the network: its lines are streets,
+    forced sub mains in the direction drawn, tied to the main pipe at their feet (an end within
+    **100 m** gets a straight connector), the join at each foot always kept; every street that
+    reaches it by gravity hangs on it, the flood deciding. South of the main road the joins on the
+    main pipe stand as before; the main pipe ends at a low point. The 2006 network is a reference
+    until the survey; then it is modelled as the as-built. A temporary stage A run shows how the
+    subnetworks converge; they are grouped by that into major groups, which the QGIS groups follow.
 
 ## Where the engine's reading needed a choice
 

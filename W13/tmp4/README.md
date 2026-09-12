@@ -66,3 +66,7 @@ For the concept report (engineer, 2026-09-12):
 - the **curve** `img/mara_curve.png`: Mara's minimum gradient at τ = 1 Pa against the Table 11
   minima, the floor marked, and where each pipe size's minimum meets the curve;
 - no pipe is regraded for tractive force; a pipe bigger than DN200 carries `TRAC_OVER` instead.
+
+**Accepted by the engineer on 2026-09-12 and frozen**: stage A, stage B (the real lay, chambers, the
+checks, the pumps as candidates; a pocket with no flow gets no station). The work goes on in `W15/`,
+a complete copy of this folder set for the whole network.

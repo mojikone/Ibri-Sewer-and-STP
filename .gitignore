@@ -47,3 +47,8 @@ W13/tmp*/dxf/*.dwg
 # T04 build scratch: smoke tests and verification renders
 TUTORIALS/T04/_test/
 TUTORIALS/T04/_verify/
+W15/run/*.pkl
+W15/run/*_log.txt
+W15/run/console_*.txt
+W15/run/scratch/
+W15/dxf/*.dwg
