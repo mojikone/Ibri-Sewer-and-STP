@@ -770,6 +770,9 @@ def main():
     for _r, _k in rep["tier_km"].items():
         rep["tier_km_guideline"][_TN[_r]] = round(rep["tier_km_guideline"].get(_TN[_r], 0.0) + _k, 1)
 
+    if "B" in str(getattr(cfg, "STAGE", "A")).upper():
+        log("stage B, the hydraulic design of each subnetwork: not built yet; stage A's outputs stand")
+        rep["stage_b"] = "not built"
     log("catchment ground and the drawing ...")
     polys2 = O.catchment_polygons(pipes, [p["catch"] for p in pipes], envelope)
     colour2 = O.colour_catchments(polys2)

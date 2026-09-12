@@ -23,8 +23,10 @@ Standing instructions for this folder (engineer, 2026-09-09 to 2026-09-12):
 - nothing is added to the logic without telling the engineer first;
 - no tertiary at the concept stage; every line in the DXF is usable, the draftsman's
   crossings are the only crossings; areas are done one at a time, each focused;
-- Stage C is built here on the test boundary first, gated on reproducing the accepted layout,
-  then each area gets A, B and C in one run.
+- the stages are the engineer's (2026-09-12): **A** the layout (what runs today), **B** the hydraulic
+  design of each subnetwork, **C** the whole network on the main pipe and the works; A runs alone
+  for an area first, B with it or after it (`STAGE` in the config), C once every area is in. B is
+  built here on the test boundary first, gated on reproducing A's layout.
 
 Open with the engineer:
 
@@ -36,9 +38,12 @@ Open with the engineer:
 - **the metered farm south of the works**: agricultural in `PLOTS_load`, so a 120 m link to the
   main pipe crosses it and the 59 km around the works leaves by that link instead of the STP;
   its arrival at the main pipe is not checked (joins not floored);
-- **Stage C, still to build**: the real lay (three gradient bands, one gradient between
-  chambers, drops), chambers and Table 12 spacing, the hydraulic check with SewerGEMS as the
-  referee, the overall network and the inlet, pumps and rising mains, crossings.
+- **stage B, still to build**: the real lay (three gradient bands, one gradient between
+  chambers, drops), chambers and Table 12 spacing, the capacity check at the laid gradient, the
+  subnetwork's pumps as candidates (after the brainstorm), its crossings, the SewerGEMS export
+  and referee run;
+- **stage C, after every area has A and B**: the main pipe sized and laid, the joins floored on
+  it, the connection to the works and the inlet, the pumps of the whole, the trunk crossings.
 
 For the concept report (engineer, 2026-09-12):
 

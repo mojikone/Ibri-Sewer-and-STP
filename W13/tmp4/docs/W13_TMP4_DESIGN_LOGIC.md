@@ -4,11 +4,25 @@ The logic of `W13/tmp4`. It starts from tmp3's (`W13/tmp3/docs/W13_TMP3_DESIGN_L
 frozen with tmp3 on 2026-09-12), which itself carries the network the engineer accepted on
 2026-09-09 (tmp2) and his rulings of 2026-09-11: the plots' own flows, the gradient grid, the
 self-cleansing audit and the guideline's tier names. No rule has changed since; the pending
-questions (the pockets, the metered farm, Stage C) are listed in this folder's `README.md`. Written so it can be followed: one rule per item, in the engineer's words, the number
+questions (the pockets, the metered farm, stages B and C) are listed in this folder's `README.md`. Written so it can be followed: one rule per item, in the engineer's words, the number
 that defines a rule next to it. No history inside a rule. When a rule changes, the rule is
 rewritten and one dated line at its head says what moved. Run results live in the run folder's
 `README.md` and `run/stage_a.json`, never here. Nothing is added to this logic without the
 engineer's agreement first.
+
+## The stages, in the engineer's words (2026-09-12)
+
+- **Stage A, the layout.** Everything this engine does today, run alone for an area so the layout
+  can be reviewed: the ground, the targets, the outlets, the pockets, the sub mains, the laterals,
+  the sizing on `Q_ULT`, Table 11 on the grid, the 12 m cut, the self-cleansing audit, the
+  tractive attribute. The sizing belongs here because the 12 m cut needs the depths.
+- **Stage B, the hydraulic design of each subnetwork.** The real lay in three gradient bands, one
+  gradient between successive chambers, drops, chambers and Table 12 spacing, the capacity check
+  at the laid gradient, the subnetwork's own pumps **as candidates**, its crossings. Run with A in
+  one go (`STAGE = "AB"`) or after it. **B must reproduce A's layout**; that is its gate.
+- **Stage C, the whole network.** When every area has A and B: the main pipe sized and laid, the
+  joins floored on it, the connection to the works and the inlet at 323.0 m, the pumps of the
+  whole (a B candidate may move, merge or go), the crossings of the main pipe and the trunks.
 
 ## The idea, in the engineer's words
 
@@ -154,7 +168,7 @@ Flags for the engineer, not rules. Each is one line of configuration or one func
 - **A header stays on its own outlet's ground**: the engine's reading, after a pocket's sub
   main had hoisted 40 km of the works' catchment into the pocket.
 - **One entry per settlement, the lowest**: the engine's choice among 134 candidates.
-- **1.55 m** cover to invert: a Stage A proxy from W13's evidence.
+- **1.55 m** cover to invert: a stage A proxy from W13's evidence, until stage B lays the cover.
 - **A plot's class from `PLOTS_load`** (2026-09-11): derived use Agricultural is agricultural,
   even when metered; a metered plot is built; the rest planned. A plot is served when it
   carries flow. Measured: a 29 ha metered farm south of the works, built in W3's file, is
@@ -186,12 +200,12 @@ Flags for the engineer, not rules. Each is one line of configuration or one func
 | 5 one outlet per junction, no loops; only sub mains join; heads at gates; catchments follow the tree | kept (rule 6) | |
 | 5 least-depth route, 500 m per metre, sub main at half, from the outlets, inside the catchment | kept (rule 6) | |
 | 6 a ridge is a boundary | kept as the crest cut (rules 1 and 5) | |
-| 7 gradient in three bands | not used | Stage C |
-| 8 gradient steps, one gradient per run; diameter never chosen to flatten | steps not used (Stage C); the diameter sentence kept (rule 7) | |
+| 7 gradient in three bands | not used | stage B |
+| 8 gradient steps, one gradient per run; diameter never chosen to flatten | steps not used (stage B); the diameter sentence kept (rule 7) | |
 | 9 heads-down lay, sizing at saturation, depth reported | kept (rule 7) | |
 | 10 over 12 m reroute first, then cut | **changed** (rule 8) | no reroute; cut only, as the engineer stated the 12 m rule |
 | 11 a closed hollow is a real pump | kept (rule 4) | |
-| 12 chambers, spacing, bends | not used | Stage C |
+| 12 chambers, spacing, bends | not used | stage B |
 | inputs: the DXF trusted as drawn, no generated crossings, islands reported | kept (rule 1) | |
 | scope: the built envelope | **changed** | the engineer's test boundary, 21.4 km²; the envelope only defines a settlement |
 | outputs: one layer per class, colour by subnetwork, arrows, depth bands, red past 12 m | kept | |

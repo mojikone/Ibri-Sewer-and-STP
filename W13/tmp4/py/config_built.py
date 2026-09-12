@@ -153,3 +153,9 @@ TRACTIVE_QMIN_LS = 1.5      # the design floor on the peak flow for the tractive
                             # minimum flow; not in G203, stated in the concept report for NWS to confirm). With it, a
                             # DN200 always passes at Table 11 (0.47 % < 0.5 %); a bigger pipe is never regraded,
                             # it carries the attribute instead (S_TRAC_PC, S_TRACL_PC, TRAC_OVER)
+
+# ---- the stages, in the engineer's words (2026-09-12)
+STAGE = "A"     # "A": the layout only (everything run_stage_a.py does today); "AB": the layout and then the
+                # hydraulic design of each subnetwork (the real lay, chambers, capacity, pumps as candidates,
+                # crossings) in one run. Stage C, the whole network on the main pipe and the works, is a
+                # separate run when every area is ready. Stage B is not built yet: "AB" runs A and says so.
