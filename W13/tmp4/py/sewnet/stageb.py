@@ -71,10 +71,11 @@ def split_lengths(L, max_len, step=10.0, fallback=5.0):
 
 
 def bend_cuts(geom, bend_deg=5.0, wide_deg=45.0, max_per_60m=3, sep_m=10.0):
-    """Chainages where a bend needs a chamber (the engineer's rule 12): up to bend_deg none;
-    a corner turning more gets one chamber on it; a sweeping curve gets one every wide_deg of
-    turn, never more than max_per_60m inside 60 m. Two cuts closer than sep_m are one, and a
-    cut within sep_m of either end is left to the end chamber."""
+    """Chainages where a bend needs a chamber (the engineer's rule 12, 2026-09-12): up to
+    bend_deg none; every corner turning more gets its chamber, two consecutive corners both;
+    a sweeping curve gets one chord chamber every wide_deg of turn, never more than
+    max_per_60m inside 60 m and never closer than sep_m to the last. A corner within sep_m of
+    an end keeps its chamber: the end chamber is not allowed to swallow it."""
     coords = list(geom.coords)
     L = geom.length
     if len(coords) < 3:
@@ -87,18 +88,22 @@ def bend_cuts(geom, bend_deg=5.0, wide_deg=45.0, max_per_60m=3, sep_m=10.0):
         d = abs(math.degrees(a2 - a1)) % 360.0
         turn = min(d, 360.0 - d)
         since += turn
-        if turn > bend_deg or since >= wide_deg:
-            cuts.append((acc, turn > 45.0))
+        if turn > bend_deg:
+            cuts.append((acc, True))          # a corner: its own chamber, always
+            since = 0.0
+        elif since >= wide_deg:
+            cuts.append((acc, False))         # a chord on a sweeping curve
             since = 0.0
     out = []
-    for c, sharp in cuts:
-        if (c < sep_m or c > L - sep_m) and not sharp:
-            continue
+    for c, corner in cuts:
         if c < 1.0 or c > L - 1.0:
             continue
-        if out and c - out[-1] < sep_m and not sharp:
-            continue
-        if len([x for x in out if abs(x - c) <= 60.0]) >= max_per_60m:
+        if not corner:
+            if out and c - out[-1] < sep_m:
+                continue
+            if len([x for x in out if abs(x - c) <= 60.0]) >= max_per_60m:
+                continue
+        elif out and c - out[-1] < 0.5:
             continue
         out.append(c)
     return out
@@ -197,18 +202,34 @@ class StageB:
         n_in0 = collections.Counter(q["dn"] for q in pipes)
         junctions = [Point(q["dn"]) for q in pipes] + [Point(q["up"]) for q in pipes if n_in0[q["up"]] > 0]
         jtree = STRtree(junctions)
+        self.dropped = []
+        bend_deg = float(getattr(self.cfg, "BEND_DEG", 5.0))
         for i, q in enumerate(pipes):
             c0 = q["geom"].coords[0]
             if n_in0[q["up"]] == 0:
-                # a head chamber (at the gate, or 10 m along) is never closer than sep to a
-                # junction chamber, so two chambers do not sit a few metres apart: it moves
+                # a head chamber: on the first bend if one lies within sep of the head (the
+                # bend keeps its chamber, the head moves to it, engineer 2026-09-12); else at
+                # the gate, but never closer than sep to a junction chamber, so it moves
                 # along its own street to sep from that junction
+                g = q["geom"]
+                bends_here = bend_cuts(g, bend_deg, sep_m=sep)
+                first_bend = min([c for c in bends_here if c <= sep], default=None)
                 pt = Point(c0)
                 near = [junctions[int(j)] for j in jtree.query(pt.buffer(sep)) if junctions[int(j)].distance(pt) < sep]
-                if near and q["geom"].length > sep + 5.0:
-                    dj = min(j_.distance(pt) for j_ in near)
-                    g = q["geom"]
-                    cut_at = sep - dj
+                cut_at = 0.0
+                if first_bend is not None:
+                    cut_at = first_bend
+                    q["head_at_bend"] = True
+                elif near:
+                    cut_at = sep - min(j_.distance(pt) for j_ in near)
+                if cut_at > 0.0:
+                    if g.length - cut_at < sep:
+                        # what is left would be shorter than a chamber's separation: the pipe
+                        # is not worth a chamber of its own, its plot connects at the foot
+                        self.dropped.append(i)
+                        q["dropped"] = "head pipe shorter than %.0f m after its head moved" % sep
+                        U.append(q["up"])
+                        continue
                     q["geom"] = self._piece(g, cut_at, g.length)
                     q["len"] = q["geom"].length
                     q["head_moved_m"] = cut_at
@@ -222,15 +243,16 @@ class StageB:
             else:
                 U.append(q["up"])
         self.U = U
-        n_in = collections.Counter(q["dn"] for q in pipes)
+        live = [i for i in range(len(pipes)) if i not in set(self.dropped)]
+        n_in = collections.Counter(pipes[i]["dn"] for i in live)
         out_of = collections.defaultdict(list)
-        for i, q in enumerate(pipes):
+        for i in live:
             out_of[U[i]].append(i)
         # heads-down order, every incoming pipe laid before the outgoing one
         arrived = collections.Counter()
         order = []
-        queue = [i for i, q in enumerate(pipes) if n_in[U[i]] == 0]
-        heads = set(U[i] for i, q in enumerate(pipes) if n_in[U[i]] == 0)
+        queue = [i for i in live if n_in[U[i]] == 0]
+        heads = set(U[i] for i in live if n_in[U[i]] == 0)
         while queue:
             i = queue.pop()
             q = pipes[i]
@@ -310,7 +332,7 @@ class StageB:
             bends = bend_cuts(p["geom"], float(getattr(self.cfg, "BEND_DEG", 5.0)),
                               sep_m=float(getattr(self.cfg, "CHAMBER_SEP_M", 10.0)))
             sep = float(getattr(self.cfg, "CHAMBER_SEP_M", 10.0))
-            cuts = list(bends)                      # a bend chamber stands where the bend is
+            cuts = list(bends)                      # every bend chamber stands where the bend is
             anchors = [0.0] + bends + [L]
             for a0, b0 in zip(anchors[:-1], anchors[1:]):
                 if b0 - a0 <= spacing + 1e-6:
@@ -458,6 +480,8 @@ class StageB:
         for r in R:
             cl[r["cleanse"]] += r["len"] / 1000.0
         return {"km": round(km, 1), "reaches": len(R), "chambers": len(C),
+                "short_head_pipes_removed": len(self.dropped),
+                "heads_on_a_bend": int(sum(1 for p in self.pipes if p.get("head_at_bend"))),
                 "chambers_by_kind": dict(collections.Counter(c["kind"] for c in C)),
                 "depth_median_m": round(float(np.median(depths)), 2),
                 "depth_max_m": round(float(depths.max()), 2),
@@ -571,6 +595,10 @@ def find_issues(reaches, chambers, pipes, cfg, cover_crown=1.3, cover_wadi=1.5):
     # 4. a bend with no chamber
     ch_tree = STRtree(pts)
     for p in pipes:
+        if p.get("dropped"):
+            v = Point(p["geom"].coords[-1])
+            issues.append((v.x, v.y, "short head pipe removed", p["dropped"]))
+            continue
         coords = list(p["geom"].coords)
         acc = 0.0
         for i in range(1, len(coords) - 1):
