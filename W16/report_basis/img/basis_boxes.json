@@ -40,11 +40,11 @@
   ],
   [
    "Government",
-   "409"
+   "410"
   ],
   [
    "Farms",
-   "1,685"
+   "1,684"
   ],
   [
    "Industrial",
@@ -69,7 +69,7 @@
    "0.72 m³/d per km of sewer"
   ],
   [
-   "3  Add the plant margin",
+   "3  Add the STP margin",
    "× 1.10  (the design average)"
   ],
   [
@@ -77,12 +77,12 @@
    "2.65 × (average in Ml/d)^0.879, Ml/d"
   ],
   [
-   "Whole area, 2070: average",
-   "60,099 → 66,109 m³/d"
+   "Whole area 2055: average / peak hour",
+   "46,492 / 78,322 m³/d"
   ],
   [
-   "Whole area, 2070: peak hour",
-   "106,724 m³/d"
+   "Whole area 2070: average / peak hour",
+   "66,109 / 106,724 m³/d"
   ]
  ],
  "B05_free_meters": [
@@ -91,7 +91,7 @@
    "126"
   ],
   [
-   "of which dwelling meters",
+   "of which domestic meters",
    "30"
   ],
   [
@@ -103,8 +103,8 @@
    "78"
   ],
   [
-   "Zoom panels",
-   "68, in the appendix"
+   "Carried in the plot loads",
+   "none"
   ]
  ]
 }

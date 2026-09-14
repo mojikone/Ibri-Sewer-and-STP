@@ -233,14 +233,14 @@ def boxes():
                         ["Empty", fmt(ps["empty"])]],
         "B03_saturation": [["1  Add the settlements in the catchment", "m³/d"],
                            ["2  Add infiltration", f"{INFIL_LD_KM / 1000:.2f} m³/d per km of sewer"],
-                           ["3  Add the plant margin", f"× {1 + MARGIN:.2f}  (the design average)"],
+                           ["3  Add the STP margin", f"× {1 + MARGIN:.2f}  (the design average)"],
                            ["4  Peak hour", "2.65 × (average in Ml/d)^0.879, Ml/d"],
-                           [f"Whole area, {t['ultimate']}: average", f"{fmt(t['q_ult'])} → {fmt(pf[t['ultimate']]['aaf'])} m³/d"],
-                           [f"Whole area, {t['ultimate']}: peak hour", f"{fmt(pf[t['ultimate']]['phf'])} m³/d"]],
-        "B05_free_meters": [["Meters more than 15 m from any plot", fmt(fm["count"])], ["of which dwelling meters", fmt(fm["domestic"])],
+                           ["Whole area 2055: average / peak hour", f"{fmt(pf[2055]['aaf'])} / {fmt(pf[2055]['phf'])} m³/d"],
+                           [f"Whole area {t['ultimate']}: average / peak hour", f"{fmt(pf[t['ultimate']]['aaf'])} / {fmt(pf[t['ultimate']]['phf'])} m³/d"]],
+        "B05_free_meters": [["Meters more than 15 m from any plot", fmt(fm["count"])], ["of which domestic meters", fmt(fm["domestic"])],
                             ["People they would carry", fmt(fm["people"])],
                             ["Government and commercial meters", fmt(fm["by_tariff"].get("Government", 0) + fm["by_tariff"].get("Commercial", 0))],
-                            ["Zoom panels", "68, in the appendix"]],
+                            ["Carried in the plot loads", "none"]],
     }
     path = os.path.join(HERE, "img", "basis_boxes.json")
     os.makedirs(os.path.dirname(path), exist_ok=True)

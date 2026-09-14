@@ -1,55 +1,54 @@
-"""The decisions this report asks NWS for. One list, read by the summary at the front
-and by the register at the end, so the two cannot differ. Each is answerable with a
-yes or no, or one fact."""
+"""What this report asks NWS to approve, and what it informs NWS is adopted. One list, read
+by the summary at the front and by the register at the end, so the two cannot differ.
+
+ask = "approve": a yes or a no is needed.
+ask = "inform": the value is the guideline's or a stated assumption; it is adopted and
+reported (engineer, 2026-09-14: do not ask for what the guideline already settles).
+"""
 
 DECISIONS = [
-    # (group, short title, what is asked)
-    ("Settlements and people", "Settlement boundaries",
-     "Adopt the twenty-five settlement boundaries redrawn so that every plot lies in one settlement and there are no gaps between them (Section 2)."),
-    ("Settlements and people", "Occupancy per settlement",
-     "Adopt the persons per property worked out for each settlement, with the floor of 4.0, the cap of 6.12 and the rule for settlements under a thousand people (Section 3)."),
-    ("Settlements and people", "The 126 meters with no plot within 15 metres",
-     "Leave them out of the plot loads, as now, or assign each to its nearest plot whatever the distance. About 140 people either way (Section 3.3)."),
-    ("Settlements and people", "Use of each plot",
-     "Adopt the use worked out from the meters and the satellite image as the basis for placing the loads (Section 4)."),
-    ("Water and sewage rates", "Water demand rates",
-     "Confirm 164 litres per person per day, plus 22 per cent for shops and offices and 14 per cent for government, the values published for Adh Dhahirah (Section 5.1)."),
-    ("Water and sewage rates", "Return to the sewer",
-     "Confirm 85 per cent of domestic and tanker supply and 54 per cent of the rest (Section 5.2)."),
-    ("Water and sewage rates", "Ratios in place of unit rates",
-     "Accept the published ratios in place of the unit rates per pupil, bed, employee and floor area, until those quantities are supplied, with the shares placed on the shop and government meters (Section 5.1)."),
-    ("Water and sewage rates", "The industrial estates",
-     "Accept 4,500 workers at Al Tayyeb and 1,800 at Tanam, at 93 litres a day each, as an assumption to be replaced by the estates' records (Section 5.3)."),
-    ("Growth", "The overflow",
-     "Adopt the overflow: when a settlement's land is full, its further growth moves to its neighbours. The alternative leaves 75,000 people with nowhere to go by 2070 (Section 6.3)."),
-    ("Growth", "The design horizon",
-     "Adopt the year the land is full, 2070, with 349,029 people and 60,099 cubic metres a day, as the design horizon, in place of completion plus 25 years (Section 6.4)."),
-    ("Growth", "The growth series",
-     "Accept the Inception Report population series to 2100 as the source of the growth rates, including its constant 2.40 per cent a year after 2058, which goes beyond the ten years of extrapolation the guideline allows (Section 6.2)."),
-    ("Growth", "The connection ratio",
-     "Accept 61 per cent of properties connected in 2030 for the early-year self-cleansing check, from the Inception Report (Section 7.2)."),
-    ("The network", "Infiltration",
-     "Confirm 720 litres a day per kilometre of sewer, added to each pipe, and none in the early-year check (Section 7.2)."),
-    ("The network", "Peak flow",
-     "Confirm the Merrimack formula above 100 properties and the Peltier formula at 100 or fewer, with the 5.0 ceiling on the hourly factor treated as a recommendation (Section 7.2)."),
-    ("The network", "Gradients and self-cleansing at the concept stage",
-     "Accept that pipes are laid at the Table 11 minimum gradient in steps of 0.05 per cent, that the tractive force is used only to list the pipes needing early washing, at 1 pascal, and that a pipe carrying less than 1.5 litres a second is checked as if it carried 1.5 (Section 7.2)."),
-    ("The network", "Depth",
-     "Accept 12 metres of cover as a hard limit at the concept stage, with a pumping station before that point (Section 7.3)."),
-    ("The plant and the effluent", "Plant flows",
-     "Confirm the average and peak-hour flows with the 10 per cent margin as defined, and supply the existing plant's daily inflow records so the maximum day can be set (Section 7.4)."),
-    ("The plant and the effluent", "Process loads",
-     "Accept 60 grams of BOD and 80 grams of suspended solids per person per day, the guideline's minimum, until laboratory data for the existing plant are supplied (Section 7.5)."),
-    ("The plant and the effluent", "Treated effluent",
-     "Confirm 95 per cent of the plant inflow produced as treated effluent and 10 per cent of it lost in the distribution network (Section 7.7)."),
+    # (ask, group, short title, what is asked or stated)
+    ("approve", "Settlements and people", "Settlement boundaries",
+     "Approve the twenty-five settlement boundaries redrawn so that every plot lies in one settlement and there are no gaps between them (Section 2)."),
+    ("approve", "Settlements and people", "Persons per property",
+     "Approve the persons per property calculated for each settlement, with the floor of 4.0, the cap of 6.12 and the rule for settlements under a thousand people (Section 3)."),
+    ("approve", "Settlements and people", "Use of each plot",
+     "Approve the use determined for each plot from the meters and the satellite image, in place of the cadastre's own land-use field, as the basis for placing the loads (Section 4)."),
+    ("approve", "Growth", "The overflow",
+     "Approve the overflow: when a settlement's land is full, its further growth moves to its neighbours. Without it 75,000 people of the series have nowhere to go by 2070 (Section 6.3)."),
+    ("approve", "Growth", "The design horizon",
+     "Decide the design horizon: 2055, the opening year 2030 plus 25 years, with 244,914 people and 42,266 cubic metres a day; or 2070, the year the land is full, with 349,029 people and 60,099 cubic metres a day (Section 6.4)."),
+    ("approve", "Growth", "The growth beyond 2050",
+     "Approve the extension of the population series beyond 2050: the rise to 2.40 per cent a year by 2058 and that rate held to 2100. The series to 2050 is the client's own (Section 6.2)."),
+    ("approve", "The network", "Gradients and self-cleansing at the concept stage",
+     "Approve the concept-stage rule: pipes laid at the Table 11 minimum gradient rounded up to steps of 0.05 per cent; the tractive-force test at 1 pascal used only to list the pipes needing early washing, with a pipe carrying less than 1.5 l/s checked as if it carried 1.5. The guideline asks for the steeper of the two gradients; this is a departure (Section 7.3)."),
+    ("inform", "Settlements and people", "The 126 meters with no plot within 15 metres",
+     "They are left out of the plot loads: about 140 people (Section 3.3)."),
+    ("inform", "Water and sewage rates", "Water demand and return",
+     "164 litres per person per day, plus 22 per cent for shops and offices and 14 per cent for government, the values the guideline publishes for Adh Dhahirah; 85 per cent of domestic and tanker supply and 54 per cent of the rest return to the sewer. The published ratios are used in place of the unit rates per pupil, bed, employee and floor area until those quantities are held (Section 5)."),
+    ("inform", "Water and sewage rates", "The industrial estates",
+     "4,500 workers at Al Tayyeb and 1,800 at Tanam at 93 litres a day each, an assumption to be replaced by the estates' records when received (Section 5.3)."),
+    ("inform", "Growth", "The connection ratio",
+     "61 per cent of properties connected in 2030, the Inception Report's ratio, used only for the early-year self-cleansing check (Section 7.3)."),
+    ("inform", "The network", "Infiltration and peak flow",
+     "720 litres a day per kilometre of sewer, added to each pipe and left out of the early-year check; the Merrimack formula above 100 properties and the Peltier formula at 100 or fewer (Section 7.3)."),
+    ("inform", "The network", "Depth",
+     "12 metres of cover is the limit at the concept stage, with a pumping station before that point; the preliminary design looks deeper where the quantities allow the cost to be calculated (Section 7.4)."),
+    ("inform", "The plant and the effluent", "STP flows and loads",
+     "The average annual flow and the peak hourly flow with the 10 per cent margin as the guideline defines them; 60 grams of BOD and 80 grams of suspended solids per person per day, the guideline's minimum, until the laboratory data of the existing STP are received; the maximum day flow from that plant's records (Sections 7.5 and 7.6)."),
+    ("inform", "The plant and the effluent", "Treated effluent",
+     "95 per cent of the STP inflow produced as treated effluent and 10 per cent of it lost in the distribution network (Section 7.8)."),
 ]
 
+APPROVALS = [d for d in DECISIONS if d[0] == "approve"]
+INFORMED = [d for d in DECISIONS if d[0] == "inform"]
+
 DATA_REQUESTS = [
-    ("Tanker water and sewage tankers", "Filling-station volumes by area and sewage tanker deliveries to the plant, with their source",
+    ("Tanker water and sewage tankers", "Filling-station volumes by area and sewage tanker deliveries to the STP, with their source",
      "Water supplied by tanker is not in any flow. It can only raise the loads."),
     ("Private wells", "Any record of private abstraction inside the study area",
      "The guideline requires it to be assessed. Not held."),
-    ("Existing plant records", "Daily inflow and the laboratory results for the Ibri plant, three years",
+    ("Existing STP records", "Daily inflow and the laboratory results for the Ibri STP, three years",
      "Sets the maximum day flow and checks the per-person loads."),
     ("Industrial estates", "Workforce and water use of the Al Tayyeb and Tanam estates",
      "Replaces the assumed 4,500 and 1,800 workers."),
