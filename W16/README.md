@@ -72,3 +72,13 @@ QGIS and prints its stdout. The map exports of 2026-09-14 were made that way.
 its pumps and was classed Agricultural by the meter rule; it is a government site. Keyed by a
 point inside the plot; applied in `facts_w14.plots()` and in the land-use map's renderer
 expression, so the frozen W14 layer is untouched.
+
+## The meeting deck
+
+`report_basis/deck/build_deck.py` builds `Ibri_Design_Basis_Meeting_2026-09-16.pptx` (18 slides,
+one hour) on the firm's kick-off presentation from the received data: its cover, Q&A and
+Thank-you slides are kept, the content slides drawn on its blank layout with the same title bar,
+rule and client logo. One slide per decision with the figure that makes it, the ask boxed as in
+the report, the adopted values on their own slides, the answer sheet at the end, speaker notes
+with the section and the answer wanted. Every number from the facts modules. `--png` exports the
+slides through PowerPoint into `deck/check/` for a look.
