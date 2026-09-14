@@ -16,6 +16,14 @@ land-use plots **without outlines** (only empty plots outlined), **no worked exa
 assumption in one table with its reason, plain words, and a numbered register of decisions at the
 end, each a yes/no. Every map layout is kept saved in the QGIS project. Added on the 2026-09-14 review: **ask approval only for what the guideline does not settle**; the guideline's own values and stated assumptions are "adopted" and reported (grey boxes, Part B of the register); headings "1." and "1.1."; **property** not dwelling; **calculated** not "worked out"; **STP** not "works", **catchment** not "pocket", **planted** not "grove", no "slivers"; symbol lines with a colon; table captions in the figure-caption look; table cells centred except the first column; footer centred; "l/s" in text; no worked examples; never mention the plot layer's delivery. Footer: text left, page number centred in a grey box, grey rule. Text 18 cm wide (1.5 cm side margins), header, footer and every table stretched to the text width.
 
+**Decks** (added 2026-09-14): on the firm's kick-off master; a cover with no stock photos and no
+vertical line (own map render of the study area, logos on a transparent ground, the JV on the
+white band, the date without the weekday); the audience is the client, so "put to Nama Water
+Services", never "you"; every slide with a category tab, a footer strip and a page number; the
+categories as a graphic on the first content slide; native PowerPoint objects (shapes, SVG icons
+placed through COM in `finish()`) rather than pictures; no Q&A slide, the logos on the closing
+slide; type of 22 pt or more on the 67 cm slide. Pattern: `W16/report_basis/deck/build_deck.py`.
+
 **Why:** the report goes to NWS for approval, where "any word may attract a comment"; hard
 vocabulary and worked examples invite comment rounds. Native captions because the engineer edits
 in Word. The sample's blue table banding and parameter tables he found ugly.

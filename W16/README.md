@@ -8,7 +8,7 @@ moves.
 
 | Folder | What it is |
 |---|---|
-| `report_basis/` | **The Design Basis Report: Settlement Boundaries, Population, Flows and Loads — Revision 0** (`R0/Ibri_Design_Basis_Report_R0.docx` + `.pdf`, 49 pages). Issued ahead of the concept report so NWS can approve the foundation: the boundaries, the people, the use of each plot, the rates, the growth and the overflow, the flow for every element, the plant loads. Nineteen decisions and seven data requests, each a yes or no. Built by `build.py` |
+| `report_basis/` | **The Design Basis Report: Settlement Boundaries, Population, Flows and Loads — Revision 0** (`R0/Ibri_Design_Basis_Report_R0.docx` + `.pdf`, 40 pages). Issued ahead of the concept report so NWS can approve the foundation: the boundaries, the people, the use of each plot, the rates, the growth and the overflow, the flow for every element, the plant loads. Nineteen decisions and seven data requests, each a yes or no. Built by `build.py` |
 | `report/` | The concept report build carried from W14 (R0 to R2 stay in `W14/report/`; **R3 builds here**), plus the shared furniture every report uses: `doc.py`, `notes.py`, `omml.py`, `flow.py`, `charts.py`, `qgis_maps.py`, `facts_w14.py`, `to_pdf.py`, and the Word template in `template/` |
 | `docs/` | W14's notes, plus **`CHANGES_FOR_CONCEPT_R3.md`**: every change made for the basis report that the concept report's next revision must carry |
 | `py/`, `analysis/`, `img/` | the load chain and its outputs, as in W14 |
@@ -75,10 +75,21 @@ expression, so the frozen W14 layer is untouched.
 
 ## The meeting deck
 
-`report_basis/deck/build_deck.py` builds `Ibri_Design_Basis_Meeting_2026-09-16.pptx` (18 slides,
-one hour) on the firm's kick-off presentation from the received data: its cover, Q&A and
-Thank-you slides are kept, the content slides drawn on its blank layout with the same title bar,
-rule and client logo. One slide per decision with the figure that makes it, the ask boxed as in
-the report, the adopted values on their own slides, the answer sheet at the end, speaker notes
-with the section and the answer wanted. Every number from the facts modules. `--png` exports the
-slides through PowerPoint into `deck/check/` for a look.
+`report_basis/deck/build_deck.py` builds `Ibri_Design_Basis_Meeting_2026-09-16.pptx` (17 slides,
+one hour) on the firm's kick-off presentation from the received data: its master, its swoosh
+cover layout and its end slide are kept; the content slides are drawn on its blank layout with
+the same title bar, rule and client logo. The cover: the title block, the study area drawn from
+the plots and the building footprints as a night map (`assets/cover_map.png`), the client's
+mark, the joint venture's logos on the white band, the six steps of the hour. One slide per
+decision with the figure that makes it, the ask boxed as in the report, the adopted values on
+their own slides, the answer sheet at the end, speaker notes with the section and the answer
+wanted. Every content slide carries a category tab (Overview, Boundaries, Population, Growth,
+Network, Plant, Decisions), a footer strip with its category lit, and its page number; the
+overview slide shows the six steps as a chevron flow. Every number from the facts modules.
+
+`make_assets.py` makes the assets: the three logos cut to a transparent ground (Renardet and
+Dohwa from the kick-off file, Nama from the Word template's EMF; the white Nama mark is the end
+slide's own SVG), the cover map from the frozen W14 layers, and the icons, Tabler Icons (MIT,
+`assets/icons/LICENSE`). python-pptx cannot write SVG graphics, so `finish()` opens the saved
+file in PowerPoint, inserts each icon as a native graphic (recolourable in PowerPoint like a
+built-in icon) and saves; `--png` then exports the slides into `deck/check/` for a look.
