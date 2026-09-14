@@ -71,5 +71,7 @@ stays as issued. R3 builds in `W16/report/` on the same furniture the basis repo
 | 46 | **No mention of the plot layer's delivery** and no field dictionary: "if they ask, I will give them" (engineer) | Appendix A4 of R2 |
 | 47 | Table captions in the **same look as figure captions**; footer text **centred**; table cells **centred except the first column** | furniture |
 | 48 | "l/s" in text, not "litres a second" | throughout |
+| 49 | **Footer**: text lines left, the page number centred in a **grey** box, the rule above the footer grey | template |
+| 50 | **Wider text**: 1.5 cm side margins on every page (18 cm of text), the header and footer stretched to it, every table's columns scaled to fill it; each added section carries its own copy of the header and footer so the landscape pages get the full width too | `template/make_template.py`, `doc.table`, `doc.page_section` |
 
 The review copy with the engineer's comments: `W16/report_basis/R0/review/R0_draft1_with_engineer_comments_2026-09-14.docx`.
