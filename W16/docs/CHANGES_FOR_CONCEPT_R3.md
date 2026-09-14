@@ -42,3 +42,34 @@ stays as issued. R3 builds in `W16/report/` on the same furniture the basis repo
 
 - The numbers: R3 reads the same `facts_w14.py` as R2 and the basis report; nothing was re-derived.
 - The load layers: `W14/shp` is frozen; the 126 meters stay out of the loads until Decision 3 is answered.
+
+## Revised after the engineer's review of the basis report (2026-09-14: 22 Word comments, 16 chat items)
+
+| # | Change | Carry into R3 |
+|---|---|---|
+| 25 | Section numbers carry a trailing dot: "1.", "1.1." | every heading |
+| 26 | **"property"** for a domestic meter's household, never "dwelling" (the guideline's word: "over 100 properties") | throughout |
+| 27 | **"calculated"** for the occupancy, **"determined"** for the plot use; never "worked out" | throughout |
+| 28 | **STP** or "treatment plant", never "works"; **catchment**, never "pocket" (neither is a guideline word) | throughout |
+| 29 | **"planted"** for the satellite test, never "grove"; **"very small plots"**, never "slivers"; the satellite paragraph reduced to which image and for what purpose | §14.5 |
+| 30 | Twenty-six polygons for twenty-five settlements, Al Aynayn drawn as two | §14.2 |
+| 31 | **Q special**, the guideline's term, in the return equation; the estates named as the special consumption of the study area | §15.3 |
+| 32 | Merrimack and Peltier as **two equations, each named** in its symbol lines | §15.6 |
+| 33 | Symbol lines with a **colon**: `Q peak: description, unit` | every equation |
+| 34 | **"Gradients"** is a Heading 3, not a sentence fragment; the 0.05 % steps stated as **our rounding** for round figures on the drawings | §12 |
+| 35 | 12 m of cover: "the excavation cost cannot be calculated without the detailed quantities", never "nothing is costed"; **no approval asked** | §12 |
+| 36 | **Approve versus adopt**: only what the guideline does not settle is put to approval (boundaries, occupancy, plot use, overflow, horizon, growth beyond 2050, the concept gradient rule); the guideline's own values and the stated assumptions are **adopted and reported**, in grey boxes and in Part B of the register, numbered after the decisions | §10.1 and the register |
+| 37 | The design horizon as a decision: **2055 (2030 + 25) or saturation 2070**, both sets of numbers | §14.7 |
+| 38 | Growth: to 2050 the client's own series; approval only for the **2.40 % rise and the hold to 2100** | §14.7 |
+| 39 | The 126 free meters: **left out of the loads**, stated; the overview map shows points only; **nine example panels** in one figure in the section; the settlement table beside it; no appendix | §14.3 |
+| 40 | The treatment plant's own plot (farm meters for its pumps) is a **government site**: `facts_w14.PLOT_OVERRIDES`, keyed by a point inside the plot, applied in the facts and in the map renderer's expression | §14.5, the land-use map |
+| 41 | Empty plots on the land-use map with a **darker outline** (#4a4a4a, 0.11 mm) | the land-use map |
+| 42 | The saturation flow map labels **both 2055 and 2070**, small settlements outside their polygon with a **leader**, and a table with the same values beside it | §15.7 |
+| 43 | The STP flow table: the **peak factor row after** the peak flow row | §13 |
+| 44 | Figures 12 and 23: the red annotation is only **"1.5 l/s"**; the minimal curve's caption ends at "against the flow in the pipe" | §12 |
+| 45 | The five-year tables of people and flow sit **in the body** (people in §14.7, flow at the head of the flows section), not in an appendix | §14.7, §15.7 |
+| 46 | **No mention of the plot layer's delivery** and no field dictionary: "if they ask, I will give them" (engineer) | Appendix A4 of R2 |
+| 47 | Table captions in the **same look as figure captions**; footer text **centred**; table cells **centred except the first column** | furniture |
+| 48 | "l/s" in text, not "litres a second" | throughout |
+
+The review copy with the engineer's comments: `W16/report_basis/R0/review/R0_draft1_with_engineer_comments_2026-09-14.docx`.

@@ -49,6 +49,26 @@ the project's layer at 50 % opacity; the project's own layer is untouched.
 
 ## What the basis report asks for
 
-Section 10 of the report: nineteen decisions in five groups (settlements and people; water and
-sewage rates; growth; the network; the plant and the effluent) and seven data requests. The
-list lives in `report_basis/decisions.py`, read by the front summary and the register alike.
+Section 10 of the report: **seven decisions** (boundaries, occupancy, plot use, overflow,
+horizon 2055 or 2070, growth beyond 2050, the concept gradient rule) and **eight values
+adopted for information** (the guideline's own values and the stated assumptions), plus seven
+data requests. The list lives in `report_basis/decisions.py` (`ask = "approve" | "inform"`),
+read by the front summary, the boxes in the sections and the register alike. Revised on
+2026-09-14 on the engineer's 22 Word comments and 16 chat items; the commented draft is in
+`report_basis/R0/review/`, the changes to carry into the concept report in
+`docs/CHANGES_FOR_CONCEPT_R3.md`.
+
+## When the QGIS relay hangs
+
+The MCP relay between the chat session and the QGIS plugin hung after the 68-panel render and
+did not recover (the app still reported it "connected"). `report_basis/qgis_direct.py` talks to
+the plugin's own socket (localhost:9876, length-prefixed JSON, exactly what the relay does):
+`python qgis_direct.py ping`, `python qgis_direct.py file a_script.py` execs the script inside
+QGIS and prints its stdout. The map exports of 2026-09-14 were made that way.
+
+## Plot-class overrides
+
+`report/facts_w14.PLOT_OVERRIDES`: the treatment plant's 29 ha compound carries farm meters for
+its pumps and was classed Agricultural by the meter rule; it is a government site. Keyed by a
+point inside the plot; applied in `facts_w14.plots()` and in the land-use map's renderer
+expression, so the frozen W14 layer is untouched.

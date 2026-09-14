@@ -14,7 +14,7 @@ in Word renumbers, the symbols under an equation as one line each (`symbol; desc
 tables with a navy header and no banding, satellite backgrounds at **50 %** opacity, coloured
 land-use plots **without outlines** (only empty plots outlined), **no worked examples**, every
 assumption in one table with its reason, plain words, and a numbered register of decisions at the
-end, each a yes/no. Every map layout is kept saved in the QGIS project.
+end, each a yes/no. Every map layout is kept saved in the QGIS project. Added on the 2026-09-14 review: **ask approval only for what the guideline does not settle**; the guideline's own values and stated assumptions are "adopted" and reported (grey boxes, Part B of the register); headings "1." and "1.1."; **property** not dwelling; **calculated** not "worked out"; **STP** not "works", **catchment** not "pocket", **planted** not "grove", no "slivers"; symbol lines with a colon; table captions in the figure-caption look; table cells centred except the first column; footer centred; "l/s" in text; no worked examples; never mention the plot layer's delivery.
 
 **Why:** the report goes to NWS for approval, where "any word may attract a comment"; hard
 vocabulary and worked examples invite comment rounds. Native captions because the engineer edits
