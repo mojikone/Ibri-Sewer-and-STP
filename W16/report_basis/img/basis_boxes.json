@@ -1,0 +1,110 @@
+{
+ "B01_boundaries": [
+  [
+   "Settlements",
+   "25"
+  ],
+  [
+   "Boundaries received",
+   "drawn round the built cores"
+  ],
+  [
+   "Redrawn",
+   "as a partition, no gaps"
+  ],
+  [
+   "Plots assigned",
+   "77,265"
+  ],
+  [
+   "Corrected",
+   "Tanam, Satwah, Al Makhtibyah, Bat"
+  ]
+ ],
+ "B02_landuse": [
+  [
+   "Built plots with meters",
+   "16,756"
+  ],
+  [
+   "Homes",
+   "12,464"
+  ],
+  [
+   "Shops",
+   "1,321"
+  ],
+  [
+   "Home and shop",
+   "614"
+  ],
+  [
+   "Government",
+   "409"
+  ],
+  [
+   "Farms",
+   "1,685"
+  ],
+  [
+   "Industrial",
+   "263"
+  ],
+  [
+   "Heritage",
+   "177"
+  ],
+  [
+   "Empty",
+   "60,509"
+  ]
+ ],
+ "B03_saturation": [
+  [
+   "1  Add the settlements in the catchment",
+   "m³/d"
+  ],
+  [
+   "2  Add infiltration",
+   "0.72 m³/d per km of sewer"
+  ],
+  [
+   "3  Add the plant margin",
+   "× 1.10  (the design average)"
+  ],
+  [
+   "4  Peak hour",
+   "2.65 × (average in Ml/d)^0.879, Ml/d"
+  ],
+  [
+   "Whole area, 2070: average",
+   "60,099 → 66,109 m³/d"
+  ],
+  [
+   "Whole area, 2070: peak hour",
+   "106,724 m³/d"
+  ]
+ ],
+ "B05_free_meters": [
+  [
+   "Meters more than 15 m from any plot",
+   "126"
+  ],
+  [
+   "of which dwelling meters",
+   "30"
+  ],
+  [
+   "People they would carry",
+   "144"
+  ],
+  [
+   "Government and commercial meters",
+   "78"
+  ],
+  [
+   "Zoom panels",
+   "68, in the appendix"
+  ]
+ ]
+}
