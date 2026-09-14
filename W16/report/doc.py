@@ -45,6 +45,12 @@ def new_document(fields=None, template=TEMPLATE):
     if template and os.path.exists(template):
         d = Document(template)
         _fill_placeholders(d, fields or {})
+        # the footer's text lines centred in their cell (engineer, 2026-09-14)
+        for s in d.sections:
+            for tbl in s.footer.tables:
+                for cell in tbl.rows[0].cells[:1]:
+                    for par in cell.paragraphs:
+                        par.alignment = WD_ALIGN_PARAGRAPH.CENTER
     else:
         d = Document()
         s = d.sections[0]
@@ -397,14 +403,16 @@ def table(d, headers, rows, widths=None, font=9, header_fill="1F497D", align_rig
         t._tbl.tblPr.append(parse_xml(
             f'<w:tblCellMar {_W}><w:left w:w="{tw}" w:type="dxa"/><w:right w:w="{tw}" w:type="dxa"/></w:tblCellMar>'))
 
+    # every column but the first is centred (engineer, 2026-09-14); align_right is kept for
+    # callers but means the same
     for i, htxt in enumerate(headers):
         cell = t.rows[0].cells[i]
         cell.text = ""
         par = cell.paragraphs[0]
         _mark_size(par, font)
         par.paragraph_format.space_after = Pt(2); par.paragraph_format.space_before = Pt(2)
-        if i in align_right:
-            par.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        if i > 0:
+            par.alignment = WD_ALIGN_PARAGRAPH.CENTER
         r = par.add_run(str(htxt)); r.bold = True; r.font.size = Pt(font); r.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
         cell._tc.get_or_add_tcPr().append(parse_xml(f'<w:shd {_W} w:val="clear" w:color="auto" w:fill="{header_fill}"/>'))
 
@@ -414,8 +422,8 @@ def table(d, headers, rows, widths=None, font=9, header_fill="1F497D", align_rig
             cells[i].text = ""
             par = cells[i].paragraphs[0]
             par.paragraph_format.space_after = Pt(1.5); par.paragraph_format.space_before = Pt(1.5)
-            if i in align_right:
-                par.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            if i > 0:
+                par.alignment = WD_ALIGN_PARAGRAPH.CENTER
             txt = "" if val is None else str(val)
             _mark_size(par, font)
             for k, seg in enumerate(txt.split("**")):
@@ -484,14 +492,16 @@ def fig_caption(d, text):
 
 
 def tab_caption(d, text):
+    """Table N   text — above the table, in the same look as a figure caption (engineer, 2026-09-14)."""
     _counters["tab"] += 1
     n = _counters["tab"]
     par = d.add_paragraph(style="Caption")
+    par.alignment = WD_ALIGN_PARAGRAPH.CENTER
     par.paragraph_format.space_before = Pt(8); par.paragraph_format.space_after = Pt(3)
     par.paragraph_format.keep_with_next = True
-    r = par.add_run("Table "); r.font.size = Pt(9); r.bold = True; r.font.color.rgb = BLUE
-    _field(par, "SEQ Table \\* ARABIC", n, size=9, bold=True, colour="1F497D")
-    r = par.add_run(f"   {text}"); r.font.size = Pt(9); r.bold = True; r.font.color.rgb = BLUE
+    r = par.add_run("Table "); r.font.size = Pt(9); r.font.color.rgb = GREY; r.italic = True
+    _field(par, "SEQ Table \\* ARABIC", n, size=9, italic=True, colour="5A5A5A")
+    r = par.add_run(f"   {text}"); r.font.size = Pt(9); r.font.color.rgb = GREY; r.italic = True
     return n
 
 
@@ -501,7 +511,7 @@ def next_eq():
 
 
 def symbols(d, rows):
-    """The symbol lines under an equation: one line each, 'symbol; description, unit'."""
+    """The symbol lines under an equation: one line each, 'symbol: description, unit'."""
     for row in rows:
         sym, desc = row[0], row[1]
         unit = row[2] if len(row) > 2 else ""
@@ -509,7 +519,7 @@ def symbols(d, rows):
         par.paragraph_format.left_indent = Cm(1.0)
         par.paragraph_format.space_after = Pt(0)
         r = par.add_run(str(sym)); r.italic = True; r.font.size = Pt(9.5)
-        tail = f";  {desc}"
+        tail = f":  {desc}"
         if unit and unit not in ("—", "-", ""):
             tail += f", {unit}"
         r2 = par.add_run(tail); r2.font.size = Pt(9.5)

@@ -31,8 +31,11 @@ def _font(size, bold=False):
     return ImageFont.load_default()
 
 
-def build():
+def build(keep=None, name="B06_panels_p%02d.png"):
+    """keep: panel numbers to compose (all when None); name: the page file pattern."""
     panels = gpd.read_file(SHP).sort_values("PANEL")
+    if keep:
+        panels = panels[panels.PANEL.isin(keep)]
     per_page = COLS * ROWS
     cell_w = (PAGE_W - 2 * MARGIN - (COLS - 1) * GAP) // COLS
     cell_h = (PAGE_H - 2 * MARGIN - 34 - (ROWS - 1) * GAP) // ROWS       # 34 px for the page footer
@@ -54,7 +57,7 @@ def build():
             im = im.resize((img_w, img_h), Image.LANCZOS)
             page.paste(im, (x0, y0 + TITLE_H))
             dr.rectangle([x0, y0 + TITLE_H, x0 + img_w - 1, y0 + TITLE_H + img_h - 1], outline=(120, 120, 120), width=2)
-            dwell = f", {r.N_DWELL} dwelling" + ("s" if r.N_DWELL != 1 else "") if r.N_DWELL else ""
+            dwell = f", {r.N_DWELL} domestic" if r.N_DWELL else ""
             dr.text((x0 + 2, y0 + 6), f"Panel {r.PANEL}   {r.SETTLE}   {r.N} meter{'s' if r.N != 1 else ''}{dwell}", fill=NAVY, font=f_title)
             # a scale bar: the panel is WIDTH_M metres across img_w pixels
             px_per_m = img_w / float(r.WIDTH_M)
@@ -65,15 +68,18 @@ def build():
             dr.text((bx + bar_m * px_per_m + 8, by - 22), f"{bar_m} m", fill=(40, 40, 40), font=f_small)
         first, last = chunk[0].PANEL, chunk[-1].PANEL
         dr.ellipse([MARGIN, PAGE_H - MARGIN - 20, MARGIN + 16, PAGE_H - MARGIN - 4], fill=RED)
-        dr.text((MARGIN + 24, PAGE_H - MARGIN - 24), "dwelling meter", fill=GREY, font=f_foot)
+        dr.text((MARGIN + 24, PAGE_H - MARGIN - 24), "domestic meter", fill=GREY, font=f_foot)
         dr.ellipse([MARGIN + 220, PAGE_H - MARGIN - 20, MARGIN + 236, PAGE_H - MARGIN - 4], fill=BLUE)
         dr.text((MARGIN + 244, PAGE_H - MARGIN - 24), "other meter (shop, government, farm)   ·   plots outlined in yellow   ·   no plot within 15 m of any meter shown", fill=GREY, font=f_foot)
-        dr.text((PAGE_W - MARGIN - 260, PAGE_H - MARGIN - 24), f"Panels {first} to {last} of {n_total}", fill=NAVY, font=f_foot)
-        out = os.path.join(IMG, "B06_panels_p%02d.png" % (p0 // per_page + 1))
+        tag = f"Panels {first} to {last} of {n_total}" if not keep else f"{len(chunk)} examples of the 126 meters"
+        dr.text((PAGE_W - MARGIN - 300, PAGE_H - MARGIN - 24), tag, fill=NAVY, font=f_foot)
+        out = os.path.join(IMG, name % (p0 // per_page + 1) if "%" in name else name)
         page.save(out, dpi=(DPI, DPI)); pages.append((out, first, last))
         print("   ", os.path.basename(out), first, "to", last)
     return pages
 
 
+EXAMPLES = (1, 3, 15, 16, 17, 21, 26, 28, 42)     # the engineer's nine, 2026-09-14
+
 if __name__ == "__main__":
-    build()
+    build(keep=EXAMPLES, name="B06_examples.png")

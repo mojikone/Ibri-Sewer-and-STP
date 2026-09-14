@@ -54,10 +54,29 @@ def fmt(n, nd=0):
     return f"{n:,.{nd}f}"
 
 
+# Plot-class overrides (W16, engineer 2026-09-14): the treatment plant's own plot carries farm
+# meters (its pumps) and was classed Agricultural by the meter rule; it is a government site.
+# Keyed by a point inside the plot, so the override survives any renumbering of the cadastre.
+PLOT_OVERRIDES = [
+    # the 29 ha compound south of the inlet (two farm meters for its pumps, staff housing);
+    # the point is inside the plot, the recorded inlet coordinate lies 40 m north of it
+    ("the Ibri treatment plant", (444342.5, 2562976.6), "Government"),
+]
+
+
+def _apply_overrides(p):
+    from shapely.geometry import Point
+    for what, (x, y), cls in PLOT_OVERRIDES:
+        hit = p.geometry.contains(Point(x, y))
+        p.loc[hit, "DERIVED"] = cls
+        p.loc[hit, "WHYC"] = "OVR"
+    return p
+
+
 @lru_cache(None)
 def plots():
     import geopandas as gpd
-    return gpd.read_file(os.path.join(SHP, "PLOTS_load.shp"))
+    return _apply_overrides(gpd.read_file(os.path.join(SHP, "PLOTS_load.shp")))
 
 
 @lru_cache(None)

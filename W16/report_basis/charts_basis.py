@@ -62,10 +62,8 @@ def mara_curve_full():
                     fontsize=7.6, color=GREEN)
     # the floor
     ax.plot([B.Q_FLOOR_LS], [s_floor], marker="D", color=RED, markersize=7, zorder=5)
-    ax.annotate(f"design floor {B.Q_FLOOR_LS:g} l/s → {s_floor:.2f} %\n"
-                f"a pipe carrying less is checked as if it carried {B.Q_FLOOR_LS:g} l/s",
-                (B.Q_FLOOR_LS, s_floor), xytext=(-250, 70), textcoords="offset points", fontsize=8, color=RED,
-                fontweight="bold", arrowprops=dict(arrowstyle="-", color=RED, linewidth=0.8))
+    ax.annotate(f"{B.Q_FLOOR_LS:g} l/s", (B.Q_FLOOR_LS, s_floor), xytext=(6, -14), textcoords="offset points",
+                fontsize=7.6, color=RED, fontweight="bold")
     # three readings on the steep part
     for q in (0.1, 0.3, 0.6):
         s = B.mara_smin_pct(q)
@@ -90,9 +88,8 @@ def mara_curve_minimal():
     ax.annotate(f"{q200:.2f} l/s: the curve meets Table 11", (q200, s200), xytext=(8, 8), textcoords="offset points",
                 fontsize=8, color=GREEN)
     ax.plot([B.Q_FLOOR_LS], [s_floor], marker="D", color=RED, markersize=7, zorder=5)
-    ax.annotate(f"design floor {B.Q_FLOOR_LS:g} l/s → {s_floor:.2f} %, below the Table 11 line",
-                (B.Q_FLOOR_LS, s_floor), xytext=(10, -26), textcoords="offset points", fontsize=8.2, color=RED,
-                fontweight="bold", arrowprops=dict(arrowstyle="-", color=RED, linewidth=0.8))
+    ax.annotate(f"{B.Q_FLOOR_LS:g} l/s", (B.Q_FLOOR_LS, s_floor), xytext=(6, -14), textcoords="offset points",
+                fontsize=7.6, color=RED, fontweight="bold")
     ax.legend(loc="upper right", frameon=False, fontsize=8)
     return _save(fig, "K02_mara_minimal")
 
