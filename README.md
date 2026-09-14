@@ -2,7 +2,7 @@
 
 Working repository of the Claude-assisted concept engineering for **Renardet Project 2621** — Consultancy Services for Design and Supervision for STP, Sewer & TE Networks Systems in Ibri, Oman (Client: Nama Water Services, Tender T/2719110/2025).
 
-> **AI agents:** start at [`CLAUDE.md`](CLAUDE.md) → `_BRAIN/` → `_SETUP/`. Humans: this README is the summary; the deliverable is the **Concept Design Report R2** under `W14/report/R2/`. **Designing the network or the plant: read `W14/docs/DESIGN_FLOWS_FOR_NETWORK.md` first.** The method, taught: `TUTORIALS/T04/`.
+> **AI agents:** start at [`CLAUDE.md`](CLAUDE.md) → `_BRAIN/` → `_SETUP/`. Humans: this README is the summary; the deliverables are the **Concept Design Report R2** under `W14/report/R2/` and the **Design Basis Report R0** under `W16/report_basis/R0/`, issued first for approval of the boundaries, population, flows and loads. **Designing the network or the plant: read `W14/docs/DESIGN_FLOWS_FOR_NETWORK.md` first.** The method, taught: `TUTORIALS/T04/`.
 
 ## The job, end to end
 
@@ -92,6 +92,7 @@ becomes real.
 
 | Date | Update |
 |---|---|
+| 2026-09-14 | **W16 opened; the Design Basis Report R0 built for approval ahead of the concept design.** `W16/report_basis/R0/Ibri_Design_Basis_Report_R0.docx` + `.pdf`, 49 pages, on the firm's template: the settlement boundaries as received and as redrawn (map), the people (occupancy per settlement), the use of each plot (coloured, no outlines), the water and sewage rates with what "distributed" means, the growth and **the overflow with and without it** (75,414 people with nowhere to go without it; seven settlements never fill alone), the flow for every element (plot, pipe, station, trunk, plant: average 66,109 and peak hour 106,724 m³/d at 2070 with the margin), the plant loads from 60/80 g per person (348 mg/l BOD, the bottom of Table 30), the treated effluent, every adopted value in one table, 7 data requests and **19 decisions, each a yes or no**. New figures: the saturation flow map with the four-step plant recipe, the 126 free meters with 68 zoom panels, the self-cleansing curve (full and minimal). Word-native captions, symbol lines under equations, satellite at 50 %. Every layout kept in `stp2.qgz` (`RPT B01…B05`, the panels atlas; `W2 M1 Study Area` imported from the old project). `W16/docs/CHANGES_FOR_CONCEPT_R3.md` lists what R3 must carry. The loads did not change: W16 reads `W14/shp`. |
 | 2026-09-12 | **W15 in Google Earth.** `W15/kmz/W15_A_network.kmz` (0.5 MB, `W15/py/export_kmz.py`): a folder per convergence group, a folder per subnetwork with its outlet, its sub mains (balloon: size, gradient, flow, depth) and its laterals, one colour per subnetwork, neighbours coloured apart, sub mains thick, main pipe, guide, every outlet in a Points layer mirroring group and subnetwork (one tick manages them all), and three overlays off by default (flow arrows, pipes deeper than 12 m, group outlines); `W15_A_network_nolabels.kmz` is the same with no point labels. |
 | 2026-09-12 | **W15: the first stage A over the whole network, six minutes.** Every street of the DXF: 1,822 km in 12,870 runs, 1,690 km of network in 310 subnetworks (187 joins, 5 direct links, 117 pockets holding 256 km), 13,164 chambers, deepest 25.9 m, 216 chambers over 12 m after eight rounds of the 12 m rule. The subnetworks grouped by where they converge (`W15/py/group_by_convergence.py`, `W15/run/groups.json`): the main pipe NE branch 149 subnetworks and 842 km, the trunk to the works 69 and 472 km, the E branch 53 and 196 km, and three pieces of main pipe not yet connected to the works (the west legs 131 km of network on them, an E piece 26 km, a N piece 23 km). Two direct links carry giant catchments (246 km around the works, 213 km east of the meeting point). QGIS group `Claude W15` with one subgroup per major group, awaiting the engineer's yes. |
 | 2026-09-12 | **Temp 4 accepted and frozen; W15 opened for the whole network.** `W15/` is a complete copy of `W13/tmp4` (the engine the engineer accepted: stage A the layout, stage B the real lay, chambers, checks and pumps as candidates; a pocket with no flow gets no station). The area is every street of the DXF, 45 by 25 km, test boundary included; settlements are the dense parts of the buffered streets; ground at 4 m. The sub main guide the engineer drew for the west (`SHP/Main Pipe/Sub Main Pipe guide.shp`, 9.2 km) is in the network as forced sub mains tied to the redrawn main pipe. Rule 17 in `W15/docs/W15_DESIGN_LOGIC.md`. The first stage A run over the whole is in progress; its subnetworks will be grouped by where they converge, and the QGIS groups will follow. |
@@ -211,7 +212,10 @@ becomes real.
 | `W3/` | Capacity, spillover, built/planned/agri plot classification (shp+qml, analyses, notes) |
 | `TUTORIALS/` | T01 sewage flow & load calculation (Rev 2) |
 | `_STANDARDS/`, `_CLIENT/` | GUD-202 pdf; Inception R0 package (remote access) |
-| `W2/report/Ibri_Concept_Screening_R1.docx/.pdf` | **Latest deliverable report** |
+| `W14/` | Population, saturation and load per plot; the **Concept Design Report R2** (`W14/report/R2/`) |
+| `W15/` | The pipe-laying engine over the whole network |
+| `W16/` | The reports: the **Design Basis Report R0** (`W16/report_basis/R0/`, for approval ahead of the concept design) and the concept report build for R3, on the firm's template |
+| `W2/report/Ibri_Concept_Screening_R1.docx/.pdf` | The first screening report (superseded) |
 
 Client source data (`Data/`, `Hydraulic/Terrain/`, `Hydraulic/SHP/`, QGIS project) lives outside the repo on the project drive.
 

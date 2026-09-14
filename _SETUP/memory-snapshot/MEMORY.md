@@ -13,3 +13,4 @@
 - [Design flows handoff](design-flows-handoff.md) — size on Q_ULT, self-cleansing on Q_2030 x 0.61; read W14/docs/DESIGN_FLOWS_FOR_NETWORK.md before any network design
 - [PyQGIS MCP crash: dangling symbol](pyqgis-mcp-crash-dangling-symbol.md) — never chain renderer().categories()[i].symbol(); bind names or style through QML
 - [Long runs detached](long-runs-detached.md) — the whole-network engine run outlives the 10-minute Bash cap; Start-Process it and Monitor the console file
+- [Report format preferences](report-format-preferences.md) — firm's template, native captions, symbol lines, 50 % imagery, no worked examples, plain words, decisions register

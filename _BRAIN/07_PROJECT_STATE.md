@@ -1,5 +1,5 @@
 # PROJECT-STATE — single-file orientation for any new session
-**Companion page: `_BRAIN/00_CURRENT.md` lists which files are live and which are superseded. LIVE DOCUMENT (user-mandated): update with every substantive commit, alongside README.md — see CLAUDE.md rule 12. Last updated 2026-09-07. Read this FIRST, then 02_DESIGN_CRITERIA before writing any number.**
+**Companion page: `_BRAIN/00_CURRENT.md` lists which files are live and which are superseded. LIVE DOCUMENT (user-mandated): update with every substantive commit, alongside README.md — see CLAUDE.md rule 12. Last updated 2026-09-14. Read this FIRST, then 02_DESIGN_CRITERIA before writing any number.**
 
 ## READ THIS FIRST: W10, W11a, W11b AND W12 WERE REVERTED OUT OF THIS REPO
 
@@ -119,6 +119,7 @@ Concept→detailed design + supervision of sewer network, TE network and STP cap
 ## 4. Progress stages
 | Stage | State |
 |---|---|
+| **W16: the Design Basis Report R0 (2026-09-14)** | For NWS approval ahead of the concept design: the settlement boundaries received and redrawn, the people, the use of each plot, the rates, the growth with and without the overflow (75,414 people with nowhere to go without it; 7 settlements never fill alone), the flow for every element, the plant flows (AAF 66,109, PHF 106,724 m³/d at 2070 with the margin) and loads (60/80 g per person, 348 mg/l BOD), the treated effluent; 19 decisions, 7 data requests. Firm's template, native captions, symbol lines, maps at 50 %, every layout saved in `stp2.qgz`. `W16/report_basis/`; what R3 must carry in `W16/docs/CHANGES_FOR_CONCEPT_R3.md`. The loads are unchanged (`W14/shp`). |
 | W1 (superseded) | First pass: trunk + 20 zones, 125 SLS candidates |
 | W2 (delivered) | 36 zones, trunk 22+172 km, 18 SLS, 134 wadi crossings, report R1 (Sample.docx style), QGIS layouts M1–M6, DXF |
 | T01 tutorial | Rev 2: full flow/load chain, native equations, R0 workbook decoded (incl. its +20 % weekly peak baked into WWG series) |
