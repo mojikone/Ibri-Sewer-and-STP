@@ -99,6 +99,42 @@ def build(sample=SAMPLE, out=OUT):
         for tbl in hf._element.iter(qn("w:tbl")):
             _pct_width(tbl)
 
+    # the footer (engineer, 2026-09-14): text lines left, the page number centred in its box,
+    # the box and the rule above the footer grey instead of black and blue
+    GREY_FILL, GREY_LINE = "7F7F7F", "BFBFBF"
+    ftbl = next(sec.footer._element.iter(qn("w:tbl")))
+    tblpr = ftbl.find(qn("w:tblPr"))
+    for b in tblpr.iter(qn("w:top")):
+        b.set(qn("w:color"), GREY_LINE); b.set(qn("w:sz"), "12")
+        for k in ("w:themeColor", "w:themeTint"):
+            if b.get(qn(k)) is not None:
+                del b.attrib[qn(k)]
+    cells = list(ftbl.iter(qn("w:tc")))
+    for i, tc in enumerate(cells):
+        tcpr = tc.find(qn("w:tcPr"))
+        for b in tcpr.iter(qn("w:top")):
+            b.set(qn("w:color"), GREY_LINE)
+        for p in tc.iter(qn("w:p")):
+            ppr = p.get_or_add_pPr()
+            for jc in ppr.findall(qn("w:jc")):
+                ppr.remove(jc)
+            jc = OxmlElement("w:jc"); jc.set(qn("w:val"), "left" if i == 0 else "center"); ppr.append(jc)
+        if i == len(cells) - 1:
+            shd = tcpr.find(qn("w:shd"))
+            if shd is not None:
+                shd.set(qn("w:fill"), GREY_FILL)
+                for k in ("w:themeFill", "w:themeFillTint", "w:themeFillShade"):
+                    if shd.get(qn(k)) is not None:
+                        del shd.attrib[qn(k)]
+            for old_v in tcpr.findall(qn("w:vAlign")):
+                tcpr.remove(old_v)
+            va = OxmlElement("w:vAlign"); va.set(qn("w:val"), "center"); tcpr.append(va)
+
+    # wider text (engineer, 2026-09-14): 1.5 cm at the sides, the top kept for the header
+    from docx.shared import Cm
+    sec.left_margin = sec.right_margin = Cm(1.5)
+    sec.bottom_margin = Cm(2.2)
+
     # the sample's first page has no header and footer (titlePg): keep that,
     # and give every later section the same header and footer by linking
     sec.different_first_page_header_footer = True

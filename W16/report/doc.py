@@ -45,12 +45,6 @@ def new_document(fields=None, template=TEMPLATE):
     if template and os.path.exists(template):
         d = Document(template)
         _fill_placeholders(d, fields or {})
-        # the footer's text lines centred in their cell (engineer, 2026-09-14)
-        for s in d.sections:
-            for tbl in s.footer.tables:
-                for cell in tbl.rows[0].cells[:1]:
-                    for par in cell.paragraphs:
-                        par.alignment = WD_ALIGN_PARAGRAPH.CENTER
     else:
         d = Document()
         s = d.sections[0]
@@ -140,7 +134,35 @@ def page_section(d, size="A4", orient="portrait", margin=None):
     s.different_first_page_header_footer = False
     if s._sectPr.find(qn("w:footnotePr")) is None:
         s._sectPr.append(parse_xml(f'<w:footnotePr {_W}><w:numRestart w:val="eachPage"/></w:footnotePr>'))
+    _own_header_footer(d, s)
     return s
+
+
+def _own_header_footer(d, s):
+    """Give a section its own copy of the first section's header and footer. A linked
+    header is laid out at the width of the section that owns it, so on a landscape page
+    the header and footer tables stayed at the portrait width; a copy in the section's
+    own part is laid out at the section's width. Images are re-related to the new part."""
+    import copy
+    from docx.opc.constants import RELATIONSHIP_TYPE as RT
+    first = d.sections[0]
+    for kind in ("header", "footer"):
+        src = getattr(first, kind); dst = getattr(s, kind)
+        if src._element is None:
+            continue
+        dst.is_linked_to_previous = False
+        dst_el = dst._element
+        for child in list(dst_el):
+            dst_el.remove(child)
+        src_part, dst_part = src.part, dst.part
+        for child in src._element:
+            el = copy.deepcopy(child)
+            for blip in el.iter("{http://schemas.openxmlformats.org/drawingml/2006/main}blip"):
+                rid = blip.get("{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed")
+                if rid and rid in src_part.rels:
+                    new_rid = dst_part.relate_to(src_part.rels[rid].target_part, RT.IMAGE)
+                    blip.set("{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed", new_rid)
+            dst_el.append(el)
 
 
 def text_width_cm(d, size="A4", orient="landscape"):
@@ -433,6 +455,13 @@ def table(d, headers, rows, widths=None, font=9, header_fill="1F497D", align_rig
                 r.bold = (k % 2 == 1) or (first_col_bold and i == 0)
 
     if widths:
+        # the columns keep their proportions but fill the text width (engineer, 2026-09-14:
+        # a table as wide as the text is more legible)
+        s = d.sections[-1]
+        tw = (s.page_width - s.left_margin - s.right_margin) / 914400 * 2.54
+        k = tw / sum(widths)
+        widths = [w * k for w in widths]
+        t.autofit = False
         for row in t.rows:
             for i, w in enumerate(widths):
                 row.cells[i].width = Cm(w)
