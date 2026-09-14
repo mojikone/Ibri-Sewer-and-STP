@@ -52,3 +52,11 @@ W15/run/*_log.txt
 W15/run/console_*.txt
 W15/run/scratch/
 W15/dxf/*.dwg
+
+# W16 report builds: the per-panel renders (68 PNG, regenerated in QGIS) and the page
+# contact sheets (a check, not a deliverable); the composed panel pages are tracked
+W16/report_basis/img/panels/
+W16/report_basis/R*/check/
+W16/report_basis/R*/*_new.docx
+W16/report/R*/*_new.docx
+**/img/_jpg/

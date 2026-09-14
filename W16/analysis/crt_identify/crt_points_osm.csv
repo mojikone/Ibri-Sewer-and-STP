@@ -1,0 +1,501 @@
+fid,tariff,x,y,lon,lat,plot_name,plot_class,moh_class,build_st,E,N,cl,osm_near
+238,CRT Seasonal,56.5,23.2,56.516089,23.2169,Additional Account Tariff,Residential-Commercial,2.0,EXisting,450487.24438958167,2567613.287139804,-1,ATM bank Muscat [amenity=atm] 6m | Bank Muscat Al Murttafa branch [amenity=bank] 7m | alkahraman alfithi Pharmacy [amenity=pharmacy;healthcare=pharmacy] 23m
+362,CRT Time of Use,56.5,23.2,56.454874,23.221065,CRT Time of Use,Residential-Commercial,2.0,EXisting,444225.4601480231,2568096.5524645634,81,D Building [building=yes] 11m | Hostel [amenity=parking] 15m | Hostel Gards [building=yes] 47m
+363,CRT Time of Use,56.5,23.2,56.454874,23.221065,CRT Time of Use,Residential-Commercial,2.0,EXisting,444225.4601480231,2568096.5524645634,81,D Building [building=yes] 11m | Hostel [amenity=parking] 15m | Hostel Gards [building=yes] 47m
+486,CRT Seasonal,56.5,23.2,56.514176,23.228757,Commercial,Residential-Commercial,2.0,EXisting,450295.8958165146,2568926.5764123835,106,Marjan Muscat Bakery and Markets [shop=supermarket] 10m
+728,CRT Seasonal,56.6,23.3,56.615369,23.317417,CRT Seasonal,Commercial,3.0,EXisting,460674.99366602977,2578710.6879719784,6,Riad Al Driz Shopping Center [shop=convenience] 54m
+1260,CRT Seasonal,56.5,23.1,56.476833,23.147847,CRT Seasonal,Residential,99.0,EXisting,446443.0994194129,2559982.658172151,-1,
+1401,CRT Seasonal,56.6,23.3,56.550316,23.281995,CRT Seasonal,Residential,1.0,EXisting,454011.65712635225,2574808.4185604216,69,
+1402,CRT Seasonal,56.6,23.3,56.550316,23.281995,CRT Seasonal,Residential,1.0,EXisting,454011.65712635225,2574808.4185604216,69,
+1403,CRT Seasonal,56.6,23.3,56.550316,23.281995,CRT Seasonal,Residential,1.0,EXisting,454011.65712635225,2574808.4185604216,69,
+1404,CRT Seasonal,56.6,23.3,56.550316,23.281995,CRT Seasonal,Residential,1.0,EXisting,454011.65712635225,2574808.4185604216,69,
+1405,CRT Seasonal,56.6,23.3,56.550316,23.281995,CRT Seasonal,Residential,1.0,EXisting,454011.65712635225,2574808.4185604216,69,
+1406,CRT Seasonal,56.6,23.3,56.550316,23.281995,CRT Seasonal,Residential,1.0,EXisting,454011.65712635225,2574808.4185604216,69,
+1665,CRT Seasonal,56.5,23.2,56.516444,23.220173,Additional Account Tariff,Residential-Commercial,2.0,EXisting,450524.7734595364,2567975.505383678,-1,AL Ariaf  Pharmacy [amenity=pharmacy;healthcare=pharmacy] 29m | F&M Grand Hotel [tourism=hotel] 35m
+2000,CRT Seasonal,56.5,23.2,56.51782,23.212788,CRT Seasonal,Agricultural,4.0,EXisting,450662.8494477384,2567157.4776942744,-1,? [amenity=school] 64m | ? [amenity=parking] 68m
+2001,CRT Seasonal,56.5,23.2,56.518301,23.212689,CRT Seasonal,Agricultural,4.0,EXisting,450712.0303464972,2567146.354682963,-1,? [amenity=parking] 22m | ? [amenity=school] 68m
+2130,CRT Seasonal,56.5,23.3,56.548071,23.278466,CRT Seasonal,Residential,99.0,EXisting,453780.84393482143,2574418.451017148,71,
+2137,CRT Time of Use,56.5,23.3,56.542783,23.278802,CRT Time of Use,Agricultural,4.0,EXisting,453240.1451693345,2574457.3439858505,-1,Sharia Al Araqi Road [] 19m
+2153,CRT Seasonal,56.5,23.3,56.534175,23.272852,CRT Seasonal,Agricultural,4.0,EXisting,452357.67031617806,2573801.445192897,-1,
+2557,CRT Time of Use,56.6,23.3,56.552052,23.286074,CRT Time of Use,Residential,1.0,EXisting,454190.59269217687,2575259.438794991,68,
+2558,CRT Time of Use,56.6,23.3,56.552052,23.286074,CRT Time of Use,Residential,1.0,EXisting,454190.59269217687,2575259.438794991,68,
+2559,CRT Time of Use,56.6,23.3,56.552052,23.286074,CRT Time of Use,Residential,1.0,EXisting,454190.59269217687,2575259.438794991,68,
+2560,CRT Time of Use,56.6,23.3,56.552052,23.286074,CRT Time of Use,Residential,1.0,EXisting,454190.59269217687,2575259.438794991,68,
+3400,CRT Seasonal,56.5,23.3,56.544673,23.278926,CRT Seasonal,Agricultural,4.0,EXisting,453433.4825329564,2574470.4631868456,-1,
+3465,CRT Time of Use,56.6,23.3,56.555965,23.261807,CRT Time of Use,Industrial,7.0,EXisting,454582.5345152231,2572571.708302757,-1,
+4018,CRT Time of Use,56.5,23.2,56.512265,23.215782,Government,Agricultural,4.0,EXisting,450095.55887984624,2567490.826256289,102,? [building=retail] 7m | Shell [amenity=fuel] 26m
+4019,CRT Seasonal,56.5,23.2,56.512265,23.215782,Government,Agricultural,4.0,EXisting,450095.55887984624,2567490.826256289,102,? [building=retail] 7m | Shell [amenity=fuel] 26m
+4460,CRT Seasonal,56.5,23.3,56.544245,23.278734,CRT Seasonal,Agricultural,4.0,EXisting,453389.6433011436,2574449.3451686646,-1,
+4611,CRT Seasonal,56.5,23.2,56.514041,23.219172,CRT Seasonal,Residential,5.0,EXisting,450278.5348969021,2567865.509291947,-1,
+4752,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3.0,EXisting,450203.0098178895,2568991.540194312,106,Dar Al Andalus bookshop [shop=books] 4m | Sara Pharmacy - Al Murtafa [amenity=pharmacy;healthcare=pharmacy] 16m | Ibri city PolyClinic [amenity=clinic] 19m
+4754,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3.0,EXisting,450203.0098178895,2568991.540194312,106,Dar Al Andalus bookshop [shop=books] 4m | Sara Pharmacy - Al Murtafa [amenity=pharmacy;healthcare=pharmacy] 16m | Ibri city PolyClinic [amenity=clinic] 19m
+4755,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3.0,EXisting,450203.0098178895,2568991.540194312,106,Dar Al Andalus bookshop [shop=books] 4m | Sara Pharmacy - Al Murtafa [amenity=pharmacy;healthcare=pharmacy] 16m | Ibri city PolyClinic [amenity=clinic] 19m
+4756,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3.0,EXisting,450203.0098178895,2568991.540194312,106,Dar Al Andalus bookshop [shop=books] 4m | Sara Pharmacy - Al Murtafa [amenity=pharmacy;healthcare=pharmacy] 16m | Ibri city PolyClinic [amenity=clinic] 19m
+4757,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3.0,EXisting,450203.0098178895,2568991.540194312,106,Dar Al Andalus bookshop [shop=books] 4m | Sara Pharmacy - Al Murtafa [amenity=pharmacy;healthcare=pharmacy] 16m | Ibri city PolyClinic [amenity=clinic] 19m
+4758,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3.0,EXisting,450203.0098178895,2568991.540194312,106,Dar Al Andalus bookshop [shop=books] 4m | Sara Pharmacy - Al Murtafa [amenity=pharmacy;healthcare=pharmacy] 16m | Ibri city PolyClinic [amenity=clinic] 19m
+4759,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3.0,EXisting,450203.0098178895,2568991.540194312,106,Dar Al Andalus bookshop [shop=books] 4m | Sara Pharmacy - Al Murtafa [amenity=pharmacy;healthcare=pharmacy] 16m | Ibri city PolyClinic [amenity=clinic] 19m
+4760,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3.0,EXisting,450203.0098178895,2568991.540194312,106,Dar Al Andalus bookshop [shop=books] 4m | Sara Pharmacy - Al Murtafa [amenity=pharmacy;healthcare=pharmacy] 16m | Ibri city PolyClinic [amenity=clinic] 19m
+4761,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3.0,EXisting,450203.0098178895,2568991.540194312,106,Dar Al Andalus bookshop [shop=books] 4m | Sara Pharmacy - Al Murtafa [amenity=pharmacy;healthcare=pharmacy] 16m | Ibri city PolyClinic [amenity=clinic] 19m
+4762,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3.0,EXisting,450203.0098178895,2568991.540194312,106,Dar Al Andalus bookshop [shop=books] 4m | Sara Pharmacy - Al Murtafa [amenity=pharmacy;healthcare=pharmacy] 16m | Ibri city PolyClinic [amenity=clinic] 19m
+4763,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3.0,EXisting,450203.0098178895,2568991.540194312,106,Dar Al Andalus bookshop [shop=books] 4m | Sara Pharmacy - Al Murtafa [amenity=pharmacy;healthcare=pharmacy] 16m | Ibri city PolyClinic [amenity=clinic] 19m
+4764,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3.0,EXisting,450203.0098178895,2568991.540194312,106,Dar Al Andalus bookshop [shop=books] 4m | Sara Pharmacy - Al Murtafa [amenity=pharmacy;healthcare=pharmacy] 16m | Ibri city PolyClinic [amenity=clinic] 19m
+4765,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3.0,EXisting,450203.0098178895,2568991.540194312,106,Dar Al Andalus bookshop [shop=books] 4m | Sara Pharmacy - Al Murtafa [amenity=pharmacy;healthcare=pharmacy] 16m | Ibri city PolyClinic [amenity=clinic] 19m
+4766,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3.0,EXisting,450203.0098178895,2568991.540194312,106,Dar Al Andalus bookshop [shop=books] 4m | Sara Pharmacy - Al Murtafa [amenity=pharmacy;healthcare=pharmacy] 16m | Ibri city PolyClinic [amenity=clinic] 19m
+4767,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3.0,EXisting,450203.0098178895,2568991.540194312,106,Dar Al Andalus bookshop [shop=books] 4m | Sara Pharmacy - Al Murtafa [amenity=pharmacy;healthcare=pharmacy] 16m | Ibri city PolyClinic [amenity=clinic] 19m
+4768,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3.0,EXisting,450203.0098178895,2568991.540194312,106,Dar Al Andalus bookshop [shop=books] 4m | Sara Pharmacy - Al Murtafa [amenity=pharmacy;healthcare=pharmacy] 16m | Ibri city PolyClinic [amenity=clinic] 19m
+4770,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3.0,EXisting,450203.0098178895,2568991.540194312,106,Dar Al Andalus bookshop [shop=books] 4m | Sara Pharmacy - Al Murtafa [amenity=pharmacy;healthcare=pharmacy] 16m | Ibri city PolyClinic [amenity=clinic] 19m
+4771,CRT Seasonal,56.5,23.2,56.513266,23.229341,Additional Account Tariff,Commercial,3.0,EXisting,450203.0098178895,2568991.540194312,106,Dar Al Andalus bookshop [shop=books] 4m | Sara Pharmacy - Al Murtafa [amenity=pharmacy;healthcare=pharmacy] 16m | Ibri city PolyClinic [amenity=clinic] 19m
+4997,CRT Seasonal,56.5,23.2,56.514014,23.217527,CRT Seasonal,Agricultural,4.0,EXisting,450275.1633336104,2567683.4079222637,-1,مصلى النساء [building=yes] 19m | ? [amenity=place_of_worship] 34m | جامع السلطان قابوس بعبري [building=yes] 35m
+5023,CRT Time of Use,56.5,23.2,56.511372,23.217451,Primary Account Tariff,Residential-Commercial,2.0,EXisting,450004.8078707211,2567675.9007052616,-1,
+5025,CRT Seasonal,56.5,23.2,56.511372,23.217451,Primary Account Tariff,Residential-Commercial,2.0,EXisting,450004.8078707211,2567675.9007052616,-1,
+5107,CRT Seasonal,56.5,23.2,56.497804,23.2408,CRT Seasonal,Residential,99.0,EXisting,448625.4758775876,2570265.504435774,-1,? [amenity=place_of_worship] 79m
+5547,CRT Time of Use,56.5,23.3,56.547826,23.277814,CRT Time of Use,Residential,0.0,EXisting,453755.5620959156,2574346.3488331046,71,
+5598,CRT Seasonal,56.5,23.2,56.50043,23.235865,Primary Account Tariff,Proposed,8.0,EXisting,448892.2402036572,2569718.243727859,154,Ibri Road [] 61m | Ibri Road [] 64m
+5599,CRT Seasonal,56.5,23.2,56.50043,23.235865,Primary Account Tariff,Proposed,8.0,EXisting,448892.2402036572,2569718.243727859,154,Ibri Road [] 61m | Ibri Road [] 64m
+5600,CRT Seasonal,56.5,23.2,56.50043,23.235865,Primary Account Tariff,Proposed,8.0,EXisting,448892.2402036572,2569718.243727859,154,Ibri Road [] 61m | Ibri Road [] 64m
+5632,CRT Seasonal,56.5,23.2,56.477011,23.214112,CRT Seasonal,Agricultural,4.0,EXisting,446487.6808574812,2567318.4895778773,126,Morgan Muscat Bakery and Market [shop=supermarket] 18m | جامع حلة النهضة [amenity=place_of_worship] 26m
+5633,CRT Seasonal,56.5,23.2,56.477011,23.214112,CRT Seasonal,Agricultural,4.0,EXisting,446487.6808574812,2567318.4895778773,126,Morgan Muscat Bakery and Market [shop=supermarket] 18m | جامع حلة النهضة [amenity=place_of_worship] 26m
+5634,CRT Seasonal,56.5,23.2,56.477011,23.214112,CRT Seasonal,Agricultural,4.0,EXisting,446487.6808574812,2567318.4895778773,126,Morgan Muscat Bakery and Market [shop=supermarket] 18m | جامع حلة النهضة [amenity=place_of_worship] 26m
+5635,CRT Seasonal,56.5,23.2,56.477011,23.214112,CRT Seasonal,Agricultural,4.0,EXisting,446487.6808574812,2567318.4895778773,126,Morgan Muscat Bakery and Market [shop=supermarket] 18m | جامع حلة النهضة [amenity=place_of_worship] 26m
+5859,CRT Seasonal,56.5,23.2,56.49799,23.240188,CRT Seasonal,Residential,0.0,EXisting,448644.2697228029,2570197.6865440323,-1,? [amenity=place_of_worship] 69m
+5918,CRT Seasonal,56.5,23.2,56.478611,23.204681,CRT Seasonal,Agricultural,4.0,EXisting,446647.65189472673,2566273.834753444,-1,مركز الوفاء لتأهيل الأطفال المعاقين [amenity=school] 26m
+6584,CRT Seasonal,56.5,23.3,56.548523,23.277596,Additional Account Tariff,Residential-Commercial,2.0,EXisting,453826.77108342224,2574321.99277256,71,
+6585,CRT Seasonal,56.5,23.3,56.548523,23.277596,Additional Account Tariff,Residential-Commercial,2.0,EXisting,453826.77108342224,2574321.99277256,71,
+6586,CRT Seasonal,56.5,23.3,56.548523,23.277596,Additional Account Tariff,Residential-Commercial,2.0,EXisting,453826.77108342224,2574321.99277256,71,
+6587,CRT Seasonal,56.5,23.3,56.548523,23.277596,Additional Account Tariff,Residential-Commercial,2.0,EXisting,453826.77108342224,2574321.99277256,71,
+6588,CRT Seasonal,56.5,23.3,56.548523,23.277596,Additional Account Tariff,Residential-Commercial,2.0,EXisting,453826.77108342224,2574321.99277256,71,
+6786,CRT Time of Use,56.6,23.3,56.554294,23.291291,CRT Time of Use,Agricultural,4.0,EXisting,454421.65038966446,2575836.285547661,65,
+6787,CRT Time of Use,56.6,23.3,56.554294,23.291291,CRT Time of Use,Agricultural,4.0,EXisting,454421.65038966446,2575836.285547661,65,
+6788,CRT Time of Use,56.6,23.3,56.554294,23.291291,CRT Time of Use,Agricultural,4.0,EXisting,454421.65038966446,2575836.285547661,65,
+6789,CRT Time of Use,56.6,23.3,56.554294,23.291291,CRT Time of Use,Agricultural,4.0,EXisting,454421.65038966446,2575836.285547661,65,
+6790,CRT Time of Use,56.6,23.3,56.554294,23.291291,CRT Time of Use,Agricultural,4.0,EXisting,454421.65038966446,2575836.285547661,65,
+6791,CRT Time of Use,56.6,23.3,56.554294,23.291291,CRT Time of Use,Agricultural,4.0,EXisting,454421.65038966446,2575836.285547661,65,
+6792,CRT Time of Use,56.6,23.3,56.554294,23.291291,CRT Time of Use,Agricultural,4.0,EXisting,454421.65038966446,2575836.285547661,65,
+6793,CRT Time of Use,56.6,23.3,56.554294,23.291291,CRT Time of Use,Agricultural,4.0,EXisting,454421.65038966446,2575836.285547661,65,
+6794,CRT Time of Use,56.6,23.3,56.554294,23.291291,CRT Time of Use,Agricultural,4.0,EXisting,454421.65038966446,2575836.285547661,65,
+6896,CRT Time of Use,56.5,23.3,56.525399,23.259777,Government,Agricultural,4.0,EXisting,451455.3531387724,2572356.8737430484,58,
+6897,CRT Time of Use,56.5,23.3,56.525399,23.259777,Government,Agricultural,4.0,EXisting,451455.3531387724,2572356.8737430484,58,
+6898,CRT Time of Use,56.5,23.3,56.525399,23.259777,Government,Agricultural,4.0,EXisting,451455.3531387724,2572356.8737430484,58,
+6899,CRT Time of Use,56.5,23.3,56.525399,23.259777,Government,Agricultural,4.0,EXisting,451455.3531387724,2572356.8737430484,58,
+6901,CRT Time of Use,56.5,23.3,56.525399,23.259777,Government,Agricultural,4.0,EXisting,451455.3531387724,2572356.8737430484,58,
+6902,CRT Time of Use,56.5,23.3,56.525399,23.259777,Government,Agricultural,4.0,EXisting,451455.3531387724,2572356.8737430484,58,
+6969,CRT Seasonal,56.5,23.1,56.474698,23.143052,CRT Seasonal,Agricultural,4.0,EXisting,446222.6209889196,2559452.6139150565,-1,
+7506,CRT Seasonal,56.6,23.3,56.560898,23.302439,CRT Seasonal,Agricultural,4.0,EXisting,455100.7321493883,2577068.375557117,-1,Qanat [] 57m
+7730,CRT Seasonal,56.5,23.3,56.545789,23.287204,CRT Seasonal,Agricultural,4.0,EXisting,453550.48976500926,2575386.530192453,-1,? [man_made=tower;building=yes] 36m | ? [man_made=tower;building=yes] 78m
+7831,CRT Seasonal,56.5,23.2,56.514334,23.242372,CRT Seasonal,Residential,0.0,EXisting,450317.1013926289,2570433.7814684585,-1,? [amenity=school] 32m | مدرسة المرتفــع للتعليم الاساسى للبنين 9-10 [building=school] 35m | مدرسة البراعم للتعليم الاساسي 1-4 [building=school] 76m
+7832,CRT Seasonal,56.5,23.2,56.516854,23.229354,CRT Seasonal,Agricultural,4.0,EXisting,450570.1033005909,2568991.7539121374,-1,
+7849,CRT Seasonal,56.6,23.3,56.605195,23.318452,CRT Seasonal,Residential-Commercial,2.0,EXisting,459635.0963929505,2578828.0693233185,-1,
+8117,CRT Seasonal,56.5,23.3,56.549269,23.278973,CRT Seasonal,Residential-Commercial,2.0,EXisting,453903.5406509418,2574474.1975286896,70,
+8118,CRT Seasonal,56.5,23.3,56.549269,23.278973,CRT Seasonal,Residential-Commercial,2.0,EXisting,453903.5406509418,2574474.1975286896,70,
+8119,CRT Seasonal,56.5,23.3,56.549269,23.278973,CRT Seasonal,Residential-Commercial,2.0,EXisting,453903.5406509418,2574474.1975286896,70,
+8120,CRT Seasonal,56.5,23.3,56.549269,23.278973,CRT Seasonal,Residential-Commercial,2.0,EXisting,453903.5406509418,2574474.1975286896,70,
+8121,CRT Seasonal,56.5,23.3,56.549269,23.278973,CRT Seasonal,Residential-Commercial,2.0,EXisting,453903.5406509418,2574474.1975286896,70,
+8122,CRT Seasonal,56.5,23.3,56.549269,23.278973,CRT Seasonal,Residential-Commercial,2.0,EXisting,453903.5406509418,2574474.1975286896,70,
+8123,CRT Seasonal,56.5,23.3,56.549269,23.278973,CRT Seasonal,Residential-Commercial,2.0,EXisting,453903.5406509418,2574474.1975286896,70,
+8221,CRT Seasonal,56.6,23.3,56.611168,23.323851,Commercial,Agricultural,4.0,EXisting,460247.3888843013,2579424.1177987847,-1,
+8437,CRT Seasonal,56.5,23.2,56.511491,23.240766,CRT Seasonal,Agricultural,4.0,EXisting,450025.6637165486,2570256.9635378853,-1,
+8443,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0.0,EXisting,450471.0316532576,2568305.922663677,96,
+8444,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0.0,EXisting,450471.0316532576,2568305.922663677,96,
+8445,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0.0,EXisting,450471.0316532576,2568305.922663677,96,
+8446,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0.0,EXisting,450471.0316532576,2568305.922663677,96,
+8447,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0.0,EXisting,450471.0316532576,2568305.922663677,96,
+8448,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0.0,EXisting,450471.0316532576,2568305.922663677,96,
+8449,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0.0,EXisting,450471.0316532576,2568305.922663677,96,
+8450,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0.0,EXisting,450471.0316532576,2568305.922663677,96,
+8451,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0.0,EXisting,450471.0316532576,2568305.922663677,96,
+8452,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0.0,EXisting,450471.0316532576,2568305.922663677,96,
+8453,CRT Seasonal,56.5,23.2,56.515908,23.223156,CRT Seasonal,Residential,0.0,EXisting,450471.0316532576,2568305.922663677,96,
+8494,CRT Seasonal,56.6,23.3,56.550479,23.282436,Primary Account Tariff,Residential,0.0,EXisting,454028.4784700747,2574857.1882158946,69,
+8495,CRT Seasonal,56.6,23.3,56.550479,23.282436,Primary Account Tariff,Residential,0.0,EXisting,454028.4784700747,2574857.1882158946,69,
+8496,CRT Seasonal,56.6,23.3,56.550479,23.282436,Primary Account Tariff,Residential,0.0,EXisting,454028.4784700747,2574857.1882158946,69,
+8499,CRT Time of Use,56.6,23.3,56.550479,23.282436,Primary Account Tariff,Residential,0.0,EXisting,454028.4784700747,2574857.1882158946,69,
+8501,CRT Seasonal,56.6,23.3,56.550479,23.282436,Primary Account Tariff,Residential,0.0,EXisting,454028.4784700747,2574857.1882158946,69,
+8508,CRT Seasonal,56.6,23.3,56.550479,23.282436,Primary Account Tariff,Residential,0.0,EXisting,454028.4784700747,2574857.1882158946,69,
+8705,CRT Seasonal,56.6,23.3,56.55328,23.278593,CRT Seasonal,Residential,5.0,EXisting,454313.62355371466,2574430.8595627863,67,
+8706,CRT Seasonal,56.6,23.3,56.55328,23.278593,CRT Seasonal,Residential,5.0,EXisting,454313.62355371466,2574430.8595627863,67,
+8707,CRT Seasonal,56.6,23.3,56.55328,23.278593,CRT Seasonal,Residential,5.0,EXisting,454313.62355371466,2574430.8595627863,67,
+8712,CRT Seasonal,56.6,23.3,56.55328,23.278593,CRT Seasonal,Residential,5.0,EXisting,454313.62355371466,2574430.8595627863,67,
+8713,CRT Seasonal,56.6,23.3,56.55328,23.278593,CRT Seasonal,Residential,5.0,EXisting,454313.62355371466,2574430.8595627863,67,
+8759,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0.0,EXisting,453272.38837221696,2573914.223875173,64,
+8760,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0.0,EXisting,453272.38837221696,2573914.223875173,64,
+8761,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0.0,EXisting,453272.38837221696,2573914.223875173,64,
+8762,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0.0,EXisting,453272.38837221696,2573914.223875173,64,
+8763,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0.0,EXisting,453272.38837221696,2573914.223875173,64,
+8764,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0.0,EXisting,453272.38837221696,2573914.223875173,64,
+8765,CRT Seasonal,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0.0,EXisting,453272.38837221696,2573914.223875173,64,
+8766,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0.0,EXisting,453272.38837221696,2573914.223875173,64,
+8767,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0.0,EXisting,453272.38837221696,2573914.223875173,64,
+8768,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0.0,EXisting,453272.38837221696,2573914.223875173,64,
+8769,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0.0,EXisting,453272.38837221696,2573914.223875173,64,
+8770,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0.0,EXisting,453272.38837221696,2573914.223875173,64,
+8771,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0.0,EXisting,453272.38837221696,2573914.223875173,64,
+8772,CRT Time of Use,56.5,23.3,56.543115,23.273897,CRT Time of Use,Residential,0.0,EXisting,453272.38837221696,2573914.223875173,64,
+8773,CRT Time of Use,56.5,23.3,56.543205,23.273795,Government,Residential,1.0,EXisting,453281.5576252882,2573902.9028637013,64,
+8774,CRT Seasonal,56.5,23.3,56.543205,23.273795,Government,Residential,1.0,EXisting,453281.5576252882,2573902.9028637013,64,
+8872,CRT Time of Use,56.6,23.3,56.558695,23.297401,CRT Time of Use,Agricultural,4.0,EXisting,454873.7676432889,2576511.3224058347,-1,
+9093,CRT Seasonal,56.4,23.2,56.418773,23.246161,CRT Seasonal,Agricultural,4.0,EXisting,440542.821359992,2570889.169379476,-1,
+9094,CRT Time of Use,56.4,23.2,56.418773,23.246161,CRT Seasonal,Agricultural,4.0,EXisting,440542.821359992,2570889.169379476,-1,
+9114,CRT Time of Use,56.5,23.2,56.454892,23.22112,CRT Time of Use,Residential-Commercial,2.0,EXisting,444227.3246965952,2568102.63440157,81,D Building [building=yes] 5m | Hostel [amenity=parking] 12m | Hostel Gards [building=yes] 41m
+9115,CRT Time of Use,56.5,23.2,56.454892,23.22112,CRT Time of Use,Residential-Commercial,2.0,EXisting,444227.3246965952,2568102.63440157,81,D Building [building=yes] 5m | Hostel [amenity=parking] 12m | Hostel Gards [building=yes] 41m
+9116,CRT Time of Use,56.5,23.2,56.454892,23.22112,CRT Time of Use,Residential-Commercial,2.0,EXisting,444227.3246965952,2568102.63440157,81,D Building [building=yes] 5m | Hostel [amenity=parking] 12m | Hostel Gards [building=yes] 41m
+9117,CRT Time of Use,56.5,23.2,56.454892,23.22112,CRT Time of Use,Residential-Commercial,2.0,EXisting,444227.3246965952,2568102.63440157,81,D Building [building=yes] 5m | Hostel [amenity=parking] 12m | Hostel Gards [building=yes] 41m
+9118,CRT Time of Use,56.5,23.2,56.454892,23.22112,CRT Time of Use,Residential-Commercial,2.0,EXisting,444227.3246965952,2568102.63440157,81,D Building [building=yes] 5m | Hostel [amenity=parking] 12m | Hostel Gards [building=yes] 41m
+9230,CRT Seasonal,56.5,23.2,56.495041,23.216813,CRT Seasonal,Residential,0.0,EXisting,448333.58595136297,2567610.982274305,139,Al-huad Pharmacy [amenity=pharmacy;healthcare=pharmacy] 27m
+9286,CRT Time of Use,56.5,23.2,56.48747,23.217121,CRT Time of Use,Residential,0.0,EXisting,447559.0420969256,2567647.7913059234,-1,رمال الظاهرة لغسيل السيارات [amenity=car_wash] 35m | الربيع للحلاقة [shop=hairdresser] 46m | أحلام الواعدة للمواد الغذائية [shop=yes] 49m
+9309,CRT Seasonal,56.5,23.2,56.491746,23.217225,CRT Seasonal,Residential-Commercial,2.0,EXisting,447996.6014030984,2567657.7682348345,138,المنظري للتصوير [craft=photographer] 20m | Ibri Opticals [shop=optician] 29m | Muscat Pharmacy - Ibri branch [amenity=pharmacy;healthcare=pharmacy] 47m
+9311,CRT Time of Use,56.5,23.2,56.49034,23.217784,CRT Time of Use,Residential-Commercial,2.0,EXisting,447852.9570534807,2567720.156569018,137,Makkah Hypermarket [shop=supermarket] 65m | ? [amenity=atm] 73m | Time Zone [shop=watches] 77m
+9389,CRT Time of Use,56.4,23.2,56.44256,23.224416,Commercial,Residential,0.0,EXisting,442966.9497810245,2568472.309734947,-1,
+9778,CRT Seasonal,56.5,23.2,56.458512,23.216572,CRT Seasonal,Residential,0.0,EXisting,444595.8363252295,2567597.757742852,78,Chicking [amenity=fast_food] 13m | Star Cinema [amenity=cinema] 31m | ? [amenity=food_court] 33m
+9779,CRT Seasonal,56.5,23.2,56.458512,23.216572,CRT Seasonal,Residential,0.0,EXisting,444595.8363252295,2567597.757742852,78,Chicking [amenity=fast_food] 13m | Star Cinema [amenity=cinema] 31m | ? [amenity=food_court] 33m
+9780,CRT Seasonal,56.5,23.2,56.458512,23.216572,CRT Seasonal,Residential,0.0,EXisting,444595.8363252295,2567597.757742852,78,Chicking [amenity=fast_food] 13m | Star Cinema [amenity=cinema] 31m | ? [amenity=food_court] 33m
+9781,CRT Seasonal,56.5,23.2,56.458512,23.216572,CRT Seasonal,Residential,0.0,EXisting,444595.8363252295,2567597.757742852,78,Chicking [amenity=fast_food] 13m | Star Cinema [amenity=cinema] 31m | ? [amenity=food_court] 33m
+9782,CRT Seasonal,56.5,23.2,56.458512,23.216572,CRT Seasonal,Residential,0.0,EXisting,444595.8363252295,2567597.757742852,78,Chicking [amenity=fast_food] 13m | Star Cinema [amenity=cinema] 31m | ? [amenity=food_court] 33m
+9783,CRT Seasonal,56.5,23.2,56.458512,23.216572,CRT Seasonal,Residential,0.0,EXisting,444595.8363252295,2567597.757742852,78,Chicking [amenity=fast_food] 13m | Star Cinema [amenity=cinema] 31m | ? [amenity=food_court] 33m
+9784,CRT Seasonal,56.5,23.2,56.458512,23.216572,CRT Seasonal,Residential,0.0,EXisting,444595.8363252295,2567597.757742852,78,Chicking [amenity=fast_food] 13m | Star Cinema [amenity=cinema] 31m | ? [amenity=food_court] 33m
+9785,CRT Seasonal,56.5,23.2,56.458512,23.216572,CRT Seasonal,Residential,0.0,EXisting,444595.8363252295,2567597.757742852,78,Chicking [amenity=fast_food] 13m | Star Cinema [amenity=cinema] 31m | ? [amenity=food_court] 33m
+9786,CRT Seasonal,56.5,23.2,56.458512,23.216572,CRT Seasonal,Residential,0.0,EXisting,444595.8363252295,2567597.757742852,78,Chicking [amenity=fast_food] 13m | Star Cinema [amenity=cinema] 31m | ? [amenity=food_court] 33m
+9787,CRT Seasonal,56.5,23.2,56.45849,23.216694,CRT Seasonal,Residential,0.0,EXisting,444593.63559646544,2567611.2722836924,78,Chicking [amenity=fast_food] 9m | ? [amenity=food_court] 24m | Deli Pizza [amenity=fast_food] 29m
+9788,CRT Seasonal,56.5,23.2,56.45849,23.216694,CRT Seasonal,Residential,0.0,EXisting,444593.63559646544,2567611.2722836924,78,Chicking [amenity=fast_food] 9m | ? [amenity=food_court] 24m | Deli Pizza [amenity=fast_food] 29m
+9790,CRT Seasonal,56.4,23.2,56.446459,23.221626,CRT Seasonal,Residential,0.0,EXisting,443364.6979753776,2568161.913627804,-1,chamber of commerce and industry oman [building=yes] 21m | Directorate General Of Manpower [building=yes] 76m
+10080,CRT Time of Use,56.5,23.2,56.487773,23.21571,Commercial,Residential-Commercial,2.0,EXisting,447589.4944552306,2567491.4761001123,-1,New Al Yahar Yemeni Restaurant [amenity=restaurant] 6m | Al Laith Pastries & Sweets [shop=pastry] 6m | Burthukal Juices [amenity=fast_food] 20m
+10214,CRT Seasonal,56.5,23.2,56.497205,23.217314,Primary Account Tariff,Residential,0.0,EXisting,448555.1980143573,2567665.678192588,135,Omantel [office=telecommunication] 16m | Omantel [office=telecommunication] 16m | ? [amenity=shelter] 52m
+10215,CRT Seasonal,56.5,23.2,56.497205,23.217314,Primary Account Tariff,Residential,0.0,EXisting,448555.1980143573,2567665.678192588,135,Omantel [office=telecommunication] 16m | Omantel [office=telecommunication] 16m | ? [amenity=shelter] 52m
+10216,CRT Seasonal,56.5,23.2,56.497205,23.217314,Primary Account Tariff,Residential,0.0,EXisting,448555.1980143573,2567665.678192588,135,Omantel [office=telecommunication] 16m | Omantel [office=telecommunication] 16m | ? [amenity=shelter] 52m
+10217,CRT Seasonal,56.5,23.2,56.497205,23.217314,Primary Account Tariff,Residential,0.0,EXisting,448555.1980143573,2567665.678192588,135,Omantel [office=telecommunication] 16m | Omantel [office=telecommunication] 16m | ? [amenity=shelter] 52m
+10218,CRT Seasonal,56.5,23.2,56.497205,23.217314,Primary Account Tariff,Residential,0.0,EXisting,448555.1980143573,2567665.678192588,135,Omantel [office=telecommunication] 16m | Omantel [office=telecommunication] 16m | ? [amenity=shelter] 52m
+10219,CRT Seasonal,56.5,23.2,56.497205,23.217314,Primary Account Tariff,Residential,0.0,EXisting,448555.1980143573,2567665.678192588,135,Omantel [office=telecommunication] 16m | Omantel [office=telecommunication] 16m | ? [amenity=shelter] 52m
+10222,CRT Seasonal,56.5,23.2,56.497205,23.217314,Primary Account Tariff,Residential,0.0,EXisting,448555.1980143573,2567665.678192588,135,Omantel [office=telecommunication] 16m | Omantel [office=telecommunication] 16m | ? [amenity=shelter] 52m
+10296,CRT Seasonal,56.5,23.2,56.494515,23.216746,CRT Seasonal,Residential,0.0,EXisting,448279.7398978282,2567603.75207778,139,Muscat Bank [amenity=bank] 35m | ? [amenity=shelter] 54m
+10501,CRT Seasonal,56.5,23.3,56.499849,23.258018,CRT Seasonal,Residential,0.0,EXisting,448841.2507942266,2572170.9205405246,-1,
+10715,CRT Seasonal,56.6,23.3,56.556799,23.250585,CRT Seasonal,Commercial,3.0,EXisting,454664.0456832693,2571329.1091915304,30,
+10718,CRT Seasonal,56.6,23.3,56.556799,23.250585,CRT Seasonal,Commercial,3.0,EXisting,454664.0456832693,2571329.1091915304,30,
+10722,CRT Seasonal,56.6,23.3,56.556799,23.250585,CRT Seasonal,Commercial,3.0,EXisting,454664.0456832693,2571329.1091915304,30,
+10724,CRT Seasonal,56.6,23.3,56.556799,23.250585,CRT Seasonal,Commercial,3.0,EXisting,454664.0456832693,2571329.1091915304,30,
+10725,CRT Seasonal,56.6,23.3,56.556799,23.250585,CRT Seasonal,Commercial,3.0,EXisting,454664.0456832693,2571329.1091915304,30,
+10780,CRT Seasonal,56.5,23.2,56.50032,23.218979,Commercial,Residential,99.0,EXisting,448874.5568635403,2567848.903944196,-1,المه‍ا [amenity=fuel] 18m | ? [amenity=parking] 18m | Mira Cafe [amenity=cafe] 33m
+10848,CRT Seasonal,56.5,23.2,56.498186,23.2174,Additional Account Tariff,Residential,0.0,EXisting,448655.6062831836,2567674.8519697418,135,Oxygen Pharmacy - Ibri [amenity=pharmacy;healthcare=pharmacy] 20m
+10987,CRT Seasonal,56.6,23.3,56.612464,23.321579,Commercial,Residential-Commercial,2.0,EXisting,460379.2145291633,2579172.2383506177,1,? [amenity=veterinary] 9m | Maqniyat Road [] 56m
+10990,CRT Seasonal,56.6,23.3,56.612464,23.321579,Commercial,Residential-Commercial,2.0,EXisting,460379.2145291633,2579172.2383506177,1,? [amenity=veterinary] 9m | Maqniyat Road [] 56m
+11127,CRT Seasonal,56.6,23.3,56.609308,23.319044,Commercial,Residential,5.0,EXisting,460055.79136796034,2578892.4662066856,-1,نفط عمان [amenity=fuel] 35m
+11475,CRT Seasonal,56.5,23.2,56.488368,23.197366,Commercial,Residential,1.0,EXisting,447643.2294017393,2565460.476835464,-1,? [amenity=place_of_worship] 13m
+11658,CRT Seasonal,56.5,23.3,56.499016,23.255389,Primary Account Tariff (with National Subsidy),Residential,99.0,EXisting,448755.0396789552,2571880.1677741427,-1,
+11676,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0.0,EXisting,447005.6044699502,2567480.260438847,127,
+11677,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0.0,EXisting,447005.6044699502,2567480.260438847,127,
+11678,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0.0,EXisting,447005.6044699502,2567480.260438847,127,
+11679,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0.0,EXisting,447005.6044699502,2567480.260438847,127,
+11680,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0.0,EXisting,447005.6044699502,2567480.260438847,127,
+11681,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0.0,EXisting,447005.6044699502,2567480.260438847,127,
+11682,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0.0,EXisting,447005.6044699502,2567480.260438847,127,
+11683,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0.0,EXisting,447005.6044699502,2567480.260438847,127,
+11684,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0.0,EXisting,447005.6044699502,2567480.260438847,127,
+11685,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0.0,EXisting,447005.6044699502,2567480.260438847,127,
+11686,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0.0,EXisting,447005.6044699502,2567480.260438847,127,
+11687,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0.0,EXisting,447005.6044699502,2567480.260438847,127,
+11688,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0.0,EXisting,447005.6044699502,2567480.260438847,127,
+11689,CRT Time of Use,56.5,23.2,56.482067,23.21559,CRT Time of Use,Residential,0.0,EXisting,447005.6044699502,2567480.260438847,127,
+11721,CRT Time of Use,56.5,23.2,56.485712,23.214292,CRT Time of Use,Residential,0.0,EXisting,447378.055826904,2567335.2399370205,132,منزل . ابراهيم حامد دعدير [amenity=library] 56m
+11722,CRT Time of Use,56.5,23.2,56.485712,23.214292,CRT Time of Use,Residential,0.0,EXisting,447378.055826904,2567335.2399370205,132,منزل . ابراهيم حامد دعدير [amenity=library] 56m
+11723,CRT Time of Use,56.5,23.2,56.485712,23.214292,CRT Time of Use,Residential,0.0,EXisting,447378.055826904,2567335.2399370205,132,منزل . ابراهيم حامد دعدير [amenity=library] 56m
+11724,CRT Time of Use,56.5,23.2,56.485712,23.214292,CRT Time of Use,Residential,0.0,EXisting,447378.055826904,2567335.2399370205,132,منزل . ابراهيم حامد دعدير [amenity=library] 56m
+11725,CRT Time of Use,56.5,23.2,56.485712,23.214292,CRT Time of Use,Residential,0.0,EXisting,447378.055826904,2567335.2399370205,132,منزل . ابراهيم حامد دعدير [amenity=library] 56m
+11726,CRT Time of Use,56.5,23.2,56.485712,23.214292,CRT Time of Use,Residential,0.0,EXisting,447378.055826904,2567335.2399370205,132,منزل . ابراهيم حامد دعدير [amenity=library] 56m
+11727,CRT Time of Use,56.5,23.2,56.485712,23.214292,CRT Time of Use,Residential,0.0,EXisting,447378.055826904,2567335.2399370205,132,منزل . ابراهيم حامد دعدير [amenity=library] 56m
+11728,CRT Time of Use,56.5,23.2,56.485712,23.214292,CRT Time of Use,Residential,0.0,EXisting,447378.055826904,2567335.2399370205,132,منزل . ابراهيم حامد دعدير [amenity=library] 56m
+11828,CRT Time of Use,56.5,23.2,56.472184,23.216657,Commercial,Residential-Commercial,2.0,EXisting,445994.79492421553,2567602.0216235626,-1,Dhofar Insurance Company Ibri Branch [office=insurance] 34m
+11992,CRT Seasonal,56.5,23.2,56.469835,23.216765,CRT Seasonal,Residential-Commercial,2.0,EXisting,445754.48823816585,2567614.8526763963,120,مطعم و مشاوي الفوار [amenity=restaurant;building=yes] 10m | Bake it Bakery [shop=bakery;building=yes] 73m
+11993,CRT Seasonal,56.5,23.2,56.469835,23.216765,CRT Seasonal,Residential-Commercial,2.0,EXisting,445754.48823816585,2567614.8526763963,120,مطعم و مشاوي الفوار [amenity=restaurant;building=yes] 10m | Bake it Bakery [shop=bakery;building=yes] 73m
+11994,CRT Seasonal,56.5,23.2,56.469835,23.216765,CRT Seasonal,Residential-Commercial,2.0,EXisting,445754.48823816585,2567614.8526763963,120,مطعم و مشاوي الفوار [amenity=restaurant;building=yes] 10m | Bake it Bakery [shop=bakery;building=yes] 73m
+11998,CRT Seasonal,56.5,23.2,56.469835,23.216765,CRT Seasonal,Residential-Commercial,2.0,EXisting,445754.48823816585,2567614.8526763963,120,مطعم و مشاوي الفوار [amenity=restaurant;building=yes] 10m | Bake it Bakery [shop=bakery;building=yes] 73m
+11999,CRT Seasonal,56.5,23.2,56.469835,23.216765,CRT Seasonal,Residential-Commercial,2.0,EXisting,445754.48823816585,2567614.8526763963,120,مطعم و مشاوي الفوار [amenity=restaurant;building=yes] 10m | Bake it Bakery [shop=bakery;building=yes] 73m
+12038,CRT Seasonal,56.5,23.2,56.486851,23.217098,Commercial,Residential,0.0,EXisting,447495.6971949224,2567645.4685603264,-1,مقهى الرونق الذهبي [amenity=fast_food] 12m | أحلام الواعدة للمواد الغذائية [shop=yes] 18m | الربيع للحلاقة [shop=hairdresser] 21m
+12734,CRT Seasonal,56.5,23.2,56.484712,23.218928,CRT Seasonal,Residential,5.0,EXisting,447277.5535351791,2567848.8346698508,136,
+12966,CRT Seasonal,56.5,23.2,56.472914,23.162785,CRT Seasonal,Agricultural,4.0,EXisting,446047.88369741343,2561637.817141741,-1,? [amenity=school] 50m
+13030,CRT Time of Use,56.5,23.2,56.468894,23.161742,Commercial,Industrial,7.0,EXisting,445635.9704287264,2561523.846241102,-1,
+13476,CRT Seasonal,56.5,23.2,56.4687,23.224243,CRT Seasonal,Residential,0.0,EXisting,445641.3815936912,2568443.137021734,-1,
+13477,CRT Seasonal,56.5,23.2,56.468669,23.224283,CRT Seasonal,Residential,0.0,EXisting,445638.2260376308,2568447.5768666,-1,
+13512,CRT Fixed Rate,56.5,23.2,56.511372,23.24143,CRT Seasonal,Agricultural,4.0,EXisting,450013.73722404457,2570330.5132086435,-1,
+13715,CRT Seasonal,56.5,23.2,56.467135,23.15895,CRT Seasonal,Industrial,7.0,EXisting,445454.7848884434,2561215.4146612845,35,
+13757,CRT Seasonal,56.5,23.2,56.468181,23.16501,CRT Seasonal,Industrial,7.0,EXisting,445564.3072219716,2561885.8974992507,-1,
+13795,CRT Seasonal,56.5,23.2,56.4654,23.158477,CRT Seasonal,Residential,0.0,EXisting,445276.9907992131,2561163.7017402,-1,
+13804,CRT Seasonal,56.5,23.2,56.46918,23.162329,CRT Seasonal,Industrial,7.0,EXisting,445665.4827938808,2561588.723531206,-1,
+13966,CRT Seasonal,56.5,23.2,56.492231,23.22095,CRT Seasonal,Residential,0.0,EXisting,448047.6672655981,2568069.9738807706,149,
+13969,CRT Seasonal,56.5,23.2,56.492231,23.22095,CRT Seasonal,Residential,0.0,EXisting,448047.6672655981,2568069.9738807706,149,
+13970,CRT Seasonal,56.5,23.2,56.492231,23.22095,CRT Seasonal,Residential,0.0,EXisting,448047.6672655981,2568069.9738807706,149,
+14007,CRT Seasonal,56.5,23.2,56.492231,23.22095,CRT Seasonal,Residential,0.0,EXisting,448047.6672655981,2568069.9738807706,149,
+14011,CRT Seasonal,56.5,23.2,56.492231,23.22095,CRT Seasonal,Residential,0.0,EXisting,448047.6672655981,2568069.9738807706,149,
+14072,CRT Seasonal,56.7,23.3,56.738873,23.26494,CRT Seasonal,Residential,0.0,EXisting,473291.7551956321,2572873.0764219365,-1,? [amenity=place_of_worship;building=yes] 15m | ? [amenity=place_of_worship] 15m
+14181,CRT Seasonal,56.5,23.2,56.498586,23.234862,Commercial,Residential,99.0,EXisting,448703.205848364,2569607.85580311,153,
+14272,CRT Seasonal,56.5,23.2,56.471102,23.169561,CRT Seasonal,Residential,0.0,EXisting,445865.1293067726,2562388.628715291,33,
+14275,CRT Seasonal,56.5,23.2,56.471102,23.169561,CRT Seasonal,Residential,0.0,EXisting,445865.1293067726,2562388.628715291,33,
+14276,CRT Seasonal,56.5,23.2,56.471102,23.169561,CRT Seasonal,Residential,0.0,EXisting,445865.1293067726,2562388.628715291,33,
+14279,CRT Seasonal,56.5,23.2,56.471102,23.169561,CRT Seasonal,Residential,0.0,EXisting,445865.1293067726,2562388.628715291,33,
+14283,CRT Seasonal,56.5,23.2,56.471102,23.169561,CRT Seasonal,Residential,0.0,EXisting,445865.1293067726,2562388.628715291,33,
+14722,CRT Time of Use,56.5,23.2,56.464283,23.160194,CRT Time of Use,Industrial,7.0,EXisting,445163.3485361355,2561354.2027779818,35,
+14842,CRT Seasonal,56.4,23.2,56.413027,23.249698,CRT Seasonal,Residential-Commercial,2.0,EXisting,439956.59797827614,2571283.105973553,-1,? [amenity=restaurant] 16m | Oman Oil [amenity=fuel;building=yes] 19m
+14843,CRT Seasonal,56.4,23.2,56.413027,23.249698,CRT Seasonal,Residential-Commercial,2.0,EXisting,439956.59797827614,2571283.105973553,-1,? [amenity=restaurant] 16m | Oman Oil [amenity=fuel;building=yes] 19m
+15033,CRT Time of Use,56.5,23.2,56.488405,23.207842,Commercial,Residential,1.0,EXisting,447651.09577446297,2566620.215549034,-1,Alshaabiyah shopping center مركز الشعبية للتسوق [building=commercial] 25m | Al Hayal Shopping Center [shop=supermarket] 31m
+15036,CRT Seasonal,56.5,23.2,56.488405,23.207842,Commercial,Residential,1.0,EXisting,447651.09577446297,2566620.215549034,-1,Alshaabiyah shopping center مركز الشعبية للتسوق [building=commercial] 25m | Al Hayal Shopping Center [shop=supermarket] 31m
+15248,CRT Seasonal,56.6,23.2,56.597726,23.221075,CRT Seasonal,Residential,0.0,EXisting,458841.55479542527,2568050.013454663,-1,? [amenity=place_of_worship] 16m | ? [amenity=toilets] 33m | ? [amenity=drinking_water] 34m
+15787,CRT Seasonal,56.5,23.2,56.49778,23.234803,CRT Seasonal,Residential,99.0,EXisting,448620.7245550987,2569601.609069026,153,
+16022,CRT Seasonal,56.5,23.2,56.495964,23.233307,Primary Account Tariff,Residential-Commercial,2.0,EXisting,448434.3618321968,2569436.636568671,153,? [amenity=parking] 46m | صناعية عبري [landuse=industrial] 76m
+16334,CRT Seasonal,56.5,23.2,56.464519,23.160463,CRT Time of Use,Industrial,7.0,EXisting,445187.6157432805,2561383.893688341,35,
+16335,CRT Seasonal,56.5,23.2,56.464519,23.160463,CRT Time of Use,Industrial,7.0,EXisting,445187.6157432805,2561383.893688341,35,
+16354,CRT Seasonal,56.4,23.2,56.446261,23.223774,CRT Seasonal,Residential,5.0,EXisting,443345.3454819692,2568399.78820862,-1,
+16525,CRT Seasonal,56.5,23.2,56.493465,23.235349,CRT Seasonal,Residential,1.0,EXisting,448179.4842943121,2569663.587663061,156,? [amenity=place_of_worship] 55m
+16526,CRT Seasonal,56.5,23.2,56.493465,23.235349,CRT Seasonal,Residential,1.0,EXisting,448179.4842943121,2569663.587663061,156,? [amenity=place_of_worship] 55m
+16527,CRT Seasonal,56.5,23.2,56.493465,23.235349,CRT Seasonal,Residential,1.0,EXisting,448179.4842943121,2569663.587663061,156,? [amenity=place_of_worship] 55m
+16528,CRT Seasonal,56.5,23.2,56.493465,23.235349,CRT Seasonal,Residential,1.0,EXisting,448179.4842943121,2569663.587663061,156,? [amenity=place_of_worship] 55m
+16529,CRT Seasonal,56.5,23.2,56.493465,23.235349,CRT Seasonal,Residential,1.0,EXisting,448179.4842943121,2569663.587663061,156,? [amenity=place_of_worship] 55m
+16530,CRT Seasonal,56.5,23.2,56.493465,23.235349,CRT Seasonal,Residential,1.0,EXisting,448179.4842943121,2569663.587663061,156,? [amenity=place_of_worship] 55m
+16531,CRT Seasonal,56.5,23.2,56.493465,23.235349,CRT Seasonal,Residential,1.0,EXisting,448179.4842943121,2569663.587663061,156,? [amenity=place_of_worship] 55m
+17152,CRT Seasonal,56.7,23.3,56.724228,23.274439,CRT Seasonal,Agricultural,4.0,EXisting,471795.846535015,2573927.429459404,-1,
+17392,CRT Seasonal,56.5,23.2,56.49409,23.235565,CRT Seasonal,Residential,1.0,EXisting,448243.5086971003,2569687.277282548,156,? [amenity=parking] 62m
+17394,CRT Time of Use,56.5,23.2,56.494114,23.237998,CRT Time of Use,Residential,99.0,EXisting,448246.9023210871,2569956.616488557,157,? [amenity=parking] 74m
+17395,CRT Seasonal,56.5,23.2,56.494114,23.237998,CRT Time of Use,Residential,99.0,EXisting,448246.9023210871,2569956.616488557,157,? [amenity=parking] 74m
+17506,CRT Seasonal,56.5,23.2,56.479823,23.207942,CRT Seasonal,Agricultural,4.0,EXisting,446772.9665291047,2566634.4020885048,-1,
+17653,CRT Seasonal,56.5,23.2,56.495873,23.227175,CRT Seasonal,Agricultural,4.0,EXisting,448422.6959061704,2568757.820222008,145,PBX connections [building=yes] 23m
+17674,CRT Seasonal,56.7,23.2,56.66358,23.20386,CRT Seasonal,Residential,0.0,EXisting,465575.0194306958,2566127.1182376263,-1,? [man_made=water_works] 4m
+17729,CRT Seasonal,56.5,23.2,56.52368,23.23111,Commercial,Residential,99.0,EXisting,451269.10916517454,2569183.846597969,-1,مدرسة عبري الخاصة [building=school] 36m | ? [amenity=school] 40m | مدرسة الأمام سيف بن سلطان للبنين11-12 [building=school] 58m
+17754,CRT Seasonal,56.5,23.2,56.519392,23.24124,Government,Residential,0.0,EXisting,450834.1207890259,2570306.740653647,113,مدرسة عبـــري للتعليم الاساسي للبنات 5-9 [building=school] 67m | ? [amenity=school] 75m
+17889,CRT Fixed Rate,56.5,23.3,56.488632,23.251959,Government,Agricultural,4.0,EXisting,447691.5172961124,2571504.150181369,-1,مركز التدريب المهني [amenity=college] 27m | ? [amenity=parking] 73m | ? [shop=books] 73m
+17890,CRT Fixed Rate,56.5,23.3,56.488632,23.251959,Government,Agricultural,4.0,EXisting,447691.5172961124,2571504.150181369,-1,مركز التدريب المهني [amenity=college] 27m | ? [amenity=parking] 73m | ? [shop=books] 73m
+18347,CRT Seasonal,56.5,23.2,56.514091,23.23913,CRT Seasonal,Residential-Commercial,2.0,EXisting,450291.0413478888,2570074.9562821626,116,Al Yamama shoping centre [shop=supermarket] 2m | Al Yamama restaurant and coffee shop [amenity=restaurant] 34m | AL Hekma  Pharmacy [amenity=pharmacy;healthcare=pharmacy] 41m
+18348,CRT Seasonal,56.5,23.2,56.514091,23.23913,CRT Seasonal,Residential-Commercial,2.0,EXisting,450291.0413478888,2570074.9562821626,116,Al Yamama shoping centre [shop=supermarket] 2m | Al Yamama restaurant and coffee shop [amenity=restaurant] 34m | AL Hekma  Pharmacy [amenity=pharmacy;healthcare=pharmacy] 41m
+18349,CRT Seasonal,56.5,23.2,56.514091,23.23913,CRT Seasonal,Residential-Commercial,2.0,EXisting,450291.0413478888,2570074.9562821626,116,Al Yamama shoping centre [shop=supermarket] 2m | Al Yamama restaurant and coffee shop [amenity=restaurant] 34m | AL Hekma  Pharmacy [amenity=pharmacy;healthcare=pharmacy] 41m
+18350,CRT Seasonal,56.5,23.2,56.514091,23.23913,CRT Seasonal,Residential-Commercial,2.0,EXisting,450291.0413478888,2570074.9562821626,116,Al Yamama shoping centre [shop=supermarket] 2m | Al Yamama restaurant and coffee shop [amenity=restaurant] 34m | AL Hekma  Pharmacy [amenity=pharmacy;healthcare=pharmacy] 41m
+18351,CRT Seasonal,56.5,23.2,56.514091,23.23913,CRT Seasonal,Residential-Commercial,2.0,EXisting,450291.0413478888,2570074.9562821626,116,Al Yamama shoping centre [shop=supermarket] 2m | Al Yamama restaurant and coffee shop [amenity=restaurant] 34m | AL Hekma  Pharmacy [amenity=pharmacy;healthcare=pharmacy] 41m
+18352,CRT Seasonal,56.5,23.2,56.514091,23.23913,CRT Seasonal,Residential-Commercial,2.0,EXisting,450291.0413478888,2570074.9562821626,116,Al Yamama shoping centre [shop=supermarket] 2m | Al Yamama restaurant and coffee shop [amenity=restaurant] 34m | AL Hekma  Pharmacy [amenity=pharmacy;healthcare=pharmacy] 41m
+18353,CRT Seasonal,56.5,23.2,56.514091,23.23913,CRT Seasonal,Residential-Commercial,2.0,EXisting,450291.0413478888,2570074.9562821626,116,Al Yamama shoping centre [shop=supermarket] 2m | Al Yamama restaurant and coffee shop [amenity=restaurant] 34m | AL Hekma  Pharmacy [amenity=pharmacy;healthcare=pharmacy] 41m
+18354,CRT Seasonal,56.5,23.2,56.514091,23.23913,CRT Seasonal,Residential-Commercial,2.0,EXisting,450291.0413478888,2570074.9562821626,116,Al Yamama shoping centre [shop=supermarket] 2m | Al Yamama restaurant and coffee shop [amenity=restaurant] 34m | AL Hekma  Pharmacy [amenity=pharmacy;healthcare=pharmacy] 41m
+18355,CRT Seasonal,56.5,23.2,56.514091,23.23913,CRT Seasonal,Residential-Commercial,2.0,EXisting,450291.0413478888,2570074.9562821626,116,Al Yamama shoping centre [shop=supermarket] 2m | Al Yamama restaurant and coffee shop [amenity=restaurant] 34m | AL Hekma  Pharmacy [amenity=pharmacy;healthcare=pharmacy] 41m
+18491,CRT Time of Use,56.5,23.2,56.513875,23.241166,Government,Residential,0.0,EXisting,450269.6985877975,2570300.427339571,-1,? [building=hospital] 56m
+18748,CRT Seasonal,56.5,23.2,56.519085,23.240547,CRT Seasonal,Residential,0.0,EXisting,450802.4602760439,2570230.1255292413,113,
+18987,CRT Seasonal,56.7,23.3,56.680679,23.29417,Commercial,Residential,1.0,EXisting,467346.7225840125,2576120.8872800013,-1,? [shop=convenience] 38m
+18989,CRT Seasonal,56.7,23.3,56.680679,23.29417,Commercial,Residential,1.0,EXisting,467346.7225840125,2576120.8872800013,-1,? [shop=convenience] 38m
+19215,CRT Seasonal,56.5,23.2,56.483494,23.236524,CRT Seasonal,Residential,1.0,EXisting,447159.8555753456,2569797.2603015667,-1,
+19427,CRT Time of Use,56.5,23.2,56.493384,23.237839,Commercial,Residential,0.0,EXisting,448172.1591773838,2569939.274585721,157,
+19861,CRT Seasonal,56.6,23.3,56.615681,23.319839,CRT Seasonal,Residential,0.0,EXisting,460707.6050895067,2578978.7329524136,-1,Bank Muscat [amenity=bank] 25m
+20519,CRT Seasonal,56.5,23.2,56.516351,23.222144,Primary Account Tariff (with National Subsidy),Residential-Commercial,2.0,EXisting,450515.98421060754,2568193.737687821,-1,
+20644,CRT Seasonal,56.5,23.2,56.464688,23.160727,CRT Seasonal,Industrial,7.0,EXisting,445205.02250666777,2561413.056312026,35,
+20718,CRT Seasonal,56.6,23.3,56.611502,23.32053,Additional Account Tariff,Residential-Commercial,2.0,EXisting,460280.54909500247,2579056.3714720136,1,Horizons Medical [amenity=doctors] 34m
+22050,CRT Seasonal,56.5,23.2,56.458526,23.217212,CRT Seasonal,Residential,0.0,EXisting,444597.5327795294,2567668.604363365,78,ريمي [amenity=restaurant] 18m | Deli Pizza [amenity=fast_food] 31m | ? [amenity=food_court] 45m
+22214,CRT Time of Use,56.4,23.3,56.368993,23.283684,CRT Time of Use,Agricultural,4.0,EXisting,435468.4620778968,2575064.531599745,14,
+22215,CRT Seasonal,56.4,23.3,56.368993,23.283684,CRT Time of Use,Agricultural,4.0,EXisting,435468.4620778968,2575064.531599745,14,
+22216,CRT Seasonal,56.4,23.3,56.368993,23.283684,CRT Time of Use,Agricultural,4.0,EXisting,435468.4620778968,2575064.531599745,14,
+22217,CRT Time of Use,56.4,23.3,56.368993,23.283684,CRT Time of Use,Agricultural,4.0,EXisting,435468.4620778968,2575064.531599745,14,
+22218,CRT Seasonal,56.4,23.3,56.368993,23.283684,CRT Time of Use,Agricultural,4.0,EXisting,435468.4620778968,2575064.531599745,14,
+22219,CRT Time of Use,56.4,23.3,56.368993,23.283684,CRT Time of Use,Agricultural,4.0,EXisting,435468.4620778968,2575064.531599745,14,
+22220,CRT Seasonal,56.4,23.3,56.368993,23.283684,CRT Time of Use,Agricultural,4.0,EXisting,435468.4620778968,2575064.531599745,14,
+22221,CRT Seasonal,56.4,23.3,56.368993,23.283684,CRT Time of Use,Agricultural,4.0,EXisting,435468.4620778968,2575064.531599745,14,
+22260,CRT Seasonal,56.4,23.3,56.383154,23.275625,CRT Seasonal,Residential,0.0,EXisting,436912.9156081502,2574166.1009883275,18,? [amenity=parking] 58m
+22365,CRT Time of Use,56.5,23.2,56.49229,23.220108,Additional Account Tariff,Residential,0.0,EXisting,448053.3782807878,2567976.7384879203,149,
+22436,CRT Seasonal,56.5,23.2,56.517806,23.21539,Additional Account Tariff,Residential,1.0,EXisting,450662.372509994,2567445.537985897,-1,
+22635,CRT Time of Use,56.5,23.2,56.513383,23.205234,Commercial,Residential,5.0,EXisting,450206.0444668454,2566322.721902113,87,
+22668,CRT Seasonal,56.5,23.2,56.511162,23.208949,CRT Seasonal,Residential,0.0,EXisting,449980.1555792479,2566734.754823848,-1,
+22718,CRT Time of Use,56.5,23.2,56.493697,23.216387,Commercial,Residential,0.0,EXisting,448195.903740174,2567564.300047664,139,Al Hashar Automotive [shop=car] 20m | Omantel [shop=telecommunication] 29m | Muscat Bank [amenity=bank] 57m
+22719,CRT Time of Use,56.5,23.2,56.493697,23.216387,Commercial,Residential,0.0,EXisting,448195.903740174,2567564.300047664,139,Al Hashar Automotive [shop=car] 20m | Omantel [shop=telecommunication] 29m | Muscat Bank [amenity=bank] 57m
+22736,CRT Seasonal,56.5,23.2,56.469071,23.216793,Commercial,Residential-Commercial,2.0,EXisting,445676.3269294078,2567618.2378084264,120,مطعم و مشاوي طيبات الشام [amenity=restaurant;building=yes] 7m | Bake it Bakery [shop=bakery;building=yes] 26m
+22737,CRT Seasonal,56.5,23.2,56.469071,23.216793,Commercial,Residential-Commercial,2.0,EXisting,445676.3269294078,2567618.2378084264,120,مطعم و مشاوي طيبات الشام [amenity=restaurant;building=yes] 7m | Bake it Bakery [shop=bakery;building=yes] 26m
+22738,CRT Seasonal,56.5,23.2,56.469071,23.216793,Commercial,Residential-Commercial,2.0,EXisting,445676.3269294078,2567618.2378084264,120,مطعم و مشاوي طيبات الشام [amenity=restaurant;building=yes] 7m | Bake it Bakery [shop=bakery;building=yes] 26m
+22740,CRT Seasonal,56.5,23.2,56.469071,23.216793,Commercial,Residential-Commercial,2.0,EXisting,445676.3269294078,2567618.2378084264,120,مطعم و مشاوي طيبات الشام [amenity=restaurant;building=yes] 7m | Bake it Bakery [shop=bakery;building=yes] 26m
+22895,CRT Seasonal,56.5,23.2,56.50009,23.23742,CRT Seasonal,Residential,0.0,EXisting,448858.0490011655,2569890.511179489,-1,Amal pharmacy [amenity=pharmacy;healthcare=pharmacy] 57m
+22903,CRT Seasonal,56.4,23.3,56.377092,23.275099,CRT Seasonal,Residential,0.0,EXisting,436292.66580603394,2574110.519212609,-1,
+22977,CRT Seasonal,56.5,23.2,56.472937,23.162809,CRT Seasonal,Agricultural,4.0,EXisting,446050.2476198768,2561640.465548524,-1,? [amenity=school] 52m
+22981,CRT Seasonal,56.5,23.2,56.495433,23.227712,CRT Seasonal,Residential,5.0,EXisting,448377.8851135797,2568817.425561368,145,PBX connections [building=yes] 62m
+22982,CRT Seasonal,56.8,23.3,56.753223,23.255133,CRT Seasonal,Agricultural,4.0,EXisting,474757.64267889207,2571784.832034593,-1,
+22995,CRT Time of Use,56.5,23.2,56.466715,23.198915,Commercial,Residential,1.0,EXisting,445428.0009853896,2565639.919336744,-1,
+23023,CRT Seasonal,56.5,23.2,56.458481,23.216264,CRT Seasonal,Residential,0.0,EXisting,444592.53734800674,2567563.672058128,78,Star Cinema [amenity=cinema] 14m | Chicking [amenity=fast_food] 47m | ? [amenity=food_court] 66m
+23024,CRT Seasonal,56.5,23.2,56.458481,23.216264,CRT Seasonal,Residential,0.0,EXisting,444592.53734800674,2567563.672058128,78,Star Cinema [amenity=cinema] 14m | Chicking [amenity=fast_food] 47m | ? [amenity=food_court] 66m
+23039,CRT Seasonal,56.4,23.3,56.388551,23.272447,CRT Seasonal,Residential,0.0,EXisting,437463.41737466666,2573811.933115399,-1,
+23085,CRT Seasonal,56.6,23.3,56.616719,23.318665,CRT Seasonal,Residential,0.0,EXisting,460813.38610827416,2578848.482797645,-1,? [amenity=school] 57m
+23097,CRT Seasonal,56.6,23.3,56.608361,23.32007,CRT Seasonal,Agricultural,4.0,EXisting,459959.2767366204,2579006.312218017,-1,
+23098,CRT Seasonal,56.6,23.3,56.552877,23.29049,CRT Time of Use,Agricultural,4.0,EXisting,454276.47086991207,2575748.056369313,-1,Al Dariz - Ibri Road [] 62m | Al Dariz - Ibri Road [] 77m | Al Dariz - Ibri Road [] 79m
+23108,CRT Seasonal,56.5,23.2,56.518929,23.238715,CRT Seasonal,Residential,0.0,EXisting,450785.8293054768,2570027.365409541,-1,مدرسة المسرات للتعليم الاساسي 1-4 [building=school] 59m
+23232,CRT Seasonal,56.5,23.2,56.467967,23.164503,CRT Seasonal,Industrial,7.0,EXisting,445542.1972392905,2561829.849894013,-1,
+23398,CRT Seasonal,56.5,23.2,56.458439,23.21709,CRT Seasonal,Residential,0.0,EXisting,444588.5806132831,2567655.1313763983,78,ريمي [amenity=restaurant] 16m | Deli Pizza [amenity=fast_food] 23m | ? [amenity=food_court] 38m
+23400,CRT Seasonal,56.5,23.2,56.459445,23.217235,CRT Seasonal,Residential,0.0,EXisting,444691.5743117053,2567670.8005701727,78,Paris Boutique [shop=jewelry] 25m | ? [amenity=parking] 31m | أيلا [amenity=cafe] 32m
+23401,CRT Seasonal,56.5,23.2,56.459873,23.217362,CRT Seasonal,Residential,0.0,EXisting,444735.4195039933,2567684.697437187,78,? [amenity=parking] 35m | Ayla Ibri Hotel [tourism=hotel] 49m | Paris Boutique [shop=jewelry] 52m
+23523,CRT Time of Use,56.5,23.2,56.492982,23.221479,Additional Account Tariff,Residential,0.0,EXisting,448124.7114820256,2568128.268958702,149,
+23525,CRT Time of Use,56.5,23.2,56.504815,23.231795,CRT Time of Use,Residential,99.0,EXisting,449339.3126234654,2569266.1344698807,122,
+23526,CRT Time of Use,56.5,23.2,56.504815,23.231795,CRT Time of Use,Residential,99.0,EXisting,449339.3126234654,2569266.1344698807,122,
+23527,CRT Time of Use,56.5,23.2,56.504815,23.231795,CRT Time of Use,Residential,99.0,EXisting,449339.3126234654,2569266.1344698807,122,
+23528,CRT Time of Use,56.5,23.2,56.504815,23.231795,CRT Time of Use,Residential,99.0,EXisting,449339.3126234654,2569266.1344698807,122,
+23636,CRT Time of Use,56.5,23.2,56.513384,23.205287,Commercial,Residential,5.0,EXisting,450206.16643093934,2566328.588943797,87,
+23665,CRT Seasonal,56.5,23.2,56.513385,23.205263,Commercial,Residential,5.0,EXisting,450206.2598678195,2566325.9316726797,87,
+23745,CRT Time of Use,56.5,23.2,56.513571,23.249843,Primary Account Tariff,Residential,0.0,EXisting,450241.8177741204,2571261.126775044,-1,
+23750,CRT Seasonal,56.5,23.2,56.500412,23.237943,CRT Seasonal,Residential,0.0,EXisting,448891.1901178692,2569948.297032476,-1,
+23758,CRT Fixed Rate,56.5,23.2,56.529417,23.231303,CRT Fixed Rate,Residential,99.0,EXisting,451856.1231028171,2569203.2996486826,-1,
+23869,CRT Seasonal,56.5,23.3,56.484477,23.258143,CRT Seasonal,Agricultural,4.0,EXisting,447268.92126158817,2572190.262196244,-1,
+23998,CRT Time of Use,56.5,23.2,56.466708,23.198971,Commercial,Residential,1.0,EXisting,445427.30738007184,2565646.121489767,-1,
+24523,CRT Seasonal,56.6,23.2,56.576373,23.229119,Commercial,Agricultural,4.0,EXisting,456659.403776512,2568946.7327451827,-1,
+24577,CRT Seasonal,56.7,23.2,56.653115,23.210956,CRT Seasonal,Residential,0.0,EXisting,464506.0285138418,2566915.1899703755,-1,? [amenity=place_of_worship;building=mosque] 17m
+24609,CRT Seasonal,56.7,23.2,56.721178,23.1699,Government,Residential,5.0,EXisting,471461.7047104879,2562355.1680745413,-1,
+24699,CRT Fixed Rate,56.5,23.2,56.487219,23.208072,Commercial,Residential,0.0,EXisting,447529.826006376,2566646.10538797,-1,مسجد الشعبية [amenity=place_of_worship;building=yes] 59m | مسجد الشعبية [amenity=place_of_worship] 60m | ? [amenity=waste_disposal] 68m
+24756,CRT Seasonal,56.5,23.2,56.487255,23.208178,Primary Account Tariff,Residential,0.0,EXisting,447533.55114962463,2566657.8272010023,-1,مسجد الشعبية [amenity=place_of_worship;building=yes] 48m | مسجد الشعبية [amenity=place_of_worship] 49m | مطب [] 65m
+25123,CRT Seasonal,56.5,23.3,56.549865,23.283223,Commercial,Residential,1.0,EXisting,453965.9557136866,2574944.5087396074,69,
+25795,CRT Seasonal,56.5,23.2,56.481856,23.217068,Primary Account Tariff,Residential-Commercial,2.0,EXisting,446984.5980675774,2567643.960688416,128,
+25920,CRT Seasonal,56.5,23.2,56.466807,23.159573,CRT Seasonal,Industrial,7.0,EXisting,445421.4618549796,2561284.506896387,35,
+26046,CRT Seasonal,56.5,23.2,56.526432,23.213447,CRT Seasonal,Residential,0.0,EXisting,451544.2898242748,2567227.535592365,-1,? [amenity=parking] 36m
+26076,CRT Seasonal,56.5,23.2,56.478243,23.215876,Commercial,Residential,0.0,EXisting,446614.442728725,2567513.3217705484,-1,Arabian Center [shop=variety_store] 23m | Oman United Insurance Company Ibri Branch [office=insurance] 66m | ? [shop=hairdresser] 73m
+26077,CRT Seasonal,56.5,23.2,56.478243,23.215876,Commercial,Residential,0.0,EXisting,446614.442728725,2567513.3217705484,-1,Arabian Center [shop=variety_store] 23m | Oman United Insurance Company Ibri Branch [office=insurance] 66m | ? [shop=hairdresser] 73m
+26387,CRT Seasonal,56.5,23.2,56.495624,23.220789,Primary Account Tariff,Residential,0.0,EXisting,448394.7660888218,2568050.9412262654,-1,
+26616,CRT Seasonal,56.5,23.2,56.484802,23.217651,CRT Seasonal,Residential,0.0,EXisting,447286.2610245307,2567707.4306149757,136,Indian School Ibri [amenity=school] 40m
+26748,CRT Time of Use,56.5,23.2,56.494991,23.223387,Commercial,Residential,99.0,EXisting,448330.999112167,2568338.7798590125,-1,Aster Hospital Pharmacy [amenity=pharmacy] 79m
+27008,CRT Time of Use,56.6,23.3,56.555874,23.261862,CRT Time of Use,Industrial,7.0,EXisting,454573.2452253426,2572577.82560781,-1,
+27119,CRT Seasonal,56.5,23.2,56.519033,23.240575,CRT Seasonal,Residential,0.0,EXisting,450797.1508642771,2570233.2429116834,113,
+27274,CRT Seasonal,56.5,23.2,56.519857,23.212888,Additional Account Tariff,Residential,1.0,EXisting,450871.3173307168,2567167.85831188,92,
+27276,CRT Seasonal,56.5,23.2,56.519857,23.212888,Additional Account Tariff,Residential,1.0,EXisting,450871.3173307168,2567167.85831188,92,
+27278,CRT Seasonal,56.5,23.2,56.519857,23.212888,Additional Account Tariff,Residential,1.0,EXisting,450871.3173307168,2567167.85831188,92,
+27279,CRT Seasonal,56.5,23.2,56.519857,23.212888,Additional Account Tariff,Residential,1.0,EXisting,450871.3173307168,2567167.85831188,92,
+27281,CRT Seasonal,56.5,23.2,56.519857,23.212888,Additional Account Tariff,Residential,1.0,EXisting,450871.3173307168,2567167.85831188,92,
+27465,CRT Seasonal,56.5,23.2,56.521098,23.211096,CRT Seasonal,Agricultural,4.0,EXisting,450997.6461117865,2566969.055402635,-1,
+27811,CRT Seasonal,56.5,23.2,56.513388,23.205307,Commercial,Residential,5.0,EXisting,450206.5831543788,2566330.8016812354,87,
+27927,CRT Time of Use,56.4,23.2,56.42917,23.227666,Commercial,Agricultural,4.0,EXisting,441598.36871302186,2568837.4258216987,-1,
+27928,CRT Time of Use,56.4,23.3,56.376367,23.281234,CRT Time of Use,Residential,0.0,EXisting,436221.4367434925,2574790.032499254,21,
+27929,CRT Time of Use,56.4,23.3,56.376367,23.281234,CRT Time of Use,Residential,0.0,EXisting,436221.4367434925,2574790.032499254,21,
+27930,CRT Time of Use,56.4,23.3,56.376367,23.281234,CRT Time of Use,Residential,0.0,EXisting,436221.4367434925,2574790.032499254,21,
+27931,CRT Time of Use,56.4,23.3,56.376367,23.281234,CRT Time of Use,Residential,0.0,EXisting,436221.4367434925,2574790.032499254,21,
+27932,CRT Time of Use,56.4,23.3,56.376367,23.281234,CRT Time of Use,Residential,0.0,EXisting,436221.4367434925,2574790.032499254,21,
+27933,CRT Time of Use,56.4,23.3,56.376367,23.281234,CRT Time of Use,Residential,0.0,EXisting,436221.4367434925,2574790.032499254,21,
+27934,CRT Time of Use,56.4,23.3,56.376367,23.281234,CRT Time of Use,Residential,0.0,EXisting,436221.4367434925,2574790.032499254,21,
+27935,CRT Time of Use,56.4,23.3,56.376367,23.281234,CRT Time of Use,Residential,0.0,EXisting,436221.4367434925,2574790.032499254,21,
+27936,CRT Time of Use,56.4,23.3,56.376367,23.281234,CRT Time of Use,Residential,0.0,EXisting,436221.4367434925,2574790.032499254,21,
+27937,CRT Time of Use,56.4,23.3,56.38004,23.272361,CRT Seasonal,Residential,0.0,EXisting,436592.88192311226,2573806.108327871,16,? [amenity=parking] 76m
+27938,CRT Time of Use,56.4,23.3,56.38004,23.272361,CRT Seasonal,Residential,0.0,EXisting,436592.88192311226,2573806.108327871,16,? [amenity=parking] 76m
+27939,CRT Time of Use,56.4,23.3,56.38004,23.272361,CRT Seasonal,Residential,0.0,EXisting,436592.88192311226,2573806.108327871,16,? [amenity=parking] 76m
+27940,CRT Time of Use,56.4,23.3,56.383117,23.275622,CRT Seasonal,Residential,0.0,EXisting,436909.1299692225,2574165.784964351,18,? [amenity=parking] 54m
+27941,CRT Time of Use,56.4,23.3,56.383117,23.275622,CRT Seasonal,Residential,0.0,EXisting,436909.1299692225,2574165.784964351,18,? [amenity=parking] 54m
+27942,CRT Time of Use,56.4,23.3,56.383117,23.275622,CRT Seasonal,Residential,0.0,EXisting,436909.1299692225,2574165.784964351,18,? [amenity=parking] 54m
+27943,CRT Time of Use,56.4,23.3,56.383117,23.275622,CRT Seasonal,Residential,0.0,EXisting,436909.1299692225,2574165.784964351,18,? [amenity=parking] 54m
+27944,CRT Time of Use,56.4,23.3,56.378681,23.272788,CRT Seasonal,Residential,0.0,EXisting,436454.0874233154,2573853.9755703565,-1,
+27945,CRT Time of Use,56.4,23.3,56.378681,23.272788,CRT Seasonal,Residential,0.0,EXisting,436454.0874233154,2573853.9755703565,-1,
+27946,CRT Time of Use,56.4,23.3,56.37711,23.275114,CRT Seasonal,Residential,0.0,EXisting,436294.5139234851,2574112.171925181,-1,
+27947,CRT Time of Use,56.5,23.2,56.456641,23.219102,CRT Time of Use,Residential-Commercial,2.0,EXisting,444405.44186985545,2567878.558961682,79,Multi Purposes Hall [building=yes] 47m
+27948,CRT Time of Use,56.5,23.2,56.495054,23.218071,Commercial,Residential,99.0,EXisting,448335.3999756656,2567750.2454786967,-1,Two Rials [shop=variety_store] 44m
+27950,CRT Seasonal,56.4,23.2,56.445442,23.224925,Commercial,Residential,5.0,EXisting,443262.0357355914,2568527.5309288134,-1,
+27951,CRT Time of Use,56.5,23.2,56.455088,23.222072,CRT Time of Use,Residential-Commercial,2.0,EXisting,444247.7740595035,2568207.9515772504,81,Store [shop=storage_rental] 18m | Hostel Supermarket [shop=supermarket;building=yes] 21m | Girls' Mosque [building=mosque] 26m
+27952,CRT Time of Use,56.5,23.2,56.455055,23.222034,CRT Time of Use,Residential-Commercial,2.0,EXisting,444244.3818439479,2568203.757400131,81,Store [shop=storage_rental] 13m | Hostel Supermarket [shop=supermarket;building=yes] 20m | Girls' Mosque [building=mosque] 22m
+27953,CRT Time of Use,56.5,23.2,56.49578,23.225486,CRT Time of Use,Residential,99.0,EXisting,448412.531949642,2568570.871046469,-1,معبر المشاه [] 39m | معبر المشاه [] 46m | Shell [amenity=fuel] 60m
+27954,CRT Time of Use,56.5,23.2,56.485362,23.218513,Primary Account Tariff,Residential,1.0,EXisting,447343.89778464346,2567802.6560636167,136,
+27955,CRT Time of Use,56.5,23.2,56.515309,23.231911,Government,Agricultural,4.0,EXisting,450412.978757834,2569275.354943065,-1,بلدية عبري [building=yes] 74m | المديرية العامة للبلديات الإقليمية وموارد المياه لمحافظة الظاهرة [] 76m
+27956,CRT Time of Use,56.5,23.2,56.496835,23.233947,Commercial,Residential,99.0,EXisting,448523.7169413801,2569507.179403104,153,
+27957,CRT Time of Use,56.4,23.2,56.426098,23.230933,Government,Residential,99.0,EXisting,441285.493949812,2569200.343200809,54,
+27958,CRT Time of Use,56.4,23.2,56.426181,23.231045,Government,Residential,99.0,EXisting,441294.0346554856,2569212.708814138,54,
+27959,CRT Time of Use,56.4,23.2,56.426303,23.231182,Government,Residential,99.0,EXisting,441306.576358588,2569227.826342405,54,
+27960,CRT Time of Use,56.4,23.2,56.426223,23.231088,Government,Residential,99.0,EXisting,441298.35047290166,2569217.452232085,54,
+27961,CRT Time of Use,56.4,23.2,56.426262,23.231141,Government,Residential,99.0,EXisting,441302.3637311009,2569223.303931625,54,
+27962,CRT Time of Use,56.5,23.2,56.454179,23.219533,CRT Time of Use,Residential-Commercial,2.0,EXisting,444153.7127310093,2567927.217366735,80,College Mosque [building=mosque] 15m | ? [amenity=parking] 33m | ? [amenity=parking] 35m
+27963,CRT Time of Use,56.5,23.2,56.458492,23.218863,Commercial,Agricultural,4.0,EXisting,444594.73492872645,2567851.393260925,79,Directorate-General for Education [office=government;building=yes] 39m | AL Akhdar Post Office [amenity=post_office] 45m
+27964,CRT Time of Use,56.5,23.2,56.45416,23.21955,CRT Time of Use,Residential-Commercial,2.0,EXisting,444151.7757528558,2567929.1066752737,80,College Mosque [building=mosque] 14m | ? [amenity=parking] 34m | ? [amenity=parking] 37m
+27965,CRT Time of Use,56.5,23.2,56.454869,23.221899,CRT Time of Use,Residential-Commercial,2.0,EXisting,444225.2949337846,2568188.883432909,81,Store [shop=storage_rental] 13m | Girls' Mosque [building=mosque] 22m | Hostel Reception [building=yes] 30m
+27966,CRT Time of Use,56.5,23.2,56.454902,23.221894,CRT Time of Use,Residential-Commercial,2.0,EXisting,444228.6693004021,2568188.317234897,81,Store [shop=storage_rental] 10m | Girls' Mosque [building=mosque] 19m | Hostel Supermarket [shop=supermarket;building=yes] 29m
+27967,CRT Fixed Rate,56.5,23.3,56.521828,23.258943,Government,Commercial,3.0,EXisting,451089.782629581,2572265.744266127,57,LuLu Hypermarket [shop=supermarket] 45m | Ahmed Al Maghribi [shop=perfumery] 65m
+27968,CRT Fixed Rate,56.5,23.3,56.521828,23.258943,Government,Commercial,3.0,EXisting,451089.782629581,2572265.744266127,57,LuLu Hypermarket [shop=supermarket] 45m | Ahmed Al Maghribi [shop=perfumery] 65m
+27969,CRT Fixed Rate,56.5,23.3,56.521828,23.258943,Government,Commercial,3.0,EXisting,451089.782629581,2572265.744266127,57,LuLu Hypermarket [shop=supermarket] 45m | Ahmed Al Maghribi [shop=perfumery] 65m
+27970,CRT Fixed Rate,56.5,23.3,56.521828,23.258943,Government,Commercial,3.0,EXisting,451089.782629581,2572265.744266127,57,LuLu Hypermarket [shop=supermarket] 45m | Ahmed Al Maghribi [shop=perfumery] 65m
+27971,CRT Time of Use,56.5,23.2,56.458451,23.218902,Commercial,Agricultural,4.0,EXisting,444590.5559499264,2567855.726435268,79,AL Akhdar Post Office [amenity=post_office] 39m | Directorate-General for Education [office=government;building=yes] 40m
+27972,CRT Time of Use,56.5,23.2,56.488721,23.214578,Commercial,Residential,1.0,EXisting,447686.0537428936,2567365.8156169555,-1,
+27973,CRT Time of Use,56.5,23.2,56.502097,23.219311,Commercial,Residential-Commercial,2.0,EXisting,449056.50215745845,2567885.0341873923,130,MAX [shop=clothes;building=retail] 39m
+27974,CRT Time of Use,56.5,23.2,56.502179,23.219306,Commercial,Residential-Commercial,2.0,EXisting,449064.89032879256,2567884.451915673,130,MAX [shop=clothes;building=retail] 43m
+27975,CRT Time of Use,56.5,23.2,56.502345,23.218806,Commercial,Residential-Commercial,2.0,EXisting,449081.6855491204,2567829.040902114,130,Karama Building Materials [shop=trade] 36m | MAX [shop=clothes;building=retail] 44m
+27976,CRT Time of Use,56.5,23.2,56.502356,23.218837,Commercial,Residential-Commercial,2.0,EXisting,449082.8228019677,2567832.468924019,130,Karama Building Materials [shop=trade] 38m | MAX [shop=clothes;building=retail] 44m
+27977,CRT Time of Use,56.4,23.2,56.426142,23.230995,Government,Residential,99.0,EXisting,441290.0227033268,2569207.189237195,54,
+27978,CRT Time of Use,56.5,23.2,56.45745,23.219034,CRT Time of Use,Agricultural,4.0,EXisting,444488.1894825666,2567870.7216760446,79,Al Akhdar Health Center [amenity=doctors] 57m | AL Akhdar Post Office [amenity=post_office] 66m
+27979,CRT Time of Use,56.4,23.2,56.447115,23.220633,CRT Time of Use,Residential,0.0,EXisting,443431.39950410544,2568051.7266499544,-1,Directorate General Of Manpower [building=yes] 56m
+27980,CRT Time of Use,56.4,23.2,56.421335,23.242747,Commercial,Residential,0.0,EXisting,440803.40329805616,2570510.168423997,50,
+27981,CRT Time of Use,56.4,23.2,56.421316,23.242734,Commercial,Residential,0.0,EXisting,440801.45384317386,2570508.736979836,50,
+27982,CRT Time of Use,56.4,23.2,56.421307,23.245307,Commercial,Residential,0.0,EXisting,440801.66857778415,2570793.5898877555,-1,
+27983,CRT Time of Use,56.4,23.2,56.421307,23.245307,Commercial,Residential,0.0,EXisting,440801.66857778415,2570793.5898877555,-1,
+27984,CRT Time of Use,56.4,23.2,56.421298,23.242723,Commercial,Residential,0.0,EXisting,440799.6075714575,2570507.5265422203,50,
+27985,CRT Time of Use,56.4,23.2,56.421278,23.242713,Commercial,Residential,0.0,EXisting,440797.5571387277,2570506.427627424,50,
+27986,CRT Time of Use,56.4,23.2,56.421257,23.2427,Commercial,Residential,0.0,EXisting,440795.40308076335,2570504.996999607,50,
+27987,CRT Time of Use,56.5,23.2,56.465937,23.159445,CRT Time of Use,Industrial,7.0,EXisting,445332.3534409879,2561270.6628393005,35,
+27988,CRT Time of Use,56.5,23.3,56.53875,23.267538,Commercial,Residential-Commercial,2.0,EXisting,452823.7151819374,2573211.6578257387,-1,
+27989,CRT Time of Use,56.5,23.3,56.538718,23.267576,Commercial,Residential-Commercial,2.0,EXisting,452820.4555775766,2573215.8750608424,-1,
+27990,CRT Time of Use,56.5,23.2,56.489183,23.217861,CRT Time of Use,Residential,0.0,EXisting,447734.6037068438,2567729.096539792,137,رامز هايبر ماركت [building=retail] 56m
+27991,CRT Seasonal,56.5,23.2,56.48042,23.217792,CRT Seasonal,Residential-Commercial,2.0,EXisting,446837.95332729,2567724.636326976,-1,Changan Auto [shop=car;building=yes] 37m
+27992,CRT Time of Use,56.5,23.2,56.48917,23.217861,CRT Time of Use,Residential,0.0,EXisting,447733.27355799393,2567729.101215077,137,رامز هايبر ماركت [building=retail] 57m
+27993,CRT Time of Use,56.5,23.2,56.481895,23.217102,Primary Account Tariff,Residential-Commercial,2.0,EXisting,446988.60195895866,2567647.710462925,128,
+27994,CRT Time of Use,56.7,23.2,56.704531,23.18571,CRT Time of Use,Residential,0.0,EXisting,469761.3749195836,2564108.7459438685,-1,
+27995,CRT Time of Use,56.5,23.2,56.48201,23.217419,CRT Time of Use,Residential-Commercial,2.0,EXisting,447000.493813246,2567682.7622902417,128,
+27996,CRT Time of Use,56.5,23.2,56.458557,23.216455,CRT Seasonal,Residential,0.0,EXisting,444600.3924934345,2567584.787966205,78,Star Cinema [amenity=cinema] 17m | Chicking [amenity=fast_food] 25m | ? [amenity=food_court] 43m
+27997,CRT Seasonal,56.5,23.2,56.458458,23.216326,CRT Seasonal,Residential,0.0,EXisting,444590.2095461703,2567570.5446095224,78,Star Cinema [amenity=cinema] 15m | Chicking [amenity=fast_food] 41m | ? [amenity=food_court] 60m
+28340,CRT Seasonal,56.5,23.2,56.513052,23.21727,Additional Account Tariff,Residential-Commercial,2.0,EXisting,450176.637000314,2567655.286069489,-1,
+29006,CRT Time of Use,56.5,23.3,56.53198,23.264294,Commercial,Residential,0.0,EXisting,452130.1155743806,2572854.745784963,-1,
+29321,CRT Time of Use,56.5,23.3,56.514701,23.251863,Additional Account Tariff,Residential,0.0,EXisting,450358.1582906213,2571484.365919208,110,
+29322,CRT Time of Use,56.5,23.3,56.514701,23.251863,Additional Account Tariff,Residential,0.0,EXisting,450358.1582906213,2571484.365919208,110,
+29323,CRT Time of Use,56.5,23.3,56.514701,23.251863,Additional Account Tariff,Residential,0.0,EXisting,450358.1582906213,2571484.365919208,110,
+29391,CRT Seasonal,56.5,23.2,56.488058,23.215679,,,,,447618.6437938588,2567487.941477898,-1,Burthukal Juices [amenity=fast_food] 9m | Al Laith Pastries & Sweets [shop=pastry] 23m | New Al Yahar Yemeni Restaurant [amenity=restaurant] 35m
+30137,CRT Seasonal,56.6,23.3,56.597854,23.323782,,,,,458886.1829471841,2579420.1991509544,-1,
+30183,CRT Time of Use,56.5,23.2,56.51769,23.218721,CRT Time of Use,Residential,5.0,EXisting,450651.727053253,2567814.3373107263,-1,
+30325,CRT Seasonal,56.4,23.3,56.37171,23.291473,,,,,435750.0692095666,2575925.631886693,-1,
+30326,CRT Seasonal,56.4,23.3,56.424687,23.253802,,,,,441151.1669099789,2571732.6722106654,-1,
+30468,CRT Seasonal,56.5,23.2,56.500187,23.231603,,,,,448865.7563051405,2569246.5006730603,-1,? [amenity=place_of_worship] 75m
+30470,CRT Time of Use,56.5,23.2,56.489908,23.215821,,,,,447807.9924567513,2567502.996166074,-1,نور الخليج [amenity=fast_food] 7m | Oman Arab Bank [amenity=atm] 43m | Oman Arab Bank [amenity=bank] 53m
+30662,CRT Seasonal,56.5,23.2,56.500146,23.231611,Primary Account Tariff,Residential,1.0,EXisting,448861.5647023524,2569247.4007545696,-1,? [amenity=place_of_worship] 79m
+30707,CRT Seasonal,56.5,23.2,56.492582,23.217404,,,,,448082.2097693291,2567677.2856759974,138,Ibri Road [] 24m | Muscat Pharmacy - Ibri branch [amenity=pharmacy;healthcare=pharmacy] 40m | ? [leisure=garden] 78m
+31228,Industrial,56.5,23.2,56.496711,23.234606,Commercial,Residential,1.0,EXisting,448511.2837117295,2569580.178585652,153,
+31239,CRT Seasonal,56.7,23.2,56.721538,23.179921,,,,,471500.67383350624,2563464.45304165,-1,
+31240,CRT Seasonal,56.7,23.2,56.679788,23.194526,,,,,467231.2791351156,2565090.065315999,-1,
+31255,CRT Seasonal,56.6,23.3,56.611855,23.320825,Commercial,Residential-Commercial,2.0,EXisting,460316.7272510021,2579088.932899937,1,Horizons Medical [amenity=doctors] 23m
+31256,CRT Seasonal,56.6,23.3,56.611855,23.320825,Commercial,Residential-Commercial,2.0,EXisting,460316.7272510021,2579088.932899937,1,Horizons Medical [amenity=doctors] 23m
+31446,CRT Seasonal,56.5,23.2,56.46539,23.159826,CRT Seasonal,Industrial,7.0,EXisting,445276.5151987535,2561313.0469359034,35,
+31624,CRT Seasonal,56.7,23.3,56.727773,23.273713,,,,,472158.2569244069,2573846.372941283,175,? [building=retail] 8m | MAYSA national shopping [shop=supermarket] 8m | ? [amenity=atm] 17m
+31625,CRT Seasonal,56.7,23.3,56.727773,23.273713,,,,,472158.2569244069,2573846.372941283,175,? [building=retail] 8m | MAYSA national shopping [shop=supermarket] 8m | ? [amenity=atm] 17m
+31626,CRT Seasonal,56.7,23.3,56.727773,23.273713,,,,,472158.2569244069,2573846.372941283,175,? [building=retail] 8m | MAYSA national shopping [shop=supermarket] 8m | ? [amenity=atm] 17m
+31629,CRT Seasonal,56.7,23.3,56.727773,23.273713,,,,,472158.2569244069,2573846.372941283,175,? [building=retail] 8m | MAYSA national shopping [shop=supermarket] 8m | ? [amenity=atm] 17m
+31630,CRT Seasonal,56.7,23.3,56.727773,23.273713,,,,,472158.2569244069,2573846.372941283,175,? [building=retail] 8m | MAYSA national shopping [shop=supermarket] 8m | ? [amenity=atm] 17m
+31631,CRT Seasonal,56.7,23.3,56.727773,23.273713,,,,,472158.2569244069,2573846.372941283,175,? [building=retail] 8m | MAYSA national shopping [shop=supermarket] 8m | ? [amenity=atm] 17m
+31632,CRT Seasonal,56.7,23.3,56.727773,23.273713,,,,,472158.2569244069,2573846.372941283,175,? [building=retail] 8m | MAYSA national shopping [shop=supermarket] 8m | ? [amenity=atm] 17m
+31634,CRT Seasonal,56.7,23.3,56.727773,23.273713,,,,,472158.2569244069,2573846.372941283,175,? [building=retail] 8m | MAYSA national shopping [shop=supermarket] 8m | ? [amenity=atm] 17m
+31766,CRT Time of Use,56.5,23.2,56.486,23.210902,,,,,447406.1975142748,2566959.843092124,-1,? [amenity=parking_entrance] 33m | Civil defense [] 45m | Ambulance Ibri Center [] 72m
+31767,CRT Time of Use,56.5,23.2,56.486,23.210902,,,,,447406.1975142748,2566959.843092124,-1,? [amenity=parking_entrance] 33m | Civil defense [] 45m | Ambulance Ibri Center [] 72m
+31804,CRT Seasonal,56.6,23.3,56.616398,23.314174,,,,,460779.2492190304,2578351.389673879,-1,
+31816,CRT Seasonal,56.7,23.2,56.745863,23.163424,,,,,473987.05199965066,2561633.633121656,-1,
+31972,CRT Seasonal,56.5,23.2,56.481945,23.238477,,,,,447002.1564638951,2570014.03394326,-1,
+32059,CRT Time of Use,56.5,23.2,56.511713,23.24941,,,,,450051.593315093,2571213.8292621933,-1,
+32082,CRT Seasonal,56.5,23.2,56.526973,23.230705,Commercial,Residential,99.0,EXisting,451605.865578499,2569137.909891044,-1,جامع حي العقبة [amenity=place_of_worship] 58m
+32389,CRT Time of Use,56.6,23.3,56.615966,23.317538,Commercial,Residential,1.0,EXisting,460736.067634924,2578723.921316646,6,Riad Al Driz Shopping Center [shop=convenience] 25m
+32392,CRT Time of Use,56.6,23.3,56.615966,23.317538,Commercial,Residential,1.0,EXisting,460736.067634924,2578723.921316646,6,Riad Al Driz Shopping Center [shop=convenience] 25m
+32396,CRT Time of Use,56.6,23.3,56.615966,23.317538,Commercial,Residential,1.0,EXisting,460736.067634924,2578723.921316646,6,Riad Al Driz Shopping Center [shop=convenience] 25m
+32398,CRT Time of Use,56.6,23.3,56.615966,23.317538,Commercial,Residential,1.0,EXisting,460736.067634924,2578723.921316646,6,Riad Al Driz Shopping Center [shop=convenience] 25m
+32399,CRT Time of Use,56.6,23.3,56.615966,23.317538,Commercial,Residential,1.0,EXisting,460736.067634924,2578723.921316646,6,Riad Al Driz Shopping Center [shop=convenience] 25m
+32401,CRT Time of Use,56.6,23.3,56.615966,23.317538,Commercial,Residential,1.0,EXisting,460736.067634924,2578723.921316646,6,Riad Al Driz Shopping Center [shop=convenience] 25m
+32405,CRT Time of Use,56.6,23.3,56.615966,23.317538,Commercial,Residential,1.0,EXisting,460736.067634924,2578723.921316646,6,Riad Al Driz Shopping Center [shop=convenience] 25m
+32421,CRT Seasonal,56.5,23.2,56.513298,23.249497,Commercial,Commercial,3.0,EXisting,450213.76293325576,2571222.916122488,-1,
+32495,CRT Seasonal,56.5,23.2,56.497303,23.228387,Commercial,Residential,1.0,EXisting,448569.466307017,2568891.4887506897,-1,
+32524,CRT Time of Use,56.5,23.2,56.465679,23.150684,CRT Time of Use,Residential,1.0,EXisting,445302.38683639833,2560300.871146639,-1,
+32544,CRT Seasonal,56.4,23.3,56.384732,23.273962,CRT Seasonal,Residential,0.0,EXisting,437073.52647383465,2573981.307855057,-1,
+32578,CRT Seasonal,56.6,23.2,56.590514,23.223982,,,,,458104.5612160092,2568373.89332256,-1,
+32644,CRT Seasonal,56.5,23.1,56.474036,23.144359,,,,,446155.3699997685,2559597.54968338,-1,
+32737,CRT Seasonal,56.5,23.2,56.492818,23.21619,Commercial,Residential,0.0,EXisting,448105.8881621994,2567542.804594115,139,نفط عمان [amenity=fuel] 38m | Avicen Pharmacy - Ibri branch [amenity=pharmacy;healthcare=pharmacy] 65m | ? [leisure=garden] 68m
+32738,CRT Seasonal,56.5,23.2,56.492818,23.21619,Commercial,Residential,0.0,EXisting,448105.8881621994,2567542.804594115,139,نفط عمان [amenity=fuel] 38m | Avicen Pharmacy - Ibri branch [amenity=pharmacy;healthcare=pharmacy] 65m | ? [leisure=garden] 68m
+32740,CRT Seasonal,56.5,23.2,56.492818,23.21619,Commercial,Residential,0.0,EXisting,448105.8881621994,2567542.804594115,139,نفط عمان [amenity=fuel] 38m | Avicen Pharmacy - Ibri branch [amenity=pharmacy;healthcare=pharmacy] 65m | ? [leisure=garden] 68m
+32756,CRT Seasonal,56.7,23.2,56.661178,23.20377,Additional Account Tariff,Residential,5.0,EXisting,465329.2038429489,2566117.725549873,-1,
+32767,CRT Seasonal,56.6,23.2,56.611218,23.216352,Primary Account Tariff,Residential,5.0,EXisting,460220.5976441234,2567523.3985066395,-1,
+32844,CRT Seasonal,56.5,23.2,56.458466,23.217383,,,,,444591.46411822026,2567687.5579957413,78,ريمي [amenity=restaurant] 38m | Deli Pizza [amenity=fast_food] 51m | ? [shop=perfumery] 64m
+32855,CRT Seasonal,56.6,23.2,56.56647,23.22018,,,,,455643.27776619775,2567960.1293512373,-1,
+32857,CRT Seasonal,56.6,23.2,56.626149,23.213613,Primary Account Tariff,Residential,5.0,EXisting,461747.5433726748,2567216.171183625,-1,
+32864,CRT Seasonal,56.5,23.2,56.54083,23.207983,,,,,453015.61192574335,2566617.91604361,-1,
+32886,CRT Seasonal,56.5,23.2,56.490303,23.214898,,,,,447848.0508030727,2567400.672950524,-1,? [amenity=parking] 28m | وزارة الأوقاف والشؤون الدينية [building=yes] 36m | جمعية المرأة العمانية [building=yes] 54m
+32915,CRT Seasonal,56.6,23.3,56.613418,23.329369,,,,,460479.0542911468,2580034.377430741,-1,
+32917,CRT Time of Use,56.6,23.3,56.618593,23.311105,Primary Account Tariff,Residential,1.0,EXisting,461002.7805820704,2578011.0405980595,-1,
+32944,CRT Seasonal,56.5,23.2,56.515272,23.224625,Primary Account Tariff,Residential,0.0,EXisting,450406.5019653847,2568468.7661290704,95,Pizza Hut [amenity=fast_food] 37m
+32946,CRT Seasonal,56.5,23.2,56.515272,23.224625,Primary Account Tariff,Residential,0.0,EXisting,450406.5019653847,2568468.7661290704,95,Pizza Hut [amenity=fast_food] 37m
+32948,CRT Seasonal,56.5,23.2,56.515272,23.224625,Primary Account Tariff,Residential,0.0,EXisting,450406.5019653847,2568468.7661290704,95,Pizza Hut [amenity=fast_food] 37m
+33008,CRT Seasonal,56.4,23.3,56.3844,23.273603,CRT Seasonal,Residential,0.0,EXisting,437039.40156882047,2573941.707813208,-1,MOT Centre [landuse=industrial] 80m
+33393,CRT Time of Use,56.6,23.3,56.622282,23.34106,,,,,461388.6252981928,2581326.2486553453,-1,
+33741,CRT Time of Use,56.5,23.2,56.486033,23.212256,,,,,447410.1041907844,2567109.726765438,-1,
+33806,CRT Time of Use,56.5,23.2,56.511609,23.21613,Commercial,Residential,0.0,EXisting,450028.5660997389,2567529.577174524,102,Shell [amenity=fuel] 52m | ? [building=retail] 76m
+33935,CRT Seasonal,56.5,23.2,56.475085,23.185559,Commercial,Residential,0.0,EXisting,446279.1998722086,2564158.2189920107,-1,
+33960,CRT Seasonal,56.5,23.3,56.534339,23.283464,Government,Agricultural,4.0,EXisting,452378.2171418933,2574976.204955526,-1,
+33961,CRT Time of Use,56.5,23.1,56.466874,23.135404,,,,,445418.53324759786,2558608.849959075,-1,
+33962,CRT Time of Use,56.5,23.2,56.472728,23.20137,,,,,446044.3193902997,2565909.4585532,-1,
+33963,CRT Time of Use,56.4,23.3,56.380926,23.282817,,,,,436688.443952798,2574963.2848892696,-1,
+33964,CRT Time of Use,56.5,23.2,56.538587,23.245412,,,,,452799.2544593375,2570762.2343736542,-1,? [man_made=tower] 27m | ? [man_made=tower] 38m
+33965,CRT Time of Use,56.5,23.2,56.495879,23.227015,,,,,448423.2483133812,2568740.1051527997,145,PBX connections [building=yes] 41m
+33966,CRT Time of Use,56.5,23.2,56.49258,23.217424,Commercial,Residential,0.0,EXisting,448082.01286073023,2567679.500505923,138,Ibri Road [] 26m | Muscat Pharmacy - Ibri branch [amenity=pharmacy;healthcare=pharmacy] 41m | ? [leisure=garden] 80m
+33967,CRT Seasonal,56.5,23.2,56.45374,23.219311,,,,,444108.7026272861,2567902.8093486694,80,College Mosque [building=mosque] 64m
+33968,CRT Time of Use,56.4,23.2,56.433161,23.228914,,,,,442007.2363981801,2568973.988893912,-1,
+33969,CRT Time of Use,56.5,23.1,56.472765,23.133578,,,,,446020.93518177886,2558404.510010972,-1,
+33970,CRT Time of Use,56.6,23.2,56.570185,23.249177,CRT Time of Use,Residential,1.0,EXisting,456032.8840275486,2571169.1178695997,-1,
