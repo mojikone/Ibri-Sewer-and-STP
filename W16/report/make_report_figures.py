@@ -73,7 +73,7 @@ def d3_flow():
     c.node("pl", 0, 0, "Existing plot: domestic meters|x occupancy = people", "start")
     c.node("de", 1, 0, "Existing plot, l/d:|0.85 · 164 · OR · N dom|+ 0.54 · (U nd · N nd|+ U gov · N gov)")
     c.node("rt", 2, 0, "Unit rates per meter:|the settlement's 22 % and 14 % shares")
-    c.node("sp", 2, 1, "Estate plot, l/d:|0.54 · 93 · workers|+ its dwellings, no shop share", "tint")
+    c.node("sp", 2, 1, "Estate plot, l/d:|0.54 · 93 · workers|+ its properties, no shop share", "tint")
     c.node("ww", 1, 1, "Average sewage|per plot, each year")
     c.node("gr", 0, 1, "Future plot, l/d:|171.3 · people housed")
     c.node("su", 1, 2, "Sum of the plots|upstream of each pipe")
