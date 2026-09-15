@@ -102,13 +102,14 @@ def c07_landuse():
     """Use of the built, metered plots, as derived from the meters and the
     satellite. Source: facts_w14.plot_summary."""
     ps = F.plot_summary(); cls = ps["classes"]
-    order = [("Residential", BLUE), ("Agricultural", GREEN), ("Commercial", RED), ("Residential-Commercial", ORANGE),
-             ("Government", AMBER), ("Industrial", PURPLE)]
-    names = [{"Residential": "Home", "Agricultural": "Farm", "Commercial": "Shop", "Residential-Commercial": "Home and shop"}.get(o[0], o[0]) for o in order]
+    # the eight classes' names and the land-use map's colours (Heritage and Empty carry no meter)
+    order = [("Residential", "#FFE600"), ("Agricultural", "#4CAF50"), ("Commercial", "#E03C31"), ("Residential-Commercial", "#F5A742"),
+             ("Government", "#3498DB"), ("Industrial", "#9B59B6")]
+    names = [o[0] for o in order]
     vals = [cls.get(o[0], 0) for o in order]; cols = [o[1] for o in order]
     total = sum(vals)
     fig, ax = plt.subplots(figsize=(7.4, 3.2))
-    bars = ax.barh(names, vals, color=cols, height=0.6, edgecolor="white", linewidth=0.8)
+    bars = ax.barh(names, vals, color=cols, height=0.6, edgecolor="#8C8C8C", linewidth=0.5)
     for b, v in zip(bars, vals):
         ax.text(v + total * 0.006, b.get_y() + b.get_height() / 2, f"{v:,}   ({v / total * 100:.1f} %)",
                 ha="left", va="center", fontsize=7.8, color=GREY)
