@@ -4,7 +4,7 @@ W14 layers and the facts modules the reports use.
 
     python make_deliverables.py        -> Ibri_Design_Basis_Data_R0/ (five folders, README) and the zip
 
-01_boundaries            project boundary received (Inception Report KMZ, 521 km2) and updated
+01_boundaries            project boundary received (Project_Boundary.kmz, 440 km2) and updated
                          (531 km2); the settlement polygons received (25 rows, Al Aynayn in two parts)
 02_settlements           the 25 settlements: people and Q by year, saturation, OR, the peak flow
 03_meters                the 33,971 electricity meters as is
@@ -191,12 +191,12 @@ class XL:
         """kinds: per column 't' text, 'c' centred text, 'i' integer, 'd' one decimal, 'f' two decimals."""
         ws = self.wb.add_worksheet(name)
         ws.hide_gridlines(2)
-        ws.write(0, 0, title, self.f_title); ws.write(1, 0, source, self.f_src)
+        ws.write(0, 0, title, self.f_title)
         for j, h in enumerate(headers):
-            ws.write(3, j, h, self.f_head_l if j in left_cols else self.f_head)
-        ws.set_row(3, 32)
+            ws.write(2, j, h, self.f_head_l if j in left_cols else self.f_head)
+        ws.set_row(2, 32)
         fm = {"t": self.f_txt, "c": self.f_ctr, "i": self.f_int, "d": self.f_dec, "f": self.f_dec2}
-        for i, r in enumerate(rows, 4):
+        for i, r in enumerate(rows, 3):
             for j, v in enumerate(r):
                 if v is None or (isinstance(v, float) and math.isnan(v)):
                     ws.write_blank(i, j, None, fm[kinds[j]])
@@ -205,7 +205,7 @@ class XL:
                 else:
                     ws.write(i, j, v, fm[kinds[j]])
         if totals:
-            i = 4 + len(rows)
+            i = 3 + len(rows)
             for j, v in enumerate(totals):
                 if v is None:
                     ws.write_blank(i, j, None, self.f_tot)
@@ -215,7 +215,7 @@ class XL:
                     ws.write_number(i, j, float(v), self.f_tot_dec if kinds[j] == "d" else self.f_tot)
         for j, w in enumerate(widths):
             ws.set_column(j, j, w)
-        ws.freeze_panes(4, 1)
+        ws.freeze_panes(3, 1)
         return ws
 
     def close(self):
@@ -252,12 +252,12 @@ def q_class(q):
 # ------------------------------------------------------------------ 01 boundaries
 def boundaries(manifest):
     d = folder("01_boundaries")
-    rec = gpd.read_file(os.path.join(DATA, "Received", "2621", "inception report - R0", "Final_Boundary_IBRI.kmz"), layer="Project_boundary")
-    rec = rec.to_crs(UTM)[["geometry"]]; rec["SOURCE"] = "Inception Report R0, Final_Boundary_IBRI.kmz"; rec["AREA_KM2"] = (rec.geometry.area / 1e6).round(2)
+    rec = gpd.read_file(os.path.join(DATA, "Received", "2621", "inception report - R0", "Project_Boundary.kmz"))
+    rec = rec.to_crs(UTM)[["geometry"]]; rec["SOURCE"] = "Project_Boundary.kmz, as received"; rec["AREA_KM2"] = (rec.geometry.area / 1e6).round(2)
     upd = gpd.read_file(os.path.join(SHP, "Study area", "Project Boundary.shp"))[["geometry"]]
     upd["SOURCE"] = "Project boundary updated (the report maps)"; upd["AREA_KM2"] = (upd.geometry.area / 1e6).round(2)
     towns = gpd.read_file(os.path.join(SHP, "Towns", "Towns.shp"))
-    for name, g, colour, what in (("Project_boundary_received", rec, "#C0504D", f"the project boundary as received in the Inception Report package, {rec.AREA_KM2.iloc[0]:.1f} km2"),
+    for name, g, colour, what in (("Project_boundary_received", rec, "#C0504D", f"the project boundary as received (Project_Boundary.kmz), {rec.AREA_KM2.iloc[0]:.1f} km2"),
                                   ("Project_boundary_updated", upd, NAVY, f"the project boundary as updated for the report maps, {upd.AREA_KM2.iloc[0]:.1f} km2")):
         write_shp(g, os.path.join(d, name + ".shp"))
         k = KML(name.replace("_", " ")); k.style_poly("b", None, colour, 3.0)
@@ -332,7 +332,7 @@ def settlements(manifest):
              ("OR", "Persons per property adopted for the settlement: the 2024 series population divided by the domestic meters, floor 4.0, cap 6.12, 4.0 for settlements under a thousand people (Decision 2)."),
              ("Peak flow", "For a trunk carrying the settlement alone: Merrimack Qpdf = 2.65 Qadf^0.879 (Ml/d) over 100 properties, Peltier PF = 1.5 + 1/sqrt(Qm, l/s) at 100 or fewer; properties in the year = people / OR. Add 720 l/d per km of sewer upstream for infiltration."),
              ("Rounding", "Each settlement's people are whole numbers, so the study-area line is their sum and can differ from the report's plot-based total by a few people (349,031 against 349,029 in 2070)."),
-             ("Source", f"Packaged {datetime.date.today().isoformat()} from the frozen W14 layers; the same figures as the report.")]
+             ("Peak flow, whole area", "The study-area peak is Merrimack on the whole flow, not the sum of the settlements' peaks; no infiltration, no STP margin.")]
     ws.write(0, 0, "Notes", xl.f_title)
     for i, (a, b) in enumerate(notes, 2):
         ws.write(i, 0, a, xl.f_txt); ws.write(i, 1, b, xl.f_txt)
@@ -446,14 +446,11 @@ def plots(manifest, names):
     f = {"t": xl.f_txt, "c": xl.f_ctr, "i": xl.f_int, "d": xl.f_dec, "f": xl.wb.add_format({"font_name": "Calibri", "font_size": 10.5, "bottom": 1, "bottom_color": "#D9D9D9", "align": "center", "num_format": "#,##0.000"})}
     ws = xl.wb.add_worksheet("Plots"); ws.hide_gridlines(2)
     ws.write(0, 0, "The 77,265 cadastral plots: meters by tariff, the use, people and average sewage flow for 2024, 2030, 2055 and saturation", xl.f_title)
-    ws.write(1, 0, "Design Basis Report R0 (Sections 3, 4 and 7); W14/shp/PLOTS_load.shp. Plot no. is the plot's row in the layer (the same number in the KMZ, the shapefile and the meters' table). "
-                   "Meters counted by tariff group; CRT = the large-consumer tariffs, each resolved to a category by public data. "
-                   "Use as determined from the meters and the satellite image (Decision 3); the treatment plant's compound as Government. Q in m³/d after the return ratios, no infiltration.", xl.f_src)
     for j, h in enumerate(heads):
-        ws.write(3, j, h, xl.f_head_l if j == 1 else xl.f_head)
-    ws.set_row(3, 32)
+        ws.write(2, j, h, xl.f_head_l if j == 1 else xl.f_head)
+    ws.set_row(2, 32)
     vals = g.drop(columns="geometry").values
-    for i, row in enumerate(vals, 4):
+    for i, row in enumerate(vals, 3):
         for j, v in enumerate(row):
             if v is None or (isinstance(v, float) and math.isnan(v)):
                 ws.write_blank(i, j, None, f[kinds[j]])
@@ -463,7 +460,7 @@ def plots(manifest, names):
                 ws.write(i, j, str(v), f[kinds[j]])
     for j, w in enumerate(widths):
         ws.set_column(j, j, w)
-    ws.freeze_panes(4, 2); ws.autofilter(3, 0, 3 + len(vals), len(heads) - 1)
+    ws.freeze_panes(3, 2); ws.autofilter(2, 0, 2 + len(vals), len(heads) - 1)
     xl.close()
     # KMZ: one file; a NetworkLink per settlement that Google Earth loads when the settlement is in
     # view, each with a subfolder per use; the plot's attributes through a Schema to keep it small

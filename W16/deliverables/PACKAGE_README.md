@@ -6,7 +6,7 @@ Every value is the one in the Design Basis Report R0: the settlement boundaries 
 
 | Folder | Files | What it is |
 |---|---|---|
-| 01_boundaries | Project_boundary_received.kmz, .shp | the project boundary as received in the Inception Report package, 521.1 km2 |
+| 01_boundaries | Project_boundary_received.kmz, .shp | the project boundary as received (Project_Boundary.kmz), 439.8 km2 |
 | 01_boundaries | Project_boundary_updated.kmz, .shp | the project boundary as updated for the report maps, 531.4 km2 |
 | 01_boundaries | Settlement_boundaries_received.kmz, .shp | the 25 settlement polygons as received with the Inception Report (Al Aynayn drawn as two parts, so 26 polygons), with the client's population series 2023 to 2100 |
 | 02_settlements | Settlements.xlsx, .kmz, .shp | the 25 settlements: people and average sewage flow for 2024, 2025 and every five years to 2070, the saturation year and people, OR (persons per property), the peak flow for a trunk (2055 and saturation); coloured by the flow at saturation as the report's map |
