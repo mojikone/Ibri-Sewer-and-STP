@@ -164,7 +164,7 @@ def s3_people(d):
                f"Each meter on a household tariff is one property: {fmt(ps['properties'])} "
                f"properties in all. Shop, office, government, farm and large-consumer meters "
                f"carry no people.")
-    N.add(p, "The primary, subsidised primary and additional-dwelling tariffs count as properties. The "
+    N.add(p, "The primary, subsidised primary and additional-account tariffs count as properties. The "
              "499 large-consumer accounts were placed by public records; their use decides only where "
              "the shop and government water is placed, not how much there is.")
 

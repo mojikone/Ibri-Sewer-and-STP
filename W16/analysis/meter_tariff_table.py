@@ -83,7 +83,7 @@ assert sum(r[1] for r in S2) == len(p), (sum(r[1] for r in S2), len(p))
 
 # ------------------------------------------------------------ sheet 3: NAMA category <- tariffs and uses
 S3 = [  # category, meters, tariffs folded in, plot uses that carry its load, rate, return, water 2024, sewage 2024
-    ("Domestic", gud["domestic"], DOM_T, "Residential; Residential-Commercial; the dwelling meters on farm, shop and government plots",
+    ("Domestic", gud["domestic"], DOM_T, "Residential; Residential-Commercial; the domestic meters on farm, shop and government plots",
      "164 l/person/d x persons per property", "85 %", water["dom"], sew["dom"]),
     ("Non-domestic", gud["non_domestic"], COM_T, "Commercial; Residential-Commercial; the shop meters on other plots",
      "22 % of the settlement's domestic water, placed on its shop meters", "54 %", water["ndom"], sew["ndom"]),
