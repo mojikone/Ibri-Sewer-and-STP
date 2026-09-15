@@ -11,7 +11,8 @@ moves.
 | `report_basis/` | **The Design Basis Report: Settlement Boundaries, Population, Flows and Loads — Revision 0** (`R0/Ibri_Design_Basis_Report_R0.docx` + `.pdf`, 40 pages). Issued ahead of the concept report so NWS can approve the foundation: the boundaries, the people, the use of each plot, the rates, the growth and the overflow, the flow for every element, the plant loads. Nineteen decisions and seven data requests, each a yes or no. Built by `build.py` |
 | `report/` | The concept report build carried from W14 (R0 to R2 stay in `W14/report/`; **R3 builds here**), plus the shared furniture every report uses: `doc.py`, `notes.py`, `omml.py`, `flow.py`, `charts.py`, `qgis_maps.py`, `facts_w14.py`, `to_pdf.py`, and the Word template in `template/` |
 | `docs/` | W14's notes, plus **`CHANGES_FOR_CONCEPT_R3.md`**: every change made for the basis report that the concept report's next revision must carry |
-| `py/`, `analysis/`, `img/` | the load chain and its outputs, as in W14 |
+| `deliverables/` | **The data package for NWS** (2026-09-15): `make_deliverables.py` builds `Ibri_Design_Basis_Data_R0.zip` from the frozen W14 layers, five folders: the boundaries received and updated, the settlements (people and Q by year, saturation, OR, the peak flow for a trunk), the meters as received, the plots (meters by tariff, the use in eight classes, people and Q for the four stored years), the identified projects. Every item KMZ + shapefile, the tables Excel in the report's look; the unpacked folder is not in git, the zip is; `PACKAGE_README.md` is the package's own README |
+| `py/`, `analysis/`, `img/` | the load chain and its outputs, as in W14; `analysis/meter_tariff_to_nama_category.xlsx` (2026-09-15): every tariff to its NAMA category and plot use, three sheets, the simple conversion on top and the values below |
 
 ## The Word furniture (shared by both reports since W16)
 
