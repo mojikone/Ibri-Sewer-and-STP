@@ -587,6 +587,7 @@ def readme(manifest):
              "| Folder | Files | What it is |", "|---|---|---|"]
     lines += [f"| {a} | {b} | {c} |" for a, b, c in manifest]
     lines += ["", "## Conventions", "",
+              "- Every folder holds SHP/ (the shapefile with its sidecars), KMZ/ (Google Earth) and XLS/ (Excel).",
               "- KMZ files are in WGS 84 for Google Earth; the balloon of every feature carries its table. Shapefiles are in UTM zone 40 North, WGS 84 (EPSG:32640).",
               "- Q is the average sewage flow in m³/d after the return ratios (85 % of domestic and tanker water, 54 % of the rest), without infiltration or the STP margin.",
               "- People by year follow the series with the overflow: a settlement grows at the series' rate until its land is full, then its further growth moves to its neighbours (Decision 4).",
@@ -600,6 +601,20 @@ def readme(manifest):
               f"Key figures: 2024 {t['pop_today']:,} people and {t['q_today']:,.0f} m³/d; 2055 {t['pop'][2055]:,} people and {t['q'][2055]:,.0f} m³/d; "
               f"saturation {t['ultimate']} {t['pop_ult']:,} people and {t['q_ult']:,.0f} m³/d."]
     open(os.path.join(OUT, "README.md"), "w", encoding="utf-8").write("\n".join(lines) + "\n")
+
+
+def arrange():
+    """Inside every folder: SHP/ for the shapefile and its sidecars, KMZ/ for Google Earth, XLS/ for Excel."""
+    kinds = {".shp": "SHP", ".shx": "SHP", ".dbf": "SHP", ".prj": "SHP", ".cpg": "SHP", ".kmz": "KMZ", ".xlsx": "XLS"}
+    for sub in sorted(os.listdir(OUT)):
+        d = os.path.join(OUT, sub)
+        if not os.path.isdir(d):
+            continue
+        for f in os.listdir(d):
+            ext = os.path.splitext(f)[1].lower()
+            if ext in kinds:
+                os.makedirs(os.path.join(d, kinds[ext]), exist_ok=True)
+                shutil.move(os.path.join(d, f), os.path.join(d, kinds[ext], f))
 
 
 def zip_package():
@@ -623,6 +638,7 @@ if __name__ == "__main__":
     meters(manifest, names)
     plots(manifest, names)
     projects(manifest)
+    arrange()
     readme(manifest)
     zip_package()
     for root, _, files in os.walk(OUT):

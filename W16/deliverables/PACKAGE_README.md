@@ -16,6 +16,7 @@ Every value is the one in the Design Basis Report R0: the settlement boundaries 
 
 ## Conventions
 
+- Every folder holds SHP/ (the shapefile with its sidecars), KMZ/ (Google Earth) and XLS/ (Excel).
 - KMZ files are in WGS 84 for Google Earth; the balloon of every feature carries its table. Shapefiles are in UTM zone 40 North, WGS 84 (EPSG:32640).
 - Q is the average sewage flow in m³/d after the return ratios (85 % of domestic and tanker water, 54 % of the rest), without infiltration or the STP margin.
 - People by year follow the series with the overflow: a settlement grows at the series' rate until its land is full, then its further growth moves to its neighbours (Decision 4).
