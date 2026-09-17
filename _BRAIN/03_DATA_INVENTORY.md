@@ -31,3 +31,17 @@ Project CRS: **EPSG:32640** (WGS84 / UTM 40N). QGIS project: `Hydraulic/QGIS/QGI
 - Gravity viable for ~95% of plots (Smin trunk ≥900 mm = 0.75 m/m‰, Tab 11). Low-grade (<1 m/km): ~2.8% of plots; below STP+5 m: ~5.4% → SLS candidate pockets.
 - Profile STP→cluster centroid monotonic rise, no adverse grade over first ~9 km.
 - Settlement clusters: #1 main town 47.5k plots; #2 east 1,144 plots @31.7 km, +164 m (satellite solution question); #3 565 @21 km; #4 487 @10 km NW (+14 m); #6 52 plots **−9.7 m below STP** (pumping or deferred).
+
+## Public and third-party data brought in for the study-area section (2026-09-17)
+Section 1.2 of the Concept Design Report R3. Scripts, files and the reasons: `W16/analysis/study_area/README.md`.
+
+| Dataset | Source | Where | Notes |
+|---|---|---|---|
+| Governorates of Oman (11) and the Wilayat of Ibri, outlines | OpenStreetMap through Nominatim, downloaded 2026-09-17, ODbL | `W16/analysis/study_area/admin/*.geojson` | For the locator inset of the location map only. geoBoundaries still carries the 7 regions of 2010 and is not used. Credit "© OpenStreetMap contributors" |
+| Climate: daily temperature and rainfall 2001 to 2024, hourly wind at 10 m 2015 to 2024, at the existing STP | NASA POWER (MERRA-2), power.larc.nasa.gov, free of restriction | `W16/analysis/study_area/climate/` | A reanalysis on a grid of about 50 km, not a station: `[GAP-24]`. Rainfall after 2020 rejected. Results: BWh, 29.7 °C annual mean, 80 mm a year, wind on a north-west to south-east axis |
+| **Flood hazard grids, 10, 25, 50, 100 and 500-year** | **Oman Flood Mapping project, MAFWR** (Renardet project 2331), `\\fileserver-\Works\2331 …\05-Hazard_Risk\FloodHazard_OM_20260608\Project2\2.3-Area3\04 Lekhuwair\Hazard_T*y.tif`, 3 m grid; clipped copies at 2 m in `W16/Meeting 2026-09-16/04_Hydrology/` (not in git) | rendered only, in `W16/report/img/A03…A06_hazard_T*.png` | Classes 1 to 6 are the **Australian hazard classes H1 (low) to H6 (high)**, AIDR Guideline 7-3 (2017). The engineer cleared their use in the NWS report with the source line "Oman Flood Mapping project, MAFWR" and their push to the public repo (2026-09-17). Maps only; no exposure statistics were asked for. **The rasters themselves are another client's data and are never committed** |
+| Road class code `StrCls` (01, 02, 04, 05) of `SHP/Road centerline 2` | as supplied | — | The codes carry no names in the data; the report shows them "as supplied" (engineer, 2026-09-17). 1,351 km of centreline inside the updated boundary, 142 km of it on dual carriageways (`dual` = 1) |
+
+**Ground at the existing STP: 329.0 m** from the 0.5 m terrain (`IBRI_0p5_clip.tif`) at E444387 N2563352. The ≈ 327.6 m in the terrain note above came from the superseded 5 m surface. 23 of the 25 settlements stand above the STP; **Al Makhtibyah and Tanam lie about 8 m below it** (median of their built plots 321 m).
+
+**The main pipe (`SHP/Main Pipe/Main Pipe.shp`) is the engineer's own input, not client data**: it is not drawn on descriptive or data maps for the client.
