@@ -15,7 +15,7 @@ QGIS project to open before starting the qgis MCP: `Hydraulic/QGIS/QGIS 2621 ibr
 
 ## 2. Python (system 3.12, NOT QGIS python)
 ```
-pip install networkx shapely pyshp rasterio numpy scipy matplotlib pymupdf pdfplumber pypdf python-docx
+pip install networkx shapely pyshp rasterio numpy scipy matplotlib pymupdf pdfplumber pypdf python-docx geopandas pandas pyproj pillow openpyxl xlsxwriter python-pptx pywin32
 ```
 Pipelines: `W1/py/s1_roads_graph.py` (road graph + dual detection) → `W2/py/s3_w2_pipeline.py` (trunk/zones/flows/SLS/crossings). Both standalone, re-runnable, ~20 s each.
 

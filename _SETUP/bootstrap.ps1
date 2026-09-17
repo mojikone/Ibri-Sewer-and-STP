@@ -50,7 +50,7 @@ if (Test-Path $skillSrc) {
 }
 
 # 3. Python deps
-$pyMods = "networkx","shapely","shapefile","rasterio","numpy","scipy","matplotlib","fitz","docx"
+$pyMods = "networkx","shapely","shapefile","rasterio","numpy","scipy","matplotlib","fitz","docx","geopandas","pandas","pyproj","PIL","openpyxl","xlsxwriter","pptx","win32com"
 $missing = @()
 foreach ($m in $pyMods) {
   python -c "import $m" 2>$null
@@ -58,7 +58,7 @@ foreach ($m in $pyMods) {
 }
 if ($missing.Count -gt 0) {
   Write-Host ("FIXING pip install: " + ($missing -join ", "))
-  python -m pip install --quiet networkx shapely pyshp rasterio numpy scipy matplotlib pymupdf python-docx
+  python -m pip install --quiet networkx shapely pyshp rasterio numpy scipy matplotlib pymupdf python-docx geopandas pandas pyproj pillow openpyxl xlsxwriter python-pptx pywin32
 } else { Write-Host "PASS   python deps" }
 
 # 4. Data paths that scripts depend on
