@@ -120,9 +120,9 @@ def layers():
 
     # the use of each plot: colour without an outline; only the empty plots keep a line
     pu = QgsVectorLayer(os.path.join(SHP14, "PLOTS_load.shp"), "Use of the plot", "ogr")
-    cols = [('Residential', 'Home', '#FFE600'), ('Residential-Commercial', 'Home and shop', '#F5A742'),
-            ('Commercial', 'Shop', '#E03C31'), ('Government', 'Government', '#3498DB'),
-            ('Agricultural', 'Farm', '#4CAF50'), ('Industrial', 'Industrial', '#9B59B6'),
+    cols = [('Residential', 'Residential', '#FFE600'), ('Residential-Commercial', 'Residential-Commercial', '#F5A742'),
+            ('Commercial', 'Commercial', '#E03C31'), ('Government', 'Government', '#3498DB'),
+            ('Agricultural', 'Agricultural', '#4CAF50'), ('Industrial', 'Industrial', '#9B59B6'),
             ('Heritage', 'Heritage, old quarter', '#8d6e63')]
     cats = [QgsRendererCategory(k, QgsFillSymbol.createSimple({'color': c, 'outline_style': 'no'}), lab) for k, lab, c in cols]
     cats.append(QgsRendererCategory('Unmetered', QgsFillSymbol.createSimple(

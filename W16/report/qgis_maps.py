@@ -28,7 +28,7 @@ SUBTITLE = "Ibri Sewer, TE Networks and STP — Concept Design Report | Renardet
 FIGURES = {
     "M01_location": (
         "Project location and study area boundary",
-        ["Project Boundary updated", "Towns"], True,
+        ["Project Boundary updated", "Settlement boundary"], True,
         [("Study area", "531.4 km2"), ("Settlements", "25"),
          ("Wilayat", "Ibri, Adh Dhahirah"), ("Projection", "UTM 40N, WGS 84")]),
     "M02_wastewater": (
@@ -141,9 +141,9 @@ def _r2_layers():
              'outline_width': '0.6', 'outline_width_unit': 'MM'}), lab) for k, lab, c in fc]))
 
     pu = QgsVectorLayer(shp("PLOTS_load.shp"), "Use of the plot", "ogr")
-    cols = [('Residential', 'Home', '#FFE600'), ('Residential-Commercial', 'Home and shop', '#F5A742'),
-            ('Commercial', 'Shop', '#E03C31'), ('Government', 'Government', '#3498DB'),
-            ('Agricultural', 'Farm', '#4CAF50'), ('Industrial', 'Industrial', '#9B59B6'),
+    cols = [('Residential', 'Residential', '#FFE600'), ('Residential-Commercial', 'Residential-Commercial', '#F5A742'),
+            ('Commercial', 'Commercial', '#E03C31'), ('Government', 'Government', '#3498DB'),
+            ('Agricultural', 'Agricultural', '#4CAF50'), ('Industrial', 'Industrial', '#9B59B6'),
             ('Heritage', 'Heritage, old quarter', '#8d6e63'), ('Unmetered', 'Empty plot', '158,158,158,60')]
     pu.setRenderer(QgsCategorizedSymbolRenderer('DERIVED', [
         QgsRendererCategory(k, QgsFillSymbol.createSimple(
@@ -284,6 +284,24 @@ def _basemap():
     return None
 
 
+BASEMAP_OPACITY = 0.5          # every satellite background at 50 % since Revision 3
+_bm = {}
+
+
+def _basemap50():
+    """A copy of the project's satellite layer at 50 % opacity; the project's own layer is untouched."""
+    if "bm" in _bm:
+        return _bm["bm"]
+    src = _basemap()
+    if src is None:
+        return None
+    bm = QgsRasterLayer(src.source(), "Satellite image (Google)", src.providerType())
+    bm.setOpacity(BASEMAP_OPACITY)
+    QgsProject.instance().addMapLayer(bm, False)
+    _bm["bm"] = bm
+    return bm
+
+
 def _clone(name):
     """Copy the template layout so every figure shares one frame."""
     proj = QgsProject.instance()
@@ -330,7 +348,7 @@ def build(keys=None, dpi=200):
 
         stack = _layers(names)
         if basemap:
-            bm = _basemap()
+            bm = _basemap50()
             if bm:
                 stack = stack + [bm]
 
@@ -365,7 +383,7 @@ def build(keys=None, dpi=200):
             for ch in list(grp.children()):
                 grp.removeChildNode(ch)
             for l in stack:
-                if l.name() in ("Google Satellite", "ESRI Satellite",
+                if l.name() in ("Google Satellite", "ESRI Satellite", "Satellite image (Google)",
                                 "Google satellite hydbrid"):
                     continue
                 node = grp.addLayer(l)

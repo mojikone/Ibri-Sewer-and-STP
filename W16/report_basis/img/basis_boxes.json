@@ -27,15 +27,15 @@
    "16,756"
   ],
   [
-   "Homes",
+   "Residential",
    "12,464"
   ],
   [
-   "Shops",
+   "Commercial",
    "1,321"
   ],
   [
-   "Home and shop",
+   "Residential-Commercial",
    "614"
   ],
   [
@@ -43,7 +43,7 @@
    "410"
   ],
   [
-   "Farms",
+   "Agricultural",
    "1,684"
   ],
   [
