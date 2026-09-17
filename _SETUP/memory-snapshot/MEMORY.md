@@ -15,3 +15,4 @@
 - [Long runs detached](long-runs-detached.md) — the whole-network engine run outlives the 10-minute Bash cap; Start-Process it and Monitor the console file
 - [Report format preferences](report-format-preferences.md) — firm's template, native captions, symbol lines, 50 % imagery, no worked examples, plain words, decisions register
 - [QGIS MCP relay fallback](qgis-mcp-relay-fallback.md) — relay hung after a long render; talk to the plugin's socket with W16/report_basis/qgis_direct.py, or start a new session
+- [Main pipe is not client data](main-pipe-not-client-data.md) — the engineer's own trunk input; never on a descriptive client map
