@@ -38,9 +38,11 @@ def main(render_pdf=False, pages=False):
     N.ensure_style(d)
 
     import rpt_front
+    D.front_matter(d)                # the cover unnumbered, then i, ii, iii
     rpt_front.contents(d)
     rpt_front.abbreviations(d)
     rpt_front.executive_summary(d)
+    D.body_start(d)                  # 1, 2, 3 from the first chapter to the end
 
     for mod, fns in (("rpt_ab", ("part_a", "part_b")), ("rpt_c", ("part_c",)), ("rpt_d", ("part_d",)),
                      ("rpt_ef", ("part_e", "part_f")), ("rpt_gh", ("part_g", "part_h")), ("rpt_app", ("appendices",))):
@@ -48,6 +50,7 @@ def main(render_pdf=False, pages=False):
         for fn in fns:
             getattr(m, fn)(d)
 
+    D.number_pages(d)
     out = OUT
     try:
         N.save(d, out)

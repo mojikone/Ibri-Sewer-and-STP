@@ -36,6 +36,7 @@ _W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
 def reset():
     for k in _counters:
         _counters[k] = 0
+    _pages["front"] = _pages["body"] = None
 
 
 def new_document(fields=None, template=TEMPLATE):
@@ -163,6 +164,55 @@ def _own_header_footer(d, s):
                     new_rid = dst_part.relate_to(src_part.rels[rid].target_part, RT.IMAGE)
                     blip.set("{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed", new_rid)
             dst_el.append(el)
+
+
+# ------------------------------------------------------------- page numbers
+# No number on the cover; i, ii, iii over the front matter (contents, lists, abbreviations,
+# executive summary); 1, 2, 3 from the first chapter to the end (engineer, 2026-09-17).
+_pages = {"front": None, "body": None}
+
+
+def front_matter(d):
+    """The cover stands alone in the first section and what follows it is numbered in
+    lower-case roman. Call straight after new_document(): the template closes its cover with
+    a page break, which is swapped here for the section break."""
+    kids = [k for k in d.element.body if k.tag != qn("w:sectPr")]
+    last = kids[-1] if kids else None
+    if last is not None and last.tag == qn("w:p"):
+        for br in list(last.iter(qn("w:br"))):
+            if br.get(qn("w:type")) == "page":
+                br.getparent().remove(br)
+    page_section(d, "A4", "portrait")
+    _pages["front"] = len(d.sections) - 1
+
+
+def body_start(d):
+    """The first chapter opens a new section, numbered from 1 to the end of the report."""
+    page_section(d, "A4", "portrait")
+    _pages["body"] = len(d.sections) - 1
+
+
+def number_pages(d):
+    """Write the page numbering of every section, once, before saving. A section made by
+    add_section is a copy of the one before it, its start value included, so a landscape page
+    would restart the count if the numbering were set as the sections are made."""
+    f, b = _pages["front"], _pages["body"]
+    if f is None or b is None:
+        return
+    for i, s in enumerate(d.sections):
+        sp = s._sectPr
+        for old in sp.findall(qn("w:pgNumType")):
+            sp.remove(old)
+        if i < f:
+            continue                                    # the cover carries no number
+        fmt = "lowerRoman" if i < b else "decimal"
+        start = ' w:start="1"' if i in (f, b) else ""
+        el = parse_xml(f'<w:pgNumType {_W} w:fmt="{fmt}"{start}/>')
+        cols = sp.find(qn("w:cols"))                    # the schema's place: before w:cols
+        if cols is not None:
+            cols.addprevious(el)
+        else:
+            sp.append(el)
 
 
 def text_width_cm(d, size="A4", orient="landscape"):
