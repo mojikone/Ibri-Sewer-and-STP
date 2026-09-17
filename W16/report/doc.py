@@ -319,13 +319,24 @@ def title(d, text, size=14, space_before=0):
 def chapter(d, text):
     """A chapter opens on a new page with its number and title as the top-level heading, and
     nothing else: no divider page, no rules. text carries the number: "4.   Demand and flows"."""
-    if not at_section_start(d):
-        pagebreak(d)
+    from docx.enum.text import WD_LINE_SPACING
+    fresh = at_section_start(d)
     _step["n"] = 0
+    # the opener stands clear of the page: 100 pt above and below, 24 pt (engineer, 2026-09-17).
+    # The space above is an empty line of exactly 100 pt, not the heading's own space-before:
+    # Word drops space-before on the first paragraph of a page that a page break opened, and
+    # keeps it at a section start, so the openers sat at two heights.
+    gap = d.add_paragraph()
+    gap.paragraph_format.space_before = gap.paragraph_format.space_after = Pt(0)
+    gap.paragraph_format.line_spacing_rule = WD_LINE_SPACING.EXACTLY
+    gap.paragraph_format.line_spacing = Pt(100)
+    gap.paragraph_format.keep_with_next = True
+    if not fresh:
+        gap.paragraph_format.page_break_before = True
     par = d.add_heading(text, 1)
-    par.paragraph_format.space_before = Pt(0); par.paragraph_format.space_after = Pt(12)
+    par.paragraph_format.space_before = Pt(0); par.paragraph_format.space_after = Pt(100)
     for r in par.runs:
-        r.font.size = Pt(18)
+        r.font.size = Pt(24)
     _outline(par, 0)
     return par
 
