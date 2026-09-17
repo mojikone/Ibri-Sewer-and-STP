@@ -16,15 +16,15 @@ def part_e(d):
     D.part(d, "E", "The existing system")
 
     # --------------------------------------------------------------- 18
-    D.h(d, 1, "18   Hydraulic assessment of the existing networks")
+    D.h(d, 1, "18.   Hydraulic assessment of the existing networks")
 
-    D.h(d, 2, "18.1   Purpose")
+    D.h(d, 2, "18.1.   Purpose")
     D.p(d, "The existing sewer, force main and treated effluent networks are "
            "assessed against the flows arising across the design period, to "
            "establish which assets have capacity for the future flow, which "
            "require upgrading, and where the new works connect to them.")
 
-    D.h(d, 2, "18.2   Approach")
+    D.h(d, 2, "18.2.   Approach")
     D.p(d, "The assessment is carried out by hydraulic model. The existing "
            "network is verified before it is modelled: the datasets supplied "
            "provide geometry but not levels, and the diameter is recorded on "
@@ -35,7 +35,7 @@ def part_e(d):
            "asset is retained, the point and manner of connection to the new "
            "works is designed.")
 
-    D.h(d, 2, "18.3   Model")
+    D.h(d, 2, "18.3.   Model")
     p = D.p(d, "The wastewater network is modelled in SewerGEMS and the "
                "treated effluent network in WaterGEMS. Models are submitted in "
                "native editable format with the calculations and assumptions, "
@@ -50,7 +50,7 @@ def part_e(d):
                 "following completion of the survey.")
 
     # --------------------------------------------------------------- 19
-    D.h(d, 1, "19   Rehabilitation and upgrading")
+    D.h(d, 1, "19.   Rehabilitation and upgrading")
     D.p(d, "Rehabilitation of the existing systems forms part of the concept "
            "scope. The extent of it follows from the assessment in Section 18 "
            "and from the condition established by survey and closed-circuit "
@@ -64,7 +64,7 @@ def part_e(d):
                 "be presented in the next revision.")
 
     # --------------------------------------------------------------- 20
-    D.h(d, 1, "20   Verification of the Regional Master Plan")
+    D.h(d, 1, "20.   Verification of the Regional Master Plan")
     D.p(d, "The Terms of Reference require the Regional Master Plan to be "
            "verified. The verification compares the flows established in Part "
            "D against those on which the master plan was based, and identifies "
@@ -92,12 +92,12 @@ def part_f(d):
     D.part(d, "F", "Options")
 
     # --------------------------------------------------------------- 21
-    D.h(d, 1, "21   Options methodology")
+    D.h(d, 1, "21.   Options methodology")
 
     D.picture(d, os.path.join(IMG, "D5_options.png"), 15.5)
     D.fig_caption(d, "Development of the options and the basis on which they are compared.")
 
-    D.h(d, 2, "21.1   Number and character of the options")
+    D.h(d, 2, "21.1.   Number and character of the options")
     p = D.p(d, "Not fewer than three options are developed for each of the "
                "sewer network, the treated effluent network and the treatment "
                "plant. The guidelines indicate the character the options "
@@ -111,7 +111,7 @@ def part_f(d):
            "with comparable reliability and redundancy, so that the comparison "
            "between them is not influenced by differences in scope.")
 
-    D.h(d, 2, "21.2   The approach proposed for each option")
+    D.h(d, 2, "21.2.   The approach proposed for each option")
     D.p(d, "The guidelines describe the character of the three options but do "
            "not prescribe what distinguishes them in design terms. The "
            "following approach is proposed, and is offered for comment before "
@@ -153,16 +153,16 @@ def part_f(d):
 
     D.p(d, "")
     p = D.p(d, "Two constraints apply across all three. Nature-based treatment "
-               "is limited by the guidelines to small works, so it is "
+               "is limited by the guidelines to small plants, so it is "
                "available for outlying settlements or for polishing rather "
                "than for the main plant. And every option is developed to the "
                "same functional requirement and the same effluent standard, so "
                "that the difference between them lies in how the result is "
                "achieved and not in what is achieved.")
     N.add(p, "PAM-GUD-203, Section 10.5, page 101, limits constructed wetlands "
-             "to works of approximately 500 cubic metres per day.")
+             "to plants of approximately 500 cubic metres per day.")
 
-    D.h(d, 2, "21.3   Basis of comparison")
+    D.h(d, 2, "21.3.   Basis of comparison")
     D.p(d, "The options are compared on capital and operating cost, life cycle "
            "cost, carbon footprint over the project lifetime, resource "
            "efficiency, in-country value and the degree to which they employ "
@@ -177,7 +177,7 @@ def part_f(d):
                   "discounted to present value together, and only then scored "
                   "against the seven criteria.", size="A4")
 
-    D.h(d, 2, "21.4   Selection")
+    D.h(d, 2, "21.4.   Selection")
     p = D.p(d, "A weighted multi-criteria analysis compares the options "
                "against total lifetime cost, sustainability, social "
                "development and in-country value, adaptability and resilience, "
@@ -189,12 +189,12 @@ def part_f(d):
     N.add(p, "PAM-GUD-201, Sections 12.6 to 12.9, pages 104 to 106.")
 
     # --------------------------------------------------------------- 22
-    D.h(d, 1, "22   Sewer network options")
+    D.h(d, 1, "22.   Sewer network options")
 
     D.picture(d, os.path.join(IMG, "D4_network.png"), 15.5)
     D.fig_caption(d, "The network design approach, and the point at which a lifting station becomes necessary.")
 
-    D.h(d, 2, "22.1   Principles")
+    D.h(d, 2, "22.1.   Principles")
     D.p(d, "The network is laid out to convey the flow by gravity wherever "
            "that is feasible and cost effective, and to keep pumping to the "
            "minimum that the topography requires. The layout follows the road "
@@ -202,14 +202,14 @@ def part_f(d):
            "plant site, which lies at a low elevation relative to the "
            "developed areas.")
 
-    D.h(d, 2, "22.2   Corridor constraints")
+    D.h(d, 2, "22.2.   Corridor constraints")
     D.p(d, "Dual carriageways are excluded as sewer corridors, as they cannot "
            "be taken out of service for construction or maintenance. Crossings "
            "of a dual carriageway are made perpendicular and, where available, "
            "through an existing underpass. Wadi crossings are designed to the "
            "cover required by the guideline.")
 
-    D.h(d, 2, "22.3   Network hierarchy")
+    D.h(d, 2, "22.3.   Network hierarchy")
     D.p(d, "The network is arranged in three tiers, following the arrangement "
            "of the existing network in Ibri: laterals collecting from "
            "properties, sub-mains collecting from laterals, and a trunk main "
@@ -217,7 +217,7 @@ def part_f(d):
            "this way limits the number of connections made directly to the "
            "trunk main and keeps each tier to a manageable size.")
 
-    D.h(d, 2, "22.4   Early-year operation")
+    D.h(d, 2, "22.4.   Early-year operation")
     D.p(d, "In the years following commissioning the connected population is a "
            "fraction of the design population, and the flow in the network is "
            "correspondingly lower. Velocities in that period may fall below "
@@ -233,7 +233,7 @@ def part_f(d):
                 "presented in the next revision.")
 
     # --------------------------------------------------------------- 23
-    D.h(d, 1, "23   Pumping and lifting stations")
+    D.h(d, 1, "23.   Pumping and lifting stations")
     D.p(d, "A lifting station is provided where the cost of excavation to "
            "maintain gravity flow becomes prohibitive. Each station lifts the "
            "flow to a level from which gravity conveyance resumes, discharging "
@@ -264,7 +264,7 @@ def part_f(d):
            "software, and the protection required is established from it.")
 
     # --------------------------------------------------------------- 24
-    D.h(d, 1, "24   Treated effluent network options")
+    D.h(d, 1, "24.   Treated effluent network options")
     D.p(d, "The treated effluent network conveys the product of the treatment "
            "plant to the customers identified in Section 17. The network is "
            "sized for the summer peak demand, with storage of not less than "
@@ -276,16 +276,16 @@ def part_f(d):
                 "following confirmation of the customers and their demand.")
 
     # --------------------------------------------------------------- 25
-    D.h(d, 1, "25   Treatment plant options", page_break=True)
+    D.h(d, 1, "25.   Treatment plant options", page_break=True)
 
-    D.h(d, 2, "25.1   Capacity and phasing")
+    D.h(d, 2, "25.1.   Capacity and phasing")
     D.p(d, "The plant is sized on the flow established in Part D with the ten "
            "per cent design margin applied, and is built in phases so that "
            "capacity follows demand. The capacity of the first phase, and the "
            "years at which subsequent phases are required, follow from the "
            "flow series and are presented with it.")
 
-    D.h(d, 2, "25.2   Process selection")
+    D.h(d, 2, "25.2.   Process selection")
     D.p(d, "Process selection is governed by the effluent standard. The total "
            "nitrogen limit described in Section 13 requires full nitrification "
            "and denitrification, which narrows the technologies that can be "
@@ -307,7 +307,7 @@ def part_f(d):
                "measures described in Section 34.")
     N.add(p, "PAM-GUD-203, Table 28, page 64.")
 
-    D.h(d, 2, "25.3   Siting")
+    D.h(d, 2, "25.3.   Siting")
     D.p(d, "The site is assessed against the criteria in the wastewater "
            "guideline, covering access, physical characteristics, "
            "environmental and climatic impact, social impact and cost. Two "
@@ -326,9 +326,9 @@ def part_f(d):
                 "be presented in the next revision.")
 
     # --------------------------------------------------------------- 26
-    D.h(d, 1, "26   Excess effluent, emergency provisions and tankers")
+    D.h(d, 1, "26.   Excess effluent, emergency provisions and tankers")
 
-    D.h(d, 2, "26.1   Tanker reception")
+    D.h(d, 2, "26.1.   Tanker reception")
     D.p(d, "A proportion of the wastewater arising in the area is collected by "
            "tanker and delivered to the treatment plant. Sewage delivered this "
            "way is stronger than sewage arriving through the network, and its "
@@ -336,7 +336,7 @@ def part_f(d):
            "facility is provided, with screening, grease removal, sampling "
            "before acceptance and flow equalisation.")
 
-    D.h(d, 2, "26.2   Excess treated effluent")
+    D.h(d, 2, "26.2.   Excess treated effluent")
     p = D.p(d, "Where the effluent produced exceeds the demand, provision is "
                "made for its disposal. Discharge to a wadi requires the "
                "effluent to meet Class A of Ministerial Decision 145/1993, and "
@@ -349,7 +349,7 @@ def part_f(d):
              "limits are materially tighter than Class A for phosphorus and "
              "ammoniacal nitrogen.")
 
-    D.h(d, 2, "26.3   Emergency provisions")
+    D.h(d, 2, "26.3.   Emergency provisions")
     D.p(d, "Provision is made for the diversion of raw sewage in the event "
            "that the plant is out of operation, and for emergency storage. "
            "Every pumping station is provided with an emergency overflow to "
@@ -358,7 +358,7 @@ def part_f(d):
            "Authority.")
 
     # --------------------------------------------------------------- 27
-    D.h(d, 1, "27   Sludge management strategy")
+    D.h(d, 1, "27.   Sludge management strategy")
     p = D.p(d, "The Oman Sludge Management Plan, as reproduced in the "
                "wastewater design guideline, identifies a sludge treatment "
                "centre performing composting at Ibri as the solution for the "

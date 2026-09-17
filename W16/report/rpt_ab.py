@@ -4,6 +4,7 @@ import os
 import data_facts as F
 import doc as D
 import notes as N
+from basis_items import APPROVALS, INFORMED, DATA_REQUESTS
 
 IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "img")
 
@@ -19,7 +20,7 @@ def part_a(d):
     D.part(d, "A", "Project, scope and process")
 
     # ---------------------------------------------------------------- 1
-    D.h(d, 1, "1   Introduction and background")
+    D.h(d, 1, "1.   Introduction and background")
     D.p(d, "Nama Water Services is developing wastewater collection, treated "
            "effluent distribution and sewage treatment for the Wilayat of "
            "Ibri. Renardet S.A. & Partners has been appointed to provide "
@@ -30,14 +31,14 @@ def part_a(d):
            "out the framework within which options for the sewer network, the "
            "treated effluent network and the treatment plant are developed.")
 
-    D.h(d, 2, "1.1   Objectives")
+    D.h(d, 2, "1.1.   Objectives")
     D.p(d, "The Terms of Reference set three objectives for the work: to "
            "verify the Regional Master Plan, to establish the ultimate "
            "expected sewage flow in the Ibri catchment, and to develop the "
            "concept, preliminary and detailed designs together with the tender "
            "documentation.")
 
-    D.h(d, 2, "1.2   Structure of this report")
+    D.h(d, 2, "1.2.   Structure of this report")
     D.p(d, "The report follows the structure approved for the concept stage. "
            "Part A records the project and its process. Part B presents the "
            "data and the assessment of it. Part C sets out the design basis. "
@@ -46,31 +47,34 @@ def part_a(d):
            "and financial appraisal, and Part H the delivery arrangements.")
 
     # ---------------------------------------------------------------- 2
-    D.h(d, 1, "2   Scope and boundaries", page_break=True)
+    D.h(d, 1, "2.   Scope and boundaries", page_break=True)
 
-    D.h(d, 2, "2.1   The study area")
+    D.h(d, 2, "2.1.   The study area")
     p = D.p(d, "The study area covers 531.4 square kilometres and contains "
                "twenty-five named settlements. Ibri is the principal "
                "settlement; the remainder are distributed along the wadi "
                "system and the main road corridors.")
-    N.add(p, "Area measured in the project geographic information system from "
-             "the boundary supplied with the Inception Report, computed in "
-             "UTM zone 40 North.")
+    N.add(p, "Area of the updated project boundary (Section 2.2), measured in "
+             "the project geographic information system in UTM zone 40 North.")
 
     _fig(d, "M01_location",
          "Project location and study area boundary, showing the twenty-five "
          "settlements within the Wilayat of Ibri.")
 
-    D.h(d, 2, "2.2   Boundary")
-    p = D.p(d, "Two boundary datasets were issued with the Inception Report. "
-               "The two differ in extent. The larger of the two has been "
-               "adopted for the work presented here so that no part of the "
-               "area is omitted, and confirmation of the approved boundary is "
-               "requested.")
-    N.add(p, "Project_Boundary.kmz and Final_Boundary_IBRI.kmz, both supplied "
-             "in the Inception Report package.")
+    D.h(d, 2, "2.2.   Boundary")
+    p = D.p(d, "The project boundary received covers 439.8 square kilometres. "
+               "The cadastral plots of the twenty-five settlements, the planned "
+               "ones included, reach beyond it in several places. The boundary "
+               "has therefore been updated to take in every plot of those "
+               "settlements, and covers 531.4 square kilometres. All the work "
+               "presented here is on the updated boundary, and confirmation of "
+               "it is requested (Section 5.3).")
+    N.add(p, "Project_Boundary.kmz, received in July 2026. A second boundary, "
+             "Final_Boundary_IBRI.kmz of 521.1 square kilometres, was issued "
+             "with the Inception Report package; the updated boundary contains "
+             "both.")
 
-    D.h(d, 2, "2.3   Coordinate system")
+    D.h(d, 2, "2.3.   Coordinate system")
     D.p(d, "All spatial data is held and all measurements are made in "
            "Universal Transverse Mercator zone 40 North on the WGS 84 datum. "
            "Datasets supplied in geographic coordinates have been "
@@ -78,7 +82,7 @@ def part_a(d):
            "in Section 8.")
 
     # ---------------------------------------------------------------- 3
-    D.h(d, 1, "3   Programme and design stages")
+    D.h(d, 1, "3.   Programme and design stages")
     D.p(d, "The design comprises four stages: concept design, preliminary "
            "design, detailed design and the preparation of tender documents. "
            "Each stage is submitted for review and approval before the "
@@ -93,7 +97,7 @@ def part_a(d):
            "kick-off presentation and in the Inception Report. Confirmation of "
            "the governing programme is requested.")
 
-    D.h(d, 2, "3.1   Deliverables at the concept stage")
+    D.h(d, 2, "3.1.   Deliverables at the concept stage")
     p = D.p(d, "The Terms of Reference set out forty numbered deliverables for "
                "the concept stage. They are grouped below by subject. Those "
                "marked as issued form part of this report or accompany it; the "
@@ -110,22 +114,26 @@ def part_a(d):
          "Issued: population and flow per settlement at five-year intervals "
          "to saturation, and per plot"],
         ["Topographic survey and geotechnical investigation",
-         "Survey in progress"],
+         "Survey team mobilised; in progress"],
         ["As-built records and GIS for the existing systems",
          "Follows the survey"],
         ["Hydraulic assessment of the existing systems", "Follows the survey"],
+        ["Concept hydraulic calculations and capacities",
+         "Sewer network completed on the basis of this report; treated "
+         "effluent network and treatment plant begun"],
         ["Wastewater network options, not fewer than three", "Next revision"],
         ["Treated effluent network options, not fewer than three",
          "Next revision"],
         ["Treatment plant options, not fewer than three, with siting and phasing",
-         "Next revision"],
+         "Siting and decision matrix in progress; options in the next revision"],
         ["Pumping and lifting station concept design", "Next revision"],
         ["Treated effluent and sludge management strategy",
          "Framework issued; strategy in the next revision"],
         ["Excess effluent and emergency overflow provisions", "Next revision"],
         ["Environmental impact assessment for the plant location",
          "Follows confirmation of scope"],
-        ["Cost estimates and life cycle cost", "Next revision"],
+        ["Cost estimates and life cycle cost",
+         "Method adopted, 25 years at 5 per cent; estimates in the next revision"],
         ["Risk analysis and value engineering", "Next revision"],
         ["Multi-criteria comparison and recommended option", "Next revision"],
         ["Hydraulic models in SewerGEMS and WaterGEMS",
@@ -134,7 +142,7 @@ def part_a(d):
         ["Register of approvals and no objection certificates", "Maintained"],
     ], widths=[10.5, 6.0], font=9)
 
-    D.h(d, 2, "3.2   Deliverables of the following stages")
+    D.h(d, 2, "3.2.   Deliverables of the following stages")
     D.p(d, "The preliminary design develops the approved concept to an "
            "estimate within ten per cent, with full survey, hazard and "
            "operability study, and preliminary bills of quantities. The "
@@ -143,7 +151,7 @@ def part_a(d):
            "design.")
 
     # ---------------------------------------------------------------- 4
-    D.h(d, 1, "4   Consultation record")
+    D.h(d, 1, "4.   Consultation record")
     D.p(d, "The following meetings have been held with Nama Water Services to "
            "the date of this report.")
     D.tab_caption(d, "Meetings held")
@@ -152,6 +160,11 @@ def part_a(d):
          "Project scope, approach, programme and organisation presented"],
         ["Inception Report submission", "August 2026",
          "Design basis, methodology and programme submitted"],
+        ["Design basis meeting", "16 September 2026",
+         "Progress reported; the Design Basis Report presented; seven "
+         "decisions put to Nama Water Services, none taken at the meeting; a "
+         "maximum gradient of 4 per cent from the tractive-force method at "
+         "head pipes indicated by Nama Water Services"],
     ], widths=[5.0, 3.4, 8.1], font=9.5)
     D.p(d, "")
     D.p(d, "Coordination with the authorities holding assets in the project "
@@ -159,66 +172,81 @@ def part_a(d):
            "approvals and no objection certificates.")
 
     # ---------------------------------------------------------------- 5
-    D.h(d, 1, "5   Matters requiring confirmation", page_break=True)
-    D.p(d, "The following matters require confirmation from Nama Water "
-           "Services. Each affects work that would otherwise be carried out "
-           "twice, and confirmation is therefore requested at the earliest "
+    D.h(d, 1, "5.   Decisions requested and matters requiring confirmation", page_break=True)
+    D.p(d, f"Only what the guidelines do not settle is put to Nama Water "
+           f"Services for approval. Section 5.1 lists those {len(APPROVALS)} "
+           f"decisions; each can be answered with a yes, a no, or one figure, "
+           f"and a no returns the design to the section named. Section 5.2 "
+           f"lists the values adopted from the guidelines and the stated "
+           f"assumptions, for information. Section 5.3 lists the other matters "
+           f"that await confirmation, and Section 5.4 the data requested. No "
+           f"decision had been taken at the date of this report.")
+
+    D.h(d, 2, "5.1.   Decisions requested")
+    grp = None
+    for i, (_, g, title, what) in enumerate(APPROVALS):
+        if g != grp:
+            D.p(d, g, bold=True, colour=D.MID, size=11, space_after=3)
+            grp = g
+        D.numbered(d, what, lead=f"{title}.  ", restart=(i == 0))
+        d.paragraphs[-1].paragraph_format.space_after = D.Pt(6)
+
+    D.h(d, 2, "5.2.   Values adopted, for information")
+    D._step["n"] = len(APPROVALS)          # the numbering continues from the decisions
+    grp = None
+    for i, (_, g, title, what) in enumerate(INFORMED):
+        if g != grp:
+            D.p(d, g, bold=True, colour=D.MID, size=11, space_after=3)
+            grp = g
+        D.numbered(d, what, lead=f"{title}.  ")
+        d.paragraphs[-1].paragraph_format.space_after = D.Pt(6)
+
+    D.h(d, 2, "5.3.   Other matters requiring confirmation")
+    D.p(d, "Each of the matters below affects work that would otherwise be "
+           "carried out twice, and confirmation is requested at the earliest "
            "opportunity.")
+    D.tab_caption(d, "Other matters requiring confirmation")
+    D.table(d, ["Matter", "What is to be confirmed", "Reference"], [
+        ["Project boundary", "The updated project boundary of 531.4 square "
+         "kilometres, which takes in every plot of the twenty-five settlements, "
+         "and the extent to be surveyed", "Section 2.2"],
+        ["Project figures", "Georeferenced versions of Figures 1, 2 and 3 of the "
+         "tender, which define the project location, the areas requiring as-built "
+         "records and the areas subject to each design stage; they are supplied "
+         "as images without coordinates", "Scope of Work"],
+        ["Hydraulic modelling software", "The software for the deliverable "
+         "models: the Scope of Work requires SewerGEMS and WaterGEMS, and the "
+         "staffing schedule of the tender refers to a different package",
+         "Scope of Work, pages 56, 57, 62, 65 and 73; Bidding Form 24, page 123"],
+        ["Environmental impact assessment", "The scope required at this stage: "
+         "the guidelines place the scoping at the preliminary design in one "
+         "clause and the full assessment at the concept and preliminary stages "
+         "in another", "PAM-GUD-201, Table 2, pages 19 to 22, and Section 6.1.4.3, page 44"],
+        ["Terminology", "That TE, as used in the Terms of Reference and in this "
+         "report, means treated effluent", "Abbreviations"],
+        ["Design manual reference", "That the treatment plant location report "
+         "follows Section 10.1 of PAM-GUD-203, Site Selection, which replaced "
+         "item 2.1 of Section 05 of the former Wastewater Design Manual",
+         "PAM-GUD-203 Revision 01, pages 2, 63 and 64"],
+        ["Governing programme", "Which of the two programmes issued during "
+         "mobilisation governs", "Section 3"],
+        ["Maximum gradient by tractive force", "How the limit of 4 per cent at "
+         "head pipes, indicated by Nama Water Services on 16 September 2026, is "
+         "to be applied", "Section 12.2"],
+        ["Margin and peak at the treatment plant", "That the 10 per cent margin "
+         "is applied to the peak hourly flow as to the average annual flow",
+         "Section 13.1"],
+        ["Potable water record", "That the PAEW dataset is the current record "
+         "for Ibri", "Section 7.2"],
+    ], widths=[3.6, 8.6, 4.3], font=8.8, keep_together=False)
 
-    D.h(d, 2, "5.1   Design horizon")
-    p = D.p(d, "The Terms of Reference define the design horizon as the year "
-               "of project completion plus twenty-five years, or the ultimate "
-               "saturated flow. The Inception Report states that the planning "
-               "and demand assessment extends to the year 2100. The two are "
-               "different bases and produce different results. Confirmation of "
-               "the horizon to be adopted is requested.")
-    N.add(p, "Terms of Reference, page 51 of the tender document; Inception "
-             "Report Revision 0, Section 6.2.")
-
-    D.h(d, 2, "5.2   Project boundary")
-    D.p(d, "Two boundary datasets were issued with the Inception Report, "
-           "differing in extent. Confirmation of the approved boundary is "
-           "requested, together with the extent to be surveyed.")
-
-    D.h(d, 2, "5.3   Project figures")
-    D.p(d, "Figures 1, 2 and 3 of the tender define the project location, the "
-           "areas requiring as-built records, and the areas subject to each "
-           "design stage. They are supplied as images without coordinates. "
-           "Georeferenced versions are requested so that the design areas can "
-           "be established without ambiguity.")
-
-    D.h(d, 2, "5.4   Hydraulic modelling software")
-    p = D.p(d, "The Scope of Work requires the wastewater network to be "
-               "modelled in SewerGEMS and the treated effluent network in "
-               "WaterGEMS. The staffing schedule in the tender refers to a "
-               "different package. Confirmation of the software to be used for "
-               "the deliverable models is requested.")
-    N.add(p, "Scope of Work, pages 56, 57, 62, 65 and 73; Bidding Form 24, "
-             "page 123 of the tender document.")
-
-    D.h(d, 2, "5.5   Environmental impact assessment")
-    p = D.p(d, "The design guidelines place environmental impact assessment "
-               "scoping at the preliminary design stage in one clause and the "
-               "full assessment at the concept and preliminary stages in "
-               "another. Confirmation of the scope required at this stage is "
-               "requested.")
-    N.add(p, "PAM-GUD-201, Table 2, pages 19 to 22, and Section 6.1.4.3, "
-             "page 44.")
-
-    D.h(d, 2, "5.6   Terminology")
-    D.p(d, "Confirmation is requested that the term TE, as used in the Terms "
-           "of Reference and in this report, is understood to mean treated "
-           "effluent.")
-
-    D.h(d, 2, "5.7   Design manual reference")
-    p = D.p(d, "The Terms of Reference require the treatment plant location "
-               "report to follow item 2.1 of Section 05 of the Wastewater "
-               "Design Manual. The current revision of PAM-GUD-203 consolidated "
-               "and renumbered the former manuals, and the corresponding "
-               "content is now Section 10.1 of PAM-GUD-203, Site Selection. The "
-               "report follows that section, and confirmation is requested.")
-    N.add(p, "PAM-GUD-203 Revision 01, page 2, records the consolidation of "
-             "the former manuals. Site selection is at pages 63 and 64.")
+    D.h(d, 2, "5.4.   Data requested")
+    D.p(d, f"{len(DATA_REQUESTS)} items would improve or confirm the numbers in "
+           f"this report. None of them stops the concept design; each replaces "
+           f"an assumption with a record.")
+    D.tab_caption(d, "Data requests")
+    D.table(d, ["Item", "What is asked for", "Why"], [[a, b, c] for a, b, c in DATA_REQUESTS],
+            widths=[3.6, 6.6, 6.3], font=9)
 
 
 # ===================================================== PART B
@@ -226,7 +254,7 @@ def part_b(d):
     D.part(d, "B", "Data")
 
     # ---------------------------------------------------------------- 6
-    D.h(d, 1, "6   Data collection")
+    D.h(d, 1, "6.   Data collection")
     D.p(d, "Data has been requested from Nama Water Services and from the "
            "authorities holding assets in the project area. The table below "
            "records what has been requested and the position at the date of "
@@ -248,7 +276,7 @@ def part_b(d):
            "results will be incorporated in the next revision of this report.")
 
     # ---------------------------------------------------------------- 7
-    D.h(d, 1, "7   Assessment of the data", page_break=True)
+    D.h(d, 1, "7.   Assessment of the data", page_break=True)
     D.p(d, "Each dataset has been loaded into the project geographic "
            "information system, reprojected where necessary, and checked "
            "against the project boundary. This section records the quantity of "
@@ -258,7 +286,7 @@ def part_b(d):
     D.picture(d, os.path.join(IMG, "D2_data.png"), 15.5)
     D.fig_caption(d, "The assessment applied to each dataset supplied.")
 
-    D.h(d, 2, "7.1   Wastewater assets")
+    D.h(d, 2, "7.1.   Wastewater assets")
     p = D.p(d, "The wastewater dataset supplied by Nama Water Services holds "
                "two networks, not one. They are distinguished by the "
                "operational status field, and the distinction is confirmed by "
@@ -326,7 +354,7 @@ def part_b(d):
     D.fig_caption(d, "Length of wastewater asset within the study area, "
                      "separated into constructed and proposed.")
 
-    D.h(d, 2, "7.2   Potable water network")
+    D.h(d, 2, "7.2.   Potable water network")
     D.p(d, "Two datasets describing potable water assets were supplied. They "
            "differ substantially in coverage.")
 
@@ -350,7 +378,7 @@ def part_b(d):
     _fig(d, "M03_water",
          "Potable water network within the study area, from the PAEW dataset.")
 
-    D.h(d, 2, "7.3   Electricity accounts")
+    D.h(d, 2, "7.3.   Electricity accounts")
     p = D.p(d, "The electricity account dataset contains 33,971 records, each "
                "carrying a tariff name and a coordinate. It records neither "
                "land use, floor area nor consumption, and the wilayat field is "
@@ -368,7 +396,7 @@ def part_b(d):
     D.table(d, ["Tariff", "Accounts", "Category adopted"], [
         ["Primary Account", "10,973", "Domestic: one property"],
         ["Primary Account with National Subsidy", "5,272", "Domestic: one property"],
-        ["Additional Account", "6,344", "Domestic: one property, an additional dwelling"],
+        ["Additional Account", "6,344", "Domestic: one property, a further one on the same plot"],
         ["Commercial, Fisheries, Tourism", "9,392", "Non-domestic"],
         ["Government, Defence", "967", "Governmental"],
         ["Agricultural", "523", "Agricultural: an irrigation pump, no sewage"],
@@ -390,14 +418,14 @@ def part_b(d):
     D.chart(d, "C01_accounts", 14.5)
     D.fig_caption(d, "Electricity meters by the category adopted, after the "
                      "large consumers were placed. Domestic connections, "
-                     "including additional dwellings on the same plot, are two "
+                     "including further properties on the same plot, are two "
                      "thirds of the total.")
 
     _fig(d, "M04_electricity",
          "Electricity meters by category, placed on the plots. The pattern "
          "of connections defines the developed extent of each settlement.")
 
-    D.h(d, 2, "7.4   Cadastral and settlement data")
+    D.h(d, 2, "7.4.   Cadastral and settlement data")
     D.p(d, "The cadastral plot layer supplied by the Ministry of Housing and "
            "Urban Planning, in the issue of September 2026, holds 77,265 "
            "plots with a built-or-future flag and a land-use class. The "
@@ -405,15 +433,16 @@ def part_b(d):
            "is not: it carries no government category, records whole "
            "districts under codes that mean unclassified, and disagrees with "
            "the meters on one built plot in seven. The use of each plot is "
-           "therefore derived from the meters and the satellite, as Section "
-           "14.5 sets out. The survey now in progress will establish the "
+           "therefore determined from the meters and the satellite image, as "
+           "Section 14.5 sets out. The survey now in progress will establish the "
            "cadastral boundaries including plot gates.")
-    D.p(d, "The settlement boundaries supplied with the Inception Report "
-           "outline the built cores and leave the land between them "
-           "unassigned. Section 14.2 describes how every plot has been "
-           "assigned to a settlement and the boundaries redrawn to meet.")
+    D.p(d, "The settlement boundaries supplied with the Inception Report are "
+           "twenty-six polygons for twenty-five settlements, Al Aynayn being "
+           "drawn as two. They outline the built cores and leave the land "
+           "between them unassigned. Section 14.2 describes how every plot has "
+           "been assigned to a settlement and the boundaries redrawn to meet.")
 
-    D.h(d, 2, "7.5   Other datasets supplied")
+    D.h(d, 2, "7.5.   Other datasets supplied")
     D.tab_caption(d, "Further datasets received")
     D.table(d, ["Dataset", "Extent", "Observation"], F.OTHER,
             widths=[3.6, 3.0, 9.9], font=9)
@@ -427,9 +456,9 @@ def part_b(d):
             widths=[4.4, 3.6, 8.5], font=9)
 
     # ---------------------------------------------------------------- 8
-    D.h(d, 1, "8   Survey and investigation", page_break=True)
+    D.h(d, 1, "8.   Survey and investigation", page_break=True)
 
-    D.h(d, 2, "8.1   Topographic and utility survey")
+    D.h(d, 2, "8.1.   Topographic and utility survey")
     D.p(d, "A survey team is mobilised and working across the study area. The "
            "survey covers the existing sewer network, lifting stations, force "
            "mains and treated effluent network as built; the topography; and "
@@ -438,13 +467,13 @@ def part_b(d):
            "datasets do not carry, and will be incorporated in the next "
            "revision of this report.")
 
-    D.h(d, 2, "8.2   Terrain model")
+    D.h(d, 2, "8.2.   Terrain model")
     p = D.p(d, "A bare-earth terrain model at 0.5 metre resolution covering "
                "the study area is in use for the work presented here. It will "
                "be superseded by the topographic survey for design purposes.")
     N.add(p, "The model excludes buildings and is held in UTM zone 40 North.")
 
-    D.h(d, 2, "8.3   Geotechnical investigation and trial pits")
+    D.h(d, 2, "8.3.   Geotechnical investigation and trial pits")
     D.p(d, "Geotechnical investigation and trial pits form part of the scope. "
            "Fifty trial pits are to be carried out at critical locations "
            "proposed by the consultant and approved by Nama Water Services. "
@@ -452,7 +481,7 @@ def part_b(d):
            "utility records described in Section 33.")
 
     # ---------------------------------------------------------------- 9
-    D.h(d, 1, "9   Existing systems: as-built records and GIS")
+    D.h(d, 1, "9.   Existing systems: as-built records and GIS")
     D.p(d, "The preparation of as-built records and geographic information for "
            "the existing sewer and treated effluent systems forms part of the "
            "scope of work. The datasets supplied provide the geometry of those "

@@ -21,7 +21,7 @@ def part_g(d):
     D.part(d, "G", "Assessment and appraisal")
 
     # --------------------------------------------------------------- 28
-    D.h(d, 1, "28   Ground conditions")
+    D.h(d, 1, "28.   Ground conditions")
     D.p(d, "Geophysical investigation is required for all infrastructure and "
            "geotechnical investigation for all above-ground assets. At this "
            "stage the purpose is to establish a site-wide ground model and a "
@@ -39,7 +39,7 @@ def part_g(d):
                 "presented in the next revision.")
 
     # --------------------------------------------------------------- 29
-    D.h(d, 1, "29   Flood protection")
+    D.h(d, 1, "29.   Flood protection")
     D.p(d, "The study area is crossed by a wadi system, and flood behaviour "
            "governs both the alignment of the works and the siting of the "
            "treatment plant. The site is assessed against the twenty-five and "
@@ -54,7 +54,7 @@ def part_g(d):
                 "revision.")
 
     # --------------------------------------------------------------- 30
-    D.h(d, 1, "30   Odour assessment")
+    D.h(d, 1, "30.   Odour assessment")
     p = D.p(d, "Odour governs the buffer distance between the treatment plant "
                "and residential development, and for a plant of this size the "
                "buffer is established from dispersion modelling rather than "
@@ -75,7 +75,7 @@ def part_g(d):
                 "the plant site.")
 
     # --------------------------------------------------------------- 31
-    D.h(d, 1, "31   Climate resilience")
+    D.h(d, 1, "31.   Climate resilience")
     p = D.p(d, "The works are assessed for resilience to the climate "
                "conditions anticipated over their service life. The assessment "
                "considers a fifty-year horizon at two and at four degrees "
@@ -87,7 +87,7 @@ def part_g(d):
     _pending(d, "The assessment will be presented in the next revision.")
 
     # --------------------------------------------------------------- 32
-    D.h(d, 1, "32   Environmental and social assessment")
+    D.h(d, 1, "32.   Environmental and social assessment")
     D.p(d, "An environmental impact assessment is required for the treatment "
            "plant and its associated works. The Environment Authority is "
            "informed of the project, its objectives and its anticipated "
@@ -99,9 +99,9 @@ def part_g(d):
     D.p(d, "The scope required at this stage is the subject of Section 5.5.")
 
     # --------------------------------------------------------------- 33
-    D.h(d, 1, "33   Utility interfaces and approvals")
+    D.h(d, 1, "33.   Utility interfaces and approvals")
 
-    D.h(d, 2, "33.1   Approach")
+    D.h(d, 2, "33.1.   Approach")
     D.p(d, "The proposed alignments are superimposed on the service records of "
            "each authority holding assets in the area. Where a conflict "
            "cannot be avoided by re-routing within the corridor, the cost of "
@@ -109,7 +109,7 @@ def part_g(d):
            "relocating the existing service, and the agreement of the owning "
            "authority is obtained for whichever is adopted.")
 
-    D.h(d, 2, "33.2   Records held and required")
+    D.h(d, 2, "33.2.   Records held and required")
     D.p(d, "The potable water network is available from the dataset described "
            "in Section 7.2 and provides 647.8 kilometres of mains within the "
            "study area. Records for electricity distribution, telecommunications "
@@ -122,7 +122,7 @@ def part_g(d):
     N.add(p, "The account dataset described in Section 7.3 comprises point "
              "locations of metered connections.")
 
-    D.h(d, 2, "33.3   Clearances")
+    D.h(d, 2, "33.3.   Clearances")
     D.tab_caption(d, "Separation from other services")
     D.table(d, ["Situation", "Requirement"], [
         ["Force main to water main, horizontal", "3.0 m"],
@@ -136,14 +136,14 @@ def part_g(d):
     D.p(d, "Beyond these, the clearance applied is that specified by the "
            "authority owning the service.")
 
-    D.h(d, 2, "33.4   Trial pits")
+    D.h(d, 2, "33.4.   Trial pits")
     D.p(d, "Fifty trial pits are provided for. Their locations are selected at "
            "road intersections, along the routes of major existing services "
            "and along the expected routes of the trunk sewers and force mains. "
            "The programme is agreed with Nama Water Services and the municipal "
            "excavation approvals obtained before work begins.")
 
-    D.h(d, 2, "33.5   Approvals register")
+    D.h(d, 2, "33.5.   Approvals register")
     D.p(d, "Approvals and no objection certificates are required from the "
            "authorities listed below. A register is maintained recording the "
            "authority, the consent required, the date of application and the "
@@ -162,7 +162,7 @@ def part_g(d):
     ], widths=[16.5], font=9.5)
 
     # --------------------------------------------------------------- 34
-    D.h(d, 1, "34   Sustainability", page_break=True)
+    D.h(d, 1, "34.   Sustainability", page_break=True)
     p = D.p(d, "The carbon footprint of each option is evaluated for both "
                "construction and operation in accordance with recognised "
                "greenhouse gas accounting standards, and is expressed in "
@@ -186,9 +186,9 @@ def part_g(d):
            "comparison in Section 38.")
 
     # --------------------------------------------------------------- 35
-    D.h(d, 1, "35   Cost")
+    D.h(d, 1, "35.   Cost")
 
-    D.h(d, 2, "35.1   Basis")
+    D.h(d, 2, "35.1.   Basis")
     D.table(d, ["Item", "Basis"], [
         ["Accuracy", "plus or minus twenty per cent at concept stage"],
         ["Measurement", "CESMM3"],
@@ -199,7 +199,7 @@ def part_g(d):
         ["Presentation", "by system element"],
     ], widths=[4.4, 12.1], font=9.5)
 
-    D.h(d, 2, "35.2   Scope of the estimate")
+    D.h(d, 2, "35.2.   Scope of the estimate")
     D.p(d, "The estimate covers the works, the associated costs and the "
            "provisions, as set out below.")
     D.bullet(d, "excavation by depth and by ground condition, trench support, "
@@ -221,7 +221,7 @@ def part_g(d):
                 "environmental assessment, consents and land, and physical and "
                 "price contingency.", lead="Associated costs — ")
 
-    D.h(d, 2, "35.3   Operating cost")
+    D.h(d, 2, "35.3.   Operating cost")
     D.p(d, "Operating cost is built from the duty of each asset rather than "
            "taken as a proportion of its capital cost. For a wastewater system "
            "the two largest items are energy and sludge, and neither follows "
@@ -248,7 +248,7 @@ def part_g(d):
              "rotating plant and instrumentation are replaced at least once "
              "within that period.")
 
-    D.h(d, 2, "35.4   Life cycle cost and net present value")
+    D.h(d, 2, "35.4.   Life cycle cost and net present value")
     p = D.p(d, "Capital cost, operating cost, replacement cost and revenue "
                "arise in different years, so they are not comparable until "
                "they are brought to a common date. Each is discounted to "
@@ -293,7 +293,7 @@ def part_g(d):
                 "revision.")
 
     # --------------------------------------------------------------- 36
-    D.h(d, 1, "36   Risk")
+    D.h(d, 1, "36.   Risk")
     D.p(d, "A risk register is established at this stage and maintained "
            "through the project. Each risk carries a description, a "
            "likelihood, an impact expressed in cost or time, an owner and the "
@@ -302,7 +302,7 @@ def part_g(d):
            "rather than only the total.")
 
     # --------------------------------------------------------------- 37
-    D.h(d, 1, "37   Value engineering")
+    D.h(d, 1, "37.   Value engineering")
     p = D.p(d, "A formal value engineering study is required at the concept "
                "and preliminary stages for a treatment plant or pumping "
                "station above the stated threshold, carried out by an "
@@ -311,7 +311,7 @@ def part_g(d):
     N.add(p, "PAM-GUD-201, Table 27, page 93, and its accompanying note.")
 
     # --------------------------------------------------------------- 38
-    D.h(d, 1, "38   Comparison and recommendation")
+    D.h(d, 1, "38.   Comparison and recommendation")
     D.p(d, "The options are compared by the method described in Section 21.3. "
            "The comparison presents, for each option, the capital cost by "
            "phase, the operating cost by year, the net present value over "
@@ -330,7 +330,7 @@ def part_h(d):
     D.part(d, "H", "Delivery")
 
     # --------------------------------------------------------------- 39
-    D.h(d, 1, "39   Implementation roadmap")
+    D.h(d, 1, "39.   Implementation roadmap")
     D.p(d, "An implementation roadmap is prepared for the recommended option, "
            "defining the scope of the subsequent design stages, the "
            "procurement route for each element, the phasing of construction, "
@@ -341,7 +341,7 @@ def part_h(d):
                 "and will be presented with it.")
 
     # --------------------------------------------------------------- 40
-    D.h(d, 1, "40   Contracting strategy")
+    D.h(d, 1, "40.   Contracting strategy")
     D.p(d, "The contracting strategy establishes how the works are packaged "
            "and procured. It is developed with Nama Water Services in a "
            "dedicated workshop, and considers the division of the works into "
@@ -349,7 +349,7 @@ def part_h(d):
            "between them.")
 
     # --------------------------------------------------------------- 41
-    D.h(d, 1, "41   Project integration")
+    D.h(d, 1, "41.   Project integration")
     p = D.p(d, "A project integration plan sets out how the water and "
                "wastewater components are coordinated through design, "
                "construction and commissioning. It also addresses the "
@@ -358,7 +358,7 @@ def part_h(d):
     N.add(p, "PAM-GUD-201, Section 13, page 107.")
 
     # --------------------------------------------------------------- 42
-    D.h(d, 1, "42   Conclusions")
+    D.h(d, 1, "42.   Conclusions")
     D.p(d, "The design basis for the wastewater and treated effluent systems "
            "is established and is set out in Part C. The data supplied has "
            "been assessed, and the datasets that are usable, those that "
@@ -372,7 +372,7 @@ def part_h(d):
            "network within the area comprises 647.8 kilometres of mains. The "
            "number of properties on each plot and the use of each plot have "
            "been established from 33,971 electricity meters and a satellite "
-           "image, the occupancy rate has been derived for each settlement, "
+           "image, the occupancy rate has been calculated for each settlement, "
            "and every plot carries a population and an average sewage flow "
            "for 2024 and for every year to the saturation of its settlement. "
            f"The study area is saturated in {F.totals()['ultimate']} at "
@@ -383,23 +383,21 @@ def part_h(d):
            "that the supplied datasets do not carry, and its completion is the "
            "principal step between this revision and the next.")
 
-    D.h(d, 2, "42.1   Recommendations")
-    D.p(d, "It is recommended that Nama Water Services confirm the seven matters "
-           "set out in Section 5 and the departures in Section 10.1, and that the datasets identified in Section "
-           "7 as requiring correction or clarification be resolved, so that "
-           "the flow series, the options and the appraisal can be completed on "
-           "an agreed basis.")
+    D.h(d, 2, "42.1.   Recommendations")
+    D.p(d, "It is recommended that Nama Water Services take the seven "
+           "decisions of Section 5.1, the design horizon and the overflow first "
+           "among them, confirm the other matters of Section 5.3, and supply "
+           "the data requested in Section 5.4, so that the options and the "
+           "appraisal can be completed on an agreed basis.")
 
     # --------------------------------------------------------------- 43
-    D.h(d, 1, "43   Appendices")
+    D.h(d, 1, "43.   Appendices")
     D.table(d, ["Appendix", "Content"], [
         ["A", "Population, land use and flow: the working behind Part D. "
               "Issued with this revision"],
         ["B", "Design criteria, with references. Next revision"],
         ["C", "Drawings and figures. Next revision"],
-        ["D", "Register of matters requiring confirmation. Next revision"],
     ], widths=[3.0, 13.5], font=9.5)
     D.p(d, "")
-    D.p(d, "The plot layer, the settlement layer, the meter layer, the "
-           "register of large-consumer accounts and the growth workbook "
-           "accompany this report in digital form.")
+    D.p(d, "The decisions requested, the values adopted and the data requests "
+           "are set out in Section 5.")
