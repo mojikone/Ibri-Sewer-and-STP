@@ -48,7 +48,8 @@ def part_g(d):
            "governs both the alignment of the works and the siting of the "
            "treatment plant. The site is assessed against the twenty-five and "
            "one hundred year flood levels, and the plant is to remain "
-           "operational during floods.")
+           "operational during floods. The flood hazard across the study area "
+           "for the 10, 25, 50 and 100-year floods is mapped in Section 1.2.7.")
     D.p(d, "Pumping station floor levels, transformers and standby generators "
            "are set not less than 300 millimetres above the one in fifty year "
            "flood level. Wadi crossings are designed with a minimum cover of "
@@ -68,6 +69,10 @@ def part_g(d):
     N.add(p, "PAM-GUD-201, Table 8, page 43; PAM-GUD-203, Table 90, page 170, "
              "which sets five odour units per cubic metre at the site boundary "
              "where the surrounding area is sensitive.")
+
+    D.p(d, "The prevailing winds are described in Section 1.2.5 from a regional "
+           "record, which serves the comparison of sites; the modelling itself "
+           "uses the record of the nearest meteorological station.")
 
     D.p(d, "Odour control is provided at the inlet works, the sludge "
            "facilities and the pumping stations, with the treatment train "

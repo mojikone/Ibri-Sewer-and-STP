@@ -94,9 +94,9 @@ def part_d(d):
            "cent of the wilayat's population in every year of the series. The "
            "other settlements of the wilayat lie outside the boundary and are "
            "not part of the design.")
-    ask(d, 1)
     _map(d, "B01_boundaries", "The settlement boundaries as received (red, dashed) and as redrawn for the design (blue). "
                               "Every plot lies in one settlement and the boundaries meet without gaps.", IMG_B)
+    ask(d, 1)            # after the map: ahead of it the box was stranded alone on a page
 
     D.h(d, 3, "4.1.3.   From the meters to the properties")
     p = D.p(d, f"Each domestic electricity meter is one property. Of the "

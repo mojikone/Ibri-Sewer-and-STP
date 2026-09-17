@@ -90,6 +90,14 @@ def executive_summary(d):
                "every cadastral plot of the twenty-five settlements, the planned "
                "ones included, lies inside it. All spatial work is carried out "
                "in UTM zone 40 North on the WGS 84 datum.")
+    import facts_area as FA
+    ga = FA.ground(); top = max(ga["settlements"], key=lambda r: r["z_med"]); low = FA.below_stp()
+    D.p(d, f"The ground falls from the north-east to the south-west, from {top['z_med']:.0f} metres at {top['name']} to "
+           f"{ga['stp_ground']:.0f} metres at the existing STP, and the wadis follow it. "
+           f"{' and '.join(r['name'] for r in low)} lie below the existing STP and cannot drain to it by gravity. The "
+           f"climate is hot desert, and the wind blows along one axis, north-west to south-east, across the line from "
+           f"the existing STP to Ibri town. Section 1.2 describes the ground, the climate, the roads and the flood "
+           f"hazard of the study area.")
     N.add(p, "Areas measured in the project geographic information system. "
              "Confirmation of the updated boundary is requested (Section 1.5.4).")
 

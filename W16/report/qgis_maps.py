@@ -11,7 +11,7 @@ from qgis.core import (QgsLayoutExporter, QgsLayoutItemLabel, QgsLayoutItemMap,
                        QgsLayoutItemLegend, QgsProject, QgsRectangle,
                        QgsCoordinateTransform, QgsCoordinateReferenceSystem,
                        QgsLayoutItemPicture, QgsReadWriteContext)
-from qgis.core import QgsLayoutSize, QgsLayoutPoint, QgsUnitTypes
+from qgis.core import QgsLayoutSize, QgsLayoutPoint, QgsUnitTypes, QgsLayoutMeasurement
 from qgis.core import QgsRasterLayer, QgsMapLayerLegendUtils
 from qgis.PyQt.QtGui import QColor
 from qgis.PyQt.QtXml import QDomDocument
@@ -416,6 +416,8 @@ def build(keys=None, dpi=200):
             lg.adjustBoxSize()
 
         _fill_box(lay, box)
+        if key == "M01_location":
+            _locator_inset(lay, mapitem)
 
         path = os.path.join(OUT, key + ".png")
         exp = QgsLayoutExporter(lay)
@@ -431,6 +433,78 @@ def build(keys=None, dpi=200):
 
 if __name__ == "__console__":
     build()
+
+
+_loc = {}
+
+
+def _locator_inset(lay, mapitem, width=50.0, height=62.0):
+    """Where the study area lies in Oman: a second, small map in the lower-left corner of the
+    location figure. The outlines are the governorates of Oman and the Wilayat of Ibri from
+    OpenStreetMap (analysis/study_area/fetch_admin_osm.py writes them with the date of download);
+    OpenStreetMap because it is the current record, 11 governorates, where geoBoundaries still
+    carries the 7 regions of 2010."""
+    from qgis.core import (QgsVectorLayer, QgsFillSymbol, QgsSingleSymbolRenderer, QgsRuleBasedRenderer,
+                           QgsTextFormat)
+    from qgis.PyQt.QtGui import QFont
+    proj = QgsProject.instance()
+    admin = os.path.join(REPO, "W16", "analysis", "study_area", "admin")
+    if not _loc:
+        gov = QgsVectorLayer(os.path.join(admin, "oman_governorates_osm.geojson"), "loc governorates", "ogr")
+        root = QgsRuleBasedRenderer.Rule(None)
+        for expr, colour in (("\"name_en\" LIKE 'Ad Dhahirah%'", "#BFD3EA"), ("ELSE", "#EDEDED")):
+            sym = QgsFillSymbol.createSimple({"color": colour, "outline_color": "#8A8A8A", "outline_width": "0.12", "outline_width_unit": "MM"})
+            rule = QgsRuleBasedRenderer.Rule(sym)
+            if expr == "ELSE":
+                rule.setIsElse(True)
+            else:
+                rule.setFilterExpression(expr)
+            root.appendChild(rule)
+        gov.setRenderer(QgsRuleBasedRenderer(root))
+        wil = QgsVectorLayer(os.path.join(admin, "ibri_wilayat_osm.geojson"), "loc wilayat", "ogr")
+        wil.setRenderer(QgsSingleSymbolRenderer(QgsFillSymbol.createSimple(
+            {"color": "31,73,125,150", "outline_color": "#1F497D", "outline_width": "0.2", "outline_width_unit": "MM"})))
+        bsrc = [l for l in proj.mapLayers().values() if l.name() == "Project Boundary updated"][0]
+        area = QgsVectorLayer(bsrc.source(), "loc study area", bsrc.providerType())
+        area.setRenderer(QgsSingleSymbolRenderer(QgsFillSymbol.createSimple(
+            {"color": "#FF0000", "outline_color": "#FF0000", "outline_width": "0.35", "outline_width_unit": "MM"})))
+        for l in (gov, wil, area):
+            if not l.isValid():
+                raise RuntimeError("locator layer not valid: " + l.source())
+            proj.addMapLayer(l, False)
+        _loc.update(gov=gov, wil=wil, area=area)
+
+    utm = QgsCoordinateReferenceSystem("EPSG:32640")
+    ext = QgsCoordinateTransform(_loc["gov"].crs(), utm, proj.transformContext()).transformBoundingBox(_loc["gov"].extent())
+    ext.scale(1.06)
+    mp = mapitem.positionWithUnits(); ms = mapitem.sizeWithUnits()
+    x = mp.x() + 3.0; strip = 9.5
+    y = mp.y() + ms.height() - height - strip - 3.0
+
+    head = QgsLayoutItemLabel(lay)
+    head.setText("Location in Oman" + chr(10) + "study area red, Wilayat of Ibri blue, Adh Dhahirah Governorate shaded")
+    tf = QgsTextFormat(); f = QFont("Arial"); tf.setFont(f); tf.setSize(5.6); tf.setColor(QColor("#1F3B63")); head.setTextFormat(tf)
+    head.setMarginX(1.2); head.setMarginY(0.9)
+    head.setBackgroundEnabled(True); head.setBackgroundColor(QColor(255, 255, 255)); head.setFrameEnabled(True)
+    head.setFrameStrokeWidth(QgsLayoutMeasurement(0.2, UNIT_MM))
+    lay.addLayoutItem(head)
+    head.attemptMove(QgsLayoutPoint(x, y, UNIT_MM)); head.attemptResize(QgsLayoutSize(width, strip, UNIT_MM))
+
+    inset = QgsLayoutItemMap(lay)
+    lay.addLayoutItem(inset)
+    inset.attemptMove(QgsLayoutPoint(x, y + strip, UNIT_MM)); inset.attemptResize(QgsLayoutSize(width, height, UNIT_MM))
+    inset.setCrs(utm)
+    inset.setLayers([_loc["area"], _loc["wil"], _loc["gov"]]); inset.setKeepLayerSet(True)
+    inset.setBackgroundColor(QColor(255, 255, 255)); inset.setFrameEnabled(True)
+    inset.setFrameStrokeWidth(QgsLayoutMeasurement(0.2, UNIT_MM))
+    inset.zoomToExtent(ext)
+
+    credit = QgsLayoutItemLabel(lay)
+    credit.setText("Outlines © OpenStreetMap contributors, 2026")
+    tc = QgsTextFormat(); tc.setFont(QFont("Arial")); tc.setSize(4.4); tc.setColor(QColor("#6A6A6A")); credit.setTextFormat(tc)
+    lay.addLayoutItem(credit)
+    credit.attemptMove(QgsLayoutPoint(x + 1.0, y + strip + height - 3.6, UNIT_MM)); credit.attemptResize(QgsLayoutSize(width - 2.0, 3.2, UNIT_MM))
+    return inset
 
 
 # the template carries an empty white label behind the data table; the table

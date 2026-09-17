@@ -53,19 +53,25 @@ def part_a(d):
            "arrangements. Appendix A holds the working behind Chapter 4.")
 
     # ---------------------------------------------------------------- 2
-    D.h(d, 2, "1.2.   Scope and boundaries")
-
-    D.h(d, 3, "1.2.1.   The study area")
-    p = D.p(d, "The study area covers 531.4 square kilometres and contains "
-               "twenty-five named settlements. Ibri is the principal "
-               "settlement; the remainder are distributed along the wadi "
-               "system and the main road corridors.")
-    N.add(p, "Area of the updated project boundary (Section 1.2.2), measured in "
-             "the project geographic information system in UTM zone 40 North.")
-
+    D.h(d, 2, "1.2.   The study area")
+    D.p(d, "This section describes the study area: where it lies and what it "
+           "contains, its boundary, its ground and drainage, its climate, its "
+           "roads and the flood hazard across it. The map on the next page shows "
+           "the study area, its settlements as received and its place in Oman.")
+    # the map sits here, ahead of 1.2.1: after it the subsections run on without a part-empty page
     _fig(d, "M01_location",
          "Project location and study area boundary, with the boundaries of the "
-         "twenty-five settlements as received with the Inception Report.")
+         "twenty-five settlements as received with the Inception Report. The inset "
+         "places the study area in the Wilayat of Ibri and in Oman.")
+
+    D.h(d, 3, "1.2.1.   Location and settlements")
+    p = D.p(d, "The study area lies in the Wilayat of Ibri, in Adh Dhahirah "
+               "Governorate in the north-west of Oman. It covers 531.4 square "
+               "kilometres and contains twenty-five named settlements. Ibri is "
+               "the principal settlement; the remainder are distributed along "
+               "the wadi system and the main road corridors.")
+    N.add(p, "Area of the updated project boundary (Section 1.2.2), measured in "
+             "the project geographic information system in UTM zone 40 North.")
 
     D.h(d, 3, "1.2.2.   Boundary")
     p = D.p(d, "The project boundary received covers 439.8 square kilometres. "
@@ -86,6 +92,9 @@ def part_a(d):
            "Datasets supplied in geographic coordinates have been "
            "reprojected. Levels are referenced to the terrain model described "
            "in Section 2.3.")
+
+    import rpt_area
+    rpt_area.study_area(d)          # 1.2.4 topography, 1.2.5 climate, 1.2.6 roads, 1.2.7 flood hazard
 
     # ---------------------------------------------------------------- 3
     D.h(d, 2, "1.3.   Programme and design stages")
