@@ -28,7 +28,7 @@ SUBTITLE = "Ibri Sewer, TE Networks and STP — Concept Design Report | Renardet
 FIGURES = {
     "M01_location": (
         "Project location and study area boundary",
-        ["Project Boundary updated", "Settlement boundary"], True,
+        ["Project Boundary updated", "Settlement boundary as received"], True,
         [("Study area", "531.4 km2"), ("Settlements", "25"),
          ("Wilayat", "Ibri, Adh Dhahirah"), ("Projection", "UTM 40N, WGS 84")]),
     "M02_wastewater": (
@@ -116,6 +116,15 @@ def _r2_layers():
     tf = QgsTextFormat(); tf.setSize(7); tf.setColor(QColor('#1F3B63'))
     b = QgsTextBufferSettings(); b.setEnabled(True); b.setSize(0.8); b.setColor(QColor('#FFFFFF')); tf.setBuffer(b)
     pal.setFormat(tf); s.setLabelsEnabled(True); s.setLabeling(QgsVectorLayerSimpleLabeling(pal))
+
+    # the settlement polygons as received with the Inception Report, outlined and named
+    rc = QgsVectorLayer(os.path.join(os.path.dirname(REPO), "SHP", "Towns", "Towns.shp"), "Settlement boundary as received", "ogr")
+    rc.setRenderer(type(rc.renderer())(QgsFillSymbol.createSimple(
+        {'style': 'no', 'outline_color': '#C0504D', 'outline_width': '0.5', 'outline_width_unit': 'MM'})))
+    palr = QgsPalLayerSettings(); palr.fieldName = 'title("NAME_EN")'; palr.isExpression = True; palr.enabled = True
+    tfr = QgsTextFormat(); tfr.setSize(7); tfr.setColor(QColor('#8E2F2C'))
+    br = QgsTextBufferSettings(); br.setEnabled(True); br.setSize(0.8); br.setColor(QColor('#FFFFFF')); tfr.setBuffer(br)
+    palr.setFormat(tfr); rc.setLabelsEnabled(True); rc.setLabeling(QgsVectorLayerSimpleLabeling(palr))
 
     po = QgsVectorLayer(shp("PLOTS_load.shp"), "Cadastral plot", "ogr")
     po.setRenderer(type(po.renderer())(QgsFillSymbol.createSimple(
@@ -205,7 +214,7 @@ def _r2_layers():
         a.setColor(QColor('#0b2a5b')); a.subSymbol().setColor(QColor('#0b2a5b'))
         sym.appendSymbolLayer(a); sym.setOpacity(0.85); return sym
     ar.setRenderer(QgsGraduatedSymbolRenderer('people', [QgsRendererRange(lo, hi, arrow(w), lab) for lo, hi, lab, w in arngs]))
-    for l in (s, po, me, fp, pu, pf, sp, sh, ar):
+    for l in (s, rc, po, me, fp, pu, pf, sp, sh, ar):
         proj.addMapLayer(l, False)
         _R2[l.name()] = l
     return _R2
