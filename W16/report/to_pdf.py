@@ -21,11 +21,26 @@ def convert(docx_path, pdf_path=None, update_fields=True):
     try:
         doc = word.Documents.Open(docx_path, ReadOnly=False)
         if update_fields:
-            for i in range(doc.TablesOfContents.Count):
-                doc.TablesOfContents(i + 1).Update()
-            doc.Fields.Update()
-        doc.SaveAs(pdf_path, FileFormat=17)  # wdFormatPDF
+            # twice: the lists of figures and tables grow by pages when first filled, which moves
+            # every page number after them. Fields.Update alone does not always fill those lists,
+            # so they are updated by name.
+            for _ in range(2):
+                for i in range(doc.TablesOfFigures.Count):
+                    doc.TablesOfFigures(i + 1).Update()
+                for i in range(doc.TablesOfContents.Count):
+                    doc.TablesOfContents(i + 1).Update()
+                doc.Fields.Update()
+            doc.Save()                       # the Word file opens with its contents and lists filled
+        # to a temporary name first: with alerts off Word skips a PDF that a viewer holds open and
+        # says nothing, which leaves the old PDF in place beside a new Word file
+        tmp = pdf_path + ".tmp.pdf"
+        if os.path.exists(tmp):
+            os.remove(tmp)
+        doc.SaveAs(tmp, FileFormat=17)       # wdFormatPDF
         pages = doc.ComputeStatistics(2)     # wdStatisticPages
+        if not os.path.exists(tmp):
+            raise RuntimeError(f"Word did not write the PDF: {tmp}")
+        os.replace(tmp, pdf_path)            # raises if the old PDF is open in a viewer
         return pdf_path, pages
     finally:
         if doc is not None:
