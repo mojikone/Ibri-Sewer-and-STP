@@ -13,7 +13,7 @@ fmt = F.fmt
 
 def contents(d):
     D.title(d, "Contents")
-    D.toc(d, "1-2")
+    D.toc(d, "1-3")
     D.pagebreak(d)
     D.title(d, "Figures")
     D.list_of(d, "Figure")
@@ -60,7 +60,7 @@ def abbreviations(d):
                "writes treated effluent in full, and TSE where a guideline value "
                "is quoted.")
     N.add(p, "PAM-GUD-201, Table 1, page 16; PAM-GUD-203, page 13. "
-             "Confirmation of the preferred convention is requested (Section 5.3).")
+             "Confirmation of the preferred convention is requested (Section 1.5.4).")
     D.pagebreak(d)
 
 
@@ -91,7 +91,7 @@ def executive_summary(d):
                "ones included, lies inside it. All spatial work is carried out "
                "in UTM zone 40 North on the WGS 84 datum.")
     N.add(p, "Areas measured in the project geographic information system. "
-             "Confirmation of the updated boundary is requested (Section 5.3).")
+             "Confirmation of the updated boundary is requested (Section 1.5.4).")
 
     D.title(d, "Data collected", size=12, space_before=8)
     D.p(d, "Data has been obtained from Nama Water Services covering the "
@@ -99,7 +99,7 @@ def executive_summary(d):
            "accounts and the cadastral plot layer. The datasets have been "
            "loaded into the project geographic information system, checked "
            "against the project boundary and assessed for completeness. "
-           "Section 7 records the outcome in full. Four points are carried "
+           "Section 2.2 records the outcome in full. Four points are carried "
            "through the report.")
     D.bullet(d, "the wastewater dataset holds two networks. The constructed "
                 "network, dated 2006, comprises 111.6 kilometres of gravity "
@@ -135,12 +135,12 @@ def executive_summary(d):
                f"in it, with a floor of four persons per property, a cap of "
                f"{max(r['or_used'] for r in st):.2f}, the highest rate among the "
                f"larger settlements, and four for a settlement of fewer than a "
-               f"thousand people. Ibri returns {ib['or_used']:.2f}. Section 14 "
+               f"thousand people. Ibri returns {ib['or_used']:.2f}. Section 4.1 "
                f"sets out the derivation.")
     N.add(p, "The guideline derives occupancy from population and housing "
              "units published by NCSI. Housing units are not published at "
              "settlement level, and counted domestic meters have been used "
-             "in their place. The departure is recorded in Section 10.")
+             "in their place. The departure is recorded in Section 3.1.")
 
     D.title(d, "Population and flows", size=12, space_before=8)
     p = D.p(d, f"Every plot in the study area carries a population and an "
@@ -156,7 +156,7 @@ def executive_summary(d):
                f"last settlement fills in {ult}, with {fmt(t['pop_ult'])} "
                f"people and {fmt(t['q_ult'])} cubic metres a day.")
     N.add(p, "Average flows before infiltration and before the STP margin. The "
-             "five-year series for every settlement is in Sections 14.9 and 15.7.")
+             "five-year series for every settlement is in Sections 4.1.9 and 4.2.7.")
     D.tab_caption(d, "The study area in the design years")
     D.table(d, ["Year", "People", "Average sewage flow, m³/d", "STP average with the margin, m³/d", "STP peak hour with the margin, m³/d"], [
         ["2024, base", fmt(t["pop_today"]), fmt(t["q_today"]), "", ""],
@@ -172,13 +172,13 @@ def executive_summary(d):
                f"loads of 60 grams of BOD and 80 grams of suspended solids per "
                f"person per day the plant receives {fmt(pl[ult]['bod_kgd'])} "
                f"kilograms of BOD a day at saturation.")
-    N.add(p, "Sections 13.1 and 15.8. The loads are replaced by the laboratory "
+    N.add(p, "Sections 3.4.1 and 4.2.8. The loads are replaced by the laboratory "
              "results of the existing STP once received.")
     p = D.p(d, "Two industrial estates inside the town, at Al Tayyeb and "
                "Tanam, were found under the commercial tariff and are treated "
                "as special consumption. The army camp, a planned resort and "
                "two sources of tankered sewage outside the boundary are "
-               "recorded in Section 16.")
+               "recorded in Section 4.3.")
     N.add(p, "The workforce of the two estates is an assumption, to be "
              "replaced by the estates' records.")
 
@@ -191,7 +191,7 @@ def executive_summary(d):
            f"The largest of them is the overflow: without it "
            f"{len(no['never'])} settlements never fill, and "
            f"{fmt(t['pop_ult'] - no['totals'][ult]['pop_own'])} people of the "
-           f"series have nowhere to go by {ult}. Section 5 gives the decisions, "
+           f"series have nowhere to go by {ult}. Section 1.5 gives the decisions, "
            f"the adopted values, the other matters awaiting confirmation and "
            f"the {len(DATA_REQUESTS)} data requests.")
     D.tab_caption(d, "The decisions requested from Nama Water Services")
@@ -209,8 +209,8 @@ def executive_summary(d):
            "utility survey is in progress; the hydraulic assessment of the "
            "existing networks follows it. The options for the sewer network, "
            "the treated effluent network and the treatment plant are presented "
-           "as a framework in Part F and will be completed once the decisions "
-           "of Section 5 are taken.")
+           "as a framework in Chapter 6 and will be completed once the decisions "
+           "of Section 1.5 are taken.")
 
     D.title(d, "How the options are developed and compared", size=12, space_before=8)
     D.p(d, "Three options are developed for each of the sewer network, the "
@@ -220,7 +220,7 @@ def executive_summary(d):
            "one based on practice already established in Oman. Every option "
            "meets the same functional requirement and the same effluent "
            "standard, so that the difference between them lies in how the "
-           "result is achieved. Section 21 sets out what distinguishes them in "
+           "result is achieved. Section 6.1 sets out what distinguishes them in "
            "design terms.")
     D.p(d, "The options are compared over a twenty-five year period against "
            "seven criteria: total lifetime cost; sustainability, comprising "
@@ -243,5 +243,5 @@ def executive_summary(d):
            "to saturation and the framework for the options and their "
            "appraisal. The options themselves, the cost estimate and the "
            "comparison follow once the design horizon is decided and the "
-           "survey is complete. Section 3.1 lists each deliverable and its "
+           "survey is complete. Section 1.3.1 lists each deliverable and its "
            "position.")

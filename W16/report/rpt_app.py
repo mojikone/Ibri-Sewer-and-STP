@@ -1,4 +1,4 @@
-"""Appendix A for Revision 3: the working behind Part D, so a reviewer can check it."""
+"""Appendix A for Revision 3: the working behind Chapter 4, so a reviewer can check it."""
 import os
 
 import doc as D
@@ -10,14 +10,14 @@ fmt = F.fmt
 
 
 def appendices(d):
-    D.part(d, "Appendix A", "Population, land use and flow: the working")
+    D.chapter(d, "Appendix A.   Population, land use and flow: the working")
     st = F.settlement_table(); mc = F.meter_counts(); cs = F.crt_summary(); t = F.totals()
 
     # ----------------------------------------------------------------- A1
-    D.h(d, 1, "A1.   Electricity meters: tariff to category")
+    D.h(d, 2, "A.1.   Electricity meters: tariff to category")
     D.p(d, "Each tariff in the electricity dataset is assigned to one of the "
            "guideline's categories. The large-consumer tariff is resolved "
-           "account by account in A2.")
+           "account by account in A.2.")
     tariffs = mc["tariff"]
     D.tab_caption(d, "Tariffs and the category adopted")
     D.table(d, ["Tariff", "Meters", "Category", "People"], [
@@ -31,18 +31,18 @@ def appendices(d):
         ["MOD", fmt(tariffs.get("MOD", 0)), "Governmental", "none"],
         ["Agricultural", fmt(tariffs.get("Agricultural", 0)), "Agricultural", "none; no sewage"],
         ["Industrial", fmt(tariffs.get("Industrial", 0)), "Special consumption", "none"],
-        ["CRT Seasonal", fmt(tariffs.get("CRT Seasonal", 0)), "Large consumer, see A2", "none"],
-        ["CRT Time of Use", fmt(tariffs.get("CRT Time of Use", 0)), "Large consumer, see A2", "none"],
-        ["CRT Fixed Rate", fmt(tariffs.get("CRT Fixed Rate", 0)), "Large consumer, see A2", "none"],
+        ["CRT Seasonal", fmt(tariffs.get("CRT Seasonal", 0)), "Large consumer, see A.2", "none"],
+        ["CRT Time of Use", fmt(tariffs.get("CRT Time of Use", 0)), "Large consumer, see A.2", "none"],
+        ["CRT Fixed Rate", fmt(tariffs.get("CRT Fixed Rate", 0)), "Large consumer, see A.2", "none"],
     ], widths=[7.0, 2.2, 4.3, 3.0], font=8.5)
     D.p(d, "")
     D.p(d, f"Of the {fmt(mc['total'])} meters, {fmt(mc['inside'])} fall inside "
            f"a plot, {fmt(mc['snapped'])} were assigned to the nearest plot "
            f"within fifteen metres, and {fmt(mc['free'])} lie further from any "
-           f"plot; they carry no load (Section 14.3).")
+           f"plot; they carry no load (Section 4.1.3).")
 
     # ----------------------------------------------------------------- A2
-    D.h(d, 1, "A2.   The large-consumer accounts")
+    D.h(d, 2, "A.2.   The large-consumer accounts")
     use = cs["use"]; conf = cs["conf"]
     D.p(d, f"The {cs['total']} accounts on the Cost Reflective Tariff were "
            f"placed by clustering them at 120 metres, matching each cluster "
@@ -74,8 +74,8 @@ def appendices(d):
              "feature by reverse geocoding. Weaker: the surroundings only.")
 
     # ----------------------------------------------------------------- A3
-    D.h(d, 1, "A3.   Occupancy rate, properties per plot, home share and capacity by settlement")
-    D.tab_caption(d, "The settlement rates used in Part D: calculated from the data, and adopted")
+    D.h(d, 2, "A.3.   Occupancy rate, properties per plot, home share and capacity by settlement")
+    D.tab_caption(d, "The settlement rates used in Chapter 4: calculated from the data, and adopted")
     D.table(d, ["Settlement", "Domestic properties, 2024", "Pop. 2024", "Empty plots", "of which counted as future homes",
                 "Occupancy rate calculated", "adopted", "Properties per home plot calculated", "adopted",
                 "Home share calculated", "adopted", "Capacity, people"],
@@ -101,7 +101,7 @@ def appendices(d):
              "and not planted, industrial or heritage.")
 
     # ----------------------------------------------------------------- A4
-    D.h(d, 1, "A4.   The overflow routes in full")
+    D.h(d, 2, "A.4.   The overflow routes in full")
     D.p(d, "Every route carrying fifty people or more at saturation. The "
            "donor's year is the year its own empty plots are full; the "
            "receiver starts in the first year it takes in overflow from any "

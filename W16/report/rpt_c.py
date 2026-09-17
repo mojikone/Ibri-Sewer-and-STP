@@ -1,4 +1,4 @@
-"""Part C - basis of design.   Revision 3: the symbol lines, the gradient rule with the
+"""Chapter 3 - basis of design.   Revision 3: the symbol lines, the gradient rule with the
 tractive-force curve in the text, the 12 m rule, the flows and loads the plant is sized on."""
 import os
 
@@ -16,10 +16,13 @@ fmt = F.fmt
 
 
 def part_c(d):
-    D.part(d, "C", "Basis of design")
+    D.chapter(d, "3.   Basis of design")
+    D.p(d, "This chapter sets out the documents that govern the design and the "
+           "departures from them, the level of service, and the design criteria for "
+           "the collection network and the treatment plant.")
 
     # --------------------------------------------------------------- 10
-    D.h(d, 1, "10.   Codes, standards and departures")
+    D.h(d, 2, "3.1.   Codes, standards and departures")
     D.p(d, "The design follows the Nama Water Services design guidelines and "
            "standard specifications. Where a value is taken from a guideline "
            "it is cited to the guideline and page.")
@@ -34,11 +37,11 @@ def part_c(d):
         ["MD 41/2017", "Ministerial Decision, ambient air quality"],
     ], widths=[4.0, 12.5], font=9.5)
 
-    D.h(d, 2, "10.1.   Departures")
+    D.h(d, 3, "3.1.1.   Departures")
     D.p(d, "The departures from the guidelines that arise from the data "
            "available, and the items that await data, are set out below with "
            "the reason and the position adopted. Those the guidelines do not "
-           "settle are put to Nama Water Services as decisions in Section 5; "
+           "settle are put to Nama Water Services as decisions in Section 1.5; "
            "the others are adopted and reported there.")
 
     D.tab_caption(d, "Departures from the design guidelines")
@@ -124,7 +127,7 @@ def part_c(d):
              "pupil, per bed, per employee and per square metre of floor area.")
 
     # --------------------------------------------------------------- 11
-    D.h(d, 1, "11.   Level of service and resilience")
+    D.h(d, 2, "3.2.   Level of service and resilience")
     D.p(d, "The systems are designed to convey and treat the flows arising "
            "across the design horizon without surcharge in the collection "
            "network and without loss of treatment capacity at the STP.")
@@ -134,13 +137,13 @@ def part_c(d):
     D.bullet(d, "a margin of ten per cent is applied to the STP design flow, "
                 "over and above redundancy.", lead="Design margin — ")
     D.bullet(d, "structures are sited and set above the flood levels described "
-                "in Section 29, and the STP is to remain operational during "
+                "in Section 7.2, and the STP is to remain operational during "
                 "floods.", lead="Flood resilience — ")
-    D.bullet(d, "emergency provisions are described in Section 26.",
+    D.bullet(d, "emergency provisions are described in Section 6.6.",
              lead="Failure — ")
 
     # --------------------------------------------------------------- 12
-    D.h(d, 1, "12.   Design criteria: collection network", page_break=True)
+    D.h(d, 2, "3.3.   Design criteria: collection network")
     D.p(d, "The criteria below govern the gravity network. All are taken from "
            "the wastewater design guideline.")
 
@@ -174,7 +177,7 @@ def part_c(d):
     ], widths=[6.2, 5.8, 4.5], font=9)
 
     D.p(d, "")
-    D.h(d, 2, "12.1.   Hydraulic formulation")
+    D.h(d, 3, "3.3.1.   Hydraulic formulation")
     D.p(d, "Full-bore velocity is computed by the Colebrook-White equation.")
     eq = D.next_eq()
     M.display(d, M.seq(
@@ -204,7 +207,7 @@ def part_c(d):
              "of 1.5 mm at 15 degrees Celsius, and correspond to full-bore "
              "flow.")
 
-    D.h(d, 2, "12.2.   Gradients and self-cleansing at the concept stage")
+    D.h(d, 3, "3.3.2.   Gradients and self-cleansing at the concept stage")
     p = D.p(d, "At the concept stage every pipe is laid at the guideline's "
                "minimum gradient for its size, rounded up to a step of 0.05 "
                "per cent, or 0.025 per cent for trunks of 500 mm and above. "
@@ -254,14 +257,14 @@ def part_c(d):
            "that the gradient obtained from the tractive-force method is "
            "limited to a maximum of 4 per cent at the head pipes. How that "
            "limit is applied will be confirmed with Nama Water Services "
-           "(Section 5.3).")
+           "(Section 1.5.4).")
     ask(d, 7)
     D.wide_figure(d, os.path.join(IMG_B, "K01_mara_full.png"),
                   "The minimum gradient by tractive force at one pascal against the flow in the pipe, "
                   "with the Table 11 minimum of every size marked where it meets the curve, and the 1.5 l/s floor.",
                   size="A4")
 
-    D.h(d, 2, "12.3.   Depth of cover and pumping")
+    D.h(d, 3, "3.3.3.   Depth of cover and pumping")
     p = D.p(d, "A gravity sewer goes deeper the further it runs. The guideline "
                "recommends about 10 to 12 metres of cover as the point where "
                "the cost of excavation justifies a pumping station. That cost "
@@ -278,11 +281,11 @@ def part_c(d):
                "metres a second.")
     N.add(p, "PAM-GUD-203, Section 8.1, page 50. Which chamber the main "
              "discharges into, and whether neighbouring stations are joined, "
-             "are layout decisions of the options (Section 23).")
+             "are layout decisions of the options (Section 6.3).")
     adopt(d, 6)
 
     # --------------------------------------------------------------- 13
-    D.h(d, 1, "13.   Design criteria: treatment plant", page_break=True)
+    D.h(d, 2, "3.4.   Design criteria: treatment plant")
     D.tab_caption(d, "Treatment plant design criteria")
     D.table(d, ["Criterion", "Value", "Reference"], [
         ["Design horizon", "not less than 15 years", "PAM-GUD-203 p65"],
@@ -319,14 +322,14 @@ def part_c(d):
              "at 5 mg/l and nitrate at 50 mg/l as NO3, equivalent to 11.3 mg/l "
              "as N.")
 
-    D.h(d, 2, "13.1.   The flows and loads the plant is sized on")
+    D.h(d, 3, "3.4.1.   The flows and loads the plant is sized on")
     p = D.p(d, "The STP is sized on three flows, and the guideline names what "
                "each one sizes: the average annual flow for the biological "
                "treatment, with the load; the peak hourly flow for everything "
                "the flow passes through; and the maximum day flow, which the "
                "guideline defines but gives no factor for. The maximum day "
                "flow is read from a year of daily records at the existing STP, "
-               "requested in Section 5.4.")
+               "requested in Section 1.5.5.")
     N.add(p, "PAM-GUD-203, Table 29, page 65, and Section 10.2.2.1, page 66.")
     eq = D.next_eq()
     M.display(d, M.seq(M.sub(R("Q"), UP("AAF")), M.EQ, R("1.10"), M.delim(M.seq(M.sub(R("Q"), UP("avg")), M.PLUS, M.sub(R("Q"), UP("inf"))))), number=eq)
@@ -337,10 +340,10 @@ def part_c(d):
     eq = D.next_eq()
     M.display(d, M.seq(M.sub(R("Q"), UP("PHF")), M.EQ, R("1.10"), M.delim(M.seq(M.sub(R("Q"), UP("peak")), M.PLUS, M.sub(R("Q"), UP("inf"))))), number=eq)
     D.symbols(d, [["Q PHF", "peak hourly flow, for the structures the flow passes through", "m³/d"],
-                  ["Q peak", "the Merrimack peak of the average flow of the settlements upstream (Section 15.6)", "m³/d"]])
+                  ["Q peak", "the Merrimack peak of the average flow of the settlements upstream (Section 4.2.6)", "m³/d"]])
     p = D.p(d, "The margin is applied to the peak as to the average. The "
                "guideline does not state the order, and this reading is for "
-               "confirmation. Section 15.8 gives the flows by year.")
+               "confirmation. Section 4.2.8 gives the flows by year.")
     N.add(p, "PAM-GUD-201, Section 7.4.5, page 73.")
     p = D.p(d, "The biological treatment is sized on the load, not only the "
                "flow. No laboratory data for Ibri's sewage is held. The "
@@ -361,4 +364,6 @@ def part_c(d):
         ["Ammonia as nitrogen", "40 to 50", "70 to 125"], ["Total phosphorus", "10 to 15", "16 to 35"],
     ], widths=[5.6, 4.6, 6.3], font=9)
     D.p(d, "")
+    D.chart(d, "R06_strength", 14.5)
+    D.fig_caption(d, "The strength of raw sewage the guideline gives: through the network, and by tanker. The tanker ranges run from the average to the maximum.")
     adopt(d, 7)

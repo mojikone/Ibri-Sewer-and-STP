@@ -266,6 +266,30 @@ def title(d, text, size=14, space_before=0):
     return par
 
 
+def chapter(d, text):
+    """A chapter opens on a new page with its number and title as the top-level heading, and
+    nothing else: no divider page, no rules. text carries the number: "4.   Demand and flows"."""
+    if not at_section_start(d):
+        pagebreak(d)
+    _step["n"] = 0
+    par = d.add_heading(text, 1)
+    par.paragraph_format.space_before = Pt(0); par.paragraph_format.space_after = Pt(12)
+    for r in par.runs:
+        r.font.size = Pt(18)
+    _outline(par, 0)
+    return par
+
+
+def sub(d, text):
+    """An unnumbered minor heading inside a numbered subsection; it stays out of the contents."""
+    par = d.add_paragraph()
+    par.paragraph_format.space_before = Pt(9); par.paragraph_format.space_after = Pt(3)
+    par.paragraph_format.keep_with_next = True
+    r = par.add_run(text); r.bold = True; r.font.size = Pt(10.5); r.font.name = "Century Gothic"; r.font.color.rgb = MID
+    _step["n"] = 0
+    return par
+
+
 def part(d, letter, title):
     """A part divider: its own page, and the top level of the contents (concept report)."""
     if not at_section_start(d):
@@ -517,7 +541,7 @@ def fig_caption(d, text):
     par.paragraph_format.space_before = Pt(2); par.paragraph_format.space_after = Pt(10)
     r = par.add_run("Figure "); r.font.size = Pt(9); r.font.color.rgb = GREY; r.italic = True
     _field(par, "SEQ Figure \\* ARABIC", n, size=9, italic=True, colour="5A5A5A")
-    r = par.add_run(f"   {text}"); r.font.size = Pt(9); r.font.color.rgb = GREY; r.italic = True
+    r = par.add_run(f".   {text}"); r.font.size = Pt(9); r.font.color.rgb = GREY; r.italic = True    # "Figure 2.   caption"
     return n
 
 
@@ -531,7 +555,7 @@ def tab_caption(d, text):
     par.paragraph_format.keep_with_next = True
     r = par.add_run("Table "); r.font.size = Pt(9); r.font.color.rgb = GREY; r.italic = True
     _field(par, "SEQ Table \\* ARABIC", n, size=9, italic=True, colour="5A5A5A")
-    r = par.add_run(f"   {text}"); r.font.size = Pt(9); r.font.color.rgb = GREY; r.italic = True
+    r = par.add_run(f".   {text}"); r.font.size = Pt(9); r.font.color.rgb = GREY; r.italic = True    # "Table 3.   caption"
     return n
 
 

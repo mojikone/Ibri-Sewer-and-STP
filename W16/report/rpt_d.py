@@ -1,4 +1,4 @@
-"""Part D - demand and flows.   Revision 3: the content of the Design Basis Report in the
+"""Chapter 4 - demand and flows.   Revision 3: the content of the Design Basis Report in the
 concept report's sections, from the same facts and the same decisions list."""
 import os
 
@@ -30,15 +30,19 @@ def _gap(d):
 
 
 def part_d(d):
-    D.part(d, "D", "Demand and flows")
+    D.chapter(d, "4.   Demand and flows")
+    D.p(d, "This chapter establishes the population, the use of the land and its growth "
+           "to saturation, the wastewater flow that every element of the system is "
+           "designed for, the non-domestic discharges and the treated effluent "
+           "available.")
     t = F.totals(); ps = F.plot_summary(); mc = F.meter_counts(); st = F.settlement_table()
     ib = [r for r in st if r["key"] == "IBRI"][0]
     ult = t["ultimate"]; cls = ps["classes"]
 
     # --------------------------------------------------------------- 14
-    D.h(d, 1, "14.   Population and land use")
+    D.h(d, 2, "4.1.   Population and land use")
 
-    D.h(d, 2, "14.1.   Approach")
+    D.h(d, 3, "4.1.1.   Approach")
     D.p(d, "The population of the study area, its distribution and its growth "
            "are established by counting rather than by assumption. Every "
            "domestic electricity meter is a property. Every plot takes its use "
@@ -61,8 +65,8 @@ def part_d(d):
                      "concentrated in Ibri town and along the wadi corridors, "
                      "and falls away sharply beyond them.")
 
-    D.h(d, 2, "14.2.   The settlements and their boundaries")
-    D.p(d, "Every rule in this Part is applied settlement by settlement: the "
+    D.h(d, 3, "4.1.2.   The settlements and their boundaries")
+    D.p(d, "Every rule in this chapter is applied settlement by settlement: the "
            "persons per property, the share of empty land that becomes housing, "
            "the growth rate and the year the land is full are all set for each "
            "settlement. So every plot must belong to exactly one settlement.")
@@ -94,7 +98,7 @@ def part_d(d):
     _map(d, "B01_boundaries", "The settlement boundaries as received (red, dashed) and as redrawn for the design (blue). "
                               "Every plot lies in one settlement and the boundaries meet without gaps.", IMG_B)
 
-    D.h(d, 2, "14.3.   From the meters to the properties")
+    D.h(d, 3, "4.1.3.   From the meters to the properties")
     p = D.p(d, f"Each domestic electricity meter is one property. Of the "
                f"{fmt(mc['total'])} meters, {fmt(mc['inside'])} fall inside a "
                f"plot. {fmt(mc['snapped'])} lie on a road or in a gap between "
@@ -108,7 +112,7 @@ def part_d(d):
              "by public records; their use decides only where the shop and "
              "government water is placed, not how much there is.")
 
-    D.h(d, 3, "Properties per home plot")
+    D.sub(d, "Properties per home plot")
     D.p(d, "The number of properties on a built home plot is measured in each "
            "settlement over the plots that are homes and nothing else, "
            "excluding the few plots that carry fifteen or more domestic meters, "
@@ -124,12 +128,12 @@ def part_d(d):
                f"principal settlements lie between 1.1 and 1.4. Four small "
                f"settlements with institutional housing on a handful of plots "
                f"return two or more; the thirteen settlements under a thousand "
-               f"people take one property per plot, as Section 14.4 sets out. "
-               f"The full table is given in Appendix A3.")
+               f"people take one property per plot, as Section 4.1.4 sets out. "
+               f"The full table is given in Appendix A.3.")
     N.add(p, f"{fmt(ps['pure_home_plots'])} home plots were measured across "
              f"the twenty-five settlements.")
 
-    D.h(d, 3, "The 126 meters with no plot within 15 metres")
+    D.sub(d, "The 126 meters with no plot within 15 metres")
     fm = B.free_meters()
     p = D.p(d, f"{fm['count']} meters lie more than fifteen metres from any "
                f"plot. {fm['domestic']} of them are domestic meters, about "
@@ -148,11 +152,12 @@ def part_d(d):
               F.NAME.get(rows[i + half][0], rows[i + half][0].title()) if i + half < len(rows) else "",
               str(rows[i + half][1]) if i + half < len(rows) else ""] for i in range(half)],
             widths=[4.6, 2.0, 4.6, 2.0], font=9)
+    _chart(d, "R07_free_meters", "The 126 meters by tariff and by settlement. Thirty are domestic meters.", 15.0)
     adopt(d, 1)
     D.wide_figures(d, [(os.path.join(IMG_B, "B05_free_meters.png"), "The 126 meters more than fifteen metres from any plot. Red: a domestic meter; blue: any other meter."),
                        (os.path.join(IMG_B, "B06_examples.png"), "Nine of the 126 meters close up: on a road, in open ground, at a pumping station, on a building the cadastre does not carry. The plots are outlined in yellow.")], size="A4")
 
-    D.h(d, 2, "14.4.   Occupancy rate")
+    D.h(d, 3, "4.1.4.   Occupancy rate")
     D.p(d, "The occupancy rate of each settlement is its population in 2024, "
            "the year of the electricity data, divided by the domestic "
            "properties counted in it.")
@@ -170,7 +175,7 @@ def part_d(d):
                f"among the settlements of two thousand people or more. And a "
                f"settlement of fewer than a thousand people takes "
                f"{F.OR_FLOOR:.1f} outright, one property per home plot and a "
-               f"home share of 0.9 (Section 14.6), because it has too few "
+               f"home share of 0.9 (Section 4.1.6), because it has too few "
                f"meters to measure on. That rule applies to {len(small)} "
                f"settlements.")
     N.add(p, f"{F.OR_FLOOR:.1f} is the rate measured at At Tayyib, 3,300 people, "
@@ -201,7 +206,7 @@ def part_d(d):
     _chart(d, "C04_population", f"People in each settlement in 2024, from the domestic meters at the settlement's occupancy rate. "
                                 f"Ibri holds {ib['people_today'] / t['pop_today'] * 100:.0f} per cent of the total.", 14.5)
 
-    D.h(d, 2, "14.5.   Land use", page_break=True)
+    D.h(d, 3, "4.1.5.   Land use")
     p = D.p(d, f"The cadastral layer received in September 2026 holds "
                f"{fmt(ps['total'])} plots. Its own land-use field cannot be used "
                f"as it stands: it has no government class, it records whole "
@@ -245,14 +250,15 @@ def part_d(d):
     _gap(d)
     D.p(d, "The use decides where the shop and government water is placed and "
            "which empty plots can become homes. It does not change the total: "
-           "that comes from the people and the rates of Section 15.")
+           "that comes from the people and the rates of Section 4.2.")
     _chart(d, "C07_landuse", f"Use of the built, metered plots. Residential plots are "
                              f"{fmt(cls.get('Residential', 0) / ps['metered'] * 100)} per cent of them; agricultural plots, "
                              f"{fmt(cls.get('Agricultural', 0) / ps['metered'] * 100)} per cent, are found by the meter or by the satellite image.", 14.0)
     ask(d, 3)
     _map(d, "B02_landuse", "The use of each plot. Coloured plots are built and metered; empty plots are shown by their outline only.", IMG_B)
 
-    D.h(d, 2, "14.6.   Capacity of the empty land")
+    D.h(d, 3, "4.1.6.   Capacity of the empty land")
+    _p0 = F.plots(); _homes = _p0[(_p0.DERIVED == "Residential") & (_p0.Buiding_St == "EXisting")]
     p = D.p(d, f"Of the {fmt(ps['total'])} plots, {fmt(ps['empty'])} carry no "
                f"meter. Not all of them will become homes. A future home plot "
                f"must look like the built ones: between 200 and 1,000 square "
@@ -264,8 +270,8 @@ def part_d(d):
     N.add(p, "Compactness is the plot's area against that of its smallest "
              "enclosing rectangle, not less than 0.6; the rectangle's sides "
              "may not differ by more than three to one. Built home plots have "
-             "a median area of 717 square metres and a median compactness of "
-             "0.98. Shapes above 2,000 square metres are whole future "
+             f"a median area of {fmt(_homes.AREA_M2.median())} square metres and a median compactness of "
+             f"{_homes.COMPACT.median():.2f}. Shapes above 2,000 square metres are whole future "
              "districts drawn as one plot and take nothing until they are "
              "subdivided.")
     hs = F.home_share_range()
@@ -289,11 +295,11 @@ def part_d(d):
                f"people on this basis, against {fmt(t['pop_today'])} living in "
                f"it in 2024.")
     N.add(p, "The thirteen settlements under a thousand people take a home "
-             "share of 0.9 and one property per plot, as Section 14.4 sets out. "
-             "Capacity by settlement: Appendix A3.")
+             "share of 0.9 and one property per plot, as Section 4.1.4 sets out. "
+             "Capacity by settlement: Appendix A.3.")
 
     gr = F.growth_rates(); no = B.no_overflow(); sy = {r["key"]: r["sat_year"] for r in st}
-    D.h(d, 2, "14.7.   How fast each settlement grows")
+    D.h(d, 3, "4.1.7.   How fast each settlement grows")
     D.picture(d, os.path.join(IMG, "D7_saturation.png"), 14.5)
     D.fig_caption(d, "From the empty plot to the year each settlement is full.")
     p = D.p(d, f"The growth rate comes from the population series of the "
@@ -321,7 +327,7 @@ def part_d(d):
     _chart(d, "C12_growth_rate", "The annual growth rate of the series: the forecast to 2040, the extension to 2050, and the rise to a constant 2.40 per cent.", 14.0)
     ask(d, 6)
 
-    D.h(d, 2, "14.8.   When a settlement is full: the overflow")
+    D.h(d, 3, "4.1.8.   When a settlement is full: the overflow")
     D.p(d, "Each settlement grows at the rate of the series until its empty "
            "plots are built, its growth filling them together and in "
            "proportion. Then its further growth has to go somewhere. Two "
@@ -366,7 +372,7 @@ def part_d(d):
            f"{top['receiver_name']}, {fmt(top['people'])} people, and "
            f"{len(rcv)} settlements take some of Ibri's growth in all. The "
            f"routes carrying more than a thousand people are set out below; the "
-           f"full list is in Appendix A4.")
+           f"full list is in Appendix A.4.")
     D.tab_caption(d, "The main overflow routes")
     rts = [r for r in F.routes() if r["people"] >= 1000]
     D.table(d, ["From", "To", "People at saturation", "Donor full", "Receiver starts", "Receiver full"],
@@ -380,7 +386,7 @@ def part_d(d):
                             "neighbours' overflow.", IMG_B)
     _chart(d, "C10_fill_years", "The year each settlement's empty plots are full. Ibri and the settlements that take a thousand or more of its people are marked.", 14.5)
 
-    D.h(d, 2, "14.9.   The design horizon: 2055, or the year the land is full")
+    D.h(d, 3, "4.1.9.   The design horizon: 2055, or the year the land is full")
     p = D.p(d, f"The Terms of Reference name a horizon of completion plus "
                f"twenty-five years. With the opening year taken as 2030, that "
                f"is 2055: {fmt(t['pop'][2055])} people and "
@@ -399,7 +405,7 @@ def part_d(d):
            "streets would then need to be replaced or relieved. A network "
            "sized on the year the land is full is laid once, and its sewers run "
            "at low flow for longer, which the self-cleansing check of Section "
-           "15.8 is there to catch. The STP is staged either way, on the "
+           "4.2.8 is there to catch. The STP is staged either way, on the "
            "series. The horizon is for Nama Water Services to decide.")
     D.tab_caption(d, "The study area in the design years")
     D.table(d, ["Year", "People", "Average sewage flow, m³/d", "What it is"], [
@@ -409,6 +415,7 @@ def part_d(d):
         [f"{ult}", fmt(t["pop_ult"]), fmt(t["q_ult"]), "saturation: the land is full"],
     ], widths=[2.0, 3.0, 4.3, 7.2], font=9.5)
     _gap(d)
+    _chart(d, "R01_horizon", "The two horizons side by side: people, average sewage flow, and the STP's average and peak-hour flow with the margin.", 15.0)
     ask(d, 5)
     _chart(d, "C08_growth", "People by year to saturation, the six largest settlements shown separately. The flat top of each band is the year that settlement fills.", 15.0)
     p = D.p(d, "The people of every settlement at five-year steps, to the year "
@@ -422,7 +429,7 @@ def part_d(d):
     D.tab_caption(d, "People by settlement at five-year intervals")
     D.table(d, hdr, rows, widths=[2.3] + [0.95] * (len(hdr) - 3) + [1.3, 1.65], font=6.4, cell_margin=0.08, keep_together=True)
 
-    D.h(d, 2, "14.10.   Where the growth is placed")
+    D.h(d, 3, "4.1.10.   Where the growth is placed")
     D.p(d, "For the network every empty plot matters, not only the ones "
            "counted as future homes, because the sewer that serves a street "
            "serves every plot on it. The people a settlement houses in a given "
@@ -434,17 +441,17 @@ def part_d(d):
            "network total and the STP total are the same figure.")
 
     # --------------------------------------------------------------- 15
-    D.h(d, 1, "15.   Wastewater generation and design flows", page_break=True)
+    D.h(d, 2, "4.2.   Wastewater generation and design flows", page_break=True)
     D.picture(d, os.path.join(IMG, "D3_flow.png"), 15.5)
     D.fig_caption(d, "Derivation of the design flow, from the plot to the pipe and the STP.")
 
-    D.h(d, 2, "15.1.   Water demand")
+    D.h(d, 3, "4.2.1.   Water demand")
     D.p(d, "Wastewater generation is derived from water demand. Four "
            "components are carried: domestic, non-domestic, governmental and "
            "special consumption. A household supplied by tanker is metered "
            "for electricity like any other and carries the domestic rate; the "
            "tanker volumes themselves are a data request and no separate "
-           "term is carried (Section 10.1).")
+           "term is carried (Section 3.1.1).")
     eq = D.next_eq()
     M.display(d, M.seq(M.sub(R("Q"), UP("dom")), M.EQ, UP("Population"), M.TIMES, UP("LPCD")), number=eq)
     D.symbols(d, [["Q dom", "domestic water demand", "l/d"],
@@ -475,7 +482,7 @@ def part_d(d):
              "specific identified non-domestic projects such as economic "
              "zones\".")
 
-    D.h(d, 2, "15.2.   Special consumption: the industrial estates")
+    D.h(d, 3, "4.2.2.   Special consumption: the industrial estates")
     p = D.p(d, "Two industrial estates lie inside the study area, at Al Tayyeb "
                "in the north-east of the town and at Tanam beside the "
                "treatment plant. Their meters are recorded on the commercial "
@@ -489,7 +496,7 @@ def part_d(d):
                "workers, and the few properties on the estates carry the "
                "domestic rate like any other. The workforce is an assumption "
                "from the number of workshop meters and is to be replaced by "
-               "the estates' own records. Section 16 describes the estates and "
+               "the estates' own records. Section 4.3 describes the estates and "
                "the other identified projects.")
     N.add(p, "PAM-GUD-201, Section 7.3.1, page 59, and Table 12, page 61, "
              "dry industry. Al Tayyeb: 94 hectares, 202 industrial plots, "
@@ -498,7 +505,7 @@ def part_d(d):
              "the assumed figures.")
     adopt(d, 3)
 
-    D.h(d, 2, "15.3.   Return to the sewer")
+    D.h(d, 3, "4.2.3.   Return to the sewer")
     D.p(d, "Not all supplied water reaches the sewer. The proportion that does is applied by category.")
     eq = D.next_eq()
     M.display(d, M.seq(M.sub(R("Q"), UP("ww")), M.EQ, R("0.85"), M.sub(R("Q"), UP("dom")), M.PLUS,
@@ -510,17 +517,18 @@ def part_d(d):
                "proportion as piped supply. The domestic rate of 164 litres a "
                "day measures network water only, so tanker supply is not "
                "inside the domestic stream; it is added when the "
-               "filling-station records are received (Section 10.1).")
+               "filling-station records are received (Section 3.1.1).")
     N.add(p, "PAM-GUD-201, Table 19, page 71, which gives a single discharge "
              "ratio for domestic and tanker supply.")
     p = D.p(d, "Farm meters supply irrigation pumps and are taken to return "
                "nothing, and the estates' dry-industry demand is taken to "
                "return 54 per cent, as non-domestic supply does. Both are rules "
                "of this design, not of the guideline.")
-    N.add(p, "On 172 of 319 farm plots a household is metered separately from the pump.")
+    _pl = F.plots(); _farm = _pl[_pl.G_AGR > 0]
+    N.add(p, f"On {fmt(int((_farm.G_DOM > 0).sum()))} of the {fmt(len(_farm))} plots with a farm meter a household is metered separately from the pump.")
     adopt(d, 2)
 
-    D.h(d, 2, "15.4.   The flow from each plot")
+    D.h(d, 3, "4.2.4.   The flow from each plot")
     D.p(d, "Applied plot by plot, the rules above give every plot an average "
            "daily sewage flow for 2024. An existing plot is built from its "
            "meters and the rates of its settlement:")
@@ -532,7 +540,7 @@ def part_d(d):
                                                         R("93"), M.sub(R("N"), UP("w"))))), number=eq)
     D.symbols(d, [
         ["Q plot", "average sewage flow of the plot in 2024", "l/d"],
-        ["OR", "occupancy rate adopted for the settlement (Section 14.4)", "persons per property"],
+        ["OR", "occupancy rate adopted for the settlement (Section 4.1.4)", "persons per property"],
         ["N dom", "domestic meters on the plot, one property each", ""],
         ["U nd", "non-domestic water per shop meter in the settlement", "l/d per meter"],
         ["N nd", "non-domestic meters on the plot; none counted on an estate plot", ""],
@@ -583,14 +591,14 @@ def part_d(d):
            f"{fmt(ps['s_spec'])} from the two estates.")
     _chart(d, "C11_streams", "Average sewage flow in 2024 by stream.", 13.0)
 
-    D.h(d, 2, "15.5.   Infiltration")
+    D.h(d, 3, "4.2.5.   Infiltration")
     p = D.p(d, "For newly constructed networks an allowance of 720 litres per "
                "day per kilometre of sewer is included. It is a property of "
                "the pipe, not of the plot, and is added along each run. "
                "Infiltration from stormwater is not considered.")
     N.add(p, "PAM-GUD-201, Section 7.4.3, page 72.")
 
-    D.h(d, 2, "15.6.   Peak flow")
+    D.h(d, 3, "4.2.6.   Peak flow")
     D.p(d, "Peak flow belongs to the pipe, not to the plot: it is applied to "
            "the sum of the plots upstream of each pipe. Above 100 properties "
            "the Merrimack formula applies; at 100 or fewer, the Peltier "
@@ -609,9 +617,11 @@ def part_d(d):
     N.add(p, "PAM-GUD-201, Section 7.4.2, pages 71 and 72. PAM-GUD-203, Table "
              "29, page 65, defines the peak hourly flow and gives it the "
              "symbol QPDF.")
+    _chart(d, "R03_peak_factor", "The peak factor against the average flow of the plots upstream. The Peltier formula applies to the head of a street, "
+                                 "the Merrimack formula beyond 100 properties; for the whole study area the factor is about 1.6.", 14.5)
     adopt(d, 5)
 
-    D.h(d, 2, "15.7.   Projection through the design period")
+    D.h(d, 3, "4.2.7.   Projection through the design period")
     p = D.p(d, f"Flows are established annually and reported at five-year "
                f"intervals to saturation, as the Terms of Reference require. "
                f"The study area generates {fmt(t['q_today'])} cubic metres a "
@@ -643,21 +653,23 @@ def part_d(d):
     D.tab_caption(d, "Average sewage flow by settlement in 2055 and at saturation, m³/d")
     D.table(d, ["Settlement", "2055", f"{ult}", "Settlement", "2055", f"{ult}"], rows,
             widths=[3.6, 2.2, 2.4, 3.6, 2.2, 2.4], font=8.5, keep_together=True)
+    _gap(d)
+    _chart(d, "R02_settlement_flows", "Average sewage flow of every settlement in 2055 and at saturation. Ibri is full before 2055; the growth after it lands on its neighbours.", 14.5)
     D.wide_figures(d, [(os.path.join(IMG, "M09_saturation.png"), "Average sewage flow of every plot at saturation."),
                        (os.path.join(IMG_B, "B03_saturation.png"), "Average sewage flow of each settlement in 2055 and at saturation, and the four steps from the settlements in a catchment to the flow of their STP.")], size="A4")
 
     pf = B.plant_flows(); pl = B.process_loads(); yrs = B.years()
-    D.h(d, 2, "15.8.   The flow each element is designed for")
+    D.h(d, 3, "4.2.8.   The flow each element is designed for")
     D.p(d, "Every plot carries an average sewage flow for 2024, 2030, 2055 and "
            "the saturation year. What each element of the system is designed "
            "for follows from those plot flows by fixed rules. The rules are "
            "the same wherever the element sits, so any one of them can be "
            "checked.")
-    D.h(d, 3, "The plot")
+    D.sub(d, "The plot")
     D.p(d, "The plot carries the average flow of its people and meters, and "
            "nothing else: no peak, no infiltration, no tankers. Those belong "
            "to the pipe and the STP.")
-    D.h(d, 3, "The pipe")
+    D.sub(d, "The pipe")
     D.p(d, "A pipe is checked twice, on two different flows, because the two "
            "checks fail in opposite directions.")
     D.bullet(d, "the flow at saturation of every plot upstream, added up, "
@@ -674,15 +686,15 @@ def part_d(d):
     N.add(p, f"Whole area: {fmt(t['q'][2030])} × 0.61 = {fmt(pf[2030]['low'])} m³/d in 2030, against "
              f"{fmt(t['q_ult'] * 0.61)} if the ratio were applied to saturation.")
     adopt(d, 4)
-    D.h(d, 3, "The pumping station and its rising main")
+    D.sub(d, "The pumping station and its rising main")
     D.p(d, "A station's duty flow is the peak flow of the catchment it drains "
-           "plus the infiltration of its sewers, at saturation. Section 12.3 "
+           "plus the infiltration of its sewers, at saturation. Section 3.3.3 "
            "gives the depth rule that places it and the velocities of its "
            "rising main.")
-    D.h(d, 3, "The trunk sewers and the treatment plant")
+    D.sub(d, "The trunk sewers and the treatment plant")
     p = D.p(d, f"The trunk sewers and the STP carry the sum of the settlements "
                f"upstream. If the whole study area drains to one STP, the flows "
-               f"are as in the table, on the definitions of Section 13.1. The "
+               f"are as in the table, on the definitions of Section 3.4.1. The "
                f"network has not yet been laid over the whole area, so its "
                f"infiltration cannot be totalled; each 100 kilometres of new "
                f"sewer adds {fmt(100 * pf['infil_per_km'])} cubic metres a day "
@@ -716,9 +728,11 @@ def part_d(d):
         ["Suspended solids as a concentration, mg/l"] + [fmt(pl[y]["tss_mgl"]) for y in yrs],
         ["BOD at the peak factor of 1.2, kg/d"] + [fmt(pl[y]["bod_peak_kgd"]) for y in yrs],
     ], widths=[6.6, 2.5, 2.5, 2.5, 2.5], font=9)
+    _gap(d)
+    _chart(d, "R04_loads", "BOD and suspended solids reaching one STP for the whole area, by year, at the guideline's minimum loads per person.", 13.5)
 
     # --------------------------------------------------------------- 16
-    D.h(d, 1, "16.   Non-domestic discharges: industrial estates and identified projects", page_break=True)
+    D.h(d, 2, "4.3.   Non-domestic discharges: industrial estates and identified projects", page_break=True)
     p = D.p(d, "Sewage from industry and commerce, called trade effluent in the "
                "guidelines, affects the STP's load and how treatable the sewage "
                "is. Where its chemical to biochemical oxygen demand is above "
@@ -726,10 +740,10 @@ def part_d(d):
                "volume is significant. In Ibri the two industrial estates are "
                "workshops on the commercial tariff; no wet industry has been "
                "found. The estates are carried at the dry-industry rate "
-               "(Section 15.2), and no separate line is foreseen at this stage.")
+               "(Section 4.2.2), and no separate line is foreseen at this stage.")
     N.add(p, "PAM-GUD-203, page 74: a COD to BOD ratio of 1.8 to 2.2 is typical of domestic sewage.")
 
-    D.h(d, 2, "16.1.   The large-consumer accounts")
+    D.h(d, 3, "4.3.1.   The large-consumer accounts")
     cs = F.crt_summary(); use = cs["use"]
     p = D.p(d, f"The electricity dataset carries {cs['total']} accounts on the "
                f"Cost Reflective Tariff, which applies above a consumption "
@@ -745,12 +759,12 @@ def part_d(d):
                f"{use.get('Telecom/Utility', 0)} telecommunications or "
                f"utility; {use.get('Unresolved', 0)} stand more than eighty "
                f"metres from any recorded feature and are carried as "
-               f"commercial. Appendix A2 gives the result by use.")
+               f"commercial. Appendix A.2 gives the result by use.")
     N.add(p, "The largest groups are the Bawadi shopping centre with twenty "
              "accounts, the commercial street of Al Murtafa with nineteen, "
              "the police headquarters, the college campus and the hospital.")
 
-    D.h(d, 2, "16.2.   Identified projects")
+    D.h(d, 3, "4.3.2.   Identified projects")
     D.p(d, "Beyond the accounts, the public record was searched for the "
            "projects the guideline keeps outside the population ratios: "
            "economic zones, camps and high-water users. Those found are "
@@ -763,7 +777,7 @@ def part_d(d):
          "treatment plant", "Special consumption, 1,800 workers at 93 l/d"],
         ["Army camp, Northern Frontier Regiment", "296 ha, west of the town, "
          "no meter in the dataset", "Recorded; no load. Its occupancy and "
-         "drainage are to be confirmed (Section 5.4)"],
+         "drainage are to be confirmed (Section 1.5.5)"],
         ["Ibri View resort", "A tourism development of 2 square kilometres at "
          "As Sulayf, announced, not yet in the cadastre", "Recorded; no load until "
          "its plan is issued"],
@@ -784,13 +798,13 @@ def part_d(d):
                "received.")
     N.add(p, "PAM-GUD-203, Table 31, page 68, gives tankered sewage at 350 to "
              "1,050 mg/l BOD against 350 to 400 mg/l for network sewage "
-             "(Section 13.1).")
+             "(Section 3.4.1).")
     _map(d, "M08_special", "The identified projects and special consumers: the industrial areas, the army camp, "
                            "the treatment plant and the hotel sites recorded in OpenStreetMap, the two estates among them.")
 
     # --------------------------------------------------------------- 17
     ts = B.tse()
-    D.h(d, 1, "17.   Treated effluent demand and customers", page_break=True)
+    D.h(d, 2, "4.4.   Treated effluent demand and customers", page_break=True)
     p = D.p(d, "Treated effluent is produced at 95 per cent of the STP inflow. "
                "A further ten per cent is lost within the treated effluent "
                "distribution network, so 85.5 per cent of the inflow reaches "
@@ -809,6 +823,7 @@ def part_d(d):
         ["Delivered, less 10 per cent in the network"] + [fmt(ts[y]["delivered"]) for y in yrs],
     ], widths=[6.6, 2.5, 2.5, 2.5, 2.5], font=9)
     _gap(d)
+    _chart(d, "R05_tse", "STP inflow, treated effluent produced and treated effluent delivered to customers, by year.", 13.5)
     adopt(d, 8)
 
     D.p(d, "Customers are classified as public or private. Public consumers "

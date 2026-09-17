@@ -89,7 +89,7 @@ REGISTER = [
      "Location and nominal capacity received; operating data outstanding"),
     ("Electricity account data", "Yes", "Received"),
     ("Cadastral plot data", "Yes",
-     "Received. Land use and missing plots being addressed"),
+     "Received, issue of September 2026; the use of each plot determined from the meters (Section 4.1.5)"),
     ("Potable water network", "Yes",
      "Received as part of the PAEW dataset"),
     ("Topographic survey", "In progress", "Survey team mobilised"),

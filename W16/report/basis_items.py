@@ -6,18 +6,18 @@ import re
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "report_basis"))
-from decisions import APPROVALS as _A, INFORMED as _I, DATA_REQUESTS  # noqa: E402,F401
+from decisions import APPROVALS as _A, INFORMED as _I, DATA_REQUESTS, BASIS  # noqa: E402,F401
 
 import doc as D  # noqa: E402
 
 # where each item is explained in the Concept Design Report, by its title
 SECTION = {
-    "Settlement boundaries": "14.2", "Persons per property": "14.4", "Use of each plot": "14.5",
-    "The overflow": "14.8", "The design horizon": "14.9", "The growth beyond 2050": "14.7",
-    "Gradients and self-cleansing at the concept stage": "12.2",
-    "The 126 meters with no plot within 15 metres": "14.3", "Water demand and return": "15.1 and 15.3",
-    "The industrial estates": "15.2", "The connection ratio": "15.8", "Infiltration and peak flow": "15.5 and 15.6",
-    "Depth": "12.3", "STP flows and loads": "13.1 and 15.8", "Treated effluent": "17",
+    "Settlement boundaries": "4.1.2", "Persons per property": "4.1.4", "Use of each plot": "4.1.5",
+    "The overflow": "4.1.8", "The design horizon": "4.1.9", "The growth beyond 2050": "4.1.7",
+    "Gradients and self-cleansing at the concept stage": "3.3.2",
+    "The 126 meters with no plot within 15 metres": "4.1.3", "Water demand and return": "4.2.1 and 4.2.3",
+    "The industrial estates": "4.2.2", "The connection ratio": "4.2.8", "Infiltration and peak flow": "4.2.5 and 4.2.6",
+    "Depth": "3.3.3", "STP flows and loads": "3.4.1 and 4.2.8", "Treated effluent": "4.4",
 }
 
 

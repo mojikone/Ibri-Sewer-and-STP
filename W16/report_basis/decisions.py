@@ -59,3 +59,24 @@ DATA_REQUESTS = [
     ("Non-domestic quantities", "Pupils, beds, employees and floor areas by plot, where held",
      "Would allow the unit rates of the guideline in place of the ratios."),
 ]
+
+
+# status and basis of every item, for the overview table of the concept report (Section 1.5.1):
+# a decision says why the guidelines do not settle it; an adopted value says where it comes from
+BASIS = {
+    "Settlement boundaries": ("Decision requested from NWS", "The guidelines do not address settlement boundaries; the polygons received leave land unassigned"),
+    "Persons per property": ("Decision requested from NWS", "PAM-GUD-201 Section 7.2 (p59) derives occupancy from housing units, which are not published by settlement; the floor, the cap and the small-settlement rule are this design's"),
+    "Use of each plot": ("Decision requested from NWS", "The guidelines assume a usable land-use layer; the cadastre's own field is not usable as it stands"),
+    "The overflow": ("Decision requested from NWS", "The guidelines do not say where growth goes once a settlement's land is full"),
+    "The design horizon": ("Decision requested from NWS", "The Terms of Reference name both horizons"),
+    "The growth beyond 2050": ("Decision requested from NWS", "PAM-GUD-201 allows ten years of extension beyond a forecast; the series to 2100 goes further"),
+    "Gradients and self-cleansing at the concept stage": ("Decision requested from NWS", "A departure from PAM-GUD-203 Section 4.2.2.1; the tractive tension is not given in the guidelines"),
+    "The 126 meters with no plot within 15 metres": ("Adopted: design choice", "No plot lies within 15 m of the meter"),
+    "Water demand and return": ("Adopted: guideline", "PAM-GUD-201 Table 11 (p60) and Table 19 (p71)"),
+    "The industrial estates": ("Adopted: stated assumption", "Rate from PAM-GUD-201 Table 12 (p61); the workforce is assumed until the estates' records arrive"),
+    "The connection ratio": ("Adopted: Inception Report", "Inception Report R0"),
+    "Infiltration and peak flow": ("Adopted: guideline", "PAM-GUD-201 Sections 7.4.2 and 7.4.3 (p71 to 72)"),
+    "Depth": ("Adopted: guideline recommendation, applied as a limit", "PAM-GUD-203 Section 4.6.3 (p33)"),
+    "STP flows and loads": ("Adopted: guideline", "PAM-GUD-201 Section 7.4.5 (p73); PAM-GUD-203 Table 29 (p65) and Section 10.3.1 (p74)"),
+    "Treated effluent": ("Adopted: guideline", "PAM-GUD-201 Section 7.4.6 (p73, p76)"),
+}
