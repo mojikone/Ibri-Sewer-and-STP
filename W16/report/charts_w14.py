@@ -81,7 +81,7 @@ def c04_population():
     rows = sorted(rows, key=lambda r: -r["people_today"])
     total = sum(r["people_today"] for r in rows)
     names = [r["name"] for r in rows]; vals = [r["people_today"] for r in rows]
-    fig, ax = plt.subplots(figsize=(7.4, 3.6))
+    fig, ax = plt.subplots(figsize=(7.4, 5.4))
     cols = [BLUE] + [MID] * 2 + [PALE] * (len(rows) - 3)
     bars = ax.barh(names, vals, color=cols, height=0.66, edgecolor="white", linewidth=0.7)
     for i, (b, v) in enumerate(zip(bars, vals)):

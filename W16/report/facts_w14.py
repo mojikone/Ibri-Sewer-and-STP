@@ -34,7 +34,7 @@ L_IND = 93.0
 OR_FLOOR = 4.0
 WORKERS = {"Al Tayyeb": 4500, "Tanam": 1800}
 HOME_LO, HOME_HI, BIG = 200, 1000, 2000
-HIGH_METERS = 15                      # a plot with this many dwelling meters is a block, not a home
+HIGH_METERS = 15                      # a plot with this many domestic meters is a block, not a home
 LPCD, R_ND, R_GOV, L_IND, RET_DOM, RET_ND = 164.0, 0.22, 0.14, 93.0, 0.85, 0.54   # PAM-GUD-201 Tab 11 p60, Tab 12 p61, Tab 19 p71
 
 NAME = {  # settlement names as the report writes them
@@ -341,8 +341,8 @@ def unit_rate_rows():
     for r in st:
         rows.append([r["name"], fmt(r["people_today"]), fmt(r["w_dom"]), fmt(r["w_nd"]), fmt(r["w_gov"]),
                      fmt(r["nd_pool"]), fmt(r["gov_pool"]),
-                     fmt(r["u_nd"]) if r["nd_pool"] > 0 else "on dwellings",
-                     fmt(r["u_gov"]) if r["gov_pool"] > 0 else "on dwellings",
+                     fmt(r["u_nd"]) if r["nd_pool"] > 0 else "on the houses",
+                     fmt(r["u_gov"]) if r["gov_pool"] > 0 else "on the houses",
                      fmt(r["w_spec"]) if r["w_spec"] > 0 else "–", fmt(r["q_2024"])])
     T = lambda k: sum(r[k] for r in st)
     rows.append(["Total", fmt(T("people_today")), fmt(T("w_dom")), fmt(T("w_nd")), fmt(T("w_gov")),
@@ -385,7 +385,7 @@ def growth_rates():
 
 @lru_cache(None)
 def farm_bare_share():
-    """Share of the plots with a farm meter that fail the satellite grove test: pump sites without a crop."""
+    """Share of the plots with a farm meter that show no planting on the satellite image: pump sites without a crop."""
     p = plots(); farm = p.G_AGR > 0
     nm, ns, ga = p.NDVI_MEAN.fillna(0), p.NDVI_SHARE.fillna(0), p.GREEN_M2.fillna(0)
     green = ((ga >= 1000) & (nm >= 0.20)) | ((ns >= 0.60) & (nm >= 0.40) & (p.AREA_M2 >= 800))

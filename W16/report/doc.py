@@ -268,7 +268,8 @@ def title(d, text, size=14, space_before=0):
 
 def part(d, letter, title):
     """A part divider: its own page, and the top level of the contents (concept report)."""
-    pagebreak(d)
+    if not at_section_start(d):
+        pagebreak(d)
     for _ in range(6):
         p(d, "", space_after=0)
     rule = p(d, "", align=WD_ALIGN_PARAGRAPH.CENTER, space_after=2)

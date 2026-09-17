@@ -102,13 +102,13 @@ def d6_landuse():
     c = Chart(3, 5, cw=256, rh=104, gx=40, gy=32,
               title="From the electricity meter to the use of each plot")
     c.node("m", 0, 0, "33,971 electricity|meters, tariff only", "start")
-    c.node("cat", 1, 0, "Tariff to category|domestic, non-domestic,|governmental, farm")
+    c.node("cat", 1, 0, "Tariff to category|domestic, non-domestic,|governmental, agricultural")
     c.node("crt", 2, 0, "499 large consumers|placed by public data", "tint")
     c.node("snap", 1, 1, "Meter to plot|inside, or nearest|within 15 m")
     c.node("est", 0, 2, "Inside an industrial|estate: industrial", "tint")
-    c.node("farm", 1, 2, "Farm meter, or a grove|by satellite: farm")
+    c.node("farm", 1, 2, "Farm meter, or planted|by satellite: agricultural")
     c.node("her", 2, 2, "Old quarter:|heritage, no load", "tint")
-    c.node("prop", 1, 3, "The meters decide|by two thirds: home,|shop or government")
+    c.node("prop", 1, 3, "The meters decide|by two thirds: residential,|commercial or government")
     c.node("lu", 1, 4, "USE OF THE PLOT|seven classes", "accent")
     c.node("none", 2, 4, "No meter:|empty plot", "tint")
 
