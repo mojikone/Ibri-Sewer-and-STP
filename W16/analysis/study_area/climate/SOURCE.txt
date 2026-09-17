@@ -1,0 +1,4 @@
+NASA Prediction Of Worldwide Energy Resources (POWER), MERRA-2 reanalysis, https://power.larc.nasa.gov
+Point: lon 56.4566, lat 23.1782 (the existing STP). Downloaded 2026-09-17.
+Daily 2001-2024: T2M, T2M_MAX, T2M_MIN, PRECTOTCORR. Hourly 2015-2024: WS10M, WD10M, local solar time.
+A modelled record on a grid of about 50 km, not a station.
