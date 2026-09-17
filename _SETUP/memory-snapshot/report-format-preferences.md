@@ -24,6 +24,8 @@ categories as a graphic on the first content slide; native PowerPoint objects (s
 placed through COM in `finish()`) rather than pictures; no Q&A slide, the logos on the closing
 slide; type of 22 pt or more on the 67 cm slide. Pattern: `W16/report_basis/deck/build_deck.py`.
 
+**Concept R3** (2026-09-17): one tractive-force chart only, the full one, in the text; decisions worded as presented to the client in the engineer's deck; a decision not yet taken is stated as open; plot uses by the eight class names (Residential, Residential-Commercial, Commercial, Government, Agricultural, Industrial, Heritage, Empty) with the land-use map's colours in every chart.
+
 **Why:** the report goes to NWS for approval, where "any word may attract a comment"; hard
 vocabulary and worked examples invite comment rounds. Native captions because the engineer edits
 in Word. The sample's blue table banding and parameter tables he found ugly.

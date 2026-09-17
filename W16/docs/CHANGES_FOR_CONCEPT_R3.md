@@ -1,5 +1,7 @@
 # Changes for the Concept Design Report, Revision 3
 
+**Applied 2026-09-17: `W16/report/R3/Ibri_Concept_Design_Report_R3.docx` + `.pdf`, 105 pages.** Items 1 to 50 below are in R3; items 51 to 62 were added while building it.
+
 Everything below was done for the Design Basis Report R0 (2026-09-14) at the engineer's
 request and is to be carried into the concept report's next revision. R2 (`W14/report/R2/`)
 stays as issued. R3 builds in `W16/report/` on the same furniture the basis report uses.
@@ -75,3 +77,20 @@ stays as issued. R3 builds in `W16/report/` on the same furniture the basis repo
 | 50 | **Wider text**: 1.5 cm side margins on every page (18 cm of text), the header and footer stretched to it, every table's columns scaled to fill it; each added section carries its own copy of the header and footer so the landscape pages get the full width too | `template/make_template.py`, `doc.table`, `doc.page_section` |
 
 The review copy with the engineer's comments: `W16/report_basis/R0/review/R0_draft1_with_engineer_comments_2026-09-14.docx`.
+
+## Added while building R3 (2026-09-17)
+
+| # | Change | Where |
+|---|---|---|
+| 51 | **No decision was taken at the meeting of 16 September 2026**: R3 states the seven decisions as open, in the executive summary, Section 5.1 and the boxes in the sections | `basis_items.py`, `rpt_front.py`, `rpt_ab.py` |
+| 52 | Section 5 rebuilt: 5.1 decisions requested (7), 5.2 values adopted for information (8), 5.3 other matters requiring confirmation (the six of R2 that remain, plus the governing programme, the 4 % limit, the order of margin and peak, the PAEW record), 5.4 data requested (7) | `rpt_ab.py` |
+| 53 | One list for both reports: `report/basis_items.py` reads `report_basis/decisions.py` and swaps the section references for the concept report's | `basis_items.py` |
+| 54 | Decisions 3 and 7 in the words put to NWS on 16 September (the engineer's deck): Decision 3 without "in place of the cadastre's own land-use field"; Decision 7 "pipes laid at the Table 11 minimum gradient" without the rounding. The rounding to 0.05 % steps stays in the text as our rounding | `report_basis/decisions.py` |
+| 55 | **One tractive-force chart only**, the full one, in the text of Section 12.2 on its own landscape page; the minimal chart is not used (engineer, 2026-09-17) | `rpt_c.py` |
+| 56 | **NWS indicated a maximum of 4 % from the tractive-force method at head pipes** (16 September): one sentence in Section 12.2, a line in Section 5.3 and in the meeting record; how it is applied is to be confirmed | `rpt_c.py`, `rpt_ab.py` |
+| 57 | Part D renumbered: 14.7 growth series, 14.8 the overflow, 14.9 the design horizon, 14.10 where the growth is placed; 15.7 projection with both maps, 15.8 the flow each element is designed for with the STP flows and loads by year. Plant results sit in 15.8, the definitions and the sewage strength in 13.1 | `rpt_d.py`, `rpt_c.py` |
+| 58 | Project boundary: received 439.8 km² (Project_Boundary.kmz), updated to 531.4 km² to take in every plot of the settlements; confirmation of the updated boundary requested | `rpt_ab.py` Section 2.2, executive summary |
+| 59 | Programme positions and the meeting record brought to 16 September from the progress section of the meeting deck: sewer concept hydraulics completed, TE and STP begun, survey mobilised, siting matrix in progress | `rpt_ab.py` Sections 3.1 and 4 |
+| 60 | The eight class names everywhere: text, the land-use table, the C07 chart (the map's colours), the D6 flowchart, the B02 map legend and data box | `rpt_d.py`, `charts_w14.py`, `make_report_figures.py`, `qgis_maps*.py`, `facts_basis.boxes()` |
+| 61 | Maps: M01 (now on the redrawn settlements), M02, M03, M04, M06, M08, M09 re-exported at 50 % imagery; B01, B02, B04, B05, B06 and B03 used from the basis report; M05, M07 and M10 retired. All on A4 landscape pages | `qgis_maps.py` (`_basemap50`), layouts `RPT M..` saved in stp2.qgz |
+| 62 | `rpt_cd.py` split into `rpt_c.py` and `rpt_d.py`; Appendix A4 (the layer fields) dropped, A6 moved into Section 14.8, the routes are A4; the C04 chart redrawn taller; a part divider no longer adds a blank page after a landscape figure (`doc.part`) | `W16/report/` |
