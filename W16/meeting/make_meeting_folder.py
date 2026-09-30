@@ -2,6 +2,7 @@
 its QGIS project. The record of how the folder of 15 September 2026 was made; re-runnable.
 
     python make_meeting_folder.py            copies, raster clips, the style export, then the project
+    python plot_years.py --check             only the year columns of the plot layer, checked against the report
 
 Needs: QGIS 3.44 open with stp2.qgz (the styles are exported from the running project through
 the plugin's socket, W16/report_basis/qgis_direct.py), the QGIS bin on disk for gdalwarp and
@@ -78,6 +79,10 @@ def copies():
     p = d("03_Plots_meters")
     for f in glob.glob(os.path.join(PKG, "03_meters", "SHP", "*")) + glob.glob(os.path.join(PKG, "04_plots", "SHP", "*")):
         shutil.copy2(f, p)
+    # the delivered plot layer holds four years; the meeting copy carries every five-year step and the
+    # year each plot's settlement is full (engineer, 2026-09-30)
+    import plot_years
+    plot_years.extend(os.path.join(p, "Plots.shp"))
     cp_shp(os.path.join(W16, "report_basis", "shp", "free_meters"), p)
     cp_shp(os.path.join(REPO, "W14", "shp", "PLOTS_load"), p, "Plots_full_W14")
     h = d("04_Hydrology")
@@ -108,6 +113,9 @@ def copies():
         shutil.copy2(os.path.join(W16, f), r)
     for f in ("report/R2/Ibri_Concept_Design_Report_R2.docx", "report/R2/Ibri_Concept_Design_Report_R2.pdf"):
         shutil.copy2(os.path.join(REPO, "W14", f), r)
+    for f in ("report/R3/Ibri_Concept_Design_Report_R3.docx", "report/R3/Ibri_Concept_Design_Report_R3.pdf"):
+        shutil.copy2(os.path.join(W16, f), r)          # the latest build of the concept report (engineer, 2026-09-30)
+    shutil.copy2(os.path.join(HERE, "MEETING_README.md"), os.path.join(M, "README.md"))
     shutil.copy2(os.path.join(W16, "report_basis", "deck", "Ibri_Design_Basis_Meeting_2026-09-16 - 2.pptx"), os.path.join(r, "Ibri_Design_Basis_Meeting_2026-09-16.pptx"))
     t = d("Tables")
     shutil.copy2(os.path.join(W16, "analysis", "meter_tariff_to_nama_category.xlsx"), t)
