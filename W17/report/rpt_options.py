@@ -22,9 +22,9 @@ def _img(name):
 
 
 def _map(name):
-    """The maps are rendered into the deliverable folder; the report takes the same file."""
-    p = os.path.join(MAPS, name + ".png")
-    return p if os.path.exists(p) else _img(name)
+    """The maps are rendered into the deliverable folder and copied here by W17/gis/make_w17_project.py."""
+    p = _img(name)
+    return p if os.path.exists(p) else os.path.join(MAPS, name + ".png")
 
 
 def _chart(d, name, caption, width=17.0):
@@ -157,9 +157,9 @@ def network_options(d):
             widths=[1.4, 1.3, 1.6, 2.0, 1.8, 1.8, 1.8, 2.0, 2.0, 1.8], font=8)
     D.p(d, "")
     D.p(d, f"Every option has the same {fmt(s0['pipe_km'])} km of sewer and {fmt(s0['manholes'])} manholes; they differ "
-           "in the sizes of the trunk sewers, in the pumping and in the plants. The depth to invert is counted from the "
-           "ground at each manhole, so a manhole deeper than 12 m in the table is not necessarily one with more than "
-           "12 m of cover.")
+           "in the sizes of the trunk sewers, in the pumping and in the plants. The depth of a manhole is counted from "
+           "its cover to its invert, so a manhole deeper than 12 m in the table does not necessarily have a pipe with "
+           "more than 12 m of cover.")
 
     _chart(d, "W01_plant_split", "The average flow arriving at each plant in 2070, by option. Colours as on the maps "
                                  "and diagrams.")
@@ -255,17 +255,46 @@ def network_options(d):
               "The year from which the network is to be self-cleansing (2030, the opening year, or a later year); "
               "the tractive stress for the head pipes (1 pascal, or another value); and whether 4 per cent is the "
               "steepest gradient for every pipe or for the head pipes only. A steeper network is deeper and needs "
-              "more pumping, and the cost of each choice will be given once it is made. This completes Decision 7 "
+              "more pumping, and the cost of each choice will be given once it is made. This extends Decision 7 "
               "(Section 3.3.2).")
+
+
+# ===================================================================== executive summary
+def summary_block(d):
+    """The options in the executive summary: what was modelled, the numbers side by side, what needs attention."""
+    opts = F.available()
+    if not opts:
+        return
+    s0 = F.summary(opts[0]); rows = [F.option_row(o) for o in opts]
+    n_pl = [r["n_plants"] for r in rows]
+    D.title(d, "The sewer network options", size=12, space_before=8)
+    D.p(d, f"The sewer network is modelled in SewerGEMS as twenty-four subnetworks, {fmt(s0['pipe_km'])} km of sewer and "
+           f"{fmt(s0['manholes'])} manholes, each draining by gravity to its own outfall and designed for the flow of 2070. "
+           f"{WORDS[len(opts)].capitalize()} option{'s have' if len(opts) > 1 else ' has'} been modelled for where the flow "
+           f"is treated, from {WORDS[min(n_pl)]} plant{'s' if min(n_pl) > 1 else ''} to {WORDS[max(n_pl)]}; where an "
+           "outfall is not at a plant, a pumping station lifts its flow into the next subnetwork or to a plant. "
+           + ("In every option and every year the pipes stay within the guideline's limits on velocity and depth of flow."
+              if all(F.checks_clean(o) for o in opts) else ""))
+    D.tab_caption(d, "The sewer network options at a glance")
+    D.table(d, ["Option", "Plants", "Average flow at the largest plant, 2070, m³/d", "Pumping stations",
+                "Pumps in duty, kW", "Energy 2070, MWh a year", "Manholes deeper than 12 m"],
+            [[r["option"], str(r["n_plants"]), fmt(r["largest_plant_2070"]), str(r["n_ps"]), fmt(r["kw"]),
+              fmt(r["mwh_2070"]), str(r["mh_over_12"])] for r in rows],
+            widths=[1.6, 1.6, 4.2, 2.4, 2.4, 2.6, 3.2], font=9)
+    D.p(d, "")
+    D.p(d, "Two matters need attention whichever option is chosen: long rising mains carrying small flows, which hold the "
+           "sewage for hours and call for hydrogen sulphide control, and a few outlying connections that pump a small flow "
+           "against a very high head. No year brings every pipe to the self-cleansing velocity, even at 4 per cent; the "
+           "criterion for the head pipes is the decision of Section 6.2.8. Section 6.2 presents the options in full.")
 
 
 # ===================================================================== Appendix B
 def appendix_b(d):
     """The depth maps and the quantities of every option."""
     opts = F.available()
-    D.chapter(d, "Appendix B.   Network options: depth and quantities")
-    D.p(d, "This appendix gives, for each option, the depth of the 2070 design on a map, and the quantities of pipe "
-           "and manholes the options are compared on.")
+    D.chapter(d, "Appendix B.   Network options: quantities, pumping stations and depth")
+    D.p(d, "This appendix gives the quantities of pipe and manholes the options are compared on, the pumping stations "
+           "of each option, and the depth of each option's 2070 design on a map.")
     ods = sorted({od for o in opts for od in F.od_classes(o)})
     D.tab_caption(d, "Length of sewer by outside diameter, metres")
     D.table(d, ["Outside diameter, mm"] + opts,
@@ -287,8 +316,19 @@ def appendix_b(d):
              for b in pb],
             widths=[3.4] + [14.6 / len(opts)] * len(opts), font=8)
     D.p(d, "")
-    D.p(d, "The pumping stations of every option, with their flows, rising mains, heads and energy, are listed in the "
-           "tables delivered with this report.")
+    D.p(d, "The pumping stations of each option follow, largest duty first. The duty is the 2070 peak flow of everything "
+           "that reaches the station; the head is the static lift plus the friction in the rising main; the retention is "
+           "the time the 2030 average flow takes to pass through the main. The figures rest on the concept values of "
+           "Section 6.2.7.")
+    for o in opts:
+        D.tab_caption(d, f"Pumping stations of option {o}")
+        D.table(d, ["Station", "Discharges to", "Duty, l/s", "Main, mm", "Main, m", "Static lift, m", "Head, m", "kW",
+                    "MWh a year 2030", "MWh a year 2070", "Retention 2030, h"],
+                [[F.name(r["ps"]), f"STP at {r['to']}" if r["kind"] == "plant" else r["to"], fmt(r["duty"], 1), str(r["dn"]),
+                  fmt(r["L"]), fmt(r["static"], 1), fmt(r["H"], 1), fmt(r["kw"], 1), fmt(r["kwh2030"] / 1000, 1),
+                  fmt(r["kwh2070"] / 1000, 1), fmt(r["ret2030"] / 60, 1)] for r in F.pumps(o)],
+                widths=[2.2, 2.3, 1.4, 1.3, 1.4, 1.5, 1.4, 1.2, 1.7, 1.7, 1.9], font=7.5)
+        D.p(d, "")
     D.wide_figures(d, [(_map(f"W17_{o}_depth"), f"Option {o}: depth of the 2070 design. Sewers by depth to invert, "
                                                 "width by size; manholes deeper than 9 m marked, those deeper than 12 m "
                                                 "in red.") for o in opts], size="A4")

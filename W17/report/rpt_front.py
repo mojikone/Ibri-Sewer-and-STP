@@ -208,17 +208,20 @@ def executive_summary(d):
             widths=[1.0, 11.5, 4.0], font=9.5)
     D.p(d, "")
 
+    import rpt_options             # Revision 4: the network options, from the SewerGEMS results of W17
+    rpt_options.summary_block(d)
+
     D.title(d, "State of the work", size=12, space_before=8)
     D.p(d, "The design basis, the data assessment, the population and flow "
            "series and the assessment framework are complete. The concept "
-           "hydraulic calculations for the sewer network have been completed "
-           "on the basis set out here, and those for the treated effluent "
-           "network and the treatment plant have begun. The topographic and "
-           "utility survey is in progress; the hydraulic assessment of the "
-           "existing networks follows it. The options for the sewer network, "
-           "the treated effluent network and the treatment plant are presented "
-           "as a framework in Chapter 6 and will be completed once the decisions "
-           "of Section 1.5 are taken.")
+           "hydraulic calculations for the sewer network are complete, and the "
+           "options for where its flow is treated are presented in Section 6.2; "
+           "those for the treated effluent network and the treatment plant have "
+           "begun. The topographic and utility survey is in progress; the "
+           "hydraulic assessment of the existing networks follows it. The options "
+           "for the treated effluent network and the treatment plant, the cost "
+           "of every option and their comparison will be completed once the "
+           "decisions of Section 1.5 are taken.")
 
     D.title(d, "How the options are developed and compared", size=12, space_before=8)
     D.p(d, "Three options are developed for each of the sewer network, the "
@@ -248,8 +251,9 @@ def executive_summary(d):
     D.p(d, "The Terms of Reference set out forty numbered deliverables for the "
            "concept stage. This report issues the design basis, the assessment "
            "of the data, the design criteria, the population and flow series "
-           "to saturation and the framework for the options and their "
-           "appraisal. The options themselves, the cost estimate and the "
-           "comparison follow once the design horizon is decided and the "
-           "survey is complete. Section 1.3.1 lists each deliverable and its "
-           "position.")
+           "to saturation, the framework for the options and their appraisal, "
+           "and the sewer network options with their quantities and pumping. "
+           "The options for the treated effluent network and the treatment "
+           "plant, the cost estimate and the comparison follow once the design "
+           "horizon is decided and the survey is complete. Section 1.3.1 lists "
+           "each deliverable and its position.")

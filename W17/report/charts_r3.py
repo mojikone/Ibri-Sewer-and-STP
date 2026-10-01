@@ -20,6 +20,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(HERE)), "W16", "
 from charts import _style, _save, _thousands, BLUE, MID, PALE, GREY, RED, GREEN, AMBER  # noqa: E402
 import facts_w14 as F  # noqa: E402
 import facts_basis as B  # noqa: E402
+# W17: facts_basis puts W16/report at the head of the path; this folder's modules must win (deliverables, ...)
+_W16_REPORT = os.path.normcase(os.path.join(os.path.dirname(os.path.dirname(HERE)), "W16", "report"))
+sys.path[:] = [HERE] + [p for p in sys.path if os.path.normcase(os.path.abspath(p)) not in (os.path.normcase(HERE), _W16_REPORT)]
 
 fmt = F.fmt
 
