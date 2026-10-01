@@ -10,7 +10,7 @@ Two maps per option, on the frame every R3 map uses (template_report_A3.qpt, ext
            deeper than 9 m marked, those deeper than 12 m in red.
 The data box of each map is filled from results/S#/S#_summary.json, the same file the report reads.
 """
-import json, os, sys
+import json, os, shutil, sys
 sys.stdout.reconfigure(line_buffering=True)
 # Qt's own Windows platform, not "offscreen": offscreen cannot see the Windows fonts and draws every glyph as a box
 from qgis.core import (Qgis, QgsApplication, QgsProject, QgsVectorLayer, QgsRasterLayer, QgsCoordinateReferenceSystem,
@@ -224,6 +224,8 @@ def make_map(proj, name, title, stack, legend_layers, ext, rows, out_png):
     exp = QgsLayoutExporter(lay); s = QgsLayoutExporter.ImageExportSettings(); s.dpi = 200
     res = exp.exportToImage(out_png, s)
     print("   ", os.path.basename(out_png), "ok" if res == QgsLayoutExporter.Success else f"FAILED {res}")
+    if res == QgsLayoutExporter.Success:      # the report takes its copy from its own img/ folder
+        shutil.copy2(out_png, os.path.join(IMG, os.path.basename(out_png)))
 
 
 def build(names):

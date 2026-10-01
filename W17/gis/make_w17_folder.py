@@ -26,6 +26,7 @@ for s in STYLES:
     src = os.path.join(MEET, "_styles", s + ".qml")
     if os.path.exists(src):
         shutil.copy2(src, os.path.join(F, "_styles"))
+shutil.copy2(os.path.join(HERE, "OPTIONS_FOLDER_README.md"), os.path.join(F, "README.md"))   # what the folder holds
 print("folder:", F)
 for root, dirs, files in os.walk(F):
     if files:
