@@ -1,0 +1,37 @@
+sanitary '2070' (14): rows 18002, total 60,355.1 m3/d, zero rows 2, manholes with an identical repeated row 22
+   rows per manhole: 0:3502, 1:13755, 2:1826, 3:193, 4:4
+   O15-M72 rows: def 2 1.428 m3/d ; def 2 0.064 m3/d ; def 2 9.690 m3/d
+sanitary '2030' (279769): rows 16980, total 21,788.6 m3/d, zero rows 0, manholes with an identical repeated row 16
+   rows per manhole: 0:4343, 1:13072, 2:1690, 3:172, 4:3
+   O15-M72 rows: def 2 0.214 m3/d ; def 2 0.010 m3/d ; def 2 1.453 m3/d
+sanitary '2040' (279770): rows 16994, total 28,160.5 m3/d, zero rows 0, manholes with an identical repeated row 18
+   rows per manhole: 0:4342, 1:13063, 2:1697, 3:175, 4:3
+   O15-M72 rows: def 2 0.643 m3/d ; def 2 0.029 m3/d ; def 2 4.355 m3/d
+sanitary '2050' (279771): rows 16994, total 34,675.0 m3/d, zero rows 0, manholes with an identical repeated row 17
+   rows per manhole: 0:4342, 1:13063, 2:1697, 3:175, 4:3
+   O15-M72 rows: def 2 1.081 m3/d ; def 2 0.048 m3/d ; def 2 7.324 m3/d
+sanitary '2055' (279772): rows 16994, total 38,904.0 m3/d, zero rows 0, manholes with an identical repeated row 17
+   rows per manhole: 0:4342, 1:13063, 2:1697, 3:175, 4:3
+   O15-M72 rows: def 2 1.367 m3/d ; def 2 0.061 m3/d ; def 2 9.262 m3/d
+sanitary '2060' (279773): rows 16994, total 44,034.3 m3/d, zero rows 0, manholes with an identical repeated row 17
+   rows per manhole: 0:4342, 1:13063, 2:1697, 3:175, 4:3
+   O15-M72 rows: def 2 1.429 m3/d ; def 2 0.064 m3/d ; def 2 9.686 m3/d
+== extreme flow factor tables (base load L/s -> factor)
+  Merrimack: 0.1->4.71  0.15->4.48  0.2->4.33  0.3->4.12  0.5->3.88  0.75->3.69  1->3.56  1.5->3.39  2->3.28  3->3.12  5->2.93  7.5->2.79  10->2.7  15->2.57  20->2.48  30->2.36  50->2.22  75->2.11  100->2.04  150->1.94  200->1.88  300->1.79  500->1.68  750->1.6  1000->1.54
+  Peltier: 0.1->4.66  0.15->4.08  0.2->3.74  0.3->3.33  0.5->2.91  0.75->2.65  1->2.5  1.5->2.32  2->2.21  3->2.08  5->1.95  7.5->1.87  10->1.82  15->1.76  20->1.72  30->1.68  50->1.64  75->1.62  100->1.6  150->1.58  200->1.57  300->1.56  500->1.54  750->1.54  1000->1.53
+  Peltier100-Merriamck: 0.1->4.66  0.15->4.08  0.2->3.74  0.3->3.33  0.5->2.91  0.75->2.65  1->2.5  1.5->3.39  2->3.28  3->3.12  5->2.93  7.5->2.79  10->2.7  15->2.57  20->2.48  30->2.36  50->2.22  75->2.11  100->2.04  150->1.94  200->1.88  300->1.79  500->1.68  750->1.6  1000->1.54
+== unit sanitary load definitions
+  Unit Sanitary (Dry Weather) Loads - 1 | UnitSanitaryLoad_UnitLoad = 0
+  Unit Sanitary (Dry Weather) Loads - 1 | UnitSanitaryLoadType = 2
+  Unit Sanitary (Dry Weather) Loads - 1 | AreaBasedType_AreaUnit = 8
+  Unit Sanitary (Dry Weather) Loads - 1 | AreaBasedType_AreaPopulationEquivalent = 0
+  Unit Sanitary (Dry Weather) Loads - 1 | AreaBasedType_AreaReportPopEquivalent = False
+  Unit Sanitary (Dry Weather) Loads - 1 | CountBasedType_CountLoadUnit = 
+  Unit Sanitary (Dry Weather) Loads - 1 | CountBasedType_CountPopEquivalent = 0
+  Unit Sanitary (Dry Weather) Loads - 1 | CountBasedType_CountReportAdjustedEquivalent = False
+  Unit Sanitary (Dry Weather) Loads - 1 | DischargeBasedType_DischargePopEquivalent = 0
+  Unit Sanitary (Dry Weather) Loads - 1 | DischargeBasedType_DischargeReportAdjustedPopulation = False
+  Unit Sanitary (Dry Weather) Loads - 1 | PopulationBasedType_PopSanitaryUnitLoadUnit = 17
+  enum Haestad.Calculations.Pressure.LoadDefinition: SanitaryHydrograph=0, SanitaryUnitLoad=1, SanitaryPatternLoad=2
+  enum Haestad.Domain.LibraryObjects.UnitSanitaryLoadType: AreaBased=0, CountBased=1, DischargeBased=2, PopulationBased=3
+  enum UnitSanitaryLoadTypeEnum: AreaBasedType=0, CountBasedType=1, DischargeBasedType=2, PopulationBasedType=3
