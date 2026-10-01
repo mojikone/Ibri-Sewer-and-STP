@@ -45,3 +45,11 @@ for col in ['SETTLE', 'STATUS', 'USE', 'FULL_YEAR']:
 print("  their distance to the nearest inactive manhole: median", round(float(np.median(d_ina[missing_plots]))), "m")
 print("  POP_2030 of the missing plots: zero", int((mp['POP_2030'].astype(float) == 0).sum()), " non-zero", int((mp['POP_2030'].astype(float) > 0).sum()))
 print("  Q_2024 equal to Q_2030 (existing, no growth):", int((mp['Q_2024'].astype(float).round(4) == mp['Q_2030'].astype(float).round(4)).sum()))
+
+# --- are the missing plots far from any active manhole (no pipe laid near them)?
+far = lambda d: f"median {np.median(d):.0f} m, 75% {np.percentile(d,75):.0f} m, share > 150 m {100*(d>150).mean():.0f}%"
+print("\ndistance to the nearest ACTIVE manhole")
+print("  the 783 missing plots :", far(d_act[missing_plots]))
+print("  all plots with flow in 2030:", far(d_act[q30 > 0]))
+gov = g['USE'].isin(['Government'])
+print("  government plots west of x=440000, Q_SAT:", round(g.loc[gov & (P[:,0] < 440000), 'Q_SAT'].astype(float).sum(), 1), "m3/d")

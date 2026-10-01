@@ -52,6 +52,33 @@ public static class OneRow
             alt.Label, merged, removed, skipped, before, after, string.Join(", ", hist.Select(kv => kv.Key + ":" + kv.Value)));
     }
 
+    // Remove every row of one load definition (1 = unit load) from an alternative; reports what was removed and where.
+    public static void DeleteRowsOfDefinition(IStormSewerModel m, int altId, int definition, string csv, TextWriter log)
+    {
+        var dds = m.DomainDataSet;
+        int at = dds.DomainDataSetType().AlternativeType("SanitaryLoading").Id;
+        var col = (IEditField)dds.FieldManager.AlternativeField("SanitaryLoads", at, 1, altId);
+        var labels = dds.DomainElementManager(1).ModelingElementField("Label").GetValues();
+        int n = 0, mh = 0; double units = 0;
+        using (var w = new StreamWriter(csv, true))
+        {
+            foreach (DictionaryEntry e in dds.FieldManager.AlternativeField("SanitaryLoadsCount", at, 1, altId).GetValues())
+            {
+                if (Convert.ToInt32(e.Value ?? 0) == 0) continue;
+                int id = (int)e.Key;
+                var lm = col.GetValue(id);
+                var hits = View(lm).Cast<System.Data.DataRowView>().Select((r, pos) => new { pos = pos, def = Convert.ToInt32(r["LoadDefinition"]),
+                    others = 0, n = r["SanitaryUnitLoadType_LoadingUnitNumber"] == DBNull.Value ? 0.0 : Convert.ToDouble(r["SanitaryUnitLoadType_LoadingUnitNumber"]) }).ToList();
+                var del = hits.Where(h => h.def == definition).ToList();
+                if (del.Count == 0) continue;
+                foreach (var h in del.OrderByDescending(x => x.pos)) { ((IListManager)lm).Delete(h.pos); n++; units += h.n; }
+                col.SetValue(id, lm); mh++;
+                w.WriteLine("{0},{1},{2},{3},{4}", altId, labels[id], del.Count, del.Sum(h => h.n), hits.Count - del.Count);
+            }
+        }
+        log.WriteLine("  alt {0}: removed {1} rows of definition {2} on {3} manholes ({4:n2} loading units)", altId, n, definition, mh, units);
+    }
+
     // Insert a row (base load in L/s, factor) into a tabular extreme-flow method, after the last row with a smaller base load.
     public static void AddTableRow(IStormSewerModel m, string methodLabel, double baseLps, double factor, TextWriter log)
     {

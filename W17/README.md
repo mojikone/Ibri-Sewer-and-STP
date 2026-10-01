@@ -16,7 +16,9 @@ helpers on the host against copies of those libraries before a job is sent.
 | W17 R0 (housekeeping) | `Desktop\Win10 shared folder\IBRI Sewer\14 IBRI_W17\IBRI_W17_R0.stsw` | superseded, kept as the record |
 | W17 R1 (physical flattened) | `…\14 IBRI_W17\IBRI_W17_R1.stsw` | superseded by R2, kept as the record |
 | W17 R2 (loads peaked) | `…\14 IBRI_W17\IBRI_W17_R2.stsw` | superseded by R3, kept as the record |
-| **W17 R3 (one load per manhole)** | `…\14 IBRI_W17\IBRI_W17_R3.stsw` | **live**; terrain contours carried (`.\SHP\Contour`, relative path) |
+| W17 R3 (one load per manhole) | `…\14 IBRI_W17\IBRI_W17_R3.stsw` | superseded; **the shared-folder copy was saved again from SewerGEMS at 10:18 before the engineer's Save As, so the R3 record is the guest copy `C:\IbriWork\W17\IBRI_W17_R3.stsw`** |
+| R4_loads (engineer's LoadBuilder reload) | `…\14 IBRI_W17\IBRI_W17_R4_loads.stsw` | the engineer's input to R4, kept |
+| **W17 R4 (years reloaded)** | `…\14 IBRI_W17\IBRI_W17_R4.stsw` | **live**; terrain contours carried (`.\SHP\Contour`, relative path) |
 
 Each revision is a new file, so the engineer can keep an older one open in SewerGEMS while the next is built: the
 scripts work on copies inside the guest (`C:\IbriWork\W17`) and only add new files to the shared folder.
@@ -77,14 +79,12 @@ unused fields (weir, cutoff, curve counts, surface storage) that were 0 and are 
 ## R3 — one sanitary load per manhole; a hard Peltier/Merrimack step (2026-10-01, engineer's decision)
 
 - **Each manhole carries one sanitary load** (engineer: only a manhole receiving an upstream outfall carries a second,
-  the transfer). The 2–4 rows on 2,023 manholes came from LoadBuilder runs made with *Append to an Existing Alternative*
-  (10.4 help, LoadBuilder step 5); they are summed into one row in all six years, totals unchanged to the m³/d
+  the transfer). The 2–4 rows on 2,023 manholes are summed into one row in all six years, totals unchanged to the m³/d
   (2070: 2,224 rows removed; 2030–2060: 2,043–2,056).
 - "Peltier100-Merriamck" gets a row **1.001 L/s → 3.56** (Merrimack at 1 L/s), so the switch is a step at 1 L/s instead
   of a ramp to 1.5 L/s. Only outfalls in that band moved: 2030 O14 4.69→4.94, O15 3.31→4.33, O19 4.23→4.68 L/s;
   2070 O23 4.91→5.05 L/s.
-- To get one row per manhole from LoadBuilder itself: one run over the whole layer, finished with *Override an Existing
-  Alternative* (or *New Alternative*), never *Append*.
+- *Correction (R4):* the extra rows are **not** from *Append* runs, as first written here — a single fresh LoadBuilder run with *Override* writes the same 2–4 rows on 2,022 manholes. LoadBuilder splits them itself; the merge after every reload is the fix.
 
 ## The year loads are short (found 2026-10-01, not yet corrected)
 
@@ -123,6 +123,17 @@ About 86–118 m³/d sits on the inactive manholes of the three deactivated subn
 the 2030 gap is exactly one plot: those plots are 4.3 km (median) from any inactive manhole, in every settlement, 548
 of them existing plots (mostly residential, agricultural, commercial). `py/year_gap_check.py`, `data/year_gap_check.txt`.
 
+## R4 — the year loads reloaded by the engineer (2026-10-01)
+
+The engineer re-ran LoadBuilder for all six sanitary alternatives from the current `Plots.shp` (`Q_2030` … `Q_2060`,
+`Q_SAT`) with *Override* and saved `IBRI_W17_R4_loads.stsw`. *Override* replaces loads only on the manholes it writes to:
+**70 old 2070 rows (259.4 m³/d, 162 of it on 11 manholes of O12) survived on manholes the new run did not load** — the
+same +256 m³/d the old 2070 carried over the plot layer. They were removed, then the loads converted to the peaked unit
+load and merged to one row per manhole. **Every year now equals the plot layer to the decimal**: 2030 24,216.31; 2040
+30,938.43; 2050 37,814.53; 2055 42,265.79; 2060 47,523.06; 2070 60,098.79 m³/d, on 15,708–15,711 manholes. The full plot
+layer is loaded, so plots in unpiped land and the military area are carried at their nearest manhole in every year.
+Peak outfall flow, sum of the 24 outfalls: 2030 613.9 → 674.0 L/s; 2070 1,541.5 → 1,535.2 L/s. `data/r4/`.
+
 ## Open
 
-- Reload the five year alternatives from the current plot layer (`Q_2030` … `Q_2060`), the same way as 2070.
+- Confirm that the plots in unpiped land are meant to be carried at their nearest manhole (the reload loads the whole layer).
