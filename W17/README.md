@@ -20,7 +20,9 @@ helpers on the host against copies of those libraries before a job is sent.
 | R4_loads (engineer's LoadBuilder reload) | `…\14 IBRI_W17\IBRI_W17_R4_loads.stsw` | the engineer's input to R4, kept |
 | W17 R4 (years reloaded) | `…\14 IBRI_W17\IBRI_W17_R4.stsw` | the loads every option builds on |
 | W17 R5, R6 (first S1 builds) | `…\14 IBRI_W17\IBRI_W17_R5/R6.stsw` | **DO NOT USE** — see the section below |
-| **W17 R7 (option S1)** | `…\14 IBRI_W17\IBRI_W17_R7.stsw` | **live**; S1 designed and analysed |
+| W17 R7 (option S1, Manning) | `…\14 IBRI_W17\IBRI_W17_R7.stsw` | superseded by R9: designed with Manning's n (0.013 catalogue), before the friction decision |
+| W17 R8 (Colebrook-White) | guest only, `C:\IbriWork\W17\IBRI_W17_R8.stsw` | R4 with the gravity friction switched to Colebrook-White, ks 1.5 mm |
+| **W17 R9 (options S1–S7)** | `…\14 IBRI_W17\IBRI_W17_R9.stsw` | **live once delivered**: all seven options on Colebrook-White |
 
 Each revision is a new file, so the engineer can keep an older one open in SewerGEMS while the next is built: the
 scripts work on copies inside the guest (`C:\IbriWork\W17`) and only add new files to the shared folder.
@@ -135,6 +137,27 @@ load and merged to one row per manhole. **Every year now equals the plot layer t
 30,938.43; 2050 37,814.53; 2055 42,265.79; 2060 47,523.06; 2070 60,098.79 m³/d, on 15,708–15,711 manholes. The full plot
 layer is loaded, so plots in unpiped land and the military area are carried at their nearest manhole in every year.
 Peak outfall flow, sum of the 24 outfalls: 2030 613.9 → 674.0 L/s; 2070 1,541.5 → 1,535.2 L/s. `data/r4/`.
+
+## R8 — Colebrook-White friction (engineer's decision, 2026-10-01)
+
+G203 p24 and p28: *"Gravity sewerage systems shall be designed by using the recognised hydraulic formulas such as
+Colebrook-White, or Manning's Formula"* and *"Colebrook-White ... shall be designed using a ks value of 1.5 mm for all pipe
+sizes and materials"*; p25 Table 9: viscosity 1.141 × 10⁻⁶ m²/s at 15 °C, *"the conservative value of 15°C should be used"*;
+p23 Table 8 gives typical Manning's n by material (plastic 0.009, PVC 0.009–0.011, PE 0.009–0.015). **Table 11 (p29) is
+Colebrook-White at ks 1.5 mm**: every row gives 0.74–0.76 m/s full bore at 15 °C (`py` check in the session; Manning
+equivalent n 0.0128–0.0133). The client asked for Colebrook-White. R8 = R4 with *Gravity Friction Method* = Darcy-Weisbach,
+*Friction Factor Method* = Colebrook-White, viscosity 1.141 × 10⁻⁶ m²/s on both calculation options, e = 1.5 mm on all
+19,286 conduits and every catalogue size (catalogue Manning's n left at 0.010, unused). Flows unchanged; velocities a
+median 13 % lower than with the old Manning roughness (2030, modeller's pipes). A Colebrook run takes ~8 times longer.
+
+## Self-cleansing — for information (the audit waits for the client's decision)
+
+`results/S1/selfcleansing_info.md` (S1, R7 flows; required gradients by Colebrook-White ks 1.5 mm): **no year has every
+pipe at 0.75 m/s at its peak** — 1.0 % of pipes in 2030, 5.8 % in 2070; 1 to 5 of 3,612 head pipes. The median gradient
+a head pipe would need is 35 % (2030) / 19 % (2070); 1 % of head pipes could do it within the client's 4 %. A DN200 needs
+**0.93 L/s** of peak flow to reach 0.75 m/s at 4 %. The tractive gradient at 1 Pa (Mara, G203 p27) is a median 2.5 % (2030)
+/ 1.3 % (2070) for head pipes; it passes 4 % only below 0.0135 L/s (1,272 head pipes in 2030, 372 in 2070 — pipes carrying
+little more than their infiltration).
 
 ## R7 — option S1, centralised STP at O-1 (2026-10-01)
 
