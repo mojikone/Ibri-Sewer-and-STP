@@ -65,3 +65,9 @@ W16/report_basis/deck/assets/icons/_coloured/
 W16/deliverables/Ibri_Design_Basis_Data_R0/
 W16/Meeting 2026-09-16/
 W16/report/R*/check/
+
+# W17 deliverable folder: copies of client data, the SewerGEMS model (300 MB) and rendered maps; rebuilt by W17/gis/make_w17_folder.py
+W17/Options 2026-10/
+# W17 report build (Revision 4): page contact sheets and the copy written when the target is open in Word
+W17/report/R*/check/
+W17/report/R*/*_new.docx
