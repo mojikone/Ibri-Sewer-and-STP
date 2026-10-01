@@ -13,7 +13,8 @@ helpers on the host against copies of those libraries before a job is sent.
 | Copy | Path | State |
 |---|---|---|
 | Modeller's original | `Desktop\Win10 shared folder\IBRI Sewer\13 IBRI_29092026 12M(7.12 PM )\` and `Hydraulic\Model\temp\…` | untouched |
-| **W17 R0 (housekeeping done)** | `Desktop\Win10 shared folder\IBRI Sewer\14 IBRI_W17\IBRI_W17_R0.stsw` | live; terrain contours carried (`.\SHP\Contour`, relative path) |
+| W17 R0 (housekeeping) | `Desktop\Win10 shared folder\IBRI Sewer\14 IBRI_W17\IBRI_W17_R0.stsw` | superseded by R1, kept as the record |
+| **W17 R1 (physical flattened)** | `…\14 IBRI_W17\IBRI_W17_R1.stsw` | **live**; terrain contours carried (`.\SHP\Contour`, relative path) |
 
 The model files are not in git (300 MB). `data/` holds the renaming maps, the before/after inventories and the log.
 
@@ -43,6 +44,16 @@ The model files are not in git (300 MB). `data/` holds the renaming maps, the be
 | O-3 | O9 | O-12 | O14 | O-18 | O15 | O-22 | O20 |
 | O-6 | O21 | O-14 | O22 | O-15 | O23 | O-5 | O24 |
 
+## R1 — the 2070 design as the base physical alternative (2026-10-01)
+
+The modeller's design ("F", renamed 2070 in R0) sat at the end of a chain of 32 inference alternatives. R1 merges it
+down the chain into Base Physical (`Flatten.cs`: scenarios moved to the parent before each merge, one unused side
+branch deleted first), names the base **2070** and adds seven empty children **S1-2070 … S7-2070**, one per STP
+option, to hold each option's design. Check: every scalar physical field of every manhole, pipe and outfall read
+before and after — **1,980,581 values, none of the design values changed**; the 1,520 that read differently are
+unused fields (weir, cutoff, curve counts, surface storage) that were 0 and are now not stored, on 157 pipes and
+132 manholes. Log: `data/r1_log.txt`.
+
 ## What the tests found (scratch copies, nothing saved)
 
 1. **The plot loads are not peaked.** All 16,980 rows (2030) are *pattern loads*; the Extreme Flow Setup has one row,
@@ -59,9 +70,13 @@ The model files are not in git (300 MB). `data/` holds the renaming maps, the be
    receiving manhole) works, upstream subnetworks first.
 4. In the units: stored flows are cfs; the typed API returns the display unit, m³/d.
 
-## Open — needs the engineer
+## Decided by the engineer (2026-10-01)
 
-- Convert the plot loads of all six years to peaked unit loads (finding 1)?
-- O-21 (now O2, 1,983 manholes) receives the whole O-4 chain but has no destination in the list; it ends 39 m from
-  MH-8112 of the O-1 subnetwork.
-- Transfers in the analysis years: each year's own upstream peak, or the 2070 pump rate in every year?
+- O-21 (now O2) drains to **MH-8112** (O1 subnetwork; OLD_ID in Notes).
+- Transfers in the analysis years use **each year's own upstream peak**, so every year runs upstream first.
+
+## Open — under discussion
+
+- How the plot loads become peaked: one discharge-type unit load carrying the plot flow (our recommendation),
+  or unit loads that SewerGEMS builds from people and use. Peaking is per pipe on the flow upstream, not per manhole
+  (shown by the O12 test).

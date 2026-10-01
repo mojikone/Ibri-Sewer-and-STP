@@ -1,0 +1,76 @@
+  snapshot type 1: 16 fields
+  snapshot type 3: 97 fields
+  snapshot type 5: 5 fields
+  snapshot of alt 279727: 1980581 values
+  deleted off-chain alternative 278355 'Physical Alternative - 1 - Property Inference Scenario - 2'
+  merged 279727 into 279720; child still exists: False
+  merged 279720 into 279713; child still exists: False
+  merged 279713 into 279704; child still exists: False
+  merged 279704 into 279589; child still exists: False
+  merged 279589 into 279582; child still exists: False
+  merged 279582 into 279573; child still exists: False
+  merged 279573 into 279560; child still exists: False
+  merged 279560 into 279558; child still exists: False
+  merged 279558 into 279111; child still exists: False
+  merged 279111 into 279060; child still exists: False
+  merged 279060 into 279041; child still exists: False
+  merged 279041 into 278937; child still exists: False
+  merged 278937 into 278912; child still exists: False
+  merged 278912 into 278849; child still exists: False
+  merged 278849 into 278838; child still exists: False
+  merged 278838 into 278736; child still exists: False
+  merged 278736 into 278636; child still exists: False
+  merged 278636 into 278620; child still exists: False
+  merged 278620 into 278586; child still exists: False
+  merged 278586 into 278499; child still exists: False
+  merged 278499 into 278469; child still exists: False
+  merged 278469 into 278427; child still exists: False
+  merged 278427 into 278332; child still exists: False
+  merged 278332 into 278313; child still exists: False
+  merged 278313 into 278279; child still exists: False
+  merged 278279 into 278251; child still exists: False
+  merged 278251 into 277975; child still exists: False
+  merged 277975 into 277958; child still exists: False
+  merged 277958 into 277899; child still exists: False
+  merged 277899 into 277809; child still exists: False
+  merged 277809 into 6; child still exists: False
+  reached base alternative 6 'Base Physical'
+  snapshot type 1: 16 fields
+  snapshot type 3: 97 fields
+  snapshot type 5: 5 fields
+  snapshot of alt 6: 1979061 values
+    DIFF 1|SurfaceDepthAreaListCount|279116: 0 -> <missing>
+    DIFF 1|SurfaceDepthAreaListCount|279115: 0 -> <missing>
+    DIFF 1|SurfaceDepthAreaListCount|279114: 0 -> <missing>
+    DIFF 1|SurfaceDepthAreaListCount|279113: 0 -> <missing>
+    DIFF 1|SurfaceDepthAreaListCount|279112: 0 -> <missing>
+    DIFF 1|SurfaceDepthAreaListCount|279066: 0 -> <missing>
+    DIFF 1|SurfaceDepthAreaListCount|279065: 0 -> <missing>
+    DIFF 1|SurfaceDepthAreaListCount|279064: 0 -> <missing>
+    DIFF 1|SurfaceDepthAreaListCount|279063: 0 -> <missing>
+    DIFF 1|SurfaceDepthAreaListCount|279062: 0 -> <missing>
+    DIFF 1|SurfaceDepthAreaListCount|279061: 0 -> <missing>
+    DIFF 1|SurfaceDepthAreaListCount|278940: 0 -> <missing>
+    DIFF 1|SurfaceDepthAreaListCount|278939: 0 -> <missing>
+    DIFF 1|SurfaceDepthAreaListCount|278938: 0 -> <missing>
+    DIFF 1|SurfaceDepthAreaListCount|278921: 0 -> <missing>
+  compared 1980581 values: 1520 differ
+       157 x 3|ElevationWidthCurveCount  0 -> <missing>
+       157 x 3|CutoffType_CutoffFlow  0 -> <missing>
+       157 x 3|PseudoWeirType_MinimumFlow  0 -> <missing>
+       157 x 3|PseudoWeirType_MaximumDepth  0 -> <missing>
+       157 x 3|PseudoWeirType_WeirLength  0 -> <missing>
+       157 x 3|PseudoWeirType_WeirCoefficient  0 -> <missing>
+       157 x 3|RoughnessDepthCurveCount  0 -> <missing>
+       157 x 3|RoughnessFlowCurveCount  0 -> <missing>
+       132 x 1|SurfaceDepthAreaListCount  0 -> <missing>
+       132 x 1|SurfaceConstantAreaType_SurfaceConstantArea  0 -> <missing>
+  Physical alternative 6: 'Base Physical' -> '2070'
+  physical child 279787 'S1-2070' under 6
+  physical child 279788 'S2-2070' under 6
+  physical child 279789 'S3-2070' under 6
+  physical child 279790 'S4-2070' under 6
+  physical child 279791 'S5-2070' under 6
+  physical child 279792 'S6-2070' under 6
+  physical child 279793 'S7-2070' under 6
+  saved C:\IbriWork\W17\IBRI_W17_R1.stsw
