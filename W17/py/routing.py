@@ -39,6 +39,16 @@ SCENARIOS = {
                text="three STPs at O-1, O-8, O-14"),
 }
 YEARS = ["2030", "2040", "2050", "2055", "2060", "2070"]
+_WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six"}
+
+
+def option_label(name):
+    """The option in current names only, for anything the client reads: 'two STPs, at O1 and O4'.
+    (SCENARIOS[...]['text'] keeps the engineer's own wording in the modeller's names, for internal use.)"""
+    stp = SCENARIOS[name]["stp"]
+    if len(stp) == 1:
+        return f"one STP for the whole area, at {stp[0]}"
+    return f"{_WORDS[len(stp)]} STPs, at {', '.join(stp[:-1])} and {stp[-1]}"
 F0 = r"D:\VBOX\bridge\out\f0"
 RENAME = r"D:\VBOX\bridge\out\inv\rename_nodes.csv"
 

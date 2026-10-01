@@ -147,12 +147,15 @@ for z in sorted(stp, key=lambda s: int(s[1:])):
         pk.append((tot[z] + sum(tot[s] for s, t in joins.items() if t == z)) / 86.4)
     say(f"| {z} ({OLD[z]}) avg m3/d | " + " | ".join(f"{a:,.0f}" for a in avg) + " |")
     say(f"| {z} ({OLD[z]}) peak L/s | " + " | ".join(f"{p:,.1f}" for p in pk) + " |")
-    plant_rows.append((z, avg, pk))
+    dep = float(mh_des[z]["ground"]) - float(mh_des[z]["invert"])   # the gravity sewer arriving at the plant site
+    plant_rows.append((z, avg, pk, dep))
+say("Depth of the sewer arriving at each plant (ground to invert at its outfall): "
+    + ", ".join(f"{z} {dep:.2f} m" for z, _, _, dep in plant_rows))
 with open(rf"{OUT}\{NAME}_plants.csv", "w", newline="", encoding="utf-8") as f:
     w = csv.writer(f)
-    w.writerow(["plant"] + [f"avg_{y}" for y in YEARS] + [f"peak_{y}" for y in YEARS])
-    for z, avg, pk in plant_rows:
-        w.writerow([z] + [round(a, 1) for a in avg] + [round(p, 2) for p in pk])
+    w.writerow(["plant"] + [f"avg_{y}" for y in YEARS] + [f"peak_{y}" for y in YEARS] + ["inlet_depth_m"])
+    for z, avg, pk, dep in plant_rows:
+        w.writerow([z] + [round(a, 1) for a in avg] + [round(p, 2) for p in pk] + [round(dep, 2)])
 
 # ---------------------------------------------------------------- 6. pumping stations
 say("\nPumping stations (one per outfall that is pumped). Duty = 2070 peak (raised to the 75 mm / 1.0 m/s floor where smaller).")
@@ -205,16 +208,18 @@ for s, dest, kind in links:
             u = nxt[u]
         return u == s
     ups = [u for u in plant if drains_through(u)]
-    e = {}
+    e, vols = {}, {}
     for y in YEARS:
         vol = sum(base_sub[y][u] + infil[u] for u in ups)          # m3/d average
+        vols[y] = vol
         hours = vol / (qd * 3600) if qd > 0 else 0
         e[y] = kw * hours * 365
     ret = (math.pi / 4 * (dn / 1000) ** 2 * L) / (sum(base_sub["2030"][u] + infil[u] for u in ups) / 86400) / 60
     ww_depth = float(o["ground"]) - float(o["invert"]) + 1.5
     ps.append(dict(ps=s, old=OLD[s], to=dest, kind=kind, type=typ, wet_well_depth=ww_depth, route=route, q70=q70 * 1000, duty=qd * 1000, dn=dn, v=v, L=L,
                    static=z_out - z_in, H=H, kw=kw, kwh2030=e["2030"], kwh2070=e["2070"], ret2030=ret,
-                   live_m3=90 * qd / (1 if typ == 1 else 2 if typ == 2 else 3)))
+                   live_m3=90 * qd / (1 if typ == 1 else 2 if typ == 2 else 3),
+                   outfall_depth=float(o["ground"]) - float(o["invert"]), avg2030_m3d=vols["2030"], avg2070_m3d=vols["2070"]))
 say("| PS (old) | to | type | wet well depth m | Q2070 L/s | duty L/s | DN | v m/s | main m | static m | total head m | kW | MWh/yr 2030 | MWh/yr 2070 | retention 2030 min | live vol m3 |")
 say("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
 for p in sorted(ps, key=lambda p: -p["duty"]):
@@ -246,8 +251,9 @@ summary = dict(
     rising_main_m=round(sum(p["L"] for p in ps), 0),
     rising_main_m_by_dn={str(d): round(sum(p["L"] for p in ps if p["dn"] == d), 0) for d in sorted({p["dn"] for p in ps})},
     ps_by_type={str(t): sum(1 for p in ps if p["type"] == t) for t in (1, 2, 3)},
-    plants={z: dict(avg_m3d=dict(zip(YEARS, [round(a, 1) for a in avg])), peak_ls=dict(zip(YEARS, [round(p, 2) for p in pk])))
-            for z, avg, pk in plant_rows},
+    plants={z: dict(avg_m3d=dict(zip(YEARS, [round(a, 1) for a in avg])), peak_ls=dict(zip(YEARS, [round(p, 2) for p in pk])),
+                    inlet_depth_m=round(dep, 2))
+            for z, avg, pk, dep in plant_rows},
     assumptions=["rising mains routed along roads and streets, cross-country where 40 % shorter",
                  "Hazen-Williams C = 120 in the rising mains", "minor losses +10 %", "wet well 1.5 m below the outfall invert",
                  "pump wire-to-water efficiency 0.65", "plant inlet 3.0 m above the ground at the plant outfall"])

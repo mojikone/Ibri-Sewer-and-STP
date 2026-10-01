@@ -10,7 +10,7 @@ import csv, json, os, collections
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.utils import get_column_letter
-from routing import SCENARIOS, YEARS, OLD
+from routing import SCENARIOS, YEARS, OLD, option_label
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 W17 = os.path.dirname(HERE)
@@ -20,7 +20,7 @@ MD = os.path.join(RES, "options_comparison.md")
 BANDS = [(0, 1.5), (1.5, 3), (3, 4.5), (4.5, 6), (6, 9), (9, 12), (12, 99)]
 band = lambda d: next(f"{a:g}-{b:g} m" if b < 99 else f">{a:g} m" for a, b in BANDS if a <= d < b)
 BAND_NAMES = [band((a + min(b, a + 1)) / 2) for a, b in BANDS]
-name = lambda s: f"{s} ({OLD[s]})"
+name = lambda s: s          # current names only: the tables go to the client with the report (engineer, 2026-10-01)
 
 opts = [o for o in SCENARIOS if os.path.exists(os.path.join(RES, o, f"{o}_summary.json"))]
 S = {o: json.load(open(os.path.join(RES, o, f"{o}_summary.json"), encoding="utf-8")) for o in opts}
@@ -57,7 +57,7 @@ hdr = ["Option", "Arrangement", "Plants", "Sewer km", "Pipes", "Manholes", "Manh
 rows = []
 for o in opts:
     s = S[o]
-    rows.append([o, s["text"], ", ".join(name(z) for z in s["stp"]), s["pipe_km"], s["pipes"], s["manholes"],
+    rows.append([o, option_label(o), ", ".join(name(z) for z in s["stp"]), s["pipe_km"], s["pipes"], s["manholes"],
                  s["manholes_by_band"].get("9-12 m", 0), s["manholes_over_12"], s["deepest"]["depth"], s["deepest"]["label"],
                  s["pipe_km_deeper_12"], s["pumping_stations"], "/".join(str(s["ps_by_type"].get(str(t), 0)) for t in (1, 2, 3)),
                  s["kw"], s["mwh_2030"], s["mwh_2070"], round(s["rising_main_m"] / 1000, 2)])
@@ -107,24 +107,25 @@ md += ["\n## Manholes by depth to invert\n", "| Depth | " + " | ".join(opts) + "
 md += ["| " + " | ".join(f"{v:,}" if isinstance(v, (int, float)) else str(v) for v in r) + " |" for r in rows]
 
 # ---- pumping stations
-hdr = ["Option", "Station", "Old name", "Discharges to", "Kind", "Type (G203 Tab 17)", "Wet well depth m", "Q 2070 L/s", "Duty L/s",
-       "Rising main DN", "Velocity m/s", "Rising main m", "Static head m", "Total head m", "kW", "MWh/yr 2030", "MWh/yr 2070",
-       "Retention 2030 min", "Live volume m3", "Route"]
+hdr = ["Option", "Station", "Discharges to", "Kind", "Type (G203 Tab 17)", "Outfall depth m", "Wet well depth m",
+       "Average flow 2070 m3/d", "Q 2070 L/s", "Duty L/s", "Rising main DN", "Velocity m/s", "Rising main m", "Static head m",
+       "Total head m", "kW", "MWh/yr 2030", "MWh/yr 2070", "Retention 2030 min", "Live volume m3", "Route"]
 rows = []
 for o in opts:
     for r in PS[o]:
         f = lambda k, n=1: round(float(r[k]), n)
-        rows.append([o, r["ps"], r["old"], r["to"], r["kind"], int(r["type"]), f("wet_well_depth"), f("q70"), f("duty"), int(r["dn"]),
+        rows.append([o, r["ps"], f"STP {r['to']}" if r["kind"] == "plant" else r["to"], r["kind"], int(r["type"]),
+                     f("outfall_depth", 2), f("wet_well_depth"), f("avg2070_m3d", 0), f("q70"), f("duty"), int(r["dn"]),
                      f("v", 2), f("L", 0), f("static"), f("H"), f("kw"), round(float(r["kwh2030"]) / 1000, 1),
                      round(float(r["kwh2070"]) / 1000, 1), f("ret2030", 0), f("live_m3"), r["route"]])
 sheet("Pumping stations", hdr, rows, note="ASSUMED for the concept: rising mains along roads and streets (cross-country x 1.1 where the "
       "street route is over 1.6 x the straight line); Hazen-Williams C 120 (G202 p104); minor losses +10 %; wet well 1.5 m below "
       "the outfall invert; discharge 0.3 m above the receiving invert (G203 p55) or 3 m above ground at a plant; efficiency 0.65; "
-      "duty raised to keep 1.0 m/s in a main of at least 75 mm (G203 p50).", widths=[8, 9, 9, 12, 9, 9] + [11] * 13 + [30])
+      "duty raised to keep 1.0 m/s in a main of at least 75 mm (G203 p50).", widths=[8, 9, 12, 9, 9] + [11] * 15 + [30])
 md += ["\n## Pumping stations (largest duty first)\n", "| Option | Station | to | duty L/s | DN | main m | head m | kW | retention 2030 min |",
        "|---|---|---|---|---|---|---|---|---|"]
 for r in rows:
-    md.append(f"| {r[0]} | {r[1]} ({r[2]}) | {r[3]} | {r[8]:,.1f} | {r[9]} | {r[11]:,.0f} | {r[13]:,.1f} | {r[14]:,.0f} | {r[17]:,.0f} |")
+    md.append(f"| {r[0]} | {r[1]} | {r[2]} | {r[9]:,.1f} | {r[10]} | {r[12]:,.0f} | {r[14]:,.1f} | {r[15]:,.0f} | {r[18]:,.0f} |")
 
 os.makedirs(os.path.dirname(XLSX), exist_ok=True)
 wb.save(XLSX)

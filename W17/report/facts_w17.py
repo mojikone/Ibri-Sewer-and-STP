@@ -19,7 +19,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 W17 = os.path.dirname(HERE)
 RES = os.path.join(W17, "results")
 sys.path.insert(0, os.path.join(W17, "py"))
-from routing import SCENARIOS, YEARS, OLD, routing, plant_of  # noqa: E402,F401
+from routing import SCENARIOS, YEARS, OLD, routing, plant_of, option_label  # noqa: E402,F401
 
 OPTIONS = [f"S{i}" for i in range(1, 8)]
 MODEL = "IBRI_W17_R9"
@@ -68,18 +68,21 @@ def loads():
 
 
 def name(s):
-    """A subnetwork or plant site by its W17 name, the earlier outfall number in brackets."""
-    return f"{s} ({OLD[s]})"
+    """A subnetwork or plant site by its current name only: the report never shows the earlier outfall numbers."""
+    return s
 
 
 def text(o):
-    return SCENARIOS[o]["text"]
+    """The option in current names: 'two STPs, at O1 and O4'."""
+    return option_label(o)
 
 
 def plants(o):
-    """{site: {"avg": {year: m3/d}, "peak": {year: L/s}}} in the order of the plant list."""
+    """{site: {"avg": {year: m3/d}, "peak": {year: L/s}, "inlet": m}} in the order of the plant list; inlet is the
+    depth below ground of the gravity sewer arriving at the plant site."""
     s = summary(o)
-    return {z: {"avg": s["plants"][z]["avg_m3d"], "peak": s["plants"][z]["peak_ls"]} for z in s["stp"]}
+    return {z: {"avg": s["plants"][z]["avg_m3d"], "peak": s["plants"][z]["peak_ls"],
+                "inlet": s["plants"][z].get("inlet_depth_m")} for z in s["stp"]}
 
 
 def option_row(o):
@@ -96,7 +99,8 @@ def option_row(o):
         rm_km=s["rising_main_m"] / 1000, longest_rm=longest, highest_head=highest,
         km_over_12=s["pipe_km_deeper_12"],
         avg_2070=sum(v["avg"]["2070"] for v in plants(o).values()),
-        largest_plant_2070=max(v["avg"]["2070"] for v in plants(o).values()))
+        largest_plant_2070=max(v["avg"]["2070"] for v in plants(o).values()),
+        inlet_depths=" / ".join(f"{v['inlet']:.1f}" for v in plants(o).values()))
 
 
 def checks_clean(o):

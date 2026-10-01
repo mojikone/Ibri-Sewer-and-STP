@@ -14,7 +14,7 @@ DIAG = r"D:\VBOX\bridge\out\r4\diag"
 S1 = r"D:\VBOX\bridge\out\scen\S1"
 OUT = r"D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\Claude\W17\results\diagrams.json"
 SUB = lambda lab: lab.split("-")[0] if lab.startswith("O") and ("-M" in lab or "-P" in lab) else None
-BOX_W, BOX_H, PLANT_W, PLANT_H = 128, 50, 280, 100
+BOX_W, BOX_H, PLANT_W, PLANT_H = 128, 50, 280, 120
 COL, ROW, TREE_GAP, MARGIN, LEGEND_H = 260, 62, 40, 40, 110
 # text sizes (px), read by diagram_js.py; legibility is checked on an A3 landscape page (380 x 235 mm of figure)
 FONT = dict(name=20, old=16, edge=17, plant_title=19, plant=16, legend=16)
@@ -71,6 +71,9 @@ def layout(name):
     for z in plants:
         place("P:" + z)
         row[0] += TREE_GAP / ROW
+    summ = os.path.join(os.path.dirname(OUT), name, f"{name}_summary.json")
+    inlet = {z: v.get("inlet_depth_m") for z, v in json.load(open(summ, encoding="utf-8"))["plants"].items()} \
+        if os.path.exists(summ) else {}
     for n, y in y_of.items():
         col = maxd - (0 if n.startswith("P:") else depth[n])
         x = MARGIN + col * COL
@@ -78,12 +81,13 @@ def layout(name):
             z = n[2:]
             avg = [sum(base[yy][s] + infil[s] for s in plant if plant[s] == z) for yy in ("2030", "2070")]
             pk = [(transfers(name, yy)[1][z] + sum(transfers(name, yy)[1][s] for s, t in joins.items() if t == z)) / 86.4 for yy in ("2030", "2070")]
+            # current names only (engineer, 2026-10-01), and the depth of the sewer arriving at the plant
             nodes.append(dict(id=n, kind="plant", zone=z, x=x, y=MARGIN + y * ROW - (PLANT_H - BOX_H) / 2, w=PLANT_W, h=PLANT_H,
-                              lines=[f"STP at {z} ({OLD[z]})", "2030 → 2070",
-                                     f"average {avg[0]:,.0f} → {avg[1]:,.0f} m³/d", f"peak {pk[0]:,.0f} → {pk[1]:,.0f} L/s"]))
+                              lines=[f"STP {z}", "2030 → 2070",
+                                     f"average {avg[0]:,.0f} → {avg[1]:,.0f} m³/d", f"peak {pk[0]:,.0f} → {pk[1]:,.0f} L/s",
+                                     f"sewer arrives {inlet[z]:.1f} m deep" if inlet.get(z) is not None else ""]))
         else:
-            nodes.append(dict(id=n, kind="sub", zone=plant[n], x=x, y=MARGIN + y * ROW, w=BOX_W, h=BOX_H,
-                              lines=[n, f"({OLD[n]})"]))
+            nodes.append(dict(id=n, kind="sub", zone=plant[n], x=x, y=MARGIN + y * ROW, w=BOX_W, h=BOX_H, lines=[n]))
     for c, p in parent.items():
         # every outfall is a pumping station whose rising main ends at the receiving subnetwork or at the plant,
         # except the subnetwork whose own outfall is the plant (gravity)

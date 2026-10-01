@@ -1,8 +1,10 @@
 """Revision 4: the sewer network options S1 to S7 (Sections 6.2.5 to 6.2.8) and Appendix B.
 
 Every number is read from facts_w17 (the SewerGEMS results of model IBRI_W17_R9, written by
-W17/py/); the transfer diagrams are drawn in Figma from the same results (W17/py/diagram_layout.py),
+W17/py/); the transfer diagrams are drawn from the same results (W17/py/diagram_layout.py),
 the maps in QGIS (W17/gis/make_w17_project.py), the charts by charts_w17.py.
+Client register (engineer, 2026-10-01): current names only (O1 ... O24), never the earlier outfall
+numbers, no file or folder names, no internal steps; the depth of the sewer at each plant is given.
 """
 import json
 import os
@@ -42,7 +44,7 @@ def _subs(o):
 
 
 def _served(o):
-    """'O1 (O-1): 19 subnetworks; O4 (O-7): O4 to O8' — the plant list of the options table."""
+    """'O1: 19 subnetworks; O4: O4, O5, O6, O7, O8' — the plant list of the options table."""
     parts = []
     for z, subs in _subs(o).items():
         if len(subs) == 1:
@@ -53,7 +55,7 @@ def _served(o):
             what = f"{len(subs)} subnetworks"
         parts.append(f"{F.name(z)}: {what}")
     order = F.summary(o)["stp"]
-    return "; ".join(sorted(parts, key=lambda t: order.index(t.split(" ")[0])))
+    return "; ".join(sorted(parts, key=lambda t: order.index(t.split(":")[0])))
 
 
 def _option_paragraph(d, o):
@@ -62,13 +64,16 @@ def _option_paragraph(d, o):
     if len(pl) == 1:
         z = next(iter(pl))
         lead = (f"All the flow is treated at one plant at {F.name(z)}: {fmt(pl[z]['avg']['2030'])} cubic metres "
-                f"a day on average in 2030 and {fmt(pl[z]['avg']['2070'])} in 2070.")
+                f"a day on average in 2030 and {fmt(pl[z]['avg']['2070'])} in 2070. The sewer arrives at the plant "
+                f"{pl[z]['inlet']:.1f} m below ground.")
     else:
         big = max(pl, key=lambda z: pl[z]["avg"]["2070"])
         rest = [z for z in pl if z != big]
         lead = (f"The flow is divided between {WORDS[len(pl)]} plants. The largest, at {F.name(big)}, receives "
-                f"{fmt(pl[big]['avg']['2070'])} cubic metres a day on average in 2070; "
-                + ", ".join(f"{F.name(z)} {fmt(pl[z]['avg']['2070'])}" for z in rest) + ".")
+                f"{fmt(pl[big]['avg']['2070'])} cubic metres a day on average in 2070, its sewer arriving "
+                f"{pl[big]['inlet']:.1f} m below ground; "
+                + ", ".join(f"{F.name(z)} receives {fmt(pl[z]['avg']['2070'])} at {pl[z]['inlet']:.1f} m" for z in rest)
+                + ".")
     big_ps = ps[0]
     far = r["longest_rm"]; high = r["highest_head"]
     text = (f"{lead} It needs {r['n_ps']} pumping stations with {fmt(r['kw'])} kW of pumps in duty; the largest lifts "
@@ -91,8 +96,11 @@ def network_options(d):
     D.p(d, "The network is modelled in SewerGEMS as twenty-four subnetworks. Each collects the flow of its own "
            "catchment by gravity and ends at its lowest point, its outfall. Where an outfall is not at a treatment "
            "plant, a pumping station there lifts the flow through a rising main into a manhole of another "
-           "subnetwork, or directly to a plant. The subnetworks are numbered O1 to O24; the figures give in brackets "
-           "the outfall numbers of the earlier drawings.")
+           "subnetwork, or directly to a plant. The subnetworks take the names of their outfalls, O1 to O24, as "
+           "shown in the figure on the following page.")
+    D.wide_figure(d, _map("W17_overview_subnetworks"),
+                  "The twenty-four subnetworks of the sewer network, each with its outfall, and the settlement "
+                  "boundaries.", size="A4")
     D.p(d, f"The flow of every plot, established in Chapter 4, is placed at the manhole nearest to it for each of the "
            f"six model years: 2030, 2040, 2050, 2055, 2060 and 2070. The network carries "
            f"{fmt(Y['2030']['carried_m3d'])} cubic metres a day of it in 2030 and {fmt(Y['2070']['carried_m3d'])} in "
@@ -132,46 +140,52 @@ def network_options(d):
     D.p(d, "")
     for o in opts:
         _option_paragraph(d, o)
-    D.p(d, "For each option a diagram shows where the flow of every subnetwork goes, with the peak flow of each "
-           "transfer in 2070, and a map shows the sewers coloured by the plant they drain to, each pumping station "
-           "with the depth of its outfall and the head it pumps against, and the rising mains. They follow, option "
-           "by option.")
+    D.p(d, "Three figures follow for each option: a diagram of where the flow of every subnetwork goes, with the peak "
+           "flow of each transfer in 2070; a map of the sewers by the plant they drain to, with the depth of the "
+           "sewer arriving at each plant; and a map of the pumping, on which each pumping station carries the depth "
+           "of its outfall, the average flow it receives in 2070, its pump head and its duty.")
     for o in opts:
-        plants = " and ".join(F.name(z) for z in F.summary(o)["stp"])
         D.wide_figure(d, _img(f"W17_{o}_transfer_diagram"),
-                      f"Option {o}, treatment at {plants}: where the flow of every subnetwork goes, with the peak "
-                      "flow of each transfer in 2070.", size="A3")
+                      f"Option {o}, {F.text(o)}: where the flow of every subnetwork goes, with the peak flow of each "
+                      "transfer in 2070.", size="A3")
+        D.wide_figure(d, _map(f"W17_{o}_zones"),
+                      f"Option {o}: the sewers by the plant they drain to, the outfalls, and the depth of the sewer "
+                      "arriving at each plant.", size="A4")
         D.wide_figure(d, _map(f"W17_{o}_network"),
-                      f"Option {o}: the sewers by the plant they drain to, the pumping stations with the depth of the "
-                      "outfall, the pump head and the duty, and the rising mains.", size="A4")
+                      f"Option {o}: the sewers by plant and size, the pumping stations and the rising mains. A station "
+                      "label gives the outfall, its depth and the average flow in 2070, then the pump head and the "
+                      "duty.", size="A4")
 
     # --------------------------------------------------------------- 6.2.7
     D.h(d, 3, "6.2.7.   Comparison")
     rows = [F.option_row(o) for o in opts]
     D.tab_caption(d, "The options compared: network, depth and pumping")
-    D.table(d, ["Option", "Plants", "Sewer, km", "Manholes deeper than 12 m", "Deepest manhole, m",
+    D.table(d, ["Option", "Plants", "Sewer at the plants, m deep", "Manholes deeper than 12 m", "Deepest manhole, m",
                 "Pumping stations", "Pumps in duty, kW", "Energy 2030, MWh a year", "Energy 2070, MWh a year",
                 "Rising mains, km"],
-            [[r["option"], str(r["n_plants"]), fmt(r["pipe_km"]), str(r["mh_over_12"]), fmt(r["deepest"], 1),
+            [[r["option"], str(r["n_plants"]), r["inlet_depths"], str(r["mh_over_12"]), fmt(r["deepest"], 1),
               str(r["n_ps"]), fmt(r["kw"]), fmt(r["mwh_2030"]), fmt(r["mwh_2070"]), fmt(r["rm_km"], 1)] for r in rows],
-            widths=[1.4, 1.3, 1.6, 2.0, 1.8, 1.8, 1.8, 2.0, 2.0, 1.8], font=8)
+            widths=[1.4, 1.3, 2.6, 2.0, 1.8, 1.7, 1.7, 1.9, 1.9, 1.7], font=8)
     D.p(d, "")
     D.p(d, f"Every option has the same {fmt(s0['pipe_km'])} km of sewer and {fmt(s0['manholes'])} manholes; they differ "
-           "in the sizes of the trunk sewers, in the pumping and in the plants. The depth of a manhole is counted from "
-           "its cover to its invert, so a manhole deeper than 12 m in the table does not necessarily have a pipe with "
+           "in the sizes of the trunk sewers, in the pumping and in the plants. The depth of the sewer at a plant is the "
+           "depth below ground of the gravity sewer arriving at the plant site, one figure for each plant in the order "
+           "of the plants table; the plant's inlet works lift the flow from that depth. The depth of a manhole is "
+           "counted from its cover to its invert, so a manhole deeper than 12 m does not necessarily have a pipe with "
            "more than 12 m of cover.")
 
     _chart(d, "W01_plant_split", "The average flow arriving at each plant in 2070, by option. Colours as on the maps "
                                  "and diagrams.")
     _chart(d, "W02_plant_years", "The average flow arriving at each plant, 2030 to 2070, by option.")
 
-    D.tab_caption(d, "Average flow arriving at each plant, cubic metres a day, with the 2070 peak flow")
+    D.tab_caption(d, "Average flow arriving at each plant, cubic metres a day, with the 2070 peak flow and the depth of "
+                     "the incoming sewer")
     prow = []
     for o in opts:
         for z, v in F.plants(o).items():
-            prow.append([o, F.name(z)] + [fmt(v["avg"][y]) for y in F.YEARS] + [fmt(v["peak"]["2070"])])
-    D.table(d, ["Option", "Plant"] + F.YEARS + ["Peak 2070, l/s"], prow,
-            widths=[1.4, 2.4, 1.75, 1.75, 1.75, 1.75, 1.75, 1.75, 2.2], font=8)
+            prow.append([o, F.name(z)] + [fmt(v["avg"][y]) for y in F.YEARS] + [fmt(v["peak"]["2070"]), f"{v['inlet']:.1f}"])
+    D.table(d, ["Option", "Plant"] + F.YEARS + ["Peak 2070, l/s", "Sewer at the plant, m deep"], prow,
+            widths=[1.3, 1.3, 1.65, 1.65, 1.65, 1.65, 1.65, 1.65, 1.9, 2.0], font=8)
     D.p(d, "")
     D.p(d, "The flows are the average daily flow of the plots served plus the infiltration of the sewers that drain to "
            "the plant. The peak is the sum of the peak flows of the outfalls that reach the plant. The ten per cent "
@@ -329,6 +343,6 @@ def appendix_b(d):
                   fmt(r["kwh2070"] / 1000, 1), fmt(r["ret2030"] / 60, 1)] for r in F.pumps(o)],
                 widths=[2.2, 2.3, 1.4, 1.3, 1.4, 1.5, 1.4, 1.2, 1.7, 1.7, 1.9], font=7.5)
         D.p(d, "")
-    D.wide_figures(d, [(_map(f"W17_{o}_depth"), f"Option {o}: depth of the 2070 design. Sewers by depth to invert, "
-                                                "width by size; manholes deeper than 9 m marked, those deeper than 12 m "
-                                                "in red.") for o in opts], size="A4")
+    D.wide_figures(d, [(_map(f"W17_{o}_depth"), f"Option {o}: depth of the sewers to invert in the 2070 design, the "
+                                                "depth of each pumping station's outfall, and the deepest manhole of "
+                                                "every run deeper than 12 m.") for o in opts], size="A4")

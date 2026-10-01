@@ -86,18 +86,18 @@ for (const d of D) {
       inBox(n, n.lines[1], 36, F.plant, {color: "#C9D6EA"});
       inBox(n, n.lines[2], 56, F.plant, {color: "#FFFFFF"});
       inBox(n, n.lines[3], 76, F.plant, {color: "#FFFFFF"});
+      if (n.lines[4]) inBox(n, n.lines[4], 96, F.plant, {color: "#FFFFFF"});
     } else {
-      inBox(n, n.lines[0], 3, F.name, {bold: true});
-      inBox(n, n.lines[1], 27, F.old, {color: GREY});
+      inBox(n, n.lines[0], 13, F.name, {bold: true});     // the current name only
     }
   }
   // legend, left to right, wrapping when the row is full
   const plants = d.nodes.filter(n => n.kind === "plant"), zc = hex(ZONE[plants[0].zone] || "#555555");
   const L = F.legend, items = [
-    {kind: "box", s: "Subnetwork: W17 name (modeller's outfall name)" + (plants.length > 1 ? ", coloured by its plant" : "")},
+    {kind: "box", s: "Subnetwork, named after its outfall" + (plants.length > 1 ? ", coloured by its STP" : "")},
     {kind: "pumped", s: "Pumping station at the outfall and its rising main, 2070 peak flow"},
-    {kind: "gravity", s: "Gravity: the plant sits at this subnetwork's own outfall"},
-    {kind: "plant", s: "Treatment plant, flows 2030 → 2070"}];
+    {kind: "gravity", s: "Gravity: the STP sits at this subnetwork's own outfall"},
+    {kind: "plant", s: "STP: flows 2030 → 2070 and the depth of the incoming sewer"}];
   let lx = 40, ly = d.body + 10;
   for (const it of items) {
     const t = text(it.s, L, {color: GREY});
