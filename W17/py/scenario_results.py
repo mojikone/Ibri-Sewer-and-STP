@@ -78,7 +78,8 @@ for l in act:
     od = int(r["size_label"].split()[0]) if r["size_label"].split()[0].isdigit() else OD(dia)
     qty_len[(od, band(d_in))] += L
     pipe_rows.append(dict(label=l, sub=SUB(l), od=od, id_mm=round(dia, 1), length=L, depth_avg=d_in, cover_min=cover_min,
-                          slope=(float(r["start_inv"]) - float(r["stop_inv"])) / L if L > 0 else 0))
+                          # 8,712 pipes are drawn against the flow; by the tree every one falls towards its outfall
+                          slope=abs(float(r["start_inv"]) - float(r["stop_inv"])) / L if L > 0 else 0))
 ods = sorted({k[0] for k in qty_len}); bands = [band((a + min(b, a + 1)) / 2) for a, b in BANDS]
 say("\nPipe length by size (OD, mm) and depth to invert (m), 2070 design, metres")
 say("| OD | " + " | ".join(bands) + " | total |"); say("|---|" + "---|" * (len(bands) + 1))
@@ -110,12 +111,12 @@ def checks(tag, design):
         q = float(r["flow_m3d"]) if r["flow_m3d"] else 0
         dmax = max(float(r["depth_in_m"] or 0), float(r["depth_out_m"] or 0)) * 1000
         lim = 0.65 if p["id_mm"] <= 350 else 0.50
-        if dmax / p["id_mm"] > lim + 1e-6: dd += 1
+        if round(dmax / p["id_mm"], 3) > lim: dd += 1               # compared at three decimals: the design's own precision
         if v > 3.0: vmax += 1
         if q > 0 and v < 0.75: vlow += 1
     return n, vmax, dd, vlow
 
-say("\nChecks (active pipes; G203 p27 v <= 3.0 m/s, d/D <= 0.65 to 350 mm ID and 0.50 above; p26 0.75 m/s at peak)")
+say("\nChecks (active pipes; G203 p27 v <= 3.0 m/s, d/D <= 0.65 to 350 mm ID and 0.50 above, d/D compared at three decimals; p26 0.75 m/s at peak)")
 say("| run | pipes with results | v > 3.0 | d/D over limit | v < 0.75 with flow |")
 say("|---|---|---|---|---|")
 for y in ['2070a'] + YEARS[:-1]:
@@ -147,6 +148,11 @@ for z in sorted(stp, key=lambda s: int(s[1:])):
     say(f"| {z} ({OLD[z]}) avg m3/d | " + " | ".join(f"{a:,.0f}" for a in avg) + " |")
     say(f"| {z} ({OLD[z]}) peak L/s | " + " | ".join(f"{p:,.1f}" for p in pk) + " |")
     plant_rows.append((z, avg, pk))
+with open(rf"{OUT}\{NAME}_plants.csv", "w", newline="", encoding="utf-8") as f:
+    w = csv.writer(f)
+    w.writerow(["plant"] + [f"avg_{y}" for y in YEARS] + [f"peak_{y}" for y in YEARS])
+    for z, avg, pk in plant_rows:
+        w.writerow([z] + [round(a, 1) for a in avg] + [round(p, 2) for p in pk])
 
 # ---------------------------------------------------------------- 6. pumping stations
 say("\nPumping stations (one per outfall that is pumped). Duty = 2070 peak (raised to the 75 mm / 1.0 m/s floor where smaller).")
@@ -221,3 +227,29 @@ for nm, data in (("pipes", pipe_rows), ("pumps", ps)):
     if data:
         with open(rf"{OUT}\{NAME}_{nm}.csv", "w", newline="", encoding="utf-8") as f:
             w = csv.DictWriter(f, fieldnames=list(data[0].keys())); w.writeheader(); w.writerows(data)
+
+# ---------------------------------------------------------------- 7. one summary for the maps, the tables and the report
+import json
+n70, vmax70, dd70, _ = checks(f"{NAME}-2070a", False)
+yr_checks = {y: dict(zip(("pipes", "v_over_3", "dd_over"), checks(f"{NAME}-{y}", False)[:3])) for y in YEARS[:-1]}
+summary = dict(
+    option=NAME, text=SCENARIOS[NAME]["text"], stp=sorted(stp, key=lambda s: int(s[1:])),
+    pipes=len(pipe_rows), pipe_km=round(sum(p["length"] for p in pipe_rows) / 1000, 2),
+    pipe_km_by_od={str(od): round(sum(qty_len.get((od, b), 0) for b in bands) / 1000, 3) for od in ods},
+    pipe_km_by_band={b: round(sum(qty_len.get((od, b), 0) for od in ods) / 1000, 3) for b in bands},
+    pipe_km_deeper_12=round(sum(p["length"] for p in pipe_rows if p["depth_avg"] > 12) / 1000, 3),
+    manholes=len(mhs), manholes_by_band={b: mb.get(b, 0) for b in bands},
+    manholes_over_12=sum(1 for d, _ in deep if d > 12), deepest=dict(label=deep[0][1], depth=round(deep[0][0], 2)),
+    checks_2070=dict(pipes=n70, v_over_3=vmax70, dd_over=dd70), checks_years=yr_checks,
+    pumping_stations=len(ps), kw=round(sum(p["kw"] for p in ps), 1),
+    mwh_2030=round(sum(p["kwh2030"] for p in ps) / 1000, 1), mwh_2070=round(sum(p["kwh2070"] for p in ps) / 1000, 1),
+    rising_main_m=round(sum(p["L"] for p in ps), 0),
+    rising_main_m_by_dn={str(d): round(sum(p["L"] for p in ps if p["dn"] == d), 0) for d in sorted({p["dn"] for p in ps})},
+    ps_by_type={str(t): sum(1 for p in ps if p["type"] == t) for t in (1, 2, 3)},
+    plants={z: dict(avg_m3d=dict(zip(YEARS, [round(a, 1) for a in avg])), peak_ls=dict(zip(YEARS, [round(p, 2) for p in pk])))
+            for z, avg, pk in plant_rows},
+    assumptions=["rising mains routed along roads and streets, cross-country where 40 % shorter",
+                 "Hazen-Williams C = 120 in the rising mains", "minor losses +10 %", "wet well 1.5 m below the outfall invert",
+                 "pump wire-to-water efficiency 0.65", "plant inlet 3.0 m above the ground at the plant outfall"])
+with open(rf"{OUT}\{NAME}_summary.json", "w", encoding="utf-8") as f:
+    json.dump(summary, f, indent=1)

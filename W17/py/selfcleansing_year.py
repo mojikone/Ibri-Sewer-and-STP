@@ -6,7 +6,7 @@ For each pipe and year: the gradient at which that year's peak flow reaches 0.75
 gradient is 4 % or less (or its laid gradient already gives 0.75 m/s). Its first such year is its self-cleansing year.
 Flows: S1 runs (local pipe flows are the same in every option; only the trunks that receive transfers differ).
 """
-import csv, math, collections
+import csv, math, collections, json
 import numpy as np
 from selfcleansing_info import rows, slope_for, velocity, TAGS
 
@@ -30,10 +30,13 @@ print("Pipes that can carry their peak at 0.75 m/s with a gradient of 4 % or les
 print("| year | pipes | share | length km | share of length | head pipes |")
 print("|---|---|---|---|---|---|")
 heads = {l for l, d in rows.items() if d["head"]}
+OUT = dict(pipes=n, km=round(L / 1000, 1), head_pipes=len(heads), years={})
 for y in YEARS:
     sel = [l for l, f in first.items() if f != "never by 2070" and YEARS.index(f) <= YEARS.index(y)]
     ln = sum(rows[l]["L"] for l in sel)
     print(f"| {y} | {len(sel):,} | {100*len(sel)/n:.1f} % | {ln/1000:,.0f} | {100*ln/L:.1f} % | {sum(1 for l in sel if l in heads):,} of {len(heads):,} |")
+    OUT["years"][y] = dict(pipes=len(sel), share=round(len(sel) / n, 4), km=round(ln / 1000, 1),
+                           share_length=round(ln / L, 4), head_pipes=sum(1 for l in sel if l in heads))
 never = [l for l, f in first.items() if f == "never by 2070"]
 print(f"\nNever within 4 % by 2070: {len(never):,} pipes ({100*len(never)/n:.1f} %), {sum(rows[l]['L'] for l in never)/1000:,.0f} km; "
       f"head pipes among them: {sum(1 for l in never if l in heads):,}")
@@ -52,6 +55,11 @@ for _ in range(60):
 house = 0.85 * 164 * 5.32 / 86400          # L/s per domestic property at the average occupancy (W14 rule, OR 5.32)
 print(f"\nA DN200 needs {q_need} L/s of peak flow to reach 0.75 m/s at 4 %: an average flow of {hi:.2f} L/s by Peltier,"
       f" about {hi/house:.0f} houses at the average occupancy")
+OUT.update(never=dict(pipes=len(never), share=round(len(never) / n, 4), km=round(sum(rows[l]["L"] for l in never) / 1000, 1),
+                      head_pipes=sum(1 for l in never if l in heads), median_q2070_ls=round(float(np.median(q70)), 2),
+                      sizes_mm=sorted(sizes)),
+           dn200_q_need_ls=q_need, dn200_avg_need_ls=round(hi, 2), houses=round(hi / house))
+json.dump(OUT, open(r"D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\Claude\W17\results\S1\selfcleansing_year.json", "w", encoding="utf-8"), indent=1)
 
 with open(r"D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\Claude\W17\results\S1\selfcleansing_year_by_pipe.csv", "w", newline="", encoding="utf-8") as f:
     w = csv.writer(f); w.writerow(["label", "inside_diameter_mm", "length_m", "head_pipe", "first_year_within_4pc"])

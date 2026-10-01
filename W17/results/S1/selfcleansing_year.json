@@ -1,0 +1,62 @@
+{
+ "pipes": 19083,
+ "km": 1498.3,
+ "head_pipes": 3612,
+ "years": {
+  "2030": {
+   "pipes": 5562,
+   "share": 0.2915,
+   "km": 438.2,
+   "share_length": 0.2925,
+   "head_pipes": 21
+  },
+  "2040": {
+   "pipes": 6304,
+   "share": 0.3303,
+   "km": 499.6,
+   "share_length": 0.3335,
+   "head_pipes": 23
+  },
+  "2050": {
+   "pipes": 6993,
+   "share": 0.3665,
+   "km": 555.3,
+   "share_length": 0.3706,
+   "head_pipes": 26
+  },
+  "2055": {
+   "pipes": 7347,
+   "share": 0.385,
+   "km": 584.2,
+   "share_length": 0.3899,
+   "head_pipes": 29
+  },
+  "2060": {
+   "pipes": 7746,
+   "share": 0.4059,
+   "km": 616.5,
+   "share_length": 0.4114,
+   "head_pipes": 34
+  },
+  "2070": {
+   "pipes": 8822,
+   "share": 0.4623,
+   "km": 708.0,
+   "share_length": 0.4725,
+   "head_pipes": 38
+  }
+ },
+ "never": {
+  "pipes": 10261,
+  "share": 0.5377,
+  "km": 790.3,
+  "head_pipes": 3574,
+  "median_q2070_ls": 0.33,
+  "sizes_mm": [
+   176.4
+  ]
+ },
+ "dn200_q_need_ls": 0.93,
+ "dn200_avg_need_ls": 0.27,
+ "houses": 32
+}

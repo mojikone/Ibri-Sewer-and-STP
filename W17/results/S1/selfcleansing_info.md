@@ -3,20 +3,20 @@
 1. Pipes reaching 0.75 m/s at their peak flow (SewerGEMS velocities of the S1 runs)
 | year | pipes | share | length km | share of length | head pipes reaching it |
 |---|---|---|---|---|---|
-| 2030 | 189 | 1.0 % | 15 | 1.0 % | 1 of 3,612 |
-| 2040 | 251 | 1.3 % | 20 | 1.4 % | 1 of 3,612 |
-| 2050 | 339 | 1.8 % | 27 | 1.8 % | 1 of 3,612 |
-| 2055 | 487 | 2.6 % | 40 | 2.6 % | 1 of 3,612 |
-| 2060 | 700 | 3.7 % | 57 | 3.8 % | 1 of 3,612 |
-| 2070 | 1,106 | 5.8 % | 92 | 6.1 % | 5 of 3,612 |
+| 2030 | 155 | 0.8 % | 12 | 0.8 % | 0 of 3,612 |
+| 2040 | 235 | 1.2 % | 18 | 1.2 % | 1 of 3,612 |
+| 2050 | 324 | 1.7 % | 25 | 1.7 % | 1 of 3,612 |
+| 2055 | 463 | 2.4 % | 36 | 2.4 % | 1 of 3,612 |
+| 2060 | 712 | 3.7 % | 57 | 3.8 % | 1 of 3,612 |
+| 2070 | 1,098 | 5.8 % | 89 | 5.9 % | 6 of 3,612 |
 
 2. Gradient needed to reach 0.75 m/s at the peak flow (Colebrook-White ks 1.5 mm), and 3. tractive gradient at 1 Pa
 | year | group | pipes | no flow at all | median flow L/s | median slope for 0.75 m/s | 75 % | within 4 % | not reached below 100 % | median tractive slope | tractive above 4 % |
 |---|---|---|---|---|---|---|---|---|---|---|
 | 2030 | head pipes | 3,612 | 0 | 0.04 | 34.7 % | 57.2 % | 21 (1 %) | 1,851 | 2.46 % | 1,272 |
-| 2030 | all pipes below 0.75 m/s | 18,894 | 0 | 0.29 | 7.0 % | 21.6 % | 5,373 (28 %) | 3,796 | 0.98 % | 2,309 |
+| 2030 | all pipes below 0.75 m/s | 18,928 | 0 | 0.29 | 6.9 % | 21.6 % | 5,407 (29 %) | 3,796 | 0.98 % | 2,309 |
 | 2070 | head pipes | 3,612 | 0 | 0.16 | 19.2 % | 31.7 % | 38 (1 %) | 526 | 1.28 % | 372 |
-| 2070 | all pipes below 0.75 m/s | 17,977 | 0 | 0.72 | 4.7 % | 10.8 % | 7,716 (43 %) | 855 | 0.64 % | 589 |
+| 2070 | all pipes below 0.75 m/s | 17,985 | 0 | 0.72 | 4.7 % | 10.8 % | 7,724 (43 %) | 855 | 0.64 % | 589 |
 
 DN200 (176.4 mm ID): gradient needed for 0.75 m/s at a given peak flow
   0.10 L/s -> 36.49 %   (tractive at 1 Pa: 1.59 %)

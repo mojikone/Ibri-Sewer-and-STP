@@ -3,9 +3,10 @@
 2. what gradient would a pipe need to reach 0.75 m/s at its peak, and how many stay within the client's 4 %?
 3. the tractive-force gradient at tau = 1 Pa (Mara, Sleigh & Taylor, G203 p27: S = 5.5e-3 tau^1.23 Q^-0.461, Q in L/s).
 Velocity by Colebrook-White, ks = 1.5 mm, nu = 1.141e-6 m2/s (G203 p24, p25), partly full circular pipe.
-Flows and velocities from the S1 runs (R7: 2070 analysis on the designed pipes, and 2030-2060).
+Flows and velocities from the S1 runs (R9: 2070 analysis on the designed pipes, and 2030-2060).
+Writes results/S1/selfcleansing_info.json with the numbers it prints, for the report.
 """
-import csv, math, collections, sys
+import csv, math, collections, sys, json
 import numpy as np
 
 S1 = r"D:\VBOX\bridge\out\scen\S1"
@@ -57,8 +58,9 @@ for y, tag in TAGS:
     for r in csv.DictReader(open(rf"{S1}\conduits_{tag}.csv", encoding="utf-8")):
         if r["active"] != "True" or not r["label"].startswith("O"):
             continue
+        fall = float(r["start_inv"]) - float(r["stop_inv"])     # 8,712 pipes are drawn against the flow: fall < 0
         d = rows.setdefault(r["label"], dict(D=float(r["diameter_mm"]) / 1000, L=float(r["length_m"]),
-                                             S=(float(r["start_inv"]) - float(r["stop_inv"])) / float(r["length_m"]),
+                                             S=abs(fall) / float(r["length_m"]), up=r["start"] if fall >= 0 else r["stop"],
                                              start=r["start"], stop=r["stop"], v={}, q={}))
         d["v"][y] = float(r["velocity_ms"]) if r["velocity_ms"] not in ("", "NaN") else 0.0
         d["q"][y] = float(r["flow_m3d"]) / 86400 if r["flow_m3d"] not in ("", "NaN") else 0.0
@@ -68,8 +70,7 @@ deg = collections.Counter()
 for d in rows.values():
     deg[d["start"]] += 1; deg[d["stop"]] += 1
 for d in rows.values():
-    up = d["start"] if d["S"] >= 0 else d["stop"]
-    d["head"] = deg[up] == 1
+    d["head"] = deg[d["up"]] == 1          # the higher end is the upstream end: no pipe falls against the tree
 
 n = len(rows); Ltot = sum(d["L"] for d in rows.values())
 heads = [d for d in rows.values() if d["head"]]
@@ -91,6 +92,7 @@ def stats(vals):
 print("\n2. Gradient needed to reach 0.75 m/s at the peak flow (Colebrook-White ks 1.5 mm), and 3. tractive gradient at 1 Pa")
 print("| year | group | pipes | no flow at all | median flow L/s | median slope for 0.75 m/s | 75 % | within 4 % | not reached below 100 % | median tractive slope | tractive above 4 % |")
 print("|---|---|---|---|---|---|---|---|---|---|---|")
+OUT = dict(pipes=n, km=round(Ltot / 1000, 1), head_pipes=len(heads), groups={})
 for y in ("2030", "2070"):
     for name, grp in (("head pipes", heads), ("all pipes below 0.75 m/s", [d for d in rows.values() if d["v"].get(y, 0) < 0.75])):
         req = [slope_for(d["q"][y], d["D"]) for d in grp]
@@ -101,6 +103,9 @@ for y in ("2030", "2070"):
         zero = int((qs <= 0).sum()); never -= zero
         tr = np.array([5.5e-3 * (q ** -0.461) for q in qs if q > 0])
         print(f"| {y} | {name} | {len(grp):,} | {zero:,} | {np.median(qs[qs > 0]):.2f} | {100*np.median(r):.1f} % | {100*np.percentile(r,75):.1f} % | {within:,} ({100*within/len(grp):.0f} %) | {never:,} | {100*np.median(tr):.2f} % | {int((tr > 0.04).sum()):,} |")
+        OUT["groups"][f"{y} {name}"] = dict(pipes=len(grp), median_flow_ls=round(float(np.median(qs[qs > 0])), 3),
+                                            median_slope_pc=round(100 * float(np.median(r)), 2), within_4pc=within,
+                                            median_tractive_pc=round(100 * float(np.median(tr)), 2), tractive_over_4pc=int((tr > 0.04).sum()))
 
 print("\nDN200 (176.4 mm ID): gradient needed for 0.75 m/s at a given peak flow")
 for q in (0.1, 0.25, 0.5, 1.0, 1.5, 2.0, 3.0, 5.0):
@@ -113,3 +118,12 @@ for _ in range(60):
     else: hi = m
 print(f"  smallest peak flow a DN200 can carry at 0.75 m/s within 4 %: {hi:.2f} L/s")
 print(f"  flow at which the tractive gradient reaches 4 %: {(0.04/5.5e-3)**(-1/0.461):.4f} L/s")
+q4 = hi
+lo, hi = 0.01, 50.0                       # the same search at 1 %
+for _ in range(60):
+    m = math.sqrt(lo * hi)
+    if slope_for(m / 1000, 0.1764) > 0.01: lo = m
+    else: hi = m
+OUT.update(dn200_q_for_075_at_4pc_ls=round(q4, 2), dn200_q_for_075_at_1pc_ls=round(hi, 2),
+           q_tractive_4pc_ls=round((0.04 / 5.5e-3) ** (-1 / 0.461), 4))
+json.dump(OUT, open(r"D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\Claude\W17\results\S1\selfcleansing_info.json", "w", encoding="utf-8"), indent=1)
