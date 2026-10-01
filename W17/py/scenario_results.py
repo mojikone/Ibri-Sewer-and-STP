@@ -5,7 +5,8 @@ Guideline values: G203 p27 (v <= 3.0 m/s; d/D <= 0.65 to DN350, <= 0.50 above), 
 12 m hard limit, standing decision), p40 Tab 17 (PS types), p43 Tab 21 (land), p48 (wet well V = 0.25 Q T, 10 starts/h),
 p50 (force main 1.0 m/s intermittent, 2.5 m/s max, >= 75 mm ID, retention ideally <= 30 min), p55 (discharge <= 300 mm
 above the receiving flow line); G202 p104 Tab 21 (Hazen-Williams C).
-PROJECT ASSUMPTIONS (tagged in every output): rising main length = straight line x 1.25; Hazen-Williams C = 120;
+PROJECT ASSUMPTIONS (tagged in every output): rising main length along roads and streets (results/rising_mains.csv,
+cross-country straight x 1.1 where the street route is over 1.6 x the straight line); Hazen-Williams C = 120;
 minor losses +10 %; wet well 1.5 m below the incoming invert; pump wire-to-water efficiency 0.65; a plant inlet 3.0 m
 above the ground at the plant outfall.
 """
@@ -149,7 +150,9 @@ for z in sorted(stp, key=lambda s: int(s[1:])):
 
 # ---------------------------------------------------------------- 6. pumping stations
 say("\nPumping stations (one per outfall that is pumped). Duty = 2070 peak (raised to the 75 mm / 1.0 m/s floor where smaller).")
-say("ASSUMED: main = straight line x 1.25; HW C = 120; minor losses +10 %; wet well 1.5 m below the outfall invert; efficiency 0.65; plant inlet = ground + 3.0 m.")
+say("ASSUMED: main routed along roads and streets (cross-country where 40 % shorter); HW C = 120; minor losses +10 %; wet well 1.5 m below the outfall invert; efficiency 0.65; plant inlet = ground + 3.0 m.")
+RMFILE = r"D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\Claude\W17\results\rising_mains.csv"
+RM = {(r["source"], r["dest"]): r for r in csv.DictReader(open(RMFILE, encoding="utf-8"))} if os.path.exists(RMFILE) else {}
 allmh = {r["label"]: r for r in rd(f"{NAME}-2070", "manholes")}
 DN = [75, 100, 150, 200, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000, 1200]
 ps = []
@@ -161,7 +164,14 @@ for s, dest, kind in links:
     else:
         t = allmh[dest]; z_out = float(t["ground"]) + 3.0
     z_in = float(o["invert"]) - 1.5
-    L = math.hypot(float(t["x"]) - float(o["x"]), float(t["y"]) - float(o["y"])) * 1.25
+    route_row = RM.get((s, dest))
+    if route_row:
+        L = float(route_row["length_m"])
+        along = float(route_row["along_dual_m"])
+        route = route_row["method"] + (f"; {along:,.0f} m along a dual carriageway, confirm" if along > 100 else "")
+    else:
+        L = math.hypot(float(t["x"]) - float(o["x"]), float(t["y"]) - float(o["y"])) * 1.25
+        route = "straight x 1.25 (not routed)"
     q70 = transfers(NAME, "2070")[1][s] / 86400
     qmin_floor = math.pi / 4 * 0.075 ** 2 * 1.0
     # main size and duty: every DN from 75 mm with v <= 2.5 m/s; the duty is raised where needed so the main keeps
@@ -196,7 +206,7 @@ for s, dest, kind in links:
         e[y] = kw * hours * 365
     ret = (math.pi / 4 * (dn / 1000) ** 2 * L) / (sum(base_sub["2030"][u] + infil[u] for u in ups) / 86400) / 60
     ww_depth = float(o["ground"]) - float(o["invert"]) + 1.5
-    ps.append(dict(ps=s, old=OLD[s], to=dest, kind=kind, type=typ, wet_well_depth=ww_depth, q70=q70 * 1000, duty=qd * 1000, dn=dn, v=v, L=L,
+    ps.append(dict(ps=s, old=OLD[s], to=dest, kind=kind, type=typ, wet_well_depth=ww_depth, route=route, q70=q70 * 1000, duty=qd * 1000, dn=dn, v=v, L=L,
                    static=z_out - z_in, H=H, kw=kw, kwh2030=e["2030"], kwh2070=e["2070"], ret2030=ret,
                    live_m3=90 * qd / (1 if typ == 1 else 2 if typ == 2 else 3)))
 say("| PS (old) | to | type | wet well depth m | Q2070 L/s | duty L/s | DN | v m/s | main m | static m | total head m | kW | MWh/yr 2030 | MWh/yr 2070 | retention 2030 min | live vol m3 |")
