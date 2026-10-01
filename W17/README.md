@@ -15,7 +15,8 @@ helpers on the host against copies of those libraries before a job is sent.
 | Modeller's original | `Desktop\Win10 shared folder\IBRI Sewer\13 IBRI_29092026 12M(7.12 PM )\` and `Hydraulic\Model\temp\…` | untouched |
 | W17 R0 (housekeeping) | `Desktop\Win10 shared folder\IBRI Sewer\14 IBRI_W17\IBRI_W17_R0.stsw` | superseded, kept as the record |
 | W17 R1 (physical flattened) | `…\14 IBRI_W17\IBRI_W17_R1.stsw` | superseded by R2, kept as the record |
-| **W17 R2 (loads peaked)** | `…\14 IBRI_W17\IBRI_W17_R2.stsw` | **live**; terrain contours carried (`.\SHP\Contour`, relative path) |
+| W17 R2 (loads peaked) | `…\14 IBRI_W17\IBRI_W17_R2.stsw` | superseded by R3, kept as the record |
+| **W17 R3 (one load per manhole)** | `…\14 IBRI_W17\IBRI_W17_R3.stsw` | **live**; terrain contours carried (`.\SHP\Contour`, relative path) |
 
 Each revision is a new file, so the engineer can keep an older one open in SewerGEMS while the next is built: the
 scripts work on copies inside the guest (`C:\IbriWork\W17`) and only add new files to the shared folder.
@@ -73,6 +74,18 @@ unused fields (weir, cutoff, curve counts, surface storage) that were 0 and are 
 - The peaking table "Peltier100-Merriamck" is Peltier to 1 L/s and Merrimack from the next row (1.5 L/s); between
   1 and 1.5 L/s SewerGEMS interpolates (2.50 → 3.39). Kept as the modeller set it (engineer, 2026-10-01).
 
+## R3 — one sanitary load per manhole; a hard Peltier/Merrimack step (2026-10-01, engineer's decision)
+
+- **Each manhole carries one sanitary load** (engineer: only a manhole receiving an upstream outfall carries a second,
+  the transfer). The 2–4 rows on 2,023 manholes came from LoadBuilder runs made with *Append to an Existing Alternative*
+  (10.4 help, LoadBuilder step 5); they are summed into one row in all six years, totals unchanged to the m³/d
+  (2070: 2,224 rows removed; 2030–2060: 2,043–2,056).
+- "Peltier100-Merriamck" gets a row **1.001 L/s → 3.56** (Merrimack at 1 L/s), so the switch is a step at 1 L/s instead
+  of a ramp to 1.5 L/s. Only outfalls in that band moved: 2030 O14 4.69→4.94, O15 3.31→4.33, O19 4.23→4.68 L/s;
+  2070 O23 4.91→5.05 L/s.
+- To get one row per manhole from LoadBuilder itself: one run over the whole layer, finished with *Override an Existing
+  Alternative* (or *New Alternative*), never *Append*.
+
 ## The year loads are short (found 2026-10-01, not yet corrected)
 
 2070 carries the plot layer's saturation flow (60,355 against 60,099 m³/d, +0.4 %, and every subnetwork within
@@ -104,6 +117,11 @@ About 86–118 m³/d sits on the inactive manholes of the three deactivated subn
 
 - O-21 (now O2) drains to **MH-8112** (O1 subnetwork; OLD_ID in Notes).
 - Transfers in the analysis years use **each year's own upstream peak**, so every year runs upstream first.
+
+**Tested 2026-10-01 — not the deactivated areas.** Plots whose nearest manhole is one of the 197 inactive ones carry
+539–719 m³/d (2030–2060), a fifth of the gap, and the inactive manholes do carry loads in every year. At 783 manholes
+the 2030 gap is exactly one plot: those plots are 4.3 km (median) from any inactive manhole, in every settlement, 548
+of them existing plots (mostly residential, agricultural, commercial). `py/year_gap_check.py`, `data/year_gap_check.txt`.
 
 ## Open
 

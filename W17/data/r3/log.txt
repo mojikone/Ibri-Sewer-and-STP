@@ -1,0 +1,10 @@
+  '2070': 2023 manholes merged, 2224 rows removed, 0 manholes with other loads left alone; total 60,355.10 -> 60,355.10 m3/d; rows per manhole now 0:3502, 1:15778
+  '2030': 1865 manholes merged, 2043 rows removed, 0 manholes with other loads left alone; total 21,788.60 -> 21,788.60 m3/d; rows per manhole now 0:4343, 1:14937
+  '2040': 1875 manholes merged, 2056 rows removed, 0 manholes with other loads left alone; total 28,160.48 -> 28,160.48 m3/d; rows per manhole now 0:4342, 1:14938
+  '2050': 1875 manholes merged, 2056 rows removed, 0 manholes with other loads left alone; total 34,675.04 -> 34,675.04 m3/d; rows per manhole now 0:4342, 1:14938
+  '2055': 1875 manholes merged, 2056 rows removed, 0 manholes with other loads left alone; total 38,903.98 -> 38,903.98 m3/d; rows per manhole now 0:4342, 1:14938
+  '2060': 1875 manholes merged, 2056 rows removed, 0 manholes with other loads left alone; total 44,034.31 -> 44,034.31 m3/d; rows per manhole now 0:4342, 1:14938
+  'Peltier100-Merriamck': row inserted at position 7: 1.001 L/s -> 3.56
+    table now: 0.1->4.66  0.15->4.08  0.2->3.74  0.3->3.33  0.5->2.91  0.75->2.65  1->2.5  1.001->3.56  1.5->3.39  2->3.28  3->3.12  5->2.93  7.5->2.79  10->2.7  15->2.57  20->2.48  30->2.36  50->2.22  75->2.11  100->2.04  150->1.94  200->1.88  300->1.79  500->1.68  750->1.6  1000->1.54
+  saved C:\IbriWork\W17\IBRI_W17_R3.stsw
+  delivered to \\VBOXSVR\Win10_shared_folder\IBRI Sewer\14 IBRI_W17
