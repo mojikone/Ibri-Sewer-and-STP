@@ -138,6 +138,27 @@ load and merged to one row per manhole. **Every year now equals the plot layer t
 layer is loaded, so plots in unpiped land and the military area are carried at their nearest manhole in every year.
 Peak outfall flow, sum of the 24 outfalls: 2030 613.9 → 674.0 L/s; 2070 1,541.5 → 1,535.2 L/s. `data/r4/`.
 
+## R9 — the seven options on Colebrook-White (building, 2026-10-01)
+
+Job `055_make_R9_all_options.ps1` builds S1–S7 in one file from R8 (`C:\IbriWork\W17\IBRI_W17_R9.stsw`, ~46 min an
+option at Colebrook speed); `py/process_options.py` follows it and processes each option as its last run is exported
+(guard: every year and the 2070 analysis kept the 2070 design; then `scenario_results.py` and `make_option_layers.py`).
+
+- **S1 (done 13:25):** design and every year identical in sizes and inverts; no pipe over 3.0 m/s or the d/D limit in
+  any year; 40 manholes over 12 m, deepest 15.10 m (O21-M21); plant O1 24,756 → 60,456 m³/d, peak 674 → 1,535 L/s;
+  23 stations, 422 kW, 0.47 / 1.37 GWh a year (2030 / 2070). `results/S1/`.
+- **d/D is compared at three decimals**, the design's own precision: O2-P203 sat at 0.65006 against 0.65 (0.06 mm).
+- **8,712 of 19,083 pipes are drawn against the flow** (start node downstream). By the tree none falls the wrong way;
+  the exported gradient is now absolute, the GeoPackage swaps their end depths, and the self-cleansing scripts take the
+  upstream end from the inverts. The self-cleansing year table did not change (29 % in 2030, 46 % in 2070).
+- **Outputs:** transfer diagrams in Figma (`py/diagram_layout.py`, `diagram_js.py`, file `rm7tdwnSGW5HefJlXQPWDW`;
+  S1–S3 at 2×, S4–S7 at 1× because the Starter plan's MCP limit was reached — the 2× frames `EXPORT2X …` are on the
+  canvas to export by hand, then delete); QGIS project and two maps per option (`gis/`); the deliverable folder
+  `Options 2026-10/` with its README and `W17_network_options_tables.xlsx` (`py/options_tables.py`); the **Concept
+  Design Report R4** in `report/` (R3 + 6.2.5–6.2.8 and Appendix B, from `report/facts_w17.py`).
+- **Report build trap, fixed:** `W16/report_basis/facts_basis.py` puts `W16/report` at the head of the import path, so
+  every chapter imported after it came from R3; `build.py` and `charts_r3.py` now put `W17/report` back in front.
+
 ## R8 — Colebrook-White friction (engineer's decision, 2026-10-01)
 
 G203 p24 and p28: *"Gravity sewerage systems shall be designed by using the recognised hydraulic formulas such as
