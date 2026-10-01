@@ -18,7 +18,9 @@ helpers on the host against copies of those libraries before a job is sent.
 | W17 R2 (loads peaked) | `…\14 IBRI_W17\IBRI_W17_R2.stsw` | superseded by R3, kept as the record |
 | W17 R3 (one load per manhole) | `…\14 IBRI_W17\IBRI_W17_R3.stsw` | superseded; **the shared-folder copy was saved again from SewerGEMS at 10:18 before the engineer's Save As, so the R3 record is the guest copy `C:\IbriWork\W17\IBRI_W17_R3.stsw`** |
 | R4_loads (engineer's LoadBuilder reload) | `…\14 IBRI_W17\IBRI_W17_R4_loads.stsw` | the engineer's input to R4, kept |
-| **W17 R4 (years reloaded)** | `…\14 IBRI_W17\IBRI_W17_R4.stsw` | **live**; terrain contours carried (`.\SHP\Contour`, relative path) |
+| W17 R4 (years reloaded) | `…\14 IBRI_W17\IBRI_W17_R4.stsw` | the loads every option builds on |
+| W17 R5, R6 (first S1 builds) | `…\14 IBRI_W17\IBRI_W17_R5/R6.stsw` | **DO NOT USE** — see the section below |
+| **W17 R7 (option S1)** | `…\14 IBRI_W17\IBRI_W17_R7.stsw` | **live**; S1 designed and analysed |
 
 Each revision is a new file, so the engineer can keep an older one open in SewerGEMS while the next is built: the
 scripts work on copies inside the guest (`C:\IbriWork\W17`) and only add new files to the shared folder.
@@ -133,6 +135,37 @@ load and merged to one row per manhole. **Every year now equals the plot layer t
 30,938.43; 2050 37,814.53; 2055 42,265.79; 2060 47,523.06; 2070 60,098.79 m³/d, on 15,708–15,711 manholes. The full plot
 layer is loaded, so plots in unpiped land and the military area are carried at their nearest manhole in every year.
 Peak outfall flow, sum of the 24 outfalls: 2030 613.9 → 674.0 L/s; 2070 1,541.5 → 1,535.2 L/s. `data/r4/`.
+
+## R7 — option S1, centralised STP at O-1 (2026-10-01)
+
+- **Structure** (the same for every option): sanitary children `S1-2030` … `S1-2070` under the shared year
+  alternatives, holding only the transfer rows (pattern loads, 120 rows = 20 transfers × 6 years); physical `S1-2070`
+  (child of the modeller's 2070); scenarios `S1-2070` (DESIGN), `S1-2070A` (the same 2070 run as an analysis, the
+  check on the design), `S1-2030` … `S1-2060` (ANALYSIS, own year's transfers) — every alternative and calculation
+  option set local. Catalogue Manning's n set to 0.013 (the modeller's value on 18,750 pipes; the catalogue had 0.010).
+- **Transfers** = each outfall's own peak + everything transferred into its subnetwork (additive, tested), upstream
+  first, per year: `py/routing.py` (S1–S7 routing), `py/make_transfers.py`. Flow check: SewerGEMS outfall flows equal
+  the computed transfers to 0.0000 %.
+- **Design** converged in four passes (2,627, 1,538, 210, 0 sizes changed). 2070 analysis and every year: **no pipe over
+  3.0 m/s, none over the d/D limit**; 42 pipes break the 12 m cover limit; **40 manholes deeper than 12 m** (modeller's
+  design: 260), deepest 15.10 m (O21-M21). 1,498 km of pipe; length by size and depth band in`results/S1/S1_summary.md`.
+- **Plant O1:** 24,756 m³/d (2030) → 60,456 m³/d (2070) average with infiltration; peak 674 → 1,535 L/s.
+- **Pumping:** 23 stations, 431 kW duty, 0.48 GWh/yr (2030), 1.39 GWh/yr (2070) — with the assumptions tagged in the
+  table (straight-line main × 1.25, C = 120, efficiency 0.65). Long small mains (O-23, O-24 to the plant 7–9 km; O-15
+  to MH-18772 9.2 km lifting 45 m) give 2–3 days' retention in 2030: H2S risk (G203 §7.7), to be weighed in the appraisal.
+- **Not yet run:** the self-cleansing audit on 2030 × 0.61 with no infiltration (project rule); 17,977 of 19,083 pipes
+  are below 0.75 m/s at their 2070 peak — mostly DN200 heads, where G203 lets tractive force govern.
+
+## R5, R6 — first S1 builds: DO NOT USE (2026-10-01)
+
+Both are kept only as the record of a fault. The year scenarios S1-2030 … S1-2060 were created with calculation
+options equal to their parent's, so they stayed **inherited**; switching S1-2070 to DESIGN made every year run a
+design too, each re-sizing the shared S1 pipes for its own year (O9-P715: 450 mm after 2030, 560 mm after 2060, 900 mm
+after the 2070 design). The pipes saved in R5 and R6 are therefore a 2060 design. Also found on the way: the typed
+API's diameter field is stale for catalogue pipes (the size reference holds the real size), and one design pass is
+not converged (R6: 1,429, 545, 49, 0 sizes changed over four passes). Fixed in R7: scenario alternatives and
+calculation options are set *local* explicitly, exports read the catalogue size, the design repeats until no size
+changes, and the job fails if an analysis run changes any pipe size.
 
 ## Open
 
