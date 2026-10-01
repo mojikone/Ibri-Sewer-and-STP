@@ -1,0 +1,210 @@
+== alternative types and alternatives
+[1] HmiDataSetGeometry / <Geometry>  count=1
+             2  parent=       0  Base <Geometry>
+[2] HMIDataSetTopology / Topology  count=1
+             3  parent=       0  Base Topology
+[3] HMIActiveTopology / Active Topology  count=1
+             4  parent=       0  Base Active Topology
+[100] HMIUserDefinedExtensions / User Data Extensions  count=1
+             5  parent=       0  Base User Data Extensions
+[4] Physical / Physical  count=33
+             6  parent=       0  Base Physical
+        277809  parent=       6  Physical Alternative - 1 - Property Inference Scenario - 1
+        277899  parent=  277809  Physical Alternative - 1 - Property Inference Scenario - 1
+        277958  parent=  277899  Physical Alternative - 1 - Property Inference Scenario - 1
+        277975  parent=  277958  Physical Alternative - 1 - Property Inference Scenario - 1
+        278251  parent=  277975  Physical Alternative - 1 - Property Inference Scenario - 2
+        278279  parent=  278251  Physical Alternative - 1 - Property Inference Scenario - 2
+        278313  parent=  278279  Physical Alternative - 1 - Property Inference Scenario - 2
+        278332  parent=  278313  Physical Alternative - 1 - Property Inference Scenario - 2
+        278355  parent=  278332  Physical Alternative - 1 - Property Inference Scenario - 2
+        278427  parent=  278332  Physical Alternative - 1 - Property Inference Scenario - 2
+        278469  parent=  278427  Physical Alternative - 1 - Property Inference Scenario - 2
+        278499  parent=  278469  Physical Alternative - 1 - Property Inference Scenario - 2
+        278586  parent=  278499  Physical Alternative - 1 - Property Inference Scenario - 2
+        278620  parent=  278586  Physical Alternative - 1 - Property Inference Scenario - 2
+        278636  parent=  278620  Physical Alternative - 1 - Property Inference Scenario - 3
+        278736  parent=  278636  Physical Alternative - 1 - Property Inference Scenario - 3
+        278838  parent=  278736  Physical Alternative - 1 - Property Inference Scenario - 3
+        278849  parent=  278838  Physical Alternative - 1 - Property Inference Scenario - 3
+        278912  parent=  278849  Physical Alternative - 1 - Property Inference Scenario - 3
+        278937  parent=  278912  Physical Alternative - 1 - Property Inference Scenario - 3
+        279041  parent=  278937  Physical Alternative - 1 - Property Inference Scenario - 3
+        279060  parent=  279041  Physical Alternative - 1 - Property Inference Scenario - 3
+        279111  parent=  279060  Physical Alternative - 1 - Property Inference Scenario - 3
+        279558  parent=  279111  Physical Alternative - 1 - Property Inference Scenario - 4
+        279560  parent=  279558  Physical Alternative - 1 - Property Inference Scenario - 4
+        279573  parent=  279560  Physical Alternative - 1 - Property Inference Scenario - 4
+        279582  parent=  279573  Physical Alternative - 1 - Property Inference Scenario - 4
+        279589  parent=  279582  Physical Alternative - 1 - Property Inference Scenario - 4
+        279704  parent=  279589  Physical Alternative - 1 - Property Inference Scenario - 4
+        279713  parent=  279704  Physical Alternative - 1 - Property Inference Scenario - 4
+        279720  parent=  279713  Physical Alternative - 1 - Property Inference Scenario - 4
+        279727  parent=  279720  2070
+[5] BoundaryCondition / Boundary Condition  count=1
+             7  parent=       0  Base Boundary Condition
+[21] InitialSettings / Initial Settings  count=1
+             8  parent=       0  Base Initial Settings
+[7] Hydrologic / Hydrology  count=1
+             9  parent=       0  Base Hydrology
+[8] Output / Output  count=1
+            10  parent=       0  Base Output
+[13] InfiltrationAndInflow / Infiltration and Inflow  count=1
+            11  parent=       0  Base Infiltration and Inflow
+[10] RainfallRunoff / Rainfall Runoff  count=1
+            12  parent=       0  Base Rainfall Runoff
+[11] WaterQuality / Water Quality  count=1
+            13  parent=       0  Base Water Quality
+[12] SanitaryLoading / Sanitary Loading  count=6
+            14  parent=       0  2070
+        279769  parent=       0  2030
+        279770  parent=       0  2040
+        279771  parent=       0  2050
+        279772  parent=       0  2055
+        279773  parent=       0  2060
+[40] Headloss / Headloss  count=1
+            15  parent=       0  Base Headloss
+[22] Operational / Operational  count=1
+            16  parent=       0  Base Operational
+[41] Design / Design  count=1
+            17  parent=       0  Base Design
+[45] SystemFlows / System Flows  count=1
+            18  parent=       0  Base System Flows
+[14] Scada / SCADA  count=1
+            19  parent=       0  Base SCADA
+[28] EnergyCost / Energy Cost  count=1
+            20  parent=       0  Base Energy Cost
+[1003] Surface / Surface Definition  count=1
+            21  parent=       0  Base Surface Definition
+== numerical engines and calculation options
+[-719657520] CivilStormDynamicEngine  options=1
+            22  Base Calculation Options
+[-975217119] PondPackNumericalEngine  options=1
+            23  Base Calculation Options
+[1901376113] StormDerivedEngine  options=1
+            24  Base Calculation Options
+[984385593] GVFPressureEngine  options=1
+            25  Base Calculation Options
+[-315037824] GravityDerivedEngine  options=1
+            26  Base Calculation Options
+[98226972] GVFEngine  options=1
+            27  Base Calculation Options
+[903456527] SwmmEngine  options=1
+            28  Base Calculation Options
+[-1006489790] EnergyCostEngine  options=1
+            29  Base Calculation Options
+[796754351] UrbanFloodEngine  options=1
+            30  Base Calculation Options
+[1633152845] DelawareProductEngine  options=2
+            31  DESIGN
+        279786  ANALYSIS
+== scenarios
+       1 parent=       0 'Base' engine=
+         HmiDataSetGeometry=2 HMIDataSetTopology=3 HMIActiveTopology=4 HMIUserDefinedExtensions=5 Physical=6 BoundaryCondition=7 InitialSettings=8 Hydrologic=9 Output=10 InfiltrationAndInflow=11 RainfallRunoff=12 WaterQuality=13 SanitaryLoading=14 Headloss=15 Operational=16 Design=17 SystemFlows=18 Scada=19 EnergyCost=20 Surface=21
+        calc[CivilStormDynamicEngine]=22
+        calc[PondPackNumericalEngine]=23
+        calc[StormDerivedEngine]=24
+        calc[GVFPressureEngine]=25
+        calc[GravityDerivedEngine]=26
+        calc[GVFEngine]=27
+        calc[SwmmEngine]=28
+        calc[EnergyCostEngine]=29
+        calc[UrbanFloodEngine]=30
+        calc[DelawareProductEngine]=31
+  279744 parent=       0 '2070' engine=
+         HmiDataSetGeometry=2 HMIDataSetTopology=3 HMIActiveTopology=4 HMIUserDefinedExtensions=5 Physical=279727 BoundaryCondition=7 InitialSettings=8 Hydrologic=9 Output=10 InfiltrationAndInflow=11 RainfallRunoff=12 WaterQuality=13 SanitaryLoading=14 Headloss=15 Operational=16 Design=17 SystemFlows=18 Scada=19 EnergyCost=20 Surface=21
+        calc[CivilStormDynamicEngine]=22
+        calc[PondPackNumericalEngine]=23
+        calc[StormDerivedEngine]=24
+        calc[GVFPressureEngine]=25
+        calc[GravityDerivedEngine]=26
+        calc[GVFEngine]=27
+        calc[SwmmEngine]=28
+        calc[EnergyCostEngine]=29
+        calc[UrbanFloodEngine]=30
+        calc[DelawareProductEngine]=31
+  279763 parent=       0 '2030' engine=
+         HmiDataSetGeometry=2 HMIDataSetTopology=3 HMIActiveTopology=4 HMIUserDefinedExtensions=5 Physical=279727 BoundaryCondition=7 InitialSettings=8 Hydrologic=9 Output=10 InfiltrationAndInflow=11 RainfallRunoff=12 WaterQuality=13 SanitaryLoading=279769 Headloss=15 Operational=16 Design=17 SystemFlows=18 Scada=19 EnergyCost=20 Surface=21
+        calc[CivilStormDynamicEngine]=22
+        calc[PondPackNumericalEngine]=23
+        calc[StormDerivedEngine]=24
+        calc[GVFPressureEngine]=25
+        calc[GravityDerivedEngine]=26
+        calc[GVFEngine]=27
+        calc[SwmmEngine]=28
+        calc[EnergyCostEngine]=29
+        calc[UrbanFloodEngine]=30
+        calc[DelawareProductEngine]=279786
+  279764 parent=       0 '2040' engine=
+         HmiDataSetGeometry=2 HMIDataSetTopology=3 HMIActiveTopology=4 HMIUserDefinedExtensions=5 Physical=279727 BoundaryCondition=7 InitialSettings=8 Hydrologic=9 Output=10 InfiltrationAndInflow=11 RainfallRunoff=12 WaterQuality=13 SanitaryLoading=279770 Headloss=15 Operational=16 Design=17 SystemFlows=18 Scada=19 EnergyCost=20 Surface=21
+        calc[CivilStormDynamicEngine]=22
+        calc[PondPackNumericalEngine]=23
+        calc[StormDerivedEngine]=24
+        calc[GVFPressureEngine]=25
+        calc[GravityDerivedEngine]=26
+        calc[GVFEngine]=27
+        calc[SwmmEngine]=28
+        calc[EnergyCostEngine]=29
+        calc[UrbanFloodEngine]=30
+        calc[DelawareProductEngine]=279786
+  279765 parent=       0 '2050' engine=
+         HmiDataSetGeometry=2 HMIDataSetTopology=3 HMIActiveTopology=4 HMIUserDefinedExtensions=5 Physical=279727 BoundaryCondition=7 InitialSettings=8 Hydrologic=9 Output=10 InfiltrationAndInflow=11 RainfallRunoff=12 WaterQuality=13 SanitaryLoading=279771 Headloss=15 Operational=16 Design=17 SystemFlows=18 Scada=19 EnergyCost=20 Surface=21
+        calc[CivilStormDynamicEngine]=22
+        calc[PondPackNumericalEngine]=23
+        calc[StormDerivedEngine]=24
+        calc[GVFPressureEngine]=25
+        calc[GravityDerivedEngine]=26
+        calc[GVFEngine]=27
+        calc[SwmmEngine]=28
+        calc[EnergyCostEngine]=29
+        calc[UrbanFloodEngine]=30
+        calc[DelawareProductEngine]=279786
+  279766 parent=       0 '2055' engine=
+         HmiDataSetGeometry=2 HMIDataSetTopology=3 HMIActiveTopology=4 HMIUserDefinedExtensions=5 Physical=279727 BoundaryCondition=7 InitialSettings=8 Hydrologic=9 Output=10 InfiltrationAndInflow=11 RainfallRunoff=12 WaterQuality=13 SanitaryLoading=279772 Headloss=15 Operational=16 Design=17 SystemFlows=18 Scada=19 EnergyCost=20 Surface=21
+        calc[CivilStormDynamicEngine]=22
+        calc[PondPackNumericalEngine]=23
+        calc[StormDerivedEngine]=24
+        calc[GVFPressureEngine]=25
+        calc[GravityDerivedEngine]=26
+        calc[GVFEngine]=27
+        calc[SwmmEngine]=28
+        calc[EnergyCostEngine]=29
+        calc[UrbanFloodEngine]=30
+        calc[DelawareProductEngine]=279786
+  279767 parent=       0 '2060' engine=
+         HmiDataSetGeometry=2 HMIDataSetTopology=3 HMIActiveTopology=4 HMIUserDefinedExtensions=5 Physical=279727 BoundaryCondition=7 InitialSettings=8 Hydrologic=9 Output=10 InfiltrationAndInflow=11 RainfallRunoff=12 WaterQuality=13 SanitaryLoading=279773 Headloss=15 Operational=16 Design=17 SystemFlows=18 Scada=19 EnergyCost=20 Surface=21
+        calc[CivilStormDynamicEngine]=22
+        calc[PondPackNumericalEngine]=23
+        calc[StormDerivedEngine]=24
+        calc[GVFPressureEngine]=25
+        calc[GravityDerivedEngine]=26
+        calc[GVFEngine]=27
+        calc[SwmmEngine]=28
+        calc[EnergyCostEngine]=29
+        calc[UrbanFloodEngine]=30
+        calc[DelawareProductEngine]=279786
+== manhole fields by alternative type
+domain element types: 8:PondOutletStructure | 9:CrossSectionNode | 1:Manhole | 2:CatchBasin | 15:JunctionChamber | 5:Outfall | 12:WetWell | 13:PressureJunction | 301:AirValve | 800:Headwall | 810:PropertyConnection | 10:GutterLink | 3:Conduit | 14:PressurePipe | 4:Channel | 24:LateralLink | 6:Catchment | 7:Pond | 700:IdahoPumpStation | 701:LID | 801:Grid2D | 1900:SurfacePolygon | 68:StandardPump | 72:VariableSpeedPumpBattery | 23:ScadaElement | 26:TapNode | 2000:SurfaceLine | 803:BoundaryLine2D | 2001:SurfaceProfilePolyline | 804:BoundaryPoint2D | 1802:SurfacePoint
+[1] HmiDataSetGeometry: HMIGeometry:LongBinary | HMIGeometryOpenNumberModified:Integer | HMIRealGeometry:LongBinary | HmiDataSetGeometry_NodeRotation:Real | HmiDataSetGeometry_RotationReferenceElement:Referenced
+[3] HMIActiveTopology: HMIActiveTopologyIsActive:Boolean
+[4] Physical: Physical_IsBolted:Boolean | Physical_SurchargedDepth:Real | Physical_TreatAsStorage:Boolean | SurfaceStorageType:Enumerated | SurfaceDepthAreaList:Collection | SurfaceDepthAreaListCount:Integer | SurfaceConstantAreaType_SurfaceConstantArea:Real | GravityStructureType:Enumerated | CircularStructureType_Diameter:Real | BoxStructureType_Length:Real | BoxStructureType_Width:Real | GridRimElevationMatching:Enumerated | Physical_SetRimToGroundElevation:Boolean | Physical_RimElevation:Real | Physical_InvertElevation:Real | Physical_GroundElevation:Real | Physical_UpdateGroundElevationFromTerrainModel:Boolean
+[21] InitialSettings: InitialSettings_InitialDepth:Real
+[8] Output: HasTwoDTimeSeriesResults:Boolean
+[13] InfiltrationAndInflow: InfiltrationAndInflow_ApplySWMMRTKUnitHydrographSet:Boolean | InfiltrationAndInflow_SewershedArea:Real | InfiltrationAndInflow_SWMMRTKUnitHydrographSetID:Referenced | InflowList:Collection | InflowListCount:Integer | InflowHydrographList:Collection | InflowHydrographListCount:Integer
+[10] RainfallRunoff: RainfallRunoff_UseLocalRainfall:Boolean | RainfallRunoff_StormEventID:Text
+[11] WaterQuality: PollutographCollection:Collection | PollutographCollectionCount:Integer | WaterQuality_ApplyTreatment:Boolean | TreatmentCollection:Collection | TreatmentCollectionCount:Integer | TreatmentUnits:Enumerated | WaterQuality_H2S:Real | WaterQuality_BOD:Real
+[12] SanitaryLoading: SanitaryLoads:Collection | SanitaryLoadsCount:Integer | SanitaryInflowHydrographCurve:Collection | SanitaryInflowHydrographCurveCount:Integer
+[40] Headloss: HeadlossMethod:Enumerated | Hec22BenchingMethod:Enumerated | AbsoluteType_AbsoluteHeadloss:Real | GenericType_DownstreamHeadlossCoefficient:Real | GenericType_UpstreamHeadlossCoefficient:Real | StandardType_StandardHeadlossCoefficient:Real | AashtoShapingMethod:Enumerated | HeadlossFlowCurveType_GenericHeadlossElementID:Referenced
+[41] Design: Design_RequiredFreeboard:Real | Design_DesignStructureElevation:Boolean | Design_DesiredSumpDepth:Real | Design_NodeMinimumCover:Real | Design_NodeMaximumCover:Real | Design_LocalPipeMatchingConstraints:Boolean | Design_LocalMatchlineOffset:Real | Design_LocalAllowDropStructure:Boolean | Design_LocalUseDropStructureToMinimizeCover:Boolean | Design_LocalMinimumDropDepth:Real | Design_LocalMinimumStandPipeHeight:Real | LocalPipeMatching:Enumerated
+[45] SystemFlows: SystemFlows_KnownFlow:Real
+== support element types
+[14] ExtremeFlowSetup  count=1
+[15] PatternSetup  count=1
+[106] CatalogConduit  count=1
+[50] IdahoPattern  count=1
+[51] IdahoPumpDefinition  count=1
+[13] UnitSanitaryLoad  count=1
+[12] ExtremeFlowFactor  count=3
+[351] DigitalTerrainModel  count=1
+[352] DigitalTerrainModelGroup  count=1
+[1000] QBATDefinition  count=1
