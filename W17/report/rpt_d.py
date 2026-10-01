@@ -77,7 +77,7 @@ def part_d(d):
                "at Tanam, Satwah, Al Makhtibyah and Bat, miss part of the plots "
                "that carry the settlement's name. The map on the next page "
                "shows them in red.")
-    N.add(p, "Final_Boundary_IBRI.kmz, issued with the Inception Report R0.")
+    N.add(p, "The boundary issued with the Inception Report R0.")
     p = D.p(d, f"The boundaries were therefore redrawn. Each of the "
                f"{fmt(ps['total'])} plots was given the settlement whose "
                f"polygon contains it, or, where none does, the nearest one. The "
@@ -215,7 +215,7 @@ def part_d(d):
                f"{fmt(F.cadastre_disagreement() * 100)} per cent of them. The "
                f"use of every plot has therefore been determined from what is "
                f"on it, in a fixed order.")
-    N.add(p, "MoH_Plots, 77,265 plots, Ministry of Housing and Urban Planning, received September 2026.")
+    N.add(p, "The cadastral plots of the Ministry of Housing and Urban Planning, 77,265 plots, received in September 2026.")
     D.picture(d, os.path.join(IMG, "D6_landuse.png"), 14.5)
     D.fig_caption(d, "How the use of each plot is determined from the electricity meters, the satellite image and the plot itself.")
     D.numbered(d, "a plot inside one of the two industrial estates is industrial;", restart=True)
@@ -318,8 +318,8 @@ def part_d(d):
                f"{fmt(gr['d2030s'], 1)} in the 2030s, {fmt(gr['d2040s'], 1)} in "
                f"the 2040s, {fmt(gr['d2050s'], 1)} in the 2050s and 2.4 after "
                f"2060.")
-    N.add(p, "Inception Report R0, Section 6, and the demand workbook, sheets "
-             "Pop_Wilayat and Project Pop Settlements. Wilayat population "
+    N.add(p, "Inception Report R0, Section 6, and its demand calculation for the "
+             "wilayat and for the project settlements. Wilayat population "
              "183,564 in 2024; the twenty-five settlements are 63.4 per cent of "
              "it in every year. PAM-GUD-201 allows an extrapolation of ten "
              "years beyond the available forecast.")

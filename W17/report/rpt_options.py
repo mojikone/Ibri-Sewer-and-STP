@@ -213,7 +213,7 @@ def network_options(d):
     lo_o = min(counts, key=counts.get); hi_o = max(counts, key=counts.get)
     many = (f"{counts[lo_o]} stations" + (" in every option" if len(opts) > 1 else f" in option {lo_o}")
             if counts[lo_o] == counts[hi_o] else
-            f"from {counts[lo_o]} stations in option {lo_o} to {counts[hi_o]} in option {hi_o}")
+            f"between {counts[lo_o]} and {counts[hi_o]} stations, depending on the option,")
     p = D.p(d, "Two features of the pumping need attention whichever option is chosen. First, a long rising main "
                f"carrying a small flow holds the sewage for hours. In 2030, {many} hold it longer than the 30 minutes "
                "the guideline aims for"
@@ -226,8 +226,9 @@ def network_options(d):
     if heads and heads[0][0] > 100:
         h, s, _ = heads[0]
         hi_opts = sorted({o for hh, ss, o in heads if ss == s and hh > 100})
+        listed = hi_opts[0] if len(hi_opts) == 1 else ", ".join(hi_opts[:-1]) + " and " + hi_opts[-1]
         D.p(d, f"Second, the station at {F.name(s)} lifts a few litres a second through a long main against about "
-               f"{fmt(round(h, -1))} m of head in option{'s' if len(hi_opts) > 1 else ''} {', '.join(hi_opts)}. "
+               f"{fmt(round(h, -1))} m of head in option{'s' if len(hi_opts) > 1 else ''} {listed}. "
                "A connection of that kind is to be "
                "reconsidered at the preliminary design: a shorter route to a nearer subnetwork, or local treatment.")
 
@@ -235,11 +236,11 @@ def network_options(d):
     sy = json.load(open(os.path.join(F.RES, "S1", "selfcleansing_year.json"), encoding="utf-8"))
     si = json.load(open(os.path.join(F.RES, "S1", "selfcleansing_info.json"), encoding="utf-8"))
     D.h(d, 3, "6.2.8.   When the network becomes self-cleansing")
-    p = D.p(d, "Nama Water Services asked in which year every pipe reaches the self-cleansing velocity of 0.75 m/s at "
-               "its peak flow. The question is answered here with the head pipes allowed as steep as 4 per cent: for "
-               "every pipe and every year, the gradient at which that year's peak flow reaches 0.75 m/s in the pipe's "
-               "own size is calculated, and the pipe counts as self-cleansing from the first year in which that "
-               "gradient is 4 per cent or less.")
+    p = D.p(d, "This section sets out the year from which each pipe reaches the self-cleansing velocity of 0.75 m/s at "
+               "its peak flow, with the head pipes allowed as steep as 4 per cent, the steepest gradient indicated by "
+               "Nama Water Services. For every pipe and every year, the gradient at which that year's peak flow "
+               "reaches 0.75 m/s in the pipe's own size is calculated, and the pipe counts as self-cleansing from the "
+               "first year in which that gradient is 4 per cent or less.")
     N.add(p, "PAM-GUD-203, page 26 (0.75 m/s at peak flow); Colebrook-White with a roughness of 1.5 mm. Calculated on "
              "option S1; the head pipes, which decide the answer, carry the same flow in every option.")
     D.tab_caption(d, "Pipes that reach 0.75 m/s at their peak flow at a gradient of 4 per cent or less")

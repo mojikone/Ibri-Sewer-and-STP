@@ -152,8 +152,8 @@ def roads(d):
                f"{by['02']:,.0f} of class 02, {by['04']:,.0f} of class 04 and {by['05']:,.0f} of class 05. Classes 01 and 02 are "
                f"the through routes that cross the study area. Class 05, {_pct(by['05'] / tot)} of the length, is the street "
                f"grid of the settlements, which the collection network follows.")
-    N.add(p, "Road centreline dataset, field StrCls, clipped to the updated project boundary. A dual carriageway is "
-             "recorded as two centrelines and is counted on both.")
+    N.add(p, "The road centrelines supplied, by the road class they carry, clipped to the updated project boundary. A dual "
+             "carriageway is recorded as two centrelines and is counted on both.")
     D.p(d, f"The dual carriageways among them, {rd['dual_centreline_km']:,.0f} kilometres of centreline, are not used as sewer "
            f"corridors and are crossed at right angles only (Section 6.2.2).")
     _map(d, "A02_roads", "Road network of the study area, by the class code of the centrelines as supplied.")

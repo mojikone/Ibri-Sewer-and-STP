@@ -78,8 +78,8 @@ def part_e(d):
                "per day, annotated as arising from the Regional Master Plan "
                "concept design and not yet approved. That figure is taken as "
                "the master plan position for comparison.")
-    N.add(p, "STP_PT_IBRI.shp, record identifier 10, status Design, source "
-             "recorded as Asset Planning.")
+    N.add(p, "The treatment plant record in the asset data supplied, with the "
+             "status Design and the source Asset Planning.")
 
     D.p(d, "The comparison depends on the design horizon, which is the subject "
            "of Section 1.5.2, and on the flow series described in Section 4.2.7. "

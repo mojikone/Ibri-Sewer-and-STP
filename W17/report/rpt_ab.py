@@ -81,10 +81,9 @@ def part_a(d):
                "settlements, and covers 531.4 square kilometres. All the work "
                "presented here is on the updated boundary, and confirmation of "
                "it is requested (Section 1.5.4).")
-    N.add(p, "Project_Boundary.kmz, received in July 2026. A second boundary, "
-             "Final_Boundary_IBRI.kmz of 521.1 square kilometres, was issued "
-             "with the Inception Report package; the updated boundary contains "
-             "both.")
+    N.add(p, "The project boundary received in July 2026. A second boundary, "
+             "of 521.1 square kilometres, was issued with the Inception Report "
+             "package; the updated boundary contains both.")
 
     D.h(d, 3, "1.2.3.   Coordinate system")
     D.p(d, "All spatial data is held and all measurements are made in "
@@ -291,9 +290,9 @@ def part_b(d):
                "two networks, not one. They are distinguished by the "
                "operational status field, and the distinction is confirmed by "
                "four further fields that agree with it on every record.")
-    N.add(p, "Field OP_STATUE on SEWERLINE_IBRI, FORCEMAIN_IBRI and "
-             "TE_LINE_IBRI. Value 1 denotes the constructed network and value "
-             "0 the proposed network.")
+    N.add(p, "The operational status recorded on every gravity sewer, force "
+             "main and treated effluent line of the dataset: one value denotes "
+             "the constructed network and the other the proposed network.")
 
     D.tab_caption(d, "The two networks and how they are distinguished")
     D.table(d, ["", "Constructed network", "Proposed network"], [
@@ -340,7 +339,7 @@ def part_b(d):
                "in progress will establish diameters, levels and condition, "
                "and until it reports, the capacity of the existing network to "
                "accept additional flow is treated as unknown.")
-    N.add(p, "Field REMARKS on the constructed records. The tender records "
+    N.add(p, "The remarks recorded on the constructed network. The tender records "
              "that the existing network layout is based on available "
              "information, and that the preparation of complete as-built "
              "records and GIS forms part of the consultant's scope.")
@@ -366,8 +365,8 @@ def part_b(d):
     D.p(d, "")
     p = D.p(d, "The PAEW dataset provides 647.8 kilometres of water mains "
                "within the study area and is adopted as the source for utility "
-               "interfaces. The second dataset, supplied under an Ibri file "
-               "name, contains 3.5 kilometres of mains located approximately "
+               "interfaces. The second dataset, supplied as the Ibri water "
+               "network, contains 3.5 kilometres of mains located approximately "
                "130 kilometres north-west of the project area; none of it "
                "falls within the study area. Confirmation is requested that "
                "the PAEW dataset is the current record for Ibri.")
@@ -386,11 +385,11 @@ def part_b(d):
                "of connections at a location, and is used for that purpose in "
                "Section 4.1. The data is of 2024, which is the base year of "
                "this report.")
-    N.add(p, "Fields present: identifier, tariff, coordinates in projected and "
-             "geographic form, governorate and wilayat. The governorate is "
-             "recorded as Dahira on all records; the wilayat field is empty on "
-             "all records. The positions were adjusted onto the cadastre by "
-             "the client before issue.")
+    N.add(p, "Each record carries an identifier, the tariff, coordinates in "
+             "projected and geographic form, the governorate and the wilayat. "
+             "The governorate is recorded as Dahira on every record and the "
+             "wilayat is blank on every record. The positions were adjusted onto "
+             "the cadastre by the client before issue.")
 
     D.tab_caption(d, "Electricity accounts by tariff and the category adopted")
     D.table(d, ["Tariff", "Accounts", "Category adopted"], [
