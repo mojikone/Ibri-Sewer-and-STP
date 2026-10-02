@@ -71,3 +71,8 @@ W17/Options 2026-10/
 # W17 report build (Revision 4): page contact sheets and the copy written when the target is open in Word
 W17/report/R*/check/
 W17/report/R*/*_new.docx
+# W17 deck: the engineer's base deck (36 MB, his file), the maps re-encoded as JPEG and the slide renders; the
+# deck itself is written into the deliverable folder by W17/presentation/build_deck_w17.py
+W17/presentation/base/
+W17/presentation/assets/
+W17/presentation/check/
