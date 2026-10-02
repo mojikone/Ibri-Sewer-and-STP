@@ -193,7 +193,16 @@ def network_options(d):
 
     _chart(d, "W03_pumping", "Pumping stations by option: the pumps in duty, and the energy they use in 2030 and "
                              "2070. The count of stations is above each bar.")
-    _chart(d, "W04_depth", "Manholes deeper than 9 m by option, split at 12 m, with the deepest manhole.")
+    n12s = [r["mh_over_12"] for r in rows]; dms = [r["deepest"] for r in rows]; kms = [r["km_over_12"] for r in rows]
+    if max(n12s) - min(n12s) <= 2 and max(dms) - min(dms) <= 0.3:   # near equal: a sentence says it better than bars
+        rng = lambda a, b, nd=0: fmt(a, nd) if round(a, nd) == round(b, nd) else f"{fmt(a, nd)} to {fmt(b, nd)}"
+        D.p(d, f"The depth hardly changes between the options: in every option {rng(min(n12s), max(n12s))} manholes "
+               f"are deeper than 12 m, {rng(min(kms), max(kms), 1)} km of sewer lies deeper than 12 m and the deepest "
+               f"manhole is at {rng(min(dms), max(dms), 1)} m. The deep sewers are set by the ground within the "
+               "subnetworks, which the options do not change; where the flow is treated changes the trunk sizes and the "
+               "pumping, not the depth.")
+    else:
+        _chart(d, "W04_depth", "Manholes deeper than 9 m by option, split at 12 m, with the deepest manhole.")
 
     D.callout(d, "Pumping figures.",
               "The rising mains follow the roads and streets, and run across open ground where that route is more "
@@ -225,12 +234,17 @@ def network_options(d):
     heads = sorted(((r["H"], r["ps"], o) for o in opts for r in F.pumps(o)), reverse=True)
     if heads and heads[0][0] > 100:
         h, s, _ = heads[0]
-        hi_opts = sorted({o for hh, ss, o in heads if ss == s and hh > 100})
-        listed = hi_opts[0] if len(hi_opts) == 1 else ", ".join(hi_opts[:-1]) + " and " + hi_opts[-1]
-        D.p(d, f"Second, the station at {F.name(s)} lifts a few litres a second through a long main against about "
-               f"{fmt(round(h, -1))} m of head in option{'s' if len(hi_opts) > 1 else ''} {listed}. "
-               "A connection of that kind is to be "
-               "reconsidered at the preliminary design: a shorter route to a nearer subnetwork, or local treatment.")
+        own = {o: hh for hh, ss, o in heads if ss == s}            # that station's head in every option that has it
+        lo_h, hi_h = min(own.values()), max(own.values())
+        where = ("in every option" if len(own) == len(opts) else
+                 "in options " + ", ".join(sorted(own)[:-1]) + " and " + sorted(own)[-1] if len(own) > 1 else
+                 f"in option {next(iter(own))}")
+        spread = hi_h - lo_h >= 15
+        against = (f"{fmt(round(lo_h, -1))} to {fmt(round(hi_h, -1))} m" if spread else f"about {fmt(round(hi_h, -1))} m")
+        D.p(d, f"Second, the station at {F.name(s)} lifts a few litres a second through a long main against "
+               f"{against} of head {where}{', depending on where it discharges' if spread else ''}. A connection of "
+               "that kind is to be reconsidered at the preliminary design: a shorter route to a nearer subnetwork, or "
+               "local treatment.")
 
     # --------------------------------------------------------------- 6.2.8
     sy = json.load(open(os.path.join(F.RES, "S1", "selfcleansing_year.json"), encoding="utf-8"))
@@ -288,14 +302,16 @@ def summary_block(d):
            f"{WORDS[len(opts)].capitalize()} option{'s have' if len(opts) > 1 else ' has'} been modelled for where the flow "
            f"is treated, from {WORDS[min(n_pl)]} plant{'s' if min(n_pl) > 1 else ''} to {WORDS[max(n_pl)]}; where an "
            "outfall is not at a plant, a pumping station lifts its flow into the next subnetwork or to a plant. "
-           + ("In every option and every year the pipes stay within the guideline's limits on velocity and depth of flow."
-              if all(F.checks_clean(o) for o in opts) else ""))
+           + ("In every option and every year the pipes stay within the guideline's limits on velocity and depth of flow. "
+              if all(F.checks_clean(o) for o in opts) else "")
+           + "The depth of the network hardly differs between the options; they differ in the pumping, the trunk sizes "
+             "and the number and size of the plants.")
     D.tab_caption(d, "The sewer network options at a glance")
-    D.table(d, ["Option", "Plants", "Average flow at the largest plant, 2070, m³/d", "Pumping stations",
-                "Pumps in duty, kW", "Energy 2070, MWh a year", "Manholes deeper than 12 m"],
-            [[r["option"], str(r["n_plants"]), fmt(r["largest_plant_2070"]), str(r["n_ps"]), fmt(r["kw"]),
-              fmt(r["mwh_2070"]), str(r["mh_over_12"])] for r in rows],
-            widths=[1.6, 1.6, 4.2, 2.4, 2.4, 2.6, 3.2], font=9)
+    D.table(d, ["Option", "Plants", "Average flow at the largest plant, 2070, m³/d", "Sewer at the plants, m deep",
+                "Pumping stations", "Pumps in duty, kW", "Energy 2070, MWh a year"],
+            [[r["option"], str(r["n_plants"]), fmt(r["largest_plant_2070"]), r["inlet_depths"], str(r["n_ps"]),
+              fmt(r["kw"]), fmt(r["mwh_2070"])] for r in rows],
+            widths=[1.5, 1.5, 3.6, 3.8, 2.2, 2.2, 2.6], font=9)
     D.p(d, "")
     D.p(d, "Two matters need attention whichever option is chosen: long rising mains carrying small flows, which hold the "
            "sewage for hours and call for hydrogen sulphide control, and a few outlying connections that pump a small flow "
