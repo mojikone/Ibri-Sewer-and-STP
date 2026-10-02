@@ -11,8 +11,10 @@ the category tab, the footer strip and the live page number are his; python-pptx
 is read from report/facts_w17.py, the module the Concept Design Report reads, so the deck and the report agree.
 The base deck is presentation/base/ (36 MB, not in git); the maps are re-encoded as JPEG in presentation/assets/.
 """
+import copy
 import json
 import os
+import re
 import sys
 
 from PIL import Image
@@ -45,16 +47,24 @@ SEC, NET, DEC, END = 8, 18, 22, 23
 TEAL = "315258"          # titles and table headers
 INK, GREY, MUTE, LINE, ZEBRA = "262626", "5A5A5A", "8C8C8C", "D9D9D9", "F3F6FA"
 NAVY, ASK = "1F497D", "EAF1F8"
-CAT = {"progress": ("Progress", "1F7F8C"), "overview": ("Overview", "01474D"), "boundaries": ("Boundaries", "2A6FBB"),
-       "population": ("Population", "D9901A"), "growth": ("Growth", "B4453F"), "network": ("Network", "3E8E5E"),
-       "plant": ("Plant", "6B4C9A"), "decisions": ("Decisions", "5A5A5A")}
-# the footer strip: category -> (text box, bar)
+# his footer strip as it came, category -> (text box, bar); replaced on every content slide by the sections below
 FOOT = {"progress": ("TextBox Progress", "Rectangle Progress"), "overview": ("TextBox 6", "Rectangle 7"),
         "boundaries": ("TextBox 8", "Rectangle 9"), "population": ("TextBox 10", "Rectangle 11"),
         "growth": ("TextBox 12", "Rectangle 13"), "network": ("TextBox 14", "Rectangle 15"),
         "plant": ("TextBox 16", "Rectangle 17"), "decisions": ("TextBox 18", "Rectangle 19")}
-FURNITURE = {"Rounded Rectangle 1", "TextBox 2", "TextBox 3", "Connector 4", "Picture 5", "TextBox 20"} | \
-            {n for pair in FOOT.values() for n in pair}
+STRIP = {n for pair in FOOT.values() for n in pair}
+FURNITURE = {"Rounded Rectangle 1", "TextBox 2", "TextBox 3", "Connector 4", "Picture 5", "TextBox 20"} | STRIP
+CONTENT_LAYOUT = "6_Custom Layout"
+# the deck's five sections (engineer, 2026-10-02: the strip and the cover show them, the slide's own lit): number,
+# label, colour, white icon on the cover (a Tabler name, "cost" drawn below; None keeps his own Progress icon)
+SECTIONS = [("01", "Progress", "1F7F8C", None), ("02", "Design basis", "01474D", "clipboard-check"),
+            ("03", "Sewer network", "3E8E5E", "pipeline"), ("04", "TE network", "2E86AB", "droplets"),
+            ("05", "Cost analysis", "8A6D3B", "cost")]
+# the Tabler set kept in W16 has no money icon and nothing is downloaded: a banknote drawn on its grid and stroke
+COST_SVG = ('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" '
+            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+            '<rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>'
+            '<path d="M6.5 9.5v5"/><path d="M17.5 9.5v5"/></svg>')
 # the content area, under the title bar and above the footer
 L, T, W, B = 1.5, 6.5, 64.3, 36.1
 fmt = F.fmt
@@ -144,32 +154,79 @@ def shape(slide, name):
     return next(sh for sh in slide.shapes if sh.name == name)
 
 
-def light(slide, cat):
-    """The footer strip with cat lit (None: nothing lit)."""
-    for key, (tb, bar) in FOOT.items():
-        on = key == cat
-        col = CAT[key][1] if on else MUTE
-        for r in shape(slide, tb).text_frame.paragraphs[0].runs:
-            r.font.color.rgb = rgb(col); r.font.bold = on
-        b = shape(slide, bar); b.fill.solid(); b.fill.fore_color.rgb = rgb(CAT[key][1] if on else LINE)
+def _clone(slide, el, name):
+    """A copy of a shape element on the same slide, with its own id and name; returns its proxy."""
+    new = copy.deepcopy(el)
+    slide.shapes._spTree.append(new)
+    nv = new.find(".//" + qn("p:cNvPr"))
+    nv.set("id", str(slide.shapes._next_shape_id)); nv.set("name", name)
+    return slide.shapes[-1]
 
 
-def furnish(slide, title, cat, tab=None):
-    """Keep his title bar and footer, drop the body; set the title, the tab and the lit category."""
+def section_strip(prs):
+    """The bottom strip of every content slide, his and the new: the deck's five sections, the slide's own lit in its
+    colour, drawn from his own strip's first item so the type and the bar are his. A slide belongs to the section of the
+    last section cover before it ('01 PROGRESS' ... '05 COST ANALYSIS')."""
+    sec, x0, x1, gap = None, 1.52, 60.0, 0.29
+    pitch = (x1 - x0) / len(SECTIONS)
+    for s in prs.slides:
+        covers = [re.match(r"^(0[1-9]) ", sh.text_frame.text.strip()) for sh in s.shapes if sh.has_text_frame]
+        if s.slide_layout.name != CONTENT_LAYOUT:
+            sec = next((m.group(1) for m in covers if m), sec)
+            continue
+        tb0, bar0 = shape(s, "TextBox Progress")._element, shape(s, "Rectangle Progress")._element
+        for sh in list(s.shapes):
+            if sh.name in STRIP:
+                sh._element.getparent().remove(sh._element)
+        for k, (num, label, col, _) in enumerate(SECTIONS):
+            on = num == sec
+            tb = _clone(s, tb0, f"Section {num}")
+            tb.left, tb.width = Cm(x0 + k * pitch), Cm(pitch - gap)
+            set_text(tb, f"{num} {label}")
+            r = tb.text_frame.paragraphs[0].runs[0]
+            r.font.size = Pt(14); r.font.bold = on; r.font.color.rgb = rgb(col if on else MUTE)
+            bar = _clone(s, bar0, f"Section {num} bar")
+            bar.left, bar.width = Cm(x0 + k * pitch + 0.24), Cm(pitch - gap - 0.21)
+            bar.fill.solid(); bar.fill.fore_color.rgb = rgb(col if on else LINE)
+
+
+def cover_row(s):
+    """The cover's row of circles: the five sections with their icons and names. His Progress circle, icon and name
+    stay where they are; the topic circles of the 16 September meeting go."""
+    for sh in list(s.shapes):
+        if sh.top > Cm(31) and sh.name != "Oval Progress" and (
+                sh.name.startswith("Oval ") or sh.name.startswith("icon ") or
+                (sh.has_text_frame and sh.top > Cm(34) and sh.name != "TextBox Progress")):
+            sh._element.getparent().remove(sh._element)
+    oval0, label0 = shape(s, "Oval Progress"), shape(s, "TextBox Progress")
+    c0 = oval0.left / 360000 + oval0.width / 720000          # his circle's centre, cm
+    pitch = (62.90 - oval0.left / 360000) / (len(SECTIONS) - 1)  # to where the last topic circle stood
+    for k, (num, label, col, ic) in enumerate(SECTIONS[1:], 1):
+        c = c0 + k * pitch
+        o = _clone(s, oval0._element, f"Oval {label}")
+        o.left = Cm(c - oval0.width / 720000); o.fill.solid(); o.fill.fore_color.rgb = rgb(col)
+        t = _clone(s, label0._element, f"TextBox {label}")
+        t.left = Cm(c - label0.width / 720000)
+        set_text(t, label)
+        r = t.text_frame.paragraphs[0].runs[0]; r.font.color.rgb = rgb(col); r.font.bold = True; r.font.size = Pt(16)
+        PLACE.append((1, svg(ic), c - 0.8, 32.10, 1.6, 1.6))
+
+
+def furnish(slide, title, tab=None):
+    """Keep his title bar and footer, drop the body; set the title and, for a new section, the tab."""
     for sh in list(slide.shapes):
         if sh.name not in FURNITURE and not sh.name.startswith("icon "):
             sh._element.getparent().remove(sh._element)
     set_text(shape(slide, "TextBox 3"), title)
     if tab:                                   # a category of its own: label, colour, and its icon placed later
-        label, col, svg = tab
+        label, col, svg_path = tab
         set_text(shape(slide, "TextBox 2"), label.upper())
         r = shape(slide, "Rounded Rectangle 1"); r.fill.solid(); r.fill.fore_color.rgb = rgb(col)
         for sh in list(slide.shapes):
             if sh.name.startswith("icon "):
                 sh._element.getparent().remove(sh._element)
-        if svg:
-            PLACE.append((slide_no(slide), svg, 1.35, 2.0, 1.2, 1.2))
-    light(slide, cat)
+        if svg_path:
+            PLACE.append((slide_no(slide), svg_path, 1.35, 2.0, 1.2, 1.2))
 
 
 def slide_no(slide):
@@ -561,32 +618,32 @@ def specs():
     opts = F.available()
     sp = [dict(template=SEC, kind="section", num="03", title="SEWER NETWORK",
                sub="Twenty-four subnetworks, seven options, three recommended"),
-          dict(template=NET, title="The Sewer Network: Twenty-Four Subnetworks, One Model", cat="network", body=s_model),
-          dict(template=NET, title="From The Plots To The Plants: The Flow Every Option Receives", cat="network", body=s_flows),
-          dict(template=NET, title="Seven Options For Where The Flow Is Treated", cat="network", body=s_options)]
+          dict(template=NET, title="The Sewer Network: Twenty-Four Subnetworks, One Model", body=s_model),
+          dict(template=NET, title="From The Plots To The Plants: The Flow Every Option Receives", body=s_flows),
+          dict(template=NET, title="Seven Options For Where The Flow Is Treated", body=s_options)]
     for o in opts:
-        sp.append(dict(template=NET, title=f"Option {o} · {tc(F.text(o))}", cat="network", body=s_diagram(o)))
-        sp.append(dict(template=NET, title=f"Option {o} · The Network And Its Pumping", cat="network", body=s_map(o)))
-    sp += [dict(template=NET, title="Depth: The Same In Every Option", cat="network", body=s_depth),
-           dict(template=NET, title="The Seven Options Side By Side", cat="network", body=s_glance),
-           dict(template=NET, title="Pumping Energy: The Stations And The Plant Inlets", cat="network", body=s_energy),
-           dict(template=NET, title="Two Matters Whichever Option Is Chosen", cat="network", body=s_matters),
-           dict(template=DEC, title="When The Network Becomes Self-Cleansing", cat="decisions", body=s_selfclean),
-           dict(template=DEC, title="Recommendation: S1, S4 And S6, In This Order", cat="decisions", body=s_recommend),
+        sp.append(dict(template=NET, title=f"Option {o} · {tc(F.text(o))}", body=s_diagram(o)))
+        sp.append(dict(template=NET, title=f"Option {o} · The Network And Its Pumping", body=s_map(o)))
+    sp += [dict(template=NET, title="Depth: The Same In Every Option", body=s_depth),
+           dict(template=NET, title="The Seven Options Side By Side", body=s_glance),
+           dict(template=NET, title="Pumping Energy: The Stations And The Plant Inlets", body=s_energy),
+           dict(template=NET, title="Two Matters Whichever Option Is Chosen", body=s_matters),
+           dict(template=DEC, title="When The Network Becomes Self-Cleansing", body=s_selfclean),
+           dict(template=DEC, title="Recommendation: S1, S4 And S6, In This Order", body=s_recommend),
            dict(template=SEC, kind="section", num="04", title="TE NETWORK",
                 sub="To be added: designed on the three recommended options"),
-           dict(template=NET, title="Treated Effluent Network", cat=None, body=s_empty,
-                tab=("TE network", "2E86AB", "droplets")),
+           dict(template=NET, title="Treated Effluent Network", body=s_empty, tab=("TE network", "2E86AB", "droplets")),
            dict(template=SEC, kind="section", num="05", title="COST ANALYSIS",
                 sub="To be added: capital, operating and life-cycle cost of the options"),
-           dict(template=NET, title="Cost Analysis", cat=None, body=s_empty, tab=("Cost", "8A6D3B", None))]
+           dict(template=NET, title="Cost Analysis", body=s_empty, tab=("Cost", "8A6D3B", "cost"))]
     return sp
 
 
 def svg(name, colour="FFFFFF"):
+    """A white (or given colour) copy of a Tabler icon, or of the cost icon drawn above, for PowerPoint to place."""
     os.makedirs(ASSETS, exist_ok=True)
     p = os.path.join(ASSETS, f"{name}-{colour}.svg")
-    s = open(os.path.join(TABLER, f"{name}.svg"), encoding="utf-8").read()
+    s = COST_SVG if name == "cost" else open(os.path.join(TABLER, f"{name}.svg"), encoding="utf-8").read()
     open(p, "w", encoding="utf-8").write(s.replace('stroke="currentColor"', f'stroke="#{colour}"'))
     return p
 
@@ -609,6 +666,7 @@ def build():
     com_duplicate(sp)
     prs = Presentation(OUT)
     cover(prs.slides[0])
+    cover_row(prs.slides[0])
     for k, spec in enumerate(sp):
         s = prs.slides[END - 1 + k]
         if spec.get("kind") == "section":
@@ -623,8 +681,9 @@ def build():
         tab = spec.get("tab")
         if tab:
             tab = (tab[0], tab[1], svg(tab[2]) if tab[2] else None)
-        furnish(s, spec["title"], spec["cat"], tab)
+        furnish(s, spec["title"], tab)
         spec["body"](s)
+    section_strip(prs)
     prs.save(OUT)
     print("wrote", OUT, "|", len(prs.slides), "slides")
 
