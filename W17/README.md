@@ -22,7 +22,7 @@ helpers on the host against copies of those libraries before a job is sent.
 | W17 R5, R6 (first S1 builds) | `…\14 IBRI_W17\IBRI_W17_R5/R6.stsw` | **DO NOT USE** — see the section below |
 | W17 R7 (option S1, Manning) | `…\14 IBRI_W17\IBRI_W17_R7.stsw` | superseded by R9: designed with Manning's n (0.013 catalogue), before the friction decision |
 | W17 R8 (Colebrook-White) | guest only, `C:\IbriWork\W17\IBRI_W17_R8.stsw` | R4 with the gravity friction switched to Colebrook-White, ks 1.5 mm |
-| **W17 R9 (options S1–S7)** | `…\14 IBRI_W17\IBRI_W17_R9.stsw` | **live once delivered**: all seven options on Colebrook-White |
+| **W17 R9 (options S1–S7)** | `…\14 IBRI_W17\IBRI_W17_R9.stsw` (also in `Options 2026-10/12_SewerGEMS/`) | **live**: all seven options on Colebrook-White, delivered 2026-10-01 17:44 |
 
 Each revision is a new file, so the engineer can keep an older one open in SewerGEMS while the next is built: the
 scripts work on copies inside the guest (`C:\IbriWork\W17`) and only add new files to the shared folder.
@@ -138,24 +138,48 @@ load and merged to one row per manhole. **Every year now equals the plot layer t
 layer is loaded, so plots in unpiped land and the military area are carried at their nearest manhole in every year.
 Peak outfall flow, sum of the 24 outfalls: 2030 613.9 → 674.0 L/s; 2070 1,541.5 → 1,535.2 L/s. `data/r4/`.
 
-## R9 — the seven options on Colebrook-White (building, 2026-10-01)
+## R9 — the seven options on Colebrook-White (done 2026-10-01, 17:45)
 
-Job `055_make_R9_all_options.ps1` builds S1–S7 in one file from R8 (`C:\IbriWork\W17\IBRI_W17_R9.stsw`, ~46 min an
-option at Colebrook speed); `py/process_options.py` follows it and processes each option as its last run is exported
-(guard: every year and the 2070 analysis kept the 2070 design; then `scenario_results.py` and `make_option_layers.py`).
+Job `055_make_R9_all_options.ps1` built S1–S7 in one file from R8, ~44 min an option at Colebrook speed, and delivered
+`IBRI_W17_R9.stsw` to the shared folder (exit 0); `py/process_options.py` followed it and processed each option as its
+last run was exported. **Every option:** the design converged in four passes; the 2070 analysis and every year kept
+the 2070 sizes and inverts (guard, both in the VM and on the host); no pipe over 3.0 m/s or the d/D limit in any year;
+the flow check 0.0000 %. Side by side (`results/options_comparison.md`, the workbook in the deliverable folder):
 
-- **S1 (done 13:25):** design and every year identical in sizes and inverts; no pipe over 3.0 m/s or the d/D limit in
-  any year; 40 manholes over 12 m, deepest 15.10 m (O21-M21); plant O1 24,756 → 60,456 m³/d, peak 674 → 1,535 L/s;
-  23 stations, 422 kW, 0.47 / 1.37 GWh a year (2030 / 2070). `results/S1/`.
+| Option | STPs | Sewer at the STPs, m deep | Stations | kW | MWh/yr 2030 / 2070 | Rising mains km |
+|---|---|---|---|---|---|---|
+| S1 | O1 | 10.3 | 23 | 422 | 465 / 1,367 | 43.9 |
+| S2 | O16 | 5.9 | 23 | 884 | 1,311 / 3,337 | 37.3 |
+| S3 | O1, O4 | 10.1 / 6.9 | 22 | 361 | 367 / 1,148 | 43.2 |
+| S4 | O1, O4, O9 | 10.0 / 6.9 / 8.8 | 21 | 319 | 339 / 974 | 43.0 |
+| S5 | O1, O3, O4, O9 | 9.8 / 5.8 / 6.9 / 8.8 | 20 | 277 | 259 / 797 | 43.0 |
+| S6 | O1, O3, O4, O9, O16, O22 | 9.8 / 5.8 / 6.9 / 8.8 / 4.9 / 1.5 | 18 | 198 | 220 / 616 | 28.7 |
+| S7 | O1, O16, O22 | 10.3 / 4.9 / 1.5 | 21 | 343 | 426 / 1,186 | 29.5 |
+
+- **Depth does not separate the options:** 40 manholes over 12 m, 3.2 km of sewer over 12 m and the deepest manhole at
+  15.0–15.1 m (O21-M21) in every option; the deep sewers are set by the ground inside the subnetworks.
+- **S2 doubles the pumping** (884 kW): all of O1's 1,450 L/s is pumped 3.0 km to O16 (DN1200, 24 m).
+- **O23** lifts 5 L/s against 220–300 m of head in every option (9.5 km to O21, or to the O22 plant in S6/S7) —
+  to be reconsidered; **retention** over 30 min in 2030 at 10–14 stations, up to 73 h (O18 to the plant).
+- **S1 (first, 13:25):** plant O1 24,756 → 60,456 m³/d, peak 674 → 1,535 L/s. `results/S#/` for every option.
 - **d/D is compared at three decimals**, the design's own precision: O2-P203 sat at 0.65006 against 0.65 (0.06 mm).
 - **8,712 of 19,083 pipes are drawn against the flow** (start node downstream). By the tree none falls the wrong way;
   the exported gradient is now absolute, the GeoPackage swaps their end depths, and the self-cleansing scripts take the
   upstream end from the inverts. The self-cleansing year table did not change (29 % in 2030, 46 % in 2070).
-- **Outputs:** transfer diagrams in Figma (`py/diagram_layout.py`, `diagram_js.py`, file `rm7tdwnSGW5HefJlXQPWDW`;
-  S1–S3 at 2×, S4–S7 at 1× because the Starter plan's MCP limit was reached — the 2× frames `EXPORT2X …` are on the
-  canvas to export by hand, then delete); QGIS project and two maps per option (`gis/`); the deliverable folder
-  `Options 2026-10/` with its README and `W17_network_options_tables.xlsx` (`py/options_tables.py`); the **Concept
-  Design Report R4** in `report/` (R3 + 6.2.5–6.2.8 and Appendix B, from `report/facts_w17.py`).
+- **Outputs:**
+  - **Concept Design Report R4**, `report/R4/` (153 pages): R3 + 6.2.5–6.2.8 and Appendix B from
+    `report/facts_w17.py`, executive summary and deliverables updated. **Client register (engineer, 2026-10-01): current
+    names only (O1–O24, never the modeller's O-#), no file, field, sheet or folder names, no internal steps** — nine R3
+    footnotes reworded; the depth of the sewer arriving at each STP given everywhere.
+  - **Transfer diagrams** drawn locally by `py/diagram_png.py` (approved by the engineer) from `py/diagram_layout.py`;
+    the Figma code (`diagram_js.py`, file `rm7tdwnSGW5HefJlXQPWDW`) is current but unused — the Starter plan's MCP
+    limit blocks it; the `EXPORT2X …` frames left on that canvas carry old names and can be deleted.
+  - **Maps** (`gis/make_w17_project.py`, engineer's notes 2026-10-01): one overview of the 24 subnetworks and three per
+    option (zones, network, depth), Google satellite at 50 % (rendered per map: the standalone exporter crashes on web
+    tiles), legend bottom-left kept clear of the network, labels "O21 8.3m 4,519 m3/d / PMP 15m 126L/s".
+  - **Deliverable folder** `Options 2026-10/` (not in git): QGIS project (86 layers, 22 layouts), GeoPackages on the
+    true pipe geometry (job 056), maps, `W17_network_options_tables.xlsx`, R4, the R9 model; the downloaded Esri
+    mosaic removed.
 - **Report build trap, fixed:** `W16/report_basis/facts_basis.py` puts `W16/report` at the head of the import path, so
   every chapter imported after it came from R3; `build.py` and `charts_r3.py` now put `W17/report` back in front.
 
