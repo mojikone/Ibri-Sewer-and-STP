@@ -120,6 +120,18 @@ def od_classes(o):
     return {int(k): v for k, v in summary(o)["pipe_km_by_od"].items()}
 
 
+def od_lengths_m(o):
+    """Pipe length by outside diameter, metres, from the model's unrounded pipe lengths (results/S#/S#_pipes.csv): the
+    rows and the total of the quantity table, and the same source as the bill of quantities."""
+    key = ("od_m", o)
+    if key not in _cache:
+        out = {}
+        for r in csv.DictReader(open(os.path.join(RES, o, f"{o}_pipes.csv"), encoding="utf-8")):
+            od = int(float(r["od"])); out[od] = out.get(od, 0.0) + float(r["length"])
+        _cache[key] = out
+    return _cache[key]
+
+
 def km_od_at_least(o, od=1000):
     """Length of sewer of outside diameter od and over, km: the trunk sewers the options differ in."""
     return sum(v for k, v in od_classes(o).items() if k >= od)

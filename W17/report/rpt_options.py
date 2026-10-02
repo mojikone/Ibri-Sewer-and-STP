@@ -526,13 +526,13 @@ def appendix_b(d):
     D.chapter(d, "Appendix B.   Network options: quantities, pumping stations and depth")
     D.p(d, "This appendix gives the quantities of pipe and manholes the options are compared on, the pumping stations "
            "of each option, and the depth of each option's 2070 design on a map.")
-    ods = sorted({od for o in opts for od in F.od_classes(o)})
+    ods = sorted({od for o in opts for od in F.od_lengths_m(o)})
     D.tab_caption(d, "Length of sewer by outside diameter, metres")
     D.table(d, ["Outside diameter, mm"] + opts,
-            [[str(od)] + [fmt(1000 * F.od_classes(o).get(od, 0)) if F.od_classes(o).get(od, 0) else "" for o in opts]
-             for od in ods] + [["Total"] + [fmt(1000 * F.summary(o)["pipe_km"]) for o in opts]],
+            [[str(od)] + [fmt(F.od_lengths_m(o).get(od, 0)) if F.od_lengths_m(o).get(od, 0) else "" for o in opts]
+             for od in ods] + [["Total"] + [fmt(sum(F.od_lengths_m(o).values())) for o in opts]],
             widths=[3.4] + [14.6 / len(opts)] * len(opts), font=8)
-    D.p(d, "")
+    D.p(d, "Lengths are rounded to the metre, so a total can differ by a metre or two from the sum of its rows.")
     bands = list(F.summary(opts[0])["manholes_by_band"])
     D.tab_caption(d, "Manholes by depth to invert")
     D.table(d, ["Depth"] + opts,
