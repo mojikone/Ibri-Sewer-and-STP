@@ -73,11 +73,12 @@ def executive_summary(d):
     D.p(d, "This report presents the concept design for the wastewater and "
            "treated effluent systems serving Ibri, together with the sewage "
            "treatment plant that will receive the collected flow. It records "
-           "the data collected, the checks applied to it, the design basis "
-           "adopted and the state of the work at the date of issue. The design "
-           "basis was issued on its own as the Design Basis Report and presented "
-           "to Nama Water Services on 16 September 2026; this revision carries "
-           "it in full.")
+           "the data collected and the checks applied to it, sets out the "
+           "design basis and the flows to saturation, and presents seven "
+           "options for the sewer network, three of which are recommended. The "
+           "design basis was issued on its own as the Design Basis Report and "
+           "presented to Nama Water Services on 16 September 2026; this "
+           "revision carries it in full.")
 
     D.picture(d, os.path.join(IMG, "D1_process.png"), 15.5)
     D.fig_caption(d, "The concept design process, from the data collected to the recommended option.")
@@ -165,23 +166,32 @@ def executive_summary(d):
                f"people and {fmt(t['q_ult'])} cubic metres a day.")
     N.add(p, "Average flows before infiltration and before the STP margin. The "
              "five-year series for every settlement is in Sections 4.1.9 and 4.2.7.")
-    D.tab_caption(d, "The study area in the design years")
-    D.table(d, ["Year", "People", "Average sewage flow, m³/d", "STP average with the margin, m³/d", "STP peak hour with the margin, m³/d"], [
+    import facts_w17 as FW         # Revision 4: the flow at the plants, from the network model
+    ch = {y: FW.flow_chain(y) for y in ("2030", "2055", str(ult))}
+    D.tab_caption(d, "The study area in the design years: from the plots to the treatment plants")
+    D.table(d, ["Year", "People", "Average sewage flow from the plots, m³/d", "Average flow at the plants, with infiltration, m³/d",
+                "Plant design average, with the 10 % margin, m³/d"], [
         ["2024, base", fmt(t["pop_today"]), fmt(t["q_today"]), "", ""],
-        ["2030, opening year", fmt(t["pop"][2030]), fmt(t["q"][2030]), fmt(pf[2030]["aaf"]), fmt(pf[2030]["phf"])],
-        ["2055, opening year plus 25", fmt(t["pop"][2055]), fmt(t["q"][2055]), fmt(pf[2055]["aaf"]), fmt(pf[2055]["phf"])],
-        [f"{ult}, saturation", fmt(t["pop_ult"]), fmt(t["q_ult"]), fmt(pf[ult]["aaf"]), fmt(pf[ult]["phf"])],
-    ], widths=[4.4, 2.4, 3.2, 3.3, 3.2], font=9)
+        ["2030, opening year", fmt(t["pop"][2030]), fmt(t["q"][2030]), fmt(ch["2030"]["at_plants"]), fmt(ch["2030"]["design"])],
+        ["2055, opening year plus 25", fmt(t["pop"][2055]), fmt(t["q"][2055]), fmt(ch["2055"]["at_plants"]), fmt(ch["2055"]["design"])],
+        [f"{ult}, saturation", fmt(t["pop_ult"]), fmt(t["q_ult"]), fmt(ch[str(ult)]["at_plants"]), fmt(ch[str(ult)]["design"])],
+    ], widths=[4.4, 2.4, 3.2, 3.6, 2.9], font=9)
     D.p(d, "")
-    p = D.p(d, f"If the whole area drains to one STP, its design average in "
-               f"{ult} is {fmt(pf[ult]['aaf'])} cubic metres a day and its peak "
-               f"hour {fmt(pf[ult]['phf'])}, with the ten per cent margin and "
-               f"before infiltration and tankers. At the guideline's minimum "
-               f"loads of 60 grams of BOD and 80 grams of suspended solids per "
-               f"person per day the plant receives {fmt(pl[ult]['bod_kgd'])} "
-               f"kilograms of BOD a day at saturation.")
-    N.add(p, "Sections 3.4.1 and 4.2.8. The loads are replaced by the laboratory "
-             "results of the existing STP once received.")
+    c = ch[str(ult)]; L = FW.loads()
+    p = D.p(d, f"The plants receive the flow the network carries plus its "
+               f"infiltration, {fmt(c['infiltration'])} cubic metres a day over "
+               f"the {fmt(L['active_sewer_km'])} km of sewer, whichever option is "
+               f"chosen. Of the {ult} flow, {fmt(c['outside'])} cubic metres a day "
+               f"is not carried: it lies in planted areas, where a sewer waits "
+               f"for the survey's levels, and in three small outlying catchments "
+               f"served on site. The plants are designed with the guideline's ten "
+               f"per cent margin. At the guideline's minimum loads of 60 grams of "
+               f"BOD and 80 grams of suspended solids per person per day they "
+               f"receive {fmt(pl[ult]['bod_kgd'])} kilograms of BOD a day at "
+               f"saturation.")
+    N.add(p, "Sections 3.4.1, 4.2.8 and 6.2.7, where the peak flows are also "
+             "given. The loads are replaced by the laboratory results of the "
+             "existing STP once received.")
     p = D.p(d, "Two industrial estates inside the town, at Al Tayyeb and "
                "Tanam, were found under the commercial tariff and are treated "
                "as special consumption. The army camp, a planned resort and "
@@ -208,31 +218,17 @@ def executive_summary(d):
             widths=[1.0, 11.5, 4.0], font=9.5)
     D.p(d, "")
 
-    import rpt_options             # Revision 4: the network options, from the SewerGEMS results of W17
-    rpt_options.summary_block(d)
-
-    D.title(d, "State of the work", size=12, space_before=8)
-    D.p(d, "The design basis, the data assessment, the population and flow "
-           "series and the assessment framework are complete. The concept "
-           "hydraulic calculations for the sewer network are complete, and the "
-           "options for where its flow is treated are presented in Section 6.2; "
-           "those for the treated effluent network and the treatment plant have "
-           "begun. The topographic and utility survey is in progress; the "
-           "hydraulic assessment of the existing networks follows it. The options "
-           "for the treated effluent network and the treatment plant, the cost "
-           "of every option and their comparison will be completed once the "
-           "decisions of Section 1.5 are taken.")
-
     D.title(d, "How the options are developed and compared", size=12, space_before=8)
-    D.p(d, "Three options are developed for each of the sewer network, the "
-           "treated effluent network and the treatment plant. Each set follows "
-           "the character the guidelines describe: one advancing "
+    D.p(d, "Not fewer than three options are developed for each of the sewer "
+           "network, the treated effluent network and the treatment plant, each "
+           "set following the character the guidelines describe: one advancing "
            "sustainability, one representing international best practice, and "
-           "one based on practice already established in Oman. Every option "
-           "meets the same functional requirement and the same effluent "
-           "standard, so that the difference between them lies in how the "
-           "result is achieved. Section 6.1 sets out what distinguishes them in "
-           "design terms.")
+           "one based on practice already established in Oman. For the sewer "
+           "network seven options have been modelled, and the three recommended "
+           "carry those characters. Every option meets the same functional "
+           "requirement and the same effluent standard, so that the difference "
+           "between them lies in how the result is achieved. Section 6.1 sets "
+           "out what distinguishes them in design terms.")
     D.p(d, "The options are compared over a twenty-five year period against "
            "seven criteria: total lifetime cost; sustainability, comprising "
            "carbon, circular economy and nature-based solutions; social "
@@ -246,6 +242,21 @@ def executive_summary(d):
                "tested by varying the weighting between criteria, the discount "
                "rate, and the input design criteria.")
     N.add(p, "PAM-GUD-201, Sections 12.6 to 12.9, pages 104 to 106.")
+
+    import rpt_options             # Revision 4: the network options and the recommendation, from the SewerGEMS results
+    rpt_options.summary_block(d)
+
+    D.title(d, "State of the work", size=12, space_before=8)
+    D.p(d, "The design basis, the data assessment, the population and flow "
+           "series to saturation and the assessment framework are complete. The "
+           "sewer network has been modelled over the whole study area and its "
+           "seven options are presented, three of them recommended (Sections "
+           "6.2 and 7.11). The treated effluent network is designed on the three "
+           "recommended options; its options, those of the treatment plant, the "
+           "cost of every option and their comparison follow, and are completed "
+           "once the decisions of Section 1.5 are taken. The topographic and "
+           "utility survey is in progress; the hydraulic assessment of the "
+           "existing networks follows it.")
 
     D.title(d, "Deliverables", size=12, space_before=8)
     D.p(d, "The Terms of Reference set out forty numbered deliverables for the "

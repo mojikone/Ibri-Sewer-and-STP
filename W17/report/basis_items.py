@@ -15,7 +15,7 @@ import doc as D  # noqa: E402
 SECTION = {
     "Settlement boundaries": "4.1.2", "Persons per property": "4.1.4", "Use of each plot": "4.1.5",
     "The overflow": "4.1.8", "The design horizon": "4.1.9", "The growth beyond 2050": "4.1.7",
-    "Gradients and self-cleansing at the concept stage": "3.3.2",
+    "Gradients and self-cleansing at the concept stage": "3.3.2 and 6.2.8",   # W17: Section 6.2.8 extends it
     "The 126 meters with no plot within 15 metres": "4.1.3", "Water demand and return": "4.2.1 and 4.2.3",
     "The industrial estates": "4.2.2", "The connection ratio": "4.2.8", "Infiltration and peak flow": "4.2.5 and 4.2.6",
     "Depth": "3.3.3", "STP flows and loads": "3.4.1 and 4.2.8", "Treated effluent": "4.4",

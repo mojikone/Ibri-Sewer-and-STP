@@ -250,9 +250,8 @@ def part_c(d):
                f"Table 11 gradient always passes.")
     N.add(p, "The relationship of Mara, Sleigh and Taylor, PAM-GUD-203, page "
              "27. No value of tractive tension in pascals is stated in "
-             "PAM-GUD-203 or PAM-GUD-201. The audit on the test area gave 70 "
-             "per cent of the length as needing early washing, all of it "
-             "200 mm pipe carrying under 1.3 l/s.")
+             "PAM-GUD-203 or PAM-GUD-201. Section 6.2.8 gives the result for "
+             "the whole network.")
     D.p(d, "At the meeting of 16 September 2026 Nama Water Services indicated "
            "that the gradient obtained from the tractive-force method is "
            "limited to a maximum of 4 per cent at the head pipes. How that "
@@ -281,7 +280,7 @@ def part_c(d):
                "metres a second.")
     N.add(p, "PAM-GUD-203, Section 8.1, page 50. Which chamber the main "
              "discharges into, and whether neighbouring stations are joined, "
-             "are layout decisions of the options (Section 6.3).")
+             "are layout decisions of the options (Section 6.2.6 and Appendix B).")
     adopt(d, 6)
 
     # --------------------------------------------------------------- 13

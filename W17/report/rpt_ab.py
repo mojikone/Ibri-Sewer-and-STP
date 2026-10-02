@@ -32,9 +32,10 @@ def part_a(d):
            "consultancy services for the design and supervision of these "
            "works.")
     D.p(d, "This report is the concept design deliverable. It establishes the "
-           "design basis, records and assesses the data collected, and sets "
-           "out the framework within which options for the sewer network, the "
-           "treated effluent network and the treatment plant are developed.")
+           "design basis, records and assesses the data collected, sets out the "
+           "framework within which options for the sewer network, the treated "
+           "effluent network and the treatment plant are developed, and "
+           "presents the options of the sewer network.")
 
     D.h(d, 3, "1.1.1.   Objectives")
     D.p(d, "The Terms of Reference set three objectives for the work: to "
@@ -50,7 +51,9 @@ def part_a(d):
            "basis. Chapter 4 establishes demand and flow. Chapter 5 assesses the "
            "existing system. Chapter 6 presents the options. Chapter 7 carries "
            "the technical and financial appraisal, and Chapter 8 the delivery "
-           "arrangements. Appendix A holds the working behind Chapter 4.")
+           "arrangements. Appendix A holds the working behind Chapter 4, and "
+           "Appendix B the quantities, pumping stations and depth of the sewer "
+           "network options.")
 
     # ---------------------------------------------------------------- 2
     D.h(d, 2, "1.2.   The study area")

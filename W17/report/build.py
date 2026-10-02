@@ -27,12 +27,15 @@ import facts_basis  # noqa: E402,F401
 _W16_REPORT = os.path.normcase(os.path.join(os.path.dirname(os.path.dirname(HERE)), "W16", "report"))
 sys.path[:] = [HERE] + [p for p in sys.path if os.path.normcase(os.path.abspath(p)) not in (os.path.normcase(HERE), _W16_REPORT)]
 
-REV = "R4"
+# The build folder is the internal iteration; the document carries the client revision. R5 is internal (engineer,
+# 2026-10-02: none of the revisions has been issued; R5 must not appear in the report), so it prints Revision 4.
+REV = "R5"                 # internal: the output folder, never printed
+DOC_REV = "R4"             # what the cover, the footers and the file name carry
 DATE = "October 2026"
 PROJECT = "Consultancy Services for Design and Supervision for STP, Sewer & TE Networks Systems in Ibri"
 TITLE = "Concept Design Report"
 OUT_DIR = os.path.join(HERE, REV)
-OUT = os.path.join(OUT_DIR, f"Ibri_Concept_Design_Report_{REV}.docx")
+OUT = os.path.join(OUT_DIR, f"Ibri_Concept_Design_Report_{DOC_REV}.docx")
 
 
 def main(render_pdf=False, pages=False):
@@ -40,8 +43,8 @@ def main(render_pdf=False, pages=False):
     d = D.new_document({
         "TITLE_1": PROJECT,
         "TITLE_2": TITLE,
-        "TITLE_3": f"Revision {REV[1:]}  ·  {DATE}",
-        "FOOTER": f"{TITLE}  ·  Revision {REV[1:]}",
+        "TITLE_3": f"Revision {DOC_REV[1:]}  ·  {DATE}",
+        "FOOTER": f"{TITLE}  ·  Revision {DOC_REV[1:]}",
     })
     N.reset()
     N.ensure_style(d)

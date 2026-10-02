@@ -93,10 +93,10 @@ def part_e(d):
 # ===================================================== PART F
 def part_f(d):
     D.chapter(d, "6.   Options")
-    D.p(d, "This chapter sets out how the options are developed and compared, and the "
-           "framework for the options of the sewer network, the pumping stations, the "
-           "treated effluent network, the treatment plant, the excess effluent and the "
-           "sludge.")
+    D.p(d, "This chapter sets out how the options are developed and compared, presents "
+           "the seven options of the sewer network with their pumping stations, and sets "
+           "the framework for the options of the treated effluent network, the treatment "
+           "plant, the excess effluent and the sludge.")
 
     # --------------------------------------------------------------- 21
     D.h(d, 2, "6.1.   Options methodology")
@@ -113,6 +113,10 @@ def part_f(d):
                "international best practice, and one based on established "
                "practice and technology available in the Sultanate.")
     N.add(p, "PAM-GUD-201, Section 12.1, page 95.")
+    D.p(d, "For the sewer network seven options have been modelled for where the "
+           "flow is treated (Section 6.2). Three of them, one of each character, are "
+           "recommended for the appraisal (Section 7.11): S1 for established "
+           "practice, S4 for international best practice and S6 for sustainability.")
 
     D.p(d, "Each option is developed to equivalent functional requirements "
            "with comparable reliability and redundancy, so that the comparison "
@@ -121,8 +125,10 @@ def part_f(d):
     D.h(d, 3, "6.1.2.   The approach proposed for each option")
     D.p(d, "The guidelines describe the character of the three options but do "
            "not prescribe what distinguishes them in design terms. The "
-           "following approach is proposed, and is offered for comment before "
-           "the options are developed.")
+           "following approach is proposed and is offered for comment. For the "
+           "sewer network, the options of Section 6.2 differ in where the flow "
+           "is treated: the more plants, the less pumping and the smaller the "
+           "trunk sewers, against more sites to build and run.")
 
     D.tab_caption(d, "Proposed approach for each option")
     D.table(d,
@@ -205,9 +211,10 @@ def part_f(d):
     D.p(d, "The network is laid out to convey the flow by gravity wherever "
            "that is feasible and cost effective, and to keep pumping to the "
            "minimum that the topography requires. The layout follows the road "
-           "corridors, and the flow is directed towards the existing treatment "
-           "plant site, which lies at a low elevation relative to the "
-           "developed areas.")
+           "corridors, and each part of the network drains to its lowest point. "
+           "The existing treatment plant site lies low relative to the developed "
+           "areas; the options differ in whether the flow is treated there or "
+           "at plants nearer the outlying settlements (Section 6.2.6).")
 
     D.h(d, 3, "6.2.2.   Corridor constraints")
     D.p(d, "Dual carriageways are excluded as sewer corridors, as they cannot "
@@ -234,7 +241,8 @@ def part_f(d):
            "from the flow series and the connection ratio, and is presented as "
            "a schedule of the pipes affected and the years concerned, so that "
            "the operating requirement is known before the network is handed "
-           "over.")
+           "over. Section 6.2.8 sets out the year from which each pipe of the "
+           "network reaches the self-cleansing velocity.")
 
     import rpt_options             # Revision 4: the options S1 to S7, from the SewerGEMS results of W17
     rpt_options.network_options(d)
@@ -245,7 +253,8 @@ def part_f(d):
            "maintain gravity flow becomes prohibitive. Each station lifts the "
            "flow to a level from which gravity conveyance resumes, discharging "
            "through a force main to a receiving manhole or to the treatment "
-           "plant.")
+           "plant. The pumping stations of the seven options, with their duty, "
+           "rising main, head and power, are listed in Appendix B.")
 
     D.tab_caption(d, "Force main design criteria")
     D.table(d, ["Criterion", "Value"], [
@@ -256,7 +265,7 @@ def part_f(d):
         ["Minimum internal diameter", "75 mm"],
         ["Gradient, rising", "1 in 500"],
         ["Gradient, falling", "1 in 300"],
-        ["Retention time", "as short as the alignment permits"],
+        ["Retention time", "30 minutes or less, ideally"],
     ], widths=[9.0, 7.5], font=9.5)
 
     D.p(d, "")
@@ -278,6 +287,9 @@ def part_f(d):
            "twenty-four hours.")
     D.p(d, "Where demand is below the volume produced, provision is made for "
            "the disposal of the excess, described in Section 6.6.")
+    D.p(d, "The treated effluent network options are developed on the three "
+           "sewer network options recommended in Section 7.11, which give one "
+           "source of treated effluent at O1, three, or six.")
 
     _pending(d, "The network options will be presented in the next revision, "
                 "following confirmation of the customers and their demand.")
@@ -286,11 +298,12 @@ def part_f(d):
     D.h(d, 2, "6.5.   Treatment plant options")
 
     D.h(d, 3, "6.5.1.   Capacity and phasing")
-    D.p(d, "The plant is sized on the flow established in Chapter 4 with the ten "
-           "per cent design margin applied, and is built in phases so that "
-           "capacity follows demand. The capacity of the first phase, and the "
-           "years at which subsequent phases are required, follow from the "
-           "flow series and are presented with it.")
+    D.p(d, "Each plant is sized on the flow arriving at it in the option chosen, "
+           "given for every model year in Section 6.2.7, with the ten per cent "
+           "design margin applied, and is built in phases so that capacity "
+           "follows demand. The capacity of the first phase, and the years at "
+           "which subsequent phases are required, follow from that series and "
+           "are presented with the plant options.")
 
     D.h(d, 3, "6.5.2.   Process selection")
     D.p(d, "Process selection is governed by the effluent standard. The total "

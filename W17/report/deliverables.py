@@ -19,8 +19,10 @@ DELIVERABLES = [
      "Sewer network designed and analysed for every option (Section 6.2); treated effluent network and treatment plant begun",
      "progress"),
     ("Wastewater network options, not fewer than three",
-     "Issued: seven options for where the flow is treated (Section 6.2); cost and comparison in the next revision", "issued"),
-    ("Treated effluent network options, not fewer than three", "Next revision", "next"),
+     "Issued: seven options for where the flow is treated, three recommended (Sections 6.2 and 7.11); cost and comparison "
+     "in the next revision", "issued"),
+    ("Treated effluent network options, not fewer than three",
+     "Developed on the three recommended sewer network options; next revision", "next"),
     ("Treatment plant options, not fewer than three, with siting and phasing",
      "Siting and decision matrix in progress; options in the next revision", "progress"),
     ("Pumping and lifting station concept design",
@@ -31,7 +33,9 @@ DELIVERABLES = [
     ("Environmental impact assessment for the plant location", "Follows confirmation of scope", "confirm"),
     ("Cost estimates and life cycle cost", "Method adopted, 25 years at 5 per cent; estimates in the next revision", "progress"),
     ("Risk analysis and value engineering", "Next revision", "next"),
-    ("Multi-criteria comparison and recommended option", "Next revision", "next"),
+    ("Multi-criteria comparison and recommended option",
+     "Sewer network options compared on their technical results, three recommended in order of priority (Section 7.11); "
+     "cost and multi-criteria scores in the next revision", "progress"),
     ("Hydraulic models in SewerGEMS and WaterGEMS",
      "Sewer network options modelled in SewerGEMS; the WaterGEMS model of the treated effluent network follows", "progress"),
     ("Contracting strategy and implementation plan", "Next revision", "next"),

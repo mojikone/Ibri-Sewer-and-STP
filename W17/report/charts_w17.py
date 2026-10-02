@@ -141,6 +141,103 @@ def w04_depth():
     return _save(fig, "W04_depth")
 
 
+def _energy_bars(ax, opts, year="2070", label_size=7):
+    """Stacked bars: the stations' energy, then the lift at the plant inlets; the total above each bar."""
+    st = [F.summary(o)[f"mwh_{year}"] for o in opts]
+    il = [F.inlet_lift(o)["mwh"][year] for o in opts]
+    x = range(len(opts))
+    ax.bar(x, st, color=BLUE, width=0.6, label="pumping stations")
+    ax.bar(x, il, bottom=st, color=PALE, width=0.6, label="lift at the plant inlets")
+    top = max(a + b for a, b in zip(st, il))
+    for i in x:                             # the totals in one fixed row above the tallest bar
+        ax.text(i, top * 1.06, f"{st[i] + il[i]:,.0f}", ha="center", fontsize=label_size, color=BLUE)
+    ax.set_ylim(0, top * 1.17)
+    ax.yaxis.set_major_formatter(FuncFormatter(_thousands))
+    return x
+
+
+def _option_ticks(ax, opts, ranked=False):
+    """Option names under the bars; with ranked, the recommended options carry their priority."""
+    rank = {o: ("1st", "2nd", "3rd")[i] for i, o in enumerate(F.RECOMMENDED)} if ranked else {}
+    ax.set_xticks(range(len(opts)))
+    ax.set_xticklabels([f"{o}\n{rank[o]}" if o in rank else o for o in opts], fontsize=8)
+    for t, o in zip(ax.get_xticklabels(), opts):
+        if o in rank:
+            t.set_color(BLUE); t.set_fontweight("bold")
+
+
+def w05_energy_total():
+    """Pumping energy in 2070: the network's stations and the lift at each plant's inlet works, by option.
+    Source: facts_w17.summary (stations) and facts_w17.inlet_lift (plants)."""
+    opts = F.available()
+    fig, ax = plt.subplots(figsize=(17 * CM, 6.6 * CM))
+    _style(ax)
+    _energy_bars(ax, opts)
+    _option_ticks(ax, opts)
+    ax.set_ylabel("Energy in 2070, MWh a year", fontsize=8, color=GREY)
+    ax.legend(fontsize=7.5, frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.12), ncol=2)
+    return _save(fig, "W05_energy_total")
+
+
+def w06_glance():
+    """The options side by side for the executive summary: the plants and their 2070 flow, the pumping energy with
+    the plant inlets, the trunk sewers of 1,000 mm and over, the pumping stations. The recommended options carry
+    their priority. Source: facts_w17."""
+    opts = F.available()
+    fig, axes = plt.subplots(2, 2, figsize=(17 * CM, 12.4 * CM))
+    (a1, a2), (a3, a4) = axes
+    for ax in (a1, a2, a3, a4):
+        _style(ax)
+    x = range(len(opts))
+    # (a) the plants, stacked in the colours of the maps; the count of plants above each bar
+    seen = []
+    for i, o in enumerate(opts):
+        base = 0.0
+        for z, v in F.plants(o).items():
+            q = v["avg"]["2070"]
+            a1.bar(i, q, bottom=base, color=ZONE[z], width=0.6, edgecolor="white", linewidth=0.6)
+            base += q
+            if z not in seen:
+                seen.append(z)
+    tot = max(sum(v["avg"]["2070"] for v in F.plants(o).values()) for o in opts)
+    for i, o in enumerate(opts):
+        a1.text(i, tot * 1.05, f"{len(F.plants(o))}", ha="center", fontsize=6.5, color=GREY)
+    a1.set_ylim(0, tot * 1.16)
+    a1.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v / 1000:,.0f}k"))
+    a1.set_title("Average flow at the plants in 2070, m³/d;\nnumber of plants", fontsize=8, color=BLUE,
+                 fontweight="bold", loc="left")
+    a1.legend(handles=[Patch(color=ZONE[z], label=F.name(z)) for z in sorted(seen, key=lambda s: int(s[1:]))],
+              fontsize=6.5, frameon=False, loc="upper left", bbox_to_anchor=(1.0, 1.0), title="Plant at",
+              title_fontsize=6.5, handlelength=1.0)
+    # (b) energy
+    _energy_bars(a2, opts, label_size=6.5)
+    a2.set_title("Pumping energy in 2070, MWh a year;\nstations and plant inlets", fontsize=8, color=BLUE,
+                 fontweight="bold", loc="left")
+    a2.legend(fontsize=6.5, frameon=False, loc="upper right", bbox_to_anchor=(1.0, 0.93))
+    # (c) the trunk sewers
+    km = [F.km_od_at_least(o) for o in opts]
+    a3.bar(x, km, color=MID, width=0.6)
+    for i, o in enumerate(opts):
+        a3.text(i, max(km) * 1.05, f"{km[i]:.0f} km", ha="center", fontsize=6.5, color=BLUE)
+        a3.text(i, max(km) * 1.17, f"{F.largest_od(o)}", ha="center", fontsize=6.0, color=GREY)
+    a3.set_ylim(0, max(km) * 1.3)
+    a3.set_title("Sewers of 1,000 mm and over, km;\nlargest size, mm", fontsize=8, color=BLUE, fontweight="bold",
+                 loc="left")
+    # (d) the pumping stations and their rising mains
+    nps = [F.summary(o)["pumping_stations"] for o in opts]
+    rm = [F.summary(o)["rising_main_m"] / 1000 for o in opts]
+    a4.bar(x, nps, color=MID, width=0.6)
+    for i in x:
+        a4.text(i, max(nps) * 1.05, f"{nps[i]}", ha="center", fontsize=6.5, color=BLUE)
+        a4.text(i, max(nps) * 1.17, f"{rm[i]:.0f} km", ha="center", fontsize=6.0, color=GREY)
+    a4.set_ylim(0, max(nps) * 1.3)
+    a4.set_title("Pumping stations;\nrising mains, km", fontsize=8, color=BLUE, fontweight="bold", loc="left")
+    for ax in (a1, a2, a3, a4):
+        _option_ticks(ax, opts, ranked=True)
+    fig.tight_layout(w_pad=2.2, h_pad=1.6)
+    return _save(fig, "W06_glance")
+
+
 if __name__ == "__main__":
     print("options:", F.available())
-    w01_plant_split(); w02_plant_years(); w03_pumping(); w04_depth()
+    w01_plant_split(); w02_plant_years(); w03_pumping(); w04_depth(); w05_energy_total(); w06_glance()

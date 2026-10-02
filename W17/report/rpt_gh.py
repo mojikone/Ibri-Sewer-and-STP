@@ -330,8 +330,12 @@ def part_g(d):
 
     D.p(d, "The net present value of each option is computed by the equation "
            "of Section 7.8.4, at five per cent over twenty-five years.")
-    _pending(d, "The comparison and the recommended option will be presented "
-                "in the next revision.")
+    import rpt_options             # Revision 4: the sewer network options compared, and the three recommended
+    rpt_options.appraisal(d)
+    _pending(d, "The cost estimate, the net present value and the multi-criteria "
+                "scores of the recommended options, and the options of the "
+                "treated effluent network and the treatment plant, will be "
+                "presented in the next revision.")
 
 
 # ===================================================== PART H
@@ -390,25 +394,26 @@ def part_h(d):
            f"The study area is saturated in {F.totals()['ultimate']} at "
            f"{F.fmt(F.totals()['pop_ult'])} people and "
            f"{F.fmt(F.totals()['q_ult'])} cubic metres of sewage a day.")
+    import rpt_options             # Revision 4: what the sewer network options established
+    rpt_options.conclusions(d)
     D.p(d, "A topographic and utility survey covering the whole study area is "
            "in progress. It will establish the levels, diameters and condition "
            "that the supplied datasets do not carry, and its completion is the "
            "principal step between this revision and the next.")
 
     D.h(d, 3, "8.4.1.   Recommendations")
-    D.p(d, "It is recommended that Nama Water Services take the seven "
-           "decisions of Section 1.5.2, the design horizon and the overflow first "
-           "among them, confirm the other matters of Section 1.5.4, and supply "
-           "the data requested in Section 1.5.5, so that the options and the "
-           "appraisal can be completed on an agreed basis.")
+    D.p(d, "It is recommended that:")
+    rpt_options.recommendations(d)
 
     # --------------------------------------------------------------- 43
     D.h(d, 2, "8.5.   Appendices")
     D.table(d, ["Appendix", "Content"], [
         ["A", "Population, land use and flow: the working behind Chapter 4. "
               "Issued with this revision"],
-        ["B", "Design criteria, with references. Next revision"],
-        ["C", "Drawings and figures. Next revision"],
+        ["B", "Network options: quantities, pumping stations and depth. "
+              "Issued with this revision"],
+        ["C", "Design criteria, with references. Next revision"],
+        ["D", "Drawings and figures. Next revision"],
     ], widths=[3.0, 13.5], font=9.5)
     D.p(d, "")
     D.p(d, "The decisions requested, the values adopted and the data requests "

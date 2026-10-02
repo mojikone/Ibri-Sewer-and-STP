@@ -188,9 +188,9 @@ def part_d(d):
                f"not published at settlement level, and the counted properties "
                f"are used in their place.")
     N.add(p, "PAM-GUD-201, Section 7.2, page 59. 116,452 divided by 22,559 "
-             "properties gives the area-wide 5.16. Revision 1 of this report "
-             "used a single rate of 5.32 for all settlements; the rate per "
-             "settlement replaces it.")
+             "properties gives the area-wide 5.16. The Inception Report used a "
+             "single rate for all settlements; the rate per settlement replaces "
+             "it.")
     D.tab_caption(d, "Occupancy rate by settlement, 2024")
     D.table(d, ["Settlement", "Domestic properties", "Population 2024", "Rate calculated", "Rate adopted", "People in the design"],
             [[r["name"], fmt(r["properties"]), fmt(r["workbook_2024"]), f"{r['or_raw']:.2f}", f"{r['or_used']:.2f}", fmt(r["people_today"])] for r in st]
@@ -692,14 +692,17 @@ def part_d(d):
            "gives the depth rule that places it and the velocities of its "
            "rising main.")
     D.sub(d, "The trunk sewers and the treatment plant")
+    import facts_w17 as FW         # Revision 4: the network is laid over the whole area, so its infiltration is known
+    LW = FW.loads()
+    infil_m = LW["infiltration_m3d"] * FW.MARGIN
     p = D.p(d, f"The trunk sewers and the STP carry the sum of the settlements "
                f"upstream. If the whole study area drains to one STP, the flows "
                f"are as in the table, on the definitions of Section 3.4.1. The "
-               f"network has not yet been laid over the whole area, so its "
-               f"infiltration cannot be totalled; each 100 kilometres of new "
-               f"sewer adds {fmt(100 * pf['infil_per_km'])} cubic metres a day "
-               f"with the margin. Tanker deliveries are added when their "
-               f"records arrive.")
+               f"network of Section 6.2, {fmt(LW['active_sewer_km'])} km of "
+               f"sewer, adds {fmt(LW['infiltration_m3d'])} cubic metres a day of "
+               f"infiltration, {fmt(infil_m)} with the margin; Section 6.2.7 "
+               f"gives the flow arriving at each plant of each option. Tanker "
+               f"deliveries are added when their records arrive.")
     N.add(p, "PAM-GUD-201, Section 7.4.5, page 73, the margin.")
     D.tab_caption(d, "Flows at one STP for the whole area, before infiltration and tankers, m³/d")
     D.table(d, ["Flow"] + [str(y) for y in yrs], [
@@ -709,7 +712,7 @@ def part_d(d):
         ["Merrimack peak factor"] + [f"{pf[y]['pf']:.2f}" for y in yrs],
         ["**Average annual flow with the margin**"] + [f"**{fmt(pf[y]['aaf'])}**" for y in yrs],
         ["**Peak hourly flow with the margin**"] + [f"**{fmt(pf[y]['phf'])}**" for y in yrs],
-        ["Infiltration with the margin, to add to both", f"{pf['infil_per_km']:.2f} m³/d per km of sewer", "", "", ""],
+        ["Infiltration with the margin, to add to both", f"{fmt(infil_m)} m³/d for the network of Section 6.2", "", "", ""],
         ["Maximum day flow", "from the existing STP's records", "", "", ""],
     ], widths=[6.2, 2.6, 2.6, 2.6, 2.6], font=9)
     _gap(d)
@@ -818,11 +821,14 @@ def part_d(d):
                   ["Q inflow", "flow entering the STP, the design average", "m³/d"]])
     D.tab_caption(d, "Treated effluent available, one STP for the whole area, m³/d")
     D.table(d, ["", *[str(y) for y in yrs]], [
-        ["STP inflow, design average"] + [fmt(ts[y]["inflow"]) for y in yrs],
+        ["STP inflow, design average, before infiltration"] + [fmt(ts[y]["inflow"]) for y in yrs],
         ["Produced, 95 per cent"] + [fmt(ts[y]["produced"]) for y in yrs],
         ["Delivered, less 10 per cent in the network"] + [fmt(ts[y]["delivered"]) for y in yrs],
     ], widths=[6.6, 2.5, 2.5, 2.5, 2.5], font=9)
     _gap(d)
+    D.p(d, f"The infiltration of the network of Section 6.2 adds {fmt(infil_m)} "
+           f"cubic metres a day to the inflow with the margin, and "
+           f"{fmt(infil_m * 0.95 * 0.90)} to the treated effluent delivered.")
     _chart(d, "R05_tse", "STP inflow, treated effluent produced and treated effluent delivered to customers, by year.", 13.5)
     adopt(d, 8)
 

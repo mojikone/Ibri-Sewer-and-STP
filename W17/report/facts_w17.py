@@ -120,6 +120,55 @@ def od_classes(o):
     return {int(k): v for k, v in summary(o)["pipe_km_by_od"].items()}
 
 
+def km_od_at_least(o, od=1000):
+    """Length of sewer of outside diameter od and over, km: the trunk sewers the options differ in."""
+    return sum(v for k, v in od_classes(o).items() if k >= od)
+
+
+def largest_od(o):
+    return max(k for k, v in od_classes(o).items() if v > 0)
+
+
+# The engineer's priority (2026-10-02): the three options recommended for the appraisal, first to third, one of each
+# character the guidelines ask for (PAM-GUD-201 Section 12.1, p95). The treated effluent network is designed on them.
+RECOMMENDED = ["S1", "S4", "S6"]
+CHARACTER = {"S1": "established local practice", "S4": "international best practice", "S6": "sustainability-led"}
+
+# The lift at a plant's inlet works, on the pumping stations' own concept values (py/scenario_results.py): the wet well
+# 1.5 m below the arriving sewer, the inlet works 3.0 m above the ground, 65 per cent wire-to-water, no main.
+WET_WELL_M, INLET_ABOVE_GROUND_M, EFFICIENCY = 1.5, 3.0, 0.65
+MARGIN = 1.10      # the design margin of a new plant, PAM-GUD-201 Section 7.4.5, p73
+
+
+def inlet_lift(o):
+    """Energy to lift the flow at every plant's inlet works, MWh a year by model year, and the power at the 2070
+    peak, kW: 9.81 x head x average volume / efficiency, the stations' rule with the static lift only."""
+    out = {"plants": {}, "mwh": {y: 0.0 for y in YEARS}, "kw_2070": 0.0}
+    for z, v in plants(o).items():
+        head = v["inlet"] + WET_WELL_M + INLET_ABOVE_GROUND_M
+        mwh = {y: 9.81 * head * v["avg"][y] / EFFICIENCY / 3600 * 365 / 1000 for y in YEARS}
+        kw = 9.81 * head * v["peak"]["2070"] / 1000 / EFFICIENCY
+        out["plants"][z] = dict(head=head, mwh=mwh, kw=kw)
+        for y in YEARS:
+            out["mwh"][y] += mwh[y]
+        out["kw_2070"] += kw
+    return out
+
+
+def energy_total(o, year):
+    """Pumping energy of the stations and the plant inlets together, MWh a year."""
+    return summary(o)[f"mwh_{year}"] + inlet_lift(o)["mwh"][year]
+
+
+def flow_chain(year):
+    """From the plots to the plants in one model year, m3/d. The same in every option: the pipes and their
+    infiltration are; only the split between the plants differs."""
+    L = loads(); y = L["years"][year]
+    at = sum(v["avg"][year] for v in plants(available()[0]).values())
+    return dict(plots=y["plot_load_m3d"], carried=y["carried_m3d"], outside=y["outside_m3d"],
+                infiltration=L["infiltration_m3d"], at_plants=at, design=at * MARGIN)
+
+
 if __name__ == "__main__":
     print("available:", available())
     for o in available():
