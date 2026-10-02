@@ -163,7 +163,10 @@ Peak outfall flow, sum of the 24 outfalls: 2030 613.9 → 674.0 L/s; 2070 1,541.
   51 slides): the engineer's deck "- 2-1" (WeTransfer, 2026-10-02; byte-identical to his Downloads copy of 16 September)
   with only the cover's title, date and revision changed; section 03 (the model, the flow to the plants, the seven options
   with diagram and map each, depth, the options side by side, energy, two matters, self-cleansing, the recommendation)
-  cloned from his own slides; placeholders 04 TE network and 05 Cost analysis. **PowerPoint pitfall:** opening, SaveAs,
+  cloned from his own slides; placeholders 04 TE network and 05 Cost analysis. The bottom strip of all 44 content
+  slides and the cover's row of icons show the five sections (01 Progress, 02 Design basis, 03 Sewer network, 04 TE
+  network, 05 Cost analysis), the slide's own lit; his topic detail stays in the top-left tab (engineer's option A,
+  `section_strip`, `cover_row`; the cost icon is a banknote drawn on the Tabler grid). **PowerPoint pitfall:** opening, SaveAs,
   editing and saving again re-reads his pictures lazily by their old part names and swaps maps for logos and icons; copy
   the file, open it, edit, save once (tested clean). His slides 2–22 compared pixel by pixel with the base render.
 - Open for the engineer: the GeoPackages in `11_Network_options` still carry an `old_id` field with the modeller's labels.
