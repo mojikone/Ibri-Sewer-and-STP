@@ -15,4 +15,6 @@
 - [Long runs detached](long-runs-detached.md) — the whole-network engine run outlives the 10-minute Bash cap; Start-Process it and Monitor the console file
 - [Report format preferences](report-format-preferences.md) — firm's template, native captions, symbol lines, 50 % imagery, no worked examples, plain words, decisions register
 - [QGIS MCP relay fallback](qgis-mcp-relay-fallback.md) — relay hung after a long render; talk to the plugin's socket with W16/report_basis/qgis_direct.py, or start a new session
+- [No unexplained agent fan-out](no-unexplained-agent-fanout.md) — work solo and visibly; ask before any multi-agent workflow, ultracode or not
 - [Main pipe is not client data](main-pipe-not-client-data.md) — the engineer's own trunk input; never on a descriptive client map
+- [PowerPoint COM: save once](powerpoint-com-save-once.md) — copy, open, edit, save once; SaveAs then Save swaps his deck's maps for logos/icons

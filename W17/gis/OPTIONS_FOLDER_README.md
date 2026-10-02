@@ -1,8 +1,13 @@
 # Ibri Sewer — STP network options S1 to S7 (October 2026)
 
 Everything needed to review the seven options for where the sewage is treated: the model, the layers, the maps, the
-tables and the report. Open **`Ibri_W17_network_options.qgz`** in QGIS 3.44 or later; every layer is grouped, styled and
-labelled, the print layouts are saved in the project, and the background is the Google satellite layer.
+tables, the quantities for the bill of quantities, the report and the presentation. Open
+**`Ibri_W17_network_options.qgz`** in QGIS 3.44 or later; every layer is grouped, styled and labelled, the print layouts
+are saved in the project, and the background is the Google satellite layer.
+
+**Recommended, in order of priority (report Section 7.11): S1, one STP at O1; S4, three STPs at O1, O4 and O9; S6, six
+STPs.** One of each character the guidelines ask for; the cost estimate and the multi-criteria appraisal confirm or
+change the order, and the treated effluent network is designed on the three.
 
 ## What is in each folder
 
@@ -15,7 +20,9 @@ labelled, the print layouts are saved in the project, and the background is the 
 | `12_SewerGEMS` | The SewerGEMS model with all seven options |
 | `Maps` | One overview of the 24 subnetworks, then three maps per option: **zones** (sewers by the STP they drain to, outfalls, the depth of the sewer arriving at each STP), **network** (sewers by STP and size; each pumping station with its outfall depth, average flow in 2070, pump head and duty; the rising mains) and **depth** (sewers by depth to invert; the outfall depth at each station; the deepest manhole of every run deeper than 12 m) |
 | `Tables` | `W17_network_options_tables.xlsx` — summary, flow at each STP by year, pipe length by size, pipe length by size and depth for each option, manholes by depth, every pumping station |
-| `Reports` | Concept Design Report, Revision 4 (Word and PDF); the options are in Section 6.2 and Appendix B |
+| `BOQ` | `Ibri_Sewer_Options_BOQ_Quantities.xlsx` — quantities for the bill of quantities, one column per option: A gravity sewers by size and depth (0.5 m bands to 4 m, then 1 m), B manholes by the largest pipe they serve and depth, C pumping stations (type, pumps, duty, head, power, wet well, land), D rising mains by size, E treatment plants (flow by year, design average with the 10 % margin, depth of the arriving sewer). House connections, crossings, excavation volumes and reinstatement are excluded until the survey |
+| `Reports` | Concept Design Report, Revision 4 (Word and PDF); the options are in Section 6.2 and Appendix B, the recommendation in Section 7.11 |
+| `Presentation` | `Ibri_Concept_Design_Presentation_2026-10.pptx` — the design-basis deck of 16 September 2026, then 03 Sewer network (the model, the flow to the plants, the seven options with their diagrams and maps, depth, energy, self-cleansing, the recommendation), and placeholders for 04 TE network and 05 Cost analysis |
 
 ## The model
 

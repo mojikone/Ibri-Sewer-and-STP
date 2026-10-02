@@ -138,6 +138,36 @@ load and merged to one row per manhole. **Every year now equals the plot layer t
 layer is loaded, so plots in unpiped land and the military area are carried at their nearest manhole in every year.
 Peak outfall flow, sum of the 24 outfalls: 2030 613.9 → 674.0 L/s; 2070 1,541.5 → 1,535.2 L/s. `data/r4/`.
 
+## 2026-10-02 — the report reviewed, the recommendation, the BOQ workbook and the deck
+
+- **Report build R5** (`report/R5/Ibri_Concept_Design_Report_R4.docx` + `.pdf`, 159 pages): `build.py` has `REV = "R5"`
+  (the folder) and `DOC_REV = "R4"` (what the cover, footers and file name print); the engineer: none of the revisions is
+  issued, R5 is internal and never appears in the report. Read end to end against itself; fixed: the plant flow tied
+  through (Table 1, 4.2.8, 4.4, 6.2.7, 8.4: 60,099 from the plots, 60,456 at the plants, 66,502 with the margin), the
+  structure (1.1, 1.1.2, 8.5 with Appendix B, Chapter 6 intro, 6.1.1, 6.1.2, 6.2.1, 6.2.4, 6.3, 6.5.1), footnotes without
+  "Revision 1" or "test area", the 12 m cover sentence removed from 6.2.7 (engineer: state how many and how deep only),
+  6.2.8's flows stated (model flows, all connected, infiltration in), Decision 7 pointing to 6.2.8, G203 p50's 30 min in
+  Table 45, Appendix B's lengths from the unrounded pipes (one total, 1,498,295 m, in every option).
+- **Plant-inlet lift** (`report/facts_w17.inlet_lift`): depth of the arriving sewer + 1.5 m wet well + 3 m, 65 %, the
+  stations' own values. 2070: 1,172–1,371 MWh/yr, S1's equal to its 23 stations; the order of the options is unchanged.
+  Table 44 and chart W05 in 6.2.7; chart W06 (the options side by side) in the executive summary.
+- **Recommendation** (`facts_w17.RECOMMENDED`, the engineer's priority 2026-10-02): **S1, S4, S6**, one of each character;
+  S2 not recommended (+57 % energy on S1); S3, S5, S7 between. In the executive summary, 7.11, 8.4 and 8.4.1, 6.1.1, 6.4
+  and the deliverables register. The TE network is designed on the three.
+- **BOQ workbook** `Options 2026-10/BOQ/Ibri_Sewer_Options_BOQ_Quantities.xlsx` (`py/boq_workbook.py`): Read me, Summary,
+  A sewers by OD and depth (0.5 m bands to 4 m, then 1 m), B manholes by the largest pipe and depth (model rim − invert,
+  not the GeoPackage's 0.01 m rounding, which moves the minimum-cover manholes across 1.5 m), C pumping stations (G203
+  Table 17 type and pumps, Table 21 land), D rising mains, E plants. Checked against the report: 1,498,295 m, 19,083
+  manholes, the same bands. Excluded until the survey: house connections, crossings, excavation volumes, reinstatement.
+- **Deck** `Options 2026-10/Presentation/Ibri_Concept_Design_Presentation_2026-10.pptx` (`presentation/build_deck_w17.py`,
+  51 slides): the engineer's deck "- 2-1" (WeTransfer, 2026-10-02; byte-identical to his Downloads copy of 16 September)
+  with only the cover's title, date and revision changed; section 03 (the model, the flow to the plants, the seven options
+  with diagram and map each, depth, the options side by side, energy, two matters, self-cleansing, the recommendation)
+  cloned from his own slides; placeholders 04 TE network and 05 Cost analysis. **PowerPoint pitfall:** opening, SaveAs,
+  editing and saving again re-reads his pictures lazily by their old part names and swaps maps for logos and icons; copy
+  the file, open it, edit, save once (tested clean). His slides 2–22 compared pixel by pixel with the base render.
+- Open for the engineer: the GeoPackages in `11_Network_options` still carry an `old_id` field with the modeller's labels.
+
 ## R9 — the seven options on Colebrook-White (done 2026-10-01, 17:45)
 
 Job `055_make_R9_all_options.ps1` built S1–S7 in one file from R8, ~44 min an option at Colebrook speed, and delivered
