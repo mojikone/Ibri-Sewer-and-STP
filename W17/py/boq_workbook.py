@@ -154,7 +154,8 @@ def main():
          "Report, Section 6.2 and Appendix B.", ""),
         ("", ""),
         ("Recommended options, in order of priority (Concept Design Report, Section 7.11)", "head"),
-    ] + [(f"{RANK[o]}:  {o}, {FW.CHARACTER[o]}; {FW.text(o)}", "") for o in FW.RECOMMENDED] + [
+    ] + [(f"{RANK[o]}:  {o}; {FW.text(o)}", "") for o in FW.RECOMMENDED] + [
+        ("Each of the three is costed under the three characters of the guidelines, on the same network: nine cases.", ""),
         ("", ""),
         ("Bills", "head"),
         ("A  Gravity sewers: length by outside diameter and depth to invert, metres", ""),

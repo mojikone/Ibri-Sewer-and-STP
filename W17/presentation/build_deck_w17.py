@@ -69,6 +69,7 @@ COST_SVG = ('<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" view
 L, T, W, B = 1.5, 6.5, 64.3, 36.1
 fmt = F.fmt
 RANK = {o: ("1st", "2nd", "3rd")[i] for i, o in enumerate(F.RECOMMENDED)}
+WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven"}
 PLACE = []               # SVG icons PowerPoint places after the build: (slide no, svg, left, top, w, h)
 
 
@@ -398,7 +399,7 @@ def s_options(s):
         "The pipes run in the same streets in every option.",
         "What changes: where each subnetwork's flow is sent, the trunk sizes, the pumping stations and their rising mains, "
         "and the number and size of the plants.",
-        "S1 treats all the flow at O1, 760 m from the existing STP; S2 at O16; S3 to S7 at two to six plants.",
+        "S1 treats all the flow at O1; S2 at O16; S3 to S7 at two to six plants.",
     ], size=21, spacing=10)
     notes(s, "Report Table 41 and Figure 77. The chart: the average flow arriving at each plant in 2070.")
 
@@ -560,8 +561,8 @@ def s_selfclean(s):
 def s_recommend(s):
     ref = F.RECOMMENDED[0]; e_ref = F.energy_total(ref, "2070")
     gains = {
-        "S1": ["One site, 760 m from the existing STP",
-               f"Built in phases: {fmt(F.plants('S1')['O1']['avg']['2030'])} to {fmt(F.plants('S1')['O1']['avg']['2070'])} m³/d",
+        "S1": [f"Phased on one site: {fmt(F.plants('S1')['O1']['avg']['2030'])} m³/d in 2030, "
+               f"{fmt(F.plants('S1')['O1']['avg']['2055'])} in 2055, {fmt(F.plants('S1')['O1']['avg']['2070'])} in 2070",
                "One plant to staff, one sludge line, one source of treated effluent"],
         "S4": [f"{_p(F.energy_total('S4', '2070'), e_ref)} % less pumping energy than S1",
                f"{('One', 'Two', 'Three', 'Four')[F.summary(ref)['pumping_stations'] - F.summary('S4')['pumping_stations'] - 1]} "
@@ -584,7 +585,9 @@ def s_recommend(s):
         head = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, Cm(x), Cm(T + 0.2), Cm(cw), Cm(3.4))
         head.fill.solid(); head.fill.fore_color.rgb = rgb(TEAL); head.line.fill.background(); head.shadow.inherit = False
         tf = head.text_frame; tf.word_wrap = True; tf.vertical_anchor = MSO_ANCHOR.MIDDLE
-        for k, (sx, sz, b) in enumerate(((f"{RANK[o]}  ·  {o}", 30, True), (F.CHARACTER[o].capitalize(), 19, False))):
+        n = len(F.plants(o))
+        for k, (sx, sz, b) in enumerate(((f"{RANK[o]}  ·  {o}", 30, True),
+                                         (f"{WORDS[n].capitalize()} plant{'s' if n > 1 else ''}", 19, False))):
             p = tf.paragraphs[0] if k == 0 else tf.add_paragraph(); p.alignment = PP_ALIGN.CENTER
             r = p.add_run(); r.text = sx; r.font.size = Pt(sz); r.font.bold = b; r.font.color.rgb = rgb("FFFFFF"); r.font.name = "Calibri"
         pl = F.plants(o); rr = F.option_row(o)
@@ -597,10 +600,12 @@ def s_recommend(s):
         text(s, x, T + 12.9, cw, 12.5,
              [("Gains", {"bold": True, "colour": "3E8E5E", "bullet": False})] + gains[o]
              + [("Costs", {"bold": True, "colour": "B4453F", "bullet": False})] + costs[o], size=17, spacing=4)
-    box(s, L, 31.0, W, 4.9, "The order rests on the technical results.  ",
-        f"S2 is not recommended: {_p(F.energy_total('S2', '2070'), e_ref)} % more pumping energy than S1. The cost estimate "
-        "and the multi-criteria appraisal confirm or change the order: S4 or S6 is preferred to S1 if its whole-life cost "
-        "is within 10 % of S1's. The treated effluent network is designed on the three.", size=19)
+    box(s, L, 31.0, W, 4.9, "Why these three, and nine costed cases.  ",
+        "Together they span the choice: one plant, three, six. "
+        f"S2 is not selected, {_p(F.energy_total('S2', '2070'), e_ref)} % more pumping energy than S1; S3, S5 and S7 "
+        "lie between the three. Each is costed under the three characters of the guidelines on the same network: "
+        "process, solar energy, reuse, materials. Of two cases within 10 % on whole-life cost, the more sustainable "
+        "is preferred. The treated effluent network is designed on the three.", size=19)
     notes(s, "Report Section 7.11 and the executive summary. Priority set by the engineer, 2 October 2026.")
 
 
@@ -649,14 +654,14 @@ def svg(name, colour="FFFFFF"):
 
 
 def cover(s):
-    """His cover with the deck's own title, subtitle, date and revision."""
+    """His cover with the deck's own title, subtitle, date and document; no revision is named."""
     for sh in s.shapes:
         if not sh.has_text_frame:
             continue
         t = sh.text_frame.text.strip()
         new = {"Design Basis Report": "Concept Design",
                "Settlement boundaries, population, flows and loads": "Design basis and the sewer network options",
-               "MEETING": "DATE", "16th September 2026": "October 2026", "Revision 0": "Revision 4"}.get(t)
+               "MEETING": "DATE", "16th September 2026": "October 2026", "Revision 0": "Concept Design Report"}.get(t)
         if new:
             set_text(sh, new)
 
