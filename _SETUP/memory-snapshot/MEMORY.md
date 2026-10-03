@@ -18,3 +18,4 @@
 - [No unexplained agent fan-out](no-unexplained-agent-fanout.md) — work solo and visibly; ask before any multi-agent workflow, ultracode or not
 - [Main pipe is not client data](main-pipe-not-client-data.md) — the engineer's own trunk input; never on a descriptive client map
 - [PowerPoint COM: save once](powerpoint-com-save-once.md) — copy, open, edit, save once; SaveAs then Save swaps his deck's maps for logos/icons
+- [WhatsApp send via Playwright](whatsapp-send-via-playwright.md) — large files to his WhatsApp when away: Playwright window, phone-number link code, short profile path, log out after
