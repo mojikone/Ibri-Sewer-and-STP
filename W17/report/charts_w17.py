@@ -238,6 +238,39 @@ def w06_glance():
     return _save(fig, "W06_glance")
 
 
+# the hazard classes in the colours of the hazard maps of Section 1.2.7 (qgis_maps_area.HAZARD)
+HAZARD_COLOURS = [("none", "#e6e6e6", "not flooded"), ("H1", "#0071ff", "H1"), ("H2", "#47c4ff", "H2"),
+                  ("H3", "#00fff9", "H3"), ("H4", "#0eff00", "H4"), ("H5", "#fff200", "H5"), ("H6", "#f41f1f", "H6")]
+
+
+def w07_flood():
+    """The share of the sewer length and of the manholes in each flood hazard class, for the 10, 25, 50 and 100-year
+    floods; the share in H4 to H6 in a fixed column at the right. Source: facts_w17.flood (py/flood_exposure.py)."""
+    fl = F.flood(); L = fl["pipes"]["length_m"]; M = fl["manholes"]["count"]; periods = list(fl["periods"])
+    fig, axes = plt.subplots(1, 2, figsize=(17 * CM, 5.6 * CM), sharey=True)
+    for ax, (title, get, total) in zip(axes, (("Length of sewer", lambda p: p["pipe_length_m"], L),
+                                              ("Manholes", lambda p: p["manholes"], M))):
+        _style(ax, xgrid=True, ygrid=False)
+        for i, T in enumerate(periods):
+            v = get(fl["periods"][T]); left = 0.0
+            for k, colour, _ in HAZARD_COLOURS:
+                share = 100 * v[k] / total
+                ax.barh(i, share, left=left, color=colour, height=0.62, edgecolor="white", linewidth=0.5)
+                left += share
+            high = 100 * sum(v[k] for k in ("H4", "H5", "H6")) / total
+            ax.text(103, i, f"{high:.1f} %", va="center", fontsize=7.5, color=BLUE, fontweight="bold")
+        ax.set_xlim(0, 100); ax.set_title(title, fontsize=8.5, color=GREY)
+        ax.text(103, -0.75, "H4–H6", fontsize=7, color=GREY, va="center")
+        ax.set_xlabel("per cent", fontsize=7.5, color=GREY)
+    axes[0].set_yticks(range(len(periods)))
+    axes[0].set_yticklabels([f"{T}-year" for T in periods], fontsize=8)
+    axes[0].invert_yaxis()
+    fig.legend(handles=[Patch(facecolor=c, edgecolor="#b8b8b8", linewidth=0.4, label=lab) for _, c, lab in HAZARD_COLOURS],
+               loc="lower center", ncol=7, frameon=False, fontsize=7.5, bbox_to_anchor=(0.5, -0.08))
+    fig.tight_layout(w_pad=4.0, rect=(0, 0.06, 1, 1))
+    return _save(fig, "W07_flood")
+
+
 if __name__ == "__main__":
     print("options:", F.available())
-    w01_plant_split(); w02_plant_years(); w03_pumping(); w04_depth(); w05_energy_total(); w06_glance()
+    w01_plant_split(); w02_plant_years(); w03_pumping(); w04_depth(); w05_energy_total(); w06_glance(); w07_flood()

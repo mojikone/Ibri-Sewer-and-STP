@@ -7,13 +7,66 @@ import facts_w14 as F
 UP, R = M.up, M.r
 
 
-def _pending(d, text):
-    D.p(d, text, italic=True, colour=D.GREY)
-
-
 def _params(d, rows):
     D.table(d, ["Symbol", "Meaning", "Unit"], rows,
             widths=[2.6, 10.4, 3.5], font=9)
+
+
+def flood_exposure(d):
+    """Section 7.2: the sewers and the manholes on the flood hazard grids of Section 1.2.7, the same in every option
+    (engineer, 2026-10-03: what share of the network lies in the high classes, H4 to H6). The plants and the pumping
+    stations are assessed once their sites are fixed. Source: facts_w17.flood (py/flood_exposure.py)."""
+    import facts_w17 as FW
+    fl = FW.flood(); L = fl["pipes"]["length_m"]; M = fl["manholes"]["count"]; per = fl["periods"]; Ts = list(per)
+    hi = ("H4", "H5", "H6")
+    rows = [("none", "Not flooded")] + [(f"H{k}", f"H{k}") for k in range(1, 7)]
+
+    def pc(part, total):
+        return f"{100 * part / total:.1f}"
+
+    D.sub(d, "Sewers and Manholes")
+    p = D.p(d, "The guideline requires sewers and their manholes to be kept out of wadis and of ground subject to "
+               "washout in heavy storms. The hazard grids give that ground a measure: the high classes, H4 to H6, where "
+               "the flood is unsafe for people and vehicles and damages buildings, are taken as the ground to be avoided.")
+    N.add(p, "PAM-GUD-203, Section 4.4.1, page 30, and page 33. The guideline sets no hazard class for washout; taking "
+             "H4 to H6 is this design's measure, to be confirmed by a scour check at the preliminary design.")
+    D.p(d, f"The sewers and the manholes lie in the same streets in every option, so their exposure does not depend on "
+           f"the option chosen. Each of the {FW.fmt(L / 1000)} km of sewer has been sampled every metre along its length, "
+           f"and each of the {FW.fmt(M)} manholes at its centre, on the grids of the 10, 25, 50 and 100-year floods. The "
+           f"tables below give the length of sewer and the number of manholes in each class.")
+    D.tab_caption(d, "Length of sewer in each flood hazard class, km")
+    D.table(d, ["Hazard class"] + [f"{T}-year" for T in Ts],
+            [[lab] + [FW.fmt(per[T]["pipe_length_m"][k] / 1000, 1) for T in Ts] for k, lab in rows]
+            + [["**H4 to H6**"] + [f"**{FW.fmt(per[T]['pipe_length_h4_h6_m'] / 1000, 1)}**" for T in Ts],
+               ["**H4 to H6, per cent of the length**"] + [f"**{pc(per[T]['pipe_length_h4_h6_m'], L)}**" for T in Ts]],
+            widths=[5.3, 2.8, 2.8, 2.8, 2.8], font=9)
+    D.p(d, "")
+    D.tab_caption(d, "Manholes in each flood hazard class")
+    D.table(d, ["Hazard class"] + [f"{T}-year" for T in Ts],
+            [[lab] + [FW.fmt(per[T]["manholes"][k]) for T in Ts] for k, lab in rows]
+            + [["**H4 to H6**"] + [f"**{FW.fmt(per[T]['manholes_h4_h6'])}**" for T in Ts],
+               ["**H4 to H6, per cent of the manholes**"] + [f"**{pc(per[T]['manholes_h4_h6'], M)}**" for T in Ts]],
+            widths=[5.3, 2.8, 2.8, 2.8, 2.8], font=9)
+    D.p(d, "")
+    D.chart(d, "W07_flood", 16.0)
+    D.fig_caption(d, "Share of the sewer length and of the manholes in each flood hazard class. The figure at the right "
+                     "of each bar is the share in the high classes, H4 to H6.")
+    a, b = per[Ts[-1]], per["25"]
+    D.p(d, f"In the 100-year flood {FW.fmt(a['pipe_length_h4_h6_m'] / 1000, 1)} km of sewer, "
+           f"{pc(a['pipe_length_h4_h6_m'], L)} per cent of the length, and {FW.fmt(a['manholes_h4_h6'])} manholes, "
+           f"{pc(a['manholes_h4_h6'], M)} per cent, lie in H4 to H6. In the 25-year flood the shares are "
+           f"{pc(b['pipe_length_h4_h6_m'], L)} per cent of the length and {pc(b['manholes_h4_h6'], M)} per cent of the "
+           f"manholes; H6, the highest class, holds {FW.fmt(a['pipe_length_m']['H6'] / 1000, 1)} km of sewer in the "
+           f"100-year flood.")
+    p = D.p(d, "At the preliminary design each sewer and manhole in these classes is reviewed on the levels of the "
+               "survey. The sewer is moved out of the channel where the streets allow. Where it has to cross, the "
+               "crossing is designed as a wadi crossing, with 1.5 metres of cover to the crown, protection against scour "
+               "and no manhole in the wadi bed or its embankments. Where no other route exists, the length is recorded "
+               "as a justified exception, and the manholes that remain in the high classes are sealed against the entry "
+               "of flood water.")
+    N.add(p, "PAM-GUD-201, Section 9.3, pages 85 and 86; PAM-GUD-203, Section 8.2.4, page 52.")
+    D.p(d, "The treatment plants, the pumping stations and the rising mains are assessed on the same grids once their "
+           "sites are fixed.")
 
 
 # ===================================================== PART G
@@ -39,8 +92,6 @@ def part_g(d):
            "to groundwater governs both the excavation method and the "
            "infiltration allowance.")
 
-    _pending(d, "The ground model and the concept geotechnical report will be "
-                "presented in the next revision.")
 
     # --------------------------------------------------------------- 29
     D.h(d, 2, "7.2.   Flood protection")
@@ -54,9 +105,7 @@ def part_g(d):
            "are set not less than 300 millimetres above the one in fifty year "
            "flood level. Wadi crossings are designed with a minimum cover of "
            "1.5 metres to the crown of the pipe.")
-
-    _pending(d, "The flood protection assessment will be presented in the next "
-                "revision.")
+    flood_exposure(d)
 
     # --------------------------------------------------------------- 30
     D.h(d, 2, "7.3.   Odour assessment")
@@ -79,9 +128,6 @@ def part_g(d):
            "selected from the assessment. Compliance is verified by continuous "
            "monitoring at the site boundary.")
 
-    _pending(d, "The dispersion modelling and the resulting buffer will be "
-                "presented in the next revision, and precede confirmation of "
-                "the plant site.")
 
     # --------------------------------------------------------------- 31
     D.h(d, 2, "7.4.   Climate resilience")
@@ -93,7 +139,6 @@ def part_g(d):
                "design of the infrastructure.")
     N.add(p, "PAM-GUD-201, Section 4.3, page 33.")
 
-    _pending(d, "The assessment will be presented in the next revision.")
 
     # --------------------------------------------------------------- 32
     D.h(d, 2, "7.5.   Environmental and social assessment")
@@ -297,9 +342,6 @@ def part_g(d):
              "above follows ISO 15686-5, with the period and discount rate "
              "taken from PAM-GUD-201.")
 
-    _pending(d, "The estimate, the discounted comparison and the payback "
-                "figures will be presented with the options in the next "
-                "revision.")
 
     # --------------------------------------------------------------- 36
     D.h(d, 2, "7.9.   Risk")
@@ -332,10 +374,6 @@ def part_g(d):
            "of Section 7.8.4, at five per cent over twenty-five years.")
     import rpt_options             # Revision 4: the sewer network options compared, and the three recommended
     rpt_options.appraisal(d)
-    _pending(d, "The cost estimate, the net present value and the multi-criteria "
-                "scores of the recommended options, and the options of the "
-                "treated effluent network and the treatment plant, will be "
-                "presented in the next revision.")
 
 
 # ===================================================== PART H
@@ -353,8 +391,6 @@ def part_h(d):
            "and the framework by which performance is monitored once the works "
            "are in service.")
 
-    _pending(d, "The roadmap follows the selection of the recommended option "
-                "and will be presented with it.")
 
     # --------------------------------------------------------------- 40
     D.h(d, 2, "8.2.   Contracting strategy")
@@ -398,8 +434,8 @@ def part_h(d):
     rpt_options.conclusions(d)
     D.p(d, "A topographic and utility survey covering the whole study area is "
            "in progress. It will establish the levels, diameters and condition "
-           "that the supplied datasets do not carry, and its completion is the "
-           "principal step between this revision and the next.")
+           "that the supplied datasets do not carry, and the assessment of the "
+           "existing networks follows it.")
 
     D.h(d, 3, "8.4.1.   Recommendations")
     D.p(d, "It is recommended that:")
@@ -408,12 +444,10 @@ def part_h(d):
     # --------------------------------------------------------------- 43
     D.h(d, 2, "8.5.   Appendices")
     D.table(d, ["Appendix", "Content"], [
-        ["A", "Population, land use and flow: the working behind Chapter 4. "
-              "Issued with this revision"],
-        ["B", "Network options: quantities, pumping stations and depth. "
-              "Issued with this revision"],
-        ["C", "Design criteria, with references. Next revision"],
-        ["D", "Drawings and figures. Next revision"],
+        ["A", "Population, land use and flow: the working behind Chapter 4"],
+        ["B", "Network options: quantities, pumping stations and depth"],
+        ["C", "Design criteria, with references"],
+        ["D", "Drawings and figures"],
     ], widths=[3.0, 13.5], font=9.5)
     D.p(d, "")
     D.p(d, "The decisions requested, the values adopted and the data requests "

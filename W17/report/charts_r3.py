@@ -170,25 +170,6 @@ def r07_free_meters():
     return _save(fig, "R07_free_meters")
 
 
-# ---------------------------------------------------------------- R08 deliverables
-def r08_deliverables():
-    """The concept-stage deliverables by position. Source: deliverables.DELIVERABLES."""
-    from deliverables import DELIVERABLES, CATEGORIES
-    cols = {"issued": GREEN, "progress": MID, "survey": AMBER, "confirm": RED, "next": "#9aa5b1"}
-    counts = [(lab, sum(1 for d in DELIVERABLES if d[2] == key), cols[key]) for key, lab in CATEGORIES]
-    total = sum(c for _, c, _ in counts)
-    fig, ax = plt.subplots(figsize=(6.8, 1.6)); left = 0
-    for lab, v, col in counts:
-        ax.barh([0], [v], left=left, color=col, height=0.5, edgecolor="white", linewidth=1.2)
-        if v:
-            ax.text(left + v / 2, 0, str(v), ha="center", va="center", fontsize=10, color="white", fontweight="bold")
-        left += v
-    ax.set_xlim(0, total); ax.set_ylim(-0.30, 0.48); ax.axis("off")
-    ax.legend(handles=[Patch(facecolor=c, label=l) for l, _, c in counts], loc="lower center", ncol=5, frameon=False, fontsize=7.4, bbox_to_anchor=(0.5, -0.34))
-    ax.text(0, 0.40, f"{total} groups of deliverables at the concept stage", fontsize=8.5, color=GREY)
-    return _save(fig, "R08_deliverables")
-
-
 if __name__ == "__main__":
-    for fn in (r01_horizon, r02_settlement_flows, r03_peak_factor, r04_loads, r05_tse, r06_strength, r07_free_meters, r08_deliverables):
+    for fn in (r01_horizon, r02_settlement_flows, r03_peak_factor, r04_loads, r05_tse, r06_strength, r07_free_meters):
         fn()

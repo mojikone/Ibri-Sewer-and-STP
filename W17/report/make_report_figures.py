@@ -176,21 +176,29 @@ def d4_network():
 
 
 def d5_options():
-    c = Chart(3, 4, cw=256, rh=108, gx=42, gy=34,
+    # W17 R6 (engineer, 2026-10-03): the characters are not tied to an option; each selected option is costed under
+    # each of them on the same network model, nine cases in all
+    c = Chart(3, 6, cw=256, rh=96, gx=42, gy=30,
               title="Development and selection of options")
-    c.node("a", 0, 0, "Sustainability-led|option", "start")
-    c.node("b", 1, 0, "International|best practice", "start")
-    c.node("c", 2, 0, "Established local|practice", "start")
-    c.node("e", 1, 1, "Equivalent function,|reliability and redundancy")
-    c.node("cost", 0, 2, "Capital and operating|cost, life cycle cost")
-    c.node("sus", 2, 2, "Carbon, resource use|and in-country value")
-    c.node("m", 1, 3, "Weighted comparison,|recommended option", "accent")
+    c.node("o", 1, 0, "Options S1 to S7:|where the flow is treated")
+    c.node("s", 1, 1, "Three selected:|S1, S4 and S6")
+    c.node("a", 0, 2, "Sustainability-led", "start")
+    c.node("b", 1, 2, "International|best practice", "start")
+    c.node("c", 2, 2, "Established local|practice", "start")
+    c.node("n", 1, 3, "Nine cases:|same function,|same effluent standard")
+    c.node("cost", 0, 4, "Capital and operating|cost, life cycle cost")
+    c.node("sus", 2, 4, "Carbon, resource use|and in-country value")
+    c.node("m", 1, 5, "Weighted comparison,|recommended case", "accent")
 
-    c.edge("a", "e")
-    c.edge("b", "e")
-    c.edge("c", "e")
-    c.edge("e", "cost")
-    c.edge("e", "sus")
+    c.edge("o", "s")
+    c.edge("s", "a")
+    c.edge("s", "b")
+    c.edge("s", "c")
+    c.edge("a", "n")
+    c.edge("b", "n")
+    c.edge("c", "n")
+    c.edge("n", "cost")
+    c.edge("n", "sus")
     c.edge("cost", "m")
     c.edge("sus", "m")
     return render(c, "D5_options", IMG)

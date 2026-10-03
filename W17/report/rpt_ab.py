@@ -110,23 +110,16 @@ def part_a(d):
                "treatment plant.")
     N.add(p, "Appendix to the Form of Bid, page 147, restated as a contract "
              "term at page 177 of the tender document.")
-    D.p(d, "Two programmes have been issued during mobilisation, in the "
-           "kick-off presentation and in the Inception Report. Confirmation of "
-           "the governing programme is requested.")
 
     D.h(d, 3, "1.3.1.   Deliverables at the concept stage")
     p = D.p(d, "The Terms of Reference set out forty numbered deliverables for "
-               "the concept stage. They are grouped below by subject. Those "
-               "marked as issued form part of this report or accompany it; the "
-               "remainder follow in the next revision as the survey and the "
-               "options are completed.")
+               "the concept stage. They are grouped below by subject, with the "
+               "section of this report that carries each.")
     N.add(p, "Scope of Work, pages 63 and 64 of the tender document.")
 
     D.tab_caption(d, "Concept stage deliverables")
-    D.table(d, ["Deliverable", "Position"], [[a, b] for a, b, _ in DELIVERABLES], widths=[10.5, 6.0], font=9)
+    D.table(d, ["Deliverable", "Section of this report"], [[a, b] for a, b in DELIVERABLES], widths=[11.5, 5.0], font=9)
     D.p(d, "")
-    D.chart(d, "R08_deliverables", 14.5)
-    D.fig_caption(d, "Position of the concept-stage deliverables at the date of issue.")
 
     D.h(d, 3, "1.3.2.   Deliverables of the following stages")
     D.p(d, "The preliminary design develops the approved concept to an "
@@ -147,10 +140,7 @@ def part_a(d):
         ["Inception Report submission", "August 2026",
          "Design basis, methodology and programme submitted"],
         ["Design basis meeting", "16 September 2026",
-         "Progress reported; the Design Basis Report presented; seven "
-         "decisions put to Nama Water Services, none taken at the meeting; a "
-         "maximum gradient of 4 per cent from the tractive-force method at "
-         "head pipes indicated by Nama Water Services"],
+         "Progress reported; the Design Basis Report presented"],
     ], widths=[5.0, 3.4, 8.1], font=9.5)
     D.p(d, "")
     D.p(d, "Coordination with the authorities holding assets in the project "
@@ -228,8 +218,6 @@ def part_a(d):
          "follows Section 10.1 of PAM-GUD-203, Site Selection, which replaced "
          "item 2.1 of Section 05 of the former Wastewater Design Manual",
          "PAM-GUD-203 Revision 01, pages 2, 63 and 64"],
-        ["Governing programme", "Which of the two programmes issued during "
-         "mobilisation governs", "Section 1.3"],
         ["Maximum gradient by tractive force", "How the limit of 4 per cent at "
          "head pipes, indicated by Nama Water Services on 16 September 2026, is "
          "to be applied", "Section 3.3.2"],
@@ -274,8 +262,8 @@ def part_b(d):
            "in progress. It will establish cover and invert levels, diameters, "
            "materials and condition for the existing sewer, force main and "
            "treated effluent networks, together with the lifting stations, the "
-           "topography and the cadastral boundaries including plot gates. The "
-           "results will be incorporated in the next revision of this report.")
+           "topography and the cadastral boundaries including plot gates. Its "
+           "results are incorporated in the design as they are received.")
 
     # ---------------------------------------------------------------- 7
     D.h(d, 2, "2.2.   Assessment of the data", page_break=True)
@@ -466,8 +454,8 @@ def part_b(d):
            "mains and treated effluent network as built; the topography; and "
            "the cadastral boundaries including plot gates. Its outputs will "
            "establish the levels, diameters and condition that the supplied "
-           "datasets do not carry, and will be incorporated in the next "
-           "revision of this report.")
+           "datasets do not carry, and are incorporated in the design as they "
+           "are received.")
 
     D.h(d, 3, "2.3.2.   Terrain model")
     p = D.p(d, "A bare-earth terrain model at 0.5 metre resolution covering "
@@ -492,5 +480,4 @@ def part_b(d):
            "records.")
     D.p(d, "The records will be prepared to the Nama Water Services "
            "specification and uploaded to the client's geographic information "
-           "system for acceptance. Progress will be reported in the next "
-           "revision.")
+           "system for acceptance.")

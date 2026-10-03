@@ -19,6 +19,11 @@ from docx.oxml import OxmlElement, parse_xml
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
 
+from headings import official
+
+# every body paragraph, bullet, numbered item and box is set Justify Low (engineer, 2026-10-03)
+BODY_ALIGN = WD_ALIGN_PARAGRAPH.JUSTIFY_LOW
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE = os.path.join(HERE, "template", "Renardet_A4.docx")
 
@@ -297,11 +302,11 @@ def at_section_start(d):
 
 
 def h(d, level, text, page_break=False, in_toc=True):
-    """A section heading; the number is part of the text ("3.2   Title")."""
+    """A section heading; the number is part of the text ("3.2   Title"), the title in official tone (headings.py)."""
     if page_break and not at_section_start(d):
         pagebreak(d)
     _step["n"] = 0
-    par = d.add_heading(text, level)
+    par = d.add_heading(official(text), level)
     _outline(par, level - 1 if in_toc else 9)
     return par
 
@@ -312,7 +317,7 @@ def title(d, text, size=14, space_before=0):
     par = d.add_paragraph()
     par.paragraph_format.space_before = Pt(space_before); par.paragraph_format.space_after = Pt(8)
     par.paragraph_format.keep_with_next = True
-    r = par.add_run(text); r.bold = True; r.font.size = Pt(size); r.font.name = "Century Gothic"; r.font.color.rgb = BLUE
+    r = par.add_run(official(text)); r.bold = True; r.font.size = Pt(size); r.font.name = "Century Gothic"; r.font.color.rgb = BLUE
     return par
 
 
@@ -333,7 +338,7 @@ def chapter(d, text):
     gap.paragraph_format.keep_with_next = True
     if not fresh:
         gap.paragraph_format.page_break_before = True
-    par = d.add_heading(text, 1)
+    par = d.add_heading(official(text), 1)
     par.paragraph_format.space_before = Pt(0); par.paragraph_format.space_after = Pt(100)
     for r in par.runs:
         r.font.size = Pt(24)
@@ -346,7 +351,7 @@ def sub(d, text):
     par = d.add_paragraph()
     par.paragraph_format.space_before = Pt(9); par.paragraph_format.space_after = Pt(3)
     par.paragraph_format.keep_with_next = True
-    r = par.add_run(text); r.bold = True; r.font.size = Pt(10.5); r.font.name = "Century Gothic"; r.font.color.rgb = MID
+    r = par.add_run(official(text)); r.bold = True; r.font.size = Pt(10.5); r.font.name = "Century Gothic"; r.font.color.rgb = MID
     _step["n"] = 0
     return par
 
@@ -384,8 +389,7 @@ def _rule(par):
 
 def p(d, text="", bold=False, italic=False, size=None, colour=None, align=None, space_after=None, style=None):
     par = d.add_paragraph(style=style)
-    if align is not None:
-        par.alignment = align
+    par.alignment = align if align is not None else BODY_ALIGN
     if space_after is not None:
         par.paragraph_format.space_after = Pt(space_after)
     if text:
@@ -401,8 +405,7 @@ def p(d, text="", bold=False, italic=False, size=None, colour=None, align=None, 
 def rich(d, *parts, align=None, space_after=None):
     """rich(d, ("plain ", {}), ("bold", {"bold": True}), ...)"""
     par = d.add_paragraph()
-    if align is not None:
-        par.alignment = align
+    par.alignment = align if align is not None else BODY_ALIGN
     if space_after is not None:
         par.paragraph_format.space_after = Pt(space_after)
     for text, fmt in parts:
@@ -419,6 +422,7 @@ def rich(d, *parts, align=None, space_after=None):
 
 def bullet(d, text, lead=None, level=0):
     par = d.add_paragraph(style="List Bullet")
+    par.alignment = BODY_ALIGN
     par.paragraph_format.left_indent = Cm(0.6 + 0.5 * level)
     par.paragraph_format.space_after = Pt(3)
     # the template's list style carries its own font; the body font is wanted
@@ -437,6 +441,7 @@ def numbered(d, text, lead=None, restart=False):
         _step["n"] = 0
     _step["n"] += 1
     par = d.add_paragraph()
+    par.alignment = BODY_ALIGN
     par.paragraph_format.left_indent = Cm(0.9)
     par.paragraph_format.first_line_indent = Cm(-0.9)
     par.paragraph_format.tab_stops.add_tab_stop(Cm(0.9))
@@ -459,6 +464,7 @@ def shade(par, hexfill):
 def callout(d, title, text, fill="EAF1F8", colour=BLUE, border="4F81BD"):
     """A boxed note: a decision asked, a caution."""
     par = d.add_paragraph()
+    par.alignment = BODY_ALIGN
     par.paragraph_format.space_before = Pt(8); par.paragraph_format.space_after = Pt(8)
     par.paragraph_format.left_indent = Cm(0.3)
     r = par.add_run(title + "  "); r.bold = True; r.font.color.rgb = colour; r.font.size = Pt(10)

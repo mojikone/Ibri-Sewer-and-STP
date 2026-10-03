@@ -7,10 +7,6 @@ import notes as N
 IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "img")
 
 
-def _pending(d, text):
-    D.p(d, text, italic=True, colour=D.GREY)
-
-
 # ===================================================== PART E
 def part_e(d):
     D.chapter(d, "5.   The existing system")
@@ -32,7 +28,11 @@ def part_e(d):
            "network is verified before it is modelled: the datasets supplied "
            "provide geometry but not levels, and the diameter is recorded on "
            "part of the network only. The survey now in progress establishes "
-           "both, and the model will be built on the surveyed data.")
+           "both, and the model will be built on the surveyed data. Until then "
+           "the concept design does not rely on the existing networks: the "
+           "network of Section 6.2 carries all the sewage to the treatment "
+           "plants, and the existing system is assessed as soon as the as-built "
+           "survey is available.")
     D.p(d, "Each asset is then classified as having capacity for the design "
            "flow, requiring upgrading, or requiring replacement. Where an "
            "asset is retained, the point and manner of connection to the new "
@@ -49,8 +49,6 @@ def part_e(d):
            "last of these establishes the period during which the network "
            "requires assisted cleansing, described in Section 6.2.4.")
 
-    _pending(d, "The assessment will be presented in the next revision, "
-                "following completion of the survey.")
 
     # --------------------------------------------------------------- 19
     D.h(d, 2, "5.2.   Rehabilitation and upgrading")
@@ -63,8 +61,6 @@ def part_e(d):
            "Dhank and Hay Al Aqabah. These have been reviewed and recorded; "
            "they describe work already carried out rather than work required.")
 
-    _pending(d, "The rehabilitation schedule, with quantities and cost, will "
-                "be presented in the next revision.")
 
     # --------------------------------------------------------------- 20
     D.h(d, 2, "5.3.   Verification of the Regional Master Plan")
@@ -82,8 +78,7 @@ def part_e(d):
              "status Design and the source Asset Planning.")
 
     D.p(d, "The comparison depends on the design horizon, which is the subject "
-           "of Section 1.5.2, and on the flow series described in Section 4.2.7. "
-           "It will be presented in the next revision.")
+           "of Section 1.5.2, and on the flow series described in Section 4.2.7.")
 
     D.p(d, "The data required by Nama Water Services Asset Management Planning "
            "for the updating of the master plan will be provided in the format "
@@ -101,8 +96,9 @@ def part_f(d):
     # --------------------------------------------------------------- 21
     D.h(d, 2, "6.1.   Options methodology")
 
-    D.picture(d, os.path.join(IMG, "D5_options.png"), 15.5)
-    D.fig_caption(d, "Development of the options and the basis on which they are compared.")
+    D.picture(d, os.path.join(IMG, "D5_options.png"), 13.0)
+    D.fig_caption(d, "Development of the options: the three selected, each designed under the three characters, "
+                     "and the basis on which the nine cases are compared.")
 
     D.h(d, 3, "6.1.1.   Number and character of the options")
     p = D.p(d, "Not fewer than three options are developed for each of the "
@@ -113,41 +109,39 @@ def part_f(d):
                "international best practice, and one based on established "
                "practice and technology available in the Sultanate.")
     N.add(p, "PAM-GUD-201, Section 12.1, page 95.")
-    D.p(d, "For the sewer network seven options have been modelled for where the "
-           "flow is treated (Section 6.2). Three of them, one of each character, are "
-           "recommended for the appraisal (Section 7.11): S1 for established "
-           "practice, S4 for international best practice and S6 for sustainability.")
+    D.p(d, "For the sewer network, seven options have been modelled for where the "
+           "flow is treated (Section 6.2), and further options can be added on the "
+           "same model. Three of them, S1, S4 and S6, are selected for the "
+           "appraisal, for the reasons given in Section 7.11. The characters are "
+           "not tied to an option. Each selected option keeps the same network "
+           "model and is designed and costed once for each character, changing "
+           "only the factors the character governs, so that the three options "
+           "give nine costed cases.")
 
     D.p(d, "Each option is developed to equivalent functional requirements "
            "with comparable reliability and redundancy, so that the comparison "
            "between them is not influenced by differences in scope.")
 
     D.h(d, 3, "6.1.2.   The approach proposed for each option")
-    D.p(d, "The guidelines describe the character of the three options but do "
-           "not prescribe what distinguishes them in design terms. The "
-           "following approach is proposed and is offered for comment. For the "
-           "sewer network, the options of Section 6.2 differ in where the flow "
-           "is treated: the more plants, the less pumping and the smaller the "
-           "trunk sewers, against more sites to build and run.")
+    D.p(d, "The guidelines describe the three characters but do not prescribe "
+           "what distinguishes them in design terms. The following approach is "
+           "proposed and is offered for comment. The network of an option, its "
+           "pipes, pumping stations and plant sites, is the same in all three "
+           "characters; what changes is the treatment process, the energy supply, "
+           "solar generation included, the reuse and the materials.")
 
-    D.tab_caption(d, "Proposed approach for each option")
+    D.tab_caption(d, "Proposed approach for each character")
     D.table(d,
             ["", "Sustainability-led", "International best practice",
              "Established local practice"],
-            [["Network",
-              "Gravity maximised, accepting deeper excavation in order to "
-              "avoid pumping",
-              "Layout optimised by model, with pumping where it reduces whole "
-              "life cost",
-              "Conventional layout, with pumping where the topography requires"],
-             ["Treatment process",
+            [["Treatment process",
               "Lower-energy process, with nature-based polishing where the "
               "scale permits",
               "Highest-performing process, smallest footprint",
               "Process already established in Oman, simple to operate and "
               "maintain"],
              ["Energy",
-              "Generation on site, with a self-sufficiency target",
+              "Solar generation on site, with a self-sufficiency target",
               "High-efficiency plant and advanced process control",
               "Grid supply with standby generation"],
              ["Reuse",
@@ -165,7 +159,7 @@ def part_f(d):
             widths=[2.6, 4.7, 4.7, 4.5], font=8.5)
 
     D.p(d, "")
-    p = D.p(d, "Two constraints apply across all three. Nature-based treatment "
+    p = D.p(d, "Two constraints apply across all three characters. Nature-based treatment "
                "is limited by the guidelines to small plants, so it is "
                "available for outlying settlements or for polishing rather "
                "than for the main plant. And every option is developed to the "
@@ -182,11 +176,11 @@ def part_f(d):
            "nature-based solutions. The evaluation period is twenty-five "
            "years. The weighting applied to each parameter is set by Nama "
            "Water Services. The figure on the following page shows how each "
-           "option is costed and compared.")
+           "case is costed and compared.")
 
     D.wide_figure(d, os.path.join(IMG, "appraisal_method.png"),
-                  "How each option is costed and compared. The three cost "
-                  "streams are established separately for every option, "
+                  "How each case is costed and compared. The three cost "
+                  "streams are established separately for every case, "
                   "discounted to present value together, and only then scored "
                   "against the seven criteria.", size="A4")
 
@@ -197,8 +191,8 @@ def part_f(d):
                "operability, constructability and environmental impact. "
                "Sensitivity is tested by varying the weighting between "
                "categories, the discount rate and the input design criteria. "
-               "Where options fall within ten per cent of one another on total "
-               "lifetime cost, the more sustainable option is adopted.")
+               "Where two cases fall within ten per cent of one another on total "
+               "lifetime cost, the more sustainable is adopted.")
     N.add(p, "PAM-GUD-201, Sections 12.6 to 12.9, pages 104 to 106.")
 
     # --------------------------------------------------------------- 22
@@ -291,8 +285,6 @@ def part_f(d):
            "sewer network options recommended in Section 7.11, which give one "
            "source of treated effluent at O1, three, or six.")
 
-    _pending(d, "The network options will be presented in the next revision, "
-                "following confirmation of the customers and their demand.")
 
     # --------------------------------------------------------------- 25
     D.h(d, 2, "6.5.   Treatment plant options")
@@ -342,8 +334,6 @@ def part_f(d):
                "the site.")
     N.add(p, "PAM-GUD-201, Table 8, pages 43 and 44.")
 
-    _pending(d, "The plant options, the site assessment and the phasing will "
-                "be presented in the next revision.")
 
     # --------------------------------------------------------------- 26
     D.h(d, 2, "6.6.   Excess effluent, emergency provisions and tankers")
@@ -354,7 +344,10 @@ def part_f(d):
            "way is stronger than sewage arriving through the network, and its "
            "arrival is concentrated in the working day. A dedicated reception "
            "facility is provided, with screening, grease removal, sampling "
-           "before acceptance and flow equalisation.")
+           "before acceptance and flow equalisation. The volumes delivered from "
+           "outside the study area, and their sources, are requested from Nama "
+           "Water Services (Section 1.5.5), so that the reception facility and "
+           "the plant are designed for them.")
 
     D.h(d, 3, "6.6.2.   Excess treated effluent")
     p = D.p(d, "Where the effluent produced exceeds the demand, provision is "
@@ -396,6 +389,5 @@ def part_f(d):
            "content is above what mechanical dewatering alone achieves, and "
            "drying or composting is therefore required.")
 
-    D.p(d, "Dewatering facilities are provided on site. The strategy, with the "
-           "quantities arising and the disposal route for each, will be "
-           "presented in the next revision.")
+    D.p(d, "Dewatering facilities are provided on site. The strategy sets out "
+           "the quantities of sludge arising and the disposal route for each.")

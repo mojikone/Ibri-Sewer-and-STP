@@ -11,6 +11,30 @@ IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "img")
 fmt = F.fmt
 
 
+def project_control(d):
+    """The document control page, ahead of the contents: the project, the document, and who prepared, checked and
+    approved it. The names, signatures and dates are filled in by hand on issue (engineer, 2026-10-03)."""
+    D.title(d, "Document Control")
+    D.table(d, ["Item", "Detail"], [
+        ["Project", "Consultancy Services for Design and Supervision for STP, Sewer & TE Networks Systems in Ibri"],
+        ["Client", "Nama Water Services"],
+        ["Tender No.", "T/2719110/2025"],
+        ["Contract No.", "OWWSCT/2719110/2025/C1499/2026"],
+        ["Consultant", "Renardet S.A. & Partners"],
+        ["Document", "Concept Design Report"],
+        ["Date", "October 2026"],
+    ], widths=[4.0, 12.5], font=10, first_col_bold=True)
+    D.p(d, "")
+    t = D.table(d, ["", "Name", "Signature", "Date"], [
+        ["Prepared by", "", "", ""],
+        ["Checked by", "", "", ""],
+        ["Approved by", "", "", ""],
+    ], widths=[3.4, 5.6, 4.6, 2.9], font=10, first_col_bold=True)
+    for row in t.rows[1:]:
+        row.height = D.Cm(1.4)
+    D.pagebreak(d)
+
+
 def contents(d):
     D.title(d, "Contents")
     D.toc(d, "1-3")
@@ -24,33 +48,59 @@ def contents(d):
 
 def abbreviations(d):
     D.title(d, "Abbreviations and definitions")
+    # every abbreviation the report uses, checked against the built document (engineer, 2026-10-03)
     D.table(d, ["Term", "Meaning"], [
         ["AAF", "Average annual flow: the design average of the treatment plant"],
         ["APSR", "Authority for Public Services Regulation"],
-        ["BOD", "Biochemical oxygen demand"],
+        ["BOD, BOD5", "Biochemical oxygen demand; BOD5 is measured over five days"],
+        ["BS EN", "British Standard adopting a European Standard"],
+        ["BWh", "Hot desert climate, in the Köppen-Geiger classification"],
         ["CAPEX / OPEX", "Capital expenditure / operating expenditure"],
         ["CESMM3", "Civil Engineering Standard Method of Measurement, third edition"],
         ["COD", "Chemical oxygen demand"],
+        ["CRT", "Cost Reflective Tariff: the electricity tariff of the large consumers"],
         ["EIA", "Environmental impact assessment"],
+        ["EPSG:32640", "The code of the coordinate system used: UTM zone 40 North on the WGS 84 datum"],
+        ["GHS-POP", "Global Human Settlement population grid of the European Commission Joint Research Centre"],
         ["GIS", "Geographic information system"],
+        ["H1 to H6", "The six flood hazard classes of the Australian classification (Section 1.2.7)"],
+        ["ISO", "International Organization for Standardization"],
+        ["kW, MWh", "Kilowatt; megawatt hour"],
+        ["l/s, m³/d", "Litres a second; cubic metres a day"],
         ["LPCD", "Litres per capita per day"],
+        ["MAFWR", "Ministry of Agriculture, Fisheries and Water Resources"],
+        ["MD", "Ministerial Decision"],
+        ["MOD", "Ministry of Defence: a tariff of the electricity dataset"],
         ["MoHUP", "Ministry of Housing and Urban Planning"],
+        ["NAMA", "Nama Water Services, in the name of its design guidelines"],
+        ["NASA POWER", "The climate data of the United States National Aeronautics and Space Administration, from the "
+                       "MERRA-2 reanalysis, used for the climate and the wind (Section 1.2.5)"],
         ["NCSI", "National Centre for Statistics and Information"],
         ["NOC", "No objection certificate"],
+        ["NPV", "Net present value"],
+        ["NWS", "Nama Water Services"],
+        ["O1 to O24", "The outfalls of the twenty-four subnetworks, the lowest point of each; a treatment plant takes the "
+                      "name of the outfall at which it sits. A pumping station is named by its subnetwork and the manhole "
+                      "at which it sits, as O1-M445"],
+        ["OMR", "Omani rial"],
         ["OR", "Occupancy rate: persons per property"],
         ["PAEW", "Public Authority for Electricity and Water"],
+        ["PAM-GUD-201, 202, 203", "The Nama Water Services design guidelines: general; water and TSE; wastewater"],
         ["PE", "Population equivalent"],
         ["PHF", "Peak hourly flow"],
         ["Property", "A household connection: one domestic electricity meter"],
         ["Qadf", "Average daily flow"],
         ["Qpdf", "Peak flow: the guideline's peak daily flow, equal to its peak hourly flow"],
+        ["S1 to S7", "The sewer network options, by where the flow is treated (Section 6.2.6)"],
+        ["SewerGEMS, WaterGEMS", "The sewer and the water network modelling software of the Terms of Reference"],
         ["SRT", "Solids retention time"],
         ["STP", "Sewage treatment plant"],
+        ["TE", "Treated effluent, as the Terms of Reference use the term (see the note below)"],
         ["TKN", "Total Kjeldahl nitrogen"],
         ["TSE", "Treated sewage effluent, the guidelines' term for treated effluent"],
         ["TSS", "Total suspended solids"],
         ["UTM 40N", "Universal Transverse Mercator zone 40 North, WGS 84 datum"],
-    ], widths=[3.0, 13.5], font=9.5)
+    ], widths=[3.6, 12.9], font=9.5, keep_together=False)
 
     D.title(d, "A note on the term TE", size=12, space_before=8)
     p = D.p(d, "The Terms of Reference and this report use TE to mean treated "
@@ -75,10 +125,10 @@ def executive_summary(d):
            "treatment plant that will receive the collected flow. It records "
            "the data collected and the checks applied to it, sets out the "
            "design basis and the flows to saturation, and presents seven "
-           "options for the sewer network, three of which are recommended. The "
-           "design basis was issued on its own as the Design Basis Report and "
-           "presented to Nama Water Services on 16 September 2026; this "
-           "revision carries it in full.")
+           "options for the sewer network, three of which are recommended for "
+           "the cost estimate and the appraisal. The design basis was issued on "
+           "its own as the Design Basis Report and presented to Nama Water "
+           "Services.")
 
     D.picture(d, os.path.join(IMG, "D1_process.png"), 15.5)
     D.fig_caption(d, "The concept design process, from the data collected to the recommended option.")
@@ -116,7 +166,11 @@ def executive_summary(d):
                 "kilometres of gravity sewer, 23.2 kilometres of pumping main "
                 "and the whole of the 45.7 kilometre treated effluent main are "
                 "recorded as proposed. No treated effluent asset has been "
-                "built.", lead="Existing assets — ")
+                "built. As the diameters and levels of the existing networks are "
+                "not recorded, the concept design lays a network that carries all "
+                "the sewage to the treatment plants; the existing system is "
+                "assessed as soon as the as-built survey is available (Chapter "
+                "5).", lead="Existing assets — ")
     D.bullet(d, "the PAEW dataset provides 647.8 kilometres of water mains "
                 "within the study area, and is adopted as the source for "
                 "utility interfaces.", lead="Potable water — ")
@@ -134,16 +188,20 @@ def executive_summary(d):
                "164 litres per person per day, with 22 per cent added for "
                "non-domestic and 14 per cent for governmental consumption. "
                "Return rates of 85 per cent for domestic and tanker supply and "
-               "54 per cent for the rest give the wastewater flow.")
+               "54 per cent for the rest give the wastewater flow. Sewage brought "
+               "to the treatment plant by tanker from outside the study area is "
+               "not in these flows; its volumes and sources are requested from "
+               "Nama Water Services, so that the plant is designed to receive it "
+               "(Sections 1.5.5 and 6.6.1).")
     N.add(p, "PAM-GUD-201, Table 11, page 60 and Table 19, page 71. The "
              "guideline states that the consumption values apply in the "
              "absence of updated figures and should be validated by NAMA "
              "before design.")
     p = D.p(d, f"The occupancy rate is set for each settlement as its 2024 "
                f"population divided by the domestic electricity meters counted "
-               f"in it, with a floor of four persons per property, a cap of "
+               f"in it, with a floor of 4 persons per property, a cap of "
                f"{max(r['or_used'] for r in st):.2f}, the highest rate among the "
-               f"larger settlements, and four for a settlement of fewer than a "
+               f"larger settlements, and 4 for a settlement of fewer than a "
                f"thousand people. Ibri returns {ib['or_used']:.2f}. Section 4.1 "
                f"sets out the derivation.")
     N.add(p, "The guideline derives occupancy from population and housing "
@@ -156,8 +214,7 @@ def executive_summary(d):
                f"average sewage flow, for 2024 and for every year to the year "
                f"its settlement is full. The use of each plot is determined from "
                f"the meters on it and from a satellite image of September 2026; "
-               f"the capacity of the empty land is read from the built plots "
-               f"around it; each settlement grows at the rate of the official "
+               f"each settlement grows at the rate of the official "
                f"series and fills its own land before its growth moves to its "
                f"neighbours. The study area holds {fmt(t['pop_today'])} people "
                f"in 2024 and generates {fmt(t['q_today'])} cubic metres of "
@@ -167,13 +224,16 @@ def executive_summary(d):
     N.add(p, "Average flows before infiltration and before the STP margin. The "
              "five-year series for every settlement is in Sections 4.1.9 and 4.2.7.")
     import facts_w17 as FW         # Revision 4: the flow at the plants, from the network model
-    ch = {y: FW.flow_chain(y) for y in ("2030", "2055", str(ult))}
+    ch = {y: FW.flow_chain(y) for y in ("2030", "2040", "2050", "2055", "2060", str(ult))}
     D.tab_caption(d, "The study area in the design years: from the plots to the treatment plants")
     D.table(d, ["Year", "People", "Average sewage flow from the plots, m³/d", "Average flow at the plants, with infiltration, m³/d",
                 "Plant design average, with the 10 % margin, m³/d"], [
         ["2024, base", fmt(t["pop_today"]), fmt(t["q_today"]), "", ""],
         ["2030, opening year", fmt(t["pop"][2030]), fmt(t["q"][2030]), fmt(ch["2030"]["at_plants"]), fmt(ch["2030"]["design"])],
+        ["2040", fmt(t["pop"][2040]), fmt(t["q"][2040]), fmt(ch["2040"]["at_plants"]), fmt(ch["2040"]["design"])],
+        ["2050", fmt(t["pop"][2050]), fmt(t["q"][2050]), fmt(ch["2050"]["at_plants"]), fmt(ch["2050"]["design"])],
         ["2055, opening year plus 25", fmt(t["pop"][2055]), fmt(t["q"][2055]), fmt(ch["2055"]["at_plants"]), fmt(ch["2055"]["design"])],
+        ["2060", fmt(t["pop"][2060]), fmt(t["q"][2060]), fmt(ch["2060"]["at_plants"]), fmt(ch["2060"]["design"])],
         [f"{ult}, saturation", fmt(t["pop_ult"]), fmt(t["q_ult"]), fmt(ch[str(ult)]["at_plants"]), fmt(ch[str(ult)]["design"])],
     ], widths=[4.4, 2.4, 3.2, 3.6, 2.9], font=9)
     D.p(d, "")
@@ -181,10 +241,7 @@ def executive_summary(d):
     p = D.p(d, f"The plants receive the flow the network carries plus its "
                f"infiltration, {fmt(c['infiltration'])} cubic metres a day over "
                f"the {fmt(L['active_sewer_km'])} km of sewer, whichever option is "
-               f"chosen. Of the {ult} flow, {fmt(c['outside'])} cubic metres a day "
-               f"is not carried: it lies in planted areas, where a sewer waits "
-               f"for the survey's levels, and in three small outlying catchments "
-               f"served on site. The plants are designed with the guideline's ten "
+               f"chosen. The plants are designed with the guideline's ten "
                f"per cent margin. At the guideline's minimum loads of 60 grams of "
                f"BOD and 80 grams of suspended solids per person per day they "
                f"receive {fmt(pl[ult]['bod_kgd'])} kilograms of BOD a day at "
@@ -204,8 +261,9 @@ def executive_summary(d):
     D.p(d, f"Only what the guidelines do not settle is put to Nama Water "
            f"Services for approval: {len(APPROVALS)} decisions, listed below and "
            f"explained in the sections named. {len(INFORMED)} further values are "
-           f"the guidelines' own or stated assumptions; they are adopted and "
-           f"reported. No decision had been taken at the date of this report. "
+           f"the guidelines' own, methods of this design or stated assumptions; "
+           f"they are adopted and reported. No decision had been taken at the "
+           f"date of this report. "
            f"The largest of them is the overflow: without it "
            f"{len(no['never'])} settlements never fill, and "
            f"{fmt(t['pop_ult'] - no['totals'][ult]['pop_own'])} people of the "
@@ -219,24 +277,30 @@ def executive_summary(d):
     D.p(d, "")
 
     D.title(d, "How the options are developed and compared", size=12, space_before=8)
-    D.p(d, "Not fewer than three options are developed for each of the sewer "
-           "network, the treated effluent network and the treatment plant, each "
-           "set following the character the guidelines describe: one advancing "
+    D.p(d, "The guidelines ask for not fewer than three options for each of the "
+           "sewer network, the treated effluent network and the treatment plant, "
+           "and describe three characters for them: one advancing "
            "sustainability, one representing international best practice, and "
            "one based on practice already established in Oman. For the sewer "
-           "network seven options have been modelled, and the three recommended "
-           "carry those characters. Every option meets the same functional "
-           "requirement and the same effluent standard, so that the difference "
-           "between them lies in how the result is achieved. Section 6.1 sets "
-           "out what distinguishes them in design terms.")
-    D.p(d, "The options are compared over a twenty-five year period against "
+           "network seven options have been modelled for where the flow is "
+           "treated, and three of them are recommended. The characters are not "
+           "tied to an option: each recommended option keeps the same network "
+           "model and is designed and costed once for each character, changing "
+           "only the factors the character governs, the treatment process, the "
+           "energy supply, solar generation included, the reuse and the "
+           "materials. The three options therefore give nine costed cases. Every "
+           "case meets the same functional requirement and the same effluent "
+           "standard, so that the difference between them lies in how the "
+           "result is achieved. Section 6.1 sets out what distinguishes the "
+           "characters in design terms.")
+    D.p(d, "The cases are compared over a twenty-five year period against "
            "seven criteria: total lifetime cost; sustainability, comprising "
            "carbon, circular economy and nature-based solutions; social "
            "development and in-country value; adaptability and resilience; "
            "operability; constructability; and environmental impact. Costs are "
            "discounted at five per cent. Nama Water Services sets the weight "
            "given to each criterion.")
-    p = D.p(d, "Where two options fall within ten per cent of one another on "
+    p = D.p(d, "Where two cases fall within ten per cent of one another on "
                "total lifetime cost they are treated as equivalent in cost, "
                "and the more sustainable of the two is adopted. Sensitivity is "
                "tested by varying the weighting between criteria, the discount "
@@ -246,25 +310,7 @@ def executive_summary(d):
     import rpt_options             # Revision 4: the network options and the recommendation, from the SewerGEMS results
     rpt_options.summary_block(d)
 
-    D.title(d, "State of the work", size=12, space_before=8)
-    D.p(d, "The design basis, the data assessment, the population and flow "
-           "series to saturation and the assessment framework are complete. The "
-           "sewer network has been modelled over the whole study area and its "
-           "seven options are presented, three of them recommended (Sections "
-           "6.2 and 7.11). The treated effluent network is designed on the three "
-           "recommended options; its options, those of the treatment plant, the "
-           "cost of every option and their comparison follow, and are completed "
-           "once the decisions of Section 1.5 are taken. The topographic and "
-           "utility survey is in progress; the hydraulic assessment of the "
-           "existing networks follows it.")
-
     D.title(d, "Deliverables", size=12, space_before=8)
     D.p(d, "The Terms of Reference set out forty numbered deliverables for the "
-           "concept stage. This report issues the design basis, the assessment "
-           "of the data, the design criteria, the population and flow series "
-           "to saturation, the framework for the options and their appraisal, "
-           "and the sewer network options with their quantities and pumping. "
-           "The options for the treated effluent network and the treatment "
-           "plant, the cost estimate and the comparison follow once the design "
-           "horizon is decided and the survey is complete. Section 1.3.1 lists "
-           "each deliverable and its position.")
+           "concept stage. Section 1.3.1 lists them, with the section of this "
+           "report that carries each.")

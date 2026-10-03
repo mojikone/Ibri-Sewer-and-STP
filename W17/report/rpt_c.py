@@ -7,7 +7,7 @@ import notes as N
 import omml as M
 import facts_w14 as F
 import facts_basis as B
-from basis_items import ask, adopt
+from basis_items import ask, adopt, number
 
 IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "img")
 IMG_B = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "W16", "report_basis", "img")  # W17: kept in W16
@@ -49,7 +49,7 @@ def part_c(d):
         ["Occupancy rate",
          "Population divided by housing units, both from NCSI",
          "Settlement population divided by the domestic electricity meters "
-         "counted in the settlement, with a floor and a cap (Decision 2)",
+         f"counted in the settlement, with a floor and a cap ({number('Occupancy rate')})",
          "Housing units are not published at settlement level"],
         ["Non-domestic and governmental demand",
          "Unit rates per pupil, bed, employee and floor area where detailed "
@@ -95,7 +95,7 @@ def part_c(d):
          "gradients",
          "Table 11 minimum gradients; the tractive force used at the concept "
          "stage only to list the pipes needing early washing, at a tractive "
-         "tension of 1 Pa and with a floor of 1.5 l/s (Decision 7)",
+         f"tension of 1 Pa and with a floor of 1.5 l/s ({number('Gradients and self-cleansing at the concept stage')})",
          "The tractive tension is not stated in the guidelines; the method "
          "sets gradients at the preliminary design once it is confirmed"],
         ["Depth of cover",
@@ -107,13 +107,13 @@ def part_c(d):
          "quantities"],
         ["Design horizon",
          "Completion plus twenty-five years, or the saturation of the area",
-         "Both carried: 2055 and the saturation year 2070 (Decision 5)",
+         f"Both carried: 2055 and the saturation year 2070 ({number('The design horizon')})",
          "The Terms of Reference name both; the choice is for Nama Water "
          "Services"],
         ["Growth beyond the forecast",
          "Not extrapolated more than ten years beyond the available forecast",
          "The Inception Report series to 2100, used for its growth rates "
-         "only (Decision 6)",
+         f"only ({number('Growth rate beyond 2050')})",
          "The land fills after 2050; the saturation year rests on the "
          "capacity of the cadastre, and the horizon to 2100 was instructed "
          "by Nama Water Services"],

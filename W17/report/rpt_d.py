@@ -853,6 +853,6 @@ def part_d(d):
     N.add(p, "PAM-GUD-201, Tables 21 to 23, pages 75 and 76. The rate for "
              "roads and junctions applies in the absence of specific "
              "vegetation information and is subject to municipality approval.")
-    D.p(d, "The identification of customers, their present and potential "
-           "demand and their development plans is in progress. The register "
-           "will be presented with the treated effluent network options.")
+    D.p(d, "The customers, their present and potential demand and their "
+           "development plans are registered with the treated effluent network "
+           "options (Section 6.4).")

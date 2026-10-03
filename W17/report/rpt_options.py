@@ -12,6 +12,7 @@ import os
 import doc as D
 import notes as N
 import facts_w17 as F
+from basis_items import APPROVALS, number
 
 IMG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "img")
 MAPS = os.path.join(F.W17, "Options 2026-10", "Maps")
@@ -127,7 +128,7 @@ def network_options(d):
                   "The pipes that exceed 3.0 m/s, or a depth of 65 per cent of the diameter up to 350 mm and 50 per cent "
                   "above, are listed with each option."))
     N.add(p, "PAM-GUD-203, page 27 and Table 10.")
-    D.p(d, "The design horizon is still to be decided (Decision 5). The pipes are designed for 2070 so that the network "
+    D.p(d, f"The design horizon is still to be decided ({number('The design horizon')}). The pipes are designed for 2070 so that the network "
            "is laid once and is not relieved while the plots around it are still being built (Section 4.1.9). The flow "
            "at each plant is given for every model year, 2055 among them, so that the plants can be phased on either "
            "horizon.")
@@ -321,7 +322,8 @@ def network_options(d):
               "The year from which the network is to be self-cleansing (2030, the opening year, or a later year); "
               "the tractive stress for the head pipes (1 pascal, or another value); and whether 4 per cent is the "
               "steepest gradient for every pipe or for the head pipes only. A steeper network is deeper and needs "
-              "more pumping, and the cost of each choice will be given once it is made. This extends Decision 7 "
+              f"more pumping, and the cost of each choice will be given once it is made. This extends "
+              f"{number('Gradients and self-cleansing at the concept stage')} "
               "(Section 3.3.2).")
 
 
@@ -348,10 +350,10 @@ def _rec_text(o):
     km = F.km_od_at_least(o); od = F.largest_od(o)
     if o == "S1":
         z = next(iter(pl))
-        return (f"One plant at {F.name(z)}, 760 m from the existing STP, receiving {fmt(pl[z]['avg']['2030'])} cubic "
-                f"metres a day on average in 2030 and {fmt(pl[z]['avg']['2070'])} in 2070, so that it is built in "
-                "phases on one site. Treatment stays near today's plant, with one plant to staff, one sludge line and "
-                f"one source of treated effluent. Its costs are the largest trunk sewers, {fmt(km)} km of sewer of 1,000 mm "
+        return (f"One plant at {F.name(z)}, receiving {fmt(pl[z]['avg']['2030'])} cubic metres a day on average in "
+                f"2030, {fmt(pl[z]['avg']['2055'])} in 2055 and {fmt(pl[z]['avg']['2070'])} in 2070, so that it is "
+                "built in phases on one site, with one plant to staff, one sludge line and one source of treated "
+                f"effluent. Its costs are the largest trunk sewers, {fmt(km)} km of sewer of 1,000 mm "
                 f"and over, up to {fmt(od)} mm, the deepest arrival at a plant, {pl[z]['inlet']:.1f} m, and the most pumping of "
                 f"the three, {fmt(e)} MWh a year in 2070 with the lift at the plant.")
     if o == "S4":
@@ -381,28 +383,36 @@ def _rec_text(o):
 
 
 def recommendation(d, numbered=True):
-    """The three recommended options with their priority, the options set aside, and the rule that can still change
-    the order. numbered: the options as a numbered list (7.11); else as bullets led by the option (summary)."""
+    """The three recommended options with their priority, why these three, the options set aside, and how the three
+    are costed: each under every character of the guidelines on the same network model, nine cases (engineer,
+    2026-10-03). numbered: the options as a numbered list (7.11); else as bullets led by the option (summary)."""
     rec = F.RECOMMENDED; ref = rec[0]
     for i, o in enumerate(rec):
         if numbered:
-            D.numbered(d, _rec_text(o), lead=f"{o}, {F.CHARACTER[o]}.  ", restart=(i == 0))
+            D.numbered(d, _rec_text(o), lead=f"{o}.  ", restart=(i == 0))
         else:
-            D.bullet(d, _rec_text(o), lead=f"{o}, {F.CHARACTER[o]}, {RANK[i]}.  ")
+            D.bullet(d, _rec_text(o), lead=f"{o}, {RANK[i]}.  ")
     rest = [o for o in F.available() if o not in rec]
     e_ref = F.energy_total(ref, "2070")
     worst = max(rest, key=lambda o: F.energy_total(o, "2070"))
     others = [o for o in rest if o != worst]
-    D.p(d, f"{worst} is not recommended: it treats all the flow at {', '.join(F.summary(worst)['stp'])} and has to pump "
+    n = {o: len(F.plants(o)) for o in rec}
+    D.p(d, f"The three are selected because together they span the choice the options present: all the flow treated "
+           f"at {WORDS[n[rec[0]]]} plant in {rec[0]}, at {WORDS[n[rec[1]]]} in {rec[1]} and at {WORDS[n[rec[2]]]} in "
+           f"{rec[2]}, so that the appraisal prices the whole range from central to local treatment. "
+           f"{worst} is not selected: it treats all the flow at {', '.join(F.summary(worst)['stp'])} and has to pump "
            f"the whole of O1's flow there, {fmt(F.energy_total(worst, '2070'))} MWh a year in 2070, "
            f"{_pct(F.energy_total(worst, '2070'), e_ref)} per cent more than S1. "
            + ", ".join(others[:-1]) + f" and {others[-1]} lie between the recommended options and offer nothing the "
            "three do not: S3 and S5 are steps between S1, S4 and S6, and S7 keeps the trunk sewers of S1 while adding "
            "two small plants.")
-    p = D.p(d, "The priority rests on the technical results. The cost estimate and the multi-criteria appraisal confirm "
-               "it or change it: under the rule of Section 6.1.4, S4 or S6 is preferred to S1 if its whole-life cost "
-               "falls within ten per cent of S1's. The treated effluent network is designed on the three options, with "
-               "one source of treated effluent, three or six.")
+    p = D.p(d, "Each of the three is designed and costed under each of the three characters of the guidelines, on the "
+               "same network model: the characters change the treatment process, the energy supply, solar generation "
+               "included, the reuse and the materials (Section 6.1.2), and the appraisal compares nine cases. The "
+               "priority rests on the technical results; the cost estimate and the multi-criteria appraisal confirm it "
+               "or change it. Under the rule of Section 6.1.4, of two cases whose whole-life costs fall within ten per "
+               "cent of one another, the more sustainable is preferred. The treated effluent network is designed on the "
+               "three options, with one source of treated effluent, three or six.")
     N.add(p, "PAM-GUD-201, Section 12.1, page 95 (the three characters), and Sections 12.6 to 12.9, pages 104 to 106 "
              "(the appraisal).")
 
@@ -415,12 +425,11 @@ def appraisal(d):
     D.p(d, f"The {WORDS[len(F.available())]} sewer network options of Section 6.2 have been compared on their technical "
            "results: the plants and the flow each receives, the trunk sewers, the pumping stations with their rising "
            "mains, and the energy they use with the lift at the plant inlets (Section 6.2.7). The depth of the network "
-           "does not separate them. Three are recommended for the cost estimate and the multi-criteria appraisal, one of "
-           "each character the guidelines ask for.")
+           "does not separate them. Three are recommended for the cost estimate and the multi-criteria appraisal, each "
+           "to be costed under the three characters of the guidelines (Section 6.1.1).")
     pl = {o: F.plants(o) for o in rec}; r = {o: F.option_row(o) for o in rec}
     D.tab_caption(d, "The three recommended options")
     D.table(d, [""] + rec, [
-        ["Character"] + [F.CHARACTER[o].capitalize() for o in rec],
         ["Priority"] + [RANK[i].capitalize() for i in range(len(rec))],
         ["Plants"] + [", ".join(F.name(z) for z in pl[o]) for o in rec],
         ["Largest plant, average 2070, m³/d"] + [fmt(r[o]["largest_plant_2070"]) for o in rec],
@@ -452,9 +461,10 @@ def conclusions(d):
            f"energy in 2070, with the lift at the plant inlets, runs from {fmt(e[lo])} MWh a year in {lo} to "
            f"{fmt(e[hi])} in {hi}.")
     rec = F.RECOMMENDED
-    D.p(d, f"Three are recommended, in order of priority: {rec[0]}, one plant at O1 near the existing STP; {rec[1]}, "
-           f"{WORDS[len(F.plants(rec[1]))]} plants at {_and(F.plants(rec[1]))}; and {rec[2]}, "
-           f"{WORDS[len(F.plants(rec[2]))]} plants (Section 7.11). In every option some long rising mains hold the "
+    D.p(d, f"Three are recommended for the appraisal, in order of priority: {rec[0]}, one plant at "
+           f"{_and(F.plants(rec[0]))}; {rec[1]}, {WORDS[len(F.plants(rec[1]))]} plants at {_and(F.plants(rec[1]))}; and "
+           f"{rec[2]}, {WORDS[len(F.plants(rec[2]))]} plants. Each is costed under the three characters of the "
+           "guidelines, nine cases in all (Section 7.11). In every option some long rising mains hold the "
            "sewage for hours and need hydrogen sulphide control, the station at O23 pumps a few litres a second against "
            "a very high head, and the head pipes do not reach the self-cleansing velocity in any year.")
 
@@ -464,10 +474,11 @@ def recommendations(d):
     rec = F.RECOMMENDED
     items = [
         f"options {rec[0]}, {rec[1]} and {rec[2]} are taken forward to the cost estimate and the multi-criteria "
-        "appraisal, in that order of priority, and the treated effluent network is designed on them (Section 7.11);",
-        "Nama Water Services takes the seven decisions of Section 1.5.2, the design horizon and the overflow first "
-        "among them, and the decision on the self-cleansing of the head pipes of Section 6.2.8, which extends "
-        "Decision 7;",
+        "appraisal, in that order of priority, each designed and costed under the three characters of the "
+        "guidelines, nine cases in all, and the treated effluent network is designed on them (Section 7.11);",
+        f"Nama Water Services takes the {WORDS[len(APPROVALS)]} decisions of Section 1.5.2, the design horizon and "
+        "the overflow first among them, and the decision on the self-cleansing of the head pipes of Section 6.2.8, "
+        f"which extends {number('Gradients and self-cleansing at the concept stage')};",
         "the connection of O23 and the long rising mains that hold the sewage for more than half an hour are "
         "reconsidered at the preliminary design: a shorter route, a nearer receiving subnetwork, local treatment or "
         "dosing (Section 6.2.7);",
@@ -509,8 +520,8 @@ def summary_block(d):
             widths=[1.5, 1.5, 2.6, 4.0, 2.2, 2.9, 3.3], font=9)
     D.p(d, "")
     D.title(d, "Recommendation", size=12, space_before=8)
-    D.p(d, "Three options are recommended for the cost estimate and the multi-criteria appraisal, one of each "
-           "character the guidelines ask for, in this order of priority.")
+    D.p(d, "Three options are recommended for the cost estimate and the multi-criteria appraisal, in this order of "
+           "priority.")
     recommendation(d, numbered=False)
     D.p(d, "Three matters need attention whichever option is chosen. Long rising mains carrying small flows hold the "
            "sewage for hours and call for hydrogen sulphide control. The station at O23 lifts a few litres a second "

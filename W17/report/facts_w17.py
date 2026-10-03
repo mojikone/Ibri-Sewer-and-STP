@@ -141,10 +141,12 @@ def largest_od(o):
     return max(k for k, v in od_classes(o).items() if v > 0)
 
 
-# The engineer's priority (2026-10-02): the three options recommended for the appraisal, first to third, one of each
-# character the guidelines ask for (PAM-GUD-201 Section 12.1, p95). The treated effluent network is designed on them.
+# The engineer's priority (2026-10-02): the three options taken to the appraisal, first to third; together they span
+# the choice, one plant, three or six. The guidelines' three characters (PAM-GUD-201 Section 12.1, p95) are not tied
+# to an option (engineer, 2026-10-03): each of the three is designed and costed under every character on the same
+# network model, nine cases in all. The treated effluent network is designed on them.
 RECOMMENDED = ["S1", "S4", "S6"]
-CHARACTER = {"S1": "established local practice", "S4": "international best practice", "S6": "sustainability-led"}
+CHARACTERS = ["established local practice", "international best practice", "sustainability-led"]
 
 # The lift at a plant's inlet works, on the pumping stations' own concept values (py/scenario_results.py): the wet well
 # 1.5 m below the arriving sewer, the inlet works 3.0 m above the ground, 65 per cent wire-to-water, no main.
@@ -170,6 +172,12 @@ def inlet_lift(o):
 def energy_total(o, year):
     """Pumping energy of the stations and the plant inlets together, MWh a year."""
     return summary(o)[f"mwh_{year}"] + inlet_lift(o)["mwh"][year]
+
+
+def flood():
+    """Flood exposure of the gravity sewers and the manholes, the same in every option (py/flood_exposure.py):
+    length and count by hazard class, H1 to H6 and not flooded, for the 10, 25, 50 and 100-year floods."""
+    return _json(os.path.join(RES, "flood_exposure.json"))
 
 
 def flow_chain(year):

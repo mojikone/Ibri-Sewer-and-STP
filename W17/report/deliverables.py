@@ -1,43 +1,28 @@
-"""The concept-stage deliverables and where each stands, one list for the table of Section
-1.3.1 and for the chart beside it. Positions at Revision 4, October 2026 (Revision 3 gave
-those of the meeting of 16 September 2026)."""
+"""The concept-stage deliverables and the section of this report that carries each, for the table of Section 1.3.1.
+W17 R6 (engineer, 2026-10-03): the report is completed by the team before it is submitted, so the table names where
+each deliverable sits rather than how far it has got; the position column and its chart (R08) are withdrawn."""
 
-# (deliverable, position, category)
-CATEGORIES = [("issued", "Issued with this report"), ("progress", "In progress"), ("survey", "Follows the survey"),
-              ("confirm", "Awaits a confirmation"), ("next", "Next revision")]
-
+# (deliverable, section of this report)
 DELIVERABLES = [
-    ("Executive summary and project schedule", "Issued", "issued"),
-    ("Data collection report and assessment of the data", "Issued", "issued"),
-    ("Design criteria and design basis", "Issued", "issued"),
-    ("Population forecasting and flow projection at five-year intervals",
-     "Issued: population and flow per settlement at five-year intervals to saturation, and per plot", "issued"),
-    ("Topographic survey and geotechnical investigation", "Survey team mobilised; in progress", "progress"),
-    ("As-built records and GIS for the existing systems", "Follows the survey", "survey"),
-    ("Hydraulic assessment of the existing systems", "Follows the survey", "survey"),
-    ("Concept hydraulic calculations and capacities",
-     "Sewer network designed and analysed for every option (Section 6.2); treated effluent network and treatment plant begun",
-     "progress"),
-    ("Wastewater network options, not fewer than three",
-     "Issued: seven options for where the flow is treated, three recommended (Sections 6.2 and 7.11); cost and comparison "
-     "in the next revision", "issued"),
-    ("Treated effluent network options, not fewer than three",
-     "Developed on the three recommended sewer network options; next revision", "next"),
-    ("Treatment plant options, not fewer than three, with siting and phasing",
-     "Siting and decision matrix in progress; options in the next revision", "progress"),
-    ("Pumping and lifting station concept design",
-     "Duty, rising main, head and power of every station of every option (Appendix B); station design in the next revision",
-     "progress"),
-    ("Treated effluent and sludge management strategy", "Framework issued; strategy in the next revision", "next"),
-    ("Excess effluent and emergency overflow provisions", "Next revision", "next"),
-    ("Environmental impact assessment for the plant location", "Follows confirmation of scope", "confirm"),
-    ("Cost estimates and life cycle cost", "Method adopted, 25 years at 5 per cent; estimates in the next revision", "progress"),
-    ("Risk analysis and value engineering", "Next revision", "next"),
-    ("Multi-criteria comparison and recommended option",
-     "Sewer network options compared on their technical results, three recommended in order of priority (Section 7.11); "
-     "cost and multi-criteria scores in the next revision", "progress"),
-    ("Hydraulic models in SewerGEMS and WaterGEMS",
-     "Sewer network options modelled in SewerGEMS; the WaterGEMS model of the treated effluent network follows", "progress"),
-    ("Contracting strategy and implementation plan", "Next revision", "next"),
-    ("Register of approvals and no objection certificates", "Maintained", "progress"),
+    ("Executive summary and project schedule", "Executive Summary; 1.3"),
+    ("Data collection report and assessment of the data", "2.1 and 2.2"),
+    ("Design criteria and design basis", "3"),
+    ("Population forecasting and flow projection at five-year intervals", "4.1 and 4.2"),
+    ("Topographic survey and geotechnical investigation", "2.3"),
+    ("As-built records and GIS for the existing systems", "2.4"),
+    ("Hydraulic assessment of the existing systems", "5.1"),
+    ("Concept hydraulic calculations and capacities", "4.2.8, 6.2 and 6.4"),
+    ("Wastewater network options, not fewer than three", "6.2"),
+    ("Treated effluent network options, not fewer than three", "6.4"),
+    ("Treatment plant options, not fewer than three, with siting and phasing", "6.5"),
+    ("Pumping and lifting station concept design", "6.3 and Appendix B"),
+    ("Treated effluent and sludge management strategy", "6.4, 6.6.2 and 6.7"),
+    ("Excess effluent and emergency overflow provisions", "6.6"),
+    ("Environmental impact assessment for the plant location", "7.5"),
+    ("Cost estimates and life cycle cost", "7.8"),
+    ("Risk analysis and value engineering", "7.9 and 7.10"),
+    ("Multi-criteria comparison and recommended option", "7.11"),
+    ("Hydraulic models in SewerGEMS and WaterGEMS", "5.1.3, 6.2.5 and 6.4"),
+    ("Contracting strategy and implementation plan", "8.1 and 8.2"),
+    ("Register of approvals and no objection certificates", "7.6.5"),
 ]

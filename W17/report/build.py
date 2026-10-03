@@ -8,7 +8,9 @@ Revision 3 (W16) carries the Design Basis Report's furniture and content: the fi
 template, native captions, symbol lines, the decisions and adopted values of
 report_basis/decisions.py, the same facts modules. Revisions 0 to 2 stay in W14/report/.
 Revision 4 (W17) is Revision 3 with the sewer network options of Section 6.2 (facts_w17.py,
-charts_w17.py, rpt_options.py); R3 stays in W16/report/R3/ as issued.
+charts_w17.py, rpt_options.py); R3 stays in W16/report/R3/ as issued. R5 and R6 are internal builds: R6 addresses the
+engineer's comments of 2026-10-03 (headings.py, the project control page, no revision printed, Justify Low, the
+recommendation as nine costed cases, the flood exposure of the network in 7.2).
 """
 import os
 import sys
@@ -27,15 +29,14 @@ import facts_basis  # noqa: E402,F401
 _W16_REPORT = os.path.normcase(os.path.join(os.path.dirname(os.path.dirname(HERE)), "W16", "report"))
 sys.path[:] = [HERE] + [p for p in sys.path if os.path.normcase(os.path.abspath(p)) not in (os.path.normcase(HERE), _W16_REPORT)]
 
-# The build folder is the internal iteration; the document carries the client revision. R5 is internal (engineer,
-# 2026-10-02: none of the revisions has been issued; R5 must not appear in the report), so it prints Revision 4.
-REV = "R5"                 # internal: the output folder, never printed
-DOC_REV = "R4"             # what the cover, the footers and the file name carry
+# The build is an internal iteration. None has been issued (engineer, 2026-10-03), so the document mentions no revision
+# anywhere: the cover carries the date, the footer the title. The file name carries the build so he knows which it is.
+REV = "R6"                 # internal: the output folder and the file name, never printed inside the report
 DATE = "October 2026"
 PROJECT = "Consultancy Services for Design and Supervision for STP, Sewer & TE Networks Systems in Ibri"
 TITLE = "Concept Design Report"
 OUT_DIR = os.path.join(HERE, REV)
-OUT = os.path.join(OUT_DIR, f"Ibri_Concept_Design_Report_{DOC_REV}.docx")
+OUT = os.path.join(OUT_DIR, f"Ibri_Concept_Design_Report_{REV}.docx")
 
 
 def main(render_pdf=False, pages=False):
@@ -43,14 +44,15 @@ def main(render_pdf=False, pages=False):
     d = D.new_document({
         "TITLE_1": PROJECT,
         "TITLE_2": TITLE,
-        "TITLE_3": f"Revision {DOC_REV[1:]}  ·  {DATE}",
-        "FOOTER": f"{TITLE}  ·  Revision {DOC_REV[1:]}",
+        "TITLE_3": DATE,
+        "FOOTER": TITLE,
     })
     N.reset()
     N.ensure_style(d)
 
     import rpt_front
     D.front_matter(d)                # the cover unnumbered, then i, ii, iii
+    rpt_front.project_control(d)     # who prepared, checked and approved it (engineer, 2026-10-03)
     rpt_front.contents(d)
     rpt_front.abbreviations(d)
     rpt_front.executive_summary(d)

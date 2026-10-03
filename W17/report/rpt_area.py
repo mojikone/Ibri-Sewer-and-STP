@@ -165,7 +165,7 @@ def roads(d):
 # --------------------------------------------------------------------- 1.2.7
 def flood_hazard(d):
     D.h(d, 3, "1.2.7.   Flood hazard")
-    p = D.p(d, "The wadis of Section 1.2.4 flood. The flood hazard across the study area is taken from the Oman Flood "
+    p = D.p(d, "The flood hazard across the study area is taken from the Oman Flood "
                "Mapping project of the Ministry of Agriculture, Fisheries and Water Resources, which maps the area on a "
                "3 metre grid. The four maps that follow show the floods of the 10, 25, 50 and 100-year return periods.")
     N.add(p, "Oman Flood Mapping project, Ministry of Agriculture, Fisheries and Water Resources; flood hazard grids of "
