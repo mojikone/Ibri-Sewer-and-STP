@@ -171,6 +171,54 @@ Peak outfall flow, sum of the 24 outfalls: 2030 613.9 → 674.0 L/s; 2070 1,541.
   the file, open it, edit, save once (tested clean). His slides 2–22 compared pixel by pixel with the base render.
 - Open for the engineer: the GeoPackages in `11_Network_options` still carry an `old_id` field with the modeller's labels.
 
+## 2026-10-03 — report build R6 on the engineer's comments, manholes in QGIS
+
+- **Live: `report/R6/Ibri_Concept_Design_Report_R6.docx` + `.pdf`** (162 pages; copied to `Options 2026-10/Reports/`,
+  replacing the R4-named copies of the R5 build, which stay in `report/R5/`). `build.py`: `REV = "R6"` names the folder
+  and the file only; **the document prints no revision anywhere** (engineer: none has been issued; a client-commented
+  issue would be the first to carry one). His 35 Word comments are in his copy
+  `Options 2026-10/Reports/Ibri_Concept_Design_Report_R4 - Copy.docx` (not touched; he will comment the rest).
+- **Front matter:** `rpt_front.project_control` (document control: project, client, tender, contract, consultant,
+  document, date; prepared / checked / approved with the names, signatures and dates blank); the abbreviations table
+  checked against every token the built document uses (S1–S7, O1–O24 and the station names, H1–H6, NWS, MAFWR, CRT, MD,
+  MOD, NPV, OMR, EPSG, ISO, BS EN, PAM-GUD, units).
+- **Headings:** `report/headings.py` maps every chapter, section, summary title and minor heading to an official title
+  (the client's comment on the Design Basis Report); `doc.h`, `doc.chapter`, `doc.title` and `doc.sub` pass every title
+  through `official()`, so the modules keep their own wording and the table is the before/after list for review.
+  **Justify Low** on every body paragraph, list and box (`doc.BODY_ALIGN`).
+- **Decisions:** `report/basis_items.py` builds this report's register from W16's `decisions.py` without touching it:
+  "Persons per property" → **Occupancy rate**, "The growth beyond 2050" → **Growth rate beyond 2050**, "Use of each plot"
+  → the adopted **Land-use layer** (after the 126 meters). **6 decisions, 9 adopted values**; `ask()`/`adopt()` keep the
+  basis report's numbers in the chapter modules and print this report's; `number(title)` writes "Decision N" in the text.
+- **Executive summary:** the 16 September sentence and "this revision" gone; the existing networks are not relied on
+  (the network carries all sewage to the plants; the existing system is assessed once the as-built survey lands, also in
+  5.1.2); tankered sewage from outside the study area requested so the plant is designed for it (also 6.6.1); "4" for
+  the floor; the empty-land sentence and the 722 m³/d not-carried sentence removed; Table 1 at 2024, 2030, 2040, 2050,
+  2055, 2060, 2070; "State of the work" removed; Deliverables points to 1.3.1.
+- **Chapter 1:** the programme paragraph and its 1.5.4 row removed; 1.3.1 maps each deliverable to its section
+  (`report/deliverables.py`), the position chart R08 withdrawn (`charts_r3.py`); the meeting outcome reads "Progress
+  reported; the Design Basis Report presented"; the wadi sentence of 1.2.7 removed. Every "next revision" and every
+  pending line removed (5, 6.4, 6.5, 6.7, 7.1, 7.3, 7.4, 7.8, 7.11, 8.1, 8.4, 8.5): the team completes the report before
+  submission.
+- **The recommendation** (engineer's comment, 2026-10-03): the characters are not tied to an option. S1, S4 and S6 are
+  selected because they span one, three and six plants; each is designed and costed under the three characters on the
+  same network model, changing process, energy with solar, reuse and materials: **nine costed cases**, the 10 % rule
+  between cases. `facts_w17.CHARACTERS` replaces the old one-per-option map; 6.1.1, 6.1.2 (the "Network" row dropped from
+  the approach table), 6.1.4, 7.11 (no Character row), 8.4, 8.4.1 and the summary rewritten; figures D5 (options
+  development, `make_report_figures.d5_options`) and the appraisal method (`py/make_appraisal_figure.py`, carried from
+  W16) redrawn; "760 m from the existing STP" and "near the existing STP" removed everywhere; S1 adds 2055 (42,635 m³/d).
+- **7.2 flood exposure** (`py/flood_exposure.py` → `results/flood_exposure.json`, chart `W07_flood`): the pipes and
+  manholes are the same in all seven options (checked), sampled every metre and at each manhole on the MAFWR grids; the
+  whole network lies inside the mapped basin, so no data means not flooded. In H4–H6: pipes 23.9 / 47.2 / 85.8 /
+  150.8 km = 1.6 / 3.1 / 5.7 / **10.1 %** of 1,498 km; manholes 305 / 580 / 1,037 / 1,839 = 1.6 / 3.0 / 5.4 / **9.6 %**
+  of 19,083 for the 10 / 25 / 50 / 100-year floods. H4–H6 as the washout ground is this design's measure (G203 p30 sets
+  none), to be confirmed by a scour check. Plants, stations and rising mains are assessed once sited.
+- **Deck and BOQ:** the cover's "Revision 4" now reads "Concept Design Report"; "760 m" removed; the recommendation
+  slide shows one / three / six plants instead of a character and states the nine cases; the BOQ's Read me likewise.
+  His slides 2–22 compared with the base render, unchanged.
+- **QGIS:** `gis/make_w17_project.py --no-render` adds a styled, labelled `Manholes` layer to each of the seven option
+  groups (depth bands, visible from 1:25,000, labels from 1:5,000), no layout changed and no PNG re-exported.
+
 ## R9 — the seven options on Colebrook-White (done 2026-10-01, 17:45)
 
 Job `055_make_R9_all_options.ps1` built S1–S7 in one file from R8, ~44 min an option at Colebrook speed, and delivered

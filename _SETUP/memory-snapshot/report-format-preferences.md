@@ -1,11 +1,11 @@
 ---
 name: report-format-preferences
-description: "How the engineer wants client reports built (set 2026-09-14 for the Design Basis Report): firm's template, Word-native captions, symbol lines not tables, 50 % imagery, no worked examples, plain words, decisions register"
+description: "How the engineer wants client reports built (2026-09-14 on, updated 2026-10-03): firm's template, native captions, no revision printed until issued, document control page, official headings, Justify Low, complete abbreviations, no pending lines, plain words, decisions register"
 metadata: 
   node_type: memory
   type: feedback
   originSessionId: 14df62fa-82b1-4684-b552-13279f047038
-  modified: 2026-09-14T09:36:32.294Z
+  modified: 2026-10-03T20:50:37.323Z
 ---
 
 For any client report from 2026-09-14 on: build on the firm's template (cover, header, footer,
@@ -29,6 +29,8 @@ slide; type of 22 pt or more on the 67 cm slide. Pattern: `W16/report_basis/deck
 **Report structure** (engineer's review of R3, 2026-09-17): **no Parts**. Number by heading so any place is referable alone: chapters 1 to 8, sections 1.1, subsections 1.1.1, appendix A.1; no divider pages, no horizontal rules; a chapter opens on a new page, nothing below it forces one. Captions **"Figure 2."** and **"Table 3."** (dot after the number). In a decisions section say for every item whether it is **requested from NWS or adopted**, and adopted from what (guideline page, Inception Report, stated assumption). **Wherever data is added, add a chart or curve with it**; a table alone is not enough. A location map of the settlements shows the boundaries **as received**. Check every flowchart box for text overflow in the exported image. Page numbers (asked 2026-09-17): none on the cover, lower-case roman for the front matter up to the executive summary, arabic from 1 at the first chapter to the end.
 
 **Study-area section** (asked 2026-09-17): a concept report describes its study area with maps and the numbers beside them: location with a locator inset (download the **latest** administrative outlines, OpenStreetMap, not an old boundary set), topography and drainage, **climate: monthly min/mean/max temperature, rainfall, climate class, and a wind rose, which he called very important for STP siting and odour**, roads styled as in his QGIS, flood hazard maps at 50 % with his QGIS colours. Public data is fine when the source and its limits are stated (NASA POWER). Hazard: maps only, no exposure statistics. Heading 1: 24 pt, 100 pt above and below.
+
+**Concept report comments** (engineer, 2026-10-03, on the R4 copy): **no revision printed anywhere inside a report until one is issued** to the client (internal builds are told apart by the file name only, e.g. `_R6`; a client-commented issue starts the revision history); a **document control page** before the contents (project, client, tender, contract, date; prepared / checked / approved with the names left blank); **headings in official tone** (the client asked on the Design Basis Report; `W17/report/headings.py` maps them); body text **Justify Low**; the abbreviation list carries **every** abbreviation used, the option names S1–S7 and O1–O24 included; never "next revision", "begun" or a pending line: colleagues complete every section before submission, so write it as done; no location detail the concept cannot stand by ("760 m from the existing STP" removed); digits for small counts ("a floor of 4"); "occupancy rate", not "persons per property", as the name. Flood: Section 1.2.7 stays maps only; Section 7.2 gives the network's exposure, the share of sewer length and manholes in H4–H6.
 
 **Why:** the report goes to NWS for approval, where "any word may attract a comment"; hard
 vocabulary and worked examples invite comment rounds. Native captions because the engineer edits
