@@ -64,6 +64,7 @@ SIZE_CLASSES = [(0, 279, "200 to 250", 0.28), (280, 399, "280 to 355", 0.55), (4
                 (630, 999, "630 to 900", 1.2), (1000, 1399, "1000 to 1200", 1.6), (1400, 9999, "1400 and over", 2.0)]
 BOX_ANCHOR, ROW_MM = (286.3, 201.9), 5.6
 LEGEND_ALPHA = 200          # the legend's white background, out of 255 (was 248): the map shows through
+RENDER = "--no-render" not in sys.argv     # --no-render: save the project and its layouts, re-export no PNG
 
 
 def fmt(n, d=0):
@@ -156,6 +157,18 @@ def style_outfalls(l):
     l.setRenderer(QgsSingleSymbolRenderer(circle("#1a1a1a", 1.6, width=0.25)))
     label(l, '"label"', size=6.0, colour="#1a1a1a", bold=True, priority=9, dist=0.6)
     l.setName("Outfall")
+
+
+def style_manholes(l):
+    """Every manhole, coloured by its depth band as the pipes are; drawn from 1:25,000 in, labelled (number and depth
+    to invert) from 1:5,000 in, so the whole-area view stays readable. Kept off every saved map layout."""
+    cats = [QgsRendererCategory(b, circle(c, 1.3, outline="#5a0f0f", width=0.15), b) for b, c in DEPTH]
+    l.setRenderer(QgsCategorizedSymbolRenderer("depth_band", cats))
+    l.setScaleBasedVisibility(True); l.setMinimumScale(25000); l.setMaximumScale(0)
+    label(l, '"label" || \'\\n\' || format_number("depth_m", 1) || \' m\'', size=5.0, colour="#5a0f0f", priority=4, dist=0.5)
+    pal = l.labeling().settings(); pal.scaleVisibility = True; pal.minimumScale = 5000; pal.maximumScale = 0
+    l.setLabeling(QgsVectorLayerSimpleLabeling(pal))
+    l.setName("Manholes")
 
 
 def style_deep(l):
@@ -313,21 +326,22 @@ def make_map(proj, google, name, title, stack, legend_layers, ext, rows, out_png
         print(f"      legend {sz.width():.1f} x {sz.height():.1f} mm")
     boxes = ([(legend, "left")] if legend is not None else []) + ([(box, "right")] if box is not None else [])
     mapitem.zoomToExtent(clear_extent(mapitem, boxes, ext, test_layers))
-    bg = google_background(proj, google, mapitem, name.replace(" ", "_"))
-    mapitem.setLayers(stack + [bg])
     credit = QgsLayoutItemLabel(lay); credit.setText(CREDIT)
     tf = QgsTextFormat(); tf.setFont(QFont("Arial")); tf.setSize(5.0); tf.setColor(QColor("#4a4a4a")); credit.setTextFormat(tf)
     lay.addLayoutItem(credit); credit.attemptResize(QgsLayoutSize(40, 3.5, UNIT_MM))
     mp, ms = mapitem.positionWithUnits(), mapitem.sizeWithUnits()
     cx = (legend.positionWithUnits().x() + legend.sizeWithUnits().width() + 2.0) if legend is not None else mp.x() + 1.5
     credit.attemptMove(QgsLayoutPoint(cx, mp.y() + ms.height() - 4.2, UNIT_MM))      # beside the legend, at the foot
-    exp = QgsLayoutExporter(lay); s = QgsLayoutExporter.ImageExportSettings(); s.dpi = DPI
-    res = exp.exportToImage(out_png, s)
-    print("   ", os.path.basename(out_png), "ok" if res == QgsLayoutExporter.Success else f"FAILED {res}")
-    if res == QgsLayoutExporter.Success:      # the report takes its copy from its own img/ folder
-        shutil.copy2(out_png, os.path.join(IMG, os.path.basename(out_png)))
+    if RENDER:
+        bg = google_background(proj, google, mapitem, name.replace(" ", "_"))
+        mapitem.setLayers(stack + [bg])
+        exp = QgsLayoutExporter(lay); s = QgsLayoutExporter.ImageExportSettings(); s.dpi = DPI
+        res = exp.exportToImage(out_png, s)
+        print("   ", os.path.basename(out_png), "ok" if res == QgsLayoutExporter.Success else f"FAILED {res}")
+        if res == QgsLayoutExporter.Success:      # the report takes its copy from its own img/ folder
+            shutil.copy2(out_png, os.path.join(IMG, os.path.basename(out_png)))
+        proj.removeMapLayer(bg.id())
     mapitem.setLayers(stack + [google])       # the saved layout draws the live Google layer
-    proj.removeMapLayer(bg.id())
 
 
 def build(names):
@@ -407,6 +421,9 @@ def build(names):
         proj.addMapLayer(pls, False)
         of = vec(gpkg, "Outfall", "outfalls"); style_outfalls(of); add(g, of, visible=False)
         of.setSubsetString('"is_plant" = 0')            # a plant's outfall carries the STP label instead
+        mh = vec(gpkg, "Manholes", "manholes")
+        if mh:
+            style_manholes(mh); add(g, mh)
         rm_thin = vec(gpkg, "Rising main", "rising_mains"); style_rising(rm_thin, 0.4) if rm_thin else None
         proj.addMapLayer(rm_thin, False)
 
@@ -447,4 +464,4 @@ def build(names):
 
 
 if __name__ == "__main__":
-    build(sys.argv[1:] or list(SCENARIOS))
+    build([a for a in sys.argv[1:] if not a.startswith("--")] or list(SCENARIOS))
