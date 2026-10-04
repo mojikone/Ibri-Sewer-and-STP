@@ -171,6 +171,16 @@ Peak outfall flow, sum of the 24 outfalls: 2030 613.9 → 674.0 L/s; 2070 1,541.
   the file, open it, edit, save once (tested clean). His slides 2–22 compared pixel by pixel with the base render.
 - Open for the engineer: the GeoPackages in `11_Network_options` still carry an `old_id` field with the modeller's labels.
 
+## 2026-10-04 — report build R7, final for issue
+
+- **Live: `report/R7/Ibri_Concept_Design_Report_R7.docx` + `.pdf`** (174 pages), copied to `Options 2026-10/Reports/`.
+- **Cost:** the team's estimate `data/finance/2621 - Options Cost Estimation.xlsx` (copied read-only from the server's `06-WORKING/04-Hydraulic/11-Finacial`), read by `report/facts_cost.py` with its parts checked against its totals. CAPEX by element (sewers by OD and depth band, manholes, stations per kW, rising mains, plants per m³/d by band); OPEX year 1 = maintenance 1 % of CAPEX + installed power 24 h at 0.02 OMR/kWh + land 1 OMR/m²/month + staff 2,500 OMR × 13; escalated 5 %/yr; discounted at 5 % over 25 years, so whole-life = CAPEX + 25 × OPEX1. Section 7.8 rebuilt on it, chart `W08_costs`; constant-price check (factor 14.8) keeps the order.
+- **Recommendation (engineer, 2026-10-04): S1, S3, S7.** S1 lowest (232.5 M OMR); S3 +3.8 %, S2 +5.4 %, S7 +5.6 % within 10 %; S2 set aside (+57 % energy); S3/S7 save 1–2 % of system energy, equal on cost and sustainability within ±20 %; S1 first on operability. `facts_w17.RECOMMENDED`; `rpt_options` (`_why`, `recommendation`, `appraisal`, `conclusions`, `recommendations`, `summary_block`) rewritten; characters at the preliminary design; the TE network not linked to the options.
+- **Existing networks:** designed as if unsewered; existing lifting station and STP not credited; `py/existing_overlap.py` → `results/existing_overlap.json`: 63.9 km of new sewer within 15 m of an existing one.
+- **Context from the server (read-only):** NWS's comments of 24 Sept on the Design Basis Report (quality, criteria justification, 2024 base year, no consultant recommendation, coverage of Al Aqariyah, As Subaykhi, Madayn); the TE stakeholder meeting of 23 Sept (minutes, customer data); MoHUP planning maps (4 Oct); NWS GIS specifications; wellfield protection zones. The 2024 base year is justified in 4.1.1; coverage stays out of the report (managers); the horizon stays open (engineer).
+- **Also new:** risk register (7.9), roadmap (8.1), packaging (8.2), phasing table (6.5.1), sludge quantities (6.7), TE customers table (4.4), three data requests, register rows, Appendix C (`rpt_appcd.py`, from the W13 criteria document's guideline columns) and D (drawings), `doc.wide_figures(last=True)` so the report ends on its last drawing, D5 and appraisal flowcharts redrawn (`py/make_appraisal_figure.py`).
+- **Deck:** recommendation slide for S1, S3, S7; 04 TE (customers, the TE availability chart) and 05 cost (table and chart) filled; his slides unchanged.
+
 ## 2026-10-03 — report build R6 on the engineer's comments, manholes in QGIS
 
 - **Live: `report/R6/Ibri_Concept_Design_Report_R6.docx` + `.pdf`** (162 pages; copied to `Options 2026-10/Reports/`,
