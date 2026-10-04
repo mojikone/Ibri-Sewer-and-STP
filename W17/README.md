@@ -179,6 +179,7 @@ Peak outfall flow, sum of the 24 outfalls: 2030 613.9 → 674.0 L/s; 2070 1,541.
 - **Existing networks:** designed as if unsewered; existing lifting station and STP not credited; `py/existing_overlap.py` → `results/existing_overlap.json`: 63.9 km of new sewer within 15 m of an existing one.
 - **Context from the server (read-only):** NWS's comments of 24 Sept on the Design Basis Report (quality, criteria justification, 2024 base year, no consultant recommendation, coverage of Al Aqariyah, As Subaykhi, Madayn); the TE stakeholder meeting of 23 Sept (minutes, customer data); MoHUP planning maps (4 Oct); NWS GIS specifications; wellfield protection zones. The 2024 base year is justified in 4.1.1; coverage stays out of the report (managers); the horizon stays open (engineer).
 - **Also new:** risk register (7.9), roadmap (8.1), packaging (8.2), phasing table (6.5.1), sludge quantities (6.7), TE customers table (4.4), three data requests, register rows, Appendix C (`rpt_appcd.py`, from the W13 criteria document's guideline columns) and D (drawings), `doc.wide_figures(last=True)` so the report ends on its last drawing, D5 and appraisal flowcharts redrawn (`py/make_appraisal_figure.py`).
+- **Deliverable folder:** `Options 2026-10/Cost/` holds the cost estimate the report's Section 7.8 is built on.
 - **Deck:** recommendation slide for S1, S3, S7; 04 TE (customers, the TE availability chart) and 05 cost (table and chart) filled; his slides unchanged.
 
 ## 2026-10-03 — report build R6 on the engineer's comments, manholes in QGIS
