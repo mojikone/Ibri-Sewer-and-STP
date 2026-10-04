@@ -69,6 +69,197 @@ def flood_exposure(d):
            "sites are fixed.")
 
 
+
+def sustainability_energy(d):
+    """Section 7.7: the pumping energy of each option against the treatment energy of the estimate."""
+    import facts_w17 as FW
+    import facts_cost as C
+    e = {o: FW.energy_total(o, "2070") for o in FW.available()}
+    lo, hi = min(e, key=e.get), max(e, key=e.get)
+    plant = C.data()["kw_plants"]["S1"] * 8760 / 1000
+    D.p(d, f"At the concept stage the energy of each option is the measurable part of its operating carbon. The pumping "
+           f"energy in 2070, with the lift at the plant inlets, runs from {FW.fmt(e[lo])} MWh a year in {lo} to "
+           f"{FW.fmt(e[hi])} in {hi} (Section 6.2.7). The treatment plants use about {FW.fmt(round(plant, -2))} MWh a year "
+           "on the basis of the cost estimate (Section 7.8.3), the same in every option because the flow treated is the "
+           "same, so the pumping is the part that separates the options.")
+
+
+def cost_section(d):
+    """Section 7.8: the estimate of the seven options, its basis, the operating cost and the whole-life cost."""
+    import facts_w17 as FW
+    import facts_cost as C
+    cd = C.data(); opts = C.OPTIONS; w = C.whole_life(); lo = min(w.values()); f = C.factor(); f0 = C.factor(0.0)
+    m = lambda x, nd=1: FW.fmt(x / 1e6, nd)
+
+    D.h(d, 3, "7.8.1.   Basis")
+    p = D.p(d, "Each option is priced on its own quantities, taken from the network model (Appendix B), on the same "
+               "rates. The estimate is made at concept accuracy and compares the options on one basis.")
+    N.add(p, "PAM-GUD-201, Table 2, pages 17 to 20: plus or minus 20 per cent at the concept stage.")
+    D.table(d, ["Item", "Basis"], [
+        ["Accuracy", "plus or minus twenty per cent at concept stage"],
+        ["Quantities", "the network model of each option: sewers, manholes, pumping stations, rising mains and plants"],
+        ["Rates", "recent tender and contract rates, and rates from Nama Water Services pre-investment appraisals, "
+                  "escalated to the base date of the estimate"],
+        ["Price basis", "current prices at the date of the estimate; operating cost escalated at "
+                        f"{100 * cd['escalation']:.0f} per cent a year"],
+        ["Presentation", "by system element"],
+        ["Not included", "the treated effluent network, whose customers are defined at the preliminary design; house "
+                         "connections and the crossings of roads and wadis, which are the same in every option"],
+    ], widths=[4.4, 12.1], font=9.5)
+
+    D.h(d, 3, "7.8.2.   Scope of the estimate")
+    D.p(d, "The capital cost of each option is built from five elements.")
+    D.bullet(d, "the length of sewer by outside diameter and by depth band, at a rate per metre that rises with the depth.",
+             lead="Gravity sewers — ")
+    D.bullet(d, "the number of manholes by type and by depth band.", lead="Manholes — ")
+    D.bullet(d, "the installed power of each station, at a rate per kilowatt, with the smallest stations in their own "
+                "band.", lead="Pumping stations — ")
+    D.bullet(d, "the length of rising main by diameter.", lead="Rising mains — ")
+    D.bullet(d, "the design capacity of each plant, the average flow of 2070 with the 10 per cent margin, at a rate per "
+                "cubic metre a day that falls as the plant grows.", lead="Treatment plants — ")
+    D.tab_caption(d, "Capital cost of the options by element, million OMR")
+    D.table(d, ["Element"] + opts,
+            [[lab] + [m(cd["capex"][lab][o]) for o in opts] for lab in cd["capex"]]
+            + [["**Total**"] + [f"**{m(cd['capex_total'][o])}**" for o in opts]],
+            widths=[3.6] + [1.85] * len(opts), font=8.5)
+    D.p(d, "")
+    hi_c = max(opts, key=lambda o: cd["capex_total"][o]); lo_c = min(opts, key=lambda o: cd["capex_total"][o])
+    D.p(d, f"The capital cost differs little between the options: from {m(cd['capex_total'][lo_c])} million OMR in {lo_c} "
+           f"to {m(cd['capex_total'][hi_c])} in {hi_c}. The more plants, the cheaper the trunk sewers and the pumping, and "
+           "the dearer the plants, because a small plant costs more for each cubic metre it treats.")
+
+    D.h(d, 3, "7.8.3.   Operating cost")
+    D.p(d, "The operating cost of each option in its first year is built from four items, and escalated at "
+           f"{100 * cd['escalation']:.0f} per cent a year over the 25 years.")
+    D.bullet(d, "1 per cent of the capital cost a year.", lead="Maintenance and operation — ")
+    D.bullet(d, f"the installed power of the pumping stations and the plants, for 24 hours a day, at "
+                f"{cd['power_rate']:.2f} OMR per kilowatt hour.", lead="Power — ")
+    D.bullet(d, f"the land of the plant and station sites at {cd['rent_rate']:.0f} OMR per square metre a month.",
+             lead="Land — ")
+    D.bullet(d, f"the staff of the plants and the stations at {FW.fmt(cd['staff_rate'])} OMR a month each, thirteen "
+                "months a year.", lead="Staff — ")
+    D.tab_caption(d, "Operating cost of the options in the first year, million OMR")
+    D.table(d, ["Item"] + opts,
+            [[lab] + [m(cd["opex"][lab][o], 2) for o in opts] for lab in cd["opex"]]
+            + [["**Total**"] + [f"**{m(cd['opex1'][o], 2)}**" for o in opts],
+               ["Staff, number"] + [str(cd["staff"][o]) for o in opts],
+               ["Land, thousand m²"] + [FW.fmt(cd["land_m2"][o] / 1000) for o in opts]],
+            widths=[3.6] + [1.85] * len(opts), font=8.5)
+    D.p(d, "")
+    D.p(d, "Staff and land grow with the number of plants and are the items that separate the options; power and "
+           "maintenance hardly differ. Sludge, chemicals and laboratory costs follow the flow treated, which is the same "
+           "in every option, and do not change the comparison; they are costed with the treatment process at the "
+           "preliminary design, as is the replacement of mechanical and electrical plant within the 25 years.")
+
+    D.h(d, 3, "7.8.4.   Life cycle cost and net present value")
+    p = D.p(d, "Capital cost and operating cost arise in different years, so they are not comparable until they are "
+               "brought to a common date. Each is discounted to present value at the rate the guideline sets, and the "
+               "options are compared on the resulting totals.")
+    N.add(p, "PAM-GUD-201, page 57, states that the twenty-five year planning life is also the period over which net "
+             "present value is calculated for the comparison of schemes; the discount rate of five per cent is given "
+             "at pages 95 to 96.")
+    eq = D.next_eq()
+    M.display(d, M.seq(
+        UP("NPV"), M.EQ,
+        M.nary("∑", M.seq(R("t"), M.EQ, R("0")), R("n"),
+               M.frac(M.sub(R("C"), R("t")),
+                      M.sup(M.delim(M.seq(R("1"), M.PLUS, R("r"))), R("t"))))),
+        number=eq)
+    _params(d, [
+        ["NPV", "net present value of the option", "OMR"],
+        ["C t", "cost in year t: the capital cost in year 0 and the operating cost of every year", "OMR"],
+        ["r", "discount rate, 0.05", "—"],
+        ["t", "year, counted from the base date", "—"],
+        ["n", "evaluation period, 25 years", "—"]])
+    D.p(d, "")
+    p = D.p(d, f"The operating cost escalates at {100 * cd['escalation']:.0f} per cent a year and is discounted at 5 per "
+               "cent, so the present value of each year's operating cost equals that of the first year, and the "
+               f"whole-life cost is the capital cost plus {f:.0f} times the first-year operating cost. It is the "
+               "quantity against which the ten per cent band of Section 6.1.4 is applied.")
+    N.add(p, "Net present value and life cycle cost are not defined by equation in the Nama Water Services guidelines. "
+             "The formulation above follows ISO 15686-5, with the period and discount rate taken from PAM-GUD-201.")
+    rank = C.ranking()
+    D.tab_caption(d, "Whole-life cost of the options over 25 years, million OMR")
+    D.table(d, ["Option", "Plants", "Capital cost", "Operating cost, present value", "Whole-life cost",
+                "Above the lowest"],
+            [[o, str(cd["n_plants"][o]), m(cd["capex_total"][o]), m(f * cd["opex1"][o]), f"**{m(wv)}**",
+              "—" if g < 1e-9 else f"{100 * g:.1f} %"] for o, wv, g in rank],
+            widths=[1.8, 1.6, 2.8, 3.8, 3.0, 3.0], font=9)
+    D.p(d, "")
+    D.chart(d, "W08_costs", 16.0)
+    D.fig_caption(d, "Whole-life cost of the options over 25 years: the capital cost and the present value of the "
+                     "operating cost, with the line ten per cent above the lowest. The recommended options carry their "
+                     "priority.")
+    r0 = C.ranking(0.0); band0 = C.within_band(0.0); band = C.within_band()
+    out0 = [o for o, _, g in r0 if o not in band0]; g0 = {o: g for o, _, g in r0}
+    D.p(d, f"In constant prices, without the escalation, the operating cost weighs less: the whole-life cost is the "
+           f"capital cost plus {f0:.1f} times the first-year operating cost. The order is the same, "
+           + ("the same options lie within ten per cent of the lowest" if set(band0) == set(band) else
+              "the options within ten per cent of the lowest change") +
+           f", and {', '.join(out0[:-1])} and {out0[-1]} remain outside the band at "
+           f"{100 * min(g0[o] for o in out0):.0f} to {100 * max(g0[o] for o in out0):.0f} per cent above.")
+    D.p(d, "Revenue from treated effluent and the costs the scheme avoids are not counted. Treated effluent tariffs are "
+           "set by Nama Water Services and the regulator, and the customers are defined at the preliminary design.")
+
+
+def risk_register(d):
+    """Section 7.9: the initial register at the concept stage."""
+    D.tab_caption(d, "Initial risk register")
+    D.table(d, ["Risk", "Effect", "Likelihood", "Impact", "Mitigation", "Owner"], [
+        ["The survey finds existing sewers fit to keep", "Part of the new network in those streets not needed",
+         "Medium", "Cost lower", "Assess the existing network on the survey (Chapter 5)", "Consultant"],
+        ["The survey finds ground levels different from the terrain model", "Depths, pumping and sizes change",
+         "Medium", "Cost and time", "Re-run the model on the surveyed levels", "Consultant"],
+        ["Plant or station sites not available, or in flood hazard", "Sites move; trunk sewers and pumping change",
+         "Medium", "Cost and time", "Early site selection with Nama Water Services and the Ministry of Housing; "
+         "flood check of each site", "Nama Water Services"],
+        ["Rock or shallow groundwater on deep sewers", "Slower excavation, dewatering", "Medium", "Cost",
+         "Geotechnical investigation along the deep runs", "Consultant"],
+        ["The design horizon decided late", "Plant phasing and capacity held open", "Medium", "Time",
+         "Decision of Section 1.5.2", "Nama Water Services"],
+        ["Tankered sewage greater than assumed", "Plant load and tanker reception undersized", "Medium", "Cost",
+         "Records of the existing plant and of the tanker sources (Section 1.5.5)", "Nama Water Services"],
+        ["Treated effluent demand lower than production", "Surplus to be disposed of", "Medium", "Cost",
+         "Customers and demand confirmed; excess effluent provision (Section 6.6.2)", "Nama Water Services"],
+        ["Hydrogen sulphide in long rising mains", "Corrosion and odour", "High", "Cost",
+         "Hydrogen sulphide evaluation; dosing or shorter routes (Section 6.2.7)", "Consultant"],
+        ["Low flows in the early years", "Deposits in the head pipes", "High", "Operation",
+         "Washing schedule; the decision of Section 6.2.8", "Nama Water Services"],
+        ["Approvals for wadi and road crossings", "Delay", "Medium", "Time",
+         "Applications at the preliminary design (Section 7.6.5)", "Consultant"],
+        ["Prices rise between the estimate and the tender", "Cost higher", "Medium", "Cost",
+         "Estimate updated at each design stage", "Consultant"],
+    ], widths=[3.4, 3.2, 1.7, 1.6, 4.4, 2.2], font=8, keep_together=False)
+    D.p(d, "")
+
+
+def roadmap(d):
+    """Section 8.1: the stages after the concept design, what each needs, and the phasing of construction."""
+    import facts_w17 as FW
+    rec = FW.RECOMMENDED[0]; pl = FW.plants(rec)
+    D.tab_caption(d, "Implementation roadmap")
+    D.table(d, ["Stage", "Scope", "What it needs before it starts"], [
+        ["Concept approval", "The recommended option and the design basis approved", "This report reviewed by Nama "
+         "Water Services; the decisions of Section 1.5.2"],
+        ["Preliminary design", "The survey taken into the model; the existing network assessed; the plant and station "
+         "sites selected and investigated for flood, ground and odour; the treated effluent customers and demand "
+         "confirmed; the characters costed and the treatment process selected; the estimate to plus or minus 10 per "
+         "cent", "The survey; the sites; the data requests of Section 1.5.5"],
+        ["Detailed design", "Drawings, specifications and priced bills of quantities", "The approved preliminary design"],
+        ["Tender", "Tender documents for each package, and support to the award", "The approved detailed design and "
+         "the contracting strategy"],
+        ["Construction", "The network in packages by groups of subnetworks; the plant in phases", "The awarded "
+         "contracts and the approvals of Section 7.6.5"],
+    ], widths=[3.0, 8.4, 5.1], font=8.5, keep_together=False)
+    D.p(d, "")
+    z = next(iter(pl)) if len(pl) == 1 else max(pl, key=lambda q: pl[q]["avg"]["2070"])
+    D.p(d, f"The sewers are laid once, for the flow of 2070. The plant is built in phases that follow the flow: in "
+           f"option {rec} it receives {FW.fmt(pl[z]['avg']['2030'])} cubic metres a day on average in 2030, "
+           f"{FW.fmt(pl[z]['avg']['2040'])} in 2040, {FW.fmt(pl[z]['avg']['2055'])} in 2055 and "
+           f"{FW.fmt(pl[z]['avg']['2070'])} in 2070 (Section 6.5.1). The size of each phase follows from the design "
+           "horizon decided in Section 1.5.2.")
+
+
 # ===================================================== PART G
 def part_g(d):
     D.chapter(d, "7.   Assessment and appraisal")
@@ -91,6 +282,12 @@ def part_g(d):
            "electrical rooms. Groundwater monitoring is required, as the depth "
            "to groundwater governs both the excavation method and the "
            "infiltration allowance.")
+    D.p(d, "The treatment plant and pumping station sites are tentative at "
+           "the concept stage, and the investigation of each site is carried "
+           "out as soon as it is decided. Along the sewer routes the "
+           "investigation follows the spacing of the guideline: 100 metres on "
+           "the secondary sewers and 500 metres on the primary sewers and the "
+           "rising mains.")
 
 
     # --------------------------------------------------------------- 29
@@ -120,8 +317,11 @@ def part_g(d):
              "where the surrounding area is sensitive.")
 
     D.p(d, "The prevailing winds are described in Section 1.2.5 from a regional "
-           "record, which serves the comparison of sites; the modelling itself "
-           "uses the record of the nearest meteorological station.")
+           "record, which serves the comparison of sites. The plant sites are "
+           "tentative at the concept stage, and the modelling is carried out "
+           "for each site as soon as it is decided, on the record of the "
+           "nearest meteorological station, which is requested (Section "
+           "1.5.5).")
 
     D.p(d, "Odour control is provided at the inlet works, the sludge "
            "facilities and the pumping stations, with the treatment train "
@@ -232,115 +432,16 @@ def part_g(d):
            "largely the same as those that reduce operating cost: conveying "
            "the flow by gravity wherever possible, minimising lift, selecting "
            "efficient equipment, and generating renewable energy on site. "
-           "Provision for photovoltaic generation within the plant perimeter "
-           "is included in the land requirement.")
-
+           "Photovoltaic generation on site is one of the factors the three "
+           "characters vary (Section 6.1.2).")
+    sustainability_energy(d)
     D.p(d, "Resource efficiency, in-country value and the use of nature-based "
-           "solutions are assessed for each option and carried into the "
-           "comparison in Section 7.11.")
+           "solutions are assessed with the three characters at the "
+           "preliminary design, where the treatment process is selected.")
 
     # --------------------------------------------------------------- 35
     D.h(d, 2, "7.8.   Cost")
-
-    D.h(d, 3, "7.8.1.   Basis")
-    D.table(d, ["Item", "Basis"], [
-        ["Accuracy", "plus or minus twenty per cent at concept stage"],
-        ["Measurement", "CESMM3"],
-        ["Rates", "recent tender and contract rates, and rates from Nama "
-                  "Water Services pre-investment appraisals, escalated to the "
-                  "base date of the estimate"],
-        ["Price basis", "current prices at the date of the estimate"],
-        ["Presentation", "by system element"],
-    ], widths=[4.4, 12.1], font=9.5)
-
-    D.h(d, 3, "7.8.2.   Scope of the estimate")
-    D.p(d, "The estimate covers the works, the associated costs and the "
-           "provisions, as set out below.")
-    D.bullet(d, "excavation by depth and by ground condition, trench support, "
-                "bedding and backfill, pipework, manholes, property "
-                "connections, road reinstatement, traffic management, "
-                "crossings, and testing.", lead="Collection network — ")
-    D.bullet(d, "land, civil structures, pumps and station pipework, "
-                "electrical supply and standby generation, control and "
-                "telemetry, odour control, and the force main with its "
-                "chambers and valves.", lead="Lifting stations — ")
-    D.bullet(d, "land, site preparation and flood protection, inlet works, "
-                "tanker reception, biological treatment, clarification, "
-                "tertiary treatment, disinfection, the sludge line, chemical "
-                "systems, odour control, electrical and control installations, "
-                "buildings, and commissioning.", lead="Treatment plant — ")
-    D.bullet(d, "pipework, storage, boosting, filling stations and customer "
-                "connections.", lead="Treated effluent network — ")
-    D.bullet(d, "design and supervision, survey and investigation, "
-                "environmental assessment, consents and land, and physical and "
-                "price contingency.", lead="Associated costs — ")
-
-    D.h(d, 3, "7.8.3.   Operating cost")
-    D.p(d, "Operating cost is built from the duty of each asset rather than "
-           "taken as a proportion of its capital cost. For a wastewater system "
-           "the two largest items are energy and sludge, and neither follows "
-           "capital value.")
-    D.bullet(d, "pumping at each lifting station from its duty flow and head, "
-                "and aeration at the treatment plant from the oxygen demand.",
-             lead="Energy — ")
-    D.bullet(d, "thickening, dewatering, transport and disposal, at the "
-                "quantity the process produces.", lead="Sludge — ")
-    D.bullet(d, "coagulant, polymer and disinfectant at the dose rate and the "
-                "flow treated.", lead="Chemicals — ")
-    D.bullet(d, "the establishment required to operate and maintain the plant, "
-                "the stations and the network.", lead="Labour — ")
-    D.bullet(d, "jetting and closed-circuit television survey of the network, "
-                "desludging, odour and corrosion control, and planned "
-                "replacement of mechanical and electrical plant falling within "
-                "the evaluation period.", lead="Maintenance — ")
-
-    p = D.p(d, "Mechanical and electrical plant has a shorter service life "
-               "than the civil works, so its replacement falls inside the "
-               "twenty-five year period and is carried as a cost in the year "
-               "it occurs.")
-    N.add(p, "PAM-GUD-201 sets a design life of 25 years for assets generally; "
-             "rotating plant and instrumentation are replaced at least once "
-             "within that period.")
-
-    D.h(d, 3, "7.8.4.   Life cycle cost and net present value")
-    p = D.p(d, "Capital cost, operating cost, replacement cost and revenue "
-               "arise in different years, so they are not comparable until "
-               "they are brought to a common date. Each is discounted to "
-               "present value at the rate the guideline sets, and the options "
-               "are compared on the resulting totals.")
-    N.add(p, "PAM-GUD-201, page 57, states that the twenty-five year planning "
-             "life is also the period over which net present value is "
-             "calculated for the comparison of schemes; the discount rate of "
-             "five per cent is given at pages 95 to 96.")
-
-    eq = D.next_eq()
-    M.display(d, M.seq(
-        UP("NPV"), M.EQ,
-        M.nary("∑", M.seq(R("t"), M.EQ, R("0")), R("n"),
-               M.frac(M.sub(R("C"), R("t")),
-                      M.sup(M.delim(M.seq(R("1"), M.PLUS, R("r"))), R("t"))))),
-        number=eq)
-    _params(d, [
-        ["NPV", "net present value of the option", "OMR"],
-        ["C t", "net cash flow in year t: revenue and avoided cost less "
-                "capital, replacement and operating cost", "OMR"],
-        ["r", "discount rate, 0.05", "—"],
-        ["t", "year, counted from the base date", "—"],
-        ["n", "evaluation period, 25 years", "—"]])
-
-    D.p(d, "")
-    p = D.p(d, "Total life cycle cost is the present value of capital, "
-               "replacement and operating cost over the same period, and is "
-               "the quantity against which the ten per cent band in Section "
-               "6.1.4 is applied. Payback is reported alongside it as an "
-               "indicator, but it does not determine the recommendation: for a "
-               "wastewater scheme a large part of the benefit is cost avoided "
-               "rather than revenue earned, and a payback period computed on "
-               "revenue alone would misstate the case.")
-    N.add(p, "Net present value and life cycle cost are not defined by "
-             "equation in the Nama Water Services guidelines. The formulation "
-             "above follows ISO 15686-5, with the period and discount rate "
-             "taken from PAM-GUD-201.")
+    cost_section(d)
 
 
     # --------------------------------------------------------------- 36
@@ -351,6 +452,7 @@ def part_g(d):
            "mitigation adopted. Risks that fall on one option and not on "
            "another are identified as such, as they affect the comparison "
            "rather than only the total.")
+    risk_register(d)
 
     # --------------------------------------------------------------- 37
     D.h(d, 2, "7.10.   Value engineering")
@@ -363,16 +465,11 @@ def part_g(d):
 
     # --------------------------------------------------------------- 38
     D.h(d, 2, "7.11.   Comparison and recommendation")
-    D.p(d, "The options are compared by the method described in Section 6.1.3. "
-           "The comparison presents, for each option, the capital cost by "
-           "phase, the operating cost by year, the net present value over "
-           "twenty-five years, the carbon footprint, and the assessment "
-           "against each of the remaining criteria, together with the results "
-           "of the sensitivity tests.")
-
-    D.p(d, "The net present value of each option is computed by the equation "
-           "of Section 7.8.4, at five per cent over twenty-five years.")
-    import rpt_options             # Revision 4: the sewer network options compared, and the three recommended
+    D.p(d, "The options are compared by the method of Sections 6.1.3 and "
+           "6.1.4: on their whole-life cost, the net present value of Section "
+           "7.8.4 at five per cent over twenty-five years, and, within ten per "
+           "cent of the lowest, on sustainability and operability.")
+    import rpt_options             # the sewer network options compared, and the three recommended
     rpt_options.appraisal(d)
 
 
@@ -385,11 +482,11 @@ def part_h(d):
 
     # --------------------------------------------------------------- 39
     D.h(d, 2, "8.1.   Implementation roadmap")
-    D.p(d, "An implementation roadmap is prepared for the recommended option, "
-           "defining the scope of the subsequent design stages, the "
-           "procurement route for each element, the phasing of construction, "
-           "and the framework by which performance is monitored once the works "
-           "are in service.")
+    D.p(d, "The roadmap sets out, for the recommended option, the scope of the "
+           "design stages that follow, what each needs before it starts, and "
+           "the phasing of construction. Performance is monitored once the "
+           "works are in service against the flows and loads of Chapter 4.")
+    roadmap(d)
 
 
     # --------------------------------------------------------------- 40
@@ -399,6 +496,14 @@ def part_h(d):
            "dedicated workshop, and considers the division of the works into "
            "packages, the procurement route for each, and the interfaces "
            "between them.")
+    D.p(d, "Three packages follow from the recommended option and are proposed "
+           "for the workshop: the sewer network with its pumping stations and "
+           "rising mains, divided by groups of subnetworks so that each "
+           "package can be built and commissioned on its own; the treatment "
+           "plant, procured for design and construction and built in phases; "
+           "and the treated effluent network, once its customers are defined. "
+           "The interfaces between them are the inlet works of the plant and "
+           "its treated effluent outlet.")
 
     # --------------------------------------------------------------- 41
     D.h(d, 2, "8.3.   Project integration")
@@ -430,7 +535,7 @@ def part_h(d):
            f"The study area is saturated in {F.totals()['ultimate']} at "
            f"{F.fmt(F.totals()['pop_ult'])} people and "
            f"{F.fmt(F.totals()['q_ult'])} cubic metres of sewage a day.")
-    import rpt_options             # Revision 4: what the sewer network options established
+    import rpt_options             # what the sewer network options and their costs established
     rpt_options.conclusions(d)
     D.p(d, "A topographic and utility survey covering the whole study area is "
            "in progress. It will establish the levels, diameters and condition "
@@ -446,8 +551,8 @@ def part_h(d):
     D.table(d, ["Appendix", "Content"], [
         ["A", "Population, land use and flow: the working behind Chapter 4"],
         ["B", "Network options: quantities, pumping stations and depth"],
-        ["C", "Design criteria, with references"],
-        ["D", "Drawings and figures"],
+        ["C", "Design criteria, with the guideline page of each"],
+        ["D", "Drawings: the subnetworks, and the network of each recommended option"],
     ], widths=[3.0, 13.5], font=9.5)
     D.p(d, "")
     D.p(d, "The decisions requested, the values adopted and the data requests "

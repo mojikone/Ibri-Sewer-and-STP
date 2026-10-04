@@ -59,11 +59,14 @@ def abbreviations(d):
         ["CESMM3", "Civil Engineering Standard Method of Measurement, third edition"],
         ["COD", "Chemical oxygen demand"],
         ["CRT", "Cost Reflective Tariff: the electricity tariff of the large consumers"],
+        ["DN, OD", "Nominal diameter; outside diameter"],
         ["EIA", "Environmental impact assessment"],
         ["EPSG:32640", "The code of the coordinate system used: UTM zone 40 North on the WGS 84 datum"],
         ["GHS-POP", "Global Human Settlement population grid of the European Commission Joint Research Centre"],
         ["GIS", "Geographic information system"],
+        ["GRP", "Glass-reinforced plastic"],
         ["H1 to H6", "The six flood hazard classes of the Australian classification (Section 1.2.7)"],
+        ["HDPE", "High-density polyethylene"],
         ["ISO", "International Organization for Standardization"],
         ["kW, MWh", "Kilowatt; megawatt hour"],
         ["l/s, m³/d", "Litres a second; cubic metres a day"],
@@ -76,6 +79,7 @@ def abbreviations(d):
         ["NASA POWER", "The climate data of the United States National Aeronautics and Space Administration, from the "
                        "MERRA-2 reanalysis, used for the climate and the wind (Section 1.2.5)"],
         ["NCSI", "National Centre for Statistics and Information"],
+        ["NF EN", "French adoption of a European Standard"],
         ["NOC", "No objection certificate"],
         ["NPV", "Net present value"],
         ["NWS", "Nama Water Services"],
@@ -86,6 +90,7 @@ def abbreviations(d):
         ["OR", "Occupancy rate: persons per property"],
         ["PAEW", "Public Authority for Electricity and Water"],
         ["PAM-GUD-201, 202, 203", "The Nama Water Services design guidelines: general; water and TSE; wastewater"],
+        ["PAM-STD", "Nama Water Services standard drawing"],
         ["PE", "Population equivalent"],
         ["PHF", "Peak hourly flow"],
         ["Property", "A household connection: one domestic electricity meter"],
@@ -100,6 +105,8 @@ def abbreviations(d):
         ["TSE", "Treated sewage effluent, the guidelines' term for treated effluent"],
         ["TSS", "Total suspended solids"],
         ["UTM 40N", "Universal Transverse Mercator zone 40 North, WGS 84 datum"],
+        ["WaPUG, CIWEM", "Wastewater Planning Users Group of the Chartered Institution of Water and Environmental "
+                         "Management"],
     ], widths=[3.6, 12.9], font=9.5, keep_together=False)
 
     D.title(d, "A note on the term TE", size=12, space_before=8)
@@ -125,8 +132,8 @@ def executive_summary(d):
            "treatment plant that will receive the collected flow. It records "
            "the data collected and the checks applied to it, sets out the "
            "design basis and the flows to saturation, and presents seven "
-           "options for the sewer network, three of which are recommended for "
-           "the cost estimate and the appraisal. The design basis was issued on "
+           "options for the sewer network with their cost, three of which are "
+           "recommended in order of priority. The design basis was issued on "
            "its own as the Design Basis Report and presented to Nama Water "
            "Services.")
 
@@ -167,10 +174,12 @@ def executive_summary(d):
                 "and the whole of the 45.7 kilometre treated effluent main are "
                 "recorded as proposed. No treated effluent asset has been "
                 "built. As the diameters and levels of the existing networks are "
-                "not recorded, the concept design lays a network that carries all "
-                "the sewage to the treatment plants; the existing system is "
-                "assessed as soon as the as-built survey is available (Chapter "
-                "5).", lead="Existing assets — ")
+                "not recorded, the areas they serve are designed as if they had "
+                "no sewer: the new network carries all the sewage to the new "
+                "treatment plants, which carry the full flow. The existing system "
+                "is assessed as soon as the as-built survey is available, and "
+                "where an existing sewer can be kept the new pipe in that street "
+                "is not needed (Chapter 5).", lead="Existing assets — ")
     D.bullet(d, "the PAEW dataset provides 647.8 kilometres of water mains "
                 "within the study area, and is adopted as the source for "
                 "utility interfaces.", lead="Potable water — ")
@@ -277,37 +286,30 @@ def executive_summary(d):
     D.p(d, "")
 
     D.title(d, "How the options are developed and compared", size=12, space_before=8)
-    D.p(d, "The guidelines ask for not fewer than three options for each of the "
-           "sewer network, the treated effluent network and the treatment plant, "
-           "and describe three characters for them: one advancing "
-           "sustainability, one representing international best practice, and "
-           "one based on practice already established in Oman. For the sewer "
-           "network seven options have been modelled for where the flow is "
-           "treated, and three of them are recommended. The characters are not "
-           "tied to an option: each recommended option keeps the same network "
-           "model and is designed and costed once for each character, changing "
-           "only the factors the character governs, the treatment process, the "
-           "energy supply, solar generation included, the reuse and the "
-           "materials. The three options therefore give nine costed cases. Every "
-           "case meets the same functional requirement and the same effluent "
-           "standard, so that the difference between them lies in how the "
-           "result is achieved. Section 6.1 sets out what distinguishes the "
-           "characters in design terms.")
-    D.p(d, "The cases are compared over a twenty-five year period against "
-           "seven criteria: total lifetime cost; sustainability, comprising "
-           "carbon, circular economy and nature-based solutions; social "
-           "development and in-country value; adaptability and resilience; "
-           "operability; constructability; and environmental impact. Costs are "
-           "discounted at five per cent. Nama Water Services sets the weight "
-           "given to each criterion.")
-    p = D.p(d, "Where two cases fall within ten per cent of one another on "
-               "total lifetime cost they are treated as equivalent in cost, "
-               "and the more sustainable of the two is adopted. Sensitivity is "
-               "tested by varying the weighting between criteria, the discount "
-               "rate, and the input design criteria.")
+    p = D.p(d, "The guidelines ask for not fewer than three options, developed "
+               "to the same functional requirement and the same effluent "
+               "standard, and describe three characters for them: one advancing "
+               "sustainability, one representing international best practice, "
+               "and one based on practice already established in Oman. For the "
+               "sewer network seven options have been modelled for where the "
+               "flow is treated, from one plant to six. The characters are not "
+               "tied to an option: they change the treatment process, the energy "
+               "supply, solar generation included, and the reuse, not the "
+               "network, and are costed at the preliminary design, where the "
+               "treatment process is selected (Section 6.1).")
+    N.add(p, "PAM-GUD-201, Section 12.1, page 95.")
+    p = D.p(d, "The options are compared on their whole-life cost: the capital "
+               "cost and twenty-five years of operating cost, discounted at five "
+               "per cent. Where options fall within ten per cent of one another "
+               "they are treated as equivalent in cost, and the more sustainable "
+               "is adopted; where they are also equal on sustainability within "
+               "the accuracy of a concept estimate, operability decides. Nama "
+               "Water Services sets the weight given to each criterion of the "
+               "full multi-criteria analysis, which the preliminary design "
+               "completes with the characters.")
     N.add(p, "PAM-GUD-201, Sections 12.6 to 12.9, pages 104 to 106.")
 
-    import rpt_options             # Revision 4: the network options and the recommendation, from the SewerGEMS results
+    import rpt_options             # the network options, their cost and the recommendation
     rpt_options.summary_block(d)
 
     D.title(d, "Deliverables", size=12, space_before=8)

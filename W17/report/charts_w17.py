@@ -271,6 +271,34 @@ def w07_flood():
     return _save(fig, "W07_flood")
 
 
+def w08_costs():
+    """Whole-life cost of each option over 25 years: the capital cost and the present value of the operating cost,
+    with the line 10 % above the lowest. Source: facts_cost (the team's estimate, discounted at 5 %)."""
+    import facts_cost as C
+    opts = F.available(); cd = C.data(); w = C.whole_life(); f = C.factor(); lo = min(w.values())
+    cap = [cd["capex_total"][o] / 1e6 for o in opts]
+    ope = [f * cd["opex1"][o] / 1e6 for o in opts]
+    fig, ax = plt.subplots(figsize=(17 * CM, 7.4 * CM))
+    _style(ax)
+    x = range(len(opts))
+    ax.bar(x, cap, color=BLUE, width=0.6, label="capital cost")
+    ax.bar(x, ope, bottom=cap, color=PALE, width=0.6, label="operating cost over 25 years, present value")
+    top = max(a + b for a, b in zip(cap, ope))
+    for i, o in enumerate(opts):                     # the totals in one row above the tallest bar
+        gap = w[o] / lo - 1
+        ax.text(i, top * 1.04, f"{w[o] / 1e6:,.1f}" + ("" if gap < 1e-9 else f"\n+{100 * gap:.1f} %"),
+                ha="center", va="bottom", fontsize=7, color=BLUE, linespacing=1.0)
+    ax.axhline(lo * 1.10 / 1e6, color=RED, linewidth=0.9, linestyle="--")
+    ax.text(-0.45, lo * 1.10 / 1e6, "10 % above the lowest", ha="left", va="bottom", fontsize=7, color=RED)
+    ax.set_ylim(0, top * 1.22)
+    ax.yaxis.set_major_formatter(FuncFormatter(_thousands))
+    ax.set_ylabel("Million OMR", fontsize=8, color=GREY)
+    _option_ticks(ax, opts, ranked=True)
+    ax.legend(fontsize=7.5, frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.16), ncol=2)
+    return _save(fig, "W08_costs")
+
+
 if __name__ == "__main__":
     print("options:", F.available())
     w01_plant_split(); w02_plant_years(); w03_pumping(); w04_depth(); w05_energy_total(); w06_glance(); w07_flood()
+    w08_costs()

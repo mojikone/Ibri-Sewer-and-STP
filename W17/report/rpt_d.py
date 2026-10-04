@@ -52,6 +52,11 @@ def part_d(d):
            "population and an average sewage flow for every plot, today and in "
            "every year to the year the land is full, which is the saturation "
            "the Terms of Reference ask for.")
+    D.p(d, "The base year is 2024 because it is the year of the most recent "
+           "complete records on which the count rests: the electricity account "
+           "data supplied by Nama Water Services, which counts the properties, "
+           "and the official population series of the Inception Report, which "
+           "starts in that year. Every later year is projected from it.")
     p = D.p(d, "The distribution of population across the study area is shown "
                "below from the Global Human Settlement population grid. The "
                "grid is a third-party product and is used to show where "
@@ -853,6 +858,32 @@ def part_d(d):
     N.add(p, "PAM-GUD-201, Tables 21 to 23, pages 75 and 76. The rate for "
              "roads and junctions applies in the absence of specific "
              "vegetation information and is subject to municipality approval.")
-    D.p(d, "The customers, their present and potential demand and their "
-           "development plans are registered with the treated effluent network "
-           "options (Section 6.4).")
+    p = D.p(d, "The potential customers were identified at a stakeholder meeting "
+               "held in Ibri on 23 September 2026 with the operator of the "
+               "existing plant and the entities below. Each was asked for its "
+               "demand and its plans for 2030, 2040 and 2050 on a common "
+               "template. The demand each indicated is given here as stated; the "
+               "customers and their demand are defined at the preliminary "
+               "design.")
+    N.add(p, "Minutes of the stakeholder meeting of 23 September 2026, and the data received from each entity "
+             "to 30 September 2026.")
+    D.tab_caption(d, "Potential treated effluent customers identified, with the demand each indicated")
+    D.table(d, ["Entity", "Use", "Demand indicated, m³/d", "Remarks"], [
+        ["Ibri Municipality", "Landscaping: 11 existing sites, and 2 projects programmed for 2027, Ibri Public Park "
+         "the largest", "2,068", "1,205 existing and 864 planned"],
+        ["Nakheel Oman, Million Date Palm project", "The Tanam farm: about 11,181 date palms with landscaping", "3,075",
+         "Served through its own pumping station and feeder main; no expansion planned"],
+        ["Ministry of Culture, Sports and Youth", "Stadium complex, a second sports ground, sports and recreation "
+         "centres", "750", "Supplied by tanker at present"],
+        ["Ibri Hospital", "Landscaping", "About 400", "To be confirmed with the landscaped area; the hospital treats "
+         "its own wastewater"],
+        ["Directorate General of Agriculture", "Agricultural plots at Ad Dariz, At Tayyib and Shariya, about "
+         "1,194 hectares allocated and stalled for lack of water", "Not stated", "Treated effluent quality to be "
+         "agreed"],
+    ], widths=[3.6, 5.6, 2.4, 4.9], font=8.5)
+    _gap(d)
+    stated = 2068 + 3075 + 750 + 400
+    D.p(d, f"The demand stated so far, about {fmt(stated)} cubic metres a day without the agricultural plots, is "
+           f"{100 * stated / ts[2030]['delivered']:.0f} per cent of the treated effluent available in 2030 and "
+           f"{100 * stated / ts[yrs[-1]]['delivered']:.0f} per cent of that available at saturation. Provision for "
+           "the excess is described in Section 6.6.2.")

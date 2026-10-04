@@ -26,62 +26,49 @@ REPORT = os.path.join(HERE, "..", "report", "img")
 
 
 def appraisal():
-    c = Chart(5, 5, cw=252, rh=118, gx=40, gy=40, pad=72,
-              title="How each case is costed and compared")
+    # W17 R7 (engineer, 2026-10-04): the comparison as it was made: every option costed on one basis, discounted to its
+    # whole-life cost, the 10 % band, then sustainability and operability; the characters at the preliminary design
+    c = Chart(5, 4, cw=252, rh=118, gx=40, gy=40, pad=72,
+              title="How each option is costed and compared")
 
-    # the options govern the costing, so they sit to the left of it
     c.node("opt", 0, 0,
-           "THREE OPTIONS,|each under the|three characters:|NINE CASES,|plus OPTION 0,|do nothing.||"
-           "Each is costed|separately, on|the same basis.",
-           "start", height=3)
+           "SEVEN OPTIONS|for where the flow|is treated.||"
+           "Each is costed|on its own quantities,|at the same rates.",
+           "start", height=2)
 
-    # ---- stream 1, what it costs to build ---------------------------
+    # ---- what it costs to build ------------------------------------
     c.node("a1", 1, 0, "Gravity sewers by|diameter AND depth band")
-    c.node("a2", 2, 0, "Manholes, house connections,|force mains, lifting stations")
-    c.node("a3", 3, 0, "STP per m3/day, TE network,|land, NOCs, diversions")
-    c.node("A", 4, 0, "STEP 1  CAPEX|phased over the build", "tint")
+    c.node("a2", 2, 0, "Manholes by type and depth;|pumping stations by power")
+    c.node("a3", 3, 0, "Rising mains by diameter;|plants by capacity band")
+    c.node("A", 4, 0, "STEP 1  CAPEX", "tint")
 
-    # ---- stream 2, what it costs to run -----------------------------
-    c.node("b1", 1, 1, "Energy: pumping, and|aeration at the plant")
-    c.node("b2", 2, 1, "Sludge, chemicals, labour,|jetting and CCTV")
-    c.node("b3", 3, 1, "Replacing M and E plant|inside the 25 years")
-    c.node("B", 4, 1, "STEP 2  OPEX|built bottom-up", "tint")
+    # ---- what it costs to run --------------------------------------
+    c.node("b1", 1, 1, "Maintenance and operation,|1 % of CAPEX a year")
+    c.node("b2", 2, 1, "Power of the stations|and the plants")
+    c.node("b3", 3, 1, "Land rent and staff|of the plants and stations")
+    c.node("B", 4, 1, "STEP 2  OPEX|escalated 5 % a year", "tint")
 
-    # ---- stream 3, what comes in ------------------------------------
-    c.node("c1", 1, 2, "Treated effluent sold,|capped by irrigation demand")
-    c.node("c2", 2, 2, "Sewerage and connection|charges, if NWS levies them")
-    c.node("c3", 3, 2, "Avoided cost: tankers, septic|emptying, deferring a plant")
-    c.node("C", 4, 2, "STEP 3  Revenue and|avoided cost", "tint")
-
-    # ---- the money question, across the full width ------------------
-    c.node("npv", 0, 3,
-           "STEP 4   Discount every flow back to today at 5 % over 25 years:  "
-           "NET PRESENT VALUE and LIFE-CYCLE COST|"
-           "Payback is reported alongside them, but it does not decide.",
+    # ---- the money question, across the full width -----------------
+    c.node("npv", 0, 2,
+           "STEP 3   Discount 25 years of cost back to today at 5 %:  WHOLE-LIFE COST",
            "tint", span=5)
 
-    # ---- the judgement, wrapped onto its own band -------------------
-    c.node("s5", 0, 4, "STEP 5|Score the|seven criteria")
-    c.node("s6", 1, 4, "STEP 6|Apply the weights|NWS sets")
-    c.node("s7", 2, 4, "STEP 7|Sensitivity: weights,|discount rate, criteria")
-    c.node("s8", 3, 4, "STEP 8|Within 10 % on cost,|the greener case wins")
-    c.node("s9", 4, 4, "STEP 9|RECOMMENDED|CASE",
-           "accent")
+    # ---- the judgement ---------------------------------------------
+    c.node("s4", 0, 3, "STEP 4|Options within 10 %|of the lowest go on")
+    c.node("s5", 1, 3, "STEP 5|Within the band,|the greener option")
+    c.node("s6", 2, 3, "STEP 6|Equal within concept|accuracy: operability")
+    c.node("s7", 3, 3, "STEP 7|Weights set|by NWS")
+    c.node("s8", 4, 3, "RECOMMENDED|OPTION", "accent")
 
-    for a, b in (("opt", "a1"), ("opt", "b1"), ("opt", "c1"),
+    for a, b in (("opt", "a1"), ("opt", "b1"),
                  ("a1", "a2"), ("a2", "a3"), ("a3", "A"),
                  ("b1", "b2"), ("b2", "b3"), ("b3", "B"),
-                 ("c1", "c2"), ("c2", "c3"), ("c3", "C"),
-                 ("s5", "s6"), ("s6", "s7"), ("s7", "s8"), ("s8", "s9")):
+                 ("s4", "s5"), ("s5", "s6"), ("s6", "s7"), ("s7", "s8")):
         c.edge(a, b)
 
-    # the three streams collect on a bus down the right edge and enter step 4
-    # from its right end; step 4 leaves from its left and drops into step 5.
-    # The page then reads as one continuous line that turns at each edge,
-    # instead of three arrows cutting back through the middle of the figure.
-    for k in ("A", "B", "C"):
+    for k in ("A", "B"):
         c.edge(k, "npv", side=("r", "r"))
-    c.edge("npv", "s5", side=("l", "l"))
+    c.edge("npv", "s4", side=("l", "l"))
 
     render(c, "appraisal_method", DOCS)
     png = os.path.join(DOCS, "appraisal_method.png")

@@ -141,11 +141,12 @@ def largest_od(o):
     return max(k for k, v in od_classes(o).items() if v > 0)
 
 
-# The engineer's priority (2026-10-02): the three options taken to the appraisal, first to third; together they span
-# the choice, one plant, three or six. The guidelines' three characters (PAM-GUD-201 Section 12.1, p95) are not tied
-# to an option (engineer, 2026-10-03): each of the three is designed and costed under every character on the same
-# network model, nine cases in all. The treated effluent network is designed on them.
-RECOMMENDED = ["S1", "S4", "S6"]
+# The recommended options, in order (engineer, 2026-10-04): costed on one basis (facts_cost), the options within 10 per
+# cent of the lowest whole-life cost go forward; S2 is set aside on energy; S1, S3 and S7 are equal on cost and on
+# sustainability within concept accuracy, and S1 is first on operability. The guidelines' three characters (PAM-GUD-201
+# Section 12.1, p95) are described now and costed at the preliminary design. The treated effluent network is not
+# part of the comparison: its customers are not defined at the concept stage.
+RECOMMENDED = ["S1", "S3", "S7"]
 CHARACTERS = ["established local practice", "international best practice", "sustainability-led"]
 
 # The lift at a plant's inlet works, on the pumping stations' own concept values (py/scenario_results.py): the wet well

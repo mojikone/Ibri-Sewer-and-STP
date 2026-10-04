@@ -176,31 +176,28 @@ def d4_network():
 
 
 def d5_options():
-    # W17 R6 (engineer, 2026-10-03): the characters are not tied to an option; each selected option is costed under
-    # each of them on the same network model, nine cases in all
+    # W17 R7 (engineer, 2026-10-04): every option costed on one basis; the options within 10 % of the lowest whole-life
+    # cost compared on sustainability, then operability; the characters costed at the preliminary design
     c = Chart(3, 6, cw=256, rh=96, gx=42, gy=30,
               title="Development and selection of options")
     c.node("o", 1, 0, "Options S1 to S7:|where the flow is treated")
-    c.node("s", 1, 1, "Three selected:|S1, S4 and S6")
-    c.node("a", 0, 2, "Sustainability-led", "start")
-    c.node("b", 1, 2, "International|best practice", "start")
-    c.node("c", 2, 2, "Established local|practice", "start")
-    c.node("n", 1, 3, "Nine cases:|same function,|same effluent standard")
-    c.node("cost", 0, 4, "Capital and operating|cost, life cycle cost")
-    c.node("sus", 2, 4, "Carbon, resource use|and in-country value")
-    c.node("m", 1, 5, "Weighted comparison,|recommended case", "accent")
+    c.node("cap", 0, 1, "Capital cost|by element")
+    c.node("opx", 2, 1, "Operating cost|over 25 years")
+    c.node("w", 1, 2, "Whole-life cost,|discounted at 5 %")
+    c.node("b", 1, 3, "Options within 10 %|of the lowest go forward")
+    c.node("s", 0, 4, "Sustainability:|energy, construction")
+    c.node("op", 2, 4, "Operability:|plants to run and manage")
+    c.node("m", 1, 5, "Recommended option;|characters costed at|the preliminary design", "accent")
 
-    c.edge("o", "s")
-    c.edge("s", "a")
-    c.edge("s", "b")
-    c.edge("s", "c")
-    c.edge("a", "n")
-    c.edge("b", "n")
-    c.edge("c", "n")
-    c.edge("n", "cost")
-    c.edge("n", "sus")
-    c.edge("cost", "m")
-    c.edge("sus", "m")
+    c.edge("o", "cap")
+    c.edge("o", "opx")
+    c.edge("cap", "w")
+    c.edge("opx", "w")
+    c.edge("w", "b")
+    c.edge("b", "s")
+    c.edge("b", "op")
+    c.edge("s", "m")
+    c.edge("op", "m")
     return render(c, "D5_options", IMG)
 
 

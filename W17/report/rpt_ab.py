@@ -51,9 +51,10 @@ def part_a(d):
            "basis. Chapter 4 establishes demand and flow. Chapter 5 assesses the "
            "existing system. Chapter 6 presents the options. Chapter 7 carries "
            "the technical and financial appraisal, and Chapter 8 the delivery "
-           "arrangements. Appendix A holds the working behind Chapter 4, and "
+           "arrangements. Appendix A holds the working behind Chapter 4, "
            "Appendix B the quantities, pumping stations and depth of the sewer "
-           "network options.")
+           "network options, Appendix C the design criteria with the guideline "
+           "page of each, and Appendix D the drawings.")
 
     # ---------------------------------------------------------------- 2
     D.h(d, 2, "1.2.   The study area")
@@ -131,8 +132,8 @@ def part_a(d):
 
     # ---------------------------------------------------------------- 4
     D.h(d, 2, "1.4.   Consultation record")
-    D.p(d, "The following meetings have been held with Nama Water Services to "
-           "the date of this report.")
+    D.p(d, "The following meetings have been held with Nama Water Services and "
+           "the stakeholders to the date of this report.")
     D.tab_caption(d, "Meetings held")
     D.table(d, ["Meeting", "Date", "Outcome"], [
         ["Kick-off meeting", "15 July 2026",
@@ -141,6 +142,12 @@ def part_a(d):
          "Design basis, methodology and programme submitted"],
         ["Design basis meeting", "16 September 2026",
          "Progress reported; the Design Basis Report presented"],
+        ["Treated effluent stakeholder meeting, Ibri", "23 September 2026",
+         "Potential treated effluent customers identified with the operator "
+         "of the existing plant, the Ministry of Agriculture, Fisheries and "
+         "Water Resources, Ibri Municipality, Ibri Hospital, Nakheel Oman and the "
+         "Ministry of Culture, Sports and Youth; their demand for 2030, 2040 "
+         "and 2050 requested (Section 4.4)"],
     ], widths=[5.0, 3.4, 8.1], font=9.5)
     D.p(d, "")
     D.p(d, "Coordination with the authorities holding assets in the project "

@@ -248,9 +248,10 @@ def wide_figure(d, path, caption, size="A4", height_cap=None):
     return n
 
 
-def wide_figures(d, items, size="A4"):
+def wide_figures(d, items, size="A4", last=False):
     """Several figures on consecutive landscape pages, one section for all of them:
-    items = [(path, caption), ...]. Returns the figure numbers."""
+    items = [(path, caption), ...]. Returns the figure numbers. last: the figures end the document, so no portrait
+    page is opened after them (it would print as a blank last page)."""
     from PIL import Image
     page_section(d, size, "landscape", margin=1.5)
     s = d.sections[-1]
@@ -267,7 +268,8 @@ def wide_figures(d, items, size="A4"):
         if i:
             par.paragraph_format.page_break_before = True    # no extra paragraph, so no blank page
         nums.append(fig_caption(d, caption))
-    page_section(d, "A4", "portrait")
+    if not last:
+        page_section(d, "A4", "portrait")
     return nums
 
 

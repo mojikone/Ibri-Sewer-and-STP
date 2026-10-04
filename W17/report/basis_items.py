@@ -12,9 +12,20 @@ import sys
 
 # W17: the decisions list stays where the basis report keeps it, in W16
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "W16", "report_basis"))
-from decisions import APPROVALS as _A, INFORMED as _I, DATA_REQUESTS, BASIS as _B  # noqa: E402,F401
+from decisions import APPROVALS as _A, INFORMED as _I, DATA_REQUESTS as _DR, BASIS as _B  # noqa: E402,F401
 
 import doc as D  # noqa: E402
+
+# the basis report's seven data requests, and those this report adds (engineer, 2026-10-04)
+DATA_REQUESTS = list(_DR) + [
+    ("Regional Master Plan", "The master plan report and the flows it adopts for Ibri",
+     "Needed for the verification of Section 5.3; not provided."),
+    ("Treated effluent demand", "Each customer's demand now and its plans for 2030, 2040 and 2050, on the template "
+     "issued after the meeting of 23 September 2026",
+     "Defines the customers and the treated effluent network options (Sections 4.4 and 6.4)."),
+    ("Meteorological record", "Hourly wind speed, direction and temperature from the nearest station, five years",
+     "Needed for the odour dispersion modelling of the plant sites (Section 7.3)."),
+]
 
 # the basis report's title -> this report's title
 RENAME = {"Persons per property": "Occupancy rate", "Use of each plot": "Land-use layer",

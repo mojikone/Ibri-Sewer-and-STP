@@ -168,6 +168,9 @@ HEADINGS = {
         "Settlement Parameters: Occupancy, Properties per Plot, Home Share and Capacity",
     "The overflow routes in full": "Population Overflow Routes",
     "Network options: quantities, pumping stations and depth": "Network Options: Quantities, Pumping Stations and Depth",
+    "Design criteria, with references": "Design Criteria and References",
+    "Drawings": "Drawings",
+    "Sewers and Manholes": "Sewers and Manholes",
 }
 
 _NUM = re.compile(r"^((?:Appendix [A-Z]\.|[A-Z]\.\d+(?:\.\d+)*\.|\d+(?:\.\d+)*\.)\s+)(.+)$")
