@@ -1,0 +1,18 @@
+{
+ "existing_km": 111.56723011196247,
+ "new_km": 1498.0382494307448,
+ "within_m": {
+  "10": {
+   "new_km_along_existing": 50.15334798903529,
+   "existing_km_with_new_alongside": 50.41791109806361
+  },
+  "15": {
+   "new_km_along_existing": 63.924229190102615,
+   "existing_km_with_new_alongside": 64.44360209626402
+  },
+  "20": {
+   "new_km_along_existing": 71.69349457142009,
+   "existing_km_with_new_alongside": 72.36105883535981
+  }
+ }
+}
