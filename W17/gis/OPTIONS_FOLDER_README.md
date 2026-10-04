@@ -6,10 +6,11 @@ tables, the quantities for the bill of quantities, the report and the presentati
 are saved in the project, and the background is the Google satellite layer. Each option's group carries its manholes,
 shown from 1:25,000 and labelled with their depth from 1:5,000.
 
-**Recommended, in order of priority (report Section 7.11): S1, one STP at O1; S4, three STPs at O1, O4 and O9; S6, six
-STPs.** Together they span the choice, one plant, three or six. Each is costed under the three characters of the
-guidelines on the same network model (process, solar energy, reuse, materials): nine cases. The cost estimate and the
-multi-criteria appraisal confirm or change the order, and the treated effluent network is designed on the three.
+**Recommended, in order of priority (report Section 7.11): S1, one STP at O1; S3, two STPs at O1 and O4; S7, three
+STPs at O1, O16 and O22.** Costed on one basis (report Section 7.8), S1 has the lowest whole-life cost over 25 years;
+S3, S2 and S7 lie within 10 % of it, S2 is set aside on energy, and S4, S5 and S6 are 17 to 21 % above. S1, S3 and S7
+are equal on cost and sustainability within concept accuracy; S1 is first on operability. The guidelines' three
+characters are costed at the preliminary design.
 
 ## What is in each folder
 
@@ -23,8 +24,8 @@ multi-criteria appraisal confirm or change the order, and the treated effluent n
 | `Maps` | One overview of the 24 subnetworks, then three maps per option: **zones** (sewers by the STP they drain to, outfalls, the depth of the sewer arriving at each STP), **network** (sewers by STP and size; each pumping station with its outfall depth, average flow in 2070, pump head and duty; the rising mains) and **depth** (sewers by depth to invert; the outfall depth at each station; the deepest manhole of every run deeper than 12 m) |
 | `Tables` | `W17_network_options_tables.xlsx` — summary, flow at each STP by year, pipe length by size, pipe length by size and depth for each option, manholes by depth, every pumping station |
 | `BOQ` | `Ibri_Sewer_Options_BOQ_Quantities.xlsx` — quantities for the bill of quantities, one column per option: A gravity sewers by size and depth (0.5 m bands to 4 m, then 1 m), B manholes by the largest pipe they serve and depth, C pumping stations (type, pumps, duty, head, power, wet well, land), D rising mains by size, E treatment plants (flow by year, design average with the 10 % margin, depth of the arriving sewer). House connections, crossings, excavation volumes and reinstatement are excluded until the survey |
-| `Reports` | Concept Design Report, build R6 (`Ibri_Concept_Design_Report_R6`, Word and PDF; no revision is printed inside it); the options are in Section 6.2 and Appendix B, the flood exposure of the sewers and manholes in Section 7.2, the recommendation in Section 7.11 |
-| `Presentation` | `Ibri_Concept_Design_Presentation_2026-10.pptx` (and a PDF copy) — the design-basis deck of 16 September 2026, then 03 Sewer network (the model, the flow to the plants, the seven options with their diagrams and maps, depth, energy, self-cleansing, the recommendation), and placeholders for 04 TE network and 05 Cost analysis; the bottom strip of every slide shows the five sections, the slide's own lit |
+| `Reports` | Concept Design Report, build R7 (`Ibri_Concept_Design_Report_R7`, Word and PDF; no revision is printed inside it); the options are in Section 6.2 and Appendix B, the flood exposure of the sewers and manholes in Section 7.2, the cost in Section 7.8, the recommendation in Section 7.11, the design criteria in Appendix C |
+| `Presentation` | `Ibri_Concept_Design_Presentation_2026-10.pptx` (and a PDF copy) — the design-basis deck of 16 September 2026, then 03 Sewer network (the model, the flow to the plants, the seven options with their diagrams and maps, depth, energy, self-cleansing, the recommendation), 04 TE network (the potential customers met on 23 September 2026) and 05 Cost analysis (the seven options over 25 years); the bottom strip of every slide shows the five sections, the slide's own lit |
 
 ## The model
 

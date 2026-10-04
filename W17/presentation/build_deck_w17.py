@@ -559,26 +559,33 @@ def s_selfclean(s):
 
 
 def s_recommend(s):
+    """The three recommended options (engineer, 2026-10-04): costed on one basis, the 10 % band, S2 out on energy,
+    S1, S3 and S7 equal on cost and sustainability within concept accuracy, S1 first on operability."""
+    import facts_cost as C
     ref = F.RECOMMENDED[0]; e_ref = F.energy_total(ref, "2070")
-    gains = {
-        "S1": [f"Phased on one site: {fmt(F.plants('S1')['O1']['avg']['2030'])} m³/d in 2030, "
-               f"{fmt(F.plants('S1')['O1']['avg']['2055'])} in 2055, {fmt(F.plants('S1')['O1']['avg']['2070'])} in 2070",
-               "One plant to staff, one sludge line, one source of treated effluent"],
-        "S4": [f"{_p(F.energy_total('S4', '2070'), e_ref)} % less pumping energy than S1",
-               f"{('One', 'Two', 'Three', 'Four')[F.summary(ref)['pumping_stations'] - F.summary('S4')['pumping_stations'] - 1]} "
-               "fewer pumping stations",
-               f"{fmt(F.km_od_at_least(ref) - F.km_od_at_least('S4'))} km less sewer of 1,000 mm and over"],
-        "S6": [f"Least pumping: {_p(F.energy_total('S6', '2070'), e_ref)} % below S1",
-               f"Fewest stations, {F.summary('S6')['pumping_stations']}; shortest rising mains, {fmt(F.summary('S6')['rising_main_m'] / 1000, 1)} km",
-               "O22, 446 m³/d in 2070, small enough for nature-based treatment"],
-    }
-    costs = {
-        "S1": [f"Largest trunks: {fmt(F.km_od_at_least('S1'))} km of 1,000 mm and over, up to {fmt(F.largest_od('S1'))} mm",
-               f"Deepest arrival, {F.plants('S1')['O1']['inlet']:.1f} m"],
-        "S4": ["Two further plant sites, O4 and O9, each with its buffer, access, power and outlet"],
-        "S6": ["Six sites and six plants to staff",
-               f"O22 receives {fmt(F.plants('S6')['O22']['avg']['2030'])} and O16 {fmt(F.plants('S6')['O16']['avg']['2030'])} m³/d in 2030"],
-    }
+    w = C.whole_life(); lo = min(w.values())
+    cost_line = lambda o: (f"Lowest whole-life cost: {w[o] / 1e6:,.1f} million OMR over 25 years" if w[o] == lo else
+                           f"Whole-life cost {w[o] / 1e6:,.1f} million OMR, +{100 * (w[o] / lo - 1):.1f} %")
+    gains, costs = {}, {}
+    for o in F.RECOMMENDED:
+        pl = F.plants(o); rr = F.option_row(o)
+        if len(pl) == 1:
+            z = next(iter(pl))
+            gains[o] = [cost_line(o),
+                        f"Phased on one site: {fmt(pl[z]['avg']['2030'])} m³/d in 2030, {fmt(pl[z]['avg']['2055'])} in "
+                        f"2055, {fmt(pl[z]['avg']['2070'])} in 2070",
+                        "One plant to staff, one sludge line, one source of treated effluent"]
+            costs[o] = [f"Largest trunks: {fmt(F.km_od_at_least(o))} km of 1,000 mm and over, up to {fmt(F.largest_od(o))} mm",
+                        f"Deepest arrival, {pl[z]['inlet']:.1f} m"]
+        else:
+            fewer = F.summary(ref)["pumping_stations"] - rr["n_ps"]
+            rest = [z for z in pl if z != max(pl, key=lambda q: pl[q]["avg"]["2070"])]
+            gains[o] = [cost_line(o),
+                        f"{_p(F.energy_total(o, '2070'), e_ref)} % less pumping energy than {ref}",
+                        f"{WORDS[fewer].capitalize()} fewer pumping station{'s' if fewer > 1 else ''}; "
+                        f"{fmt(rr['rm_km'], 1)} km of rising main against {fmt(F.option_row(ref)['rm_km'], 1)}"]
+            costs[o] = [f"{WORDS[len(rest)].capitalize()} further plant site{'s' if len(rest) > 1 else ''}, "
+                        f"{' and '.join(rest)}, with buffer, access, power, staff and sludge line"]
     cw, gap = 20.6, 1.25
     for i, o in enumerate(F.RECOMMENDED):
         x = L + i * (cw + gap)
@@ -595,18 +602,64 @@ def s_recommend(s):
             ["Largest plant 2070", f"{fmt(rr['largest_plant_2070'])} m³/d"],
             ["Pumping stations", str(rr["n_ps"])],
             ["Energy 2070", f"{fmt(F.energy_total(o, '2070'))} MWh"],
-            ["Largest sewer", f"{fmt(F.largest_od(o))} mm"],
+            ["Whole-life cost", f"{w[o] / 1e6:,.1f} M OMR"],
         ], x, T + 3.8, cw, col_w=[9, 11.6], size=17, row_h=1.45, left_cols=(0,))
         text(s, x, T + 12.9, cw, 12.5,
              [("Gains", {"bold": True, "colour": "3E8E5E", "bullet": False})] + gains[o]
              + [("Costs", {"bold": True, "colour": "B4453F", "bullet": False})] + costs[o], size=17, spacing=4)
-    box(s, L, 31.0, W, 4.9, "Why these three, and nine costed cases.  ",
-        "Together they span the choice: one plant, three, six. "
-        f"S2 is not selected, {_p(F.energy_total('S2', '2070'), e_ref)} % more pumping energy than S1; S3, S5 and S7 "
-        "lie between the three. Each is costed under the three characters of the guidelines on the same network: "
-        "process, solar energy, reuse, materials. Of two cases within 10 % on whole-life cost, the more sustainable "
-        "is preferred. The treated effluent network is designed on the three.", size=19)
-    notes(s, "Report Section 7.11 and the executive summary. Priority set by the engineer, 2 October 2026.")
+    band = C.within_band(); out = [o for o, _, _ in C.ranking() if o not in band]
+    g = {o: gg for o, _, gg in C.ranking()}
+    box(s, L, 31.0, W, 4.9, f"Why {ref} first.  ",
+        f"Costed on one basis, {ref} has the lowest whole-life cost; {', '.join(o for o in band if o != ref)} are within "
+        f"10 %, {', '.join(out)} {100 * min(g[o] for o in out):.0f} to {100 * max(g[o] for o in out):.0f} % above. "
+        f"S2 is set aside: {_p(F.energy_total('S2', '2070'), e_ref)} % more pumping energy. "
+        f"{F.RECOMMENDED[1]} and {F.RECOMMENDED[2]} pump less than {ref}, but about 2 % of the system's energy: equal on "
+        f"cost and sustainability within concept accuracy. {ref} is first on operability: one plant to run. The "
+        "characters are costed at the preliminary design.", size=19)
+    notes(s, "Report Section 7.11 and the executive summary; costs in Section 7.8.")
+
+
+def s_te(s):
+    """The potential treated effluent customers identified at the stakeholder meeting of 23 September 2026."""
+    rows = [["Ibri Municipality", "Landscaping: 11 sites, 2 projects for 2027", "2,068"],
+            ["Nakheel Oman, Million Date Palm", "Tanam farm, about 11,181 palms", "3,075"],
+            ["Ministry of Culture, Sports and Youth", "Stadium, sports ground, centres", "750"],
+            ["Ibri Hospital", "Landscaping, to be confirmed", "About 400"],
+            ["Directorate General of Agriculture", "About 1,194 ha of plots, stalled for lack of water", "Not stated"]]
+    table(s, ["Entity", "Use", "Demand indicated, m³/d"], rows, L, T + 0.3, 40.5, col_w=[13, 18.5, 9], size=17,
+          row_h=2.0, left_cols=(0, 1))
+    pic(s, os.path.join(IMG, "R05_tse.png"), L, T + 13.6, 40.5, B - T - 13.9)
+    text(s, 43.5, T + 0.4, 22.3, 24, [
+        "Stakeholder meeting, Ibri, 23 September 2026, with the operator of the existing plant.",
+        "Each entity asked for its demand now and its plans for 2030, 2040 and 2050, on one template.",
+        "About 6,300 m³/d stated so far, without the agricultural plots: well below the treated effluent the plants "
+        "produce.",
+        ("At the concept stage the customers are not yet defined; the network options follow their demand at the "
+         "preliminary design.", {"bold": True, "colour": TEAL}),
+    ], size=19, spacing=10)
+    notes(s, "Report Sections 4.4 and 6.4. The chart: the plant inflow, the treated effluent produced and the treated "
+             "effluent delivered to customers, by year (report Section 4.4).")
+
+
+def s_cost(s):
+    """The whole-life cost of the seven options, from the team's estimate, discounted at 5 % over 25 years."""
+    import facts_cost as C
+    cd = C.data(); f = C.factor()
+    rows = [[o + (f" ({RANK[o]})" if o in RANK else ""), f"{cd['capex_total'][o] / 1e6:,.1f}",
+             f"{cd['opex1'][o] / 1e6:,.2f}", f"**{wv / 1e6:,.1f}**", "—" if gg < 1e-9 else f"+{100 * gg:.1f} %"]
+            for o, wv, gg in C.ranking()]
+    table(s, ["Option", "Capital cost, M OMR", "Operating cost, year 1, M OMR", "Whole-life cost, M OMR",
+              "Above the lowest"], rows, L, T + 0.3, 33.5, col_w=[6.5, 6.5, 7.5, 7.0, 6.0], size=17, row_h=1.85,
+          bold_rows=tuple(i for i, (o, _, _) in enumerate(C.ranking()) if o in RANK))
+    pic(s, os.path.join(IMG, "W08_costs.png"), 36.5, T, 29.3, 15.5)
+    text(s, L, T + 0.3 + 1.85 * 8 + 0.6, 33.5, 13, [
+        "Quantities from the model of each option, at the same rates; plus or minus 20 % at the concept stage.",
+        "Operating cost: maintenance 1 % of capital, power, land rent, staff; escalated 5 % a year.",
+        f"Whole-life cost: capital plus 25 years of operating cost discounted at 5 %, {f:.0f} times the first year.",
+        ("Staff and land grow with the number of plants: that is what separates the options.",
+         {"bold": True, "colour": TEAL}),
+    ], size=18, spacing=8)
+    notes(s, "Report Section 7.8. Treated effluent network, house connections and crossings not included.")
 
 
 def _p(a, b):
@@ -634,13 +687,13 @@ def specs():
            dict(template=NET, title="Pumping Energy: The Stations And The Plant Inlets", body=s_energy),
            dict(template=NET, title="Two Matters Whichever Option Is Chosen", body=s_matters),
            dict(template=DEC, title="When The Network Becomes Self-Cleansing", body=s_selfclean),
-           dict(template=DEC, title="Recommendation: S1, S4 And S6, In This Order", body=s_recommend),
+           dict(template=DEC, title="Recommendation: S1, S3 And S7, In This Order", body=s_recommend),
            dict(template=SEC, kind="section", num="04", title="TE NETWORK",
-                sub="To be added: designed on the three recommended options"),
-           dict(template=NET, title="Treated Effluent Network", body=s_empty, tab=("TE network", "2E86AB", "droplets")),
+                sub="Customers identified on 23 September; their demand to 2050 requested"),
+           dict(template=NET, title="Treated Effluent: The Potential Customers", body=s_te, tab=("TE network", "2E86AB", "droplets")),
            dict(template=SEC, kind="section", num="05", title="COST ANALYSIS",
-                sub="To be added: capital, operating and life-cycle cost of the options"),
-           dict(template=NET, title="Cost Analysis", body=s_empty, tab=("Cost", "8A6D3B", "cost"))]
+                sub="Capital, operating and whole-life cost of the seven options"),
+           dict(template=NET, title="Cost Of The Seven Options Over 25 Years", body=s_cost, tab=("Cost", "8A6D3B", "cost"))]
     return sp
 
 

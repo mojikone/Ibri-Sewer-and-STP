@@ -155,7 +155,8 @@ def main():
         ("", ""),
         ("Recommended options, in order of priority (Concept Design Report, Section 7.11)", "head"),
     ] + [(f"{RANK[o]}:  {o}; {FW.text(o)}", "") for o in FW.RECOMMENDED] + [
-        ("Each of the three is costed under the three characters of the guidelines, on the same network: nine cases.", ""),
+        ("Costed on one basis, these three lie within 10 % of the lowest whole-life cost; S1 is first on operability, "
+         "one plant to run (report Sections 7.8 and 7.11).", ""),
         ("", ""),
         ("Bills", "head"),
         ("A  Gravity sewers: length by outside diameter and depth to invert, metres", ""),
