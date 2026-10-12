@@ -171,6 +171,11 @@ Peak outfall flow, sum of the 24 outfalls: 2030 613.9 → 674.0 L/s; 2070 1,541.
   the file, open it, edit, save once (tested clean). His slides 2–22 compared pixel by pixel with the base render.
 - Open for the engineer: the GeoPackages in `11_Network_options` still carry an `old_id` field with the modeller's labels.
 
+## 2026-10-12 — own flow of the 24 subnetworks at every five years
+
+- **`results/subnetwork_flows_by_year.xlsx`** (`py/subnetwork_flows.py`), asked for by the team: sheet *Flow m3d* = each subnetwork's own average dry-weather flow at 2024, 2025, 2030 … 2065 and 2070 (saturation), no transfer from upstream subnetworks, no peaking, so the same for every option; sewer length and infiltration (720 L/d/km, G201 p72) as separate columns; sheet *Population* the same grouping in people.
+- **Source and check:** the model's plot layer (`14 IBRI_W17/SHP/Plots/Plots.shp` on the model share) carries `Q_2024 … Q_2065`, `Q_SAT`, the population columns and `HMINNODE`, the id of the manhole each plot loads; the node inventory (`bridge/out/inv_w17/nodes.csv`) maps the id to the label and the label to O1–O24. The sums equal the model's sanitary loads (`bridge/out/r4/diag/rows_<year>.csv`) to 0.01 m³/d in every subnetwork and year the model runs, asserted on every build. 7,318 plots load inactive manholes (the three deactivated absorption-well areas): one row "outside the 24", 539 m³/d in 2030 to 722 in 2070, so the total is the report's 60,099.
+
 ## 2026-10-04 — report build R7, final for issue
 
 - **Live: `report/R7/Ibri_Concept_Design_Report_R7.docx` + `.pdf`** (174 pages), copied to `Options 2026-10/Reports/`.
