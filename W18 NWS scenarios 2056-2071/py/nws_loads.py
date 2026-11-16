@@ -92,15 +92,37 @@ p["MH_DIST"] = 0.0
 p.loc[need, "MH_DIST"] = dist
 moved = need & (p[qcols[-1]].values > 0)
 
-p[["SETTLE", "STATUS", "CADASTRE", "USE", "HMINNODE", "MH_W18", "MH_DIST"] + qcols].to_csv(os.path.join(OUT, "plot_loads.csv"), index_label="FID", float_format="%.6f")
-mh = p.groupby("MH_W18")[qcols].sum()
+# What the network carries (engineer, 2026-11-16): a plot whose manhole is inactive (the deactivated areas, as in W17)
+# is not carried, and neither is a plot whose edge lies more than 200 m from the nearest active sewer (land left
+# without a network: steep ground, vegetation). Their flow stays in the settlement totals, reported as not carried.
+from shapely import STRtree, linestrings
+allnodes = pd.read_csv(r"D:\VBOX\bridge\out\inv_w17\nodes.csv").set_index("id")
+cd = pd.read_csv(r"D:\VBOX\bridge\out\scen\S1\conduits_S1-2070.csv")
+cd = cd[cd.active == True]
+seg = linestrings(np.stack([allnodes.loc[cd.start, ["x", "y"]].values, allnodes.loc[cd.stop, ["x", "y"]].values], axis=1))
+_, dpipe = STRtree(seg).query_nearest(g.geometry.values, return_distance=True, all_matches=False)
+NO_NETWORK_M = 200.0
+p["D_PIPE"] = dpipe
+p["MH_ACTIVE"] = allnodes.loc[p.MH_W18, "active"].values.astype(bool)
+p["WHY_OUT"] = np.where(~p.MH_ACTIVE, "inactive manhole", np.where(p.D_PIPE > NO_NETWORK_M, "over 200 m from a sewer", ""))
+p["CARRIED"] = p.WHY_OUT == ""
+
+p[["SETTLE", "STATUS", "CADASTRE", "USE", "HMINNODE", "MH_W18", "MH_DIST", "D_PIPE", "WHY_OUT"] + qcols].to_csv(os.path.join(OUT, "plot_loads.csv"), index_label="FID", float_format="%.6f")
+mh = p[p.CARRIED].groupby("MH_W18")[qcols].sum()
 assert set(mh.index) <= rowed
+out_tab = p[~p.CARRIED].groupby("WHY_OUT")[qcols].sum()
+out_tab.loc["total not carried"] = out_tab.sum()
+out_tab.to_csv(os.path.join(OUT, "not_carried.csv"), float_format="%.2f")
 mh.to_csv(os.path.join(OUT, "manhole_loads.csv"), index_label="manhole_id", float_format="%.6f")
 sf.to_csv(os.path.join(OUT, "settlement_flows.csv"), index=False, float_format="%.4f")
 
 L = ["# W18 loads, check", "", f"Rate {rate*1000:.3f} L/person/day; plots {len(p):,}; manholes loaded {len(mh):,}, every one carrying a row in all six year alternatives.",
      f"Plots linked to a manhole here (no HMINNODE, or one without a row): {int(need.sum()):,}; carrying flow in {YEARS[-1]}: {int(moved.sum()):,} "
      f"({p.loc[moved, qcols[-1]].sum():,.1f} m3/d), distance to the manhole median {np.median(dist):,.0f} m, 95th percentile {np.percentile(dist, 95):,.0f} m, max {dist.max():,.0f} m", "",
+     f"Not carried by the network, m3/d (plots: inactive manhole {int((p.WHY_OUT == 'inactive manhole').sum()):,}, over 200 m from a sewer {int((p.WHY_OUT == 'over 200 m from a sewer').sum()):,}):", "",
+     "| | " + " | ".join(qcols) + " |", "|---|" + "---|" * len(qcols)]
+L += [f"| {k} | " + " | ".join(f"{v:,.1f}" for v in r) + " |" for k, r in out_tab.iterrows()]
+L += ["", f"Carried by the network (the model's loads): " + ", ".join(f"{c} {mh[c].sum():,.1f}" for c in qcols), "",
      "| year | people used | plot flow m3/d | team sheet less infiltration ({:,.1f}) | difference | settlements capped |".format(infil),
      "|---|---|---|---|---|---|"]
 for y in YEARS:
