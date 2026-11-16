@@ -1,17 +1,17 @@
 # W18 loads, check
 
 Rate 171.028 L/person/day; plots 77,265; manholes loaded 15,482, every one carrying a row in all six year alternatives.
-Plots linked to a manhole here (no HMINNODE, or one without a row): 6,503; carrying flow in 2071: 4 (0.9 m3/d), distance to the manhole median 92 m, 95th percentile 1,884 m, max 8,677 m
+Plots linked to a manhole here (no HMINNODE, or one without a row): 6,503; carrying flow in 2071: 0 (0.0 m3/d), distance to the manhole median 92 m, 95th percentile 1,884 m, max 8,677 m
 
 Not carried by the network, m3/d (plots: inactive manhole 1,201, over 200 m from a sewer 8,682):
 
 | | Q_2026 | Q_2031 | Q_2036 | Q_2041 | Q_2046 | Q_2051 | Q_2056 | Q_2061 | Q_2066 | Q_2071 |
 |---|---|---|---|---|---|---|---|---|---|---|
-| inactive manhole | 499.8 | 542.8 | 590.6 | 643.9 | 699.3 | 762.1 | 831.6 | 908.7 | 946.2 | 946.9 |
-| over 200 m from a sewer | 128.2 | 182.6 | 243.0 | 310.5 | 381.1 | 461.0 | 549.4 | 647.6 | 749.8 | 857.6 |
-| total not carried | 628.0 | 725.4 | 833.6 | 954.4 | 1,080.4 | 1,223.1 | 1,381.0 | 1,556.3 | 1,696.1 | 1,804.5 |
+| inactive manhole | 499.8 | 516.5 | 534.9 | 555.5 | 577.0 | 601.2 | 628.1 | 657.9 | 672.4 | 672.5 |
+| over 200 m from a sewer | 128.2 | 167.8 | 211.8 | 261.0 | 312.6 | 370.8 | 435.4 | 507.0 | 582.7 | 663.4 |
+| total not carried | 628.0 | 684.2 | 746.7 | 816.5 | 889.5 | 972.1 | 1,063.5 | 1,164.9 | 1,255.1 | 1,335.9 |
 
-Carried by the network (the model's loads): Q_2026 20,085.1, Q_2031 22,358.5, Q_2036 24,882.6, Q_2041 27,701.1, Q_2046 30,636.5, Q_2051 33,960.1, Q_2056 37,639.2, Q_2061 41,723.2, Q_2066 44,827.3, Q_2071 47,053.7
+Carried by the network (the model's loads): Q_2026 20,085.1, Q_2031 22,399.7, Q_2036 24,969.5, Q_2041 27,839.0, Q_2046 30,827.5, Q_2051 34,211.2, Q_2056 37,956.8, Q_2061 42,114.5, Q_2066 45,268.3, Q_2071 47,522.3
 
 | year | people used | plot flow m3/d | team sheet less infiltration (1,099.0) | difference | settlements capped |
 |---|---|---|---|---|---|

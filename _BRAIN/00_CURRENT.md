@@ -4,9 +4,9 @@
 
 W18 loads corrected the same day against the earlier decisions:
 - **The estates are additive** (W14 rule 4: 316.4 m³/d).
-- **Growth goes only on W14's spread set**, equal per plot (rules 9d and 9e: empty plots up to 2,000 m², no groves, estates, industrial or heritage plots), and only inside the plot's own settlement boundary.
-- **Not carried:** plots on the inactive network (planted areas and outlying catchments, as in R7) and plots more than 200 m from an active sewer. That comes to 725 m³/d in 2031, 1,381 in 2056 and 1,805 in 2071, shown on a map in the report.
-- **Carried:** 22,359, 37,639 and 47,054 m³/d before infiltration.
+- **Growth goes only on W14's home-shaped empty plots**, equal per plot (41,400 plots; large or non-square plots take none), and only inside the plot's own settlement boundary.
+- **Not carried:** plots on the inactive network (planted areas and outlying catchments, as in R7) and plots more than 200 m from an active sewer. That comes to 684 m³/d in 2031, 1,064 in 2056 and 1,336 in 2071, shown on a map in the report.
+- **Carried:** 22,400, 37,957 and 47,522 m³/d before infiltration.
 - **The model:** the year loads go into the six existing year alternatives (job 067 proved the loading), and SC1 at 2056 is under way.
 
 **2026-10-12: the own flow and population of the 24 subnetworks at every five years** are in `W17/results/subnetwork_flows_by_year.xlsx` (`W17/py/subnetwork_flows.py`), for the team's plant and station sizing: average dry-weather m³/d per subnetwork without transfers or peaking, infiltration separate, reconciled with the model's loads. R7 remains the live report.

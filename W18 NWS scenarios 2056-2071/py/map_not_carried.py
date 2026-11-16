@@ -57,7 +57,7 @@ ax.legend(handles=[Patch(color=COL["Inactive network (planted areas, outlying ca
 rows = [("", "2031", "2056", "2071")]
 for cat in COL:
     s = nc[nc.CATEGORY == cat]
-    rows.append((f"{cat} ({len(s):,} plots)", *(f"{s[c].sum():,.0f}" for c in ("Q_2031", "Q_2056", "Q_2071"))))
+    rows.append((f"{cat.split(' (')[0]} ({len(s):,} plots)", *(f"{s[c].sum():,.0f}" for c in ("Q_2031", "Q_2056", "Q_2071"))))
 rows.append((f"Total not carried ({len(nc):,} plots)", *(f"{nc[c].sum():,.0f}" for c in ("Q_2031", "Q_2056", "Q_2071"))))
 tb = ax.table(cellText=rows[1:], colLabels=rows[0], loc="lower right", colWidths=[0.30, 0.06, 0.06, 0.06], cellLoc="right")
 tb.auto_set_font_size(False); tb.set_fontsize(9); tb.scale(1, 1.4)

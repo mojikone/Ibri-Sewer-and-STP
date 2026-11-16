@@ -22,7 +22,9 @@
 ## Earlier rules kept (checked 2026-11-16 at the engineer's request)
 
 - **W14 rule 4: the industrial estates are additive.** 6,300 workers × 93 L/d × 0.54 = **316.4 m³/d**, on their plots, outside the per-capita volume (doctrine 1b). The plot flow is the team's sheet plus 316.4.
-- **W14 rules 9d and 9e: growth lands only on W14's spread set.** That is empty plots up to 2,000 m², with no groves, industrial, heritage or estate plots (`SPREAD_W > 0`). There are 48,813 such plots inside the boundaries (Ibri 12,838), shared equally per plot (8 Nov). W14 weighted by area capped at 1,000 m².
+- **Growth lands only on W14's home-shaped empty plots** (rule 9; engineer, 2026-11-16: large or non-square plots take no growth). That means 200–1,000 m², compact ≥ 0.6, aspect ≤ 3, and no groves, industrial, heritage or estate plots. There are 41,400 such plots inside the boundaries (Ibri 10,424), shared equally per plot (8 Nov).
+  - W14's wider spread set of plots up to 2,000 m² would have put a house plot's share on 7,483 slivers and strips (median 80 m², 5,194 m³/d in 2071).
+  - Existing plots keep their metered flow whatever their shape.
 - **The inactive network (R7 §6.2.5):** branches in planted areas, where ground levels are unreliable until the survey, and three small outlying catchments proposed for on-site treatment (absorption wells).
 
 ## Flow that does not enter the network (engineer, 2026-11-16)
@@ -34,10 +36,10 @@ These plots are not carried, and their flow stays in the settlement totals:
 
 | m³/d | 2031 | 2056 | 2071 |
 |---|---|---|---|
-| Inactive network | 543 | 832 | 947 |
-| Farther than 200 m | 183 | 549 | 858 |
-| Not carried | 725 | 1,381 | 1,805 |
-| Carried (before infiltration) | 22,359 | 37,639 | 47,054 |
+| Inactive network | 516 | 628 | 673 |
+| Farther than 200 m | 168 | 435 | 663 |
+| Not carried | 684 | 1,064 | 1,336 |
+| Carried (before infiltration) | 22,400 | 37,957 | 47,522 |
 
 **These values go into the report, with a map of the plots in the two categories.**
 - Layer: `gis/not_carried_plots.gpkg`.

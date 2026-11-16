@@ -60,10 +60,13 @@ p["INSIDE"] = [bool(shapely.contains(poly[s], c)) for s, c in zip(p.S, cent)]
 #  rule 9d - growth lands only on W14's spread set: empty plots up to 2,000 m2, not grove, industrial, heritage or
 #            estate (SPREAD_W > 0); 9e heritage takes nothing. The weighting is now equal per plot (8 Nov, NWS), no
 #            longer W14's area capped at 1,000 m2.
-w14 = pyogrio.read_dataframe(os.path.join(W18, "..", "W14", "shp", "PLOTS_load.shp"), columns=["AREA_M2", "SPREAD_W", "S_SPEC"], read_geometry=False)
+w14 = pyogrio.read_dataframe(os.path.join(W18, "..", "W14", "shp", "PLOTS_load.shp"), columns=["AREA_M2", "SPREAD_W", "S_SPEC", "HOMESHAPE"], read_geometry=False)
 assert len(w14) == len(p) and np.allclose(w14.AREA_M2.values, pyogrio.read_dataframe(PLOTS, columns=["AREA_M2"], read_geometry=False).AREA_M2.values, atol=0.01)
 p["SPEC"] = w14.S_SPEC.values
-p["SPREAD"] = w14.SPREAD_W.values > 0
+# Growth only on HOME-SHAPED empty plots (engineer, 2026-11-16: large or non-square plots take no growth): W14 rule 9,
+# 200-1,000 m2, compact >= 0.6, aspect <= 3, not grove, industrial, heritage or estate - the plots its capacity counted.
+# Under an equal share per plot, slivers and strips of W14's spread set would take as much as a house plot.
+p["SPREAD"] = (w14.SPREAD_W.values > 0) & (w14.HOMESHAPE.values == 1)
 
 rows, out = [], {f"Q_{y}": np.zeros(len(p)) for y in YEARS}
 for s in sorted(pop):
