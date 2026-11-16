@@ -71,13 +71,36 @@ team = {sc.cell(1, c).value: sum(sc.cell(r, c).value for r in range(2, 27)) for 
 infil = sum(wb["Base Demand"].cell(r, 3).value for r in range(7, 32))
 
 qcols = [f"Q_{y}" for y in YEARS]
-p[["SETTLE", "STATUS", "CADASTRE", "USE", "HMINNODE"] + qcols].to_csv(os.path.join(OUT, "plot_loads.csv"), index_label="FID", float_format="%.6f")
-mh = p.dropna(subset=["HMINNODE"]).groupby(p.HMINNODE.dropna().astype(int))[qcols].sum()
+
+# The manhole each plot loads. HMINNODE is 0 on 6,499 plots (6,246 future) that carried no flow in W14, so the load
+# builder never linked them; under the equal share they now carry flow. SewerGEMS cannot take a load on a manhole that
+# has no load row (jobs 060-066), so every plot goes to a manhole that carries a row in all six year alternatives:
+# its own HMINNODE where that holds, otherwise the nearest such manhole (the load builder's nearest-node rule).
+from scipy.spatial import cKDTree
+ROWS = r"D:\VBOX\bridge\out\r4\diag\rows_{}.csv"
+rowed = set.intersection(*[set(pd.read_csv(ROWS.format(y)).mh_id) for y in ("2030", "2040", "2050", "2055", "2060", "2070")])
+nodes = pd.read_csv(r"D:\VBOX\bridge\out\inv_w17\nodes.csv")
+nodes = nodes[nodes.id.isin(rowed)]
+g = pyogrio.read_dataframe(PLOTS, columns=[])
+cen = np.column_stack([g.geometry.centroid.x.values, g.geometry.centroid.y.values])
+own = p.HMINNODE.fillna(0).astype(int).values
+need = ~np.isin(own, list(rowed))
+dist, idx = cKDTree(nodes[["x", "y"]].values).query(cen[need])
+p["MH_W18"] = own
+p.loc[need, "MH_W18"] = nodes.id.values[idx]
+p["MH_DIST"] = 0.0
+p.loc[need, "MH_DIST"] = dist
+moved = need & (p[qcols[-1]].values > 0)
+
+p[["SETTLE", "STATUS", "CADASTRE", "USE", "HMINNODE", "MH_W18", "MH_DIST"] + qcols].to_csv(os.path.join(OUT, "plot_loads.csv"), index_label="FID", float_format="%.6f")
+mh = p.groupby("MH_W18")[qcols].sum()
+assert set(mh.index) <= rowed
 mh.to_csv(os.path.join(OUT, "manhole_loads.csv"), index_label="manhole_id", float_format="%.6f")
 sf.to_csv(os.path.join(OUT, "settlement_flows.csv"), index=False, float_format="%.4f")
 
-L = ["# W18 loads, check", "", f"Rate {rate*1000:.3f} L/person/day; plots {len(p):,}; manholes loaded {len(mh):,}; "
-     f"plots without a manhole {int(p.HMINNODE.isna().sum())} carrying {p.loc[p.HMINNODE.isna(), qcols[-1]].sum():.1f} m3/d in {YEARS[-1]}", "",
+L = ["# W18 loads, check", "", f"Rate {rate*1000:.3f} L/person/day; plots {len(p):,}; manholes loaded {len(mh):,}, every one carrying a row in all six year alternatives.",
+     f"Plots linked to a manhole here (no HMINNODE, or one without a row): {int(need.sum()):,}; carrying flow in {YEARS[-1]}: {int(moved.sum()):,} "
+     f"({p.loc[moved, qcols[-1]].sum():,.1f} m3/d), distance to the manhole median {np.median(dist):,.0f} m, 95th percentile {np.percentile(dist, 95):,.0f} m, max {dist.max():,.0f} m", "",
      "| year | people used | plot flow m3/d | team sheet less infiltration ({:,.1f}) | difference | settlements capped |".format(infil),
      "|---|---|---|---|---|---|"]
 for y in YEARS:

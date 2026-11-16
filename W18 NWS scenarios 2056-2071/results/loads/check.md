@@ -1,6 +1,7 @@
 # W18 loads, check
 
-Rate 171.028 L/person/day; plots 77,265; manholes loaded 15,712; plots without a manhole 0 carrying 0.0 m3/d in 2071
+Rate 171.028 L/person/day; plots 77,265; manholes loaded 15,708, every one carrying a row in all six year alternatives.
+Plots linked to a manhole here (no HMINNODE, or one without a row): 6,503; carrying flow in 2071: 5,147 (3,061.3 m3/d), distance to the manhole median 92 m, 95th percentile 1,884 m, max 8,677 m
 
 | year | people used | plot flow m3/d | team sheet less infiltration (1,099.0) | difference | settlements capped |
 |---|---|---|---|---|---|
