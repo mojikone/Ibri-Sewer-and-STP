@@ -39,6 +39,14 @@ SCENARIOS = {
                text="three STPs at O-1, O-8, O-14"),
 }
 YEARS = ["2030", "2040", "2050", "2055", "2060", "2070"]
+# W18: the NWS scenarios (team, 2026-11-08): STP-1 = O1, STP-2 = O16, STP-5 = O4; SC1-SC3 route as S1-S3
+SCENARIOS.update({
+    "SC1": dict(SCENARIOS["S1"], text="STP-1 only (O1)"),
+    "SC2": dict(SCENARIOS["S2"], text="STP-2 only (O16)"),
+    "SC3": dict(SCENARIOS["S3"], text="STP-1 (O1) + STP-5 (O4)"),
+    "SC4": dict(stp=["O16", "O4"], extra=[("O1", "MH-21598")], joins={"O17": "O16", "O18": "O16"},
+                text="STP-2 (O16) + STP-5 (O4)"),
+})
 _WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six"}
 
 
@@ -49,7 +57,7 @@ def option_label(name):
     if len(stp) == 1:
         return f"one STP for the whole area, at {stp[0]}"
     return f"{_WORDS[len(stp)]} STPs, at {', '.join(stp[:-1])} and {stp[-1]}"
-F0 = r"D:\VBOX\bridge\out\f0"
+F0 = r"D:\VBOX\bridge\out\w18\f0"   # W18 year flows (W17's were in out\f0)
 RENAME = r"D:\VBOX\bridge\out\inv\rename_nodes.csv"
 
 
