@@ -9,6 +9,16 @@ W18 loads corrected the same day against the earlier decisions:
 - **Carried:** 22,400, 37,957 and 47,522 m³/d before infiltration.
 - **The model:** the year loads go into the six existing year alternatives (job 067 proved the loading), and SC1 at 2056 is under way.
 
+**SC1 designed for 2056 on the final loads (job 070):**
+- **The design:** it converged in 4 passes; every pipe is laid at its Table 11 floor; the plant inlet at O1 is 10.0 m deep; 316 manholes are over 12 m.
+- **The 2031 check:** of the pipes above DN200 (151.8 km), 9.7 % reach 0.75 m/s.
+- **Steepening to reach 0.75 m/s, by slope limit** (check run `W18…/py/selfcleansing_slope.py`, maps `img/depth_SC1-2056_*.png`):
+  - **0.50 %:** 26.6 km of the length above DN200 stays below 0.75 m/s (17.5 %), 352 manholes are over 12 m, and the O9 station goes to 22.2 m (+5.4) and O3 to 10.8 m.
+  - **0.75 %:** 9.5 km stays below (6.3 %), 426 manholes are over 12 m, and O3 goes to 15.8 m.
+  - **1.00 %:** 3.1 km stays below (2.1 %), 458 manholes are over 12 m, and O3 goes to 23.8 m.
+  - **In every case:** the plant depth does not change, and all 1,346 km of DN200 stay below 0.75 m/s.
+- **Recommended to NWS:** a 0.50 % limit (the DN200 minimum of Table 11), with about 17 % of the length above DN200 on a flushing list.
+
 **2026-10-12: the own flow and population of the 24 subnetworks at every five years** are in `W17/results/subnetwork_flows_by_year.xlsx` (`W17/py/subnetwork_flows.py`), for the team's plant and station sizing: average dry-weather m³/d per subnetwork without transfers or peaking, infiltration separate, reconciled with the model's loads. R7 remains the live report.
 
 **2026-10-04: the live report is the Concept Design Report built in `W17/report/R7/`** (174 pages, file `Ibri_Concept_Design_Report_R7`, final for issue; no revision printed; `W17/report/R6/` superseded and kept). It carries the cost of the seven options from the team's estimate (`W17/data/finance/`, `W17/report/facts_cost.py`) and **recommends S1, S3, S7** (cost first, the 10 % band, S2 out on energy, S1 first on operability; doctrine 1e amended again); the characters are costed at the preliminary design and the treated effluent network is not linked to the options. The existing networks' areas are designed as if unsewered (`W17/py/existing_overlap.py`). NWS's comments of 24 September on the Design Basis Report (in `09-RECEIVED/1. NAMA/Comments` on the server) were read: the coverage request for Al Aqariyah, As Subaykhi and Madayn is for the managers and not in the report; the design horizon stays open. The deck (`W17/presentation/build_deck_w17.py`) has its recommendation, 04 TE and 05 cost slides filled; the deliverable folder carries the cost estimate under `Cost`.

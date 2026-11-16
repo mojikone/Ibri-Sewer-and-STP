@@ -51,6 +51,20 @@ Model loading:
 - The six year alternatives of the model carry 2031, 2051, 2056, 2061, 2066 and 2071.
 - New year alternatives failed in jobs 060–066; the cause was a load on a manhole without a load row. Job 067 proved the loading, and job 069 has the final loads.
 
+## SC1 designed for 2056 (final loads) and the slope check
+
+**SC1 designed for 2056 on the final loads (job 070):**
+- **The design:** it converged in 4 passes; every pipe is laid at its Table 11 floor; the plant inlet at O1 is 10.0 m deep; 316 manholes are over 12 m.
+- **The 2031 check:** of the pipes above DN200 (151.8 km), 9.7 % reach 0.75 m/s.
+- **Steepening to reach 0.75 m/s, by slope limit** (check run `W18…/py/selfcleansing_slope.py`, maps `img/depth_SC1-2056_*.png`):
+  - **0.50 %:** 26.6 km of the length above DN200 stays below 0.75 m/s (17.5 %), 352 manholes are over 12 m, and the O9 station goes to 22.2 m (+5.4) and O3 to 10.8 m.
+  - **0.75 %:** 9.5 km stays below (6.3 %), 426 manholes are over 12 m, and O3 goes to 15.8 m.
+  - **1.00 %:** 3.1 km stays below (2.1 %), 458 manholes are over 12 m, and O3 goes to 23.8 m.
+  - **In every case:** the plant depth does not change, and all 1,346 km of DN200 stay below 0.75 m/s.
+- **Recommended to NWS:** a 0.50 % limit (the DN200 minimum of Table 11), with about 17 % of the length above DN200 on a flushing list.
+
+Results: `results/SC1-2056_final/`, `results/selfcleansing_slope/SC1-2056_final/`; the provisional run is kept in the `_provisional` folders.
+
 ## Expected difficulty with the design-year rule
 
 In the W17 S1 run (2070 design), the share of pipes above DN200 reaching 0.75 m/s is 37 % at the 2070 flow, 16 % at the 2055 flow and 6 % at the 2030 flow (`D:/VBOX/bridge/out/scen/S1/conduits_S1-*.csv`). Table 11 gives 0.75 m/s only to a pipe running at least half full, so SC1 at 2056 is run first to measure the real pass rate before the other runs.
