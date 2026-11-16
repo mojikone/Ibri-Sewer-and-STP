@@ -28,7 +28,7 @@ def _work_folders():
     import re
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     found = sorted((d for d in os.listdir(root)
-                    if re.fullmatch(r"W[0-9]+[a-z]?", d)
+                    if re.fullmatch(r"W[0-9]+[a-z]?( .+)?", d)
                     and os.path.isdir(os.path.join(root, d))),
                    key=lambda d: (len(d), d))
     return found + ["TUTORIALS"]
