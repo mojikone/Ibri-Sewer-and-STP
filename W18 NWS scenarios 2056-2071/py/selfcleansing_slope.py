@@ -139,6 +139,16 @@ for T in THRESHOLDS:
                      mh_over_12m=int((new_depth > 12).sum()), mh_over_12m_before=int((base_depth > 12).sum()),
                      deepest_m=new_depth.max(), max_added_at_outfall_m=at_out.max(),
                      outfalls_added_over_1m=int((at_out > 1).sum())))
+# node levels of the design and of the three cases mapped for the engineer (0.50, 0.75, 1.00 %)
+nodes_out = pd.DataFrame({"inv_laid": inv0})
+for T in (0.005, 0.0075, 0.01):
+    s_new = np.where(big & (dy.S_REQ > dy.S_LAID) & (dy.S_REQ <= T), dy.S_REQ, dy.S_LAID)
+    nodes_out[f"inv_{T*100:.2f}"] = relay(s_new)
+heads = set(dy.UP) - set(dy.DN)
+for n in heads: nodes_out.loc[n, ["inv_laid", "inv_0.50", "inv_0.75", "inv_1.00"]] = dy.loc[dy.UP == n, "UP_INV0"].max()
+nodes_out = nodes_out.join(mh[["label", "x", "y", "ground"]], how="left")
+nodes_out.to_csv(os.path.join(out, f"nodes_{tag}.csv"), index_label="id", float_format="%.3f")
+dy[["label", "UP", "DN", "size_label", "diameter_mm", "length_m", "S_LAID", "S_REQ"]].to_csv(os.path.join(out, f"links_{tag}.csv"), index=False, float_format="%.6g")
 tab = pd.DataFrame(rows)
 
 never = big & dy.S_REQ.isna()
