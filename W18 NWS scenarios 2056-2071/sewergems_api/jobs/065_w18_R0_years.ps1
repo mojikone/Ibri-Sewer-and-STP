@@ -1,16 +1,17 @@
-# W18 R0, fourth attempt. 060, 062 and 063 all loaded the first year and then failed reading the SECOND year's loads
-# (GetParentID, "Value does not fall within the expected range"), even with every alternative created and saved first.
-# So the model is closed and reopened between years: one year's loads per open model.
-. \VBOXSVR\VBOX\bridge\lib\load.ps1
-$out = '\VBOXSVR\VBOX\bridge\out\w18\f0'; New-Item -ItemType Directory -Force $out | Out-Null
-$csv = '\VBOXSVR\VBOX\bridge\data\w18\manhole_loads.csv'
+# W18 R0, fifth attempt (064 never ran: the shell that wrote it turned \\VBOXSVR into \VBOXSVR).
+# 060, 062 and 063 all loaded the first year and then failed reading the SECOND year's loads (GetParentID, "Value does
+# not fall within the expected range"), even with every alternative created and saved first. So the model is closed
+# and reopened between years: one year's loads per open model.
+. \\VBOXSVR\VBOX\bridge\lib\load.ps1
+$out = '\\VBOXSVR\VBOX\bridge\out\w18\f0'; New-Item -ItemType Directory -Force $out | Out-Null
+$csv = '\\VBOXSVR\VBOX\bridge\data\w18\manhole_loads.csv'
 $src = 'C:\IbriWork\W17\IBRI_W17_R8.stsw'; $dst = 'C:\IbriWork\W18\IBRI_W18_R0.stsw'
 New-Item -ItemType Directory -Force 'C:\IbriWork\W18' | Out-Null
 Get-ChildItem 'C:\IbriWork\W18' -Filter 'IBRI_W18_R0*' | Remove-Item -Force
 $log = New-Object IO.StringWriter
 $ANALYSIS = 279786; $LOADS2070 = 14; $BASE2070 = 279744; $UNIT = 279741
 $years = 2026, 2031, 2036, 2041, 2046, 2051, 2056, 2061, 2066, 2071
-function Flush { [IO.File]::WriteAllText("$out\log_064.txt", $log.ToString()) }
+function Flush { [IO.File]::WriteAllText("$out\log_065.txt", $log.ToString()) }
 [void][OpenFlows.StormSewer.OpenFlowsStormSewer]::StartSession([OpenFlows.StormSewer.StormSewerProductLicenseType]::SewerGEMS)
 try {
   $m = [OpenFlows.StormSewer.OpenFlowsStormSewer]::Open($src)
