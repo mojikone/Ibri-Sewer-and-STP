@@ -19,6 +19,12 @@
 
 `plot_loads.csv` (per plot, every five years 2026–2071), `manhole_loads.csv` (per manhole id), `settlement_flows.csv`, `check.md`. Plot flow before infiltration: 2031 22,768 · 2056 38,704 · 2061 42,963 · 2066 46,207 · 2071 48,542 m³/d. The team's scenario sheet less its 1,099 m³/d of infiltration is matched to 0.0 in 2031, 2056 and 2061; 2066 and 2071 are 1,484 and 4,398 m³/d lower because Ibri is capped.
 
+## Earlier rules kept (checked 2026-11-16 at the engineer's request)
+
+- **W14 rule 4: the industrial estates are additive.** 6,300 workers × 93 L/d × 0.54 = **316.4 m³/d**, on their plots, outside the per-capita volume (doctrine 1b). The plot flow is the team's sheet plus 316.4.
+- **W14 rules 9d and 9e: growth lands only on W14's spread set.** That is empty plots up to 2,000 m², with no groves, industrial, heritage or estate plots (`SPREAD_W > 0`). There are 48,813 such plots inside the boundaries (Ibri 12,838), shared equally per plot (8 Nov). W14 weighted by area capped at 1,000 m².
+- **The inactive network (R7 §6.2.5):** branches in planted areas, where ground levels are unreliable until the survey, and three small outlying catchments proposed for on-site treatment (absorption wells).
+
 ## Flow that does not enter the network (engineer, 2026-11-16)
 
 These plots are not carried, and their flow stays in the settlement totals:
@@ -28,10 +34,10 @@ These plots are not carried, and their flow stays in the settlement totals:
 
 | m³/d | 2031 | 2056 | 2071 |
 |---|---|---|---|
-| Inactive network | 557 | 937 | 1,090 |
-| Farther than 200 m | 185 | 627 | 995 |
-| Not carried | 742 | 1,564 | 2,085 |
-| Carried (before infiltration) | 22,026 | 37,140 | 46,457 |
+| Inactive network | 543 | 832 | 947 |
+| Farther than 200 m | 183 | 549 | 858 |
+| Not carried | 725 | 1,381 | 1,805 |
+| Carried (before infiltration) | 22,359 | 37,639 | 47,054 |
 
 **These values go into the report, with a map of the plots in the two categories.**
 - Layer: `gis/not_carried_plots.gpkg`.

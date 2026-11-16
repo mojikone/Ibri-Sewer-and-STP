@@ -12,8 +12,8 @@ HERE = os.path.dirname(os.path.abspath(__file__)); W18 = os.path.dirname(HERE)
 PLOTS = r"C:\Users\mojtaba\Desktop\Win10 shared folder\IBRI Sewer\14 IBRI_W17\SHP\Plots\Plots.shp"
 SETTLE = os.path.join(W18, "..", "W14", "shp", "Settlements_merged.shp")
 os.makedirs(os.path.join(W18, "gis"), exist_ok=True); os.makedirs(os.path.join(W18, "img"), exist_ok=True)
-CAT = {"inactive manhole": "Inactive network (bad terrain)", "over 200 m from a sewer": "Farther than 200 m from the network"}
-COL = {"Inactive network (bad terrain)": "#8e44ad", "Farther than 200 m from the network": "#d62728"}
+CAT = {"inactive manhole": "Inactive network (planted areas, outlying catchments)", "over 200 m from a sewer": "Farther than 200 m from the network"}
+COL = {"Inactive network (planted areas, outlying catchments)": "#8e44ad", "Farther than 200 m from the network": "#d62728"}
 
 g = pyogrio.read_dataframe(PLOTS, columns=["SETTLE", "STATUS"])
 t = pd.read_csv(os.path.join(W18, "results", "loads", "plot_loads.csv"))
@@ -46,10 +46,10 @@ ax.set_aspect("equal"); ax.set_axis_off()
 xmin, ymin, xmax, ymax = g.total_bounds; ax.set_xlim(xmin - 500, xmax + 500); ax.set_ylim(ymin - 500, ymax + 500)
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
-ax.legend(handles=[Patch(color=COL["Inactive network (bad terrain)"], label="Plot on the inactive network (bad terrain)"),
+ax.legend(handles=[Patch(color=COL["Inactive network (planted areas, outlying catchments)"], label="Plot on the inactive network (planted areas awaiting the survey; outlying catchments, on-site)"),
                    Patch(color=COL["Farther than 200 m from the network"], label="Plot farther than 200 m from the network"),
                    Patch(color="#c8c8c8", label="Plot served by the network"),
-                   Patch(facecolor="#f2f2f2", edgecolor="#d9d9d9", label="Plot with no sewage flow (non-residential vacant, or outside its settlement boundary)"),
+                   Patch(facecolor="#f2f2f2", edgecolor="#d9d9d9", label="Plot with no sewage flow (outside its settlement boundary, grove, estate, heritage, over 2,000 m2, or not yet built on)"),
                    Line2D([], [], color="#1f4e79", lw=1, label="Sewer network"),
                    Line2D([], [], color="#b07cc6", lw=1, ls=":", label="Inactive network")],
           loc="upper left", frameon=True, fontsize=10)

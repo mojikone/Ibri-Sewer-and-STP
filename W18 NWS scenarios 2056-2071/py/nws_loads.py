@@ -54,28 +54,40 @@ cent = geo.geometry.centroid.values
 poly = dict(zip(sb.S, sb.geometry.values))
 p["INSIDE"] = [bool(shapely.contains(poly[s], c)) for s, c in zip(p.S, cent)]
 
+# Earlier decisions kept (W14 rules, W14/docs/W14_LOAD_AND_GROWTH.md; checked 2026-11-16 at the engineer's request):
+#  rule 4  - the two industrial estates (4,500 + 1,800 workers x 93 L/d, S_SPEC, 316.4 m3/d) are ADDITIVE, outside the
+#            per-capita volume (doctrine 1b): taken out of the existing pattern and added on their plots every year;
+#  rule 9d - growth lands only on W14's spread set: empty plots up to 2,000 m2, not grove, industrial, heritage or
+#            estate (SPREAD_W > 0); 9e heritage takes nothing. The weighting is now equal per plot (8 Nov, NWS), no
+#            longer W14's area capped at 1,000 m2.
+w14 = pyogrio.read_dataframe(os.path.join(W18, "..", "W14", "shp", "PLOTS_load.shp"), columns=["AREA_M2", "SPREAD_W", "S_SPEC"], read_geometry=False)
+assert len(w14) == len(p) and np.allclose(w14.AREA_M2.values, pyogrio.read_dataframe(PLOTS, columns=["AREA_M2"], read_geometry=False).AREA_M2.values, atol=0.01)
+p["SPEC"] = w14.S_SPEC.values
+p["SPREAD"] = w14.SPREAD_W.values > 0
+
 rows, out = [], {f"Q_{y}": np.zeros(len(p)) for y in YEARS}
 for s in sorted(pop):
     assert pop[s][BASE] < cap[s], f"{s} already over capacity in {BASE}"
     m = ((p.S == s) & p.INSIDE).values
-    base_w = p.Q_2024.values * m
-    tgt = m & (p.STATUS == "Future").values & p.CADASTRE.isin(TARGET_USES).values
+    base_w = (p.Q_2024.values - p.SPEC.values) * m
+    tgt = m & (p.STATUS == "Future").values & p.SPREAD.values
     n_t = int(tgt.sum())
+    spec = p.SPEC.values * m
     f_base = pop[s][BASE] * rate
     for y in YEARS:
         P = min(pop[s][y], cap[s]); F = P * rate; G = F - f_base
         q = base_w / base_w.sum() * f_base
         if n_t: q = q + tgt * (G / n_t)
-        else:   q = base_w / base_w.sum() * F                       # no future home plot: existing plots take the growth
-        out[f"Q_{y}"] += q
+        else:   q = base_w / base_w.sum() * F                       # no future plot to spread on: existing plots take the growth
+        out[f"Q_{y}"] += q + spec
         rows.append(dict(settlement=s, year=y, pop_team=pop[s][y], capacity=cap[s], pop_used=P,
-                         capped=pop[s][y] > cap[s], flow_m3d=F, future_home_plots=n_t,
+                         capped=pop[s][y] > cap[s], flow_m3d=F, special_m3d=spec.sum(), future_spread_plots=n_t,
                          plots_outside_boundary=int(((p.S == s) & ~p.INSIDE).sum())))
 sf = pd.DataFrame(rows)
 for y in YEARS:
     p[f"Q_{y}"] = out[f"Q_{y}"]
     got = p.groupby("S")[f"Q_{y}"].sum()
-    want = sf[sf.year == y].set_index("settlement").flow_m3d
+    want = sf[sf.year == y].set_index("settlement").eval("flow_m3d + special_m3d")
     assert (got - want).abs().max() < 1e-6, y
 
 # the team's scenario sheet carries infiltration per settlement; take it off to compare
