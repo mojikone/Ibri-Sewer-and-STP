@@ -1,0 +1,44 @@
+﻿plots 77265; nearest-manhole distance median 40 m, 95% 1381 m, max 9215 m
+plots whose nearest manhole is inactive (absorption-well areas): 1189
+2030: plots   24216.3  model   21788.6  diff  -2427.7 m3/d | manholes matching within 1%: 13439/16726 | flow of plots >300 m from any manhole:   212.7
+     largest shortfalls (model - nearest-plot sum): O24-M202 -82.9, O1-M1687 -34.6, O2-M869 -15.2, O7-M311 -15.0, O19-M10 -14.8
+2040: plots   30938.4  model   28160.5  diff  -2778.0 m3/d | manholes matching within 1%: 13237/16726 | flow of plots >300 m from any manhole:   395.8
+     largest shortfalls (model - nearest-plot sum): O24-M202 -82.9, O1-M1687 -34.6, O3-M3055 -17.8, O7-M311 -15.9, O2-M869 -15.2
+2050: plots   37814.5  model   34675.0  diff  -3139.5 m3/d | manholes matching within 1%: 13172/16726 | flow of plots >300 m from any manhole:   583.1
+     largest shortfalls (model - nearest-plot sum): O24-M202 -82.9, O1-M1687 -34.6, O3-M3055 -29.9, O9-M2270 -18.8, O7-M311 -16.9
+2055: plots   42265.8  model   38904.0  diff  -3361.8 m3/d | manholes matching within 1%: 13133/16726 | flow of plots >300 m from any manhole:   732.3
+     largest shortfalls (model - nearest-plot sum): O24-M202 -82.9, O3-M3055 -37.7, O1-M1687 -34.6, O9-M2270 -23.7, O15-M106 -19.6
+2060: plots   47523.1  model   44034.3  diff  -3488.8 m3/d | manholes matching within 1%: 13095/16726 | flow of plots >300 m from any manhole:  2078.1
+     largest shortfalls (model - nearest-plot sum): O24-M202 -82.9, O3-M3055 -40.0, O1-M1687 -34.6, O9-M2270 -26.5, O15-M106 -20.5
+2070: plots   60098.8  model   60355.1  diff    256.3 m3/d | manholes matching within 1%: 14493/16789 | flow of plots >300 m from any manhole:  3834.4
+     largest shortfalls (model - nearest-plot sum): O24-M202 -82.9, O1-M1687 -34.6, O3-M458 -9.5, O21-M1011 -9.2, O3-M1189 -8.8
+
+model - plots by subnetwork, m3/d (2070 shows the assignment noise)
+sub           2030     2040     2050     2055     2060     2070
+O3          -828.0   -882.0   -937.2   -973.0   -992.9     11.4
+O15          -62.8   -188.3   -316.7   -400.4   -419.0      0.1
+O4          -263.5   -278.9   -294.6   -304.7   -317.1     30.0
+O2          -256.8   -273.0   -289.6   -300.5   -302.8      4.2
+O1          -222.6   -246.4   -270.8   -286.7   -291.0     10.6
+O6          -222.8   -232.7   -242.7   -249.3   -257.2     -0.3
+O7          -127.7   -144.7   -162.1   -165.1   -166.1      0.3
+O21          -58.9    -89.1   -123.3   -140.8   -162.3     12.8
+inactive     -86.1    -97.2   -108.5   -116.0   -117.7      3.5
+O9           -57.6    -70.8    -84.3    -93.0   -105.1     20.4
+O12          -52.9    -68.0    -83.3    -93.3   -105.0    162.3
+O19          -75.6    -78.5    -81.5    -83.4    -85.7      0.7
+O16          -18.1    -20.7    -23.4    -25.2    -27.2     -0.8
+O14          -24.8    -25.1    -25.4    -25.6    -25.9     -0.0
+O11          -16.8    -19.2    -21.6    -23.2    -25.1     -0.0
+O8           -14.7    -17.3    -19.9    -21.6    -23.6      1.1
+O5           -12.0    -14.3    -16.6    -18.0    -18.8     -8.1
+O23           -8.9    -11.6    -14.5    -16.3    -18.5      2.0
+O17           -4.2     -5.2     -6.3     -7.0     -7.9     -0.0
+O10           -6.5     -6.6     -6.8     -6.9     -7.0      1.8
+O20           -5.1     -5.2     -5.3     -5.4     -5.5      1.3
+O18           -1.1     -1.7     -2.4     -2.8     -3.3     -0.1
+O22           -1.8     -2.2     -2.5     -2.7     -2.9      0.0
+O13           -0.2     -0.7     -1.1     -1.4     -1.8      2.2
+O24            1.9      1.4      1.0      0.7      0.6      1.0
+
+share of each settlement's plots that sit near loaded manholes is not testable here; settlement totals of plots:

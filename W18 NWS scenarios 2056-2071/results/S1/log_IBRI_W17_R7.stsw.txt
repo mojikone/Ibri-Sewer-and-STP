@@ -1,0 +1,59 @@
+  exported 'base2070_inputs'
+  catalogue 'Circle - Concrete': Manning n = 0.013 on 26 sizes
+== sanitary children with the transfers
+  SanitaryLoading child 'S1-2030' = 279794 under 279769
+  SanitaryLoading child 'S1-2040' = 279795 under 279770
+  SanitaryLoading child 'S1-2050' = 279796 under 279771
+  SanitaryLoading child 'S1-2055' = 279797 under 279772
+  SanitaryLoading child 'S1-2060' = 279798 under 279773
+  SanitaryLoading child 'S1-2070' = 279799 under 14
+  120 transfer rows written
+== scenarios
+  scenario 'S1-2070' = 279800 (parent 279744); Physical=279787 local, SanitaryLoading=279799 local; calc 279786 (local True)
+== flow check (2070 as analysis on the modeller's pipes)
+  'S1-2070' run raised EngineWarningsException: GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x11787; STMDisChargeAboveDesignCapacity x2599; STMConduitNotMeetMaxCover x253; STMConduitNotMeetMaxVelocity x189
+  'S1-2070' ran in 31 s, results: True
+  exported 'check2070'
+  scenario 'S1-2070' = 279800 (parent 279744); Physical=279787 local, SanitaryLoading=279799 local; calc 31 (local True)
+  scenario 'S1-2070A' = 279801 (parent 279800); ; calc 279786 (local True)
+  scenario 'S1-2030' = 279802 (parent 279800); SanitaryLoading=279794 local; calc 279786 (local True)
+  scenario 'S1-2040' = 279803 (parent 279800); SanitaryLoading=279795 local; calc 279786 (local True)
+  scenario 'S1-2050' = 279804 (parent 279800); SanitaryLoading=279796 local; calc 279786 (local True)
+  scenario 'S1-2055' = 279805 (parent 279800); SanitaryLoading=279797 local; calc 279786 (local True)
+  scenario 'S1-2060' = 279806 (parent 279800); SanitaryLoading=279798 local; calc 279786 (local True)
+== design 2070 until no size changes
+  'S1-2070' run raised EngineWarningsException: GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x11787; STMDisChargeAboveDesignCapacity x1432; STMConduitNotMeetMaxCover x255
+  'S1-2070' ran in 54 s, results: True
+  design pass 1: 2627 pipe sizes changed
+  'S1-2070' run raised EngineWarningsException: GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x11787; STMDisChargeAboveDesignCapacity x203; STMConduitNotMeetMaxCover x43
+  'S1-2070' ran in 27 s, results: True
+  design pass 2: 1538 pipe sizes changed
+  'S1-2070' run raised EngineWarningsException: GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x11787; STMConduitNotMeetMaxCover x42
+  'S1-2070' ran in 20 s, results: True
+  design pass 3: 210 pipe sizes changed
+  'S1-2070' run raised EngineWarningsException: GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x11787; STMConduitNotMeetMaxCover x42
+  'S1-2070' ran in 27 s, results: True
+  design pass 4: 0 pipe sizes changed
+  exported 'S1-2070'
+== 2070 analysis check and the analysis years
+  'S1-2070A' run raised EngineWarningsException: GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x11787; STMConduitNotMeetMaxCover x42
+  'S1-2070A' ran in 30 s, results: True
+  exported 'S1-2070a'
+  'S1-2030' run raised EngineWarningsException: GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x15073; STMConduitNotMeetMaxCover x42
+  'S1-2030' ran in 34 s, results: True
+  exported 'S1-2030'
+  'S1-2040' run raised EngineWarningsException: GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x14322; STMConduitNotMeetMaxCover x42
+  'S1-2040' ran in 34 s, results: True
+  exported 'S1-2040'
+  'S1-2050' run raised EngineWarningsException: GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x13709; STMConduitNotMeetMaxCover x42
+  'S1-2050' ran in 40 s, results: True
+  exported 'S1-2050'
+  'S1-2055' run raised EngineWarningsException: GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x13366; STMConduitNotMeetMaxCover x42
+  'S1-2055' ran in 29 s, results: True
+  exported 'S1-2055'
+  'S1-2060' run raised EngineWarningsException: GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x12856; STMConduitNotMeetMaxCover x42
+  'S1-2060' ran in 20 s, results: True
+  exported 'S1-2060'
+  pipe sizes unchanged by the analysis runs
+  saved C:\IbriWork\W17\IBRI_W17_R7.stsw
+  delivered to \\VBOXSVR\Win10_shared_folder\IBRI Sewer\14 IBRI_W17

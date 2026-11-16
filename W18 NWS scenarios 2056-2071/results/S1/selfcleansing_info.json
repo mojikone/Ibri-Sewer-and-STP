@@ -1,0 +1,42 @@
+{
+ "pipes": 19083,
+ "km": 1498.3,
+ "head_pipes": 3612,
+ "groups": {
+  "2030 head pipes": {
+   "pipes": 3612,
+   "median_flow_ls": 0.039,
+   "median_slope_pc": 34.71,
+   "within_4pc": 21,
+   "median_tractive_pc": 2.46,
+   "tractive_over_4pc": 1272
+  },
+  "2030 all pipes below 0.75 m/s": {
+   "pipes": 18928,
+   "median_flow_ls": 0.287,
+   "median_slope_pc": 6.92,
+   "within_4pc": 5407,
+   "median_tractive_pc": 0.98,
+   "tractive_over_4pc": 2309
+  },
+  "2070 head pipes": {
+   "pipes": 3612,
+   "median_flow_ls": 0.159,
+   "median_slope_pc": 19.24,
+   "within_4pc": 38,
+   "median_tractive_pc": 1.28,
+   "tractive_over_4pc": 372
+  },
+  "2070 all pipes below 0.75 m/s": {
+   "pipes": 17985,
+   "median_flow_ls": 0.718,
+   "median_slope_pc": 4.69,
+   "within_4pc": 7724,
+   "median_tractive_pc": 0.64,
+   "tractive_over_4pc": 589
+  }
+ },
+ "dn200_q_for_075_at_4pc_ls": 0.93,
+ "dn200_q_for_075_at_1pc_ls": 4.55,
+ "q_tractive_4pc_ls": 0.0135
+}

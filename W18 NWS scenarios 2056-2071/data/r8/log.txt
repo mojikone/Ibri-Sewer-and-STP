@@ -1,0 +1,14 @@
+== before: 2030 analysis on the modeller's pipes (Manning)
+  '2030' run raised EngineWarningsException: GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x15064; STMDisChargeAboveDesignCapacity x494; STMConduitNotMeetMaxCover x253
+  '2030' ran in 22 s, results: True
+  exported 'manning_2030'
+== Colebrook-White, ks 1.5 mm, nu 1.141e-6 m2/s
+  calc options 31: gravity friction 2, factor method 1, viscosity 1.2282E-005 ft2/s (1.1410E-006 m2/s)
+  calc options 279786: gravity friction 2, factor method 1, viscosity 1.2282E-005 ft2/s (1.1410E-006 m2/s)
+  physical 6: Darcy-Weisbach e = 1.5 mm on 19286 conduits (19286 read back)
+  catalogue 'Circle - Concrete': Darcy-Weisbach e = 1.5 mm on 26 sizes (Manning's n left at its value)
+== after: the same 2030 analysis
+  '2030' run raised EngineWarningsException: GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x15023; STMDisChargeAboveDesignCapacity x487; STMConduitNotMeetMaxCover x253
+  '2030' ran in 173 s, results: True
+  exported 'colebrook_2030'
+  saved C:\IbriWork\W17\IBRI_W17_R8.stsw

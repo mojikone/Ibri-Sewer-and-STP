@@ -1,0 +1,3514 @@
+[
+ {
+  "option": "S1",
+  "title": "centralised STP at O-1",
+  "width": 2180,
+  "body": 808.0,
+  "height": 918.0,
+  "nodes": [
+   {
+    "id": "O7",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 40,
+    "y": 40.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O7"
+    ]
+   },
+   {
+    "id": "O6",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 300,
+    "y": 40.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O6"
+    ]
+   },
+   {
+    "id": "O8",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 300,
+    "y": 102.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O8"
+    ]
+   },
+   {
+    "id": "O5",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 560,
+    "y": 71.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O5"
+    ]
+   },
+   {
+    "id": "O4",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 71.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O4"
+    ]
+   },
+   {
+    "id": "O3",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 71.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O3"
+    ]
+   },
+   {
+    "id": "O2",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1340,
+    "y": 71.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O2"
+    ]
+   },
+   {
+    "id": "O13",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 300,
+    "y": 164.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O13"
+    ]
+   },
+   {
+    "id": "O12",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 560,
+    "y": 164.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O12"
+    ]
+   },
+   {
+    "id": "O11",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 164.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O11"
+    ]
+   },
+   {
+    "id": "O10",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 164.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O10"
+    ]
+   },
+   {
+    "id": "O14",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 226.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O14"
+    ]
+   },
+   {
+    "id": "O9",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1340,
+    "y": 195.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O9"
+    ]
+   },
+   {
+    "id": "O22",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 288.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O22"
+    ]
+   },
+   {
+    "id": "O23",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 350.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O23"
+    ]
+   },
+   {
+    "id": "O21",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1340,
+    "y": 319.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O21"
+    ]
+   },
+   {
+    "id": "O24",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1340,
+    "y": 412.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O24"
+    ]
+   },
+   {
+    "id": "O15",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1340,
+    "y": 474.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O15"
+    ]
+   },
+   {
+    "id": "O1",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1600,
+    "y": 294.2,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O1"
+    ]
+   },
+   {
+    "id": "O19",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1340,
+    "y": 536.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O19"
+    ]
+   },
+   {
+    "id": "O20",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1340,
+    "y": 598.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O20"
+    ]
+   },
+   {
+    "id": "O16",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1600,
+    "y": 567.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O16"
+    ]
+   },
+   {
+    "id": "O17",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1600,
+    "y": 660.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O17"
+    ]
+   },
+   {
+    "id": "O18",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1600,
+    "y": 722.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O18"
+    ]
+   },
+   {
+    "id": "P:O1",
+    "kind": "plant",
+    "zone": "O1",
+    "x": 1860,
+    "y": 525.8000000000001,
+    "w": 280,
+    "h": 120,
+    "lines": [
+     "STP O1",
+     "2030 → 2070",
+     "average 24,756 → 60,456 m³/d",
+     "peak 674 → 1,535 L/s",
+     "sewer arrives 10.3 m deep"
+    ]
+   }
+  ],
+  "edges": [
+   {
+    "src": "O7",
+    "dst": "O6",
+    "kind": "pumped",
+    "label": "47 L/s"
+   },
+   {
+    "src": "O6",
+    "dst": "O5",
+    "kind": "pumped",
+    "label": "71 L/s"
+   },
+   {
+    "src": "O8",
+    "dst": "O5",
+    "kind": "pumped",
+    "label": "20 L/s"
+   },
+   {
+    "src": "O5",
+    "dst": "O4",
+    "kind": "pumped",
+    "label": "122 L/s"
+   },
+   {
+    "src": "O4",
+    "dst": "O3",
+    "kind": "pumped",
+    "label": "222 L/s"
+   },
+   {
+    "src": "O3",
+    "dst": "O2",
+    "kind": "pumped",
+    "label": "486 L/s"
+   },
+   {
+    "src": "O2",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "636 L/s"
+   },
+   {
+    "src": "O23",
+    "dst": "O21",
+    "kind": "pumped",
+    "label": "5 L/s"
+   },
+   {
+    "src": "O22",
+    "dst": "O21",
+    "kind": "pumped",
+    "label": "11 L/s"
+   },
+   {
+    "src": "O21",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "121 L/s"
+   },
+   {
+    "src": "O24",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "55 L/s"
+   },
+   {
+    "src": "O13",
+    "dst": "O12",
+    "kind": "pumped",
+    "label": "2 L/s"
+   },
+   {
+    "src": "O12",
+    "dst": "O11",
+    "kind": "pumped",
+    "label": "42 L/s"
+   },
+   {
+    "src": "O11",
+    "dst": "O10",
+    "kind": "pumped",
+    "label": "64 L/s"
+   },
+   {
+    "src": "O10",
+    "dst": "O9",
+    "kind": "pumped",
+    "label": "100 L/s"
+   },
+   {
+    "src": "O14",
+    "dst": "O9",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O9",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "382 L/s"
+   },
+   {
+    "src": "O15",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "35 L/s"
+   },
+   {
+    "src": "O20",
+    "dst": "O16",
+    "kind": "pumped",
+    "label": "11 L/s"
+   },
+   {
+    "src": "O19",
+    "dst": "O16",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O16",
+    "dst": "P:O1",
+    "kind": "pumped",
+    "label": "58 L/s"
+   },
+   {
+    "src": "O17",
+    "dst": "P:O1",
+    "kind": "pumped",
+    "label": "15 L/s"
+   },
+   {
+    "src": "O18",
+    "dst": "P:O1",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O1",
+    "dst": "P:O1",
+    "kind": "gravity",
+    "label": "gravity"
+   }
+  ],
+  "font": {
+   "name": 20,
+   "old": 16,
+   "edge": 17,
+   "plant_title": 19,
+   "plant": 16,
+   "legend": 16
+  },
+  "box": {
+   "w": 128,
+   "h": 50,
+   "col": 260
+  }
+ },
+ {
+  "option": "S2",
+  "title": "centralised STP at O-8",
+  "width": 2440,
+  "body": 808.0,
+  "height": 918.0,
+  "nodes": [
+   {
+    "id": "O7",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 40,
+    "y": 40.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O7"
+    ]
+   },
+   {
+    "id": "O6",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 300,
+    "y": 40.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O6"
+    ]
+   },
+   {
+    "id": "O8",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 300,
+    "y": 102.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O8"
+    ]
+   },
+   {
+    "id": "O5",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 560,
+    "y": 71.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O5"
+    ]
+   },
+   {
+    "id": "O4",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 820,
+    "y": 71.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O4"
+    ]
+   },
+   {
+    "id": "O3",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1080,
+    "y": 71.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O3"
+    ]
+   },
+   {
+    "id": "O2",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1340,
+    "y": 71.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O2"
+    ]
+   },
+   {
+    "id": "O13",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 300,
+    "y": 164.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O13"
+    ]
+   },
+   {
+    "id": "O12",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 560,
+    "y": 164.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O12"
+    ]
+   },
+   {
+    "id": "O11",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 820,
+    "y": 164.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O11"
+    ]
+   },
+   {
+    "id": "O10",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1080,
+    "y": 164.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O10"
+    ]
+   },
+   {
+    "id": "O14",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1080,
+    "y": 226.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O14"
+    ]
+   },
+   {
+    "id": "O9",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1340,
+    "y": 195.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O9"
+    ]
+   },
+   {
+    "id": "O22",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1080,
+    "y": 288.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O22"
+    ]
+   },
+   {
+    "id": "O23",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1080,
+    "y": 350.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O23"
+    ]
+   },
+   {
+    "id": "O21",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1340,
+    "y": 319.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O21"
+    ]
+   },
+   {
+    "id": "O24",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1340,
+    "y": 412.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O24"
+    ]
+   },
+   {
+    "id": "O15",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1340,
+    "y": 474.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O15"
+    ]
+   },
+   {
+    "id": "O1",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1600,
+    "y": 294.2,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O1"
+    ]
+   },
+   {
+    "id": "O19",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1600,
+    "y": 536.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O19"
+    ]
+   },
+   {
+    "id": "O20",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1600,
+    "y": 598.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O20"
+    ]
+   },
+   {
+    "id": "O16",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1860,
+    "y": 476.0666666666667,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O16"
+    ]
+   },
+   {
+    "id": "O17",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1860,
+    "y": 660.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O17"
+    ]
+   },
+   {
+    "id": "O18",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1860,
+    "y": 722.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O18"
+    ]
+   },
+   {
+    "id": "P:O16",
+    "kind": "plant",
+    "zone": "O16",
+    "x": 2120,
+    "y": 584.3555555555556,
+    "w": 280,
+    "h": 120,
+    "lines": [
+     "STP O16",
+     "2030 → 2070",
+     "average 24,756 → 60,456 m³/d",
+     "peak 674 → 1,535 L/s",
+     "sewer arrives 5.9 m deep"
+    ]
+   }
+  ],
+  "edges": [
+   {
+    "src": "O7",
+    "dst": "O6",
+    "kind": "pumped",
+    "label": "47 L/s"
+   },
+   {
+    "src": "O6",
+    "dst": "O5",
+    "kind": "pumped",
+    "label": "71 L/s"
+   },
+   {
+    "src": "O8",
+    "dst": "O5",
+    "kind": "pumped",
+    "label": "20 L/s"
+   },
+   {
+    "src": "O5",
+    "dst": "O4",
+    "kind": "pumped",
+    "label": "122 L/s"
+   },
+   {
+    "src": "O4",
+    "dst": "O3",
+    "kind": "pumped",
+    "label": "222 L/s"
+   },
+   {
+    "src": "O3",
+    "dst": "O2",
+    "kind": "pumped",
+    "label": "486 L/s"
+   },
+   {
+    "src": "O2",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "636 L/s"
+   },
+   {
+    "src": "O23",
+    "dst": "O21",
+    "kind": "pumped",
+    "label": "5 L/s"
+   },
+   {
+    "src": "O22",
+    "dst": "O21",
+    "kind": "pumped",
+    "label": "11 L/s"
+   },
+   {
+    "src": "O21",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "121 L/s"
+   },
+   {
+    "src": "O24",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "55 L/s"
+   },
+   {
+    "src": "O13",
+    "dst": "O12",
+    "kind": "pumped",
+    "label": "2 L/s"
+   },
+   {
+    "src": "O12",
+    "dst": "O11",
+    "kind": "pumped",
+    "label": "42 L/s"
+   },
+   {
+    "src": "O11",
+    "dst": "O10",
+    "kind": "pumped",
+    "label": "64 L/s"
+   },
+   {
+    "src": "O10",
+    "dst": "O9",
+    "kind": "pumped",
+    "label": "100 L/s"
+   },
+   {
+    "src": "O14",
+    "dst": "O9",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O9",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "382 L/s"
+   },
+   {
+    "src": "O15",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "35 L/s"
+   },
+   {
+    "src": "O20",
+    "dst": "O16",
+    "kind": "pumped",
+    "label": "11 L/s"
+   },
+   {
+    "src": "O19",
+    "dst": "O16",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O1",
+    "dst": "O16",
+    "kind": "pumped",
+    "label": "1,451 L/s"
+   },
+   {
+    "src": "O17",
+    "dst": "P:O16",
+    "kind": "pumped",
+    "label": "15 L/s"
+   },
+   {
+    "src": "O18",
+    "dst": "P:O16",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O16",
+    "dst": "P:O16",
+    "kind": "gravity",
+    "label": "gravity"
+   }
+  ],
+  "font": {
+   "name": 20,
+   "old": 16,
+   "edge": 17,
+   "plant_title": 19,
+   "plant": 16,
+   "legend": 16
+  },
+  "box": {
+   "w": 128,
+   "h": 50,
+   "col": 260
+  }
+ },
+ {
+  "option": "S3",
+  "title": "two STPs at O-1 and O-7",
+  "width": 1920,
+  "body": 914.0,
+  "height": 1024.0,
+  "nodes": [
+   {
+    "id": "O3",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 40.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O3"
+    ]
+   },
+   {
+    "id": "O2",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 40.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O2"
+    ]
+   },
+   {
+    "id": "O13",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 40,
+    "y": 102.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O13"
+    ]
+   },
+   {
+    "id": "O12",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 300,
+    "y": 102.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O12"
+    ]
+   },
+   {
+    "id": "O11",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 560,
+    "y": 102.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O11"
+    ]
+   },
+   {
+    "id": "O10",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 102.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O10"
+    ]
+   },
+   {
+    "id": "O14",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 164.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O14"
+    ]
+   },
+   {
+    "id": "O9",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 133.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O9"
+    ]
+   },
+   {
+    "id": "O22",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 226.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O22"
+    ]
+   },
+   {
+    "id": "O23",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 288.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O23"
+    ]
+   },
+   {
+    "id": "O21",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 257.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O21"
+    ]
+   },
+   {
+    "id": "O24",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 350.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O24"
+    ]
+   },
+   {
+    "id": "O15",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 412.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O15"
+    ]
+   },
+   {
+    "id": "O1",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1340,
+    "y": 238.4,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O1"
+    ]
+   },
+   {
+    "id": "O19",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 474.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O19"
+    ]
+   },
+   {
+    "id": "O20",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 536.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O20"
+    ]
+   },
+   {
+    "id": "O16",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1340,
+    "y": 505.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O16"
+    ]
+   },
+   {
+    "id": "O17",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1340,
+    "y": 598.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O17"
+    ]
+   },
+   {
+    "id": "O18",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1340,
+    "y": 660.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O18"
+    ]
+   },
+   {
+    "id": "P:O1",
+    "kind": "plant",
+    "zone": "O1",
+    "x": 1600,
+    "y": 465.34999999999997,
+    "w": 280,
+    "h": 120,
+    "lines": [
+     "STP O1",
+     "2030 → 2070",
+     "average 21,185 → 52,521 m³/d",
+     "peak 568 → 1,313 L/s",
+     "sewer arrives 10.1 m deep"
+    ]
+   },
+   {
+    "id": "O7",
+    "kind": "sub",
+    "zone": "O4",
+    "x": 560,
+    "y": 762.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O7"
+    ]
+   },
+   {
+    "id": "O6",
+    "kind": "sub",
+    "zone": "O4",
+    "x": 820,
+    "y": 762.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O6"
+    ]
+   },
+   {
+    "id": "O8",
+    "kind": "sub",
+    "zone": "O4",
+    "x": 820,
+    "y": 824.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O8"
+    ]
+   },
+   {
+    "id": "O5",
+    "kind": "sub",
+    "zone": "O4",
+    "x": 1080,
+    "y": 793.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O5"
+    ]
+   },
+   {
+    "id": "O4",
+    "kind": "sub",
+    "zone": "O4",
+    "x": 1340,
+    "y": 793.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O4"
+    ]
+   },
+   {
+    "id": "P:O4",
+    "kind": "plant",
+    "zone": "O4",
+    "x": 1600,
+    "y": 758.0,
+    "w": 280,
+    "h": 120,
+    "lines": [
+     "STP O4",
+     "2030 → 2070",
+     "average 3,571 → 7,935 m³/d",
+     "peak 106 → 222 L/s",
+     "sewer arrives 6.9 m deep"
+    ]
+   }
+  ],
+  "edges": [
+   {
+    "src": "O7",
+    "dst": "O6",
+    "kind": "pumped",
+    "label": "47 L/s"
+   },
+   {
+    "src": "O6",
+    "dst": "O5",
+    "kind": "pumped",
+    "label": "71 L/s"
+   },
+   {
+    "src": "O8",
+    "dst": "O5",
+    "kind": "pumped",
+    "label": "20 L/s"
+   },
+   {
+    "src": "O5",
+    "dst": "O4",
+    "kind": "pumped",
+    "label": "122 L/s"
+   },
+   {
+    "src": "O3",
+    "dst": "O2",
+    "kind": "pumped",
+    "label": "263 L/s"
+   },
+   {
+    "src": "O2",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "414 L/s"
+   },
+   {
+    "src": "O23",
+    "dst": "O21",
+    "kind": "pumped",
+    "label": "5 L/s"
+   },
+   {
+    "src": "O22",
+    "dst": "O21",
+    "kind": "pumped",
+    "label": "11 L/s"
+   },
+   {
+    "src": "O21",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "121 L/s"
+   },
+   {
+    "src": "O24",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "55 L/s"
+   },
+   {
+    "src": "O13",
+    "dst": "O12",
+    "kind": "pumped",
+    "label": "2 L/s"
+   },
+   {
+    "src": "O12",
+    "dst": "O11",
+    "kind": "pumped",
+    "label": "42 L/s"
+   },
+   {
+    "src": "O11",
+    "dst": "O10",
+    "kind": "pumped",
+    "label": "64 L/s"
+   },
+   {
+    "src": "O10",
+    "dst": "O9",
+    "kind": "pumped",
+    "label": "100 L/s"
+   },
+   {
+    "src": "O14",
+    "dst": "O9",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O9",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "382 L/s"
+   },
+   {
+    "src": "O15",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "35 L/s"
+   },
+   {
+    "src": "O20",
+    "dst": "O16",
+    "kind": "pumped",
+    "label": "11 L/s"
+   },
+   {
+    "src": "O19",
+    "dst": "O16",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O16",
+    "dst": "P:O1",
+    "kind": "pumped",
+    "label": "58 L/s"
+   },
+   {
+    "src": "O17",
+    "dst": "P:O1",
+    "kind": "pumped",
+    "label": "15 L/s"
+   },
+   {
+    "src": "O18",
+    "dst": "P:O1",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O4",
+    "dst": "P:O4",
+    "kind": "gravity",
+    "label": "gravity"
+   },
+   {
+    "src": "O1",
+    "dst": "P:O1",
+    "kind": "gravity",
+    "label": "gravity"
+   }
+  ],
+  "font": {
+   "name": 20,
+   "old": 16,
+   "edge": 17,
+   "plant_title": 19,
+   "plant": 16,
+   "legend": 16
+  },
+  "box": {
+   "w": 128,
+   "h": 50,
+   "col": 260
+  }
+ },
+ {
+  "option": "S4",
+  "title": "three STPs at O-1, O-3, O-7",
+  "width": 1660,
+  "body": 953.9999999999999,
+  "height": 1064.0,
+  "nodes": [
+   {
+    "id": "O3",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 560,
+    "y": 40.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O3"
+    ]
+   },
+   {
+    "id": "O2",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 40.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O2"
+    ]
+   },
+   {
+    "id": "O22",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 560,
+    "y": 102.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O22"
+    ]
+   },
+   {
+    "id": "O23",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 560,
+    "y": 164.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O23"
+    ]
+   },
+   {
+    "id": "O21",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 133.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O21"
+    ]
+   },
+   {
+    "id": "O24",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 226.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O24"
+    ]
+   },
+   {
+    "id": "O15",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 288.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O15"
+    ]
+   },
+   {
+    "id": "O1",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 171.75,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O1"
+    ]
+   },
+   {
+    "id": "O19",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 350.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O19"
+    ]
+   },
+   {
+    "id": "O20",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 412.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O20"
+    ]
+   },
+   {
+    "id": "O16",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 381.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O16"
+    ]
+   },
+   {
+    "id": "O17",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 474.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O17"
+    ]
+   },
+   {
+    "id": "O18",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 536.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O18"
+    ]
+   },
+   {
+    "id": "P:O1",
+    "kind": "plant",
+    "zone": "O1",
+    "x": 1340,
+    "y": 355.6875,
+    "w": 280,
+    "h": 120,
+    "lines": [
+     "STP O1",
+     "2030 → 2070",
+     "average 18,695 → 36,881 m³/d",
+     "peak 496 → 931 L/s",
+     "sewer arrives 10.0 m deep"
+    ]
+   },
+   {
+    "id": "O13",
+    "kind": "sub",
+    "zone": "O9",
+    "x": 40,
+    "y": 638.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O13"
+    ]
+   },
+   {
+    "id": "O12",
+    "kind": "sub",
+    "zone": "O9",
+    "x": 300,
+    "y": 638.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O12"
+    ]
+   },
+   {
+    "id": "O11",
+    "kind": "sub",
+    "zone": "O9",
+    "x": 560,
+    "y": 638.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O11"
+    ]
+   },
+   {
+    "id": "O10",
+    "kind": "sub",
+    "zone": "O9",
+    "x": 820,
+    "y": 638.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O10"
+    ]
+   },
+   {
+    "id": "O14",
+    "kind": "sub",
+    "zone": "O9",
+    "x": 820,
+    "y": 700.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O14"
+    ]
+   },
+   {
+    "id": "O9",
+    "kind": "sub",
+    "zone": "O9",
+    "x": 1080,
+    "y": 669.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O9"
+    ]
+   },
+   {
+    "id": "P:O9",
+    "kind": "plant",
+    "zone": "O9",
+    "x": 1340,
+    "y": 634.0,
+    "w": 280,
+    "h": 120,
+    "lines": [
+     "STP O9",
+     "2030 → 2070",
+     "average 2,490 → 15,640 m³/d",
+     "peak 71 → 382 L/s",
+     "sewer arrives 8.8 m deep"
+    ]
+   },
+   {
+    "id": "O7",
+    "kind": "sub",
+    "zone": "O4",
+    "x": 300,
+    "y": 801.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O7"
+    ]
+   },
+   {
+    "id": "O6",
+    "kind": "sub",
+    "zone": "O4",
+    "x": 560,
+    "y": 801.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O6"
+    ]
+   },
+   {
+    "id": "O8",
+    "kind": "sub",
+    "zone": "O4",
+    "x": 560,
+    "y": 863.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O8"
+    ]
+   },
+   {
+    "id": "O5",
+    "kind": "sub",
+    "zone": "O4",
+    "x": 820,
+    "y": 832.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O5"
+    ]
+   },
+   {
+    "id": "O4",
+    "kind": "sub",
+    "zone": "O4",
+    "x": 1080,
+    "y": 832.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O4"
+    ]
+   },
+   {
+    "id": "P:O4",
+    "kind": "plant",
+    "zone": "O4",
+    "x": 1340,
+    "y": 797.9999999999999,
+    "w": 280,
+    "h": 120,
+    "lines": [
+     "STP O4",
+     "2030 → 2070",
+     "average 3,571 → 7,935 m³/d",
+     "peak 106 → 222 L/s",
+     "sewer arrives 6.9 m deep"
+    ]
+   }
+  ],
+  "edges": [
+   {
+    "src": "O7",
+    "dst": "O6",
+    "kind": "pumped",
+    "label": "47 L/s"
+   },
+   {
+    "src": "O6",
+    "dst": "O5",
+    "kind": "pumped",
+    "label": "71 L/s"
+   },
+   {
+    "src": "O8",
+    "dst": "O5",
+    "kind": "pumped",
+    "label": "20 L/s"
+   },
+   {
+    "src": "O5",
+    "dst": "O4",
+    "kind": "pumped",
+    "label": "122 L/s"
+   },
+   {
+    "src": "O3",
+    "dst": "O2",
+    "kind": "pumped",
+    "label": "263 L/s"
+   },
+   {
+    "src": "O2",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "414 L/s"
+   },
+   {
+    "src": "O23",
+    "dst": "O21",
+    "kind": "pumped",
+    "label": "5 L/s"
+   },
+   {
+    "src": "O22",
+    "dst": "O21",
+    "kind": "pumped",
+    "label": "11 L/s"
+   },
+   {
+    "src": "O21",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "121 L/s"
+   },
+   {
+    "src": "O24",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "55 L/s"
+   },
+   {
+    "src": "O13",
+    "dst": "O12",
+    "kind": "pumped",
+    "label": "2 L/s"
+   },
+   {
+    "src": "O12",
+    "dst": "O11",
+    "kind": "pumped",
+    "label": "42 L/s"
+   },
+   {
+    "src": "O11",
+    "dst": "O10",
+    "kind": "pumped",
+    "label": "64 L/s"
+   },
+   {
+    "src": "O10",
+    "dst": "O9",
+    "kind": "pumped",
+    "label": "100 L/s"
+   },
+   {
+    "src": "O14",
+    "dst": "O9",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O15",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "35 L/s"
+   },
+   {
+    "src": "O20",
+    "dst": "O16",
+    "kind": "pumped",
+    "label": "11 L/s"
+   },
+   {
+    "src": "O19",
+    "dst": "O16",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O16",
+    "dst": "P:O1",
+    "kind": "pumped",
+    "label": "58 L/s"
+   },
+   {
+    "src": "O17",
+    "dst": "P:O1",
+    "kind": "pumped",
+    "label": "15 L/s"
+   },
+   {
+    "src": "O18",
+    "dst": "P:O1",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O4",
+    "dst": "P:O4",
+    "kind": "gravity",
+    "label": "gravity"
+   },
+   {
+    "src": "O9",
+    "dst": "P:O9",
+    "kind": "gravity",
+    "label": "gravity"
+   },
+   {
+    "src": "O1",
+    "dst": "P:O1",
+    "kind": "gravity",
+    "label": "gravity"
+   }
+  ],
+  "font": {
+   "name": 20,
+   "old": 16,
+   "edge": 17,
+   "plant_title": 19,
+   "plant": 16,
+   "legend": 16
+  },
+  "box": {
+   "w": 128,
+   "h": 50,
+   "col": 260
+  }
+ },
+ {
+  "option": "S5",
+  "title": "four STPs at O-1, O-2, O-3, O-7",
+  "width": 1660,
+  "body": 1087.0,
+  "height": 1197.0,
+  "nodes": [
+   {
+    "id": "O22",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 560,
+    "y": 40.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O22"
+    ]
+   },
+   {
+    "id": "O23",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 560,
+    "y": 102.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O23"
+    ]
+   },
+   {
+    "id": "O21",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 71.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O21"
+    ]
+   },
+   {
+    "id": "O2",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 164.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O2"
+    ]
+   },
+   {
+    "id": "O24",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 226.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O24"
+    ]
+   },
+   {
+    "id": "O15",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 288.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O15"
+    ]
+   },
+   {
+    "id": "O1",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 187.25,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O1"
+    ]
+   },
+   {
+    "id": "O19",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 350.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O19"
+    ]
+   },
+   {
+    "id": "O20",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 412.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O20"
+    ]
+   },
+   {
+    "id": "O16",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 381.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O16"
+    ]
+   },
+   {
+    "id": "O17",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 474.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O17"
+    ]
+   },
+   {
+    "id": "O18",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 536.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O18"
+    ]
+   },
+   {
+    "id": "P:O1",
+    "kind": "plant",
+    "zone": "O1",
+    "x": 1340,
+    "y": 359.5625,
+    "w": 280,
+    "h": 120,
+    "lines": [
+     "STP O1",
+     "2030 → 2070",
+     "average 13,684 → 25,915 m³/d",
+     "peak 365 → 668 L/s",
+     "sewer arrives 9.8 m deep"
+    ]
+   },
+   {
+    "id": "O13",
+    "kind": "sub",
+    "zone": "O9",
+    "x": 40,
+    "y": 638.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O13"
+    ]
+   },
+   {
+    "id": "O12",
+    "kind": "sub",
+    "zone": "O9",
+    "x": 300,
+    "y": 638.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O12"
+    ]
+   },
+   {
+    "id": "O11",
+    "kind": "sub",
+    "zone": "O9",
+    "x": 560,
+    "y": 638.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O11"
+    ]
+   },
+   {
+    "id": "O10",
+    "kind": "sub",
+    "zone": "O9",
+    "x": 820,
+    "y": 638.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O10"
+    ]
+   },
+   {
+    "id": "O14",
+    "kind": "sub",
+    "zone": "O9",
+    "x": 820,
+    "y": 700.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O14"
+    ]
+   },
+   {
+    "id": "O9",
+    "kind": "sub",
+    "zone": "O9",
+    "x": 1080,
+    "y": 669.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O9"
+    ]
+   },
+   {
+    "id": "P:O9",
+    "kind": "plant",
+    "zone": "O9",
+    "x": 1340,
+    "y": 634.0,
+    "w": 280,
+    "h": 120,
+    "lines": [
+     "STP O9",
+     "2030 → 2070",
+     "average 2,490 → 15,640 m³/d",
+     "peak 71 → 382 L/s",
+     "sewer arrives 8.8 m deep"
+    ]
+   },
+   {
+    "id": "O7",
+    "kind": "sub",
+    "zone": "O4",
+    "x": 300,
+    "y": 801.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O7"
+    ]
+   },
+   {
+    "id": "O6",
+    "kind": "sub",
+    "zone": "O4",
+    "x": 560,
+    "y": 801.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O6"
+    ]
+   },
+   {
+    "id": "O8",
+    "kind": "sub",
+    "zone": "O4",
+    "x": 560,
+    "y": 863.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O8"
+    ]
+   },
+   {
+    "id": "O5",
+    "kind": "sub",
+    "zone": "O4",
+    "x": 820,
+    "y": 832.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O5"
+    ]
+   },
+   {
+    "id": "O4",
+    "kind": "sub",
+    "zone": "O4",
+    "x": 1080,
+    "y": 832.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O4"
+    ]
+   },
+   {
+    "id": "P:O4",
+    "kind": "plant",
+    "zone": "O4",
+    "x": 1340,
+    "y": 797.9999999999999,
+    "w": 280,
+    "h": 120,
+    "lines": [
+     "STP O4",
+     "2030 → 2070",
+     "average 3,571 → 7,935 m³/d",
+     "peak 106 → 222 L/s",
+     "sewer arrives 6.9 m deep"
+    ]
+   },
+   {
+    "id": "O3",
+    "kind": "sub",
+    "zone": "O3",
+    "x": 1080,
+    "y": 965.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O3"
+    ]
+   },
+   {
+    "id": "P:O3",
+    "kind": "plant",
+    "zone": "O3",
+    "x": 1340,
+    "y": 930.9999999999999,
+    "w": 280,
+    "h": 120,
+    "lines": [
+     "STP O3",
+     "2030 → 2070",
+     "average 5,011 → 10,966 m³/d",
+     "peak 131 → 263 L/s",
+     "sewer arrives 5.8 m deep"
+    ]
+   }
+  ],
+  "edges": [
+   {
+    "src": "O7",
+    "dst": "O6",
+    "kind": "pumped",
+    "label": "47 L/s"
+   },
+   {
+    "src": "O6",
+    "dst": "O5",
+    "kind": "pumped",
+    "label": "71 L/s"
+   },
+   {
+    "src": "O8",
+    "dst": "O5",
+    "kind": "pumped",
+    "label": "20 L/s"
+   },
+   {
+    "src": "O5",
+    "dst": "O4",
+    "kind": "pumped",
+    "label": "122 L/s"
+   },
+   {
+    "src": "O2",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "150 L/s"
+   },
+   {
+    "src": "O23",
+    "dst": "O21",
+    "kind": "pumped",
+    "label": "5 L/s"
+   },
+   {
+    "src": "O22",
+    "dst": "O21",
+    "kind": "pumped",
+    "label": "11 L/s"
+   },
+   {
+    "src": "O21",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "121 L/s"
+   },
+   {
+    "src": "O24",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "55 L/s"
+   },
+   {
+    "src": "O13",
+    "dst": "O12",
+    "kind": "pumped",
+    "label": "2 L/s"
+   },
+   {
+    "src": "O12",
+    "dst": "O11",
+    "kind": "pumped",
+    "label": "42 L/s"
+   },
+   {
+    "src": "O11",
+    "dst": "O10",
+    "kind": "pumped",
+    "label": "64 L/s"
+   },
+   {
+    "src": "O10",
+    "dst": "O9",
+    "kind": "pumped",
+    "label": "100 L/s"
+   },
+   {
+    "src": "O14",
+    "dst": "O9",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O15",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "35 L/s"
+   },
+   {
+    "src": "O20",
+    "dst": "O16",
+    "kind": "pumped",
+    "label": "11 L/s"
+   },
+   {
+    "src": "O19",
+    "dst": "O16",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O16",
+    "dst": "P:O1",
+    "kind": "pumped",
+    "label": "58 L/s"
+   },
+   {
+    "src": "O17",
+    "dst": "P:O1",
+    "kind": "pumped",
+    "label": "15 L/s"
+   },
+   {
+    "src": "O18",
+    "dst": "P:O1",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O3",
+    "dst": "P:O3",
+    "kind": "gravity",
+    "label": "gravity"
+   },
+   {
+    "src": "O4",
+    "dst": "P:O4",
+    "kind": "gravity",
+    "label": "gravity"
+   },
+   {
+    "src": "O9",
+    "dst": "P:O9",
+    "kind": "gravity",
+    "label": "gravity"
+   },
+   {
+    "src": "O1",
+    "dst": "P:O1",
+    "kind": "gravity",
+    "label": "gravity"
+   }
+  ],
+  "font": {
+   "name": 20,
+   "old": 16,
+   "edge": 17,
+   "plant_title": 19,
+   "plant": 16,
+   "legend": 16
+  },
+  "box": {
+   "w": 128,
+   "h": 50,
+   "col": 260
+  }
+ },
+ {
+  "option": "S6",
+  "title": "six STPs at O-1, O-2, O-3, O-7, O-8, O-14",
+  "width": 1660,
+  "body": 1228.9999999999998,
+  "height": 1338.9999999999998,
+  "nodes": [
+   {
+    "id": "O13",
+    "kind": "sub",
+    "zone": "O9",
+    "x": 40,
+    "y": 40.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O13"
+    ]
+   },
+   {
+    "id": "O12",
+    "kind": "sub",
+    "zone": "O9",
+    "x": 300,
+    "y": 40.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O12"
+    ]
+   },
+   {
+    "id": "O11",
+    "kind": "sub",
+    "zone": "O9",
+    "x": 560,
+    "y": 40.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O11"
+    ]
+   },
+   {
+    "id": "O10",
+    "kind": "sub",
+    "zone": "O9",
+    "x": 820,
+    "y": 40.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O10"
+    ]
+   },
+   {
+    "id": "O14",
+    "kind": "sub",
+    "zone": "O9",
+    "x": 820,
+    "y": 102.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O14"
+    ]
+   },
+   {
+    "id": "O9",
+    "kind": "sub",
+    "zone": "O9",
+    "x": 1080,
+    "y": 71.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O9"
+    ]
+   },
+   {
+    "id": "P:O9",
+    "kind": "plant",
+    "zone": "O9",
+    "x": 1340,
+    "y": 36.0,
+    "w": 280,
+    "h": 120,
+    "lines": [
+     "STP O9",
+     "2030 → 2070",
+     "average 2,490 → 15,640 m³/d",
+     "peak 71 → 382 L/s",
+     "sewer arrives 8.8 m deep"
+    ]
+   },
+   {
+    "id": "O19",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 820,
+    "y": 204.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O19"
+    ]
+   },
+   {
+    "id": "O20",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 820,
+    "y": 266.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O20"
+    ]
+   },
+   {
+    "id": "O16",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1080,
+    "y": 235.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O16"
+    ]
+   },
+   {
+    "id": "O17",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1080,
+    "y": 327.99999999999994,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O17"
+    ]
+   },
+   {
+    "id": "O18",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1080,
+    "y": 389.99999999999994,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O18"
+    ]
+   },
+   {
+    "id": "P:O16",
+    "kind": "plant",
+    "zone": "O16",
+    "x": 1340,
+    "y": 282.66666666666663,
+    "w": 280,
+    "h": 120,
+    "lines": [
+     "STP O16",
+     "2030 → 2070",
+     "average 657 → 2,602 m³/d",
+     "peak 24 → 85 L/s",
+     "sewer arrives 4.9 m deep"
+    ]
+   },
+   {
+    "id": "O7",
+    "kind": "sub",
+    "zone": "O4",
+    "x": 300,
+    "y": 492.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O7"
+    ]
+   },
+   {
+    "id": "O6",
+    "kind": "sub",
+    "zone": "O4",
+    "x": 560,
+    "y": 492.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O6"
+    ]
+   },
+   {
+    "id": "O8",
+    "kind": "sub",
+    "zone": "O4",
+    "x": 560,
+    "y": 553.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O8"
+    ]
+   },
+   {
+    "id": "O5",
+    "kind": "sub",
+    "zone": "O4",
+    "x": 820,
+    "y": 523.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O5"
+    ]
+   },
+   {
+    "id": "O4",
+    "kind": "sub",
+    "zone": "O4",
+    "x": 1080,
+    "y": 523.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O4"
+    ]
+   },
+   {
+    "id": "P:O4",
+    "kind": "plant",
+    "zone": "O4",
+    "x": 1340,
+    "y": 488.0,
+    "w": 280,
+    "h": 120,
+    "lines": [
+     "STP O4",
+     "2030 → 2070",
+     "average 3,571 → 7,935 m³/d",
+     "peak 106 → 222 L/s",
+     "sewer arrives 6.9 m deep"
+    ]
+   },
+   {
+    "id": "O2",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 655.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O2"
+    ]
+   },
+   {
+    "id": "O21",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 717.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O21"
+    ]
+   },
+   {
+    "id": "O24",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 779.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O24"
+    ]
+   },
+   {
+    "id": "O15",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 841.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O15"
+    ]
+   },
+   {
+    "id": "O1",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 748.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O1"
+    ]
+   },
+   {
+    "id": "P:O1",
+    "kind": "plant",
+    "zone": "O1",
+    "x": 1340,
+    "y": 713.9999999999999,
+    "w": 280,
+    "h": 120,
+    "lines": [
+     "STP O1",
+     "2030 → 2070",
+     "average 12,950 → 22,867 m³/d",
+     "peak 339 → 567 L/s",
+     "sewer arrives 9.8 m deep"
+    ]
+   },
+   {
+    "id": "O22",
+    "kind": "sub",
+    "zone": "O22",
+    "x": 1080,
+    "y": 943.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O22"
+    ]
+   },
+   {
+    "id": "O23",
+    "kind": "sub",
+    "zone": "O22",
+    "x": 1080,
+    "y": 1005.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O23"
+    ]
+   },
+   {
+    "id": "P:O22",
+    "kind": "plant",
+    "zone": "O22",
+    "x": 1340,
+    "y": 939.9999999999999,
+    "w": 280,
+    "h": 120,
+    "lines": [
+     "STP O22",
+     "2030 → 2070",
+     "average 77 → 446 m³/d",
+     "peak 2 → 16 L/s",
+     "sewer arrives 1.5 m deep"
+    ]
+   },
+   {
+    "id": "O3",
+    "kind": "sub",
+    "zone": "O3",
+    "x": 1080,
+    "y": 1107.9999999999998,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O3"
+    ]
+   },
+   {
+    "id": "P:O3",
+    "kind": "plant",
+    "zone": "O3",
+    "x": 1340,
+    "y": 1072.9999999999998,
+    "w": 280,
+    "h": 120,
+    "lines": [
+     "STP O3",
+     "2030 → 2070",
+     "average 5,011 → 10,966 m³/d",
+     "peak 131 → 263 L/s",
+     "sewer arrives 5.8 m deep"
+    ]
+   }
+  ],
+  "edges": [
+   {
+    "src": "O7",
+    "dst": "O6",
+    "kind": "pumped",
+    "label": "47 L/s"
+   },
+   {
+    "src": "O6",
+    "dst": "O5",
+    "kind": "pumped",
+    "label": "71 L/s"
+   },
+   {
+    "src": "O8",
+    "dst": "O5",
+    "kind": "pumped",
+    "label": "20 L/s"
+   },
+   {
+    "src": "O5",
+    "dst": "O4",
+    "kind": "pumped",
+    "label": "122 L/s"
+   },
+   {
+    "src": "O2",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "150 L/s"
+   },
+   {
+    "src": "O21",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "105 L/s"
+   },
+   {
+    "src": "O24",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "55 L/s"
+   },
+   {
+    "src": "O13",
+    "dst": "O12",
+    "kind": "pumped",
+    "label": "2 L/s"
+   },
+   {
+    "src": "O12",
+    "dst": "O11",
+    "kind": "pumped",
+    "label": "42 L/s"
+   },
+   {
+    "src": "O11",
+    "dst": "O10",
+    "kind": "pumped",
+    "label": "64 L/s"
+   },
+   {
+    "src": "O10",
+    "dst": "O9",
+    "kind": "pumped",
+    "label": "100 L/s"
+   },
+   {
+    "src": "O14",
+    "dst": "O9",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O15",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "35 L/s"
+   },
+   {
+    "src": "O20",
+    "dst": "O16",
+    "kind": "pumped",
+    "label": "11 L/s"
+   },
+   {
+    "src": "O19",
+    "dst": "O16",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O17",
+    "dst": "P:O16",
+    "kind": "pumped",
+    "label": "15 L/s"
+   },
+   {
+    "src": "O18",
+    "dst": "P:O16",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O23",
+    "dst": "P:O22",
+    "kind": "pumped",
+    "label": "5 L/s"
+   },
+   {
+    "src": "O16",
+    "dst": "P:O16",
+    "kind": "gravity",
+    "label": "gravity"
+   },
+   {
+    "src": "O3",
+    "dst": "P:O3",
+    "kind": "gravity",
+    "label": "gravity"
+   },
+   {
+    "src": "O22",
+    "dst": "P:O22",
+    "kind": "gravity",
+    "label": "gravity"
+   },
+   {
+    "src": "O4",
+    "dst": "P:O4",
+    "kind": "gravity",
+    "label": "gravity"
+   },
+   {
+    "src": "O9",
+    "dst": "P:O9",
+    "kind": "gravity",
+    "label": "gravity"
+   },
+   {
+    "src": "O1",
+    "dst": "P:O1",
+    "kind": "gravity",
+    "label": "gravity"
+   }
+  ],
+  "font": {
+   "name": 20,
+   "old": 16,
+   "edge": 17,
+   "plant_title": 19,
+   "plant": 16,
+   "legend": 16
+  },
+  "box": {
+   "w": 128,
+   "h": 50,
+   "col": 260
+  }
+ },
+ {
+  "option": "S7",
+  "title": "three STPs at O-1, O-8, O-14",
+  "width": 2180,
+  "body": 953.9999999999999,
+  "height": 1064.0,
+  "nodes": [
+   {
+    "id": "O7",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 40,
+    "y": 40.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O7"
+    ]
+   },
+   {
+    "id": "O6",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 300,
+    "y": 40.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O6"
+    ]
+   },
+   {
+    "id": "O8",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 300,
+    "y": 102.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O8"
+    ]
+   },
+   {
+    "id": "O5",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 560,
+    "y": 71.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O5"
+    ]
+   },
+   {
+    "id": "O4",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 71.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O4"
+    ]
+   },
+   {
+    "id": "O3",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 71.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O3"
+    ]
+   },
+   {
+    "id": "O2",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1340,
+    "y": 71.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O2"
+    ]
+   },
+   {
+    "id": "O13",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 300,
+    "y": 164.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O13"
+    ]
+   },
+   {
+    "id": "O12",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 560,
+    "y": 164.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O12"
+    ]
+   },
+   {
+    "id": "O11",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 820,
+    "y": 164.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O11"
+    ]
+   },
+   {
+    "id": "O10",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 164.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O10"
+    ]
+   },
+   {
+    "id": "O14",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1080,
+    "y": 226.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O14"
+    ]
+   },
+   {
+    "id": "O9",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1340,
+    "y": 195.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O9"
+    ]
+   },
+   {
+    "id": "O21",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1340,
+    "y": 288.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O21"
+    ]
+   },
+   {
+    "id": "O24",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1340,
+    "y": 350.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O24"
+    ]
+   },
+   {
+    "id": "O15",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1340,
+    "y": 412.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O15"
+    ]
+   },
+   {
+    "id": "O1",
+    "kind": "sub",
+    "zone": "O1",
+    "x": 1600,
+    "y": 263.20000000000005,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O1"
+    ]
+   },
+   {
+    "id": "P:O1",
+    "kind": "plant",
+    "zone": "O1",
+    "x": 1860,
+    "y": 228.20000000000005,
+    "w": 280,
+    "h": 120,
+    "lines": [
+     "STP O1",
+     "2030 → 2070",
+     "average 24,021 → 57,408 m³/d",
+     "peak 648 → 1,435 L/s",
+     "sewer arrives 10.3 m deep"
+    ]
+   },
+   {
+    "id": "O19",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1340,
+    "y": 514.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O19"
+    ]
+   },
+   {
+    "id": "O20",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1340,
+    "y": 576.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O20"
+    ]
+   },
+   {
+    "id": "O16",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1600,
+    "y": 545.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O16"
+    ]
+   },
+   {
+    "id": "O17",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1600,
+    "y": 638.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O17"
+    ]
+   },
+   {
+    "id": "O18",
+    "kind": "sub",
+    "zone": "O16",
+    "x": 1600,
+    "y": 700.0,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O18"
+    ]
+   },
+   {
+    "id": "P:O16",
+    "kind": "plant",
+    "zone": "O16",
+    "x": 1860,
+    "y": 592.6666666666666,
+    "w": 280,
+    "h": 120,
+    "lines": [
+     "STP O16",
+     "2030 → 2070",
+     "average 657 → 2,602 m³/d",
+     "peak 24 → 85 L/s",
+     "sewer arrives 4.9 m deep"
+    ]
+   },
+   {
+    "id": "O22",
+    "kind": "sub",
+    "zone": "O22",
+    "x": 1600,
+    "y": 801.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O22"
+    ]
+   },
+   {
+    "id": "O23",
+    "kind": "sub",
+    "zone": "O22",
+    "x": 1600,
+    "y": 863.9999999999999,
+    "w": 128,
+    "h": 50,
+    "lines": [
+     "O23"
+    ]
+   },
+   {
+    "id": "P:O22",
+    "kind": "plant",
+    "zone": "O22",
+    "x": 1860,
+    "y": 797.9999999999999,
+    "w": 280,
+    "h": 120,
+    "lines": [
+     "STP O22",
+     "2030 → 2070",
+     "average 77 → 446 m³/d",
+     "peak 2 → 16 L/s",
+     "sewer arrives 1.5 m deep"
+    ]
+   }
+  ],
+  "edges": [
+   {
+    "src": "O7",
+    "dst": "O6",
+    "kind": "pumped",
+    "label": "47 L/s"
+   },
+   {
+    "src": "O6",
+    "dst": "O5",
+    "kind": "pumped",
+    "label": "71 L/s"
+   },
+   {
+    "src": "O8",
+    "dst": "O5",
+    "kind": "pumped",
+    "label": "20 L/s"
+   },
+   {
+    "src": "O5",
+    "dst": "O4",
+    "kind": "pumped",
+    "label": "122 L/s"
+   },
+   {
+    "src": "O4",
+    "dst": "O3",
+    "kind": "pumped",
+    "label": "222 L/s"
+   },
+   {
+    "src": "O3",
+    "dst": "O2",
+    "kind": "pumped",
+    "label": "486 L/s"
+   },
+   {
+    "src": "O2",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "636 L/s"
+   },
+   {
+    "src": "O21",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "105 L/s"
+   },
+   {
+    "src": "O24",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "55 L/s"
+   },
+   {
+    "src": "O13",
+    "dst": "O12",
+    "kind": "pumped",
+    "label": "2 L/s"
+   },
+   {
+    "src": "O12",
+    "dst": "O11",
+    "kind": "pumped",
+    "label": "42 L/s"
+   },
+   {
+    "src": "O11",
+    "dst": "O10",
+    "kind": "pumped",
+    "label": "64 L/s"
+   },
+   {
+    "src": "O10",
+    "dst": "O9",
+    "kind": "pumped",
+    "label": "100 L/s"
+   },
+   {
+    "src": "O14",
+    "dst": "O9",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O9",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "382 L/s"
+   },
+   {
+    "src": "O15",
+    "dst": "O1",
+    "kind": "pumped",
+    "label": "35 L/s"
+   },
+   {
+    "src": "O20",
+    "dst": "O16",
+    "kind": "pumped",
+    "label": "11 L/s"
+   },
+   {
+    "src": "O19",
+    "dst": "O16",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O17",
+    "dst": "P:O16",
+    "kind": "pumped",
+    "label": "15 L/s"
+   },
+   {
+    "src": "O18",
+    "dst": "P:O16",
+    "kind": "pumped",
+    "label": "12 L/s"
+   },
+   {
+    "src": "O23",
+    "dst": "P:O22",
+    "kind": "pumped",
+    "label": "5 L/s"
+   },
+   {
+    "src": "O22",
+    "dst": "P:O22",
+    "kind": "gravity",
+    "label": "gravity"
+   },
+   {
+    "src": "O1",
+    "dst": "P:O1",
+    "kind": "gravity",
+    "label": "gravity"
+   },
+   {
+    "src": "O16",
+    "dst": "P:O16",
+    "kind": "gravity",
+    "label": "gravity"
+   }
+  ],
+  "font": {
+   "name": 20,
+   "old": 16,
+   "edge": 17,
+   "plant_title": 19,
+   "plant": 16,
+   "legend": 16
+  },
+  "box": {
+   "w": 128,
+   "h": 50,
+   "col": 260
+  }
+ }
+]

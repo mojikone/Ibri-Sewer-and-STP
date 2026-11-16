@@ -1,0 +1,107 @@
+== save as new file
+   ok
+== terrain reference
+  DTM 0_Contour Final 22 09 2026.shp DigitalTerrainModel_IsChecked = True
+  DTM 0_Contour Final 22 09 2026.shp DigitalTerrainModel_IsActive = True
+  DTM 0_Contour Final 22 09 2026.shp DigitalTerrainModel_FilePath = Y:\IBRI Sewer\13 IBRI_29092026 12M(7.12 PM )\SHP\Contour\0_Contour Final 22 09 2026.shp
+  DTM 0_Contour Final 22 09 2026.shp DigitalTerrainModel_ModelString = 
+  DTM 0_Contour Final 22 09 2026.shp DigitalTerrainModel_ElevationField = ELEV
+  DTM 0_Contour Final 22 09 2026.shp DigitalTerrainModel_SourceUnit = 151
+  DTM 0_Contour Final 22 09 2026.shp DigitalTerrainModel_BoundaryLineColor = -65536
+  DTM 0_Contour Final 22 09 2026.shp DigitalTerrainModel_BoundaryLineWidth = 1
+  DTM 0_Contour Final 22 09 2026.shp DigitalTerrainModel_ShowContour = False
+  DTM 0_Contour Final 22 09 2026.shp DigitalTerrainModel_LinesPerMajorInterval = 5
+  DTM 0_Contour Final 22 09 2026.shp DigitalTerrainModel_MajorLineInterval = 10
+  DTM 0_Contour Final 22 09 2026.shp DigitalTerrainModel_MajorLineColor = -65536
+  DTM 0_Contour Final 22 09 2026.shp DigitalTerrainModel_MinorLineInterval = 2
+  DTM 0_Contour Final 22 09 2026.shp DigitalTerrainModel_ShowTriangles = False
+  DTM 0_Contour Final 22 09 2026.shp DigitalTerrainModel_TriangleColor = -8323073
+  DTM 0_Contour Final 22 09 2026.shp DigitalTerrainModel_MinorLineColor = -16776961
+  DTM 0_Contour Final 22 09 2026.shp DigitalTerrainModel_FileProxy = DocumentSpecificationLocalFile <LocalDocumentSpecification Path="Y:\IBRI Sewer\13 IBRI_29092026 12M(7.12 PM )\SHP\Contour\0_Contour Final 22 09 2026.shp" />
+  DTM 0_Contour Final 22 09 2026.shp DigitalTerrainModel_RelativeFilePath = .\SHP\Contour\0_Contour Final 22 09 2026.shp
+  DTM 0_Contour Final 22 09 2026.shp DTMSourceType = 2
+   ok
+== calc options -> DESIGN
+  calc options DelawareProductEngine/31: 'Base Calculation Options' -> 'DESIGN'
+   ok
+== physical F -> 2070
+  Physical alternative 279727: 'Physical Alternative - F' -> '2070'
+   ok
+== empty 2070 sanitary deleted
+  deleted SanitaryLoading alternative 279774 '2070'
+   ok
+== base sanitary -> 2070
+  SanitaryLoading alternative 14: 'Base Sanitary Loading' -> '2070'
+   ok
+== scenario 34 -> 2070
+  scenario 279744: 'Scenario - 34' -> '2070'
+   ok
+== drop system flows
+  scenario '2030' -> base system flows
+  scenario '2040' -> base system flows
+  scenario '2050' -> base system flows
+  scenario '2055' -> base system flows
+  scenario '2060' -> base system flows
+  deleted system flows alternative 279775 '2030'
+  deleted system flows alternative 279776 '2040'
+  deleted system flows alternative 279777 '2050'
+  deleted system flows alternative 279778 '2055'
+  deleted system flows alternative 279779 '2060'
+  deleted system flows alternative 279780 '2070'
+  cleared 19 known flows on Manhole
+   ok
+== delete property inference scenarios
+  deleted scenario 278354 'Property Inference Scenario - 2'
+  deleted scenario 279726 'Property Inference Scenario - 4'
+  deleted scenario 279719 'Property Inference Scenario - 4'
+  deleted scenario 279712 'Property Inference Scenario - 4'
+  deleted scenario 279703 'Property Inference Scenario - 4'
+  deleted scenario 279588 'Property Inference Scenario - 4'
+  deleted scenario 279581 'Property Inference Scenario - 4'
+  deleted scenario 279572 'Property Inference Scenario - 4'
+  deleted scenario 279559 'Property Inference Scenario - 4'
+  deleted scenario 279557 'Property Inference Scenario - 4'
+  deleted scenario 279110 'Property Inference Scenario - 3'
+  deleted scenario 279059 'Property Inference Scenario - 3'
+  deleted scenario 279040 'Property Inference Scenario - 3'
+  deleted scenario 278936 'Property Inference Scenario - 3'
+  deleted scenario 278911 'Property Inference Scenario - 3'
+  deleted scenario 278848 'Property Inference Scenario - 3'
+  deleted scenario 278837 'Property Inference Scenario - 3'
+  deleted scenario 278735 'Property Inference Scenario - 3'
+  deleted scenario 278635 'Property Inference Scenario - 3'
+  deleted scenario 278619 'Property Inference Scenario - 2'
+  deleted scenario 278585 'Property Inference Scenario - 2'
+  deleted scenario 278498 'Property Inference Scenario - 2'
+  deleted scenario 278468 'Property Inference Scenario - 2'
+  deleted scenario 278426 'Property Inference Scenario - 2'
+  deleted scenario 278331 'Property Inference Scenario - 2'
+  deleted scenario 278312 'Property Inference Scenario - 2'
+  deleted scenario 278278 'Property Inference Scenario - 2'
+  deleted scenario 278250 'Property Inference Scenario - 2'
+  deleted scenario 277974 'Property Inference Scenario - 1'
+  deleted scenario 277957 'Property Inference Scenario - 1'
+  deleted scenario 277898 'Property Inference Scenario - 1'
+  deleted scenario 277808 'Property Inference Scenario - 1'
+   ok
+== delete test pump station
+  deleted pressure pipe P-3
+  deleted pressure pipe P-4
+  deleted pressure pipe P-2
+  deleted pressure pipe P-1
+  deleted pump PMP-1
+  deleted pressure junction J-1
+  deleted pressure junction J-2
+  deleted wet well W-2
+   ok
+== OLD_ID to Notes
+  OLD_ID written to Notes for 38593 elements (0 kept their existing notes after it)
+   ok
+== rename nodes
+  rename_nodes.csv: 19107 relabelled, 0 mismatches
+   ok
+== rename conduits
+  rename_links.csv: 19083 relabelled, 0 mismatches
+   ok
+== save
+   ok

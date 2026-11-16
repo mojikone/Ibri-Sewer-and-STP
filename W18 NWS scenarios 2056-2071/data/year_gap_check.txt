@@ -1,0 +1,17 @@
+﻿inactive manholes: 197
+year  shortfall  plots nearest an inactive MH  plots within 500 m of one
+2030     2427.7                         538.8                     2182.4
+2040     2778.0                         602.0                     2367.0
+2050     3139.5                         666.6                     2556.0
+2055     3361.8                         709.2                     2679.6
+2060     3488.8                         719.1                     2713.8
+
+manholes whose 2070 load equals their nearest plots: 13480; of these short in 2030: 1361; short by exactly one plot: 783
+the missing plots: 783  Q_2030 sum 742.1
+  by SETTLE: {'Ibri': {'count': 249, 'sum': 269.3}, 'Al Araqi': {'count': 148, 'sum': 152.9}, 'Ad Dariz': {'count': 94, 'sum': 79.3}, 'Al Wahrah': {'count': 62, 'sum': 64.8}, 'Al Aynayn': {'count': 38, 'sum': 40.0}, 'Al Jibayyah': {'count': 34, 'sum': 31.4}}
+  by STATUS: {'Existing': {'count': 548, 'sum': 724.7}, 'Future': {'count': 235, 'sum': 17.4}}
+  by USE: {'Residential': {'count': 302, 'sum': 311.5}, 'Agricultural': {'count': 142, 'sum': 205.7}, 'Commercial': {'count': 46, 'sum': 77.0}, 'Government': {'count': 33, 'sum': 65.5}, 'Residential-Commercial': {'count': 23, 'sum': 62.0}, 'Empty (unmetered)': {'count': 234, 'sum': 17.1}}
+  by FULL_YEAR: {2056: {'count': 250, 'sum': 269.4}, 2057: {'count': 148, 'sum': 152.9}, 2070: {'count': 127, 'sum': 121.4}, 2062: {'count': 94, 'sum': 79.3}, 2060: {'count': 44, 'sum': 42.6}, 2069: {'count': 35, 'sum': 28.9}}
+  their distance to the nearest inactive manhole: median 4271 m
+  POP_2030 of the missing plots: zero 65  non-zero 718
+  Q_2024 equal to Q_2030 (existing, no growth): 549

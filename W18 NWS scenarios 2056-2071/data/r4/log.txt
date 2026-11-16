@@ -1,0 +1,22 @@
+== leftover unit rows (not written by the reload) removed first
+  alt 14: removed 70 rows of definition 1 on 70 manholes (259.37 loading units)
+  alt 279769: removed 0 rows of definition 1 on 0 manholes (0.00 loading units)
+  alt 279770: removed 0 rows of definition 1 on 0 manholes (0.00 loading units)
+  alt 279771: removed 0 rows of definition 1 on 0 manholes (0.00 loading units)
+  alt 279772: removed 0 rows of definition 1 on 0 manholes (0.00 loading units)
+  alt 279773: removed 0 rows of definition 1 on 0 manholes (0.00 loading units)
+== conversion
+  '2070': 17934 rows on 15711 manholes converted; before 60,098.79 m3/d, stored after 60,098.79 m3/d (17934 unit rows read back); pattern rows left 0; other rows untouched 0
+  '2030': 17918 rows on 15708 manholes converted; before 24,216.31 m3/d, stored after 24,216.31 m3/d (17918 unit rows read back); pattern rows left 0; other rows untouched 0
+  '2040': 17934 rows on 15711 manholes converted; before 30,938.43 m3/d, stored after 30,938.43 m3/d (17934 unit rows read back); pattern rows left 0; other rows untouched 0
+  '2050': 17934 rows on 15711 manholes converted; before 37,814.53 m3/d, stored after 37,814.53 m3/d (17934 unit rows read back); pattern rows left 0; other rows untouched 0
+  '2055': 17934 rows on 15711 manholes converted; before 42,265.79 m3/d, stored after 42,265.79 m3/d (17934 unit rows read back); pattern rows left 0; other rows untouched 0
+  '2060': 17934 rows on 15711 manholes converted; before 47,523.06 m3/d, stored after 47,523.06 m3/d (17934 unit rows read back); pattern rows left 0; other rows untouched 0
+  '2070': 2022 manholes merged, 2223 rows removed, 0 manholes with other loads left alone; total 60,098.79 -> 60,098.79 m3/d; rows per manhole now 0:3569, 1:15711
+  '2030': 2012 manholes merged, 2210 rows removed, 0 manholes with other loads left alone; total 24,216.31 -> 24,216.31 m3/d; rows per manhole now 0:3572, 1:15708
+  '2040': 2022 manholes merged, 2223 rows removed, 0 manholes with other loads left alone; total 30,938.43 -> 30,938.43 m3/d; rows per manhole now 0:3569, 1:15711
+  '2050': 2022 manholes merged, 2223 rows removed, 0 manholes with other loads left alone; total 37,814.53 -> 37,814.53 m3/d; rows per manhole now 0:3569, 1:15711
+  '2055': 2022 manholes merged, 2223 rows removed, 0 manholes with other loads left alone; total 42,265.79 -> 42,265.79 m3/d; rows per manhole now 0:3569, 1:15711
+  '2060': 2022 manholes merged, 2223 rows removed, 0 manholes with other loads left alone; total 47,523.06 -> 47,523.06 m3/d; rows per manhole now 0:3569, 1:15711
+  saved C:\IbriWork\W17\IBRI_W17_R4.stsw
+  delivered to \\VBOXSVR\Win10_shared_folder\IBRI Sewer\14 IBRI_W17

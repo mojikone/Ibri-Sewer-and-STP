@@ -1,0 +1,10 @@
+  unit load 279741 'Unit Sanitary (Dry Weather) Loads - 1' -> 'Plot average flow (1 m3/d per unit)', discharge-based, 1 m3/d per unit
+  '2070': 18002 rows on 15778 manholes converted; before 60,355.10 m3/d, stored after 60,355.10 m3/d (18002 unit rows read back); pattern rows left 0; other rows untouched 0
+  '2030': 16980 rows on 14937 manholes converted; before 21,788.60 m3/d, stored after 21,788.60 m3/d (16980 unit rows read back); pattern rows left 0; other rows untouched 0
+  '2040': 16994 rows on 14938 manholes converted; before 28,160.48 m3/d, stored after 28,160.48 m3/d (16994 unit rows read back); pattern rows left 0; other rows untouched 0
+  '2050': 16994 rows on 14938 manholes converted; before 34,675.04 m3/d, stored after 34,675.04 m3/d (16994 unit rows read back); pattern rows left 0; other rows untouched 0
+  '2055': 16994 rows on 14938 manholes converted; before 38,903.98 m3/d, stored after 38,903.98 m3/d (16994 unit rows read back); pattern rows left 0; other rows untouched 0
+  '2060': 16994 rows on 14938 manholes converted; before 44,034.31 m3/d, stored after 44,034.31 m3/d (16994 unit rows read back); pattern rows left 0; other rows untouched 0
+  saved C:\IbriWork\W17\IBRI_W17_R2.stsw
+  pattern load row 0 on 22070: 3.53146667214886 cfs
+  delivered to \\VBOXSVR\Win10_shared_folder\IBRI Sewer\14 IBRI_W17

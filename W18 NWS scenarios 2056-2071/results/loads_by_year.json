@@ -1,0 +1,42 @@
+{
+ "active_sewer_km": 1498.295,
+ "infiltration_m3d": 1078.8,
+ "years": {
+  "2030": {
+   "plot_load_m3d": 24216.3,
+   "carried_m3d": 23677.3,
+   "outside_m3d": 539.1,
+   "outside_manholes": 172
+  },
+  "2040": {
+   "plot_load_m3d": 30938.4,
+   "carried_m3d": 30336.2,
+   "outside_m3d": 602.2,
+   "outside_manholes": 172
+  },
+  "2050": {
+   "plot_load_m3d": 37814.5,
+   "carried_m3d": 37147.7,
+   "outside_m3d": 666.9,
+   "outside_manholes": 172
+  },
+  "2055": {
+   "plot_load_m3d": 42265.8,
+   "carried_m3d": 41556.3,
+   "outside_m3d": 709.4,
+   "outside_manholes": 172
+  },
+  "2060": {
+   "plot_load_m3d": 47523.1,
+   "carried_m3d": 46803.6,
+   "outside_m3d": 719.4,
+   "outside_manholes": 172
+  },
+  "2070": {
+   "plot_load_m3d": 60098.8,
+   "carried_m3d": 59377.3,
+   "outside_m3d": 721.5,
+   "outside_manholes": 173
+  }
+ }
+}
