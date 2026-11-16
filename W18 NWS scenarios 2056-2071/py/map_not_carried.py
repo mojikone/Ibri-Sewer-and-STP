@@ -19,6 +19,8 @@ g = pyogrio.read_dataframe(PLOTS, columns=["SETTLE", "STATUS"])
 t = pd.read_csv(os.path.join(W18, "results", "loads", "plot_loads.csv"))
 assert len(t) == len(g)
 g["CATEGORY"] = t.WHY_OUT.fillna("").map(CAT).fillna("")
+# only plots that carry flow; plots outside their settlement boundary carry none (engineer, 2026-11-16)
+g.loc[t.Q_2071.values <= 0, "CATEGORY"] = ""
 for c in ("Q_2031", "Q_2056", "Q_2071"): g[c] = t[c].values
 g["D_PIPE_M"] = t.D_PIPE.values.round(1)
 nc = g[g.CATEGORY != ""].copy()
@@ -33,7 +35,9 @@ fig, ax = plt.subplots(figsize=(16.5, 11.7), dpi=150)
 st = pyogrio.read_dataframe(SETTLE) if os.path.exists(SETTLE) else None
 if st is not None:
     st.boundary.plot(ax=ax, color="#7f7f7f", linewidth=0.6, zorder=1)
-g[g.CATEGORY == ""].plot(ax=ax, color="#e6e6e6", linewidth=0, zorder=2)
+flow = g.Q_2071.values > 0
+g[(g.CATEGORY == "") & flow].plot(ax=ax, color="#c8c8c8", linewidth=0, zorder=2)
+g[~flow].plot(ax=ax, color="#f2f2f2", edgecolor="#d9d9d9", linewidth=0.2, zorder=1.5)
 ax.add_collection(LineCollection(segs[act], colors="#1f4e79", linewidths=0.35, zorder=3))
 ax.add_collection(LineCollection(segs[~act], colors="#b07cc6", linewidths=0.35, linestyles="dotted", zorder=3))
 for cat, col in COL.items():
@@ -44,7 +48,8 @@ from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 ax.legend(handles=[Patch(color=COL["Inactive network (bad terrain)"], label="Plot on the inactive network (bad terrain)"),
                    Patch(color=COL["Farther than 200 m from the network"], label="Plot farther than 200 m from the network"),
-                   Patch(color="#e6e6e6", label="Plot served by the network"),
+                   Patch(color="#c8c8c8", label="Plot served by the network"),
+                   Patch(facecolor="#f2f2f2", edgecolor="#d9d9d9", label="Plot with no sewage flow (non-residential vacant, or outside its settlement boundary)"),
                    Line2D([], [], color="#1f4e79", lw=1, label="Sewer network"),
                    Line2D([], [], color="#b07cc6", lw=1, ls=":", label="Inactive network")],
           loc="upper left", frameon=True, fontsize=10)

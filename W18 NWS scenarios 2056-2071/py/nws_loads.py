@@ -42,10 +42,22 @@ p = pyogrio.read_dataframe(PLOTS, columns=["SETTLE", "STATUS", "CADASTRE", "USE"
 p["S"] = p.SETTLE.str.strip().str.upper()
 assert set(p.S) == set(pop), set(p.S) ^ set(pop)
 
+# A plot takes flow only inside its own settlement's boundary (engineer, 2026-11-16: the redrawn settlement boundaries
+# lie inside the project boundary and a settlement's flow cannot leave them). Centroid in the plot's own polygon.
+import shapely
+SETTLE_SHP = os.path.join(W18, "..", "W14", "shp", "Settlements_merged.shp")
+sb = pyogrio.read_dataframe(SETTLE_SHP, columns=["SETTLE"])
+sb["S"] = sb.SETTLE.str.strip().str.upper()
+assert set(sb.S) == set(pop)
+geo = pyogrio.read_dataframe(PLOTS, columns=[])
+cent = geo.geometry.centroid.values
+poly = dict(zip(sb.S, sb.geometry.values))
+p["INSIDE"] = [bool(shapely.contains(poly[s], c)) for s, c in zip(p.S, cent)]
+
 rows, out = [], {f"Q_{y}": np.zeros(len(p)) for y in YEARS}
 for s in sorted(pop):
     assert pop[s][BASE] < cap[s], f"{s} already over capacity in {BASE}"
-    m = (p.S == s).values
+    m = ((p.S == s) & p.INSIDE).values
     base_w = p.Q_2024.values * m
     tgt = m & (p.STATUS == "Future").values & p.CADASTRE.isin(TARGET_USES).values
     n_t = int(tgt.sum())
@@ -57,7 +69,8 @@ for s in sorted(pop):
         else:   q = base_w / base_w.sum() * F                       # no future home plot: existing plots take the growth
         out[f"Q_{y}"] += q
         rows.append(dict(settlement=s, year=y, pop_team=pop[s][y], capacity=cap[s], pop_used=P,
-                         capped=pop[s][y] > cap[s], flow_m3d=F, future_home_plots=n_t))
+                         capped=pop[s][y] > cap[s], flow_m3d=F, future_home_plots=n_t,
+                         plots_outside_boundary=int(((p.S == s) & ~p.INSIDE).sum())))
 sf = pd.DataFrame(rows)
 for y in YEARS:
     p[f"Q_{y}"] = out[f"Q_{y}"]

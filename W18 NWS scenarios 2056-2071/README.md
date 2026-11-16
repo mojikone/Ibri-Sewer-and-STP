@@ -22,15 +22,16 @@
 ## Flow that does not enter the network (engineer, 2026-11-16)
 
 These plots are not carried, and their flow stays in the settlement totals:
-- **Inactive network (bad terrain):** a plot whose nearest manhole is inactive, as in W17 (1,201 plots, the largest group in central Ibri).
-- **Farther than 200 m from the network:** a plot whose edge is more than 200 m from an active sewer, measured straight between manholes (8,682 plots).
+- **Inactive network (bad terrain):** a plot whose nearest manhole is inactive, as in W17 (963 plots with flow, the largest group in central Ibri).
+- **Farther than 200 m from the network:** a plot whose edge is more than 200 m from an active sewer, measured straight between manholes (2,818 plots with flow).
+- **Outside its settlement boundary (no flow at all):** 5,907 plots lie outside their redrawn settlement boundary, which sits inside the project boundary. They take no flow, and the settlement's flow is shared by the plots inside it (engineer, 2026-11-16). Ibri's future home plots come to 13,119, against 13,120 in the team's count.
 
 | m³/d | 2031 | 2056 | 2071 |
 |---|---|---|---|
-| Inactive network | 556 | 937 | 1,090 |
-| Farther than 200 m | 227 | 920 | 1,489 |
-| Not carried | 783 | 1,856 | 2,579 |
-| Carried (before infiltration) | 21,984 | 36,847 | 45,963 |
+| Inactive network | 557 | 937 | 1,090 |
+| Farther than 200 m | 185 | 627 | 995 |
+| Not carried | 742 | 1,564 | 2,085 |
+| Carried (before infiltration) | 22,026 | 37,140 | 46,457 |
 
 **These values go into the report, with a map of the plots in the two categories.**
 - Layer: `gis/not_carried_plots.gpkg`.
