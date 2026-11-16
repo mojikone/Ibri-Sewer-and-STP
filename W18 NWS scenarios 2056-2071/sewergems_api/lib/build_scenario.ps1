@@ -20,9 +20,12 @@ try {
   $phys = [Scen]::ChildAlternative($m, 'Physical', $basePhys, $tag, $log)
   $log.WriteLine('== sanitary children with the transfers')
   $san = New-Object 'System.Collections.Generic.Dictionary[string,int]'
+  # the six LoadBuilder year alternatives carry the W18 years since job 066 (new year alternatives cannot be read
+  # once a sibling holds records, a SewerGEMS fault met by jobs 060-065)
+  $W18ALT = @{ '2031' = 279769; '2051' = 279770; '2056' = 279771; '2061' = 279772; '2066' = 279773; '2071' = 14 }
   foreach ($y in @($dy) + $checks) {
-    $yearAlt = [Scen]::ChildAlternative($m, 'SanitaryLoading', $LOADS2070, "W18-$y", $log)
-    $san[$y] = [Scen]::ChildAlternative($m, 'SanitaryLoading', $yearAlt, "$name-$y", $log)
+    if (-not $W18ALT.ContainsKey($y)) { throw "no W18 year alternative for $y" }
+    $san[$y] = [Scen]::ChildAlternative($m, 'SanitaryLoading', $W18ALT[$y], "$name-$y", $log)
   }
   [Scen]::AddTransfers($m, $san, "$out\transfers_$tag.csv", $log)
   $log.WriteLine('== scenarios')
