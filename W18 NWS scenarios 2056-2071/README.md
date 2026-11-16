@@ -19,6 +19,29 @@
 
 `plot_loads.csv` (per plot, every five years 2026–2071), `manhole_loads.csv` (per manhole id), `settlement_flows.csv`, `check.md`. Plot flow before infiltration: 2031 22,768 · 2056 38,704 · 2061 42,963 · 2066 46,207 · 2071 48,542 m³/d. The team's scenario sheet less its 1,099 m³/d of infiltration is matched to 0.0 in 2031, 2056 and 2061; 2066 and 2071 are 1,484 and 4,398 m³/d lower because Ibri is capped.
 
+## Flow that does not enter the network (engineer, 2026-11-16)
+
+These plots are not carried, and their flow stays in the settlement totals:
+- **Inactive network (bad terrain):** a plot whose nearest manhole is inactive, as in W17 (1,201 plots, the largest group in central Ibri).
+- **Farther than 200 m from the network:** a plot whose edge is more than 200 m from an active sewer, measured straight between manholes (8,682 plots).
+
+| m³/d | 2031 | 2056 | 2071 |
+|---|---|---|---|
+| Inactive network | 556 | 937 | 1,090 |
+| Farther than 200 m | 227 | 920 | 1,489 |
+| Not carried | 783 | 1,856 | 2,579 |
+| Carried (before infiltration) | 21,984 | 36,847 | 45,963 |
+
+**These values go into the report, with a map of the plots in the two categories.**
+- Layer: `gis/not_carried_plots.gpkg`.
+- Draft map: `img/not_carried_plots.png` (`py/map_not_carried.py`).
+- The report figure is a QGIS layout, made with the report's other maps.
+
+Model loading:
+- Plots without a manhole (HMINNODE 0, 6,499 plots that carried no flow in W14) go to the nearest manhole that has a load row.
+- The six year alternatives of the model carry 2031, 2051, 2056, 2061, 2066 and 2071.
+- New year alternatives failed in jobs 060–066; the cause was a load on a manhole without a load row. Job 067 proved the loading, and job 069 has the final loads.
+
 ## Expected difficulty with the design-year rule
 
 In the W17 S1 run (2070 design), the share of pipes above DN200 reaching 0.75 m/s is 37 % at the 2070 flow, 16 % at the 2055 flow and 6 % at the 2030 flow (`D:/VBOX/bridge/out/scen/S1/conduits_S1-*.csv`). Table 11 gives 0.75 m/s only to a pipe running at least half full, so SC1 at 2056 is run first to measure the real pass rate before the other runs.
