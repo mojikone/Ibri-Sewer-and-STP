@@ -20,7 +20,7 @@ ST = os.path.join(W18, "gis", "W18_settlements_2026_2100.shp")
 XL = os.path.join(W18, "results", "W18_MOHUP_DATA_NA_growth_plots.xlsx")
 LD = os.path.join(W18, "results", "loads")
 ZP = os.path.join(W18, "gis", "W18_plot_flows_QGIS.zip")
-YEARS = list(range(2026, 2101)); MY = list(range(2026, 2072, 5)); OCC = 4.8
+YEARS = list(range(2026, 2101)); MY = list(range(2026, 2092, 5)); OCC = 4.8
 R = []                                                     # (section, check, ok, detail)
 def chk(sec, name, ok, detail=""): R.append((sec, name, bool(ok), detail)); print(("PASS " if ok else "FAIL ") + sec, name, detail)
 
@@ -186,7 +186,7 @@ chk("C", "settlement fields recomputed (capacity, years, counts, properties, OR,
 # ---------------------------------------------------------------- D  loads (the model's input)
 pl = pd.read_csv(os.path.join(LD, "plot_loads.csv"), index_col="FID")
 dq = max(np.abs(pl[f"Q_{y}"].values - Q[:, YEARS.index(y)]).max() for y in MY)
-chk("D", "plot_loads.csv = plot layer in the ten model years", dq < 1e-4, f"max {dq:.1e} m3/d")
+chk("D", f"plot_loads.csv = plot layer in the model years {MY[0]}-{MY[-1]}", dq < 1e-4, f"max {dq:.1e} m3/d")
 chk("D", "plot_loads.csv growth flag = recomputed rule", (pl.GROWTH.values.astype(bool) == growth).all())
 car = (p.NETWORK == "connected").values
 chk("D", "not carried = inactive manhole or over 200 m (and nothing else)", set(p.NETWORK) == {"connected", "inactive manhole", "over 200 m from a sewer"}

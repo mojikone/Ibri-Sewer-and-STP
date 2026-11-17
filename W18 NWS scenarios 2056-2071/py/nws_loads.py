@@ -24,7 +24,7 @@ WB = os.path.join(TEAM, "New Calculation MH.xlsx")
 SCEN = os.path.join(TEAM, "WW Generation - Network Scenarios.xlsx")
 PLOTS = r"C:\Users\mojtaba\Desktop\Win10 shared folder\IBRI Sewer\14 IBRI_W17\SHP\Plots\Plots.shp"
 OUT = os.path.join(W18, "results", "loads"); os.makedirs(OUT, exist_ok=True)
-YEARS = [2026, 2031, 2036, 2041, 2046, 2051, 2056, 2061, 2066, 2071]
+YEARS = list(range(2026, 2092, 5))   # 2026-2091 every 5 years (engineer 2026-11-17: model years every 5 from 2031 to 2091)
 BASE = 2026
 TARGET_USES = ("Residential", "Residential-Commercial")
 
