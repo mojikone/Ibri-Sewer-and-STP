@@ -19,6 +19,29 @@
 
 `plot_loads.csv` (per plot, every five years 2026–2071), `manhole_loads.csv` (per manhole id), `settlement_flows.csv`, `check.md`. Plot flow before infiltration: 2031 22,768 · 2056 38,704 · 2061 42,963 · 2066 46,207 · 2071 48,542 m³/d. The team's scenario sheet less its 1,099 m³/d of infiltration is matched to 0.0 in 2031, 2056 and 2061; 2066 and 2071 are 1,484 and 4,398 m³/d lower because Ibri is capped.
 
+## Plot layer 2026–2100 (`py/plot_layer_2100.py` -> `gis/W18_plots_2026_2100.zip`)
+
+Each of the 77,265 plots carries:
+- its meters by category (domestic, commercial, government, special, farm);
+- its land use (and MoH's planned use) and its status, Existing or Future;
+- its properties: existing dwellings (the 2024 dwelling meters) and the dwellings added by 2100 at the team's 4.8 persons each;
+- its residents and average flow (m³/d, unpeaked, no infiltration) for every year from 2026 to 2100;
+- its handling: inside its boundary, growth plot, network status (connected / inactive manhole / over 200 m) and the manhole it loads.
+
+The fields are listed in `gis/W18_plots_2026_2100_fields.md`, and the checks are in `results/loads/plot_layer_check.md`:
+- **Model years:** the flows of the ten model years match `plot_loads.csv` to 5e-7 m³/d.
+- **Totals:** residents and flow sum to the settlements every year. The file keeps 5 decimals, because every growth plot in a settlement carries the same share and rounding errors pile up instead of cancelling (2 decimals were 100 people out). The file is within 0.1 person and 0.13 m³/d of the totals.
+- **Residents are not flow ÷ 171:** on an existing plot the flow also carries shops, offices and estate workers, who are not residents.
+- **Size:** the raw shapefile (a 145 MB .dbf) is over GitHub's limit, so the repo holds the 9 MB zip. Rebuild with `python py/plot_layer_2100.py`.
+
+The results:
+- **Totals in 2100:** 341,193 residents and 58,670 m³/d, of which 56,797 m³/d is carried.
+- **Full years:** 8 settlements fill by 2100, each in the same year as the team's sheet (Ibri 2064, Bat 2074, Al Araqi 2077, Al Aynayn 2078, Ad Dariz 2081, Hijar 2084, Satwah 2086, Al Wahrah 2095). The other 17 do not fill by 2100.
+- **Dwellings per growth plot:** the team's capacity counts all future residential plots (Ibri 13,120), but growth lands only on the home-shaped ones (Ibri 10,424). Each growth plot therefore takes more:
+  - Ibri: 1.60 dwellings per plot when full, against the team's 1.48.
+  - Al Akheedar: 5.9 per plot by 2100 (44 plots, against the team's 108).
+  - Ash Shiab: 3.5 per plot (12 plots, against 60).
+
 ## Earlier rules kept (checked 2026-11-16 at the engineer's request)
 
 - **W14 rule 4: the industrial estates are additive.** 6,300 workers × 93 L/d × 0.54 = **316.4 m³/d**, on their plots, outside the per-capita volume (doctrine 1b). The plot flow is the team's sheet plus 316.4.
