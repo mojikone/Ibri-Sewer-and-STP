@@ -19,6 +19,12 @@ W18 loads corrected the same day against the earlier decisions:
   - **In every case:** the plant depth does not change, and all 1,346 km of DN200 stay below 0.75 m/s.
 - **Recommended to NWS:** a 0.50 % limit (the DN200 minimum of Table 11), with about 17 % of the length above DN200 on a flushing list.
 
+**The W18 plot layer for every year 2026–2100** is `W18…/gis/W18_plots_2026_2100.zip` (built by `py/plot_layer_2100.py`; the raw shapefile is not in git; fields are listed in `gis/W18_plots_2026_2100_fields.md`).
+- **Contents:** meters by category, land use, status, properties, and residents and flow for every year.
+- **Model years:** they equal the W18 loads.
+- **In 2100:** 341,193 residents and 58,670 m³/d.
+- **Full years:** 8 settlements fill by 2100, each in the team's year.
+
 **2026-10-12: the own flow and population of the 24 subnetworks at every five years** are in `W17/results/subnetwork_flows_by_year.xlsx` (`W17/py/subnetwork_flows.py`), for the team's plant and station sizing: average dry-weather m³/d per subnetwork without transfers or peaking, infiltration separate, reconciled with the model's loads. R7 remains the live report.
 
 **2026-10-04: the live report is the Concept Design Report built in `W17/report/R7/`** (174 pages, file `Ibri_Concept_Design_Report_R7`, final for issue; no revision printed; `W17/report/R6/` superseded and kept). It carries the cost of the seven options from the team's estimate (`W17/data/finance/`, `W17/report/facts_cost.py`) and **recommends S1, S3, S7** (cost first, the 10 % band, S2 out on energy, S1 first on operability; doctrine 1e amended again); the characters are costed at the preliminary design and the treated effluent network is not linked to the options. The existing networks' areas are designed as if unsewered (`W17/py/existing_overlap.py`). NWS's comments of 24 September on the Design Basis Report (in `09-RECEIVED/1. NAMA/Comments` on the server) were read: the coverage request for Al Aqariyah, As Subaykhi and Madayn is for the managers and not in the report; the design horizon stays open. The deck (`W17/presentation/build_deck_w17.py`) has its recommendation, 04 TE and 05 cost slides filled; the deliverable folder carries the cost estimate under `Cost`.
