@@ -35,18 +35,19 @@ The fields are listed in `gis/W18_plots_2026_2100_fields.md`, and the checks are
 - **Size:** the raw shapefile (a 145 MB .dbf) is over GitHub's limit, so the repo holds the 9 MB zip. Rebuild with `python py/plot_layer_2100.py`.
 
 The results:
-- **Totals in 2100:** 341,193 residents and 58,670 m³/d, of which 56,797 m³/d is carried.
+- **Totals in 2100:** 341,193 residents and 58,670 m³/d, of which 56,691 m³/d is carried.
 - **Full years:** 8 settlements fill by 2100, each in the same year as the team's sheet (Ibri 2064, Bat 2074, Al Araqi 2077, Al Aynayn 2078, Ad Dariz 2081, Hijar 2084, Satwah 2086, Al Wahrah 2095). The other 17 do not fill by 2100.
-- **Dwellings per growth plot:** the team's capacity counts all future residential plots (Ibri 13,120), but growth lands only on the home-shaped ones (Ibri 10,424). Each growth plot therefore takes more:
-  - Ibri: 1.60 dwellings per plot when full, against the team's 1.48.
-  - Al Akheedar: 5.9 per plot by 2100 (44 plots, against the team's 108).
-  - Ash Shiab: 3.5 per plot (12 plots, against 60).
+- **Dwellings per growth plot:** the team's capacity counts all future residential plots (Ibri 13,120), but growth lands only on the home-shaped ones (Ibri 11,019). Each growth plot therefore takes more:
+  - Ibri: 1.51 dwellings per plot when full, against the team's 1.48.
+  - Al Akheedar: 3.65 per plot by 2100 (71 plots, against the team's 108; 5.9 on 44 plots under the 1,000 m² limit).
+  - Ash Shiab: 2.44 per plot (17 plots, against 60).
 - Check maps of plot flow, five settlements (2056): `img/plotflow_2056_*.png`, with A3 detail sheets at 1:5,000 so every plot over 1,000 m² has a readable area label, in `img/plotflow_2056_*.pdf` (`py/map_plot_flows.py`), for the engineer to judge the growth-plot shape and area limits.
 
 ## Earlier rules kept (checked 2026-11-16 at the engineer's request)
 
 - **W14 rule 4: the industrial estates are additive.** 6,300 workers × 93 L/d × 0.54 = **316.4 m³/d**, on their plots, outside the per-capita volume (doctrine 1b). The plot flow is the team's sheet plus 316.4.
-- **Growth lands only on W14's home-shaped empty plots** (rule 9; engineer, 2026-11-16: large or non-square plots take no growth). That means 200–1,000 m², compact ≥ 0.6, aspect ≤ 3, and no groves, industrial, heritage or estate plots. There are 41,400 such plots inside the boundaries (Ibri 10,424), shared equally per plot (8 Nov).
+- **Growth lands only on W14's home-shaped empty plots** (rule 9; engineer, 2026-11-16: large or non-square plots take no growth). That means 200–2,000 m², compact ≥ 0.6, aspect ≤ 3, and no groves, industrial, heritage or estate plots. There are 43,238 such plots inside the boundaries (Ibri 11,019), shared equally per plot (8 Nov).
+  - **Upper limit raised from 1,000 to 2,000 m²** (engineer, 2026-11-16, after the check maps). It adds 1,838 growth plots. Of the 2,815 empty plots of 1,000–2,000 m², 1,983 pass; 456 are groves, 268 fail the shape test, and 108 are industrial or unmetered. Most large empty plots are over 2,000 m² (Bat 271 over 1,000 m², 106 of them up to 2,000).
   - W14's wider spread set of plots up to 2,000 m² would have put a house plot's share on 7,483 slivers and strips (median 80 m², 5,194 m³/d in 2071).
   - Existing plots keep their metered flow whatever their shape.
 - **The inactive network (R7 §6.2.5):** branches in planted areas, where ground levels are unreliable until the survey, and three small outlying catchments proposed for on-site treatment (absorption wells).
@@ -54,16 +55,18 @@ The results:
 ## Flow that does not enter the network (engineer, 2026-11-16)
 
 These plots are not carried, and their flow stays in the settlement totals:
-- **Inactive network (bad terrain):** a plot whose nearest manhole is inactive, as in W17 (963 plots with flow, the largest group in central Ibri).
-- **Farther than 200 m from the network:** a plot whose edge is more than 200 m from an active sewer, measured straight between manholes (2,818 plots with flow).
+- **Inactive network (bad terrain):** a plot whose nearest manhole is inactive, as in W17 (546 plots with flow in 2071, the largest group in central Ibri).
+- **Farther than 200 m from the network:** a plot whose edge is more than 200 m from an active sewer, measured straight between manholes (1,766 plots with flow in 2071).
 - **Outside its settlement boundary (no flow at all):** 5,907 plots lie outside their redrawn settlement boundary, which sits inside the project boundary. They take no flow, and the settlement's flow is shared by the plots inside it (engineer, 2026-11-16). Ibri's future home plots come to 13,119, against 13,120 in the team's count.
 
 | m³/d | 2031 | 2056 | 2071 |
 |---|---|---|---|
-| Inactive network | 516 | 628 | 673 |
-| Farther than 200 m | 168 | 435 | 663 |
-| Not carried | 684 | 1,064 | 1,336 |
-| Carried (before infiltration) | 22,400 | 37,957 | 47,522 |
+| Inactive network | 519 | 648 | 699 |
+| Farther than 200 m | 171 | 457 | 701 |
+| Not carried | 690 | 1,105 | 1,400 |
+| Carried (before infiltration) | 22,394 | 37,915 | 47,458 |
+
+With the 1,000 m² limit these were 684 / 1,064 / 1,336 not carried and 22,400 / 37,957 / 47,522 carried; job 069 and the SC1 run (job 070) hold those loads.
 
 **These values go into the report, with a map of the plots in the two categories.**
 - Layer: `gis/not_carried_plots.gpkg`.
@@ -77,7 +80,7 @@ Model loading:
 
 ## SC1 designed for 2056 (final loads) and the slope check
 
-**SC1 designed for 2056 on the final loads (job 070):**
+**SC1 designed for 2056 (job 070), on the loads with the 1,000 m² growth limit** (the 2,000 m² loads carry 42 m³/d less in 2056; the model is not yet reloaded):
 - **The design:** it converged in 4 passes; every pipe is laid at its Table 11 floor; the plant inlet at O1 is 10.0 m deep; 316 manholes are over 12 m.
 - **The 2031 check:** of the pipes above DN200 (151.8 km), 9.7 % reach 0.75 m/s.
 - **Steepening to reach 0.75 m/s, by slope limit** (check run `W18…/py/selfcleansing_slope.py`, maps `img/depth_SC1-2056_*.png`):

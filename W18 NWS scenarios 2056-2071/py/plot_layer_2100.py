@@ -49,14 +49,16 @@ assert set(pop) == set(cap) and len(pop) == 25
 g = pyogrio.read_dataframe(PLOTS, columns=["PLOT_NO", "SETTLE", "STATUS", "CADASTRE", "USE", "AREA_M2", "Q_2024"])
 g["S"] = g.SETTLE.str.strip().str.upper()
 w14 = pyogrio.read_dataframe(W14P, columns=["AREA_M2", "Classes", "G_DOM", "G_NDOM", "G_GOV", "G_SPEC", "G_AGR", "POP",
-                                            "S_SPEC", "SPREAD_W", "HOMESHAPE"], read_geometry=False)
+                                            "S_SPEC", "SPREAD_W", "HOMESHAPE", "COMPACT", "ASPECT"], read_geometry=False)
 assert len(w14) == len(g) and np.allclose(w14.AREA_M2.values, g.AREA_M2.values, atol=0.01)
 sb = pyogrio.read_dataframe(SETTLE_SHP, columns=["SETTLE"]); sb["S"] = sb.SETTLE.str.strip().str.upper()
 poly = dict(zip(sb.S, sb.geometry.values))
 cent = g.geometry.centroid.values
 inside = np.array([bool(shapely.contains(poly[s], c)) for s, c in zip(g.S, cent)])
 spec_all = w14.S_SPEC.values
-spread = (w14.SPREAD_W.values > 0) & (w14.HOMESHAPE.values == 1)
+# the growth-plot test of nws_loads.py: upper limit 2,000 m2 since 2026-11-16 (was W14's 1,000)
+HOME_LO, HOME_HI = 200.0, 2000.0
+spread = (w14.SPREAD_W.values > 0) & ((w14.AREA_M2 >= HOME_LO) & (w14.AREA_M2 <= HOME_HI) & (w14.COMPACT >= 0.6) & (w14.ASPECT <= 3)).values
 pl = pd.read_csv(os.path.join(LOADS, "plot_loads.csv"), index_col="FID")
 assert len(pl) == len(g) and (pl.SETTLE.values == g.SETTLE.values).all()
 
@@ -181,7 +183,7 @@ F = [f"# {NAME} - field dictionary", "",
      "| PROP_FUT | dwellings added on the plot by 2100: people added / 4.8 | properties |",
      "| PROPS | PROP_EX + PROP_FUT | properties |",
      "| IN_BOUND | 1 = centroid inside its own settlement's boundary; 0 = outside, takes no people and no flow | |",
-     "| GROWTH | 1 = growth plot: empty, home-shaped (200-1,000 m2, compact, not a strip), not grove, industrial, heritage or estate, inside its boundary | |",
+     "| GROWTH | 1 = growth plot: empty, home-shaped (200-2,000 m2, compact, not a strip), not grove, industrial, heritage or estate, inside its boundary | |",
      "| NETWORK | connected; inactive manhole (planted areas, outlying catchments); over 200 m from a sewer - the last two are not carried by the network | |",
      "| MH_W18 | manhole the plot loads in the model | |",
      "| POP_yyyy | residents on the plot, every year 2026-2100 | people |",

@@ -4,12 +4,12 @@
 
 W18 loads corrected the same day against the earlier decisions:
 - **The estates are additive** (W14 rule 4: 316.4 m³/d).
-- **Growth goes only on W14's home-shaped empty plots**, equal per plot (41,400 plots; large or non-square plots take none), and only inside the plot's own settlement boundary.
-- **Not carried:** plots on the inactive network (planted areas and outlying catchments, as in R7) and plots more than 200 m from an active sewer. That comes to 684 m³/d in 2031, 1,064 in 2056 and 1,336 in 2071, shown on a map in the report.
-- **Carried:** 22,400, 37,957 and 47,522 m³/d before infiltration.
+- **Growth goes only on W14's home-shaped empty plots**, equal per plot, and only inside the plot's own settlement boundary. The upper area limit is 2,000 m² (raised from W14's 1,000 by the engineer after the check maps): 43,238 plots, 1,838 more than at 1,000; plots over 2,000 m² or non-square take none.
+- **Not carried:** plots on the inactive network (planted areas and outlying catchments, as in R7) and plots more than 200 m from an active sewer. That comes to 690 m³/d in 2031, 1,105 in 2056 and 1,400 in 2071, shown on a map in the report (684 / 1,064 / 1,336 at the 1,000 m² limit).
+- **Carried:** 22,394, 37,915 and 47,458 m³/d before infiltration.
 - **The model:** the year loads go into the six existing year alternatives (job 067 proved the loading), and SC1 at 2056 is under way.
 
-**SC1 designed for 2056 on the final loads (job 070):**
+**SC1 designed for 2056 (job 070), on the loads with the 1,000 m² limit** (37,957 m³/d carried in 2056, 42 more than now; the model is not yet reloaded):
 - **The design:** it converged in 4 passes; every pipe is laid at its Table 11 floor; the plant inlet at O1 is 10.0 m deep; 316 manholes are over 12 m.
 - **The 2031 check:** of the pipes above DN200 (151.8 km), 9.7 % reach 0.75 m/s.
 - **Steepening to reach 0.75 m/s, by slope limit** (check run `W18…/py/selfcleansing_slope.py`, maps `img/depth_SC1-2056_*.png`):

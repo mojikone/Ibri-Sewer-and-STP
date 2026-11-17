@@ -24,7 +24,7 @@ is shared equally by the growth plots. The two industrial estates (316.4 m3/d) a
 | PROP_FUT | dwellings added on the plot by 2100: people added / 4.8 | properties |
 | PROPS | PROP_EX + PROP_FUT | properties |
 | IN_BOUND | 1 = centroid inside its own settlement's boundary; 0 = outside, takes no people and no flow | |
-| GROWTH | 1 = growth plot: empty, home-shaped (200-1,000 m2, compact, not a strip), not grove, industrial, heritage or estate, inside its boundary | |
+| GROWTH | 1 = growth plot: empty, home-shaped (200-2,000 m2, compact, not a strip), not grove, industrial, heritage or estate, inside its boundary | |
 | NETWORK | connected; inactive manhole (planted areas, outlying catchments); over 200 m from a sewer - the last two are not carried by the network | |
 | MH_W18 | manhole the plot loads in the model | |
 | POP_yyyy | residents on the plot, every year 2026-2100 | people |

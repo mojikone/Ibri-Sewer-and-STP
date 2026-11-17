@@ -1,6 +1,7 @@
 """W18 check maps (engineer, 2026-11-16): one settlement per map, plots filled by their average flow in a blue
 gradient, existing plots outlined red, the area labelled on every plot over 1,000 m2 - to judge the shape and area
-limits of the growth plots (200-1,000 m2, compact >= 0.6, aspect <= 3). Reads gis/W18_plots_2026_2100.shp.
+limits of the growth plots (200-2,000 m2 since 2026-11-16, was 1,000; compact >= 0.6, aspect <= 3).
+Reads gis/W18_plots_2026_2100.shp.
 Usage: python map_plot_flows.py <year> <settlement> [<settlement> ...]"""
 import os, sys
 import numpy as np, pandas as pd, pyogrio
@@ -136,7 +137,7 @@ for s in names:
     fut = d.STATUS == "Future"
     rows = [["Plots: existing / empty", f"{int(ex.sum()):,} / {int(fut.sum()):,}"],
             ["Growth plots", f"{int(d.GROWTH.sum()):,}"],
-            ["Empty > 1,000 m², no growth", f"{int((fut & (d.AREA_M2 > 1000)).sum()):,}"],
+            ["Empty > 2,000 m², no growth", f"{int((fut & (d.AREA_M2 > 2000)).sum()):,}"],
             ["Empty < 200 m², no growth", f"{int((fut & (d.AREA_M2 < 200)).sum()):,}"],
             ["Empty, outside boundary", f"{int((fut & (d.IN_BOUND == 0)).sum()):,}"],
             [f"Flow {year}: existing / growth", f"{d.loc[ex, q].sum():,.1f} / {d.loc[d.GROWTH == 1, q].sum():,.1f} m³/d"],
