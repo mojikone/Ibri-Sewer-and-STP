@@ -25,6 +25,7 @@ W18 loads corrected the same day against the earlier decisions:
 - **In 2100:** 341,193 residents and 58,670 m³/d.
 - **Full years:** 8 settlements fill by 2100, each in the team's year.
 - Check maps of plot flow, five settlements (2056): `img/plotflow_2056_*.png`, with A3 detail sheets at 1:5,000 so every plot over 1,000 m² has a readable area label, in `img/plotflow_2056_*.pdf` (`py/map_plot_flows.py`), for the engineer to judge the growth-plot shape and area limits.
+- Odd-plot check maps (proposal: growth on every future residential plot except odd ones, under 200 m² or narrower than 10 m): `img/oddplots_*.pdf` (`py/map_odd_plots.py`), Ibri and the five settlements, overview plus A3 sheets at 1:5,000, every odd plot circled and labelled. Ibri: 13,119 future residential plots, 1,203 under 200 m², 35 narrower than 10 m, 465 groves; 11,416 would take growth with groves out (11,881 with groves).
 
 **2026-10-12: the own flow and population of the 24 subnetworks at every five years** are in `W17/results/subnetwork_flows_by_year.xlsx` (`W17/py/subnetwork_flows.py`), for the team's plant and station sizing: average dry-weather m³/d per subnetwork without transfers or peaking, infiltration separate, reconciled with the model's loads. R7 remains the live report.
 

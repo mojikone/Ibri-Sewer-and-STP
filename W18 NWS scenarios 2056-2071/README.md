@@ -42,6 +42,7 @@ The results:
   - Al Akheedar: 3.65 per plot by 2100 (71 plots, against the team's 108; 5.9 on 44 plots under the 1,000 m² limit).
   - Ash Shiab: 2.44 per plot (17 plots, against 60).
 - Check maps of plot flow, five settlements (2056): `img/plotflow_2056_*.png`, with A3 detail sheets at 1:5,000 so every plot over 1,000 m² has a readable area label, in `img/plotflow_2056_*.pdf` (`py/map_plot_flows.py`), for the engineer to judge the growth-plot shape and area limits.
+- Odd-plot check maps (proposal: growth on every future residential plot except odd ones, under 200 m² or narrower than 10 m): `img/oddplots_*.pdf` (`py/map_odd_plots.py`), Ibri and the five settlements, overview plus A3 sheets at 1:5,000, every odd plot circled and labelled. Ibri: 13,119 future residential plots, 1,203 under 200 m², 35 narrower than 10 m, 465 groves; 11,416 would take growth with groves out (11,881 with groves).
 
 ## Earlier rules kept (checked 2026-11-16 at the engineer's request)
 
