@@ -74,12 +74,15 @@ p["SPEC"] = w14.S_SPEC.values
 # team's capacity counts), 200-3,000 m2, not odd-shaped (W14's test: compact >= 0.6, aspect <= 3), not agricultural
 # (zoned so, or a grove on W14's satellite test), not heritage, industrial or an estate. It replaces W14's spread set,
 # which stopped at 2,000 m2 and put growth on 1,197 plots zoned commercial or agricultural.
+# Zoning ignored (engineer, 2026-11-17: "I am not sure the proposed plot use are correct ... treat all receiving plots
+# the same"): any future zoning qualifies - residential, commercial, proposed - except agricultural (the engineer's rule),
+# Tourism (MoHUP's class for the heritage plots, W14 rule 9e) and Industrial (the estates carry their own load).
 HOME_LO, HOME_HI = 200.0, 3000.0
 home = lambda w, hi: (w.AREA_M2 >= HOME_LO) & (w.AREA_M2 <= hi) & (w.COMPACT >= 0.6) & (w.ASPECT <= 3)
 assert (home(w14, 1000.0).astype(int) == w14.HOMESHAPE).all()
-zoned_res = w14.Classes.isin(["Residential", "Residential-Commercial"])
+zoned_ok = ~w14.Classes.isin(["Agricultural", "Tourism", "Industrial"])
 excluded = w14.DERIVED.isin(["Agricultural", "Industrial", "Heritage"]) | w14.ESTATE.notna()
-p["SPREAD"] = (zoned_res & home(w14, HOME_HI) & ~excluded).values
+p["SPREAD"] = (zoned_ok & home(w14, HOME_HI) & ~excluded).values
 
 rows, out = [], {f"Q_{y}": np.zeros(len(p)) for y in YEARS}
 for s in sorted(pop):

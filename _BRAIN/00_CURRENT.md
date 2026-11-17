@@ -4,9 +4,9 @@
 
 W18 loads corrected the same day against the earlier decisions:
 - **The estates are additive** (W14 rule 4: 316.4 m³/d).
-- **Growth plots (engineer, 2026-11-17):** a future plot **zoned residential** (as the team counts), inside its settlement boundary, **200–3,000 m²**, **not odd-shaped** (compact ≥ 0.6, length ≤ 3 × width), **not agricultural** (zoned so, or a grove on the satellite test), and not heritage, industrial or an estate. Equal share per plot. **42,567 plots** (Ibri 10,903); it replaced W14's home-shaped set (200–1,000, then 200–2,000 m², 43,238 plots).
-- **Not carried:** plots on the inactive network (planted areas and outlying catchments, as in R7) and plots more than 200 m from an active sewer. That comes to 693 m³/d in 2031, 1,128 in 2056 and 1,435 in 2071, shown on a map in the report (684 / 1,064 / 1,336 on the loads the model holds).
-- **Carried:** 22,391, 37,892 and 47,423 m³/d before infiltration.
+- **Growth plots (engineer, 2026-11-17):** a future plot of **any zoning** (the planning layer's proposed uses are not trusted, so residential, commercial and proposed plots count alike), inside its settlement boundary, **200–3,000 m²**, **not odd-shaped** (compact ≥ 0.6, length ≤ 3 × width), and **not agricultural** (zoned so, or a grove on the satellite test), heritage (zoned Tourism), industrial or an estate. Equal share per plot. **43,230 plots** (Ibri 11,053); it replaced W14's home-shaped set (200–1,000, then 200–2,000 m², 43,238 plots).
+- **Not carried:** plots on the inactive network (planted areas and outlying catchments, as in R7) and plots more than 200 m from an active sewer. That comes to 693 m³/d in 2031, 1,128 in 2056 and 1,434 in 2071, shown on a map in the report (684 / 1,064 / 1,336 on the loads the model holds).
+- **Carried:** 22,391, 37,892 and 47,424 m³/d before infiltration.
 - **The model:** the year loads go into the six existing year alternatives (job 067 proved the loading), and SC1 at 2056 is under way.
 
 **SC1 designed for 2056 (job 070), on the loads with the 1,000 m² limit** (37,957 m³/d carried in 2056, 65 more than now; the model is not yet reloaded):

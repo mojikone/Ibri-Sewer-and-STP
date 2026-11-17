@@ -1,5 +1,5 @@
 """W18 check maps: which future plots take growth, and why the others do not. The rule (engineer, 2026-11-17): a growth
-plot is a future plot zoned residential, inside its settlement boundary, 200-3,000 m2, not odd-shaped (compact >= 0.6,
+plot is a future plot of any zoning (the zoning is not trusted) except agricultural, heritage (Tourism) or industrial, inside its settlement boundary, 200-3,000 m2, not odd-shaped (compact >= 0.6,
 aspect <= 3) and not agricultural (zoned so, or a grove on W14's satellite test); heritage, industrial and estate plots
 take none. "Takes growth" is read from the plot layer's GROWTH field (set by py/nws_loads.py), not recomputed.
 One PDF per settlement: overview with numbered sheet frames, then A3 sheets at 1:5,000 over the odd plots (under 200 m2
@@ -30,7 +30,7 @@ w14 = pyogrio.read_dataframe(os.path.join(W18, "..", "W14", "shp", "PLOTS_load.s
 assert len(w14) == len(p)
 p["S"] = p.SETTLE.str.strip().str.upper()
 fut_in = ((p.STATUS == "Future") & (p.IN_BOUND == 1)).values
-p["FUTRES"] = fut_in & p.MOH_USE.isin(["Residential", "Residential-Commercial"]).values
+p["FUTRES"] = fut_in & ~p.MOH_USE.isin(["Agricultural", "Tourism", "Industrial"]).values   # candidates: zoning ignored
 p["AGRI"] = fut_in & ((w14.DERIVED == "Agricultural").values | (p.MOH_USE == "Agricultural").values)
 p["ODDSHAPE"] = ((w14.COMPACT < 0.6) | (w14.ASPECT > 3)).values
 sb = pyogrio.read_dataframe(os.path.join(W18, "..", "W14", "shp", "Settlements_merged.shp"), columns=["SETTLE"])
@@ -43,7 +43,7 @@ team_c = {md.cell(r, 1).value.strip().upper(): md.cell(r, 3).value for r in rang
 CATS = [("existing plot", "#d9d9d9"), ("takes growth", "#9ecae1"),
         ("OUT: agricultural (zoned, or grove)", "#a1d99b"), ("OUT: under 200 m²", "#d62728"),
         ("OUT: odd shape", "#ff7f0e"), ("OUT: over 3,000 m²", "#bcbddc"),
-        ("other: not residential / outside / heritage", "white")]
+        ("other: outside / heritage / industrial", "white")]
 RING = (3, 4)
 HAND = [Patch(fc=c, ec="#9e9e9e", label=l) for l, c in CATS] + [
     plt.Line2D([], [], ls="", marker="o", ms=9, mfc="none", mec="#d62728", mew=1.2, label="under 200 m² or odd shape, circled"),
@@ -105,7 +105,7 @@ def locator(fig, d, tiles, k):
 
 
 os.makedirs(os.path.join(W18, "img"), exist_ok=True)
-TITLE = "which future plots take growth (zoned residential, 200-3,000 m², not odd-shaped, not agricultural)"
+TITLE = "which future plots take growth (any zoning, 200-3,000 m², not odd-shaped, not agricultural)"
 for s in names:
     d = p[p.S == s].copy(); assert len(d), s
     agri = d.AGRI
@@ -116,7 +116,7 @@ for s in names:
     d["CAT"] = np.select([d.STATUS == "Existing", take, agri, small, odd, big], [0, 1, 2, 3, 4, 5], 6)
     tiles, alone = sheets(d)
     rows = [["Team's future residential plots", f"{team_c.get(s, 0):,}"],
-            ["Future plots zoned residential, in the layer", f"{int(d.FUTRES.sum()):,}"],
+            ["Future plots inside, any zoning but agri./heritage/ind.", f"{int(d.FUTRES.sum()):,}"],
             ["Out: agricultural (zoned, or grove)", f"{int(agri.sum()):,}"],
             ["Out: under 200 m²", f"{int(small.sum()):,}"],
             ["Out: odd shape (compact < 0.6 or aspect > 3)", f"{int(odd.sum()):,}"],

@@ -1,6 +1,6 @@
 """W18 check maps (engineer, 2026-11-16): one settlement per map, plots filled by their average flow in a blue
 gradient, existing plots outlined red, the area labelled on every plot over 1,000 m2 - to judge the shape and area
-limits of the growth plots (since 2026-11-17: zoned residential, 200-3,000 m2, compact >= 0.6, aspect <= 3, not agricultural).
+limits of the growth plots (since 2026-11-17: any zoning but agricultural, heritage or industrial, 200-3,000 m2, compact >= 0.6, aspect <= 3).
 Reads gis/W18_plots_2026_2100.shp.
 Usage: python map_plot_flows.py <year> <settlement> [<settlement> ...]"""
 import os, sys
