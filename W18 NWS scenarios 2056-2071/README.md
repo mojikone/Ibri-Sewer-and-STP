@@ -35,20 +35,21 @@ The fields are listed in `gis/W18_plots_2026_2100_fields.md`, and the checks are
 - **Size:** the raw shapefile (a 145 MB .dbf) is over GitHub's limit, so the repo holds the 9 MB zip. Rebuild with `python py/plot_layer_2100.py`.
 
 The results:
-- **Totals in 2100:** 341,193 residents and 58,670 m³/d, of which 56,691 m³/d is carried.
+- **Totals in 2100:** 341,193 residents and 58,670 m³/d, of which 56,641 m³/d is carried.
 - **Full years:** 8 settlements fill by 2100, each in the same year as the team's sheet (Ibri 2064, Bat 2074, Al Araqi 2077, Al Aynayn 2078, Ad Dariz 2081, Hijar 2084, Satwah 2086, Al Wahrah 2095). The other 17 do not fill by 2100.
-- **Dwellings per growth plot:** the team's capacity counts all future residential plots (Ibri 13,120), but growth lands only on the home-shaped ones (Ibri 11,019). Each growth plot therefore takes more:
-  - Ibri: 1.51 dwellings per plot when full, against the team's 1.48.
-  - Al Akheedar: 3.65 per plot by 2100 (71 plots, against the team's 108; 5.9 on 44 plots under the 1,000 m² limit).
-  - Ash Shiab: 2.44 per plot (17 plots, against 60).
+- **Properties per growth plot:** the team's capacity counts all future residential plots (Ibri 13,120), but growth lands only on the growth plots (Ibri 10,903). Each growth plot therefore takes more:
+  - Ibri: 1.53 properties per plot when full, against the team's 1.48.
+  - Al Akheedar: 3.46 per plot by 2100 (75 plots, against the team's 108).
+  - Ash Shiab: 2.31 per plot (18 plots, against 60; 37 of the team's 60 are under 200 m²).
 - Check maps of plot flow, five settlements (2056): `img/plotflow_2056_*.png`, with A3 detail sheets at 1:5,000 so every plot over 1,000 m² has a readable area label, in `img/plotflow_2056_*.pdf` (`py/map_plot_flows.py`), for the engineer to judge the growth-plot shape and area limits.
-- Odd-plot check maps (proposal: growth on every future residential plot except odd ones, under 200 m² or narrower than 10 m): `img/oddplots_*.pdf` (`py/map_odd_plots.py`), Ibri and the five settlements, overview plus A3 sheets at 1:5,000, every odd plot circled and labelled. Ibri: 13,119 future residential plots, 1,203 under 200 m², 35 narrower than 10 m, 465 groves; 11,416 would take growth with groves out (11,881 with groves).
+- Growth-plot check maps: `img/oddplots_*.pdf` (`py/map_odd_plots.py`), Ibri and the five settlements, overview plus A3 sheets at 1:5,000: every future plot coloured by why it takes growth or not (agricultural, under 200 m², odd shape, over 3,000 m²), the small and odd ones circled and labelled with their area. Ibri: 13,119 zoned residential; out 1,203 under 200 m², 214 odd-shaped, 334 over 3,000 m², 465 groves; 10,903 take growth.
 
 ## Earlier rules kept (checked 2026-11-16 at the engineer's request)
 
 - **W14 rule 4: the industrial estates are additive.** 6,300 workers × 93 L/d × 0.54 = **316.4 m³/d**, on their plots, outside the per-capita volume (doctrine 1b). The plot flow is the team's sheet plus 316.4.
-- **Growth lands only on W14's home-shaped empty plots** (rule 9; engineer, 2026-11-16: large or non-square plots take no growth). That means 200–2,000 m², compact ≥ 0.6, aspect ≤ 3, and no groves, industrial, heritage or estate plots. There are 43,238 such plots inside the boundaries (Ibri 11,019), shared equally per plot (8 Nov).
-  - **Upper limit raised from 1,000 to 2,000 m²** (engineer, 2026-11-16, after the check maps). It adds 1,838 growth plots. Of the 2,815 empty plots of 1,000–2,000 m², 1,983 pass; 456 are groves, 268 fail the shape test, and 108 are industrial or unmetered. Most large empty plots are over 2,000 m² (Bat 271 over 1,000 m², 106 of them up to 2,000).
+- **The growth plots (engineer, 2026-11-17: "the limit is 200 to 3000 m2; proposed agriculture lands out; all odd shape plots out"):** a future plot **zoned residential** (as the team counts), inside its settlement boundary, **200–3,000 m²**, **not odd-shaped** (compact ≥ 0.6, length ≤ 3 × width), **not agricultural** (zoned so, or a grove on the satellite test), and not heritage, industrial or an estate. There are **42,567** (Ibri 10,903), shared equally per plot (8 Nov). This replaces W14's spread set, which stopped at 2,000 m² and put growth on 1,197 plots zoned commercial or agricultural.
+  - Before (2026-11-16): W14's home-shaped plots, 200–1,000 m², then 200–2,000 m² (43,238 plots).
+  - **The 2,000 m² step (2026-11-16, superseded the next day)** It adds 1,838 growth plots. Of the 2,815 empty plots of 1,000–2,000 m², 1,983 pass; 456 are groves, 268 fail the shape test, and 108 are industrial or unmetered. Most large empty plots are over 2,000 m² (Bat 271 over 1,000 m², 106 of them up to 2,000).
   - W14's wider spread set of plots up to 2,000 m² would have put a house plot's share on 7,483 slivers and strips (median 80 m², 5,194 m³/d in 2071).
   - Existing plots keep their metered flow whatever their shape.
 - **The inactive network (R7 §6.2.5):** branches in planted areas, where ground levels are unreliable until the survey, and three small outlying catchments proposed for on-site treatment (absorption wells).
@@ -56,16 +57,16 @@ The results:
 ## Flow that does not enter the network (engineer, 2026-11-16)
 
 These plots are not carried, and their flow stays in the settlement totals:
-- **Inactive network (bad terrain):** a plot whose nearest manhole is inactive, as in W17 (546 plots with flow in 2071, the largest group in central Ibri).
-- **Farther than 200 m from the network:** a plot whose edge is more than 200 m from an active sewer, measured straight between manholes (1,766 plots with flow in 2071).
+- **Inactive network (bad terrain):** a plot whose nearest manhole is inactive, as in W17 (554 plots with flow in 2071, the largest group in central Ibri).
+- **Farther than 200 m from the network:** a plot whose edge is more than 200 m from an active sewer, measured straight between manholes (1,784 plots with flow in 2071).
 - **Outside its settlement boundary (no flow at all):** 5,907 plots lie outside their redrawn settlement boundary, which sits inside the project boundary. They take no flow, and the settlement's flow is shared by the plots inside it (engineer, 2026-11-16). Ibri's future home plots come to 13,119, against 13,120 in the team's count.
 
 | m³/d | 2031 | 2056 | 2071 |
 |---|---|---|---|
-| Inactive network | 519 | 648 | 699 |
-| Farther than 200 m | 171 | 457 | 701 |
-| Not carried | 690 | 1,105 | 1,400 |
-| Carried (before infiltration) | 22,394 | 37,915 | 47,458 |
+| Inactive network | 520 | 656 | 710 |
+| Farther than 200 m | 173 | 472 | 725 |
+| Not carried | 693 | 1,128 | 1,435 |
+| Carried (before infiltration) | 22,391 | 37,892 | 47,423 |
 
 With the 1,000 m² limit these were 684 / 1,064 / 1,336 not carried and 22,400 / 37,957 / 47,522 carried; job 069 and the SC1 run (job 070) hold those loads.
 

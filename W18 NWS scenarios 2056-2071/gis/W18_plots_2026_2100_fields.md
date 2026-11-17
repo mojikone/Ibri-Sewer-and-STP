@@ -15,16 +15,16 @@ is shared equally by the growth plots. The two industrial estates (316.4 m3/d) a
 | STATUS | Existing (built or metered in 2024) or Future (empty) | |
 | LANDUSE | plot use: Residential, Residential-Commercial, Commercial, Government, Industrial, Agricultural, Heritage, Empty (unmetered) - from the meters on the plot, farms by meter or satellite grove test | |
 | MOH_USE | MoH planned use of the plot | |
-| M_DOM | dwelling meters (primary, subsidised and additional tariffs) | meters |
+| M_DOM | domestic meters (primary, subsidised and additional tariffs) | meters |
 | M_COM | commercial meters (shops, offices; large users identified as commercial) | meters |
 | M_GOV | government meters (including large users identified as government) | meters |
 | M_SPEC | special meters (the two industrial estates) | meters |
 | M_AGR | farm meters (no sewage load) | meters |
-| PROP_EX | existing dwellings, 2024 (= M_DOM) | properties |
-| PROP_FUT | dwellings added on the plot by 2100: people added / 4.8 | properties |
+| PROP_EX | existing properties, 2024 (= M_DOM) | properties |
+| PROP_FUT | properties added on the plot by 2100: people added / 4.8 | properties |
 | PROPS | PROP_EX + PROP_FUT | properties |
 | IN_BOUND | 1 = centroid inside its own settlement's boundary; 0 = outside, takes no people and no flow | |
-| GROWTH | 1 = growth plot: empty, home-shaped (200-2,000 m2, compact, not a strip), not grove, industrial, heritage or estate, inside its boundary | |
+| GROWTH | 1 = growth plot: future, zoned residential, 200-3,000 m2, not odd-shaped (compact >= 0.6, aspect <= 3), not agricultural (zoned or grove), heritage, industrial or estate, inside its boundary | |
 | NETWORK | connected; inactive manhole (planted areas, outlying catchments); over 200 m from a sewer - the last two are not carried by the network | |
 | MH_W18 | manhole the plot loads in the model | |
 | POP_yyyy | residents on the plot, every year 2026-2100 | people |

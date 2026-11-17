@@ -60,7 +60,7 @@ p["INSIDE"] = [bool(shapely.contains(poly[s], c)) for s, c in zip(p.S, cent)]
 #  rule 9d - growth lands only on W14's spread set: empty plots up to 2,000 m2, not grove, industrial, heritage or
 #            estate (SPREAD_W > 0); 9e heritage takes nothing. The weighting is now equal per plot (8 Nov, NWS), no
 #            longer W14's area capped at 1,000 m2.
-w14 = pyogrio.read_dataframe(os.path.join(W18, "..", "W14", "shp", "PLOTS_load.shp"), columns=["AREA_M2", "SPREAD_W", "S_SPEC", "HOMESHAPE", "COMPACT", "ASPECT"], read_geometry=False)
+w14 = pyogrio.read_dataframe(os.path.join(W18, "..", "W14", "shp", "PLOTS_load.shp"), columns=["AREA_M2", "SPREAD_W", "S_SPEC", "HOMESHAPE", "COMPACT", "ASPECT", "Classes", "DERIVED", "ESTATE"], read_geometry=False)
 assert len(w14) == len(p) and np.allclose(w14.AREA_M2.values, pyogrio.read_dataframe(PLOTS, columns=["AREA_M2"], read_geometry=False).AREA_M2.values, atol=0.01)
 p["SPEC"] = w14.S_SPEC.values
 # Growth only on HOME-SHAPED empty plots (engineer, 2026-11-16: large or non-square plots take no growth): W14 rule 9,
@@ -69,10 +69,17 @@ p["SPEC"] = w14.S_SPEC.values
 # Upper limit raised from 1,000 to 2,000 m2 (engineer, 2026-11-16, after the plot-flow check maps; 2,000 m2 is also the
 # ceiling of W14's spread set). The test is W14's (plot_class_v2_apply.py), rebuilt here from its COMPACT and ASPECT
 # fields; with 1,000 m2 it reproduces W14's HOMESHAPE plot for plot.
-HOME_LO, HOME_HI = 200.0, 2000.0
+# THE RULE NOW (engineer, 2026-11-17: "the limit is 200 to 3000 m2; proposed agriculture lands out; all odd shape plots
+# out"): a growth plot is a future plot ZONED residential by MoHUP (Residential or Residential-Commercial, the plots the
+# team's capacity counts), 200-3,000 m2, not odd-shaped (W14's test: compact >= 0.6, aspect <= 3), not agricultural
+# (zoned so, or a grove on W14's satellite test), not heritage, industrial or an estate. It replaces W14's spread set,
+# which stopped at 2,000 m2 and put growth on 1,197 plots zoned commercial or agricultural.
+HOME_LO, HOME_HI = 200.0, 3000.0
 home = lambda w, hi: (w.AREA_M2 >= HOME_LO) & (w.AREA_M2 <= hi) & (w.COMPACT >= 0.6) & (w.ASPECT <= 3)
 assert (home(w14, 1000.0).astype(int) == w14.HOMESHAPE).all()
-p["SPREAD"] = (w14.SPREAD_W.values > 0) & home(w14, HOME_HI).values
+zoned_res = w14.Classes.isin(["Residential", "Residential-Commercial"])
+excluded = w14.DERIVED.isin(["Agricultural", "Industrial", "Heritage"]) | w14.ESTATE.notna()
+p["SPREAD"] = (zoned_res & home(w14, HOME_HI) & ~excluded).values
 
 rows, out = [], {f"Q_{y}": np.zeros(len(p)) for y in YEARS}
 for s in sorted(pop):
@@ -141,7 +148,8 @@ p["MH_ACTIVE"] = allnodes.loc[p.MH_W18, "active"].values.astype(bool)
 p["WHY_OUT"] = np.where(~p.MH_ACTIVE, "inactive manhole", np.where(p.D_PIPE > NO_NETWORK_M, "over 200 m from a sewer", ""))
 p["CARRIED"] = p.WHY_OUT == ""
 
-p[["SETTLE", "STATUS", "CADASTRE", "USE", "HMINNODE", "MH_W18", "MH_DIST", "D_PIPE", "WHY_OUT"] + qcols].to_csv(os.path.join(OUT, "plot_loads.csv"), index_label="FID", float_format="%.6f")
+p["GROWTH"] = ((p.STATUS == "Future") & p.INSIDE & p.SPREAD).astype(int)   # the growth plots, read by plot_layer_2100.py
+p[["SETTLE", "STATUS", "CADASTRE", "USE", "HMINNODE", "MH_W18", "MH_DIST", "D_PIPE", "WHY_OUT", "GROWTH"] + qcols].to_csv(os.path.join(OUT, "plot_loads.csv"), index_label="FID", float_format="%.6f")
 mh = p[p.CARRIED].groupby("MH_W18")[qcols].sum()
 assert set(mh.index) <= rowed
 out_tab = p[~p.CARRIED].groupby("WHY_OUT")[qcols].sum()

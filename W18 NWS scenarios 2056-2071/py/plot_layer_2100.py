@@ -4,13 +4,13 @@ load basis. The placement is py/nws_loads.py's, repeated for every year; the flo
 against results/loads/plot_loads.csv to 1e-6 m3/d.
 
 People are RESIDENTS. The settlement's people (team series, capped at its capacity) sit on the existing plots in the
-pattern of the W14 residents (POP: dwelling meters x the settlement's occupancy) up to the 2026 figure, and every person
+pattern of the W14 residents (POP: domestic meters x the settlement's occupancy) up to the 2026 figure, and every person
 above 2026 sits on the growth plots in equal shares - the same plots and shares that take the growth flow. So on a
 growth plot Q = people x 171.03 L/d exactly; on an existing plot the flow also carries the plot's shops, offices and
 the estates' workers, which are not residents.
 
-Properties: existing = dwelling meters 2024 (W14 G_DOM); future = the people added on the plot by 2100 / 4.8, the
-team's persons per dwelling (sheet 'MOHUP DATA - NA', column G = total properties x 4.8).
+Properties: existing = domestic meters 2024 (W14 G_DOM); future = the people added on the plot by 2100 / 4.8, the
+team's persons per property (sheet 'MOHUP DATA - NA', column G = total properties x 4.8).
 
 Writes gis/W18_plots_2026_2100.shp (+ .zip of it), gis/W18_plots_2026_2100_fields.md, results/loads/plot_layer_check.md
 Usage: python plot_layer_2100.py
@@ -43,7 +43,7 @@ cap = {md.cell(r, 1).value.strip().upper(): md.cell(r, 7).value for r in range(2
 team_full = {md.cell(r, 1).value.strip().upper(): md.cell(r, 8).value for r in range(2, md.max_row + 1)
              if md.cell(r, 1).value and md.cell(r, 1).value != "Total"}
 g2 = openpyxl.load_workbook(WB, data_only=False)["MOHUP DATA - NA"]["G2"].value
-assert str(g2).replace(" ", "") == "=F2*4.8", f"the team's persons per dwelling is no longer 4.8: {g2}"
+assert str(g2).replace(" ", "") == "=F2*4.8", f"the team's persons per property is no longer 4.8: {g2}"
 assert set(pop) == set(cap) and len(pop) == 25
 
 g = pyogrio.read_dataframe(PLOTS, columns=["PLOT_NO", "SETTLE", "STATUS", "CADASTRE", "USE", "AREA_M2", "Q_2024"])
@@ -56,11 +56,11 @@ poly = dict(zip(sb.S, sb.geometry.values))
 cent = g.geometry.centroid.values
 inside = np.array([bool(shapely.contains(poly[s], c)) for s, c in zip(g.S, cent)])
 spec_all = w14.S_SPEC.values
-# the growth-plot test of nws_loads.py: upper limit 2,000 m2 since 2026-11-16 (was W14's 1,000)
-HOME_LO, HOME_HI = 200.0, 2000.0
-spread = (w14.SPREAD_W.values > 0) & ((w14.AREA_M2 >= HOME_LO) & (w14.AREA_M2 <= HOME_HI) & (w14.COMPACT >= 0.6) & (w14.ASPECT <= 3)).values
 pl = pd.read_csv(os.path.join(LOADS, "plot_loads.csv"), index_col="FID")
 assert len(pl) == len(g) and (pl.SETTLE.values == g.SETTLE.values).all()
+# the growth plots are nws_loads.py's (its GROWTH column, 2026-11-17), so the rule lives in one place
+spread = pl.GROWTH.values.astype(bool)
+assert not (spread & ~inside).any() and (g.STATUS.values[spread] == "Future").all()
 
 Q = {y: np.zeros(len(g)) for y in YEARS}; P = {y: np.zeros(len(g)) for y in YEARS}
 growth = np.zeros(len(g), bool); rows = []
@@ -84,8 +84,8 @@ for s in sorted(pop):
             P[y] += res_w / res_w.sum() * Py
     rows.append(dict(settlement=s, growth_plots=n_t, people_2026=p26, people_2100=min(pop[s][2100], cap[s]),
                      capacity=cap[s], full_year=full or "not by 2100", team_full_year=team_full[s],
-                     dwellings_added_per_growth_plot_2100=(min(pop[s][2100], cap[s]) - p26) / n_t / OCC if n_t else np.nan,
-                     dwellings_per_growth_plot_when_full=(cap[s] - p26) / n_t / OCC if n_t else np.nan))
+                     properties_added_per_growth_plot_2100=(min(pop[s][2100], cap[s]) - p26) / n_t / OCC if n_t else np.nan,
+                     properties_per_growth_plot_when_full=(cap[s] - p26) / n_t / OCC if n_t else np.nan))
 st = pd.DataFrame(rows).set_index("settlement")
 
 # --- checks: the ten model years are nws_loads.py's flows; residents and flow sum to the settlements
@@ -146,17 +146,17 @@ L = [f"# W18 plot layer 2026-2100, check", "",
      f"{len(g):,} plots, {len(schema['properties'])} fields; residents and flow for {len(YEARS)} years ({YEARS[0]}-{YEARS[-1]}).",
      f"Flows of the model years 2026-2071 against results/loads/plot_loads.csv: largest difference {d_max:.2e} m3/d.",
      f"Residents and flow sum to the settlements every year (to 1e-6); after rounding in the file (5 decimals), residents within {rb:.2f} people and flow within {qb:.3f} m3/d of the totals.",
-     f"Growth plots: {int(growth.sum()):,}. Existing plots outside their settlement boundary with dwelling meters (no people, no flow): "
-     f"{int(ex_out.sum()):,} plots, {int(w14.G_DOM.values[ex_out].sum()):,} dwellings.", "",
+     f"Growth plots: {int(growth.sum()):,}. Existing plots outside their settlement boundary with domestic meters (no people, no flow): "
+     f"{int(ex_out.sum()):,} plots, {int(w14.G_DOM.values[ex_out].sum()):,} properties.", "",
      "| year | residents | flow m3/d | carried by the network m3/d |", "|---|---|---|---|"]
 car = out.NETWORK.values == "connected"
 for y in (2026, 2031, 2041, 2051, 2056, 2061, 2066, 2071, 2081, 2091, 2100):
     L.append(f"| {y} | {P[y].sum():,.0f} | {Q[y].sum():,.1f} | {Q[y][car].sum():,.1f} |")
-L += ["", "| settlement | growth plots | people 2026 | people 2100 | capacity | full (ours) | full (team sheet) | dwellings added per growth plot by 2100 | per growth plot when full |",
+L += ["", "| settlement | growth plots | people 2026 | people 2100 | capacity | full (ours) | full (team sheet) | properties added per growth plot by 2100 | per growth plot when full |",
       "|---|---|---|---|---|---|---|---|---|"]
 for s, r in st.iterrows():
     L.append(f"| {s} | {r.growth_plots:,} | {r.people_2026:,.0f} | {r.people_2100:,.0f} | {r.capacity:,.0f} | {r.full_year} | {r.team_full_year} | "
-             f"{r.dwellings_added_per_growth_plot_2100:.2f} | {r.dwellings_per_growth_plot_when_full:.2f} |")
+             f"{r.properties_added_per_growth_plot_2100:.2f} | {r.properties_per_growth_plot_when_full:.2f} |")
 open(os.path.join(LOADS, "plot_layer_check.md"), "w", encoding="utf-8").write("\n".join(L) + "\n")
 st.to_csv(os.path.join(LOADS, "plot_layer_settlements.csv"), float_format="%.4f")
 
@@ -174,16 +174,16 @@ F = [f"# {NAME} - field dictionary", "",
      "| STATUS | Existing (built or metered in 2024) or Future (empty) | |",
      "| LANDUSE | plot use: Residential, Residential-Commercial, Commercial, Government, Industrial, Agricultural, Heritage, Empty (unmetered) - from the meters on the plot, farms by meter or satellite grove test | |",
      "| MOH_USE | MoH planned use of the plot | |",
-     "| M_DOM | dwelling meters (primary, subsidised and additional tariffs) | meters |",
+     "| M_DOM | domestic meters (primary, subsidised and additional tariffs) | meters |",
      "| M_COM | commercial meters (shops, offices; large users identified as commercial) | meters |",
      "| M_GOV | government meters (including large users identified as government) | meters |",
      "| M_SPEC | special meters (the two industrial estates) | meters |",
      "| M_AGR | farm meters (no sewage load) | meters |",
-     "| PROP_EX | existing dwellings, 2024 (= M_DOM) | properties |",
-     "| PROP_FUT | dwellings added on the plot by 2100: people added / 4.8 | properties |",
+     "| PROP_EX | existing properties, 2024 (= M_DOM) | properties |",
+     "| PROP_FUT | properties added on the plot by 2100: people added / 4.8 | properties |",
      "| PROPS | PROP_EX + PROP_FUT | properties |",
      "| IN_BOUND | 1 = centroid inside its own settlement's boundary; 0 = outside, takes no people and no flow | |",
-     "| GROWTH | 1 = growth plot: empty, home-shaped (200-2,000 m2, compact, not a strip), not grove, industrial, heritage or estate, inside its boundary | |",
+     "| GROWTH | 1 = growth plot: future, zoned residential, 200-3,000 m2, not odd-shaped (compact >= 0.6, aspect <= 3), not agricultural (zoned or grove), heritage, industrial or estate, inside its boundary | |",
      "| NETWORK | connected; inactive manhole (planted areas, outlying catchments); over 200 m from a sewer - the last two are not carried by the network | |",
      "| MH_W18 | manhole the plot loads in the model | |",
      "| POP_yyyy | residents on the plot, every year 2026-2100 | people |",
