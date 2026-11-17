@@ -76,3 +76,8 @@ W17/report/R*/*_new.docx
 W17/presentation/base/
 W17/presentation/assets/
 W17/presentation/check/
+
+# W18 deliverable package (SewerGEMS model 300 MB) and the team's full MH workbook copy (their raw data):
+# rebuilt by py/package_w18_deliverable.py and py/mh_workbook_capacity.py
+W18 NWS scenarios 2056-2071/deliverables/
+W18 NWS scenarios 2056-2071/results/New Calculation MH - capacity.xlsx
