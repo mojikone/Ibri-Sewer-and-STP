@@ -9,7 +9,7 @@ QGZ = os.path.join(W18, "qgis", "W18_plot_flows.qgz")
 OUT = os.path.join(W18, "gis", "W18_plot_flows_QGIS.zip")
 TOP = "W18_plot_flows/"
 LAYERS = {"../gis/W18_plots_2026_2100.shp": os.path.join(W18, "gis", "W18_plots_2026_2100"),
-          "../../W14/shp/Settlements_merged.shp": os.path.join(W18, "..", "W14", "shp", "Settlements_merged")}
+          "../gis/W18_settlements_2026_2100.shp": os.path.join(W18, "gis", "W18_settlements_2026_2100")}
 
 src = zipfile.ZipFile(QGZ)
 qgs_name = next(n for n in src.namelist() if n.endswith(".qgs"))
@@ -31,10 +31,11 @@ with zipfile.ZipFile(OUT, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as z:
             f = base + ext
             if os.path.exists(f): z.write(f, TOP + "layers/" + os.path.basename(f))
     z.write(os.path.join(W18, "gis", "W18_plots_2026_2100_fields.md"), TOP + "W18_plots_2026_2100_fields.md")
+    z.write(os.path.join(W18, "gis", "W18_settlements_2026_2100_fields.md"), TOP + "W18_settlements_2026_2100_fields.md")
     z.writestr(TOP + "README.txt",
                "Open W18_plot_flows.qgz in QGIS 3.x (layers load from ./layers).\n"
                "Plots filled by average flow (m3/d per plot) in a blue gradient, darker = more; one year at a time (2031, 2056, 2071, 2100).\n"
                "Plots with no flow are empty. Existing plots outlined by land use; proposed plots outlined light grey.\n"
-               "Fields of the plot layer: W18_plots_2026_2100_fields.md. Basemap: Google satellite hybrid (web, needs internet).\n")
+               "Fields: W18_plots_2026_2100_fields.md and W18_settlements_2026_2100_fields.md. Basemap: Google satellite hybrid (web, needs internet).\n")
 print(OUT, round(os.path.getsize(OUT) / 1e6, 1), "MB")
 for i in zipfile.ZipFile(OUT).infolist(): print(f"  {i.filename}  {i.file_size / 1e6:.2f} MB")

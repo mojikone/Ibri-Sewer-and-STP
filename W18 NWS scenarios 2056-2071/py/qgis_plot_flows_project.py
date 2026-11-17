@@ -16,7 +16,7 @@ from qgis.PyQt.QtCore import QSize
 
 HERE = os.path.dirname(os.path.abspath(__file__)); W18 = os.path.dirname(HERE)
 PLOTS = os.path.join(W18, "gis", "W18_plots_2026_2100.shp")
-SETTLE = os.path.join(W18, "..", "W14", "shp", "Settlements_merged.shp")
+SETTLE = os.path.join(W18, "gis", "W18_settlements_2026_2100.shp")   # W18 settlement layer (py/settlements_2100.py)
 OUT = os.path.join(W18, "qgis", "W18_plot_flows.qgz")
 os.makedirs(os.path.dirname(OUT), exist_ok=True)
 
