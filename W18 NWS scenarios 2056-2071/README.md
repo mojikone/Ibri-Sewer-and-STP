@@ -41,7 +41,7 @@ The results:
   - Ibri: 1.60 dwellings per plot when full, against the team's 1.48.
   - Al Akheedar: 5.9 per plot by 2100 (44 plots, against the team's 108).
   - Ash Shiab: 3.5 per plot (12 plots, against 60).
-- Check maps of plot flow, five settlements (2056): `img/plotflow_2056_*.png` (`py/map_plot_flows.py`), for the engineer to judge the growth-plot shape and area limits.
+- Check maps of plot flow, five settlements (2056): `img/plotflow_2056_*.png`, with A3 detail sheets at 1:5,000 so every plot over 1,000 m² has a readable area label, in `img/plotflow_2056_*.pdf` (`py/map_plot_flows.py`), for the engineer to judge the growth-plot shape and area limits.
 
 ## Earlier rules kept (checked 2026-11-16 at the engineer's request)
 
