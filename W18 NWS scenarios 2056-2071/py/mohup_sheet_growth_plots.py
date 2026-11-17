@@ -58,6 +58,14 @@ ws["F1"].comment = Comment("Growth plots of the plot layer: future, inside the s
                            "not odd-shaped, any zoning except agricultural, tourism (heritage) and industrial, "
                            "no grove or estate.", "W18")
 INT, DEC = "#,##0", "0.00"
+# Saturation year without array evaluation (phone viewers and Google Sheets do not evaluate INDEX(range>=x,0) as an
+# array, so the first version showed "Not Fully Occupied" everywhere): the series only rises, so the years below the
+# capacity are the first COUNTIF ones and the next column is the year it is reached.
+for r in range(N0, N1 + 1):
+    srs = [avv.cell(r, c).value for c in range(2, 77)]
+    assert all(b >= a for a, b in zip(srs, srs[1:])), ("population falls in a year", av.cell(r, 1).value)
+sat = lambda r, c: (f'=IF(COUNTIF(Average!$B{r}:$BX{r},"<"&${c}{r})>=COLUMNS(Average!$B{r}:$BX{r}),"Not Fully Occupied",'
+                    f'INDEX(Average!$B$1:$BX$1,COUNTIF(Average!$B{r}:$BX{r},"<"&${c}{r})+1))')
 names = []
 for r in range(N0, N1 + 1):
     n = team.cell(r, 1).value; k = n.strip().upper(); names.append(k)
@@ -66,8 +74,8 @@ for r in range(N0, N1 + 1):
     row = {"A": n, "B": f"='Team original'!B{r}", "C": f"=Average!B{r}", "D": exres[k],
            "E": f"=MAX(1,B{r}/D{r})", "F": ours[k], "G": f"=F{r}*E{r}", "H": f"=B{r}+G{r}",
            "I": f"=G{r}*$B${PAR}", "J": f"=C{r}+I{r}",
-           "K": f'=IFERROR(INDEX(Average!$B$1:$BX$1,MATCH(TRUE,INDEX(Average!$B{r}:$BX{r}>=$J{r},0),0)),"Not Fully Occupied")',
-           "M": f"='Team original'!C{r}", "N": f"='Team original'!G{r}", "O": f"='Team original'!H{r}"}
+           "K": sat(r, "J"),
+           "M": f"='Team original'!C{r}", "N": f"='Team original'!G{r}", "O": sat(r, "N")}
     for col, v in row.items():
         c = ws[f"{col}{r}"]; c.value = v
         c.number_format = DEC if col == "E" else INT
@@ -116,6 +124,7 @@ chk = openpyxl.load_workbook(OUT, data_only=True)
 s, t = chk[SHEET], chk["Team original"]
 for r in range(N0, N1 + 1):                          # the team's ratio reproduced, the capacity adds up
     assert abs(s[f"E{r}"].value - t[f"D{r}"].value) < 1e-9, (r, s[f"E{r}"].value, t[f"D{r}"].value)
+    assert s[f"O{r}"].value == t[f"H{r}"].value, ("team's saturation year", r, s[f"O{r}"].value, t[f"H{r}"].value)
     assert abs(s[f"J{r}"].value - (s[f"C{r}"].value + s[f"F{r}"].value * s[f"E{r}"].value * 4.8)) < 1e-6
 print(f"{'settlement':17}{'exist pop':>10}{'plots':>7}{'prop/plot':>10}{'fut pop':>9}{'capacity':>10}{'full':>8}{'team cap':>10}{'team':>8}")
 for r in range(N0, TOT + 1):
