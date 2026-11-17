@@ -82,6 +82,8 @@ Model loading:
 
 ## SC1 designed for 2056 (final loads) and the slope check
 
+**Model reloaded (job 071, 2026-11-17): `C:\IbriWork\W18\IBRI_W18_R3.stsw`** = W17 R8 with the six year alternatives (W18-2031, -2051, -2056, -2061, -2066, -2071) set from the final loads (growth plots 200–3,000 m², any zoning but agricultural / heritage / industrial; capacity = 2026 population + growth plots × properties per plot × 4.8): stored = file in every year (2031 22,391.33, 2056 37,892.16, 2071 46,809.56 m³/d carried; 14,989 manholes loaded). Outfall flows for the transfers in `bridge\out\w18\f0` (R0's archived in `f0_R0`): 2056 −0.2 %, 2071 −1.4 % against R0. R0 and the SC1 design R2 (below, on R0) are kept as the record; **SC1 is not yet redesigned on R3.**
+
 **SC1 designed for 2056 (job 070), on the loads with the 1,000 m² growth limit** (the 2,000 m² loads carry 42 m³/d less in 2056; the model is not yet reloaded):
 - **The design:** it converged in 4 passes; every pipe is laid at its Table 11 floor; the plant inlet at O1 is 10.0 m deep; 316 manholes are over 12 m.
 - **The 2031 check:** of the pipes above DN200 (151.8 km), 9.7 % reach 0.75 m/s.

@@ -9,7 +9,7 @@ W18 loads corrected the same day against the earlier decisions:
 - **Carried:** 22,391, 37,892 and 46,810 m³/d before infiltration.
 - **The model:** the year loads go into the six existing year alternatives (job 067 proved the loading), and SC1 at 2056 is under way.
 
-**SC1 designed for 2056 (job 070), on the loads with the 1,000 m² limit** (37,957 m³/d carried in 2056, 65 more than now; the model is not yet reloaded):
+**SC1 designed for 2056 (job 070), on the loads with the 1,000 m² limit** (37,957 m³/d carried in 2056, 65 more than now). **The model is reloaded with the final loads as `IBRI_W18_R3.stsw` (job 071, 2026-11-17; stored = file every year); SC1 is not yet redesigned on it:**
 - **The design:** it converged in 4 passes; every pipe is laid at its Table 11 floor; the plant inlet at O1 is 10.0 m deep; 316 manholes are over 12 m.
 - **The 2031 check:** of the pipes above DN200 (151.8 km), 9.7 % reach 0.75 m/s.
 - **Steepening to reach 0.75 m/s, by slope limit** (check run `W18…/py/selfcleansing_slope.py`, maps `img/depth_SC1-2056_*.png`):
