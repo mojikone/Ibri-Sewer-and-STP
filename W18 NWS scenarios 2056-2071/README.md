@@ -99,6 +99,26 @@ Model loading:
 
 Results: `results/SC1-2056_final/`, `results/selfcleansing_slope/SC1-2056_final/`; the provisional run is kept in the `_provisional` folders.
 
+## SC1 redesigned on the R4 loads (job 074, 2026-11-17) and the split of the deep subnetworks
+
+**R5 = `C:\IbriWork\W18\IBRI_W18_R5_SC1_2056.stsw`** (job `074_w18_R5_SC1_2056.ps1`, `lib/build_scenario.ps1` on R4): SC1 designed for 2056, checked at 2031, transfers from R4's outfall flows (`py/make_transfers.py SC1 2056 2031`, same 20 routes as R2, 469 m³/d less in 2056). Converged in 4 passes (1,867 / 757 / 124 / 0 sizes changed), the analyses changed no size. The depth is R2's: 318 manholes over 12 m, deepest 21.97 m. Exports `results/SC1-2056_R5/`; 2031 slope check `results/selfcleansing_slope/SC1-2056_R5/` (1 %: 98.1 % of the length above DN200 reaches 0.75 m/s, 458 manholes over 12 m, deepest 29.25 m). R2's exports archived in `bridge\out\w18\scen\SC1-2056_R2`.
+
+**Split of the deep subnetworks (engineer, 2026-11-17), mapped, NOT yet in the model** (`py/split_deep_subnetworks.py` -> `results/split/SC1-2056_R5*/`: SUMMARY, cuts, joins, nodes, map PNG, GeoPackage):
+- Pipes above DN200 steepened to 0.75 m/s at the 2031 peak, up to the limit; every subnetwork.
+- A subnetwork deeper than 12 m for good - every manhole from there to its OWN outfall deeper than 12 m - is cut at the last manhole at 12 m or less: a pumping station lifting to the next manhole, which restarts at minimum cover. Dips that come back to 12 m or less within their own subnetwork are left alone. (Recovery is confined to the subnetwork: otherwise a gravity join let 25 m sewer run for kilometres into the next subnetwork.)
+- A cut on the last pipe into a pumped outfall moves that station one manhole up (not a new station).
+- An outfall at 12 m or less within one manhole spacing (G203 Table 12, p30: DN200-315 100 m, 350-900 120 m, 1000-1400 150 m, over 1400 200 m) of the manhole it pumps to is joined by gravity, kept only if the stations in all go down; the join re-lays the receiving subnetwork, which may be cut again. One cut per round, re-laid after each, until nothing changes.
+- Re-lay = the SewerGEMS design rule, checked on all 19,083 pipes (99 % to 0.000 m, largest 0.16 m): upstream invert = the lowest of the lowest arriving invert, the lowest arriving crown less the pipe's diameter (crowns matched) and the shallowest the cover allows (1.3 m over the soffit at both ends; every head pipe sits exactly there).
+
+| gradient limit | length above DN200 at 0.75 m/s (2031) | stations (plant inlet not counted) | new | moved up | joined by gravity | deepest manhole left |
+|---|---|---|---|---|---|---|
+| none (the design) | 9.3 % | 21 | 6 | 2 | 9 | 21.97 m |
+| 0.50 % | 82.6 % | 27 | 9 | 2 | 6 | 16.47 m |
+| 0.75 % | 93.9 % | 29 | 11 | 2 | 6 | 16.17 m |
+| **1.00 %** | **98.1 %** | **31** | **13** | **2** | **6** | **16.17 m** |
+
+Today 23 stations. At 1 %: new stations in O3 (2), O9 (7), O11, O12 (2) and O14, 4.9-29.7 L/s in 2056, 11.0-12.0 m deep, each lifting over one pipe length (62-117 m); O20 and O23 move one manhole up; O2, O3, O5, O6, O7 and O14 join the next subnetwork by gravity. 241 manholes stay deeper than 12 m in dips that come back (176 at 12-14 m, 63 at 14-16 m, 1 at 16.2 m). Next: the engineer's choice of limit, then the cuts, joins and minimum gradients in SewerGEMS (R6).
+
 ## Expected difficulty with the design-year rule
 
 In the W17 S1 run (2070 design), the share of pipes above DN200 reaching 0.75 m/s is 37 % at the 2070 flow, 16 % at the 2055 flow and 6 % at the 2030 flow (`D:/VBOX/bridge/out/scen/S1/conduits_S1-*.csv`). Table 11 gives 0.75 m/s only to a pipe running at least half full, so SC1 at 2056 is run first to measure the real pass rate before the other runs.

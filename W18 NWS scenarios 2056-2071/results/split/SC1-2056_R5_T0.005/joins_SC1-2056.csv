@@ -1,0 +1,21 @@
+source,receiver,length_m,outfall_depth_m,result,why
+O3,O2-M696,16.9,11.8,joined by gravity,stations 33 -> 32
+O5,O4-M1421,103.4,11.5,joined by gravity,stations 32 -> 31
+O7,O6-M93,61.9,8.9,joined by gravity,stations 31 -> 30
+O2,O1-M1519,43.3,7.2,joined by gravity,stations 30 -> 29
+O6,O5-M191,63.6,6.9,joined by gravity,stations 29 -> 28
+O14,O9-M425,98.7,5.5,joined by gravity,stations 28 -> 27
+O15,O1-M2227,1217.8,10.5,kept as a station,"rising main 1218 m > 100 m (Table 12, DN280)"
+O11,O10-M148,27.7,10.5,kept as a station,joining leaves 27 stations against 27
+O21,O1-M445,2031.7,10.1,kept as a station,"rising main 2032 m > 120 m (Table 12, DN630)"
+O8,O5-M130,3374.7,10.0,kept as a station,"rising main 3375 m > 100 m (Table 12, DN250)"
+O10,O9-M1184,44.0,9.7,kept as a station,joining leaves 27 stations against 27
+O9,O1-M2472,149.2,9.7,kept as a station,"rising main 149 m > 120 m (Table 12, DN800)"
+O12,O11-M96,65.5,8.9,kept as a station,joining leaves 27 stations against 27
+O19,O16-M73,1100.9,8.4,kept as a station,"rising main 1101 m > 100 m (Table 12, DN200)"
+O4,O3-M3205,666.0,6.6,kept as a station,"rising main 666 m > 120 m (Table 12, DN900)"
+O24,O1-M445,509.5,6.5,kept as a station,"rising main 510 m > 120 m (Table 12, DN500)"
+O20,O16-M44,600.7,6.0,kept as a station,"rising main 601 m > 100 m (Table 12, DN200)"
+O13,O12-M440,362.6,3.7,kept as a station,"rising main 363 m > 100 m (Table 12, DN200)"
+O22,O21-M559,2407.1,1.9,kept as a station,"rising main 2407 m > 100 m (Table 12, DN200)"
+O23,O21-M559,9455.0,,kept as a station,"rising main 9455 m > 100 m (Table 12, DN200)"
