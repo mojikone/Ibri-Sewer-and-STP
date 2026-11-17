@@ -3,6 +3,9 @@ status, properties, residents and average sewage flow for every year of the team
 load basis. The placement is py/nws_loads.py's, repeated for every year; the flows of its ten years are checked
 against results/loads/plot_loads.csv to 1e-6 m3/d.
 
+Capacity (engineer, 2026-11-17): 2026 population + growth plots x the team's properties per plot (sheet 'MOHUP DATA -
+NA', column D) x 4.8 - nws_loads.py's, re-derived here and checked against its settlement_flows.csv.
+
 People are RESIDENTS. The settlement's people (team series, capped at its capacity) sit on the existing plots in the
 pattern of the W14 residents (POP: domestic meters x the settlement's occupancy) up to the 2026 figure, and every person
 above 2026 sits on the growth plots in equal shares - the same plots and shares that take the growth flow. So on a
@@ -61,6 +64,14 @@ assert len(pl) == len(g) and (pl.SETTLE.values == g.SETTLE.values).all()
 # the growth plots are nws_loads.py's (its GROWTH column, 2026-11-17), so the rule lives in one place
 spread = pl.GROWTH.values.astype(bool)
 assert not (spread & ~inside).any() and (g.STATUS.values[spread] == "Future").all()
+# capacity = 2026 population + growth plots x the team's properties per plot x 4.8 (engineer, 2026-11-17), as nws_loads.py
+ppp = {md.cell(r, 1).value.strip().upper(): md.cell(r, 4).value for r in range(2, md.max_row + 1)
+       if md.cell(r, 1).value and md.cell(r, 1).value != "Total"}
+cap_team = cap
+cap = {s: pop[s][BASE] + int(((g.S == s).values & inside & (g.STATUS == "Future").values & spread).sum()) * ppp[s] * OCC
+       for s in pop}
+sfl = pd.read_csv(os.path.join(LOADS, "settlement_flows.csv")).groupby("settlement").capacity.first()
+assert all(abs(sfl[s] - cap[s]) < 1e-3 for s in pop), "capacity differs from nws_loads.py"
 
 Q = {y: np.zeros(len(g)) for y in YEARS}; P = {y: np.zeros(len(g)) for y in YEARS}
 growth = np.zeros(len(g), bool); rows = []
@@ -83,7 +94,7 @@ for s in sorted(pop):
             Q[y] += base_w / base_w.sum() * Py * rate + spec
             P[y] += res_w / res_w.sum() * Py
     rows.append(dict(settlement=s, growth_plots=n_t, people_2026=p26, people_2100=min(pop[s][2100], cap[s]),
-                     capacity=cap[s], full_year=full or "not by 2100", team_full_year=team_full[s],
+                     capacity=cap[s], capacity_team=cap_team[s], full_year=full or "not by 2100", team_full_year=team_full[s],
                      properties_added_per_growth_plot_2100=(min(pop[s][2100], cap[s]) - p26) / n_t / OCC if n_t else np.nan,
                      properties_per_growth_plot_when_full=(cap[s] - p26) / n_t / OCC if n_t else np.nan))
 st = pd.DataFrame(rows).set_index("settlement")
@@ -152,18 +163,19 @@ L = [f"# W18 plot layer 2026-2100, check", "",
 car = out.NETWORK.values == "connected"
 for y in (2026, 2031, 2041, 2051, 2056, 2061, 2066, 2071, 2081, 2091, 2100):
     L.append(f"| {y} | {P[y].sum():,.0f} | {Q[y].sum():,.1f} | {Q[y][car].sum():,.1f} |")
-L += ["", "| settlement | growth plots | people 2026 | people 2100 | capacity | full (ours) | full (team sheet) | properties added per growth plot by 2100 | per growth plot when full |",
-      "|---|---|---|---|---|---|---|---|---|"]
+L += ["", "| settlement | growth plots | people 2026 | people 2100 | capacity | team's capacity | full (ours) | full (team sheet) | properties added per growth plot by 2100 | per growth plot when full |",
+      "|---|---|---|---|---|---|---|---|---|---|"]
 for s, r in st.iterrows():
-    L.append(f"| {s} | {r.growth_plots:,} | {r.people_2026:,.0f} | {r.people_2100:,.0f} | {r.capacity:,.0f} | {r.full_year} | {r.team_full_year} | "
+    L.append(f"| {s} | {r.growth_plots:,} | {r.people_2026:,.0f} | {r.people_2100:,.0f} | {r.capacity:,.0f} | {r.capacity_team:,.0f} | {r.full_year} | {r.team_full_year} | "
              f"{r.properties_added_per_growth_plot_2100:.2f} | {r.properties_per_growth_plot_when_full:.2f} |")
 open(os.path.join(LOADS, "plot_layer_check.md"), "w", encoding="utf-8").write("\n".join(L) + "\n")
 st.to_csv(os.path.join(LOADS, "plot_layer_settlements.csv"), float_format="%.4f")
 
 F = [f"# {NAME} - field dictionary", "",
      "Plots of the model (the W14 plot set, 77,265, row for row with the model's plot layer), EPSG:32640.",
-     "Load basis: the team's settlement population (mean of NCSI, meters x 4.8 and APSR), each settlement capped at the",
-     "capacity of its empty plots; 171.03 L/person/day; no infiltration (the model adds 720 L/day/km). The 2026 flow sits",
+     "Load basis: the team's settlement population (mean of NCSI, meters x 4.8 and APSR), each settlement capped at its",
+     "capacity (2026 population + growth plots x the team's properties per plot x 4.8); 171.03 L/person/day; no",
+     "infiltration (the model adds 720 L/day/km). The 2026 flow sits",
      "on the existing plots in their 2024 pattern (homes, shops and government on their own plots); everything above 2026",
      "is shared equally by the growth plots. The two industrial estates (316.4 m3/d) are added on their plots every year.", "",
      "| field | meaning | unit |", "|---|---|---|",

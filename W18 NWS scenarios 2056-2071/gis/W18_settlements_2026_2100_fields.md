@@ -1,6 +1,6 @@
 # W18_settlements_2026_2100 - fields
 
-25 settlements, 184 fields, EPSG:32640. Built by `py/settlements_2100.py`.
+25 settlements, 185 fields, EPSG:32640. Built by `py/settlements_2100.py`.
 
 | Field | Meaning | Unit |
 |---|---|---|
@@ -11,7 +11,8 @@
 | PPP_SAT | properties added per growth plot when the settlement is full (saturation) | properties/plot |
 | PPP_2100 | properties added per growth plot by 2100 (= PPP_SAT where full by 2100) | properties/plot |
 | PPP_TEAM | the team's residential properties per future plot (MOHUP DATA - NA, column D) | properties/plot |
-| CAPACITY | population capacity (team's sheet, column G: total properties x 4.8) | people |
+| CAPACITY | population capacity: 2026 population + growth plots x the team's properties per plot x 4.8 (the population stops here) | people |
+| CAP_TEAM | the team's capacity (sheet column G: (existing + future residential properties) x 4.8), for comparison | people |
 | FULL_YEAR | year the settlement is full on the team's series (0 = not by 2100) | year |
 | FULL_TEAM | the team's saturation year (column H) |  |
 | N_PLOTS | plots inside the settlement boundary | plots |

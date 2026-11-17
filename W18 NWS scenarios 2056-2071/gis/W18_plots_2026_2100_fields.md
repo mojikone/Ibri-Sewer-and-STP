@@ -1,8 +1,9 @@
 # W18_plots_2026_2100 - field dictionary
 
 Plots of the model (the W14 plot set, 77,265, row for row with the model's plot layer), EPSG:32640.
-Load basis: the team's settlement population (mean of NCSI, meters x 4.8 and APSR), each settlement capped at the
-capacity of its empty plots; 171.03 L/person/day; no infiltration (the model adds 720 L/day/km). The 2026 flow sits
+Load basis: the team's settlement population (mean of NCSI, meters x 4.8 and APSR), each settlement capped at its
+capacity (2026 population + growth plots x the team's properties per plot x 4.8); 171.03 L/person/day; no
+infiltration (the model adds 720 L/day/km). The 2026 flow sits
 on the existing plots in their 2024 pattern (homes, shops and government on their own plots); everything above 2026
 is shared equally by the growth plots. The two industrial estates (316.4 m3/d) are added on their plots every year.
 
@@ -32,4 +33,4 @@ is shared equally by the growth plots. The two industrial estates (316.4 m3/d) a
 
 Residents and flow differ on purpose: on a growth plot Q = POP x 171.03 L/d; on an existing plot Q also carries the
 plot's shops, offices and estate workers, who are not residents, so a shop has flow and no residents.
-A settlement stops growing the year its people reach its capacity; Ibri is full in 2064.
+A settlement stops growing the year its people reach its capacity; Ibri is full in 2063.

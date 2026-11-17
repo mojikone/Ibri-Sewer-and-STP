@@ -7,24 +7,24 @@
 | Item | Value |
 |---|---|
 | Population | the team's settlement series: mean of NCSI, domestic meters x 4.8 and the APSR master plan (`temp/recent updates by the team/New Calculation MH.xlsx`, sheet `Average`; server `06-WORKING/04-Hydraulic/7- Demand`) |
-| Cap | each settlement grows until its empty plots are full (sheet `MOHUP DATA - NA`, column G), no overflow; only Ibri fills before 2071 (2064, 146,116 people) |
+| Cap | each settlement grows until its empty plots are full, no overflow; capacity = 2026 population + growth plots × the team's properties per plot × 4.8 (sheet `MOHUP DATA - NA`, column D; engineer 2026-11-17, in place of the team's column G, which counted the existing properties at 4.8 people); Bat (2057), Ibri (2063, 144,537 people), Hijar (2067) and Al Araqi (2071) fill by 2071 |
 | Rate | 171.03 L/person/day (sheet `Base Demand` H4); infiltration 720 L/day/km added by the model |
 | Plots | the model's plot layer (`14 IBRI_W17/SHP/Plots/Plots.shp`, row for row the W14 plots); the new MoHUP plots were too messy to use |
-| Placement | the 2026 flow on the existing plots in their 2024 pattern; growth above 2026 shared equally by the future Residential and Residential-Commercial plots of the settlement |
+| Placement | the 2026 flow on the existing plots in their 2024 pattern, fixed every year; growth above 2026 shared equally by the settlement's growth plots |
 | Design years | 2056, 2061, 2066, 2071: design for 2056 and check it at 2031 (every pipe above DN200 at 0.75 m/s); if it passes, move on to the next year; if 2056 fails, step back to 2051. Tolerance not settled |
 | Gradients | Table 11, no tractive force |
 | Scenarios | SC1 STP-1 (O1) = S1 · SC2 STP-2 (O16) = S2 · SC3 STP-1 + STP-5 (O4) = S3 · **SC4 STP-2 + STP-5, new** |
 
 ## Loads (`py/nws_loads.py` -> `results/loads/`)
 
-`plot_loads.csv` (per plot, every five years 2026–2071), `manhole_loads.csv` (per manhole id), `settlement_flows.csv`, `check.md`. Plot flow before infiltration: 2031 22,768 · 2056 38,704 · 2061 42,963 · 2066 46,207 · 2071 48,542 m³/d. The team's scenario sheet less its 1,099 m³/d of infiltration is matched to 0.0 in 2031, 2056 and 2061; 2066 and 2071 are 1,484 and 4,398 m³/d lower because Ibri is capped.
+`plot_loads.csv` (per plot, every five years 2026–2071), `manhole_loads.csv` (per manhole id), `settlement_flows.csv`, `check.md`. Plot flow before infiltration: 2031 23,084 · 2056 39,020 · 2061 43,197 · 2066 46,075 · 2071 48,224 m³/d. Against the team's scenario sheet less its 1,099 m³/d of infiltration it is 316 m³/d higher in 2031 and 2056 (the two estates, which the team's sheet does not carry); 2061, 2066 and 2071 are 234 higher, 1,616 and 4,715 lower, because settlements stop at their capacity (Bat from 2057, Ibri 2063, Hijar 2067, Al Araqi 2071).
 
 ## Plot layer 2026–2100 (`py/plot_layer_2100.py` -> `gis/W18_plots_2026_2100.zip`)
 
 Each of the 77,265 plots carries:
 - its meters by category (domestic, commercial, government, special, farm);
 - its land use (and MoH's planned use) and its status, Existing or Future;
-- its properties: existing dwellings (the 2024 dwelling meters) and the dwellings added by 2100 at the team's 4.8 persons each;
+- its properties: existing properties (the 2024 domestic meters) and the properties added by 2100 at the team's 4.8 persons each;
 - its residents and average flow (m³/d, unpeaked, no infiltration) for every year from 2026 to 2100;
 - its handling: inside its boundary, growth plot, network status (connected / inactive manhole / over 200 m) and the manhole it loads.
 
@@ -35,15 +35,12 @@ The fields are listed in `gis/W18_plots_2026_2100_fields.md`, and the checks are
 - **Size:** the raw shapefile (a 145 MB .dbf) is over GitHub's limit, so the repo holds the 9 MB zip. Rebuild with `python py/plot_layer_2100.py`.
 
 The results:
-- **Totals in 2100:** 341,193 residents and 58,670 m³/d, of which 56,646 m³/d is carried.
-- **Full years:** 8 settlements fill by 2100, each in the same year as the team's sheet (Ibri 2064, Bat 2074, Al Araqi 2077, Al Aynayn 2078, Ad Dariz 2081, Hijar 2084, Satwah 2086, Al Wahrah 2095). The other 17 do not fill by 2100.
-- **Properties per growth plot:** the team's capacity counts all future residential plots (Ibri 13,120), but growth lands only on the growth plots (Ibri 11,053). Each growth plot therefore takes more:
-  - Ibri: 1.51 properties per plot when full, against the team's 1.48.
-  - Al Akheedar: 3.46 per plot by 2100 (75 plots, against the team's 108).
-  - Ash Shiab: 2.31 per plot (18 plots, against 60; 37 of the team's 60 are under 200 m²).
+- **Totals in 2100:** 322,220 residents and 55,425 m³/d, of which 53,478 m³/d is carried.
+- **Full years:** 12 settlements fill by 2100 (Bat 2057, Ibri 2063, Hijar 2067, Al Araqi 2071, Ad Dariz 2072, Ash Shiab 2075, Al Aynayn 2076, Satwah 2079, Al Wahrah 2086, Usaybuq 2095, Al Akheedar 2096, Suwayda al Ma 2100); on the team's capacity 8 did, all later. The other 13 do not fill by 2100.
+- **Properties per growth plot:** a full settlement puts exactly the team's properties per plot on each growth plot (Ibri 1.48, Al Akheedar 3.10, Ash Shiab 1.09), because the capacity is built from the growth plots themselves. (On the team's capacity, which counts their 13,120 future residential plots in Ibri against our 11,053, it was 1.51 in Ibri, 3.46 in Al Akheedar and 2.31 in Ash Shiab.)
 - Check maps of plot flow, five settlements (2056): `img/plotflow_2056_*.png`, with A3 detail sheets at 1:5,000 so every plot over 1,000 m² has a readable area label, in `img/plotflow_2056_*.pdf` (`py/map_plot_flows.py`), for the engineer to judge the growth-plot shape and area limits.
 - QGIS project of the plot flows: `qgis/W18_plot_flows.qgz` (`py/qgis_plot_flows_project.py`, built headless with QGIS 3.44). Plots filled by average flow in a blue gradient (2031, 2056 shown, 2071, 2100; no flow = empty), existing plots outlined by land use in the LBCS colours (residential yellow, mixed orange, commercial red, government blue, industrial purple, agricultural green), proposed plots outlined light grey, settlement boundaries, Google satellite hybrid at 30 %. The plot shapefile it reads is local (not in git): rebuild it with `py/plot_layer_2100.py`. Settlement layer 2026–2100: `gis/W18_settlements_2026_2100.shp` (`py/settlements_2100.py`, fields in `_fields.md`): the 25 W14 boundaries with W18 attributes, summed from the plot layer (checked to it every year): population and flow every year, OR (W14 measured) and OR_2026 (team's 2026 population / meters), properties per growth plot at saturation and 2100 against the team's, capacity and full years, area, plot counts inside the boundary, existing plots by land use and by Nama meter category, empty plots by count and by area, growth plots, flow not carried 2031/2056/2071. In the QGIS project and its zip. W14's `Settlements_merged` keeps its old attributes as the record. Packaged with its layers, to open anywhere: `gis/W18_plot_flows_QGIS.zip` (`py/package_qgis_plot_flows.py`, 8.8 MB, with the workbook below).
-- The capacity on the engineer's rule (2026-11-17): `results/W18_MOHUP_DATA_NA_growth_plots.xlsx` (`py/mohup_sheet_growth_plots.py`). Sheet 'MOHUP DATA - NA' rebuilt with live formulas: existing population = the team's 2026 average; future population = our growth plots × the team's properties per plot (existing residential properties ÷ existing residential plots) × 4.8; capacity = the two added (the team's own capacity, (existing + future properties) × 4.8, counted the existing properties at 4.8 people while the 2026 population puts 5.98 on them in Ibri). The team's count, capacity and year alongside; their sheet unchanged on 'Team original'; 4.8 in one input cell. Result: 403,668 people against the team's 443,102 (Ibri 144,537 against 146,116, full in 2063 against 2064; Bat 2057 against 2074). **Not yet applied: the loads and layers still cap at the team's capacity**; applying it leaves 2056 unchanged and lowers 2071 by 634 m³/d and 2100 by 3,245 m³/d.
+- The capacity on the engineer's rule (2026-11-17): `results/W18_MOHUP_DATA_NA_growth_plots.xlsx` (`py/mohup_sheet_growth_plots.py`). Sheet 'MOHUP DATA - NA' rebuilt with live formulas: existing population = the team's 2026 average; future population = our growth plots × the team's properties per plot (existing residential properties ÷ existing residential plots) × 4.8; capacity = the two added (the team's own capacity, (existing + future properties) × 4.8, counted the existing properties at 4.8 people while the 2026 population puts 5.98 on them in Ibri). The team's count, capacity and year alongside; their sheet unchanged on 'Team original'; 4.8 in one input cell. Result: 403,668 people against the team's 443,102 (Ibri 144,537 against 146,116, full in 2063 against 2064; Bat 2057 against 2074). **Applied the same day** (engineer: the team's average population is untouched, the capacity only sets the year a settlement stops) to the loads, the plot layer and the settlement layer (`CAPACITY`; the team's in `CAP_TEAM`): 2026–2056 unchanged on every plot, 2061 −82, 2066 −448, 2071 −634 and 2100 −3,245 m³/d. SewerGEMS's 2056 loads are not affected by it.
 - Growth-plot check maps: `img/oddplots_*.pdf` (`py/map_odd_plots.py`), Ibri and the five settlements, overview plus A3 sheets at 1:5,000: every future plot coloured by why it takes growth or not (agricultural, under 200 m², odd shape, over 3,000 m²), the small and odd ones circled and labelled with their area. Ibri: 13,331 future plots (any zoning but agricultural, heritage, industrial); out 1,257 under 200 m², 216 odd-shaped, 340 over 3,000 m², 465 groves; 11,053 take growth.
 
 ## Earlier rules kept (checked 2026-11-16 at the engineer's request)
@@ -66,10 +63,10 @@ These plots are not carried, and their flow stays in the settlement totals:
 
 | m³/d | 2031 | 2056 | 2071 |
 |---|---|---|---|
-| Inactive network | 520 | 658 | 712 |
-| Farther than 200 m | 172 | 470 | 722 |
-| Not carried | 693 | 1,128 | 1,434 |
-| Carried (before infiltration) | 22,391 | 37,892 | 47,424 |
+| Inactive network | 520 | 658 | 708 |
+| Farther than 200 m | 172 | 470 | 706 |
+| Not carried | 693 | 1,128 | 1,414 |
+| Carried (before infiltration) | 22,391 | 37,892 | 46,810 |
 
 With the 1,000 m² limit these were 684 / 1,064 / 1,336 not carried and 22,400 / 37,957 / 47,522 carried; job 069 and the SC1 run (job 070) hold those loads.
 

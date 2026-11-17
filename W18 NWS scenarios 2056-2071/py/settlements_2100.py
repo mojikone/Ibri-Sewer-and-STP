@@ -45,7 +45,8 @@ for _, r in sb.iterrows():
                PPP_SAT=round(st.loc[s, "properties_per_growth_plot_when_full"], 3),
                PPP_2100=round(st.loc[s, "properties_added_per_growth_plot_2100"], 3),
                PPP_TEAM=round(team[s]["D"], 3),
-               CAPACITY=round(st.loc[s, "capacity"], 1), FULL_YEAR=0 if str(full).startswith("not") else int(full),
+               CAPACITY=round(st.loc[s, "capacity"], 1), CAP_TEAM=round(st.loc[s, "capacity_team"], 1),
+               FULL_YEAR=0 if str(full).startswith("not") else int(full),
                FULL_TEAM=str(st.loc[s, "team_full_year"]),
                N_PLOTS=len(d), N_EXIST=len(ex), N_EMPTY=len(em),
                EMPTY_PCT=round(100 * len(em) / max(len(d), 1), 1),
@@ -73,7 +74,7 @@ schema = {"geometry": "MultiPolygon", "properties": {}}
 for c in t.columns:
     if c in ("SETTLE", "FULL_TEAM"): schema["properties"][c] = "str:24"
     elif t[c].dtype.kind in "iu": schema["properties"][c] = "int:8"
-    elif c.startswith("P_") or c in ("CAPACITY", "PROP_2100"): schema["properties"][c] = "float:11.1"
+    elif c.startswith("P_") or c in ("CAPACITY", "CAP_TEAM", "PROP_2100"): schema["properties"][c] = "float:11.1"
     else: schema["properties"][c] = "float:11.3"
 from shapely.geometry import MultiPolygon, mapping
 geoms = [g if g.geom_type == "MultiPolygon" else MultiPolygon([g]) for g in sb.geometry.values]
@@ -88,7 +89,8 @@ D = [("SETTLE", "settlement name", ""),
      ("PPP_SAT", "properties added per growth plot when the settlement is full (saturation)", "properties/plot"),
      ("PPP_2100", "properties added per growth plot by 2100 (= PPP_SAT where full by 2100)", "properties/plot"),
      ("PPP_TEAM", "the team's residential properties per future plot (MOHUP DATA - NA, column D)", "properties/plot"),
-     ("CAPACITY", "population capacity (team's sheet, column G: total properties x 4.8)", "people"),
+     ("CAPACITY", "population capacity: 2026 population + growth plots x the team's properties per plot x 4.8 (the population stops here)", "people"),
+     ("CAP_TEAM", "the team's capacity (sheet column G: (existing + future residential properties) x 4.8), for comparison", "people"),
      ("FULL_YEAR", "year the settlement is full on the team's series (0 = not by 2100)", "year"),
      ("FULL_TEAM", "the team's saturation year (column H)", ""),
      ("N_PLOTS", "plots inside the settlement boundary", "plots"),

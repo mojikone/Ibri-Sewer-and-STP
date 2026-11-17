@@ -1,8 +1,9 @@
 """W18 plot loads on the NWS basis of November 2026.
 
 Volume: the team's settlement population (mean of the NCSI, meters x 4.8 and APSR series, sheet 'Average'
-of 'New Calculation MH.xlsx'), capped at the settlement's capacity of its empty plots (sheet 'MOHUP DATA - NA',
-column G; engineer 2026-11-16: each settlement grows only until its empty plots are full, no overflow),
+of 'New Calculation MH.xlsx'), capped at the settlement's capacity (engineer 2026-11-16: each settlement grows only
+until its empty plots are full, no overflow; 2026-11-17: capacity = 2026 population + growth plots x the team's
+properties per plot (sheet 'MOHUP DATA - NA', column D) x 4.8, in place of the team's column G),
 times the per-capita rate of sheet 'Base Demand' H4 (171.03 L/person/day). No infiltration: the model adds
 720 L/day/km itself.
 
@@ -84,13 +85,26 @@ zoned_ok = ~w14.Classes.isin(["Agricultural", "Tourism", "Industrial"])
 excluded = w14.DERIVED.isin(["Agricultural", "Industrial", "Heritage"]) | w14.ESTATE.notna()
 p["SPREAD"] = (zoned_ok & home(w14, HOME_HI) & ~excluded).values
 
+# CAPACITY (engineer, 2026-11-17): the 2026 population stays on the existing plots and each growth plot takes the team's
+# properties per plot (sheet 'MOHUP DATA - NA', column D) x 4.8 people: capacity = P_2026 + growth plots x D x 4.8.
+# It replaces the team's column G, (existing + future residential properties) x 4.8, which counted the existing
+# properties at 4.8 people (Ibri holds 5.98 per property in 2026) and the team's own count of future plots. The team's
+# average population is unchanged: the capacity only sets the year a settlement stops growing.
+# Same as results/W18_MOHUP_DATA_NA_growth_plots.xlsx, column J (py/mohup_sheet_growth_plots.py).
+OCC = 4.8
+ppp = {md.cell(r, 1).value.strip().upper(): md.cell(r, 4).value for r in range(2, md.max_row + 1)
+       if md.cell(r, 1).value and md.cell(r, 1).value != "Total"}
+n_growth = {s: int(((p.S == s) & p.INSIDE & (p.STATUS == "Future") & p.SPREAD).sum()) for s in pop}
+cap_team = cap
+cap = {s: pop[s][BASE] + n_growth[s] * ppp[s] * OCC for s in pop}
+
 rows, out = [], {f"Q_{y}": np.zeros(len(p)) for y in YEARS}
 for s in sorted(pop):
     assert pop[s][BASE] < cap[s], f"{s} already over capacity in {BASE}"
     m = ((p.S == s) & p.INSIDE).values
     base_w = (p.Q_2024.values - p.SPEC.values) * m
     tgt = m & (p.STATUS == "Future").values & p.SPREAD.values
-    n_t = int(tgt.sum())
+    n_t = int(tgt.sum()); assert n_t == n_growth[s], s
     spec = p.SPEC.values * m
     f_base = pop[s][BASE] * rate
     for y in YEARS:
@@ -99,7 +113,7 @@ for s in sorted(pop):
         if n_t: q = q + tgt * (G / n_t)
         else:   q = base_w / base_w.sum() * F                       # no future plot to spread on: existing plots take the growth
         out[f"Q_{y}"] += q + spec
-        rows.append(dict(settlement=s, year=y, pop_team=pop[s][y], capacity=cap[s], pop_used=P,
+        rows.append(dict(settlement=s, year=y, pop_team=pop[s][y], capacity=cap[s], capacity_team=cap_team[s], pop_used=P,
                          capped=pop[s][y] > cap[s], flow_m3d=F, special_m3d=spec.sum(), future_spread_plots=n_t,
                          plots_outside_boundary=int(((p.S == s) & ~p.INSIDE).sum())))
 sf = pd.DataFrame(rows)
