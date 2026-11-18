@@ -85,3 +85,5 @@ The whole network under each variant (SC1; the others within ±0.1 M OMR):
 5. Add backdrops and vortex shafts to the BOQ.
 
 The design change itself (1, 2, 3) is a new iteration of the design and the SewerGEMS models, not part of this study.
+
+**Decision (engineer, 2026-11-18): leave it as a study, kept on record.** The design, models and report stay as they are; the fixes above are not applied.
