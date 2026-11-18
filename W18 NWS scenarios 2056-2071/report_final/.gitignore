@@ -1,0 +1,4 @@
+# the report outputs are rebuilt by build_report.py + word_finish.py from the team's R8-MH (outside git); they travel in the deliverables package
+R*/*.docx
+R*/*.pdf
+__pycache__/

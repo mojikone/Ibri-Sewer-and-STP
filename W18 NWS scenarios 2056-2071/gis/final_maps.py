@@ -31,10 +31,10 @@ STL = os.path.join(HERE, "W18_settlements_2026_2100.shp")
 MH_QML = os.path.join(W18, "qgis", "styles", "manholes_depth.qml")
 SUBTITLE = "Ibri Sewer, TE Networks and STP — Concept Design Report | Renardet 2621"
 RENDER = "--no-render" not in sys.argv
-SCEN = {"SC1": "SC1, STP 1 only", "SC2": "SC2, STP 16 only", "SC3": "SC3, STP 1 and STP 5", "SC4": "SC4, STP 16 and STP 5"}
+SCEN = {"SC1": "SC1, STP-1 only", "SC2": "SC2, STP-2 only", "SC3": "SC3, STP-1 and STP-5", "SC4": "SC4, STP-2 and STP-5"}
 YEARS, BASE = ["2051", "2056", "2061"], "2056"
 LABEL_SIZE = "clamp(7, 8*25000/@map_scale, 36)"
-PLANT_COLOUR = {"P1": "#2E75B6", "P2": "#C0504D", "P7": "#ED7D31"}
+PLANT_COLOUR = {"STP-1": "#2E75B6", "STP-5": "#C0504D", "STP-2": "#ED7D31"}
 SYS_COLOUR = ["#e6194b", "#3cb44b", "#e0b400", "#4363d8", "#f58231", "#911eb4", "#46f0f0", "#f032e6", "#bcf60c",
               "#008080", "#6a3d9a", "#9a6324", "#800000", "#00c08b", "#808000"]
 SC = [("DN200 (rule: above DN200 only)", "#9e9e9e", "DN200, not checked (rule: above DN200 only)"),
@@ -178,9 +178,9 @@ def build():
             vel = lyr(gpkg, "pipes", "Sewers: self-cleansing at the 2031 peak")
             have = set(vel.uniqueValues(vel.fields().indexOf("sc_class")))
             vel.setRenderer(QgsCategorizedSymbolRenderer("sc_class", [QgsRendererCategory(v, sym_line(c, arrows=True), lab) for v, c, lab in SC if v in have]))
-            plants = sorted(Q["plants"])
+            plants = sorted({v["stp"] for v in Q["plants"].values()})
             zs = lyr(gpkg, "pipes", "Sewers by plant and size")
-            zs.setRenderer(QgsCategorizedSymbolRenderer("plant", [QgsRendererCategory(p, sym_line(PLANT_COLOUR.get(p, "#555555")), f"To the STP at {p}") for p in plants]))
+            zs.setRenderer(QgsCategorizedSymbolRenderer("stp", [QgsRendererCategory(p, sym_line(PLANT_COLOUR.get(p, "#555555")), f"To {p}") for p in plants]))
             dp = lyr(gpkg, "pipes", "Depth to invert"); M.style_pipes_depth(dp)
             dr = lyr(gpkg, "deep_runs", "Deepest manhole of a run over 12 m")
             if dr is not None: M.style_deep(dr); scale_labels(dr)
@@ -188,13 +188,13 @@ def build():
             if y != BASE: continue
             # ------------------------------------------------------------ the report maps, 2056
             S = json.load(open(os.path.join(R, case, "products", "quantities.json")))
-            prow = [(f"STP at {p}, {y} average", f"{f0(v['avg_m3d'][y])} m³/d, inlet {v['inlet_depth_m']:.1f} m deep") for p, v in S["plants"].items()]
+            prow = [(f"{v['stp']} (inlet {p}), {y} average", f"{f0(v['avg_m3d'][y])} m³/d, inlet {v['inlet_depth_m']:.1f} m deep") for p, v in S["plants"].items()]
             st_only = lambda: [x for x in (st,) if x]
             stp = lyr(gpkg, "stations", "Stations"); style_stations(stp, "map_label"); proj.addMapLayer(stp, False)
             sdu = lyr(gpkg, "stations", "Stations"); style_stations(sdu, "duty_label"); proj.addMapLayer(sdu, False)
             fmp = lyr(gpkg, "force_mains", "Force main"); style_force_mains(fmp, False); proj.addMapLayer(fmp, False)
             z1 = lyr(gpkg, "pipes", "Sewers by plant")
-            z1.setRenderer(QgsCategorizedSymbolRenderer("plant", [QgsRendererCategory(p, sym_line(PLANT_COLOUR.get(p, "#555555"), sized=False), f"To the STP at {p}") for p in plants]))
+            z1.setRenderer(QgsCategorizedSymbolRenderer("stp", [QgsRendererCategory(p, sym_line(PLANT_COLOUR.get(p, "#555555"), sized=False), f"To {p}") for p in plants]))
             proj.addMapLayer(z1, False)
             vp = lyr(gpkg, "pipes", "Sewers")
             vp.setRenderer(QgsCategorizedSymbolRenderer("sc_class", [QgsRendererCategory(v, sym_line(c), lab) for v, c, lab in SC if v in have]))

@@ -17,6 +17,7 @@ CASE = sys.argv[1]; NAME, YEAR = CASE.split("-")
 R = os.path.join(W18, "results", "final_0.75pc_SC1-SC4"); NM = os.path.join(R, CASE, "named")
 OUT = os.path.join(R, CASE, "products"); os.makedirs(OUT, exist_ok=True)
 YEARS = ["2026", "2031", "2036", "2041", "2046", "2051", "2056", "2061"]
+STP_NAME = {"O1": "STP-1", "O16": "STP-2", "O4": "STP-5"}   # the treatment sites by the outfall they sit on
 INF = 0.72                                                   # m3/day per km of sewer (the design's infiltration)
 DN_FM = [75, 100, 150, 200, 250, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000, 1200]
 
@@ -84,7 +85,7 @@ for r in S.itertuples():
 ST = pd.DataFrame(rows)
 ST.to_csv(os.path.join(OUT, "stations.csv"), index=False)
 plants = {p: {y: round(avg(p, y), 0) for y in YEARS} for p in ST[ST.kind == "plant inlet"].name}
-pl = pd.DataFrame([dict(plant=p, inlet_depth_m=float(ST.set_index("name").at[p, "outfall_depth_m"]), **{f"avg_{y}_m3d": v for y, v in plants[p].items()},
+pl = pd.DataFrame([dict(plant=p, stp=STP_NAME[S.set_index("name").at[p, "old"]], inlet_depth_m=float(ST.set_index("name").at[p, "outfall_depth_m"]), **{f"avg_{y}_m3d": v for y, v in plants[p].items()},
                         peak_design_ls=float(ST.set_index("name").at[p, "duty_ls"])) for p in plants])
 pl.to_csv(os.path.join(OUT, "plants.csv"), index=False)
 
@@ -101,7 +102,7 @@ Q = dict(case=CASE, sewer_km=round(K.length_m.sum() / 1000, 2), manholes=int(len
          km_by_depth={b: round(v / 1000, 2) for b, v in K.groupby("depth_band").length_m.sum().items()},
          manholes_by_depth={b: int(v) for b, v in mh.groupby("depth_band").size().items()},
          deepest=dict(name=mh.loc[mh.depth.idxmax(), "new"], depth=round(float(mh.depth.max()), 2)),
-         plants={p: dict(avg_m3d=plants[p], inlet_depth_m=float(ST.set_index("name").at[p, "outfall_depth_m"])) for p in plants},
+         plants={p: dict(stp=STP_NAME[S.set_index("name").at[p, "old"]], avg_m3d=plants[p], inlet_depth_m=float(ST.set_index("name").at[p, "outfall_depth_m"])) for p in plants},
          km_big=round(K[K.dn_mm > 200].length_m.sum() / 1000, 2),
          km_big_under075_2031=round(K[(K.dn_mm > 200) & (K.under075 == 1)].length_m.sum() / 1000, 2),
          km_big_under075_2036=round(K[(K.dn_mm > 200) & (K.v2036_ms < 0.75)].length_m.sum() / 1000, 2))
@@ -111,7 +112,7 @@ json.dump(Q, open(os.path.join(OUT, "quantities.json"), "w"), indent=1)
 GP = os.path.join(OUT, "map.gpkg")
 if os.path.exists(GP): os.remove(GP)
 p = gpd.read_file(os.path.join(NM, "network.gpkg"), layer="pipes")
-p["plant"] = p.section.map(lambda s: plant_of(s)); p["depth_band"] = p.depth_max_m.map(band)
+p["plant"] = p.section.map(lambda s: plant_of(s)); p["stp"] = p.plant.map(lambda x: STP_NAME[S.set_index("name").at[x, "old"]]); p["depth_band"] = p.depth_max_m.map(band)
 
 
 def sc_class(r):                                             # self-cleansing class for the maps (a gravity join is a sewer)
@@ -127,7 +128,8 @@ m = gpd.read_file(os.path.join(NM, "network.gpkg"), layer="manholes")
 m["depth_band"] = m.depth.map(band)
 m.rename(columns={"new": "label", "depth": "depth_m"}).to_file(GP, layer="manholes", driver="GPKG")
 s = gpd.read_file(os.path.join(NM, "network.gpkg"), layer="stations")[["name", "geometry"]].merge(ST.drop(columns=["x", "y"]), on="name")
-s["map_label"] = [f"{a} {d:.1f} m" if k != "plant inlet" else f"STP at {a}, inlet {d:.1f} m" for a, k, d in zip(s.name, s.kind, s.outfall_depth_m)]
+stp_of = {r.name: STP_NAME.get(r.old, "") for r in S.itertuples()}
+s["map_label"] = [f"{a} {d:.1f} m" if k != "plant inlet" else f"{stp_of[a]} inlet ({a}), {d:.1f} m" for a, k, d in zip(s.name, s.kind, s.outfall_depth_m)]
 s["duty_label"] = [f"{a} {d:.1f} m | {q:.0f} L/s, head {h:.0f} m" for a, d, q, h in zip(s.name, s.outfall_depth_m, s.duty_ls, s.head_m)]
 s.to_file(GP, layer="stations", driver="GPKG")
 gpd.read_file(os.path.join(NM, "network.gpkg"), layer="force_mains").to_file(GP, layer="force_mains", driver="GPKG")

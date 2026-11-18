@@ -16,7 +16,7 @@ R = os.path.join(W18, "results", "final_0.75pc_SC1-SC4")
 OUT = os.path.join(W18, "report_final", "deliverables", "Ibri_Sewer_BOQ_and_Network_Cost_SC1-SC4.xlsx")
 RATES = os.path.join(r"W:\2621 Design and Supervision for STP, Sewer & TE Networks System in Ibri_NAMA\06-WORKING\04-Hydraulic\11_Finacial",
                      "2621 - Options Cost Estimation-MH 14-10-2026.xlsx")
-SCEN = {"SC1": "STP 1 only", "SC2": "STP 16 only", "SC3": "STP 1 and STP 5", "SC4": "STP 16 and STP 5"}
+SCEN = {"SC1": "STP-1 only", "SC2": "STP-2 only", "SC3": "STP-1 and STP-5", "SC4": "STP-2 and STP-5"}
 CASES = [f"{s}-{y}" for s in SCEN for y in ("2051", "2056", "2061")]
 NAVY = "1F3B63"; HEAD = PatternFill("solid", fgColor="DCE6F1"); BASE = PatternFill("solid", fgColor="FFF2CC")
 thin = Side(style="thin", color="999999"); BOX = Border(left=thin, right=thin, top=thin, bottom=thin)
@@ -104,7 +104,7 @@ case_head = [f"{c.split('-')[0]} {SCEN[c.split('-')[0]]}\ndesigned for {c.split(
 base_cols = [i + 3 for i, c in enumerate(CASES) if c.endswith("2056")]
 ws = wb.active; ws.title = "Read me"
 lines = [("Ibri sewer network, scenarios SC1 to SC4: bill of quantities and network capital cost", "t"), ("", ""),
-         ("Scenarios", "h"), ("SC1: one treatment plant, STP 1. SC2: one treatment plant, STP 16. SC3: STP 1 and STP 5. SC4: STP 16 and STP 5.", ""),
+         ("Scenarios", "h"), ("SC1: one treatment plant, STP-1. SC2: one treatment plant, STP-2. SC3: STP-1 and STP-5. SC4: STP-2 and STP-5.", ""),
          ("Each scenario is designed for 2051, 2056 and 2061; 2056 (2031 plus 25 years) is the base design and is shaded.", ""), ("", ""),
          ("Basis", "h"),
          ("Gravity sewers: PAM-GUD-203 Table 11 minimum gradients, steepened where needed (up to 0.75 %) so that sewers above DN200 reach 0.75 m/s at the 2031 peak flow.", ""),
@@ -170,8 +170,8 @@ put(ws, 5 + len(keys), ["Total", ""] + [round(float(D[c].sum()), 1) for c in CAS
 
 ws = wb.create_sheet("E Treatment plants"); title(ws, "Bill E: treatment plants", "Average flow arriving at each plant by year (the plots served and the infiltration of their sewers), the inlet depth and the design peak.")
 yc = [c for c in pd.DataFrame(E).columns if c.startswith("avg_")]
-header(ws, 4, ["Scenario, design year", "Plant inlet", "Inlet depth, m"] + [c[4:8] + ", m³/d" for c in yc] + ["Design peak, L/s"], [18, 11, 11] + [12] * len(yc) + [13])
-for i, x in enumerate(E, 5): put(ws, i, [x["case"].replace("-", " "), x["plant"], x["inlet_depth_m"]] + [x[c] for c in yc] + [x["peak_design_ls"]], "#,##0")
+header(ws, 4, ["Scenario, design year", "Plant (inlet station)", "Inlet depth, m"] + [c[4:8] + ", m³/d" for c in yc] + ["Design peak, L/s"], [18, 11, 11] + [12] * len(yc) + [13])
+for i, x in enumerate(E, 5): put(ws, i, [x["case"].replace("-", " "), f"{x['stp']} ({x['plant']})", x["inlet_depth_m"]] + [x[c] for c in yc] + [x["peak_design_ls"]], "#,##0")
 
 # ------------------------------------------------------------------ F: network cost at the team's rates (formulas)
 ws = wb.create_sheet("F Network cost"); title(ws, "Network capital cost at the rates of the options cost estimate (October 2026), OMR",

@@ -1,0 +1,24 @@
+# internal names of the final-design work (rule 14): any of these in the rendered report fails the build
+W17
+W18
+IBRI_W18
+stsw
+own design
+own code
+fixed_stations
+reduce_stations
+split_deep
+final_design
+SC1-2056
+SC2-2056
+SC3-2056
+SC4-2056
+job 07
+job 08
+Claude
+the engineer
+engineer's
+O1-M
+O9-M
+O12-M
+O3-M
