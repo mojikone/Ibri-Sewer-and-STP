@@ -9,16 +9,21 @@ was sent (qgis/W18_plot_flows.qgz), with a saved print layout and an exported ma
 Frame and machinery as the W17 maps (gis/template_report_A3.qpt, gis/make_w17_project.py): data box bottom right,
 legend bottom left, Google satellite hybrid at 30 % rendered for each map's extent (the layout exporter crashes on
 web tiles; the saved layouts keep the live layer).
+Engineer's style (2026-11-18): every label sized by the map scale, clamp(7, 8*25000/@map_scale, 36) pt, buffer 0.8 mm,
+no scale limit; on C0 an arrowhead at the centre of each pipe in the direction of flow, from 1:15,000 in (field flow_rev,
+1 where the drawn line runs against the flow, written into the C0 GeoPackage from the SewerGEMS R5 inverts).
 Run after py/qgis_plot_flows_project.py (which rebuilds the project from scratch):
     & "C:\\Program Files\\QGIS 3.44.8\\bin\\python-qgis-ltr.bat" qgis_sc1_conditions.py [--no-render]
 Writes qgis/W18_plot_flows.qgz and results/sc1_conditions/maps/SC1_C#_*.png."""
-import json, os, sys, tempfile
+import csv, json, math, os, sys, tempfile
 sys.stdout.reconfigure(line_buffering=True)
 from qgis.core import (Qgis, QgsApplication, QgsProject, QgsVectorLayer, QgsLayoutItemMap, QgsLayoutItemLegend,
                        QgsLayoutItemLabel, QgsLayoutExporter, QgsLayoutSize, QgsLayoutPoint, QgsTextFormat,
                        QgsCategorizedSymbolRenderer, QgsRendererCategory, QgsGraduatedSymbolRenderer, QgsRendererRange,
                        QgsSingleSymbolRenderer, QgsLineSymbol, QgsMarkerSymbol, QgsProperty, QgsSymbolLayer,
-                       QgsRectangle, QgsLayerTreeGroup)
+                       QgsRectangle, QgsLayerTreeGroup, QgsPalLayerSettings, QgsVectorLayerSimpleLabeling, QgsField,
+                       QgsGeometryGeneratorSymbolLayer, QgsMarkerLineSymbolLayer, QgsSimpleMarkerSymbolLayer)
+from qgis.PyQt.QtCore import QVariant
 from qgis.PyQt.QtGui import QColor, QFont
 
 HERE = os.path.dirname(os.path.abspath(__file__)); W18 = os.path.dirname(HERE)
@@ -53,6 +58,58 @@ CLASSES = [("DN200 (not steepened)", "#9e9e9e", "DN200, not steepened (rule: abo
            ("Gravity join (was a rising main)", "#00a651", "Gravity join (was a rising main)")]
 OUTFALL = [("Plant inlet", "square", "#1F3B63", 4.2), ("Existing station", "circle", "#a61b1b", 2.6),
            ("New station", "triangle", "#1f3fff", 3.4), ("Joined by gravity", "circle", "#00a651", 2.2)]
+LABEL_SIZE = "clamp(7, 8*25000/@map_scale, 36)"        # engineer 2026-11-18: 8 pt at 1:25,000, never below 7
+ARROW_SCALE = 15000                                     # flow arrows only at 1:15,000 and closer
+ARROWS = {"C0"}                                         # the conditions that carry flow arrows (C0 only so far)
+SG_R5 = os.path.join(W18, "results", "SC1-2056_R5")     # SewerGEMS design R5 exports: inverts and manhole positions
+
+
+def scale_labels(l):
+    """The layer's labels sized by the map scale (LABEL_SIZE), buffer fixed at 0.8 mm, no scale-visibility limit."""
+    pal = QgsPalLayerSettings(l.labeling().settings())
+    tf = pal.format(); tf.setSize(8.0); tf.setSizeUnit(Qgis.RenderUnit.Points)
+    b = tf.buffer(); b.setEnabled(True); b.setSize(0.8); b.setSizeUnit(Qgis.RenderUnit.Millimeters); tf.setBuffer(b)
+    pal.setFormat(tf); pal.scaleVisibility = False
+    props = pal.dataDefinedProperties(); props.setProperty(QgsPalLayerSettings.Size, QgsProperty.fromExpression(LABEL_SIZE))
+    pal.setDataDefinedProperties(props)
+    l.setLabeling(QgsVectorLayerSimpleLabeling(pal)); l.setLabelsEnabled(True)
+
+
+def with_arrow(s, colour):
+    """Append to a pipe symbol an arrowhead at the pipe's centre pointing down the flow, in the pipe's colour,
+    drawn only at 1:ARROW_SCALE and closer. The symbol is complete before it goes into a renderer range."""
+    head = QgsSimpleMarkerSymbolLayer(Qgis.MarkerShape.ArrowHeadFilled, 1.8)
+    head.setColor(QColor(colour)); head.setStrokeColor(QColor(colour))
+    ml = QgsMarkerLineSymbolLayer(True, 1.0); ml.setPlacements(Qgis.MarkerLinePlacement.CentralPoint)
+    ml.setSubSymbol(QgsMarkerSymbol([head]))
+    gen = QgsGeometryGeneratorSymbolLayer.create({"geometryModifier": 'if("flow_rev"=1, reverse($geometry), $geometry)',
+                                                  "SymbolType": "Line"})
+    gen.setSubSymbol(QgsLineSymbol([ml]))
+    gen.setDataDefinedProperty(QgsSymbolLayer.PropertyLayerEnabled, QgsProperty.fromExpression(f"@map_scale <= {ARROW_SCALE}"))
+    s.appendSymbolLayer(gen)
+    return s
+
+
+def ensure_flow_rev(gpkg):
+    """flow_rev on the pipes of a condition's GeoPackage: 1 where the drawn line runs against the flow. The upstream
+    end is the end of the line nearer the manhole with the higher SewerGEMS invert (R5 design export)."""
+    def rows(name): return list(csv.DictReader(open(os.path.join(SG_R5, name), encoding="utf-8")))
+    mh = {r["id"]: (float(r["x"]), float(r["y"])) for r in rows(f"manholes_{TAG}a.csv")}
+    up = {r["label"]: (r["start"] if float(r["start_inv"]) >= float(r["stop_inv"]) else r["stop"])
+          for r in rows(f"conduits_{TAG}a.csv") if r["active"] == "True"}
+    l = QgsVectorLayer(f"{gpkg}|layername=pipes", "pipes", "ogr"); pr = l.dataProvider()
+    if l.fields().indexOf("flow_rev") < 0:
+        pr.addAttributes([QgsField("flow_rev", QVariant.Int)]); l.updateFields()
+    i = l.fields().indexOf("flow_rev"); change = {}; n_rev = 0
+    for f in l.getFeatures():
+        xy = mh.get(up.get(f["label"]))
+        if xy is None: continue
+        pts = [p for part in f.geometry().constParts() for p in part.vertices()]
+        rev = int(math.dist((pts[-1].x(), pts[-1].y()), xy) < math.dist((pts[0].x(), pts[0].y()), xy)); n_rev += rev
+        if f["flow_rev"] != rev: change[f.id()] = {i: rev}
+    if change: pr.changeAttributeValues(change)
+    print(f"      flow_rev: {n_rev:,} of {l.featureCount():,} lines drawn against the flow ({len(change):,} written)")
+    del l
 
 
 def sym_line(colour, width=0.3, dd=True, style="solid", alpha=1.0):
@@ -88,7 +145,7 @@ def style_outfalls(l):
                                                                  "outline_width": "0.35", "size": str(sz)}), k)
             for k, shp, c, sz in OUTFALL if k in have]
     l.setRenderer(QgsCategorizedSymbolRenderer("kind", cats))
-    M.label(l, '"map_label"', size=6.0, colour="#1a1a1a", bold=True, priority=10, dist=0.8)
+    M.label(l, '"map_label"', size=6.0, colour="#1a1a1a", bold=True, priority=10, dist=0.8); scale_labels(l)
 
 
 def make_map(proj, google, name, title, stack, legend_layers, ext, rows, out_png, test_layers):
@@ -172,8 +229,10 @@ def build():
         over3 = lyr(gpkg, "pipes", "Pipe over 3.0 m/s at the 2056 peak", '"over3" = 1')
         over3.setRenderer(QgsSingleSymbolRenderer(sym_line("#e7298a", 1.8, dd=False, alpha=0.8)))
         if limit is None:                                   # C0: velocity at the 2031 peak
+            if code in ARROWS: ensure_flow_rev(gpkg)
             pipes = lyr(gpkg, "pipes", "Velocity at the 2031 peak, m/s")
-            pipes.setRenderer(QgsGraduatedSymbolRenderer("v2031_ms", [QgsRendererRange(lo, hi, sym_line(c), lab) for lo, hi, c, lab in VEL]))
+            sym = (lambda c: with_arrow(sym_line(c), c)) if code in ARROWS else sym_line
+            pipes.setRenderer(QgsGraduatedSymbolRenderer("v2031_ms", [QgsRendererRange(lo, hi, sym(c), lab) for lo, hi, c, lab in VEL]))
             deep = lyr(gpkg, "pipes", "Pipe deeper than 12 m", '"deep12" = 1')
             deep.setRenderer(QgsSingleSymbolRenderer(sym_line("#00bcd4", 1.7, dd=False, alpha=0.55)))
             mhd = lyr(gpkg, "manholes_deep", "Manhole deeper than 12 m (depth)")
@@ -223,6 +282,7 @@ def build():
         if mhd is not None:
             mhd.setRenderer(QgsSingleSymbolRenderer(M.circle("#006d77", 1.4, width=0.2)))
             M.label(mhd, '"label" || \' \' || format_number("depth_m", 1) || \' m\'', size=5.0, colour="#006d77", priority=4, dist=0.5)
+            scale_labels(mhd)
             add(g, mhd, False)
         root.findGroup(GROUP).findGroup(f"{code} {cname}").setItemVisibilityChecked(True)
         e = QgsRectangle(pipes.extent()); e.grow(max(e.width(), e.height()) * 0.02)
