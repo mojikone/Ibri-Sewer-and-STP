@@ -1,0 +1,109 @@
+{
+ "case": "SC3-2056",
+ "drops_over_2m": 1306,
+ "manholes": 1274,
+ "by_role": {
+  "branch": 1145,
+  "main line": 161
+ },
+ "recommended": {
+  "F2 lower the branch, 4 %": 1233,
+  "F1 regrade": 51,
+  "F2 lower the branch, steeper than 4 % (to 3 m/s)": 17,
+  "vortex drop shaft": 5
+ },
+ "vortex_shafts_left": 5,
+ "cost_4pc_total_OMR": 1681746.0,
+ "cost_3ms_total_OMR": 4212.0,
+ "by_ground": {
+  "flat": 662,
+  "falls": 463,
+  "rises": 181
+ },
+ "variants": [
+  {
+   "variant": "0 design as laid",
+   "drops_over_2m": 1306,
+   "manholes_with_drop_over_2m": 1274,
+   "backdrops_06_2m": 1656,
+   "manholes_deeper_12m": 330,
+   "deepest_manhole_m": 16.13,
+   "deepest_station_m": 14.71,
+   "pipes_regraded": 0,
+   "max_velocity_ms": 0.0,
+   "km_under_075_2031": 9.29,
+   "cost_change_MOMR": 0.0,
+   "failed_lowerings": 0
+  },
+  {
+   "variant": "F1 regrade, 4 %",
+   "drops_over_2m": 1255,
+   "manholes_with_drop_over_2m": 1227,
+   "backdrops_06_2m": 1138,
+   "manholes_deeper_12m": 328,
+   "deepest_manhole_m": 16.13,
+   "deepest_station_m": 14.71,
+   "pipes_regraded": 3246,
+   "max_velocity_ms": 2.19,
+   "km_under_075_2031": 9.29,
+   "cost_change_MOMR": -0.96,
+   "failed_lowerings": 0
+  },
+  {
+   "variant": "F1 regrade, 3 m/s",
+   "drops_over_2m": 1232,
+   "manholes_with_drop_over_2m": 1204,
+   "backdrops_06_2m": 1133,
+   "manholes_deeper_12m": 328,
+   "deepest_manhole_m": 16.13,
+   "deepest_station_m": 14.71,
+   "pipes_regraded": 3246,
+   "max_velocity_ms": 2.19,
+   "km_under_075_2031": 9.29,
+   "cost_change_MOMR": -1.06,
+   "failed_lowerings": 0
+  },
+  {
+   "variant": "F1+F2a steepen only, 4 %",
+   "drops_over_2m": 7,
+   "manholes_with_drop_over_2m": 7,
+   "backdrops_06_2m": 2386,
+   "manholes_deeper_12m": 335,
+   "deepest_manhole_m": 16.41,
+   "deepest_station_m": 14.71,
+   "pipes_regraded": 4624,
+   "max_velocity_ms": 3.0,
+   "km_under_075_2031": 9.09,
+   "cost_change_MOMR": 1.41,
+   "failed_lowerings": 7
+  },
+  {
+   "variant": "F1+F2b steepen and step down, 4 %",
+   "drops_over_2m": 7,
+   "manholes_with_drop_over_2m": 7,
+   "backdrops_06_2m": 2838,
+   "manholes_deeper_12m": 336,
+   "deepest_manhole_m": 16.13,
+   "deepest_station_m": 14.71,
+   "pipes_regraded": 4406,
+   "max_velocity_ms": 3.0,
+   "km_under_075_2031": 9.09,
+   "cost_change_MOMR": 1.18,
+   "failed_lowerings": 7
+  },
+  {
+   "variant": "F1+F2b steepen and step down, 3 m/s",
+   "drops_over_2m": 0,
+   "manholes_with_drop_over_2m": 0,
+   "backdrops_06_2m": 2389,
+   "manholes_deeper_12m": 328,
+   "deepest_manhole_m": 16.13,
+   "deepest_station_m": 14.71,
+   "pipes_regraded": 4202,
+   "max_velocity_ms": 3.0,
+   "km_under_075_2031": 9.09,
+   "cost_change_MOMR": -0.35,
+   "failed_lowerings": 0
+  }
+ ]
+}

@@ -1,0 +1,7 @@
+variant,drops_over_2m,manholes_with_drop_over_2m,backdrops_06_2m,manholes_deeper_12m,deepest_manhole_m,deepest_station_m,pipes_regraded,max_velocity_ms,km_under_075_2031,cost_change_MOMR,failed_lowerings
+0 design as laid,1301,1269,1677,330,16.13,14.71,0,0.0,9.29,0.0,0
+"F1 regrade, 4 %",1250,1222,1154,328,16.13,14.71,3261,2.38,9.29,-0.98,0
+"F1 regrade, 3 m/s",1227,1199,1149,328,16.13,14.71,3261,2.38,9.29,-1.08,0
+"F1+F2a steepen only, 4 %",7,7,2397,335,16.41,14.71,4637,3.0,9.09,1.52,7
+"F1+F2b steepen and step down, 4 %",7,7,2853,336,16.13,14.71,4415,3.0,9.09,1.29,7
+"F1+F2b steepen and step down, 3 m/s",0,0,2402,328,16.13,14.71,4211,3.0,9.09,-0.24,0
