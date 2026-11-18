@@ -15,7 +15,7 @@ import socket
 import struct
 import sys
 
-HOST, PORT = "localhost", 9876
+HOST, PORT = "localhost", int(os.environ.get("QGIS_PORT", 9876))
 HEADER = struct.Struct(">I")
 
 
