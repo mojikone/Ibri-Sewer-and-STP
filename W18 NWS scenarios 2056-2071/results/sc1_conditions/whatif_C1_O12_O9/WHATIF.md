@@ -32,3 +32,42 @@ As designed (SewerGEMS, no steepening, no cut) the O9 outfall is 16.78 m deep; s
 
 One station tried at every manhole from O9-M103 to the outfall (103 sites): none leaves the subnetwork clear of 12 m; the least deep is O9-M101 (station 12.63 m, deepest 16.47 m).
 
+## O9: O9-M773, O9-M728 (in series: 4091 m of sewer from O9-M773 down to the other station)
+
+| case | stations in total | station depth | outfall depth | deepest manhole in the subnetwork | manholes > 12 m | pipe > 12 m | still deep for good |
+|---|---|---|---|---|---|---|---|
+| as mapped (two stations) | 25 | O9-M773 11.95 m / O9-M728 11.39 m | 10.10 m | O9-M48 16.47 m | 101 | 9.37 km | 0 |
+| none of the two | 23 | - | **22.56 m** | O9-M694 23.70 m | 193 | 17.37 km | 92 |
+| only O9-M773 | 24 | O9-M773 11.95 m | 14.25 m | O9-M48 16.47 m | 148 | 13.28 km | 47 |
+| only O9-M728 | 24 | O9-M728 19.70 m | 10.10 m | O9-M728 19.70 m | 146 | 13.46 km | 45 |
+| **one station at O9-M773** (0 m below O9-M773, 7.6 L/s) | 24 | **O9-M773 11.95 m** | 14.25 m | O9-M48 16.47 m | 148 | 13.28 km | 47 |
+| none of the two, the 41 steepened pipes below them (3.54 km) left at the design gradient | 23 | - | 16.78 m | O9-M722 20.95 m | 193 | 17.37 km | 92 |
+
+As designed (SewerGEMS, no steepening, no cut) the O9 outfall is 16.78 m deep; steepened to 0.50 % with no cut, 22.56 m. Below the two stations 41 pipes are steepened; left at the design gradient, 41 of them (3.54 km) stay under 0.75 m/s at the 2031 peak.
+
+One station tried at every manhole from O9-M773 to the outfall (92 sites): none leaves the subnetwork clear of 12 m; the least deep is O9-M773 (station 11.95 m, deepest 16.47 m).
+
+## O9: O9-M773, O9-M728, with O9-M103 and O9-M89 merged at O9-M101 (in series: 4091 m of sewer from O9-M773 down to the other station)
+
+| case | stations in total | station depth | outfall depth | deepest manhole in the subnetwork | manholes > 12 m | pipe > 12 m | still deep for good |
+|---|---|---|---|---|---|---|---|
+| start, with O9-M103 and O9-M89 merged at O9-M101 (two stations) | 24 | O9-M773 11.95 m / O9-M728 11.39 m | 10.10 m | O9-M48 16.47 m | 103 | 9.57 km | 2 |
+| none of the two | 22 | - | **22.56 m** | O9-M694 23.70 m | 195 | 17.57 km | 94 |
+| only O9-M773 | 23 | O9-M773 11.95 m | 14.25 m | O9-M48 16.47 m | 150 | 13.48 km | 49 |
+| only O9-M728 | 23 | O9-M728 19.70 m | 10.10 m | O9-M728 19.70 m | 148 | 13.66 km | 47 |
+| **one station at O9-M773** (0 m below O9-M773, 7.6 L/s) | 23 | **O9-M773 11.95 m** | 14.25 m | O9-M48 16.47 m | 150 | 13.48 km | 49 |
+| none of the two, the 41 steepened pipes below them (3.54 km) left at the design gradient | 22 | - | 16.78 m | O9-M722 20.95 m | 195 | 17.57 km | 94 |
+
+As designed (SewerGEMS, no steepening, no cut) the O9 outfall is 16.78 m deep; steepened to 0.50 % with no cut, 22.56 m. Below the two stations 41 pipes are steepened; left at the design gradient, 41 of them (3.54 km) stay under 0.75 m/s at the 2031 peak.
+
+One station tried at every manhole from O9-M773 to the outfall (92 sites): none leaves the subnetwork clear of 12 m; the least deep is O9-M773 (station 11.95 m, deepest 16.47 m).
+
+## O9-M728 without a station: the steepened run below it left at the design gradient
+
+None of the pipes between O9-M773 and O9-M728 is steepened; O9-M728 is needed because the steepened run below it goes deep. Steepened pipes below O9-M773's lift, from the top down, put back to the design gradient until nothing in O9 is deeper than 12 m for good:
+
+| case | left at the design gradient | of it under 0.75 m/s at 2031 | stations in total | outfall depth | deepest manhole | manholes > 12 m | pipe > 12 m |
+|---|---|---|---|---|---|---|---|
+| O9-M728 dropped | 14 pipes, 1.25 km (to O9-P709) | 1.25 km | 24 | 11.89 m | O9-M48 16.47 m | 125 | 11.64 km |
+| O9-M728 dropped, O9-M103 and O9-M89 merged at O9-M101 | 14 pipes, 1.25 km (to O9-P709) | 1.25 km | 23 | 11.89 m | O9-M48 16.47 m | 127 | 11.84 km |
+

@@ -17,10 +17,22 @@ sys.argv = ["split_deep_subnetworks.py", "SC1-2056", os.path.join(W18, "results"
 sys.path.insert(0, HERE)
 import split_deep_subnetworks as T                    # runs the split exactly as for C1
 
-PAIRS = [("O12", ["O12-M26", "O12-M193"]), ("O9", ["O9-M103", "O9-M89"])]
+PAIRS = [("O12", ["O12-M26", "O12-M193"]), ("O9", ["O9-M103", "O9-M89"]), ("O9", ["O9-M773", "O9-M728"])]
 assert T.S["stations"] == 25 and abs(T.S["km_big_under075"] - 26.4) < 0.05, (T.S["stations"], T.S["km_big_under075"])
 base = set(T.best["active"]); cut_of = {T.lab[T.links[c["link"]]["up"]]: c["link"] for c in T.best["cuts"]}
 term = T.sub_terminal
+base0 = base
+
+
+def merged(start, pair, site):
+    """The network with a pair's two stations replaced by one station at site."""
+    full = start | {cut_of[s] for s in pair}; nx = T.downstream_map(full)
+    return full - {nx[next(n for n, l in T.lab.items() if l == site)]}
+
+
+# every pair on the network as mapped; the second O9 pair again with the first O9 pair merged (both drain to O9)
+CASES = [(s, p, base0, "") for s, p in PAIRS] + \
+        [("O9", ["O9-M773", "O9-M728"], merged(base0, ["O9-M103", "O9-M89"], "O9-M101"), ", with O9-M103 and O9-M89 merged at O9-M101")]
 
 
 def state(active, sub):
@@ -39,7 +51,7 @@ L = ["# SC1-2056 at 0.50 %: fewer stations in O12 and O9 (engineer, 2026-11-18)"
      f"Base: the C1 split as mapped, {T.S['stations']} stations, {T.S['km_big_under075']:.1f} km above DN200 under 0.75 m/s at 2031. "
      "Every case keeps all other cuts and joins; depths are the re-lay's (ground minus invert), the outfall's ground is the model's.", ""]
 rows = []
-for sub, pair in PAIRS:
+for sub, pair, base, note in CASES:
     links = [cut_of[s] for s in pair]
     full = base | set(links)                                     # both stations removed
     nxt = T.downstream_map(full)
@@ -62,10 +74,10 @@ for sub, pair in PAIRS:
                  f"of sewer above it; crow-fly between the stations {math.dist(T.xy[ids[pair[0]]], T.xy[ids[pair[1]]]):.0f} m")
     b, dep_b = state(base, sub)
     n, dep_n = state(full, sub)
-    L += [f"## {sub}: {', '.join(pair)} ({where})", "",
+    L += [f"## {sub}: {', '.join(pair)}{note} ({where})", "",
           "| case | stations in total | station depth | outfall depth | deepest manhole in the subnetwork | manholes > 12 m | pipe > 12 m | still deep for good |",
           "|---|---|---|---|---|---|---|---|",
-          f"| as mapped (two stations) | {b['stations']} | " + " / ".join(f"{s} {dep_b[ids[s]]:.2f} m" for s in pair) +
+          f"| {'as mapped' if not note else 'start' + note} (two stations) | {b['stations']} | " + " / ".join(f"{s} {dep_b[ids[s]]:.2f} m" for s in pair) +
           f" | {b['outfall_m']:.2f} m | {b['deepest']} {b['deepest_m']:.2f} m | {b['mh_over12']} | {b['km_over12']:.2f} km | {b['deep_for_good']} |",
           f"| none of the two | {n['stations']} | - | **{n['outfall_m']:.2f} m** | {n['deepest']} {n['deepest_m']:.2f} m | {n['mh_over12']} | {n['km_over12']:.2f} km | {n['deep_for_good']} |"]
     def one(x, case):                                            # a single station at x (its leaving pipe = rising main)
@@ -102,6 +114,34 @@ for sub, pair in PAIRS:
                f"than 12 m for good; the shallowest such station is {pick.station} at {pick.station_m:.2f} m.") if len(ok) else
               (f"One station tried at every manhole from {first} to the outfall ({len(R)} sites): none leaves the subnetwork clear "
                f"of 12 m; the least deep is {pick.station} (station {pick.station_m:.2f} m, deepest {pick.deepest_m:.2f} m)."), ""]
+def unsteepen_to_drop(start, keep_st, drop_st, sub, note):
+    """drop_st removed; the fewest steepened pipes below keep_st's lift, from the top down, put back to the design
+    gradient until nothing in the subnetwork is deeper than 12 m for good."""
+    act = start | {cut_of[drop_st]}; nx = T.downstream_map(act)
+    p = [T.links[cut_of[keep_st]]["dn"]]
+    while p[-1] in nx: p.append(T.links[nx[p[-1]]]["dn"])
+    steep = [nx[y] for y in p[:-1] if T.links[nx[y]]["S"] > T.links[nx[y]]["S0"] + 1e-9]
+    accepted = state(start, sub)[0]["deep_for_good"]    # what the start already accepts (the O9-M101 merge: 2 manholes)
+    for n in range(len(steep) + 1):
+        old = {k: T.links[k]["S"] for k in steep[:n]}
+        for k in steep[:n]: T.links[k]["S"] = T.links[k]["S0"]
+        r, _ = state(act, sub)
+        for k, s in old.items(): T.links[k]["S"] = s
+        if r["deep_for_good"] <= accepted:
+            km = sum(T.links[k]["L"] for k in steep[:n]) / 1000
+            ku = sum(T.links[k]["L"] for k in steep[:n] if T.dy.at[k, "V31_SG"] < T.V_SC) / 1000
+            return (f"| {drop_st} dropped{note} | {n} pipes, {km:.2f} km (to {T.links[steep[n - 1]]['label'] if n else '-'}) | {ku:.2f} km | "
+                    f"{r['stations']} | {r['outfall_m']:.2f} m | {r['deepest']} {r['deepest_m']:.2f} m | {r['mh_over12']} | {r['km_over12']:.2f} km |")
+    return f"| {drop_st} dropped{note} | no stretch clears it | | | | | | |"
+
+
+L += ["## O9-M728 without a station: the steepened run below it left at the design gradient", "",
+      "None of the pipes between O9-M773 and O9-M728 is steepened; O9-M728 is needed because the steepened run below it goes deep. "
+      "Steepened pipes below O9-M773's lift, from the top down, put back to the design gradient until nothing in O9 is deeper than 12 m for good:", "",
+      "| case | left at the design gradient | of it under 0.75 m/s at 2031 | stations in total | outfall depth | deepest manhole | manholes > 12 m | pipe > 12 m |",
+      "|---|---|---|---|---|---|---|---|",
+      unsteepen_to_drop(base0, "O9-M773", "O9-M728", "O9", ""),
+      unsteepen_to_drop(merged(base0, ["O9-M103", "O9-M89"], "O9-M101"), "O9-M773", "O9-M728", "O9", ", O9-M103 and O9-M89 merged at O9-M101"), ""]
 pd.DataFrame(rows).to_csv(os.path.join(OUT, "single_station_sites.csv"), index=False, float_format="%.2f")
 open(os.path.join(OUT, "WHATIF.md"), "w", encoding="utf-8").write("\n".join(L) + "\n")
 print("\n".join(L))
