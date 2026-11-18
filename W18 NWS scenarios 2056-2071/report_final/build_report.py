@@ -5,8 +5,10 @@ edited on a copy, in the document's own styles, captions and page layout, the re
   Chapter 6  the seven options replaced by the four scenarios SC1-SC4: method, design year, network, plants, pumping and
              lift stations, maps, the team's treated effluent subsections of the matching options kept, comparison;
   Appendix D depth maps and quantities of the four scenarios.
+R10 (2026-11-18) adds the whole-report review of r10_edits.py (executive summary, Chapters 5 and 7 to 17, appendices,
+captions) and, here, the plots paragraph of 6.2.2 and the TE network of SC4; R9 stays in R9/ as sent.
 Then Word updates the fields and the contents and exports the PDF, and the clean-room gate scans it.
-Usage: python build_report.py      Writes R9/Ibri_Concept_Design_Report_R9.docx and .pdf"""
+Usage: python build_report.py      Writes R10/Ibri_Concept_Design_Report_R10.docx and .pdf"""
 import os, sys, copy, shutil, re
 from docx import Document
 from docx.shared import Cm, Pt
@@ -16,7 +18,7 @@ from docx.enum.text import WD_BREAK
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 import facts_final as F
 SRC = r"D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\temp\recent updates by the team\Ibri_Concept_Design_Report_R8-MH.docx"
-REV = "R9"; OUT = os.path.join(HERE, REV); os.makedirs(OUT, exist_ok=True)
+REV = "R10"; OUT = os.path.join(HERE, REV); os.makedirs(OUT, exist_ok=True)
 DOCX = os.path.join(OUT, f"Ibri_Concept_Design_Report_{REV}.docx"); PDF = DOCX.replace(".docx", ".pdf")
 IMG = os.path.join(HERE, "img")
 shutil.copy(SRC, DOCX)
@@ -75,6 +77,9 @@ class Out:
         for r in rows:
             cells = t.add_row().cells
             for i, v in enumerate(r): cells[i].text = str(v)
+        for row in t.rows:                                             # left-aligned: justified text spreads in narrow cells
+            for c in row.cells:
+                for q in c.paragraphs: q.alignment = 0
         if widths:
             for row in t.rows:
                 for i, w in enumerate(widths): row.cells[i].width = Cm(w)
@@ -242,6 +247,10 @@ o.p("The network is designed in SewerGEMS. Sewers are sized for the peak flow of
     "that the depth of flow does not exceed 0.65 of the diameter up to 355 mm and 0.50 above (PAM-GUD-203, p. 27), and laid as set out "
     "in Chapter 3. The collection sewers follow common street corridors in all scenarios; the scenarios differ in the routing of flows "
     "between systems, the diameters of the sewers carrying combined flows, the stations and force mains, and the treatment facilities.")
+o.p("Each plot carries the flow of its population and use in each year. An existing plot keeps the flow of its metered properties; the "
+    "growth of each settlement in the population forecast of Chapter 4 is shared equally among its future plots of 200 to 3,000 m², "
+    "excluding agricultural, heritage and industrial plots and strips or irregular plots unsuited to building, whatever their planned use. "
+    "The flow of each plot enters the network at its nearest manhole.")
 o.maps([(os.path.join(IMG, "map_pumping_systems.png"), "The pumping systems of the network, their pumping and lift stations")])
 o.h("Design Year and Self-Cleansing", 3)
 o.p("The design year is chosen so that the network is large enough for the long-term flow while its sewers still carry enough flow in "
@@ -254,6 +263,8 @@ o.table(["Design year", "Sewers above 200 mm", "Below 0.75 m/s at the 2031 peak"
           f"{Y[y]['pumps']} / {Y[y]['lifts']}", f0(Y[y]["mh_over12"]), f1(Y[y]["cost"]["total"] / 1e6)] for y in F.YEARS],
         caption="Design years compared, Scenario SC1")
 d51, d56, d61 = Y["2051"], Y["2056"], Y["2061"]
+o.p("Each of the twelve designs, four scenarios in three design years, has been modelled in SewerGEMS at its design-year, 2031 and 2036 "
+    "flows; the models reproduce the design flows and confirm that no sewer exceeds its depth of flow.")
 o.p(f"{F.BASE} is adopted as the design year. It is 25 years after the start of operation, the design horizon of the network, and in "
     f"the {F.BASE} design {pct(d56['km_big'] - d56['km_under31'], d56['km_big'])} of the sewers larger than 200 mm reach the self-cleansing "
     f"velocity at the 2031 peak. A 2051 design self-cleanses slightly better ({pct(d51['km_big'] - d51['km_under31'], d51['km_big'])}) and "
@@ -326,11 +337,26 @@ for sc in F.SCEN:
                 for old, new in ((f"Option {sc[-1]}", f"Scenario {sc}"), (f"OP{sc[-1]}", sc), (f"OPTION {sc[-1]}", f"SCENARIO {sc[-1]}")):
                     if old in pp.text: replace_text(pp, pp.text.replace(old, new))
             o.put(x)
+    else:                                                                  # SC4: no matching option in the team's chapter (R10)
+        import json as _j, pandas as _pd
+        fz = _j.load(open(os.path.join(F.R, "financial.json")))[sc]; L4 = _pd.read_csv(os.path.join(F.R, "te", "SC4_TE_lengths.csv"))
+        o.h(f"{sc} – TE Network Configuration", 3)
+        sp = fz["supply"]
+        o.p(f"Under Scenario {sc}, STP-2 and STP-5 supply the treated effluent. STP-5 supplies the {sp['STP-5']['customers']} customers of the "
+            "north-eastern settlements through the network it supplies in Scenario SC3, and STP-2 supplies the other "
+            f"{sp['STP-2']['customers']} customers through the transmission main of Scenario SC2, without the branches that serve the "
+            "customers of STP-5. As both plants lie at low points of their sewer networks, booster pumping stations supply the network; the "
+            f"combined power of the duty pumps is estimated at about {fz['te']['kw']:,.0f} kW, from the booster duties of the SC2 and SC3 "
+            "networks in proportion to the flow each plant supplies. Six small customers, about 1,000 m³/d in 2070, lie 1 to 7 km beyond the "
+            "mains; their connections are routed at the preliminary design.")
+        o.table(["Diameter (mm)", "Length (m)"], [[int(r.D), f0(r.L)] for r in L4.itertuples()] + [["Total", f0(L4.L.sum())]],
+                caption=f"Scenario {sc} – TE Network Pipes Arrangement")
     tag = f"{sc}_{F.BASE}"
     o.maps([(os.path.join(IMG, f"map_{tag}_zones.png"), f"Scenario {sc}: the sewers by the plant they drain to"),
             (os.path.join(IMG, f"map_{tag}_network.png"), f"Scenario {sc}: sewers, pumping and lift stations and force mains"),
             (os.path.join(IMG, f"map_{tag}_selfcleansing.png"), f"Scenario {sc}: self-cleansing of the sewers at the 2031 peak")]
-           + ([(te_fig[sc][0], f"Scenario {sc}: TE Network General Layout")] if sc in te_fig else []))     # one landscape run
+           + ([(te_fig[sc][0], f"Scenario {sc}: TE Network General Layout")] if sc in te_fig else
+              [(os.path.join(IMG, f"map_{sc}_TE_network.png"), f"Scenario {sc}: TE Network General Layout")]))     # one landscape run
 
 o.h("Comparison of Scenarios", 2)
 o.p(f"The four scenarios share the collection sewers and differ in where the flow is treated. The table compares the sewer network of each "
@@ -372,5 +398,7 @@ for sc in F.SCEN:
     o.table(["Depth to invert", "Sewer length (km)", "Manholes"], [[b, f1(f["km_by_depth"].get(b, 0)), f0(f["manholes_by_depth"].get(b, 0))] for b in bands]
             + [["Total", f1(f["sewer_km"]), f0(f["manholes"])]], caption=f"Scenario {sc}: sewers and manholes by depth to invert")
 o.maps([(os.path.join(IMG, f"map_{sc}_{F.BASE}_depth.png"), f"Scenario {sc}: depth of the sewers to invert") for sc in F.SCEN])
+import r10_edits
+r10_edits.apply(globals())
 d.save(DOCX)
 print("saved", DOCX)

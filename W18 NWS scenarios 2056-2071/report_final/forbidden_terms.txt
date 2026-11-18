@@ -22,3 +22,24 @@ O1-M
 O9-M
 O12-M
 O3-M
+# added for R10 (2026-11-18): internal review notes, names of the superseded options, unresolved references
+CHECK:
+▶
+IBRI_LCC
+Option S
+option S
+OP1
+OP7
+S1 to S7
+seven options
+seven sewer network options
+Section 0\b
+Chapter 0\b
+Table 0-
+Figure 0-
+\bTo be (provided|confirmed|added|completed|updated|checked|decided)\b
+outfall O
+O23
+6\.86\.8
+\b06\.7\b
+\[APSR
