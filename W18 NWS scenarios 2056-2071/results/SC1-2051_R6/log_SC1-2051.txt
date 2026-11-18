@@ -1,0 +1,42 @@
+  Physical child 'SC1-2051' = 279814 under 6
+== sanitary children with the transfers
+  SanitaryLoading child 'SC1-2051' = 279815 under 279770
+  SanitaryLoading child 'SC1-2031' = 279816 under 279769
+  SanitaryLoading child 'SC1-2056' = 279817 under 279771
+  60 transfer rows written
+== scenarios
+  scenario 'SC1-2051' = 279818 (parent 279744); Physical=279814 local, SanitaryLoading=279815 local; calc 279786 (local True)
+== flow check (design year as analysis on the modeller's pipes)
+  'SC1-2051' run raised EngineWarningsException: SWGSanitaryUnitLoadCountZero x550; GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x13582; STMDisChargeAboveDesignCapacity x1447; STMConduitNotMeetMaxCover x253; STMConduitNotMeetMaxVelocity x143
+  'SC1-2051' ran in 265 s, results: True
+  exported 'check2051'
+  scenario 'SC1-2051' = 279818 (parent 279744); Physical=279814 local, SanitaryLoading=279815 local; calc 31 (local True)
+  scenario 'SC1-2051A' = 279819 (parent 279818); ; calc 279786 (local True)
+  scenario 'SC1-2051-at-2031' = 279820 (parent 279818); SanitaryLoading=279816 local; calc 279786 (local True)
+  scenario 'SC1-2051-at-2056' = 279821 (parent 279818); SanitaryLoading=279817 local; calc 279786 (local True)
+== design 2051 until no size changes
+  'SC1-2051' run raised EngineWarningsException: SWGSanitaryUnitLoadCountZero x550; GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x13566; STMDisChargeAboveDesignCapacity x623; STMConduitNotMeetMaxCover x401
+  'SC1-2051' ran in 406 s, results: True
+  design pass 1: 1823 pipe sizes changed
+  'SC1-2051' run raised EngineWarningsException: SWGSanitaryUnitLoadCountZero x550; GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x13566; STMConduitNotMeetMaxCover x312; STMDisChargeAboveDesignCapacity x107
+  'SC1-2051' ran in 419 s, results: True
+  design pass 2: 713 pipe sizes changed
+  'SC1-2051' run raised EngineWarningsException: SWGSanitaryUnitLoadCountZero x550; GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x13566; STMConduitNotMeetMaxCover x312
+  'SC1-2051' ran in 430 s, results: True
+  design pass 3: 107 pipe sizes changed
+  'SC1-2051' run raised EngineWarningsException: SWGSanitaryUnitLoadCountZero x550; GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x13566; STMConduitNotMeetMaxCover x312
+  'SC1-2051' ran in 426 s, results: True
+  design pass 4: 0 pipe sizes changed
+  exported 'SC1-2051'
+== analysis of the design year and the check years on the designed pipes
+  'SC1-2051A' run raised EngineWarningsException: SWGSanitaryUnitLoadCountZero x550; GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x13566; STMConduitNotMeetMaxCover x312
+  'SC1-2051A' ran in 182 s, results: True
+  exported 'SC1-2051a'
+  'SC1-2051-at-2031' run raised EngineWarningsException: SWGSanitaryUnitLoadCountZero x547; GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x14636; STMConduitNotMeetMaxCover x312
+  'SC1-2051-at-2031' ran in 269 s, results: True
+  exported 'SC1-2051-at-2031'
+  'SC1-2051-at-2056' run raised EngineWarningsException: SWGSanitaryUnitLoadCountZero x550; GVFBoundaryNodeDoesntSupportWWFs x2; SWCMoreThanOneConduitConnectedToFreeOutfall x5; DesignTractiveStressWarning x13337; STMDisChargeAboveDesignCapacity x589; STMConduitNotMeetMaxCover x312
+  'SC1-2051-at-2056' ran in 159 s, results: True
+  exported 'SC1-2051-at-2056'
+  pipe sizes unchanged by the analysis runs
+  saved C:\IbriWork\W18\IBRI_W18_R6_SC1_2051.stsw
