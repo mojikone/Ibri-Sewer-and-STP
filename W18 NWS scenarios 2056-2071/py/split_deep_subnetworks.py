@@ -55,6 +55,8 @@ DESIGN = "--design" in sys.argv
 tag, src, out = ARGS[0], ARGS[1], ARGS[2]
 T = 0.0 if DESIGN else (float(ARGS[3]) if len(ARGS) > 3 else 0.01)
 FIX = {} if DESIGN or "--no-fixed" in sys.argv else FIXED.get((tag, round(T, 4)), {})   # --no-fixed: the split as searched
+_FX = [a.split("=", 1)[1] for a in sys.argv if a.startswith("--fixed=")]          # --fixed=<json>: {tag: {sub: [stations]}}
+if _FX and not DESIGN: FIX = json.load(open(_FX[0], encoding="utf-8")).get(tag, {})   # (the final designs, 2026-11-18)
 os.makedirs(out, exist_ok=True)
 HERE = os.path.dirname(os.path.abspath(__file__)); W18 = os.path.dirname(HERE)
 GEO = os.path.join(W18, "..", "W17", "Options 2026-10", "11_Network_options", "S1.gpkg")

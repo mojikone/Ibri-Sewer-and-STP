@@ -1,0 +1,6 @@
+round,station,receiver,depth_station,depth_receiver_before,subnetwork,kind,depth_station_final,rising_main_m,pipe,size,flow_2056_ls,x,y
+1,O3-M1442,O3-M1441,11.27,12.18,O3,new station,11.27,111.11,O3-P1442,DN280,21.93,450297.96,2573992.93
+0,O9-M167,O9-M166,11.85,12.10,O9,new station,11.82,100.00,O9-P167,DN315,22.94,452920.83,2566542.76
+0,O9-M72,O9-M71,18.80,19.13,O9,new station,11.95,105.08,O9-P72,DN315,25.12,456660.92,2570357.34
+0,O9-M763,O9-M762,13.61,13.83,O9,new station,13.61,97.50,O9-P763,DN200,10.08,457369.31,2569079.29
+0,O9-M89,O9-M88,13.74,14.41,O9,new station,13.74,103.44,O9-P89,DN200,7.69,457897.18,2570224.31

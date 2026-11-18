@@ -1,0 +1,7 @@
+# rebuilt in seconds by py/final_design.py and py/split_deep_subnetworks.py; the renumbered deliverables are kept
+*/exports/
+*/split/*.gpkg
+*/split/*.gpkg-*
+*/split/nodes_*.csv
+*/split/pipes_*.csv
+*.log

@@ -1,0 +1,74 @@
+{
+ "tag": "SC2-2051",
+ "condition": "steepened up to 0.75 %, split",
+ "limit_pc": 0.75,
+ "km_total": 1497.8266,
+ "km_dn200": 1350.0403,
+ "km_big": 147.7863,
+ "km_big_under075": 4.500100000000001,
+ "km_dn200_under075": 1349.9879,
+ "n_steepened": 1456,
+ "km_steepened": 120.5679,
+ "n_runs_steepened": 215,
+ "km_by_band": {
+  "up to 0.30 %": 54.371199999999995,
+  "0.30 to 0.50 %": 49.1501,
+  "0.50 to 0.75 %": 17.0466,
+  "0.75 to 1.00 %": 0.0
+ },
+ "n_over3": 0,
+ "v2056_max": 1.051,
+ "v2031_max": 0.956,
+ "stations": 23,
+ "stations_existing": 18,
+ "stations_new": 5,
+ "joined": 5,
+ "stations_design": 23,
+ "outfalls_over12": [
+  {
+   "name": "O11",
+   "depth_m": 12.4
+  },
+  {
+   "name": "O12",
+   "depth_m": 14.71
+  },
+  {
+   "name": "O14",
+   "depth_m": 12.73
+  },
+  {
+   "name": "O3-M1446",
+   "depth_m": 12.8
+  },
+  {
+   "name": "O9-M763",
+   "depth_m": 13.61
+  },
+  {
+   "name": "O9-M89",
+   "depth_m": 13.74
+  }
+ ],
+ "mh_over12": 308,
+ "mh_deepest": 15.978890947476316,
+ "mh_over12_design": 315,
+ "mh_deepest_design": 22.638356570646238,
+ "mh_over12_steepened_no_cut": 441,
+ "mh_deepest_steepened_no_cut": 27.27514765347871,
+ "km_pipes_over12": 27.753199999999996,
+ "relay_check_p99_m": 685.1702510675568,
+ "relay_check_max_m": 697.5120608510883,
+ "engineer_stations": {
+  "O3": [
+   "O3-M1446"
+  ],
+  "O9": [
+   "O9-M166",
+   "O9-M72",
+   "O9-M763",
+   "O9-M89"
+  ],
+  "O12": []
+ }
+}
