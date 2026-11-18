@@ -5,3 +5,4 @@
 */split/nodes_*.csv
 */split/pipes_*.csv
 *.log
+*/named/network.gpkg

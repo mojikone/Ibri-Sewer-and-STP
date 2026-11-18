@@ -1,0 +1,32 @@
+{
+ "case": "SC1-2061",
+ "pumps": 14,
+ "lifts": 9,
+ "plant_inlets": 1,
+ "stations": [
+  "P1 (O1, plant inlet, 11.25 m, 1080.9 L/s, type 3)",
+  "P1L1 (O3-M1442, lift, 11.27 m, 21.9 L/s, type 1)",
+  "P2 (O4, pump, 6.93 m, 180.5 L/s, type 2)",
+  "P3 (O8, pump, 9.22 m, 15.3 L/s, type 1)",
+  "P4 (O9, pump, 10.25 m, 124.8 L/s, type 2)",
+  "P4L1 (O10, lift, 11.58 m, 34.2 L/s, type 1)",
+  "P4L2 (O11, lift, 12.4 m, 25.7 L/s, type 1)",
+  "P4L3 (O12, lift, 14.71 m, 18.4 L/s, type 1)",
+  "P4L4 (O9-M167, lift, 11.82 m, 22.9 L/s, type 1)",
+  "P4L5 (O14, lift, 12.73 m, 7.2 L/s, type 1)",
+  "P4L6 (O9-M72, lift, 11.95 m, 25.1 L/s, type 1)",
+  "P4L7 (O9-M89, lift, 13.74 m, 7.7 L/s, type 1)",
+  "P4L8 (O9-M763, lift, 13.61 m, 10.1 L/s, type 1)",
+  "P5 (O13, pump, 3.11 m, 0.8 L/s, type 1)",
+  "P6 (O15, pump, 10.34 m, 28.7 L/s, type 1)",
+  "P7 (O16, pump, 10.52 m, 23.7 L/s, type 1)",
+  "P8 (O17, pump, 8.78 m, 5.4 L/s, type 1)",
+  "P9 (O18, pump, 5.37 m, 4.6 L/s, type 1)",
+  "P10 (O19, pump, 7.42 m, 8.2 L/s, type 1)",
+  "P11 (O20, pump, 9.99 m, 8.2 L/s, type 1)",
+  "P12 (O21, pump, 11.01 m, 82.8 L/s, type 1)",
+  "P13 (O22, pump, 1.48 m, 4.0 L/s, type 1)",
+  "P14 (O23, pump, 11.73 m, 0.4 L/s, type 1)",
+  "P15 (O24, pump, 8.55 m, 55.5 L/s, type 1)"
+ ]
+}
