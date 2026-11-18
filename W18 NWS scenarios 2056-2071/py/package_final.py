@@ -36,12 +36,19 @@ with zipfile.ZipFile(OUT, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as z:
         for n in q.namelist():
             if n != name: qz.writestr(n, q.read(n))
     z.writestr(TOP + "QGIS/Ibri_sewer_concept_design.qgz", buf.getvalue())
-    for f in glob.glob(os.path.join(MODELS, "*")): z.write(f, TOP + "SewerGEMS/" + os.path.basename(f))
+    # the model, its database and the results of its three final scenarios (2056 design 279818, at the 2031 peak 279829,
+    # at the 2036 peak 279830); the results the source model kept for its earlier scenarios are left out
+    for f in glob.glob(os.path.join(MODELS, "*")):
+        b = os.path.basename(f)
+        if b.endswith((".stsw", ".stsw.sqlite")) or any(f"_{s}" in b for s in ("279818", "279829", "279830")):
+            z.write(f, TOP + "SewerGEMS/" + b)
     z.writestr(TOP + "READ ME.txt",
                "Ibri sewer network, concept design of scenarios SC1 to SC4 (gradient limit 0.75 %, design year 2056; QGIS also 2051 and 2061)\n"
                "Report: the concept design report draft; Chapter 3 (design basis), Chapter 6 (scenarios) and Appendix D carry the final design.\n"
                "BOQ: quantities by bill and the network capital cost at the rates of the options cost estimate (formulas).\n"
                "Maps: the report maps. QGIS: open Ibri_sewer_concept_design.qgz; one group per scenario and design year.\n"
-               "SewerGEMS: one model per scenario designed for 2056, with the design-year analysis and the 2031 and 2036 checks.\n"
+               "SewerGEMS: one model per scenario designed for 2056; open the scenario 'SC# 2056 design' for the design year and "
+               "'... at the 2031 peak' / '... at the 2036 peak' for the self-cleansing checks (the other scenarios are the source model's). "
+               "Gravity joins between systems are carried as flow transfers to the receiving manhole.\n"
                "Names: pumping stations P1 to P15, lift stations P#L#, manholes and pipes by the station they drain to (P4-M12, P4L1-P3).\n")
 print("wrote", OUT, f"{os.path.getsize(OUT) / 1e6:,.0f} MB")

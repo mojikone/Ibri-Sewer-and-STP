@@ -24,8 +24,10 @@ L = [f"# {CASE}: SewerGEMS model against the own design", "",
      f"- Depth of flow over the limit (0.65 to DN355, 0.50 above) at the design year: {(j.dD > j.lim + 0.005).sum()} pipes, "
      f"{j.length_m[j.dD > j.lim + 0.005].sum() / 1000:.2f} km; largest d/D {j.dD.max():.2f} ({j.dD.idxmax()}, DN{int(j.dn_mm[j.dD.idxmax()])}).",
      f"- Above DN200, velocity at the 2031 peak, model minus own: median {(big.v31_sg - big.v2031_ms).median():+.3f} m/s, 5-95 % "
-     f"{(big.v31_sg - big.v2031_ms).quantile(.05):+.3f} to {(big.v31_sg - big.v2031_ms).quantile(.95):+.3f}; under 0.75 m/s: model "
-     f"{big.length_m[big.v31_sg < 0.75].sum() / 1000:.1f} km, own {big.length_m[big.v2031_ms < 0.75].sum() / 1000:.1f} km.",
+     f"{(big.v31_sg - big.v2031_ms).quantile(.05):+.3f} to {(big.v31_sg - big.v2031_ms).quantile(.95):+.3f}; under 0.75 m/s at two decimals: model "
+     f"{big.length_m[big.v31_sg.round(2) < 0.75].sum() / 1000:.1f} km, own {big.length_m[big.v2031_ms.round(2) < 0.75].sum() / 1000:.1f} km "
+     f"(the steepened pipes are laid to reach 0.75 m/s exactly; the model gives 0.749-0.750 on "
+     f"{((big.v31_sg < 0.75) & (big.v31_sg.round(2) >= 0.75)).sum()} of them).",
      f"- Highest velocity at the design year: model {j.velocity_ms.max():.2f} m/s ({j.velocity_ms.idxmax()})."]
 over = j[j.dD > j.lim + 0.005].sort_values("dD", ascending=False).head(10)
 if len(over): L += ["", "Pipes over the depth-of-flow limit (largest 10): " + ", ".join(f"{k} DN{int(r.dn_mm)} d/D {r.dD:.2f} (own flow {r.q_own / 86.4:.1f}, model {r.flow_m3d / 86.4:.1f} L/s)" for k, r in over.iterrows())]
