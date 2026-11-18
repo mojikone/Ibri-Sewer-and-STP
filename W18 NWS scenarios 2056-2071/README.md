@@ -184,7 +184,7 @@ The engineer, on the C1 map: the new stations are only in O12 and O9; without O1
 - Outfalls kept deeper than 12 m: O9 14.25 m, O12 14.63 m (0.50 %) / 14.71 m (0.75 and 1.00 %: 8 cm over the limit, kept deep as he decided at 0.50 %), O11 12.39 m, O14 12.73 m; deepest manhole 16.5 / 16.2 / 16.2 m, unchanged.
 - O3's stations (0.75 and 1.00 %) cannot be dropped or merged: without them O3 is 18-26 m deep. O9-M728 goes at every limit (O9 14.25 m), O9-M103 + O9-M89 merge at O9-M101 at every limit.
 - The station choice does not move a gradient, so self-cleansing is that of the limit; with fewer stations 0.75 % needs 23 stations, the number of the design as laid, for 9.2 km under 0.75 m/s against 26.4 km at 0.50 %.
-- Every split GeoPackage now has a `manholes` layer (label, ground, depth_design, depth_after); the QGIS project shows it with the engineer's style (`qgis/styles/manholes_depth.qml`: from 1:15,000, labels name and depth from 1:10,000). Maps: `results/sc1_conditions/maps/SC1_C#_*_fewer_stations.png`.
+- Every split GeoPackage now has a `manholes` layer (label, ground, depth_design, depth_after); the QGIS project shows it with the engineer's style (`qgis/styles/manholes_depth.qml`: from 1:15,000, labels name and depth from 1:10,000). Maps: `results/sc1_conditions/maps/SC1_C#_*_fewer_stations.png`. The project file and the engineer's open QGIS agree (checked on the plugin socket, 2026-11-18); a second QGIS window holding the old project overwrote the rebuild once on save and was restored from git - after a script rebuild, reload the project in every open QGIS before saving.
 
 ## Expected difficulty with the design-year rule
 
