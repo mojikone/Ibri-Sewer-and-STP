@@ -13,7 +13,7 @@ import numpy as np, pandas as pd
 HERE = os.path.dirname(os.path.abspath(__file__)); W18 = os.path.dirname(HERE)
 OUT = os.path.join(W18, "results", "sc1_conditions", "whatif_C1_O12_O9"); os.makedirs(OUT, exist_ok=True)
 sys.argv = ["split_deep_subnetworks.py", "SC1-2056", os.path.join(W18, "results", "SC1-2056_R5"),
-            os.path.join(tempfile.gettempdir(), "w18_whatif_split"), "0.005"]
+            os.path.join(tempfile.gettempdir(), "w18_whatif_split"), "0.005", "--no-fixed"]   # the split as searched (C1 as first mapped)
 sys.path.insert(0, HERE)
 import split_deep_subnetworks as T                    # runs the split exactly as for C1
 

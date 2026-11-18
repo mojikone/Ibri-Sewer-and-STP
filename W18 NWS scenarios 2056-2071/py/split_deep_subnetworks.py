@@ -40,10 +40,21 @@ COVER, DMAX, TURN = 1.3, 12.0, 30.0
 # with one branch (O11) between the new station and the outfall - in effect the outfall moved, not the network split.
 # No cut is made in these subnetworks; the outfall keeps its depth (O14 12.73 m, O11 12.13 m as designed).
 KEEP_DEEP = {"O14", "O11"}
+# the engineer's station decisions (2026-11-18, on the SC1-2056 map at 0.50 %; py/whatif_merge_stations.py): a subnetwork
+# listed here is not searched for cuts - its new stations are exactly these manholes (none: the outfall is kept deep).
+# O12: neither O12-M26 nor O12-M193, outfall 14.6 m accepted. O9: O9-M103 and O9-M89 as one station at O9-M101 (12.6 m
+# accepted), O9-M728 removed and O9-M773 kept (O9 outfall 14.3 m accepted). A gravity join may not deepen these outfalls.
+FIXED = {("SC1-2056", 0.005): {"O12": [], "O9": ["O9-M773", "O9-M166", "O9-M101"]},
+         # his logic learnt and applied to every subnetwork at 0.75 % and 1.00 % (engineer: "learn from my logic",
+         # 2026-11-18; py/reduce_stations.py: drop or merge while a new station <= 12.65 m, an outfall <= 14.65 m and no
+         # manhole > 16.5 m); O12 kept deep as he decided at 0.50 % although its outfall is 14.71 m there (8 cm over)
+         ("SC1-2056", 0.0075): {"O12": [], "O9": ["O9-M101", "O9-M166", "O9-M72", "O9-M773"]},
+         ("SC1-2056", 0.01): {"O12": [], "O9": ["O9-M101", "O9-M166", "O9-M2805", "O9-M69", "O9-M773"]}}
 ARGS = [a for a in sys.argv[1:] if not a.startswith("--")]
 DESIGN = "--design" in sys.argv
 tag, src, out = ARGS[0], ARGS[1], ARGS[2]
 T = 0.0 if DESIGN else (float(ARGS[3]) if len(ARGS) > 3 else 0.01)
+FIX = {} if DESIGN or "--no-fixed" in sys.argv else FIXED.get((tag, round(T, 4)), {})   # --no-fixed: the split as searched
 os.makedirs(out, exist_ok=True)
 HERE = os.path.dirname(os.path.abspath(__file__)); W18 = os.path.dirname(HERE)
 GEO = os.path.join(W18, "..", "W17", "Options 2026-10", "11_Network_options", "S1.gpkg")
@@ -239,7 +250,9 @@ def regions(active, inv):
 
 def governing_cut(active, inv, li, R, terminal):
     """Walk up from a deep outfall along the link that sets each node's invert; cut where the walk leaves the region."""
-    if lab.get(terminal) in KEEP_DEEP: return None
+    # an outfall kept deep, or any outfall of a subnetwork whose stations the engineer fixed (its own outfall or one of
+    # the fixed stations, labelled e.g. O9-M101): no cut is searched above it
+    if lab.get(terminal) in KEEP_DEEP or str(lab.get(terminal)).split("-")[0] in FIX: return None
     into = {}
     for k in active: into.setdefault(links[k]["dn"], []).append(k)
     ups = {links[k]["up"] for k in active}
@@ -260,6 +273,12 @@ def governing_cut(active, inv, li, R, terminal):
 def solve(active, pumps_in):
     """Cut until no node is deeper than 12 m for good. Returns the active links, the cuts and the final inverts."""
     active = set(active); cuts = []
+    if FIX:                                                # the engineer's stations first (round 0), then the search elsewhere
+        inv, li = relay(active); dep = depths(inv); nxt = downstream_map(active); node_of = {v: n for n, v in lab.items()}
+        for s in (s for st in FIX.values() for s in st):
+            n = node_of[s]; k = nxt[n]
+            active.discard(k); cuts.append(dict(round=0, link=k, station=n, receiver=links[k]["dn"],
+                                                depth_station=dep.get(n), depth_receiver_before=dep.get(links[k]["dn"])))
     for rnd in range(1, 500):
         inv, li = relay(active)
         R, dep, nxt = regions(active, inv)
@@ -327,7 +346,7 @@ while changed:
         # (2026-11-18: O12 joined into O11 took the O11 outfall from 12.4 to 15.0 m)
         d_try = depths(inv)
         deepened = [f"{lab[x]} {dep_now.get(x, 0):.1f} -> {d_try.get(x, 0):.1f} m" for x in orig_terminals
-                    if lab.get(x) in KEEP_DEEP and d_try.get(x, 0) > dep_now.get(x, 0) + 0.01]
+                    if (lab.get(x) in KEEP_DEEP or lab.get(x) in FIX) and d_try.get(x, 0) > dep_now.get(x, 0) + 0.01]
         if deepened:
             joins_log.append(dict(source=t["source"], receiver=t["receiver_label"], length_m=t["length"], outfall_depth_m=d_out,
                                   result="kept as a station", why="the join deepens an outfall kept uncut: " + ", ".join(deepened)))
@@ -437,7 +456,8 @@ S = dict(tag=tag, condition="as designed" if DESIGN else f"steepened up to {T*10
          mh_over12_steepened_no_cut=sum(1 for v in mh_steep.values() if v > DMAX),
          mh_deepest_steepened_no_cut=max(mh_steep.values()),
          km_pipes_over12=km(pipes_only[pipes_only.deep12 == 1]),
-         relay_check_p99_m=float(np.percentile(err, 99)), relay_check_max_m=float(err.max()))
+         relay_check_p99_m=float(np.percentile(err, 99)), relay_check_max_m=float(err.max()),
+         engineer_stations={s: v for s, v in FIX.items()})
 json.dump(S, open(os.path.join(out, f"summary_{tag}.json"), "w"), indent=1)
 
 L = [f"# {tag}: {S['condition']}", "",
@@ -455,11 +475,15 @@ L = [f"# {tag}: {S['condition']}", "",
      f"| pumping stations (the plant inlet not counted) | {S['stations_design']} | {S['stations_design']} | {S['stations']} "
      f"({S['stations_new']} new, {S['joined']} existing joined by gravity) |", "",
      "Outfalls deeper than 12 m, kept where they are (an outfall is never moved): "
-     + (", ".join(f"{o['name']} {o['depth_m']:.2f} m" for o in S["outfalls_over12"]) or "none") + ".", "",
-     "New stations:"]
+     + (", ".join(f"{o['name']} {o['depth_m']:.2f} m" for o in S["outfalls_over12"]) or "none") + ".", ""]
+if FIX:
+    L += ["Engineer's station decisions (2026-11-18), no cut searched in these subnetworks: "
+          + "; ".join(f"{s}: " + (", ".join(v) if v else "no new station, outfall kept deep") for s, v in FIX.items()) + ".", ""]
+L += ["New stations:"]
 for r in (cuts.itertuples() if len(cuts) else []):
     L.append(f"- {r.subnetwork}: at {r.station} ({r.depth_station_final:.1f} m deep), {r.flow_2056_ls:.1f} L/s in 2056, "
-             f"to {r.receiver} over {r.rising_main_m:.0f} m (pipe {r.pipe}, {r.size}); round {r.round}")
+             f"to {r.receiver} over {r.rising_main_m:.0f} m (pipe {r.pipe}, {r.size}); "
+             + ("engineer's decision" if r.round == 0 else f"round {r.round}"))
 if not DESIGN:
     L += ["", "Existing stations, gravity join tested (outfall at 12 m or less and the receiving manhole within Table 12 spacing):"]
     for j in joins_log:
@@ -487,6 +511,10 @@ md = [dict(label=lab[n], depth_m=round(v, 2), x=xy[n][0], y=xy[n][1]) for n, v i
 if md:
     M_ = pd.DataFrame(md)
     gpd.GeoDataFrame(M_, geometry=[Point(a, b) for a, b in zip(M_.x, M_.y)], crs="EPSG:32640").to_file(GP, layer="manholes_deep", driver="GPKG")
+# every manhole, its depth as designed and after this condition (the engineer's working layer, 2026-11-18)
+MA = pd.DataFrame([dict(label=lab[n], ground=round(ground.get(n, np.nan), 3), depth_design=round(base_depth.get(n, np.nan), 3),
+                        depth_after=round(v, 3)) for n, v in mh_dep.items()])
+gpd.GeoDataFrame(MA, geometry=[Point(*xy[n]) for n in mh_dep], crs="EPSG:32640").to_file(GP, layer="manholes", driver="GPKG")
 print("written", GP)
 
 # quick-look map
