@@ -1,5 +1,5 @@
 source,receiver,length_m,outfall_depth_m,result,why
-O3,O2-M696,16.9,11.6,joined by gravity,stations 27 -> 26
+O3,O2-M696,16.9,11.5,joined by gravity,stations 27 -> 26
 O5,O4-M1421,103.4,10.6,joined by gravity,stations 26 -> 25
 O7,O6-M93,61.9,10.4,joined by gravity,stations 25 -> 24
 O6,O5-M191,63.6,7.4,joined by gravity,stations 24 -> 23

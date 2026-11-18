@@ -1,86 +1,86 @@
 {
  "SC1-2051": {
-  "sewers": 76633753,
-  "manholes": 35481519,
+  "sewers": 76966278,
+  "manholes": 35462354,
   "force_mains": 715437,
-  "stations": 3051000,
-  "total": 115881709
+  "stations": 3068500,
+  "total": 116212568
  },
  "SC1-2056": {
-  "sewers": 85216278,
-  "manholes": 35917851,
-  "force_mains": 738980,
-  "stations": 3265000,
-  "total": 125138109
+  "sewers": 85753903,
+  "manholes": 35934623,
+  "force_mains": 739547,
+  "stations": 3282000,
+  "total": 125710073
  },
  "SC1-2061": {
-  "sewers": 92004871,
-  "manholes": 36434382,
+  "sewers": 91699594,
+  "manholes": 36334170,
   "force_mains": 747190,
-  "stations": 3635000,
-  "total": 132821444
+  "stations": 3651500,
+  "total": 132432454
  },
  "SC2-2051": {
-  "sewers": 81819921,
-  "manholes": 35287591,
+  "sewers": 82152446,
+  "manholes": 35268426,
   "force_mains": 1069465,
-  "stations": 4343000,
-  "total": 122519977
+  "stations": 4360500,
+  "total": 122850837
  },
  "SC2-2056": {
-  "sewers": 90402446,
-  "manholes": 35723924,
-  "force_mains": 1093008,
-  "stations": 4735500,
-  "total": 131954877
+  "sewers": 90940071,
+  "manholes": 35740695,
+  "force_mains": 1093575,
+  "stations": 4752500,
+  "total": 132526841
  },
  "SC2-2061": {
-  "sewers": 98460977,
-  "manholes": 36243260,
+  "sewers": 98155699,
+  "manholes": 36143047,
   "force_mains": 1355302,
-  "stations": 5174000,
-  "total": 141233538
+  "stations": 5190500,
+  "total": 140844547
  },
  "SC3-2051": {
-  "sewers": 72746363,
-  "manholes": 35510805,
+  "sewers": 73078887,
+  "manholes": 35491640,
   "force_mains": 666686,
-  "stations": 2907500,
-  "total": 111831353
+  "stations": 2925000,
+  "total": 112162213
  },
  "SC3-2056": {
-  "sewers": 78220937,
-  "manholes": 35921202,
-  "force_mains": 690229,
-  "stations": 3121500,
-  "total": 117953867
+  "sewers": 78737874,
+  "manholes": 35941026,
+  "force_mains": 690796,
+  "stations": 3138500,
+  "total": 118508196
  },
  "SC3-2061": {
-  "sewers": 84839397,
-  "manholes": 36456045,
+  "sewers": 84521684,
+  "manholes": 36353064,
   "force_mains": 698439,
-  "stations": 3460000,
-  "total": 125453882
+  "stations": 3476500,
+  "total": 125049688
  },
  "SC4-2051": {
-  "sewers": 76616506,
-  "manholes": 35311756,
+  "sewers": 76949030,
+  "manholes": 35292591,
   "force_mains": 1020714,
-  "stations": 3984000,
-  "total": 116932976
+  "stations": 4001500,
+  "total": 117263835
  },
  "SC4-2056": {
-  "sewers": 83407105,
-  "manholes": 35727274,
-  "force_mains": 1044257,
-  "stations": 4250500,
-  "total": 124429135
+  "sewers": 83924042,
+  "manholes": 35747098,
+  "force_mains": 1044824,
+  "stations": 4267500,
+  "total": 124983464
  },
  "SC4-2061": {
-  "sewers": 90015223,
-  "manholes": 36260558,
+  "sewers": 89697510,
+  "manholes": 36157576,
   "force_mains": 1052467,
-  "stations": 4750000,
-  "total": 132078247
+  "stations": 4766500,
+  "total": 131674053
  }
 }

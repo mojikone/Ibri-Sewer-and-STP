@@ -99,14 +99,28 @@ for y in [YEAR] + CHECKS:
         TR[y][new2id[mh]] = TR[y].get(new2id[mh], 0.0) + q; rows_out.append([int(year), s, new2id[mh], mh, q])
 
 
+# --lifts (2026-11-18): the lift stations of the case's last split (split/cuts_<case>.csv) pump their flow to the next
+# manhole as a transfer of its peak, not re-peaked - the project's rule for anything pumped (R2 test) - so the sewers
+# below a lift are sized for what the model will carry
+CUT = set()
+if "--lifts" in sys.argv:
+    cuts_csv = os.path.join(ROOT, TAG, "split", f"cuts_{TAG}.csv")
+    CUT = set(d.index[d.label.isin(pd.read_csv(cuts_csv)["pipe"])]) if os.path.exists(cuts_csv) else set()
+LIFT_TR = {}                                             # year -> [(station label, receiver id, m3/d)]
+
+
 def flows(year):
-    base = loads[f"Q_{year}"].to_dict(); tr = TR[year]; cb, cl, ct = {}, {}, {}
+    base = loads[f"Q_{year}"].to_dict(); tr = dict(TR[year]); cb, cl, ct, q = {}, {}, {}, {}
+    LIFT_TR[year] = []
     for k in order:
-        u = d.at[k, "UP"]; ks = into.get(u, [])
+        u = d.at[k, "UP"]; ks = [j for j in into.get(u, []) if j not in CUT]
         cb[k] = base.get(u, 0.0) + sum(cb[j] for j in ks)
         cl[k] = d.at[k, "length_m"] + sum(cl[j] for j in ks)
         ct[k] = tr.get(u, 0.0) + sum(ct[j] for j in ks)
-    b = pd.Series(cb); return (b * [pf(x / 86.4) for x in b] + pd.Series(cl) / 1000 * INF + pd.Series(ct)).sort_index()
+        q[k] = cb[k] * pf(cb[k] / 86.4) + cl[k] / 1000 * INF + ct[k]
+        if k in CUT:                                     # the lift's peak lands on the next manhole
+            dn = d.at[k, "DN"]; tr[dn] = tr.get(dn, 0.0) + q[k]; LIFT_TR[year].append((d.at[k, "label"], int(dn), q[k]))
+    return pd.Series(q).sort_index()
 
 
 Q = {y: flows(y) / 86400.0 for y in [YEAR] + CHECKS}
