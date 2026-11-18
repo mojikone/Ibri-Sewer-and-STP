@@ -37,10 +37,14 @@ TAG = "SC1-2056"
 GROUP = "SC1 sewer conditions (re-lay of SewerGEMS R5, design year 2056)"
 SUBTITLE = "Ibri Sewer, TE Networks and STP — SC1 working map, re-lay of the SewerGEMS design | Renardet 2621"
 RENDER = "--no-render" not in sys.argv
+# C1-C3 since 2026-11-18: the runs with fewer stations (the engineer's decisions at 0.50 %, his logic at 0.75 and 1.00 %,
+# py/reduce_stations.py); the splits as first searched stay in C#_limit_*pc as the record
 CONDS = [("C0_as_designed", "C0", "As designed", None),
-         ("C1_limit_0.50pc", "C1", "Steepened, gradient up to 0.50 %", 0.50),
-         ("C2_limit_0.75pc", "C2", "Steepened, gradient up to 0.75 %", 0.75),
-         ("C3_limit_1.00pc", "C3", "Steepened, gradient up to 1.00 %", 1.00)]
+         ("C1_limit_0.50pc_fewer_stations", "C1", "Steepened, gradient up to 0.50 %, fewer stations", 0.50),
+         ("C2_limit_0.75pc_fewer_stations", "C2", "Steepened, gradient up to 0.75 %, fewer stations", 0.75),
+         ("C3_limit_1.00pc_fewer_stations", "C3", "Steepened, gradient up to 1.00 %, fewer stations", 1.00)]
+MH_QML = os.path.join(W18, "qgis", "styles", "manholes_depth.qml")   # the engineer's manhole layer (side chat, 2026-11-18):
+                                                                     # shown from 1:15,000, labels name + depth from 1:10,000
 WIDTH = ('CASE WHEN "dn_mm" >= 1400 THEN 2.0 WHEN "dn_mm" >= 1000 THEN 1.6 WHEN "dn_mm" >= 630 THEN 1.2 '
          'WHEN "dn_mm" >= 400 THEN 0.85 WHEN "dn_mm" > 200 THEN 0.55 ELSE 0.2 END')
 SIZES = [(200, 200, "DN200", 0.2), (201, 399, "DN250 to 355", 0.55), (400, 629, "DN400 to 560", 0.85),
@@ -264,8 +268,13 @@ def build():
             before = lyr(gpkg, "deep_before_split", "Deeper than 12 m if steepened and not split")
             if before is not None: before.setRenderer(QgsSingleSymbolRenderer(sym_line("#000000", 0.9, dd=False, style="dot")))
             mhd = lyr(gpkg, "manholes_deep", "Manhole deeper than 12 m (depth)")
-            add(g, outf); add(g, rmn); add(g, over3); add(g, pipes); add(g, deep); add(g, before, False)
-            title = f"SC1 {code}: steepened for 0.75 m/s at 2031, gradient up to {limit:.2f} %, split below 12 m"
+            mall = lyr(gpkg, "manholes", "Manholes, depth after split (m)")
+            if mall is not None: mall.loadNamedStyle(MH_QML)
+            add(g, outf); add(g, mall); add(g, rmn); add(g, over3); add(g, pipes); add(g, deep); add(g, before, False)
+            fixed = S.get("engineer_stations") or {}
+            kept = [f"{o['name']} {o['depth_m']:.1f}" for o in sorted(S["outfalls_over12"], key=lambda o: -o["depth_m"])]
+            title = (f"SC1 {code}: steepened for 0.75 m/s at 2031, gradient up to {limit:.2f} %, split below 12 m"
+                     + (", fewer stations" if fixed else ""))
             band_rows = [(f"   to {b}", f"{fmt(v)} km") for b, v in S["km_by_band"].items() if v > 0.05]
             rows = ([("Gradient limit", f"{limit:.2f} % (one gradient per street run)"),
                      ("Pipes above DN200", f"{fmt(S['km_big'])} km"),
@@ -275,7 +284,10 @@ def build():
                      ("Pumping stations", f"{S['stations']} (as designed {S['stations_design']})"),
                      ("   new / existing joined by gravity", f"{S['stations_new']} / {S['joined']}"),
                      ("Manholes deeper than 12 m", f"{S['mh_over12']} (as designed {S['mh_over12_design']})"),
-                     ("Deepest manhole", f"{S['mh_deepest']:.1f} m (a dip that comes back)")])
+                     ("Deepest manhole", f"{S['mh_deepest']:.1f} m" + ("" if fixed else " (a dip that comes back)"))] +
+                    ([("Kept deeper than 12 m" if i == 0 else "", ", ".join(c) + (" m" if i + 2 >= len(kept) else ","))
+                      for i, c in ((i, kept[i:i + 2]) for i in range(0, len(kept), 2))]       # two a row: the box is 92 mm
+                     if fixed else []))
             stack = [x for x in (outf, rmn, over3, pipes, deep, settle) if x is not None]
             legend = [(outf, False), (pipes, False), (size_legend(), True), (deep, False)] + \
                      ([(rmn, False)] if rmn is not None else []) + [(over3, False), (settle, False)]
