@@ -112,13 +112,41 @@ GP = os.path.join(OUT, "map.gpkg")
 if os.path.exists(GP): os.remove(GP)
 p = gpd.read_file(os.path.join(NM, "network.gpkg"), layer="pipes")
 p["plant"] = p.section.map(lambda s: plant_of(s)); p["depth_band"] = p.depth_max_m.map(band)
+
+
+def sc_class(r):                                             # self-cleansing class for the maps (a gravity join is a sewer)
+    if r.dn_mm <= 200: return "DN200 (rule: above DN200 only)"
+    if r.under075 == 1:
+        return "Under 0.75 m/s in 2031, reaches it by 2036" if r.v2036_ms >= 0.75 else "Under 0.75 m/s in 2031 and in 2036"
+    return r.map_class if str(r.map_class).startswith("Steepened") else "Above DN200, 0.75 m/s as laid"
+
+
+p["sc_class"] = [sc_class(r) for r in p.itertuples()]
 p.rename(columns={"new": "label", "dn_mm": "od_mm"}).to_file(GP, layer="pipes", driver="GPKG")
 m = gpd.read_file(os.path.join(NM, "network.gpkg"), layer="manholes")
 m["depth_band"] = m.depth.map(band)
 m.rename(columns={"new": "label", "depth": "depth_m"}).to_file(GP, layer="manholes", driver="GPKG")
 s = gpd.read_file(os.path.join(NM, "network.gpkg"), layer="stations")[["name", "geometry"]].merge(ST.drop(columns=["x", "y"]), on="name")
 s["map_label"] = [f"{a} {d:.1f} m" if k != "plant inlet" else f"STP at {a}, inlet {d:.1f} m" for a, k, d in zip(s.name, s.kind, s.outfall_depth_m)]
-s["duty_label"] = [f"{a} {d:.1f} m | {q:.0f} L/s {h:.0f} m" for a, d, q, h in zip(s.name, s.outfall_depth_m, s.duty_ls, s.head_m)]
+s["duty_label"] = [f"{a} {d:.1f} m | {q:.0f} L/s, head {h:.0f} m" for a, d, q, h in zip(s.name, s.outfall_depth_m, s.duty_ls, s.head_m)]
 s.to_file(GP, layer="stations", driver="GPKG")
 gpd.read_file(os.path.join(NM, "network.gpkg"), layer="force_mains").to_file(GP, layer="force_mains", driver="GPKG")
+# the deepest manhole of every run of sewer deeper than 12 m (pipes joined where they share a manhole)
+deep = K[K.depth_max_m > 12]; parent = {}
+def find(a):
+    while parent.setdefault(a, a) != a: a = parent[a]
+    return a
+for a, b in zip(deep.from_mh, deep.to_mh): parent[find(a)] = find(b)
+runs = collections.defaultdict(set)
+for a, b in zip(deep.from_mh, deep.to_mh): runs[find(a)] |= {a, b}
+dr = []
+for nodes_ in runs.values():
+    cand = [n for n in nodes_ if n in node.index and node.at[n, "kind"] == "manhole"]
+    if not cand: continue
+    n = max(cand, key=lambda n: node.at[n, "depth"])
+    dr.append(dict(label=n, depth_m=round(float(node.at[n, "depth"]), 2), map_label=f"{n} {node.at[n, 'depth']:.1f} m",
+                   run_km=round(deep[deep.from_mh.isin(nodes_) | deep.to_mh.isin(nodes_)].length_m.sum() / 1000, 2), x=node.at[n, "x"], y=node.at[n, "y"]))
+if dr:
+    D_ = pd.DataFrame(dr)
+    gpd.GeoDataFrame(D_.drop(columns=["x", "y"]), geometry=gpd.points_from_xy(D_.x, D_.y), crs="EPSG:32640").to_file(GP, layer="deep_runs", driver="GPKG")
 print(json.dumps({k: Q[k] for k in ("case", "pumps", "lifts", "stations", "force_main_km", "kw_network", "mwh_2031", "mwh_design", "deepest")}))
