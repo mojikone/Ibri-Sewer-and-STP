@@ -85,8 +85,10 @@ class Out:
         """Maps on their own A3 landscape pages: the portrait section ends here, one map and caption a page."""
         self.sect(SECT_A4)
         for i, (path, cap) in enumerate(items):
-            w = min(A3W - 0.5, (A3H - 2.2) * 2338 / 1653)
-            x = d.add_paragraph(); x.alignment = 1; x.add_run().add_picture(path, width=Cm(w)); self.put(x._p)
+            if isinstance(path, str):                         # a new map from file
+                w = min(A3W - 0.5, (A3H - 2.2) * 2338 / 1653)
+                x = d.add_paragraph(); x.alignment = 1; x.add_run().add_picture(path, width=Cm(w)); self.put(x._p)
+            else: self.put(path)                              # a figure kept from the team's chapter (its image paragraph)
             self.caption("Figure", cap)
             if i < len(items) - 1:
                 b = d.add_paragraph(); b.add_run().add_break(WD_BREAK.PAGE); self.put(b._p)
@@ -327,9 +329,8 @@ for sc in F.SCEN:
     tag = f"{sc}_{F.BASE}"
     o.maps([(os.path.join(IMG, f"map_{tag}_zones.png"), f"Scenario {sc}: the sewers by the plant they drain to"),
             (os.path.join(IMG, f"map_{tag}_network.png"), f"Scenario {sc}: sewers, pumping and lift stations and force mains"),
-            (os.path.join(IMG, f"map_{tag}_selfcleansing.png"), f"Scenario {sc}: self-cleansing of the sewers at the 2031 peak")])
-    if sc in te_fig:
-        img, cap = te_fig[sc]; kept_maps([(img, f"Scenario {sc}: TE Network General Layout")])
+            (os.path.join(IMG, f"map_{tag}_selfcleansing.png"), f"Scenario {sc}: self-cleansing of the sewers at the 2031 peak")]
+           + ([(te_fig[sc][0], f"Scenario {sc}: TE Network General Layout")] if sc in te_fig else []))     # one landscape run
 
 o.h("Comparison of Scenarios", 2)
 o.p(f"The four scenarios share the collection sewers and differ in where the flow is treated. The table compares the sewer network of each "
