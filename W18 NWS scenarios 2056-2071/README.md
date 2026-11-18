@@ -130,11 +130,11 @@ Today 23 stations. At 1 %: new stations in O3 (2), O9 (7), O11, O12 (2) and O14,
 | condition | length above DN200 under 0.75 m/s (2031) | steepened | stations | new | joined by gravity | manholes > 12 m | deepest |
 |---|---|---|---|---|---|---|---|
 | C0 as designed | 137.6 of 151.8 km (91 %) | - | 23 | - | - | 318 | 21.97 m |
-| C1 up to 0.50 % | 26.4 km (17.4 %) | 115.8 km, 189 runs | 26 | 9 | 6 | 227 | 16.47 m |
-| C2 up to 0.75 % | 9.2 km (6.1 %) | 130.4 km, 231 runs | 28 | 11 | 6 | 266 | 16.19 m |
-| C3 up to 1.00 % | 2.9 km (1.9 %) | 136.2 km, 244 runs | 30 | 13 | 6 | 267 | 16.19 m |
+| C1 up to 0.50 % | 26.4 km (17.4 %) | 115.8 km, 189 runs | 25 | 7 | 5 | 235 | 16.47 m |
+| C2 up to 0.75 % | 9.2 km (6.1 %) | 130.4 km, 231 runs | 27 | 9 | 5 | 274 | 16.19 m |
+| C3 up to 1.00 % | 2.9 km (1.9 %) | 136.2 km, 244 runs | 29 | 11 | 5 | 275 | 16.19 m |
 
-As designed, four outfalls are deeper than 12 m: O9 16.78, O12 14.56, O14 12.73, O11 12.13 m; all DN200 (1,346 km) is under 0.75 m/s at 2031. Joined by gravity in C1-C3: O2, O3, O5, O6, O7, O14. Two cuts sit close to the outfall-move the engineer rejected and are flagged for his decision: **O14** (station at O14-M2, one 62 m pipe left to O14, which then joins O9 by gravity: in effect the station two manholes up) and **O11** (station at O11-M6, 365 m and one branch left to O11, an extra station because O11 is 12.13 m deep as designed). Every other cut leaves 0.9-9.2 km of network with 2-35 branches below it. Not yet in SewerGEMS.
+As designed, four outfalls are deeper than 12 m: O9 16.78, O12 14.56, O14 12.73, O11 12.13 m; all DN200 (1,346 km) is under 0.75 m/s at 2031. Joined by gravity in C1-C3: O2, O3, O5, O6, O7. **O14 and O11 are kept deep, uncut (engineer, 2026-11-18):** their cuts sat next to the outfall (O14-M2 left one 62 m pipe to O14, which then joined O9 by gravity - in effect the station two manholes up; O11-M6 left 365 m and one branch - an extra station only because O11 is 12.13 m deep as designed). They stay stations at 12.73 m (O14) and 12.39 m (O11, steepened); dropping O11's cut saves a station, O14's does not (its cut came with the gravity join). **A join may not deepen an outfall kept uncut:** O12 -> O11-M96 (66 m) would save one more station but takes O11 from 12.4 to 15.0 m with 25 O11 pipes deeper than 12 m (to 16.0 m), so O12 stays a station. Every other cut leaves 0.9-9.2 km of network with 2-35 branches below it. Not yet in SewerGEMS.
 
 ## Expected difficulty with the design-year rule
 

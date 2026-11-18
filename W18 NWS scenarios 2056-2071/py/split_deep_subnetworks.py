@@ -36,6 +36,10 @@ import numpy as np, pandas as pd
 
 G, NU, KS, V_SC, V_MAX = 9.81, 1.141e-6, 1.5e-3, 0.75, 3.0
 COVER, DMAX, TURN = 1.3, 12.0, 30.0
+# outfalls the engineer keeps deep rather than cut next to them (2026-11-18): the cut left one 62 m pipe (O14) or 365 m
+# with one branch (O11) between the new station and the outfall - in effect the outfall moved, not the network split.
+# No cut is made in these subnetworks; the outfall keeps its depth (O14 12.73 m, O11 12.13 m as designed).
+KEEP_DEEP = {"O14", "O11"}
 ARGS = [a for a in sys.argv[1:] if not a.startswith("--")]
 DESIGN = "--design" in sys.argv
 tag, src, out = ARGS[0], ARGS[1], ARGS[2]
@@ -235,6 +239,7 @@ def regions(active, inv):
 
 def governing_cut(active, inv, li, R, terminal):
     """Walk up from a deep outfall along the link that sets each node's invert; cut where the walk leaves the region."""
+    if lab.get(terminal) in KEEP_DEEP: return None
     into = {}
     for k in active: into.setdefault(links[k]["dn"], []).append(k)
     ups = {links[k]["up"] for k in active}
@@ -318,6 +323,16 @@ while changed:
         trial = pipes | {("join", j["source"]) for j in best["joins"]} | {k}
         act, cts, inv, li = solve(trial, 0)
         n_before, n_after = n_stations(best["active"]), n_stations(act)
+        # a subnetwork the engineer keeps uncut cannot be relieved by a cut, so a join may not deepen its outfall
+        # (2026-11-18: O12 joined into O11 took the O11 outfall from 12.4 to 15.0 m)
+        d_try = depths(inv)
+        deepened = [f"{lab[x]} {dep_now.get(x, 0):.1f} -> {d_try.get(x, 0):.1f} m" for x in orig_terminals
+                    if lab.get(x) in KEEP_DEEP and d_try.get(x, 0) > dep_now.get(x, 0) + 0.01]
+        if deepened:
+            joins_log.append(dict(source=t["source"], receiver=t["receiver_label"], length_m=t["length"], outfall_depth_m=d_out,
+                                  result="kept as a station", why="the join deepens an outfall kept uncut: " + ", ".join(deepened)))
+            del links[k]
+            continue
         if n_after < n_before:
             best = dict(active=act, cuts=cts, inv=inv, li=li, joins=best["joins"] + [t]); changed = True
             joins_log.append(dict(source=t["source"], receiver=t["receiver_label"], length_m=t["length"], outfall_depth_m=d_out,
