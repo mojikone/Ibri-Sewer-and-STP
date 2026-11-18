@@ -140,6 +140,8 @@ for f, y in ((f"conduits_{TAG}a.csv", YEAR),) + tuple((f"conduits_{TAG}-at-{c}.c
 shutil.copy(os.path.join(INP, "manholes_network.csv"), os.path.join(EXP, f"manholes_{TAG}a.csv"))
 pd.DataFrame(rows_out, columns=["year", "source", "receiver_id", "receiver_label", "flow_m3d"]).to_csv(
     os.path.join(EXP, f"transfers_{TAG}.csv"), index=False)
+pd.DataFrame([(int(y), p, r, q) for y in LIFT_TR for p, r, q in LIFT_TR[y]], columns=["year", "cut_pipe", "receiver_id", "flow_m3d"]).to_csv(
+    os.path.join(EXP, f"lift_transfers_{TAG}.csv"), index=False)   # for the SewerGEMS model
 S = dict(tag=TAG, scenario=SCENARIOS[NAME]["text"], passes=passes, pipes=len(d), over_largest_size=int(over.sum()),
          sizes={int(k): int(v) for k, v in nom.value_counts().sort_index().items()},
          km_above_dn200=round(float(d.length_m[nom.values > 200].sum()) / 1000, 2),
