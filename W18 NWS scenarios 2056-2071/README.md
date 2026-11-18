@@ -103,7 +103,7 @@ Results: `results/SC1-2056_final/`, `results/selfcleansing_slope/SC1-2056_final/
 
 **R5 = `C:\IbriWork\W18\IBRI_W18_R5_SC1_2056.stsw`** (job `074_w18_R5_SC1_2056.ps1`, `lib/build_scenario.ps1` on R4): SC1 designed for 2056, checked at 2031, transfers from R4's outfall flows (`py/make_transfers.py SC1 2056 2031`, same 20 routes as R2, 469 m³/d less in 2056). Converged in 4 passes (1,867 / 757 / 124 / 0 sizes changed), the analyses changed no size. The depth is R2's: 318 manholes over 12 m, deepest 21.97 m. Exports `results/SC1-2056_R5/`; 2031 slope check `results/selfcleansing_slope/SC1-2056_R5/` (1 %: 98.1 % of the length above DN200 reaches 0.75 m/s, 458 manholes over 12 m, deepest 29.25 m). R2's exports archived in `bridge\out\w18\scen\SC1-2056_R2`.
 
-**Split of the deep subnetworks (engineer, 2026-11-17), mapped, NOT yet in the model** (`py/split_deep_subnetworks.py` -> `results/split/SC1-2056_R5*/`: SUMMARY, cuts, joins, nodes, map PNG, GeoPackage):
+*Superseded on 2026-11-18 by "SC1 in four conditions" below (outfalls never moved, one gradient per street run, SewerGEMS velocity, outfall ground from the model).* **Split of the deep subnetworks (engineer, 2026-11-17), mapped, NOT yet in the model** (`py/split_deep_subnetworks.py` -> `results/split/SC1-2056_R5*/`: SUMMARY, cuts, joins, nodes, map PNG, GeoPackage):
 - Pipes above DN200 steepened to 0.75 m/s at the 2031 peak, up to the limit; every subnetwork.
 - A subnetwork deeper than 12 m for good - every manhole from there to its OWN outfall deeper than 12 m - is cut at the last manhole at 12 m or less: a pumping station lifting to the next manhole, which restarts at minimum cover. Dips that come back to 12 m or less within their own subnetwork are left alone. (Recovery is confined to the subnetwork: otherwise a gravity join let 25 m sewer run for kilometres into the next subnetwork.)
 - A cut on the last pipe into a pumped outfall moves that station one manhole up (not a new station).
@@ -118,6 +118,23 @@ Results: `results/SC1-2056_final/`, `results/selfcleansing_slope/SC1-2056_final/
 | **1.00 %** | **98.1 %** | **31** | **13** | **2** | **6** | **16.17 m** |
 
 Today 23 stations. At 1 %: new stations in O3 (2), O9 (7), O11, O12 (2) and O14, 4.9-29.7 L/s in 2056, 11.0-12.0 m deep, each lifting over one pipe length (62-117 m); O20 and O23 move one manhole up; O2, O3, O5, O6, O7 and O14 join the next subnetwork by gravity. 241 manholes stay deeper than 12 m in dips that come back (176 at 12-14 m, 63 at 14-16 m, 1 at 16.2 m). Next: the engineer's choice of limit, then the cuts, joins and minimum gradients in SewerGEMS (R6).
+
+## SC1 in four conditions, re-laid from R5, maps in the QGIS project (engineer, 2026-11-18)
+
+**Live; supersedes `results/split/` (2026-11-17).** `py/split_deep_subnetworks.py` revised on the engineer's rulings of 2026-11-18, run on R5's exports into `results/sc1_conditions/<condition>/` (SUMMARY.md, summary json, pipes/nodes/cuts/joins csv, GeoPackage); `py/qgis_sc1_conditions.py` adds the four maps to the QGIS project the engineer was sent (`qgis/W18_plot_flows.qgz`, group "SC1 sewer conditions", one condition at a time, saved layouts `SC1 C0`...`C3`, exported to `results/sc1_conditions/maps/`); `py/package_qgis_plot_flows.py` packs them into `gis/W18_plot_flows_QGIS.zip` (28 MB).
+- **An outfall is never moved:** a cut is a split of the network, so no cut is made on the last pipe into an outfall that is still one (pumping station or plant inlet); it keeps its depth. (The 2026-11-17 run moved O20 and O23 one manhole up: withdrawn.)
+- **One gradient per street run:** a run follows, at each manhole, the arriving pipe of the same size within 30 degrees of the leaving pipe's line (68 % of pipe-to-pipe deflections are under 30 degrees, the rest are corners); its gradient is the steepest any of its pipes above DN200 needs for 0.75 m/s at the 2031 peak within the limit; each pipe takes the steeper of that and its laid gradient. Checked: no spread of gradient within any steepened run; median 3-4 pipes per run, longest 58.
+- **Velocity is SewerGEMS's own** (2031 and 2056 analyses of R5), scaled by the Colebrook-White ratio where the gradient changes; the required gradient is the one at which that scaled velocity reaches 0.75 m/s. **Maximum 3.0 m/s at the design flow (G203 p27) checked on every pipe at the 2056 peak: none over, highest 1.07 m/s in every condition.**
+- **Outfall ground and position from the model's own outfalls** (W17 `S1.gpkg`, same labels), no longer the manhole above: the re-lay now reproduces SewerGEMS's inverts exactly (0.000 m on all 19,083 pipes).
+
+| condition | length above DN200 under 0.75 m/s (2031) | steepened | stations | new | joined by gravity | manholes > 12 m | deepest |
+|---|---|---|---|---|---|---|---|
+| C0 as designed | 137.6 of 151.8 km (91 %) | - | 23 | - | - | 318 | 21.97 m |
+| C1 up to 0.50 % | 26.4 km (17.4 %) | 115.8 km, 189 runs | 26 | 9 | 6 | 227 | 16.47 m |
+| C2 up to 0.75 % | 9.2 km (6.1 %) | 130.4 km, 231 runs | 28 | 11 | 6 | 266 | 16.19 m |
+| C3 up to 1.00 % | 2.9 km (1.9 %) | 136.2 km, 244 runs | 30 | 13 | 6 | 267 | 16.19 m |
+
+As designed, four outfalls are deeper than 12 m: O9 16.78, O12 14.56, O14 12.73, O11 12.13 m; all DN200 (1,346 km) is under 0.75 m/s at 2031. Joined by gravity in C1-C3: O2, O3, O5, O6, O7, O14. Two cuts sit close to the outfall-move the engineer rejected and are flagged for his decision: **O14** (station at O14-M2, one 62 m pipe left to O14, which then joins O9 by gravity: in effect the station two manholes up) and **O11** (station at O11-M6, 365 m and one branch left to O11, an extra station because O11 is 12.13 m deep as designed). Every other cut leaves 0.9-9.2 km of network with 2-35 branches below it. Not yet in SewerGEMS.
 
 ## Expected difficulty with the design-year rule
 

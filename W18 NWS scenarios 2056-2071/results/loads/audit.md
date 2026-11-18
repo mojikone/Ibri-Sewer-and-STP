@@ -41,7 +41,7 @@
 | C | 25 settlements, the W14 boundaries | pass |  |
 | C | P_yyyy and Q_yyyy = sums of the plot layer, 2026-2100 | pass | max 0.050 people, 0.0050 m3/d |
 | C | settlement fields recomputed (capacity, years, counts, properties, OR, not carried) and = workbook | pass | 0 mismatches [] |
-| D | plot_loads.csv = plot layer in the ten model years | pass | max 5.0e-06 m3/d |
+| D | plot_loads.csv = plot layer in the model years 2026-2091 | pass | max 5.0e-06 m3/d |
 | D | plot_loads.csv growth flag = recomputed rule | pass |  |
 | D | not carried = inactive manhole or over 200 m (and nothing else) | pass |  |
 | D | manhole_loads.csv = carried plot flow summed per manhole | pass | 15,482 manholes, max 2.5e-04 m3/d; carried 2056 37,892.2, 2071 46,809.6 |
