@@ -142,6 +142,53 @@ L += ["## O9-M728 without a station: the steepened run below it left at the desi
       "|---|---|---|---|---|---|---|---|",
       unsteepen_to_drop(base0, "O9-M773", "O9-M728", "O9", ""),
       unsteepen_to_drop(merged(base0, ["O9-M103", "O9-M89"], "O9-M101"), "O9-M773", "O9-M728", "O9", ", O9-M103 and O9-M89 merged at O9-M101"), ""]
+# ------------------------------------------------------------------ the engineer's choice (2026-11-18)
+# O12 without its two new stations (outfall 14.6 m accepted); O9-M103 and O9-M89 as one station at O9-M101 (12.6 m
+# accepted); O9-M728 removed and O9-M773 kept (station 12.0 m, O9 outfall 14.3 m accepted). All else as C1.
+choice = merged(base0, ["O9-M103", "O9-M89"], "O9-M101") | {cut_of[s] for s in ("O12-M26", "O12-M193", "O9-M728")}
+inv_c, li_c = T.relay(choice); R_c, dep_c, _ = T.regions(choice, inv_c)
+ups_c = {T.links[k]["up"] for k in choice}; outs_c = {T.links[k]["dn"] for k in choice} - ups_c - T.plants
+new_c = sorted((T.lab[n], dep_c[n]) for n in outs_c if n not in T.orig_terminals)
+mh_c = {n: v for n, v in dep_c.items() if n in T.mh.index}
+pk = [k for k in choice if T.links[k]["kind"] == "pipe"]
+km12_c = sum(T.links[k]["L"] for k in pk if max(T.ground.get(T.links[k]["up"], np.nan) - li_c[k][0],
+                                                 T.ground.get(T.links[k]["dn"], np.nan) - li_c[k][1]) > T.DMAX) / 1000
+d = T.dy.loc[pk].copy(); d["under"] = d.V31 < T.V_SC; big_c = d[d.NOM > 200]; und = big_c[big_c.under]
+assert len(set(T.best["active"]) ^ set(choice)) <= 8                       # only the pair links differ from C1
+L += ["## The engineer's choice (2026-11-18): O12 kept deep, O9-M103 + O9-M89 at O9-M101, O9-M728 removed", "",
+      f"- **Stations: {T.n_stations(choice)}** (C1 as mapped 25); new stations left: " + ", ".join(f"{a} {b:.2f} m" for a, b in new_c) + ".",
+      f"- Outfalls: O12 {dep_c[term['O12']]:.2f} m, O9 {dep_c[term['O9']]:.2f} m, O11 {dep_c[term['O11']]:.2f} m, O14 {dep_c[term['O14']]:.2f} m "
+      f"(accepted deep); deeper than 12 m for good: " + ", ".join(f"{s} {sum(1 for n in R_c if str(T.lab.get(n, '')).split('-')[0] == s)} manholes"
+                                                       for s in ("O12", "O9")) + ".",
+      f"- Manholes deeper than 12 m: {sum(v > T.DMAX for v in mh_c.values())} (C1 {T.S['mh_over12']}); deepest {max(mh_c.values()):.2f} m; "
+      f"pipe deeper than 12 m {km12_c:.1f} km (C1 {T.S['km_pipes_over12']:.1f} km).",
+      f"- **Self-cleansing (gradients are set before the split, so the station choice does not change them):** above DN200 "
+      f"{und.length_m.sum() / 1000:.1f} of {big_c.length_m.sum() / 1000:.1f} km under 0.75 m/s at the 2031 peak "
+      f"({und.length_m.sum() / big_c.length_m.sum() * 100:.1f} %), {len(und)} pipes; DN200 not checked (rule), "
+      f"{d[(d.NOM <= 200) & d.under].length_m.sum() / 1000:.0f} of {d[d.NOM <= 200].length_m.sum() / 1000:.0f} km under 0.75 m/s.", ""]
+need = und.S_REQ * 100
+bands = [("needs 0.50 to 0.75 %", (need > 0.5) & (need <= 0.75)), ("needs 0.75 to 1.00 %", (need > 0.75) & (need <= 1.0)),
+         ("needs 1.00 to 2.00 %", (need > 1.0) & (need <= 2.0)), ("needs over 2.00 %", need > 2.0),
+         ("cannot reach 0.75 m/s at any gradient", need.isna())]
+vb = [("0.60 to 0.75 m/s", und.V31 >= 0.60), ("0.45 to 0.60 m/s", (und.V31 >= 0.45) & (und.V31 < 0.60)),
+      ("0.30 to 0.45 m/s", (und.V31 >= 0.30) & (und.V31 < 0.45)), ("under 0.30 m/s", und.V31 < 0.30)]
+L += ["| pipes above DN200 under 0.75 m/s at 2031 | pipes | km |", "|---|---|---|"]
+L += [f"| {a} | {int(m.sum())} | {und.length_m[m].sum() / 1000:.1f} |" for a, m in bands]
+L += [f"| velocity {a} | {int(m.sum())} | {und.length_m[m].sum() / 1000:.1f} |" for a, m in vb]
+L += ["", "| subnetwork | under 0.75 m/s | of above DN200 | share | 2031 velocity, median | 2031 flow, median |", "|---|---|---|---|---|---|"]
+for s, g in sorted(big_c.groupby("SUB"), key=lambda x: -x[1][x[1].under].length_m.sum()):
+    u = g[g.under]
+    if len(u): L.append(f"| {s} | {u.length_m.sum() / 1000:.2f} km | {g.length_m.sum() / 1000:.2f} km | {u.length_m.sum() / g.length_m.sum() * 100:.0f} % | "
+                        f"{u.V31.median():.2f} m/s | {u.Q31.median() * 1000:.1f} L/s |")
+L += ["", "| size | under 0.75 m/s | of the size | share |", "|---|---|---|---|"]
+for n, g in big_c.groupby("NOM"):
+    u = g[g.under]
+    if len(u): L.append(f"| DN{n:.0f} | {u.length_m.sum() / 1000:.2f} km | {g.length_m.sum() / 1000:.2f} km | {u.length_m.sum() / g.length_m.sum() * 100:.0f} % |")
+L.append("")
+und.assign(dn_mm=und.NOM.astype(int), s_laid_pc=und.S_LAID * 100, s_new_pc=und.S_NEW * 100, s_needed_pc=need,
+           q2031_ls=und.Q31 * 1000, v2031_ms=und.V31, v2056_ms=und.V56)[
+    ["label", "SUB", "dn_mm", "length_m", "s_laid_pc", "s_new_pc", "s_needed_pc", "q2031_ls", "v2031_ms", "v2056_ms"]].rename(
+    columns={"SUB": "sub"}).sort_values(["sub", "label"]).to_csv(os.path.join(OUT, "under_075_engineer_choice.csv"), index=False, float_format="%.3f")
 pd.DataFrame(rows).to_csv(os.path.join(OUT, "single_station_sites.csv"), index=False, float_format="%.2f")
 open(os.path.join(OUT, "WHATIF.md"), "w", encoding="utf-8").write("\n".join(L) + "\n")
 print("\n".join(L))

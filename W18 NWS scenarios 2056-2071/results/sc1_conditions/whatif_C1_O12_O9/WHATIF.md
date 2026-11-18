@@ -71,3 +71,43 @@ None of the pipes between O9-M773 and O9-M728 is steepened; O9-M728 is needed be
 | O9-M728 dropped | 14 pipes, 1.25 km (to O9-P709) | 1.25 km | 24 | 11.89 m | O9-M48 16.47 m | 125 | 11.64 km |
 | O9-M728 dropped, O9-M103 and O9-M89 merged at O9-M101 | 14 pipes, 1.25 km (to O9-P709) | 1.25 km | 23 | 11.89 m | O9-M48 16.47 m | 127 | 11.84 km |
 
+## The engineer's choice (2026-11-18): O12 kept deep, O9-M103 + O9-M89 at O9-M101, O9-M728 removed
+
+- **Stations: 21** (C1 as mapped 25); new stations left: O9-M101 12.63 m, O9-M166 11.96 m, O9-M773 11.95 m.
+- Outfalls: O12 14.63 m, O9 14.25 m, O11 12.39 m, O14 12.73 m (accepted deep); deeper than 12 m for good: O12 37 manholes, O9 49 manholes.
+- Manholes deeper than 12 m: 321 (C1 235); deepest 16.47 m; pipe deeper than 12 m 29.1 km (C1 21.5 km).
+- **Self-cleansing (gradients are set before the split, so the station choice does not change them):** above DN200 26.4 of 151.7 km under 0.75 m/s at the 2031 peak (17.4 %), 331 pipes; DN200 not checked (rule), 1346 of 1346 km under 0.75 m/s.
+
+| pipes above DN200 under 0.75 m/s at 2031 | pipes | km |
+|---|---|---|
+| needs 0.50 to 0.75 % | 219 | 17.2 |
+| needs 0.75 to 1.00 % | 76 | 6.3 |
+| needs 1.00 to 2.00 % | 25 | 2.0 |
+| needs over 2.00 % | 11 | 0.8 |
+| cannot reach 0.75 m/s at any gradient | 0 | 0.0 |
+| velocity 0.60 to 0.75 m/s | 175 | 13.7 |
+| velocity 0.45 to 0.60 m/s | 139 | 11.4 |
+| velocity 0.30 to 0.45 m/s | 17 | 1.3 |
+| velocity under 0.30 m/s | 0 | 0.0 |
+
+| subnetwork | under 0.75 m/s | of above DN200 | share | 2031 velocity, median | 2031 flow, median |
+|---|---|---|---|---|---|
+| O3 | 11.79 km | 37.37 km | 32 % | 0.58 m/s | 7.4 L/s |
+| O9 | 3.98 km | 21.83 km | 18 % | 0.58 m/s | 6.8 L/s |
+| O1 | 3.07 km | 31.64 km | 10 % | 0.63 m/s | 9.3 L/s |
+| O4 | 2.28 km | 12.13 km | 19 % | 0.59 m/s | 7.5 L/s |
+| O24 | 1.53 km | 4.52 km | 34 % | 0.66 m/s | 10.9 L/s |
+| O21 | 1.30 km | 9.86 km | 13 % | 0.67 m/s | 11.7 L/s |
+| O7 | 1.29 km | 2.10 km | 61 % | 0.66 m/s | 11.2 L/s |
+| O15 | 0.75 km | 0.75 km | 100 % | 0.39 m/s | 1.7 L/s |
+| O2 | 0.34 km | 12.69 km | 3 % | 0.70 m/s | 9.9 L/s |
+| O8 | 0.07 km | 0.07 km | 100 % | 0.56 m/s | 6.1 L/s |
+| O12 | 0.03 km | 0.09 km | 37 % | 0.62 m/s | 8.8 L/s |
+
+| size | under 0.75 m/s | of the size | share |
+|---|---|---|---|
+| DN250 | 21.27 km | 30.87 km | 69 % |
+| DN280 | 2.59 km | 16.87 km | 15 % |
+| DN315 | 1.32 km | 11.29 km | 12 % |
+| DN355 | 1.25 km | 17.97 km | 7 % |
+
