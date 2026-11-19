@@ -1,5 +1,6 @@
 """W18 final design: one zip with everything the team receives (current names only):
-  Report/         the concept design report (Word and PDF) of revision REV
+  Report/         the concept design report (Word and PDF) of revision REV, and the workbook of its tables and charts
+  Drawings/       the design drawings of the four scenarios (DWG, 2056 design, UTM 40N)
   BOQ/            the bill of quantities and network capital cost workbook; treatment, TE and financial workbook
   Maps/           the report maps (2056 design)
   QGIS/           the project of the four scenarios and three design years, with its layers (paths made relative)
@@ -8,7 +9,7 @@ Usage: python package_final.py      Writes deliverables/Ibri_Sewer_Final_Design_
 import os, zipfile, re, glob, datetime, io
 HERE = os.path.dirname(os.path.abspath(__file__)); W18 = os.path.dirname(HERE)
 R = os.path.join(W18, "results", "final_0.75pc_SC1-SC4"); RF = os.path.join(W18, "report_final")
-DATE = datetime.date.today().isoformat(); REV = "R10"
+DATE = datetime.date.today().isoformat(); REV = "R11"
 OUT = os.path.join(W18, "deliverables", f"Ibri_Sewer_Final_Design_SC1-SC4_{REV}_{DATE}.zip"); os.makedirs(os.path.dirname(OUT), exist_ok=True)
 TOP = "Ibri_Sewer_Final_Design_SC1-SC4/"
 QGZ = os.path.join(R, "qgis", "Ibri_sewer_concept_design.qgz")
@@ -17,7 +18,9 @@ STL = os.path.join(W18, "gis", "W18_settlements_2026_2100")
 MODELS = r"D:\VBOX\bridge\out\w18\final_models"
 with zipfile.ZipFile(OUT, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as z:
     for f in glob.glob(os.path.join(RF, REV, "*.docx")) + glob.glob(os.path.join(RF, REV, "*.pdf")): z.write(f, TOP + "Report/" + os.path.basename(f))
-    for f in glob.glob(os.path.join(RF, "deliverables", "*.xlsx")): z.write(f, TOP + "BOQ/" + os.path.basename(f))
+    for f in glob.glob(os.path.join(RF, "deliverables", "*.xlsx")):
+        z.write(f, TOP + ("Report/" if "Tables_and_Charts" in f else "BOQ/") + os.path.basename(f))
+    for f in glob.glob(os.path.join(RF, "deliverables", "dwg", "*.dwg")): z.write(f, TOP + "Drawings/" + os.path.basename(f))
     for f in glob.glob(os.path.join(RF, "img", "*.png")): z.write(f, TOP + "Maps/" + os.path.basename(f))
     # the QGIS project: every layer source rewritten to ./layers/
     q = zipfile.ZipFile(QGZ); name = [n for n in q.namelist() if n.endswith(".qgs")][0]; qgs = q.read(name).decode("utf-8")
@@ -44,7 +47,12 @@ with zipfile.ZipFile(OUT, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as z:
             z.write(f, TOP + "SewerGEMS/" + b)
     z.writestr(TOP + "READ ME.txt",
                "Ibri sewer network, concept design of scenarios SC1 to SC4 (gradient limit 0.75 %, design year 2056; QGIS also 2051 and 2061)\n"
-               "Report: the concept design report, every chapter on the four scenarios and the 2056 design (Word and PDF).\n"
+               "Report: the concept design report, every chapter on the four scenarios and the 2056 design (Word and PDF), and the workbook of "
+               "its tables and charts (live formulas; each chart is built in Excel from its table).\n"
+               "Drawings: one DWG per scenario, designed for 2056, in UTM zone 40N metres. Layers by family (gravity sewers by size, "
+               "manholes, deep and drop manholes, rising mains, stations, plants), their text on separate TXT- layers: stations and "
+               "plants read zoomed out; zoomed in, every pipe carries its size, length, gradient, design flow, velocity and inverts, "
+               "and every manhole its ground level, invert, depth and drop.\n"
                "BOQ: quantities by bill and the network capital cost at the rates of the options cost estimate (formulas); treatment modules, "
                "treated effluent supply and the CAPEX/OPEX of the four scenarios.\n"
                "Maps: the report maps. QGIS: open Ibri_sewer_concept_design.qgz; one group per scenario and design year.\n"
