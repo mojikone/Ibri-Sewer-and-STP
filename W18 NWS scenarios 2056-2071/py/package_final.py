@@ -17,7 +17,8 @@ BND = os.path.join(W18, "..", "W17", "Options 2026-10", "01_Boundaries", "Projec
 STL = os.path.join(W18, "gis", "W18_settlements_2026_2100")
 MODELS = r"D:\VBOX\bridge\out\w18\final_models"
 with zipfile.ZipFile(OUT, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as z:
-    for f in glob.glob(os.path.join(RF, REV, "*.docx")) + glob.glob(os.path.join(RF, REV, "*.pdf")): z.write(f, TOP + "Report/" + os.path.basename(f))
+    for f in (os.path.join(RF, REV, f"Ibri_Concept_Design_Report_{REV}.{x}") for x in ("docx", "pdf")):   # the report by name: other files
+        z.write(f, TOP + "Report/" + os.path.basename(f))                                                   # in the folder are not issued
     for f in glob.glob(os.path.join(RF, "deliverables", "*.xlsx")):
         z.write(f, TOP + ("Report/" if "Tables_and_Charts" in f else "BOQ/") + os.path.basename(f))
     for f in glob.glob(os.path.join(RF, "deliverables", "dwg", "*.dwg")): z.write(f, TOP + "Drawings/" + os.path.basename(f))
