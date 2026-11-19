@@ -40,8 +40,8 @@ TE_TEAM = {"SC1": dict(cost=4923902.3, km=95.869, kw=750.0, by={100: 6103, 150: 
 Q_MODEL = dict(S2_stp2=769.72, S3_stp1=717.64, S3_stp5=52.08)       # L/s each plant supplies in the team's TE models
 
 
-def plants(sc):
-    p = pd.read_csv(os.path.join(R, f"{sc}-2056", "products", "plants.csv"))
+def plants(sc, Y=2056):
+    p = pd.read_csv(os.path.join(R, f"{sc}-{Y}", "products", "plants.csv"))
     return {r.stp: {int(c[4:8]): getattr(r, c) for c in p.columns if c.startswith("avg_")} for r in p.itertuples()}
 
 
@@ -49,10 +49,11 @@ def at(series, y):
     ys = sorted(series); return float(np.interp(y, ys, [series[k] for k in ys]))
 
 
-def modules(q):
-    cap = q[2056] * 1.1; size = math.ceil(cap / 4 / (500 if cap / 4 >= 5000 else 250)) * (500 if cap / 4 >= 5000 else 250)
+def modules(q, Y=2056):
+    """Four modules on the design year's inflow + 10 %, installed as the inflow needs them up to the design year."""
+    cap = q[Y] * 1.1; size = math.ceil(cap / 4 / (500 if cap / 4 >= 5000 else 250)) * (500 if cap / 4 >= 5000 else 250)
     n0 = math.ceil(q[2031] * 1.1 / size); plan = {2031: n0}; n = n0
-    for y in Y5[1:]:
+    for y in [y for y in Y5[1:] + [2061] if y <= Y]:
         need = math.ceil(q[y] * 1.1 / size)
         if need > n: plan[y] = need - n; n = need
     return dict(design=cap, size=size, n=n, total=n * size, plan=plan, rate=band(n * size)[1], land_per=band(n * size)[2])
@@ -62,10 +63,11 @@ out = {}
 C = pd.read_csv(os.path.join(TE, "te_customers.csv"))
 C["src_sc3"] = C.sc3_source.str.replace(" (no location)", "", regex=False)
 dem = lambda df, y: float((df.d2030 + (df.d2070 - df.d2030) * (y - 2030) / 40).sum())
-for sc in SC:
-    q = plants(sc); stp = {k: modules(v) for k, v in q.items()}
+def case(sc, Y=2056):
+    """One scenario designed for year Y: its plants, stations and costs (the TE network is the same in every design year)."""
+    q = plants(sc, Y); stp = {k: modules(v, Y) for k, v in q.items()}
     tot = {y: sum(v[y] for v in q.values()) for y in q[next(iter(q))]}
-    st = pd.read_csv(os.path.join(R, f"{sc}-2056", "products", "stations.csv"))
+    st = pd.read_csv(os.path.join(R, f"{sc}-{Y}", "products", "stations.csv"))
     n_st = int((st.kind != "plant inlet").sum() + (st.kind == "plant inlet").sum())   # every pumping and lift station
     kw_sew = float(st.kw.sum()); small = st[st.kw <= 10].kw.sum(); large = st[st.kw > 10].kw.sum()
     land_st = math.ceil(small * 5 / 100) * 100 + math.ceil(large * 3 / 100) * 100
@@ -85,8 +87,8 @@ for sc in SC:
         supply[p] = {y: dict(produced=0.95 * at(q[p], y), delivered=0.95 * 0.9 * at(q[p], y), demand=dem(cu, y)) for y in (2031, 2036, 2046, 2056)}
         supply[p]["customers"] = int(len(cu)); supply[p]["demand_2070"] = float(cu.d2070.sum())
     # capital, base prices, by year of expenditure
-    capex = {2031: dict(sewers=NET[f"{sc}-2056"]["sewers"], manholes=NET[f"{sc}-2056"]["manholes"], force_mains=NET[f"{sc}-2056"]["force_mains"],
-                        stations=NET[f"{sc}-2056"]["stations"], te_mains=te["cost"], te_boosters=te["kw"] * 5000.0, stp=0.0)}
+    capex = {2031: dict(sewers=NET[f"{sc}-{Y}"]["sewers"], manholes=NET[f"{sc}-{Y}"]["manholes"], force_mains=NET[f"{sc}-{Y}"]["force_mains"],
+                        stations=NET[f"{sc}-{Y}"]["stations"], te_mains=te["cost"], te_boosters=te["kw"] * 5000.0, stp=0.0)}
     for p, m in stp.items():
         for y, k in m["plan"].items():
             capex.setdefault(y, dict(stp=0.0))["stp"] = capex.get(y, {}).get("stp", 0.0) + k * m["size"] * m["rate"]
@@ -100,13 +102,13 @@ for sc in SC:
     rows = []; in_service = 0.0
     for y in YEARS:
         in_service += sum(capex.get(y, {}).values())
-        f = at(tot, y) / tot[2056]; e = (1 + INFL) ** (y - BASE)
+        f = at(tot, y) / tot[Y]; e = (1 + INFL) ** (y - BASE)
         rows.append(dict(year=y, flow_share=f, capex_base=sum(capex.get(y, {}).values()), capex_nominal=sum(capex.get(y, {}).values()) * e,
                          mo=0.01 * in_service * e, power=power_full * f * e, land=land * 12 * e, staff=staff * 2500 * 13 * e, chemicals=chem * f * e,
                          opex_base=0.01 * in_service + power_full * f + land * 12 + staff * 2500 * 13 + chem * f))
     D = pd.DataFrame(rows); D["opex_nominal"] = D[["mo", "power", "land", "staff", "chemicals"]].sum(axis=1)
     disc = (1 + DISC) ** -(D.year - BASE)
-    out[sc] = dict(plants={p: dict(q={y: round(at(q[p], y)) for y in Y5 + [2061]}, **{k: v for k, v in m.items()}) for p, m in stp.items()},
+    o = dict(plants={p: dict(q={y: round(at(q[p], y)) for y in Y5 + [2061]}, **{k: v for k, v in m.items()}) for p, m in stp.items()},
                    inflow={y: round(at(tot, y)) for y in Y5 + [2061]}, te=te, supply=supply,
                    capex_by_year={y: {k: round(v) for k, v in c.items()} for y, c in capex.items()},
                    capex_base=float(D.capex_base.sum()), capex_nominal=float(D.capex_nominal.sum()),
@@ -116,8 +118,14 @@ for sc in SC:
                    pv_capex=float((D.capex_base * disc).sum()), pv_opex=float((D.opex_base * disc).sum()),
                    requirements=dict(te_kw=te["kw"], sewage_kw=round(kw_sew, 1), stp_kw=kw_stp, land_m2=land, stations=n_st, plants=len(stp), staff=staff, **{k: round(v, 1) for k, v in chem_kgd.items()}),
                    annual=D.round(2).to_dict(orient="list"))
-    out[sc]["pv_total"] = out[sc]["pv_capex"] + out[sc]["pv_opex"]
-    out[sc]["total_2055"] = out[sc]["capex_nominal_by"][2055] + out[sc]["opex_cum"]["opex_nominal"][2055]
+    o["pv_total"] = o["pv_capex"] + o["pv_opex"]
+    o["total_2055"] = o["capex_nominal_by"][2055] + o["opex_cum"]["opex_nominal"][2055]
+    o["design_year"] = Y; o["network_capex"] = NET[f"{sc}-{Y}"]["total"]; o["kw_sewage"] = round(kw_sew, 1)
+    return o
+
+
+for sc in SC: out[sc] = case(sc)                                   # the 2056 design, which the report's chapters use
+out["designs"] = {f"{sc}-{Y}": case(sc, Y) for sc in SC for Y in (2051, 2056, 2061)}
 json.dump(out, open(os.path.join(R, "financial.json"), "w"), indent=1, default=float)
 
 # ------------------------------------------------------------------ the workbook
@@ -143,6 +151,17 @@ with pd.ExcelWriter(XLSX, engine="openpyxl") as xw:
     pd.DataFrame([dict(scenario=sc, capex_base=round(out[sc]["capex_base"]), capex_escalated=round(out[sc]["capex_nominal"]),
                        opex_25yr_escalated=round(out[sc]["opex_cum"]["opex_nominal"][2055]), total_escalated=round(out[sc]["total_2055"]),
                        pv_capex=round(out[sc]["pv_capex"]), pv_opex=round(out[sc]["pv_opex"]), pv_total=round(out[sc]["pv_total"])) for sc in SC]).to_excel(xw, sheet_name="I Summary", index=False)
+pd.DataFrame([dict(design=k, scenario=k[:3], design_year=v["design_year"], **{f"{p} capacity m3/d": m["total"] for p, m in v["plants"].items()},
+                   network_capex=round(v["network_capex"]), capex_base=round(v["capex_base"]), capex_escalated=round(v["capex_nominal"]),
+                   opex_25yr_escalated=round(v["opex_cum"]["opex_nominal"][2055]), total_escalated=round(v["total_2055"]),
+                   pv_capex=round(v["pv_capex"]), pv_opex=round(v["pv_opex"]), pv_total=round(v["pv_total"])) for k, v in out["designs"].items()]
+             ).to_excel(XLSX.replace(".xlsx", "_tmp.xlsx"), sheet_name="J Design years", index=False)
+with pd.ExcelWriter(XLSX, engine="openpyxl", mode="a") as xw:
+    pd.read_excel(XLSX.replace(".xlsx", "_tmp.xlsx")).to_excel(xw, sheet_name="J Design years", index=False)
+os.remove(XLSX.replace(".xlsx", "_tmp.xlsx"))
+for k, o in out["designs"].items():
+    print(k, {p: (m["size"], m["n"], m["total"]) for p, m in o["plants"].items()}, f"net {o['network_capex'] / 1e6:.1f}, capex {o['capex_base'] / 1e6:.1f} base;",
+          f"25y esc {o['total_2055'] / 1e6:.1f}; PV {o['pv_total'] / 1e6:.1f} M; sewage kW {o['kw_sewage']}")
 for sc in SC:
     o = out[sc]
     print(sc, {p: (m["size"], m["n"], m["plan"]) for p, m in o["plants"].items()}, f"capex {o['capex_base'] / 1e6:.1f} M base, {o['capex_nominal'] / 1e6:.1f} M esc;",
