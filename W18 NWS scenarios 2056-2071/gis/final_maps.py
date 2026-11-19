@@ -19,6 +19,8 @@ from qgis.core import (Qgis, QgsApplication, QgsProject, QgsVectorLayer, QgsRast
                        QgsGeometryGeneratorSymbolLayer, QgsMarkerLineSymbolLayer, QgsSimpleMarkerSymbolLayer,
                        QgsPalLayerSettings, QgsVectorLayerSimpleLabeling, QgsFeature, QgsGeometry)
 from qgis.PyQt.QtGui import QColor, QFont
+import colorsys
+from qgis.core import QgsLegendStyle
 
 HERE = os.path.dirname(os.path.abspath(__file__)); W18 = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
@@ -34,7 +36,7 @@ RENDER = "--no-render" not in sys.argv
 SCEN = {"SC1": "SC1, STP-1 only", "SC2": "SC2, STP-2 only", "SC3": "SC3, STP-1 and STP-5", "SC4": "SC4, STP-2 and STP-5"}
 YEARS, BASE = ["2051", "2056", "2061"], "2056"
 LABEL_SIZE = "clamp(7, 8*25000/@map_scale, 36)"
-PLANT_COLOUR = {"STP-1": "#2E75B6", "STP-5": "#C0504D", "STP-2": "#ED7D31"}
+PLANT_COLOUR = {"STP-1": "#1F6FB2", "STP-2": "#D9730D", "STP-5": "#2E8B57"}
 SYS_COLOUR = ["#e6194b", "#3cb44b", "#e0b400", "#4363d8", "#f58231", "#911eb4", "#46f0f0", "#f032e6", "#bcf60c",
               "#008080", "#6a3d9a", "#9a6324", "#800000", "#00c08b", "#808000"]
 SC = [("DN200 (rule: above DN200 only)", "#9e9e9e", "DN200, not checked (rule: above DN200 only)"),
@@ -46,6 +48,22 @@ SC = [("DN200 (rule: above DN200 only)", "#9e9e9e", "DN200, not checked (rule: a
       ("Under 0.75 m/s in 2031 and in 2036", "#7b3294", "Under 0.75 m/s in 2031 and in 2036")]
 KIND = [("plant inlet", "square", M.NAVY, 4.2, "Plant inlet pumping station"), ("pump", "circle", "#a61b1b", 2.6, "Pumping station"),
         ("lift", "triangle", "#1f3fff", 3.2, "Lift station")]
+
+
+def shade(hexc, i, n):
+    r, g, b = (int(hexc[k:k + 2], 16) / 255 for k in (1, 3, 5)); h, l, s = colorsys.rgb_to_hls(r, g, b)
+    l2 = 0.28 + 0.44 * ((i * 0.618) % 1.0)                       # spread lightness so neighbours differ
+    r, g, b = colorsys.hls_to_rgb(h, l2, min(1.0, s * 1.05)); return "#%02x%02x%02x" % (int(r * 255), int(g * 255), int(b * 255))
+
+
+def style_catchments(l):
+    """Sewers by the plant they drain to, one shade of the plant's colour per pumping or lift catchment (no legend)."""
+    secs = {}
+    for f_ in l.getFeatures(): secs.setdefault(f_["stp"], set()).add(f_["section"])
+    cats = []
+    for stp, ss in secs.items():
+        for i, s_ in enumerate(sorted(ss)): cats.append(QgsRendererCategory(s_, sym_line(shade(PLANT_COLOUR.get(stp, "#555555"), i, len(ss)), 0.32, sized=False), s_))
+    l.setRenderer(QgsCategorizedSymbolRenderer("section", cats))
 
 
 def scale_labels(l, expr=None):
@@ -113,13 +131,16 @@ def make_map(proj, google, name, title, stack, legend_layers, ext, rows, out_png
         for l, show_title in legend_layers:
             node = grp.addLayer(l)
             if not show_title: node.setCustomProperty("legend/title-style", "hidden")
-        legend.setTitle(""); legend.setResizeToContents(True); legend.adjustBoxSize()
+        legend.setTitle(""); legend.setResizeToContents(True)
+        for st_ in (QgsLegendStyle.SymbolLabel, QgsLegendStyle.Subgroup, QgsLegendStyle.Group):
+            tf_ = legend.rstyle(st_).textFormat(); tf_.setSize(7.0); legend.rstyle(st_).setTextFormat(tf_)
+        legend.setSymbolWidth(6.0); legend.setSymbolHeight(3.2); legend.adjustBoxSize()
         tmp = QgsLayoutExporter(lay); ts = QgsLayoutExporter.ImageExportSettings(); ts.dpi = 25; mapitem.setLayers(stack)
         tmp.exportToImage(os.path.join(tempfile.gettempdir(), "final_legend_probe.png"), ts)
         sz = legend.sizeWithUnits(); mp, ms = mapitem.positionWithUnits(), mapitem.sizeWithUnits()
         legend.attemptMove(QgsLayoutPoint(mp.x() + 3.0, mp.y() + ms.height() - sz.height() - 3.0, M.UNIT_MM))
     boxes = ([(legend, "left")] if legend is not None else []) + ([(box, "right")] if box is not None else [])
-    mapitem.zoomToExtent(M.clear_extent(mapitem, boxes, ext, test_layers))
+    mapitem.zoomToExtent(ext)                                    # full extent; the legend and table sit over the map
     credit = QgsLayoutItemLabel(lay); credit.setText(M.CREDIT)
     tf = QgsTextFormat(); tf.setFont(QFont("Arial")); tf.setSize(5.0); tf.setColor(QColor("#4a4a4a")); credit.setTextFormat(tf)
     lay.addLayoutItem(credit); credit.attemptResize(QgsLayoutSize(40, 3.5, M.UNIT_MM))
@@ -185,7 +206,19 @@ def build():
             dr = lyr(gpkg, "deep_runs", "Deepest manhole of a run over 12 m")
             if dr is not None: M.style_deep(dr); scale_labels(dr)
             for l, v in ((st, True), (fm, True), (mh, True), (vel, True), (zs, False), (dp, False), (dr, False)): add(g, l, v)
-            if y != BASE: continue
+            if y != BASE:
+                if RENDER:
+                    S0 = json.load(open(os.path.join(R, case, "products", "quantities.json"))); h0 = set(vel.uniqueValues(vel.fields().indexOf("sc_class")))
+                    v0 = lyr(gpkg, "pipes", "Sewers"); v0.setRenderer(QgsCategorizedSymbolRenderer("sc_class", [QgsRendererCategory(v, sym_line(c), lab) for v, c, lab in SC if v in h0]))
+                    st0 = lyr(gpkg, "stations", "Stations"); style_stations(st0, "map_label")
+                    for l_ in (v0, st0): proj.addMapLayer(l_, False)
+                    kb0 = S0["km_big"]
+                    make_map(proj, google, f"{sc} self-cleansing {y}", f"{SCEN[sc]}: self-cleansing at the 2031 peak, designed for {y}",
+                             [st0, v0, stl, bnd], [(st0, False), (v0, False), (sizes, True), (stl, False)], ext,
+                             [("Sewers above DN200", f"{f1(kb0)} km"), ("Under 0.75 m/s at the 2031 peak", f"{f1(S0['km_big_under075_2031'])} km ({S0['km_big_under075_2031'] / kb0 * 100:.1f} %)"),
+                              ("   of which still under in 2036", f"{f1(S0['km_big_under075_2036'])} km"), ("Pumping stations / lifts", f"{S0['pumps']} / {S0['lifts']}")],
+                             os.path.join(IMG, f"map_{sc}_{y}_selfcleansing.png"), [v0, st0, bline])
+                continue
             # ------------------------------------------------------------ the report maps, 2056
             S = json.load(open(os.path.join(R, case, "products", "quantities.json")))
             prow = [(f"{v['stp']} (inlet {p}), {y} average", f"{f0(v['avg_m3d'][y])} m³/d, inlet {v['inlet_depth_m']:.1f} m deep") for p, v in S["plants"].items()]
@@ -193,9 +226,9 @@ def build():
             stp = lyr(gpkg, "stations", "Stations"); style_stations(stp, "map_label"); proj.addMapLayer(stp, False)
             sdu = lyr(gpkg, "stations", "Stations"); style_stations(sdu, "duty_label"); proj.addMapLayer(sdu, False)
             fmp = lyr(gpkg, "force_mains", "Force main"); style_force_mains(fmp, False); proj.addMapLayer(fmp, False)
-            z1 = lyr(gpkg, "pipes", "Sewers by plant")
-            z1.setRenderer(QgsCategorizedSymbolRenderer("stp", [QgsRendererCategory(p, sym_line(PLANT_COLOUR.get(p, "#555555"), sized=False), f"To {p}") for p in plants]))
-            proj.addMapLayer(z1, False)
+            z1 = lyr(gpkg, "pipes", "Sewers by plant"); style_catchments(z1); proj.addMapLayer(z1, False)
+            zleg = [M.memory_line(f"Sewers to {p}: one shade~per pumping or lift catchment", PLANT_COLOUR.get(p, "#555555")) for p in plants]
+            for zl in zleg: proj.addMapLayer(zl, False)
             vp = lyr(gpkg, "pipes", "Sewers")
             vp.setRenderer(QgsCategorizedSymbolRenderer("sc_class", [QgsRendererCategory(v, sym_line(c), lab) for v, c, lab in SC if v in have]))
             proj.addMapLayer(vp, False)
@@ -216,7 +249,7 @@ def build():
                          os.path.join(IMG, "map_pumping_systems.png"), [ov, stp, bline])
             print(case)
             make_map(proj, google, f"{sc} zones", f"{SCEN[sc]}: sewers by the plant they drain to ({y})",
-                     [stp, fmp, z1, stl, bnd], [(stp, False), (z1, False), (fmp, False), (bnd, False)], ext, prow,
+                     [stp, fmp, z1, stl, bnd], [(stp, False)] + [(zl, False) for zl in zleg] + [(fmp, False), (bnd, False)], ext, prow,
                      os.path.join(IMG, f"map_{tag}_zones.png"), [z1, stp, bline])
             make_map(proj, google, f"{sc} network", f"{SCEN[sc]}: sewers, pumping stations and lifts ({y})",
                      [sdu, fmp, zs, stl, bnd], [(sdu, False), (zs, False), (sizes, True), (fmp, False), (bnd, False)], ext,
