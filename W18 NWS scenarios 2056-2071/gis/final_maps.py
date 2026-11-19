@@ -33,6 +33,7 @@ STL = os.path.join(HERE, "W18_settlements_2026_2100.shp")
 MH_QML = os.path.join(W18, "qgis", "styles", "manholes_depth.qml")
 SUBTITLE = "Ibri Sewer, TE Networks and STP — Concept Design Report | Renardet 2621"
 RENDER = "--no-render" not in sys.argv
+OTHER_ONLY = "--other-years" in sys.argv                     # render only the 2051 and 2061 maps; the project is not rewritten
 SCEN = {"SC1": "SC1, STP-1 only", "SC2": "SC2, STP-2 only", "SC3": "SC3, STP-1 and STP-5", "SC4": "SC4, STP-2 and STP-5"}
 YEARS, BASE = ["2051", "2056", "2061"], "2056"
 LABEL_SIZE = "clamp(7, 8*25000/@map_scale, 36)"
@@ -218,7 +219,21 @@ def build():
                              [("Sewers above DN200", f"{f1(kb0)} km"), ("Under 0.75 m/s at the 2031 peak", f"{f1(S0['km_big_under075_2031'])} km ({S0['km_big_under075_2031'] / kb0 * 100:.1f} %)"),
                               ("   of which still under in 2036", f"{f1(S0['km_big_under075_2036'])} km"), ("Pumping stations / lifts", f"{S0['pumps']} / {S0['lifts']}")],
                              os.path.join(IMG, f"map_{sc}_{y}_selfcleansing.png"), [v0, st0, bline])
+                    # the network of this design year, for its own block of Chapter 6 (team's structure, 2026-11-19)
+                    sd0 = lyr(gpkg, "stations", "Stations"); style_stations(sd0, "duty_label")
+                    fm0 = lyr(gpkg, "force_mains", "Force main"); style_force_mains(fm0, False)
+                    zs0 = lyr(gpkg, "pipes", "Sewers by plant and size")
+                    zs0.setRenderer(QgsCategorizedSymbolRenderer("stp", [QgsRendererCategory(p, sym_line(PLANT_COLOUR.get(p, "#555555")), f"To {p}") for p in plants]))
+                    for l_ in (sd0, fm0, zs0): proj.addMapLayer(l_, False)
+                    prow0 = [(f"{v['stp']} (inlet {p}), {y} average", f"{f0(v['avg_m3d'][y])} m³/d, inlet {v['inlet_depth_m']:.1f} m deep") for p, v in S0["plants"].items()]
+                    make_map(proj, google, f"{sc} network {y}", f"{SCEN[sc]}: sewers, pumping stations and lifts, designed for {y}",
+                             [sd0, fm0, zs0, stl, bnd], [(sd0, False), (zs0, False), (sizes, True), (fm0, False), (bnd, False)], ext,
+                             prow0 + [("Sewers", f"{f0(S0['sewer_km'])} km"), ("Pumping stations / lifts", f"{S0['pumps']} / {S0['lifts']}"),
+                                      ("Force mains", f"{f1(S0['force_main_km'])} km"), ("Network pumping duty", f"{f0(S0['kw_network'])} kW"),
+                                      ("Pumping energy 2031 / " + y, f"{f0(S0['mwh_2031'])} / {f0(S0['mwh_design'])} MWh/yr")],
+                             os.path.join(IMG, f"map_{sc}_{y}_network.png"), [zs0, sd0, bline])
                 continue
+            if OTHER_ONLY: continue                                      # the 2056 maps are already drawn
             # ------------------------------------------------------------ the report maps, 2056
             S = json.load(open(os.path.join(R, case, "products", "quantities.json")))
             prow = [(f"{v['stp']} (inlet {p}), {y} average", f"{f0(v['avg_m3d'][y])} m³/d, inlet {v['inlet_depth_m']:.1f} m deep") for p, v in S["plants"].items()]
@@ -275,6 +290,7 @@ def build():
                       ("Deepest manhole", f"{S['deepest']['depth']:.1f} m")],
                      os.path.join(IMG, f"map_{tag}_selfcleansing.png"), [vp, stp, bline])
     root.addLayer(google)
+    if OTHER_ONLY: print('2051 and 2061 maps rendered; project left as it was'); return
     assert proj.write(PROJECT), PROJECT
     print("wrote", PROJECT, "|", len(proj.mapLayers()), "layers |", len(proj.layoutManager().layouts()), "layouts")
     app.exitQgis()
