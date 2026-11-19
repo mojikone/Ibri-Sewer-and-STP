@@ -36,7 +36,7 @@ def apply(g):
         if e.tag == qn("w:p") and Pp(e).style is not None and Pp(e).style.name == "Heading 1" and norm(Pp(e).text).startswith("Appendix D."):
             p = Pp(e); r0 = p.runs[0]
             for r in p.runs[1:]: r._r.getparent().remove(r._r)
-            r0.text = "Appendix D. Network Quantities, Station Flows, Depth and Self-Cleansing"; break
+            r0.text = "Appendix D. Network Quantities, Station Flows and Depth"; break     # R12: self-cleansing maps moved to Chapter 6
 
     # ---- every table: centred, cells centred, header repeated; wide tables in a smaller font
     n_t = 0

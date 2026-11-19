@@ -24,7 +24,7 @@ import json as _json, pandas as _pd
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 import facts_final as F
 SRC = r"D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Hydraulic\temp\recent updates by the team\Ibri_Concept_Design_Report_R8-MH.docx"
-REV = "R11"; OUT = os.path.join(HERE, REV); os.makedirs(OUT, exist_ok=True)
+REV = "R12"; OUT = os.path.join(HERE, REV); os.makedirs(OUT, exist_ok=True)
 DOCX = os.path.join(OUT, f"Ibri_Concept_Design_Report_{REV}.docx"); PDF = DOCX.replace(".docx", ".pdf")
 IMG = os.path.join(HERE, "img")
 shutil.copy(SRC, DOCX)
@@ -283,15 +283,9 @@ o.p(f"Of the {f1(c1['km_under31'])} km that remains below 0.75 m/s at the 2031 p
 o.h("Design Year and Self-Cleansing", 3)
 o.p("The design year is chosen so that the network carries the flow of its design life while its sewers still carry enough flow in the "
     "early years to keep themselves clean. Each scenario was designed for 2051, 2056 and 2061 and tested at the 2031 peak, the start of "
-    "operation, and at the 2036 peak. The twelve designs are compared in the table; the chart shows Scenario SC1, and the other "
-    "three scenarios follow the same pattern.")
+    "operation, and at the 2036 peak. The chart shows Scenario SC1, and the other three scenarios follow the same pattern; each scenario's "
+    "three designs are described and compared in Sections 6.3 to 6.6.")
 DYC = _json.load(open(os.path.join(F.R, "design_year_check_2056.json"))); ALL = {(s, y): F.case(s, y) for s in F.SCEN for y in F.YEARS}
-o.table(["Scenario", "Design year", "Sewers above 200 mm (km)", "Below 0.75 m/s at the 2031 peak, km (%)", "Still below at the 2036 peak (km)",
-         "Pumping / lift stations", "Manholes deeper than 12 m", "Over the depth limit by 2056, pipes / km", "Network cost (M OMR)"],
-        [[s if y == "2051" else "", y, f1(ALL[(s, y)]["km_big"]), f"{f1(ALL[(s, y)]['km_under31'])} ({pct(ALL[(s, y)]['km_under31'], ALL[(s, y)]['km_big'])})",
-          f1(ALL[(s, y)]["km_under36"]), f"{ALL[(s, y)]['pumps']} / {ALL[(s, y)]['lifts']}", f0(ALL[(s, y)]["mh_over12"]),
-          (f"{DYC[f'{s}-{y}']['pipes_over']} / {DYC[f'{s}-{y}']['km_over']:.1f}" if DYC.get(f"{s}-{y}", {}).get("pipes_over") else "none"),
-          f1(ALL[(s, y)]["cost"]["total"] / 1e6)] for s in F.SCEN for y in F.YEARS], caption="The twelve designs compared")
 o.figure(os.path.join(IMG, "chart_design_year.png"), "Design year, Scenario SC1: sewers short of self-cleansing in 2031 and sewers over their depth limit by 2056")
 ov = [DYC[f"{s}-2051"] for s in F.SCEN]; dc = [(ALL[(s, "2061")]["cost"]["total"] - ALL[(s, "2056")]["cost"]["total"]) / 1e6 for s in F.SCEN]
 o.p("Three tests decide the design year: the network must carry the flow of its design life, 25 years from the start of operation in "
@@ -301,8 +295,7 @@ o.p(f"A 2051 design fails the second test in every scenario: by 2056, {min(x['pi
     f"pipes ({min(x['km_over'] for x in ov):.1f} to {max(x['km_over'] for x in ov):.1f} km) would run above their depth limit. A 2061 design passes "
     f"both but costs {min(dc):.1f} to {max(dc):.1f} million OMR more and leaves {pct(ALL[('SC1', '2061')]['km_under31'], ALL[('SC1', '2061')]['km_big'])} "
     f"of the sewers above 200 mm below the self-cleansing velocity at 2031, against {pct(ALL[('SC1', '2056')]['km_under31'], ALL[('SC1', '2056')]['km_big'])} "
-    "for 2056. 2056 is therefore the design year in all four scenarios; the station arrangement is the same in the three designs. The "
-    "self-cleansing maps of the 2051 and 2061 designs are in Appendix D.")
+    "for 2056. 2056 is therefore the design year in all four scenarios; the station arrangement is the same in the three designs.")
 o.p("Each of the twelve designs has been modelled in SewerGEMS at its design-year, 2031 and 2036 flows; the models reproduce the design "
     "flows and confirm that no sewer exceeds its depth of flow.")
 o.h("Pumping Stations and Lift Stations", 3)
@@ -327,72 +320,114 @@ def kept_maps(items):
 o.maps([(os.path.join(IMG, "map_stp_sites.png"), "Locations of the Proposed Sewage Treatment Plants"),
         (os.path.join(IMG, "map_te_customers.png"), "Locations of the Existing and Potential TE Customers")])
 TITLE = {"SC1": "Treatment at STP-1 Only", "SC2": "Treatment at STP-2 Only", "SC3": "Treatment at STP-1 and STP-5", "SC4": "Treatment at STP-2 and STP-5"}
+FD = _json.load(open(os.path.join(F.R, "financial.json")))["designs"]
 for sc in F.SCEN:
-    f = C[sc]; n = sc[-1]; st = f["stations"]; net = st[st.kind != "plant inlet"]; plants = f["plants"]
+    n = sc[-1]; f56 = C[sc]; stps = [v["stp"] for v in f56["plants"].values()]; sec = f"6.{int(n) + 2}"
     o.h(f"SCENARIO {n}: {TITLE[sc]}", 2)
-    stps = [v["stp"] for v in plants.values()]
     o.p(f"Scenario {sc} conveys the wastewater of the Project area to {' and '.join(stps)}. Gravity sewers collect the wastewater within each "
         "pumping system and convey it to its station; pumping stations and force mains transfer the flows between systems, combining "
-        f"them for conveyance to the treatment plant{'s' if len(stps) > 1 else ''}. The schematic below shows how the systems connect.")
-    o.maps([(os.path.join(IMG, f"flow_diagram_{sc}.png"), f"Scenario {sc}: wastewater flow schematic")])
-    o.h(f"{sc} – Wastewater Network Configuration", 3)
-    o.p(f"The network is sized for the {F.BASE} peak flows, including infiltration, and checked at the 2031 and 2036 peaks for self-cleansing. "
-        f"It comprises {f0(f['sewer_km'])} km of sewers, {f1(f['km_big'])} km of them larger than 200 mm, of which "
-        f"{pct(f['km_big'] - f['km_under31'], f['km_big'])} reach 0.75 m/s at the 2031 peak. Of the {f0(f['manholes'])} manholes, "
-        f"{f0(f['mh_over12'])} are deeper than 12 m to invert; the deepest is {f['deepest']['depth']:.1f} m.")
-    o.table(["Diameter (mm)", "Length (m)"], [[k, f0(v * 1000)] for k, v in sorted(f["km_by_size"].items(), key=lambda kv: int(kv[0]))]
-            + [["Total", f0(f["sewer_km"] * 1000)]], caption=f"Scenario {sc} – Wastewater Network Pipes Arrangement")
-    o.h(f"{sc} – Pumping Stations and Lift Stations", 3)
-    lg, lf = f["largest"], f["longest"]
-    o.p(f"The scenario requires {f['pumps']} pumping stations and {f['lifts']} lift stations, with an aggregate duty pump power of "
-        f"{f0(f['kw_network'])} kW, excluding the plant inlet station{'s' if len(plants) > 1 else ''}. The largest station, {lg['name']}, "
-        f"handles {f0(lg['duty_ls'])} l/s; the longest force main extends {f1(lf['force_main_m'] / 1000)} km from {lf['name']}. Pumping "
-        f"energy is about {f0(f['mwh_2031'])} MWh a year in 2031 and {f0(f['mwh_design'])} MWh in {F.BASE}. The people and the flow "
-        "at every station, every five years from 2026 to 2061, are given in Appendix D.")
-    o.table(["Station", "Kind", "Type", "Discharges to", "Incoming sewer depth (m)", "Duty (l/s)", "Head (m)", "Power (kW)", "Force main (mm × m)"],
-            [[r.name, r.kind, r.g203_type, dest(r, plants), f"{r.outfall_depth_m:.1f}", f0(r.duty_ls),
-              f0(r.head_m), f1(r.kw), f"{int(r.force_main_dn)} × {f0(r.force_main_m)}" if r.force_main_m > 0 else "-"] for r in st.itertuples()],
-            caption=f"Scenario {sc} – Pumping Stations and Lift Stations")
-    o.h(f"{sc} – Treatment Facility", 3)
-    if len(plants) == 1:
-        (k, v), = plants.items()
-        o.p(f"{v['stp']} receives an average wastewater flow of {f0(v['avg_m3d']['2031'])} m³/d in 2031, increasing to "
-            f"{f0(v['avg_m3d'][F.BASE])} m³/d in {F.BASE}. The incoming sewer reaches the plant at a depth of about {v['inlet_depth_m']:.1f} m "
-            f"below ground, and the inlet pumping station {k} lifts a design peak of {f0(st.set_index('name').at[k, 'duty_ls'])} l/s.")
-    else:
-        o.p(f"{sc} divides treatment between {' and '.join(stps)}, with projected average inflows of "
-            + " and ".join(f"{f0(v['avg_m3d'][F.BASE])} m³/d" for v in plants.values()) + f" respectively in {F.BASE}.")
-        o.table(["Treatment Facility", "Inlet station", "Average inflow 2031 (m³/d)", f"Average inflow {F.BASE} (m³/d)", "Incoming sewer depth (m)"],
-                [[v["stp"], k, f0(v["avg_m3d"]["2031"]), f0(v["avg_m3d"][F.BASE]), f"{v['inlet_depth_m']:.1f}"] for k, v in plants.items()],
-                caption=f"Scenario {sc} – Treatment Facilities")
-    if sc in te:
-        hd = te[sc][0]; replace_text(P.Paragraph(hd, d), f"{sc} – TE Network Configuration")
-        for x in te[sc]:
-            if x.tag == qn("w:p"):
-                pp = P.Paragraph(x, d)
-                for old, new in ((f"Option {sc[-1]}", f"Scenario {sc}"), (f"OP{sc[-1]}", sc), (f"OPTION {sc[-1]}", f"SCENARIO {sc[-1]}")):
-                    if old in pp.text: replace_text(pp, pp.text.replace(old, new))
-            o.put(x)
-    else:                                                                  # SC4: no matching option in the team's chapter (R10)
-        import json as _j, pandas as _pd
-        fz = _j.load(open(os.path.join(F.R, "financial.json")))[sc]; L4 = _pd.read_csv(os.path.join(F.R, "te", "SC4_TE_lengths.csv"))
-        o.h(f"{sc} – TE Network Configuration", 3)
-        sp = fz["supply"]
-        o.p(f"Under Scenario {sc}, STP-2 and STP-5 supply the treated effluent. STP-5 supplies the {sp['STP-5']['customers']} customers of the "
-            "north-eastern settlements through the network it supplies in Scenario SC3, and STP-2 supplies the other "
-            f"{sp['STP-2']['customers']} customers through the transmission main of Scenario SC2, without the branches that serve the "
-            "customers of STP-5. As both plants lie at low points of their sewer networks, booster pumping stations supply the network; the "
-            f"combined power of the duty pumps is estimated at about {fz['te']['kw']:,.0f} kW, from the booster duties of the SC2 and SC3 "
-            "networks in proportion to the flow each plant supplies. Six small customers, about 1,000 m³/d in 2070, lie 1 to 7 km beyond the "
-            "mains; their connections are routed at the preliminary design.")
-        o.table(["Diameter (mm)", "Length (m)"], [[int(r.D), f0(r.L)] for r in L4.itertuples()] + [["Total", f0(L4.L.sum())]],
-                caption=f"Scenario {sc} – TE Network Pipes Arrangement")
-    tag = f"{sc}_{F.BASE}"
-    o.maps([(os.path.join(IMG, f"map_{tag}_zones.png"), f"Scenario {sc}: the sewers by the plant they drain to"),
-            (os.path.join(IMG, f"map_{tag}_network.png"), f"Scenario {sc}: sewers, pumping and lift stations and force mains"),
-            (os.path.join(IMG, f"map_{tag}_selfcleansing.png"), f"Scenario {sc}: self-cleansing of the sewers at the 2031 peak")]
-           + ([(te_fig[sc][0], f"Scenario {sc}: TE Network General Layout")] if sc in te_fig else
-              [(os.path.join(IMG, f"map_{sc}_TE_network.png"), f"Scenario {sc}: TE Network General Layout")]))     # one landscape run
+        f"them for conveyance to the treatment plant{'s' if len(stps) > 1 else ''}. The network is designed for the flows of 2051, 2056 and "
+        f"2061; each design is described below and the three are compared in Section {sec}.4. The station arrangement is the same in the three "
+        "designs: the schematic shows how the pumping systems connect, with the design peaks of the 2056 design, and the map shows the sewers "
+        "by the plant they drain to.")
+    o.maps([(os.path.join(IMG, f"flow_diagram_{sc}.png"), f"Scenario {sc}: wastewater flow schematic"),
+            (os.path.join(IMG, f"map_{sc}_{F.BASE}_zones.png"), f"Scenario {sc}: the sewers by the plant they drain to")])
+    for k, y in enumerate(F.YEARS):
+        f = F.case(sc, y); st = f["stations"]; plants = f["plants"]; fd = FD[f"{sc}-{y}"]; sub = f"{sec}.{k + 1}"
+        o.h(f"{sc} Network Design by Flow of {y}", 3)
+        o.h(f"{sc} – Wastewater Network Configuration (Flow {y})", 4)
+        o.p(f"The network is sized for the {y} peak flows, including infiltration, and checked at the 2031 and 2036 peaks for self-cleansing. "
+            f"It comprises {f0(f['sewer_km'])} km of sewers, {f1(f['km_big'])} km of them larger than 200 mm, of which "
+            f"{pct(f['km_big'] - f['km_under31'], f['km_big'])} reach 0.75 m/s at the 2031 peak. Of the {f0(f['manholes'])} manholes, "
+            f"{f0(f['mh_over12'])} are deeper than 12 m to invert; the deepest is {f['deepest']['depth']:.1f} m.")
+        o.table(["Diameter (mm)", "Length (m)"], [[kk, f0(v * 1000)] for kk, v in sorted(f["km_by_size"].items(), key=lambda kv: int(kv[0]))]
+                + [["Total", f0(f["sewer_km"] * 1000)]], caption=f"Scenario {sc} – Wastewater Network Pipes Arrangement (Flow {y})")
+        o.h(f"{sc} – Pumping Stations and Lift Stations (Flow {y})", 4)
+        lg, lf = f["largest"], f["longest"]
+        o.p(f"The design requires {f['pumps']} pumping stations and {f['lifts']} lift stations, with an aggregate duty pump power of "
+            f"{f0(f['kw_network'])} kW, excluding the plant inlet station{'s' if len(plants) > 1 else ''}. The largest station, {lg['name']}, "
+            f"handles {f0(lg['duty_ls'])} l/s; the longest force main extends {f1(lf['force_main_m'] / 1000)} km from {lf['name']}. Pumping "
+            f"energy is about {f0(f['mwh_2031'])} MWh a year in 2031 and {f0(f['mwh_design'])} MWh in {y}."
+            + (" The people and the flow at every station, every five years from 2026 to 2061, are given in Appendix D." if k == 0 else ""))
+        o.table(["Station", "Kind", "Type", "Discharges to", "Incoming sewer depth (m)", "Duty (l/s)", "Head (m)", "Power (kW)", "Force main (mm × m)"],
+                [[r.name, r.kind, r.g203_type, dest(r, plants), f"{r.outfall_depth_m:.1f}", f0(r.duty_ls),
+                  f0(r.head_m), f1(r.kw), f"{int(r.force_main_dn)} × {f0(r.force_main_m)}" if r.force_main_m > 0 else "-"] for r in st.itertuples()],
+                caption=f"Scenario {sc} – Pumping Stations and Lift Stations (Flow {y})")
+        o.h(f"{sc} – Treatment Facility (Flow {y})", 4)
+        sti = st.set_index("name")
+        o.p(f"Each plant is sized on its {y} average inflow plus 10 per cent, in four equal modules installed as the inflow requires. "
+            + " ".join(f"{v['stp']} receives {f0(v['avg_m3d']['2031'])} m³/d in 2031 and {f0(v['avg_m3d'][y])} m³/d in {y}; its four modules of "
+                       f"{f0(fd['plants'][v['stp']]['size'])} m³/d give {f0(4 * fd['plants'][v['stp']]['size'])} m³/d. The incoming sewer arrives "
+                       f"{v['inlet_depth_m']:.1f} m below ground and the inlet pumping station {p} lifts {f0(sti.at[p, 'duty_ls'])} l/s."
+                       for p, v in plants.items()))
+        o.table(["Treatment facility", "Inlet station", "Average inflow 2031 (m³/d)", f"Average inflow {y} (m³/d)", "Modules (m³/d)",
+                 "Design capacity (m³/d)", "Land (ha)", "Incoming sewer depth (m)", "Inlet duty (l/s)"],
+                [[v["stp"], p, f0(v["avg_m3d"]["2031"]), f0(v["avg_m3d"][y]), f"4 × {f0(fd['plants'][v['stp']]['size'])}",
+                  f0(4 * fd["plants"][v["stp"]]["size"]), f1(4 * fd["plants"][v["stp"]]["size"] * fd["plants"][v["stp"]]["land_per"] / 10000),
+                  f"{v['inlet_depth_m']:.1f}", f0(sti.at[p, "duty_ls"])] for p, v in plants.items()],
+                caption=f"Scenario {sc} – Treatment Facilities (Flow {y})")
+        if k == 0:                                                         # the TE network, in full in the first design
+            if sc in te:
+                hd = te[sc][0]; hp = P.Paragraph(hd, d); replace_text(hp, f"{sc} – TE Network Configuration (Flow {y})"); hp.style = d.styles["Heading 4"]
+                for x in te[sc][1:]:
+                    if x.tag == qn("w:p") and P.Paragraph(x, d).style is not None and P.Paragraph(x, d).style.name == "Heading 4":
+                        P.Paragraph(x, d).style = d.styles["Heading 5"]
+                for x in te[sc]:
+                    if x.tag == qn("w:p"):
+                        pp = P.Paragraph(x, d)
+                        for old, new in ((f"Option {sc[-1]}", f"Scenario {sc}"), (f"OP{sc[-1]}", sc), (f"OPTION {sc[-1]}", f"SCENARIO {sc[-1]}")):
+                            if old in pp.text: replace_text(pp, pp.text.replace(old, new))
+                    o.put(x)
+            else:                                                          # SC4: no matching option in the team's chapter (R10)
+                fz = FD[f"{sc}-{F.BASE}"]; L4 = _pd.read_csv(os.path.join(F.R, "te", "SC4_TE_lengths.csv"))
+                o.h(f"{sc} – TE Network Configuration (Flow {y})", 4)
+                sp = fz["supply"]
+                o.p(f"Under Scenario {sc}, STP-2 and STP-5 supply the treated effluent. STP-5 supplies the {sp['STP-5']['customers']} customers of the "
+                    "north-eastern settlements through the network it supplies in Scenario SC3, and STP-2 supplies the other "
+                    f"{sp['STP-2']['customers']} customers through the transmission main of Scenario SC2, without the branches that serve the "
+                    "customers of STP-5. As both plants lie at low points of their sewer networks, booster pumping stations supply the network; the "
+                    f"combined power of the duty pumps is estimated at about {fz['te']['kw']:,.0f} kW, from the booster duties of the SC2 and SC3 "
+                    "networks in proportion to the flow each plant supplies. Six small customers, about 1,000 m³/d in 2070, lie 1 to 7 km beyond the "
+                    "mains; their connections are routed at the preliminary design.")
+                o.table(["Diameter (mm)", "Length (m)"], [[int(r.D), f0(r.L)] for r in L4.itertuples()] + [["Total", f0(L4.L.sum())]],
+                        caption=f"Scenario {sc} – TE Network Pipes Arrangement")
+            te_map = [(te_fig[sc][0], f"Scenario {sc}: TE Network General Layout")] if sc in te_fig else \
+                     [(os.path.join(IMG, f"map_{sc}_TE_network.png"), f"Scenario {sc}: TE Network General Layout")]
+        else:
+            o.h(f"{sc} – TE Network Configuration (Flow {y})", 4)
+            o.p(f"The treated effluent network is sized on the demand of its customers, not on the design year of the sewers: the network of "
+                f"Section {sec}.1.4, {f1(fd['te']['km'])} km with {f0(fd['te']['kw'])} kW of booster duty, serves the {y} design unchanged. The "
+                f"plant{'s' if len(plants) > 1 else ''} produce{'' if len(plants) > 1 else 's'} the same treated effluent in every design year, "
+                "since the flow reaching a plant does not depend on the year for which the sewers are sized.")
+            te_map = []
+        o.maps([(os.path.join(IMG, f"map_{sc}_{y}_network.png"), f"Scenario {sc} designed for {y}: sewers, pumping and lift stations and force mains"),
+                (os.path.join(IMG, f"map_{sc}_{y}_selfcleansing.png"), f"Scenario {sc} designed for {y}: self-cleansing of the sewers at the 2031 peak")]
+               + te_map)
+    # ---- the scenario's three designs compared
+    o.h(f"Scenario {n} Options Comparison", 3)
+    A = {y: F.case(sc, y) for y in F.YEARS}; B = {y: FD[f"{sc}-{y}"] for y in F.YEARS}
+    rows = [("Sewers above 200 mm (km)", lambda y: f1(A[y]["km_big"])),
+            ("Below 0.75 m/s at the 2031 peak, km (%)", lambda y: f"{f1(A[y]['km_under31'])} ({pct(A[y]['km_under31'], A[y]['km_big'])})"),
+            ("Still below at the 2036 peak (km)", lambda y: f1(A[y]["km_under36"])),
+            ("Over the depth limit by 2056, pipes / km", lambda y: f"{DYC[f'{sc}-{y}']['pipes_over']} / {DYC[f'{sc}-{y}']['km_over']:.1f}" if DYC.get(f"{sc}-{y}", {}).get("pipes_over") else "none"),
+            ("Pumping / lift stations", lambda y: f"{A[y]['pumps']} / {A[y]['lifts']}"),
+            ("Manholes deeper than 12 m", lambda y: f0(A[y]["mh_over12"])),
+            ("Sewage pumping duty, with plant inlets (kW)", lambda y: f0(A[y]["kw_network"] + A[y]["kw_plant_inlets"])),
+            ("Treatment capacity (m³/d)", lambda y: " + ".join(f0(m["total"]) for m in B[y]["plants"].values())),
+            ("Sewer network capital cost, base prices (M OMR)", lambda y: f1(B[y]["network_capex"] / 1e6)),
+            ("Capital cost, base prices (M OMR)", lambda y: f1(B[y]["capex_base"] / 1e6)),
+            ("CAPEX + OPEX over 25 years, escalated (M OMR)", lambda y: f1(B[y]["total_2055"] / 1e6)),
+            ("Whole-life cost, present value (M OMR)", lambda y: f1(B[y]["pv_total"] / 1e6))]
+    o.table(["Item"] + [f"Designed for {y}" for y in F.YEARS], [[a] + [fn(y) for y in F.YEARS] for a, fn in rows],
+            caption=f"Scenario {sc}: the three designs compared")
+    ov_ = DYC[f"{sc}-2051"]
+    o.p(f"The 2051 design costs least, {f1(B['2051']['total_2055'] / 1e6)} million OMR over 25 years escalated, but it does not carry the flow "
+        f"of its design life: by 2056, {ov_['pipes_over']} of its pipes ({ov_['km_over']:.1f} km) run above their depth limit and its plant"
+        f"{'s' if len(B['2051']['plants']) > 1 else ''} work{'' if len(B['2051']['plants']) > 1 else 's'} inside the 10 per cent margin, so relief "
+        "sewers and a further module would be needed by 2056; their cost is not in these figures. The 2061 design carries the flow with "
+        f"margin but costs {f1((B['2061']['total_2055'] - B['2056']['total_2055']) / 1e6)} million OMR more than the 2056 design and leaves "
+        f"{pct(A['2061']['km_under31'], A['2061']['km_big'])} of the sewers above 200 mm below the self-cleansing velocity at 2031, against "
+        f"{pct(A['2056']['km_under31'], A['2056']['km_big'])}. The 2056 design is adopted for Scenario {sc}.")
 
 o.h("Comparison of Scenarios", 2)
 o.h("Basis of Comparison", 3)
@@ -451,8 +486,8 @@ for tb in d.tables:
 # ------------------------------------------------------------------ Appendix D: depth and quantities of the four scenarios
 hd = find("Appendix D.", "Heading 1"); old = section(hd)[1:]
 o = Out(old[-1].getnext() if old else hd._p.getnext()); remove(old)
-o.p(f"This appendix gives the people and the average flow at every pumping and lift station, and, for each scenario designed for "
-    f"{F.BASE}, the depth of the sewers to invert with the manholes in each depth band, and the self-cleansing of the 2051 and 2061 designs.")
+o.p(f"This appendix gives the people and the average flow at every pumping and lift station and, for each scenario designed for "
+    f"{F.BASE}, the depth of the sewers to invert with the manholes in each depth band.")
 SFL = _pd.read_csv(os.path.join(F.R, "station_flows.csv")); own = SFL[SFL.scenario == "SC1"]; Y5 = [2026, 2031, 2036, 2041, 2046, 2051, 2056, 2061]
 order = sorted(own.station.unique(), key=lambda s: (int(s[1:].split("L")[0]), 0 if "L" not in s else int(s.split("L")[1])))
 PV = own.pivot_table(index="station", columns="year", values="people_own"); QV = own.pivot_table(index="station", columns="year", values="flow_own_m3d")
@@ -473,9 +508,7 @@ for sc in F.SCEN:
     f = C[sc]; bands = ["up to 3 m", "3 to 6 m", "6 to 9 m", "9 to 12 m", "12 to 15 m", "over 15 m"]
     o.table(["Depth to invert", "Sewer length (km)", "Manholes"], [[b, f1(f["km_by_depth"].get(b, 0)), f0(f["manholes_by_depth"].get(b, 0))] for b in bands]
             + [["Total", f1(f["sewer_km"]), f0(f["manholes"])]], caption=f"Scenario {sc}: sewers and manholes by depth to invert")
-o.maps([(os.path.join(IMG, f"map_{sc}_{F.BASE}_depth.png"), f"Scenario {sc}: depth of the sewers to invert") for sc in F.SCEN]
-       + [(os.path.join(IMG, f"map_{sc}_{y}_selfcleansing.png"), f"Scenario {sc} designed for {y}: self-cleansing of the sewers at the 2031 peak")
-          for sc in F.SCEN for y in ("2051", "2061")])
+o.maps([(os.path.join(IMG, f"map_{sc}_{F.BASE}_depth.png"), f"Scenario {sc}: depth of the sewers to invert") for sc in F.SCEN])
 import r10_edits, r11_edits
 r10_edits.apply(globals())
 r11_edits.apply(globals())

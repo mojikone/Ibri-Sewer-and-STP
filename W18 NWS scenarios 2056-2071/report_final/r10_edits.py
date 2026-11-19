@@ -496,6 +496,41 @@ def apply(g):
         cx = {sc: fin[sc]["capex_nominal_by"][y] for sc in SC}; ox = {sc: fin[sc]["opex_cum"]["opex_nominal"][y] for sc in SC}
         rows += [[y, "CAPEX"] + [M(cx[sc]) for sc in SC], ["", "OPEX"] + [M(ox[sc]) for sc in SC], ["", "TOTAL"] + [M(cx[sc] + ox[sc]) for sc in SC]]
     o.table(["Year", ""] + [f"{sc} (M OMR)" for sc in SC], rows, caption="Scenarios Total CAPEX and Cumulative OPEX")
+    # ---- the three design years of every scenario (team's structure of 2026-11-19; R12)
+    DS = fin["designs"]; DY = ["2051", "2056", "2061"]
+    o.h("CAPEX and OPEX by Design Year", 2)
+    o.p("Each scenario has been designed for the flows of 2051, 2056 and 2061 (Chapter 6). The tables below price the twelve designs on the "
+        "same basis as the scenarios above: the network of each design at its own quantities, the treatment plant in four modules sized on the "
+        "design year's inflow plus 10 per cent, and the treated effluent network, which is the same in every design year. Costs are escalated "
+        "at 5 per cent a year from 2031 and accumulated to 2055.")
+    rows = []
+    for sc in SC:
+        for i, (k, lab_) in enumerate(COMP):
+            v = [sum(c.get(k, 0) * 1.05 ** (int(y_) - 2031) for y_, c in DS[f"{sc}-{y}"]["capex_by_year"].items()) for y in DY]
+            rows.append([sc if i == 0 else "", lab_] + [M(x) for x in v])
+        rows.append(["", "Total"] + [M(DS[f"{sc}-{y}"]["capex_nominal"]) for y in DY])
+    o.table(["Scenario", "Component"] + [f"Designed for {y} (M OMR)" for y in DY], rows, caption="CAPEX of the twelve designs by component, escalated")
+    RQ2 = [("Sewage pumping and lift stations (kW)", "sewage_kw"), ("STP power (kW)", "stp_kw"), ("Required plot area (m²)", "land_m2"),
+           ("No. of staff", "staff"), ("Chlorine (kg/d)", "chlorine")]
+    o.table(["Scenario", "Design year"] + [a for a, _ in RQ2],
+            [[sc if y == DY[0] else "", y] + [f0(DS[f"{sc}-{y}"]["requirements"][k]) for _, k in RQ2] for sc in SC for y in DY],
+            caption="Operation requirements of the twelve designs")
+    rows = []
+    for sc in SC:
+        for i, (k, lab_) in enumerate(OC):
+            rows.append([sc if i == 0 else "", lab_] + [M(DS[f"{sc}-{y}"]["opex_cum"][k]["2055"]) for y in DY])
+        rows.append(["", "Total"] + [M(DS[f"{sc}-{y}"]["opex_cum"]["opex_nominal"]["2055"]) for y in DY])
+    o.table(["Scenario", "Component"] + [f"Designed for {y} (M OMR)" for y in DY], rows, caption="Cumulative OPEX of the twelve designs to 2055, escalated")
+    o.table(["Scenario", "Design year", "CAPEX (M OMR)", "Cumulative OPEX (M OMR)", "Total to 2055 (M OMR)"],
+            [[sc if y == DY[0] else "", y, M(DS[f"{sc}-{y}"]["capex_nominal_by"]["2055"]), M(DS[f"{sc}-{y}"]["opex_cum"]["opex_nominal"]["2055"]),
+              M(DS[f"{sc}-{y}"]["total_2055"])] for sc in SC for y in DY], caption="Total CAPEX and cumulative OPEX of the twelve designs to 2055")
+    d51 = [DS[f"{s}-2056"]["total_2055"] - DS[f"{s}-2051"]["total_2055"] for s in SC]; d61 = [DS[f"{s}-2061"]["total_2055"] - DS[f"{s}-2056"]["total_2055"] for s in SC]
+    ordr = {y: sorted(SC, key=lambda s: DS[f"{s}-{y}"]["total_2055"]) for y in DY}
+    assert len({tuple(v) for v in ordr.values()}) == 1, ordr                         # "the order is the same in every design year"
+    o.p(f"Within every scenario the 2051 design costs {M(min(d51))} to {M(max(d51))} million OMR less than the 2056 design over the 25 years, and "
+        f"the 2061 design {M(min(d61))} to {M(max(d61))} million OMR more. The 2051 figures exclude the relief sewers and the further plant module "
+        "that its overloaded pipes and plant would need by 2056 (Section 6.2.4), so the saving is not available; the order of the scenarios "
+        "is the same in every design year.")
     o.h("Conclusion", 2)
     order = sorted(SC, key=lambda s: tot[s]); lo_cx = min(SC, key=lambda s: fin[s]["capex_base"])
     pw = lambda sc: f"{(tot[sc] / tot[order[0]] - 1) * 100:.1f} per cent higher"
@@ -611,6 +646,16 @@ def apply(g):
         f"{(tot['SC3'] / tot['SC1'] - 1) * 100:.1f} per cent above it. All four scenarios lie within 10 per cent of the "
         "lowest on both bases. The two bases differ because the second plant of SC3 and SC4 adds staff and land rent every year, which weigh "
         "more when operating costs are escalated and not discounted.")
+    DS = fin["designs"]; DY = ["2051", "2056", "2061"]
+    o.table(["Scenario", "Design year", "Capital cost", "Present value of capital", "Present value of operation", "Whole-life cost, constant prices",
+             "Cumulative cost, escalated"],
+            [[sc if y == DY[0] else "", y, M(DS[f"{sc}-{y}"]["capex_base"]), M(DS[f"{sc}-{y}"]["pv_capex"]), M(DS[f"{sc}-{y}"]["pv_opex"]),
+              M(DS[f"{sc}-{y}"]["pv_total"]), M(DS[f"{sc}-{y}"]["total_2055"])] for sc in SC for y in DY],
+            caption="Whole-life cost of the twelve designs over 25 years, M OMR")
+    low2 = {y: sorted(SC, key=lambda s: DS[f"{s}-{y}"]["pv_total"])[:2] for y in DY}
+    assert all(sorted(v) == ["SC1", "SC3"] for v in low2.values()), low2              # the sentence below must stay true
+    o.p("The design year moves the whole-life cost of every scenario by a similar amount: SC3 and SC1 are the two lowest in every design year. "
+        "The 2056 design, adopted in every scenario (Section 6.2.4), is the basis of the comparison and of the sensitivity tests below.")
     o.p("PAM-GUD-201 requires sensitivity tests on the discount rate and on the input design criteria (p. 106). The table below tests the "
         "constant-price result against the evaluation basis and the two operating cost assumptions that most distinguish the scenarios.")
     cases = [("Basis: 25 years, 5 per cent", {}), ("Land allocated, no land rent", dict(land=False)), ("Staff at 1,200 OMR a month", dict(staff_rate=1200)),

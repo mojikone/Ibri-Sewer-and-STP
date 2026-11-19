@@ -148,6 +148,15 @@ sheet("Whole-life cost", "Whole-life cost over 25 years at 5 %, constant prices,
       ["Scenario", "Present value of capital", "Present value of operation", "Whole-life cost", "Lowest +10 %", "Above the lowest"], rows, [10, 14, 14, 13, 13, 12],
       [None, "0.0", "0.0", "0.0", "0.0", "0.0%"])
 
+# ------------------------------------------------------------------ 9 the twelve designs priced (R12, team's structure of 2026-11-19)
+DS = FIN["designs"]
+rows = [[s, int(y), round(DS[f"{s}-{y}"]["capex_nominal_by"]["2055"] / 1e6, 1), round(DS[f"{s}-{y}"]["opex_cum"]["opex_nominal"]["2055"] / 1e6, 1), "=C{r}+D{r}",
+         round(DS[f"{s}-{y}"]["pv_capex"] / 1e6, 1), round(DS[f"{s}-{y}"]["pv_opex"] / 1e6, 1), "=F{r}+G{r}"] for s in SC for y in YEARS]
+sheet("Design year costs", "The twelve designs priced: four scenarios in three design years, M OMR",
+      "CAPEX and OPEX escalated at 5 % a year and accumulated to 2055; present values at 5 % over 25 years at constant prices. Plants in four modules on the design year's inflow + 10 %.",
+      ["Scenario", "Design year", "CAPEX to 2055", "OPEX to 2055", "Total to 2055", "Present value of capital", "Present value of operation", "Whole-life cost"], rows,
+      [10, 9, 12, 12, 12, 14, 14, 13], [None, "0", "0.0", "0.0", "0.0", "0.0", "0.0", "0.0"])
+
 # ------------------------------------------------------------------ contents
 ws = wb.create_sheet("Contents", 0); ws.sheet_view.showGridLines = False
 ws["A1"] = "Ibri Sewer, TE Networks and STP - Concept Design: tables and charts"; ws["A1"].font = Font(bold=True, size=14, color=NAVY)
@@ -155,7 +164,7 @@ for i, (s, d) in enumerate([("Flows to the plants", "Population and flow, Chapte
                             ("Design year", "The twelve designs: four scenarios in three design years"), ("Station catchments", "People and flow generated at every station, 2026-2061"),
                             ("Station throughflow", "People served and flow through every station, by scenario"), ("Plant capacity", "Inflow and installed capacity of the plants"),
                             ("Scenarios compared", "Quantities, duty power, TE and costs of the four scenarios"), ("Cost by year", "Cumulative CAPEX and OPEX by year"),
-                            ("Whole-life cost", "Present value over 25 years")]):
+                            ("Whole-life cost", "Present value over 25 years"), ("Design year costs", "The twelve designs priced, Chapters 8 and 14")]):
     a = ws.cell(row=3 + i, column=1, value=s); a.hyperlink = f"#'{s}'!A1"; a.font = Font(color="1F6FB2", underline="single")
     ws.cell(row=3 + i, column=2, value=d)
 ws.column_dimensions["A"].width = 24; ws.column_dimensions["B"].width = 64
