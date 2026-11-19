@@ -139,9 +139,15 @@ def make_map(proj, google, name, title, stack, legend_layers, ext, rows, out_png
         tmp = QgsLayoutExporter(lay); ts = QgsLayoutExporter.ImageExportSettings(); ts.dpi = 25; mapitem.setLayers(stack)
         tmp.exportToImage(os.path.join(tempfile.gettempdir(), "final_legend_probe.png"), ts)
         sz = legend.sizeWithUnits(); mp, ms = mapitem.positionWithUnits(), mapitem.sizeWithUnits()
+        if sz.height() > 0.2 * ms.height():                      # a tall legend in two columns: half the height over the map
+            legend.setColumnCount(3 if sz.height() > 0.4 * ms.height() else 2); legend.setSplitLayer(True); legend.setEqualColumnWidth(False); legend.adjustBoxSize()
+            tmp.exportToImage(os.path.join(tempfile.gettempdir(), "final_legend_probe.png"), ts); sz = legend.sizeWithUnits()
         legend.attemptMove(QgsLayoutPoint(mp.x() + 3.0, mp.y() + ms.height() - sz.height() - 3.0, M.UNIT_MM))
     boxes = ([(legend, "left")] if legend is not None else []) + ([(box, "right")] if box is not None else [])
     mapitem.zoomToExtent(ext)                                    # full extent; the legend and table sit over the map
+    e_ = mapitem.extent(); up = e_.yMaximum() - ext.yMaximum() - 0.03 * e_.height()
+    if up > 0:                                                   # the area raised to the top of the frame, so the legend and the table
+        mapitem.setExtent(QgsRectangle(e_.xMinimum(), e_.yMinimum() - up, e_.xMaximum(), e_.yMaximum() - up))   # at the foot cover less of it
     credit = QgsLayoutItemLabel(lay); credit.setText(M.CREDIT)
     tf = QgsTextFormat(); tf.setFont(QFont("Arial")); tf.setSize(5.0); tf.setColor(QColor("#4a4a4a")); credit.setTextFormat(tf)
     lay.addLayoutItem(credit); credit.attemptResize(QgsLayoutSize(40, 3.5, M.UNIT_MM))
