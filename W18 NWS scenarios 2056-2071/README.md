@@ -197,6 +197,32 @@ New stations in every case: O9 four (O9-M166/M167, O9-M72, O9-M763 13.6 m, O9-M8
 - **SewerGEMS of the 2051 and 2061 designs** (jobs 086-093, the same build as 081-084; copy-out job 094): all eight match the own design as the 2056 ones do - flows within 0.1 % on every pipe, no pipe over the depth-of-flow limit, the same length under 0.75 m/s at 2031 at two decimals (2051: 4.2 km, 2061: 14.1 km in both). `<case>/sewergems/COMPARE.md`.
 - **Treatment, TE and financial analysis** (`py/final_financial.py` -> `results/final_0.75pc_SC1-SC4/financial.json`, `report_final/deliverables/Ibri_Treatment_TE_and_Financial_SC1-SC4.xlsx`): the team's cost method (`W:/.../11_Finacial/2621 - Options Cost Estimation-MH 14-10-2026.xlsx`: STP rate and land by capacity band, 0.025 kW per m3/d, 1 % M&O, power x flow share, land 1 OMR/m2/month, staff ROUNDUP(stations/5)x2 + 20 or 28, chemicals) on the final flows; four modules per plant on 2056 inflow + 10 % (SC1 STP-1 4 x 11,000; SC3 STP-1 4 x 9,500 and STP-5 4 x 1,750); 2031 prices, 5 % escalation; present value at 5 % over 2031-2055. 25-year escalated total SC1 364.3, SC3 374.5, SC2 377.8, SC4 390.9 M OMR; present value SC3 214.9, SC1 217.3, SC4 225.4, SC2 226.3. TE: every plant meets its customers' demand from 2031 (team's register; SC3 split read from their TE model); SC4 = SC3's STP-5 network + SC2's main pruned to STP-2's customers, 89.4 km, 826 kW (pro rata), map `gis/te_map_sc4.py`. The team's TE data stays out of git (`results/.../te/`, from W:/.../10_TSE).
 - **Report R10** (`report_final/r10_edits.py` on top of the R9 build, outputs in `report_final/R10/`, not in git; the engineer: "review the entire report and update all parts"): executive summary, Chapters 5, 7-17 and Appendices A, B, C.3, F, H brought to SC1-SC4 and the 2056 design; Chapter 4's flows reconciled to the plant inflow (Table 4-13 + estates 316 - infiltration allowance 1,099 - not conveyed + 1,079 modelled infiltration, exact to 2061); SC1 recommended, SC3 alternative (SC2/SC4 not). Every cross-reference written as its current number (the team's printed 'Section 0'), caption chapter parts as text, 213 team highlights removed. Clean gate extended with regexes for review notes and option names, and PASSED (204 pages). Sent to the engineer's WhatsApp (Word and PDF) 2026-11-18. **Still the team's to confirm:** the STP-5 footprint (mosque at 349 m < 500 m) on which SC3/SC4 depend; Chapter 7 says STP-2 passes separation while Chapter 9 reports a dwelling at about 380 m.
+- **Report R11** (2026-11-19; `report_final/r11_edits.py` after r10; outputs in `report_final/R11/`, not in git; the engineer: "look from the reader and client point of view"):
+  - **Chapter 6:**
+    - The gradient limit (6.2.3) and the design year (6.2.4) are decisive. Table and chart of the twelve designs, from `results/final_0.75pc_SC1-SC4/design_year_check_2056.json`: a 2051 design leaves 131-189 pipes (10.6-16.0 km) over their depth limit by 2056; 2061 leaves 9 % short of self-cleansing against 6 %.
+    - Each scenario reads: intro and flow schematic → network → stations → treatment → TE → maps.
+    - The comparison is split into network, treatment/TE and trade-offs.
+  - **Flow schematics:** `report_final/flow_diagram.py` drives R7's own `py/diagram_png.py`. The engineer: "keep the same as R7, later the team will check it".
+  - **Excel workbook** of the tables and charts: `report_final/report_workbook.py` → `report_final/deliverables/Ibri_Concept_Design_Tables_and_Charts.xlsx`. The charts are built by Excel COM and placed in Chapters 6, 7, 8 and 14.
+  - **People and flow at every station,** 2026-2061 (`py/final_station_flows.py` → `station_flows.csv`). They are in Appendix D and the workbook.
+  - **Maps:**
+    - The team's STP-site and TE-customer maps are redrawn on the final network (`gis/team_maps_redraw.py`, sites from W: `Revised_STPs.shp`).
+    - Plant colours are STP-1 blue, STP-2 orange and STP-5 green, with shades per pumping/lift catchment.
+    - Legends are small and may overlap the map.
+    - The 2051/2061 self-cleansing maps are in Appendix D.
+  - **Whole-report layout:**
+    - no blank pages (empty paragraphs before page or section breaks removed);
+    - chapters start on a new page;
+    - tables centred, columns sized by content, header rows repeated;
+    - all captions in one form; body text flush (the team's chapters had two indents).
+  - Clean gate PASSED, 201 pages.
+- **DWG drawings** (`py/final_dwg.py`, ezdxf, then AutoCAD 2026 `accoreconsole` saves DWG 2018; `report_final/deliverables/dwg/`, not in git): one per scenario, 2056 design, UTM 40N.
+  - **Layers:** gravity sewers by size band (line weight 0.25-1.00 mm); manholes; deep (>12 m) and drop (>0.5 m) manholes; pump and lift rising mains; stations and plants; separate TXT- layers.
+  - **Text heights:** plants 40 m and stations 25 m (read zoomed out), rising mains 6 m, pipes and manholes 1 m.
+  - **Pipe text:** name, DN, length, gradient, design flow, velocity and inverts.
+  - **Manhole text:** ground level, invert, depth and drop.
+  - **Station text:** duty, head, kW, rising main DN, length and velocity, and the wet well.
+  - **Plant text:** modules, inflows, inlet depth, inlet pumps and wet-well volume.
 - **Study: drops over 2 m** (`studies/drops over 2 m/`, temporary, design untouched): about 1,300 junction drops over 2 m per scenario (SC1 1,301 at 1,269 manholes). The engine re-lays the network (reproduces the design within 5 mm) and tests: F1 regrade (new: pipes on steep falling ground were laid at Table 11 from their low end and hang deep; following the ground to 4 % removes 51 and saves about 1 M OMR), F2 lower the branch at 4 % (1,224; median 330 OMR each), F2 above 4 % to 3 m/s (17, the P1-M37xx hillside), F4 reconnect (0-3 candidates), F3 parallel sewer (nothing left for it). Left for vortex shafts: SC1 7, SC2 9, SC3 5, SC4 7, all trunk junctions DN900-1600. Whole package at 4 %: +1.3 M OMR, 7 left; at 3 m/s: -0.24 M OMR, none left. Backdrops rise to 2,400-2,850; the BOQ has no backdrop or vortex item.
 
 ## Fewer stations: the engineer's decisions at 0.50 %, his logic at 0.75 and 1.00 % (2026-11-18)
