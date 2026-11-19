@@ -144,6 +144,7 @@ def apply(g):
             for tc in tr.findall(qn("w:tc")):
                 gs = tc.find(qn("w:tcPr") + "/" + qn("w:gridSpan")); span = int(gs.get(qn("w:val"))) if gs is not None else 1
                 tx = norm("".join(x.text or "" for x in tc.iter(qn("w:t"))))
+                if tc.find(qn("w:tcPr") + "/" + qn("w:textDirection")) is not None: tx = ""   # rotated text needs height, not width
                 if span == 1 and pos < nc:
                     if ri == 0: head[pos] = tx
                     else: data[pos].append(tx)
@@ -155,8 +156,9 @@ def apply(g):
             wt.append(max(hw, dw, 5))
         # no column narrower than its longest word (a word never breaks): about 95 twips a character at 8.5 pt, 115 at
         # 10 pt, plus the cell margins; the rest of the width shared by content
-        cw = 95 if nc >= 7 else 115
-        need = [max((len(w) for x in [head[j]] + data[j] for w in x.split()), default=1) * cw + 230 for j in range(nc)]
+        cw = 100 if nc >= 7 else 120
+        need = [max((len(w) for x in [head[j]] + data[j] for w in x.split()), default=1) * cw + 250 for j in range(nc)]
+        if sum(need) > 0.9 * tw: need = [int(x * 0.9 * tw / sum(need)) for x in need]    # never more than the page holds
         fixed = set()
         while True:
             free = tw - sum(need[j] for j in fixed); rest = [j for j in range(nc) if j not in fixed]
@@ -164,6 +166,7 @@ def apply(g):
             short = [j for j in rest if ws_[j] < need[j]]
             if not short or len(fixed) + len(short) >= nc: break
             fixed |= set(short)
+        assert min(ws_) > 0, ('negative column width', ws_)
         for c, w_ in zip(cols, ws_): c.set(qn("w:w"), str(w_))
         for tr in tbl.findall(qn("w:tr")):
             pos = 0
@@ -183,7 +186,8 @@ def apply(g):
     for e in body.iterchildren():
         if e.tag == qn("w:tbl"):
             first = norm("".join(x.text or "" for x in e.find(qn("w:tr")).iter(qn("w:t")))) if e.find(qn("w:tr")) is not None else ""
-            if first or len(e.findall(qn("w:tr"))) >= 3: pending.append(e)
+            has_pic = next(e.iter(qn("w:drawing")), None) is not None     # a layout table (the cover's logo and address) keeps its widths:
+            if (first or len(e.findall(qn("w:tr"))) >= 3) and not has_pic: pending.append(e)   # resizing it clipped the logo to its cell
             continue
         sp = e.find(qn("w:pPr") + "/" + qn("w:sectPr")) if e.tag == qn("w:p") else (e if e.tag == qn("w:sectPr") else None)
         if sp is not None:
@@ -224,6 +228,68 @@ def apply(g):
                 if old in r.text: r.text = r.text.replace(old, new); hit += 1; break
         assert hit >= 1, ("reference not found", old)
     print("cross-references corrected:", len(FIX))
+    # ---- R12 review (2026-11-19): references whose target moved, and two statements the twelve designs made incomplete
+    XS_ = "{http://www.w3.org/XML/1998/namespace}space"
+
+    def set_text(p, text):                                     # as in r10_edits: first run's format kept, footnote references kept
+        pp = p._p; rpr = None
+        for r in pp.iter(qn("w:r")):
+            if r.find(qn("w:t")) is not None and r.find(qn("w:fldChar")) is None and r.find(qn("w:rPr")) is not None:
+                rpr = copy.deepcopy(r.find(qn("w:rPr"))); break
+        notes = [copy.deepcopy(r) for r in pp.iter(qn("w:r")) if r.find(qn("w:footnoteReference")) is not None]
+        for ch in list(pp):
+            if ch.tag not in (qn("w:pPr"), qn("w:bookmarkStart"), qn("w:bookmarkEnd")): pp.remove(ch)
+        r = pp.makeelement(qn("w:r"), {})
+        if rpr is not None: r.append(rpr)
+        t = r.makeelement(qn("w:t"), {}); t.text = text; t.set(XS_, "preserve"); r.append(t); pp.append(r)
+        for nn in notes: pp.append(nn)
+
+    def sub_text(pred, pairs, n=1):
+        hit = 0
+        for q in list(d.paragraphs) + cells:
+            if q.style is not None and q.style.name.upper().startswith(("TOC", "TABLE OF")): continue
+            t = norm(q.text)
+            if not pred(t): continue
+            for a, b in pairs:
+                assert a in t, (a, t[:140]); t = t.replace(a, b)
+            set_text(q, t); hit += 1
+        assert hit == n, (pairs[0], hit, n)
+    import json as _j
+    DYC_ = _j.load(open(os.path.join(g["F"].R, "design_year_check_2056.json")))
+    po = [DYC_[f"{s}-2051"]["pipes_over"] for s in ("SC1", "SC2", "SC3", "SC4")]
+    sub_text(lambda t: "to spare in 2056 (Section 6.2.6)" in t, [("(Section 6.2.6)", "(Section 6.2.7)")])         # TE demands moved to 6.2.7 in R11
+    sub_text(lambda t: "exceeds demand by about" in t and "(Section 6.2.6)" in t, [("(Section 6.2.6)", "(Section 6.2.7)")])
+    sub_text(lambda t: t in ("Section 6.2.6", "Section 6.2.6; Chapter 10"), [("6.2.6", "6.2.7")], n=3)              # Appendix A items 13, 16, 21
+    sub_text(lambda t: t == "4.10, 6.2.6", [("6.2.6", "6.2.7")])                                                     # Appendix B item A15
+    sub_text(lambda t: t.startswith("The prevailing winds described in Section 1.3.5"), [("Section 1.3.5", "Section 1.3.6")])   # winds: 1.3.6 Climate
+    sub_text(lambda t: "adds staff and land rent every year (Sections 8.8 and 14.5)" in t, [("Sections 8.8 and 14.5", "Sections 8.9 and 14.5")])  # 8.8 inserted in R12
+    sub_text(lambda t: "and are built in modules to 44,000 m³/d." in t,
+             [("and are built in modules to 44,000 m³/d.", "and are built in modules to 44,000 m³/d in one plant or 45,000 m³/d in two.")])
+    sub_text(lambda t: t.startswith("Four scenarios have been designed and modelled in SewerGEMS.") and "The network of each is designed for 2056, with" in t,
+             [("The network of each is designed for 2056, with",
+               f"Each scenario has been designed for the flows of 2051, 2056 and 2061 (Chapter 6), and the 2056 design is adopted in all four: a "
+               f"2051 design leaves {min(po)} to {max(po)} pipes above their depth limit by 2056, and a 2061 design costs more and leaves more sewer "
+               "below the self-cleansing velocity in the early years. The 2056 designs have")])
+    es_ref = next(q for q in d.paragraphs if norm(q.text) == "Matters Requiring Attention in Every Scenario")
+    es_bad = next(q for q in d.paragraphs if norm(q.text) == "Treatment Plant, Treated Effluent and Sludge" and q.style.name == "List Paragraph")
+    old_pPr = es_bad._p.find(qn("w:pPr")); new_pPr = copy.deepcopy(es_ref._p.find(qn("w:pPr")))
+    if old_pPr is not None: es_bad._p.remove(old_pPr)
+    es_bad._p.insert(0, new_pPr)                               # the executive summary subheading in the style of its neighbours
+    # the flow the network does not yet carry, said where a reader of the network looks for it (engineer, 2026-11-19); the figures are
+    # read from Section 7.3.1, which the reconciliation of r10_edits writes, so the two cannot differ
+    p731 = next(norm(q.text) for q in d.paragraphs if norm(q.text).startswith("The inflow excludes the plots not yet conveyed by the network"))
+    q31, q56 = re.search(r"([\d,]+) m³/d in 2031 and ([\d,]+) m³/d in 2056", p731).groups()
+    sub_text(lambda t: t.startswith("Each plot carries the flow of its population and use in each year.") and t.endswith("enters the network at its nearest manhole."),
+             [("enters the network at its nearest manhole.",
+               "enters the network at its nearest manhole. Two groups of plots are not yet conveyed: plots in planted areas, where the ground "
+               "levels of the terrain model are unreliable under the trees until the survey, and plots more than 200 m from a sewer. They "
+               f"generate {q31} m³/d in 2031 and {q56} m³/d in 2056 (Section 7.3.1; by settlement in Appendix C.3) and are connected at the "
+               "preliminary design, within the 10 per cent margin of the plant capacity.")])
+    n_dt = 0                                                   # the cover carries the month of this revision
+    for t_ in list(body)[0].iter(qn("w:t")):
+        if "October 2026" in (t_.text or ""): t_.text = t_.text.replace("October 2026", "November 2026"); n_dt += 1
+    assert n_dt in (1, 2), ("cover date", n_dt)                # the text box and its fallback copy for older readers
+    print("R12 review fixes applied: 6 references, 2 statements, 1 subheading, cover date")
     # ---- the team's agreed term is property, never dwelling (engineer, 2026-11-19); the clean gate now rejects it
     n_d = 0
     for q in list(d.paragraphs) + cells:

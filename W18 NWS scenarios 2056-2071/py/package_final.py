@@ -9,7 +9,7 @@ Usage: python package_final.py      Writes deliverables/Ibri_Sewer_Final_Design_
 import os, zipfile, re, glob, datetime, io
 HERE = os.path.dirname(os.path.abspath(__file__)); W18 = os.path.dirname(HERE)
 R = os.path.join(W18, "results", "final_0.75pc_SC1-SC4"); RF = os.path.join(W18, "report_final")
-DATE = datetime.date.today().isoformat(); REV = "R11"
+DATE = datetime.date.today().isoformat(); REV = "R12"
 OUT = os.path.join(W18, "deliverables", f"Ibri_Sewer_Final_Design_SC1-SC4_{REV}_{DATE}.zip"); os.makedirs(os.path.dirname(OUT), exist_ok=True)
 TOP = "Ibri_Sewer_Final_Design_SC1-SC4/"
 QGZ = os.path.join(R, "qgis", "Ibri_sewer_concept_design.qgz")
