@@ -211,6 +211,19 @@ def apply(g):
         ts[0].text = ". " + re.sub(r"\s+", " ", txt.lstrip(" .:-–\t")).strip(); ts[0].set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
         n_k += 1
     print("captions made uniform:", n_k)
+    # ---- typed cross-references that point at the wrong place (checked against the table of contents, 2026-11-19)
+    cells = [q for tb in d.tables for row in tb.rows for c in row.cells for q in c.paragraphs]
+    FIX = [(lambda t: "Merrimack peak of the average flow" in t, "4.2.6", "4.8.4"),               # 4.8.4 Peak Flow
+           (lambda t: "Hydrogen sulphide control: dosing" in t, "6.6.3", "3.5"),                 # 3.5 force main criteria
+           (lambda t: norm(t) == "Section 7.5", "Section 7.5", "Sections 3.5 and 11.1")]         # power supply, App A
+    for test, old, new in FIX:
+        hit = 0
+        for q in list(d.paragraphs) + cells:
+            if not test(q.text): continue
+            for r in q.runs:
+                if old in r.text: r.text = r.text.replace(old, new); hit += 1; break
+        assert hit >= 1, ("reference not found", old)
+    print("cross-references corrected:", len(FIX))
     # ---- no blank pages: an empty paragraph after a full page (a long table, the end of a chapter) is pushed onto a page
     # of its own, before the section break or the heading that starts the next page. Drop those empty paragraphs and
     # make the paragraph that carries a section break 1 pt high so it always fits on the page above it.
