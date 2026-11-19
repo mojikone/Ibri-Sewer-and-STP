@@ -224,6 +224,15 @@ def apply(g):
                 if old in r.text: r.text = r.text.replace(old, new); hit += 1; break
         assert hit >= 1, ("reference not found", old)
     print("cross-references corrected:", len(FIX))
+    # ---- the team's agreed term is property, never dwelling (engineer, 2026-11-19); the clean gate now rejects it
+    n_d = 0
+    for q in list(d.paragraphs) + cells:
+        for r in q.runs:
+            if re.search(r"[Dd]welling", r.text):
+                t0 = r.text.replace("to dwellings, mosques", "to residential properties, mosques")
+                t0 = re.sub(r"([Dd])wellings", lambda m: "Properties" if m.group(1) == "D" else "properties", t0)
+                r.text = re.sub(r"([Dd])welling", lambda m: "Property" if m.group(1) == "D" else "property", t0); n_d += 1
+    print("dwelling -> property:", n_d)
     # ---- no blank pages: an empty paragraph after a full page (a long table, the end of a chapter) is pushed onto a page
     # of its own, before the section break or the heading that starts the next page. Drop those empty paragraphs and
     # make the paragraph that carries a section break 1 pt high so it always fits on the page above it.

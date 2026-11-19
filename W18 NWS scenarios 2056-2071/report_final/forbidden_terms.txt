@@ -43,3 +43,5 @@ O23
 6\.86\.8
 \b06\.7\b
 \[APSR
+# the team says property, never dwelling (engineer, 2026-11-19)
+[Dd]wellings?
