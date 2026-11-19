@@ -1,0 +1,50 @@
+{
+ "SC1-2051": {
+  "pipes_over": 171,
+  "km_over": 13.8,
+  "surcharged": 0,
+  "max_dD": 0.75
+ },
+ "SC1-2061": {
+  "pipes_over": 0,
+  "km_over": 0.0,
+  "surcharged": 0,
+  "max_dD": 0
+ },
+ "SC2-2051": {
+  "pipes_over": 171,
+  "km_over": 13.8,
+  "surcharged": 0,
+  "max_dD": 0.75
+ },
+ "SC2-2061": {
+  "pipes_over": 0,
+  "km_over": 0.0,
+  "surcharged": 0,
+  "max_dD": 0
+ },
+ "SC3-2051": {
+  "pipes_over": 131,
+  "km_over": 10.6,
+  "surcharged": 0,
+  "max_dD": 0.75
+ },
+ "SC3-2061": {
+  "pipes_over": 0,
+  "km_over": 0.0,
+  "surcharged": 0,
+  "max_dD": 0
+ },
+ "SC4-2051": {
+  "pipes_over": 189,
+  "km_over": 16.0,
+  "surcharged": 0,
+  "max_dD": 0.75
+ },
+ "SC4-2061": {
+  "pipes_over": 0,
+  "km_over": 0.0,
+  "surcharged": 0,
+  "max_dD": 0
+ }
+}
