@@ -76,7 +76,7 @@ def draw(d):
             text(n["lines"][0], n["x"] + n["w"] / 2, n["y"] + n["h"] / 2, F["name"], NAVY, bold=True, ha="center", va="center")
     # legend, left to right, wrapping when the row is full
     zc = ZONE.get(plants[0]["zone"], "#555555")
-    items = [("box", "Subnetwork, named after its outfall" + (", coloured by its STP" if len(plants) > 1 else "")),
+    items = d.get("legend") or [("box", "Subnetwork, named after its outfall" + (", coloured by its STP" if len(plants) > 1 else "")),
              ("pumped", "Pumping station at the outfall and its rising main, 2070 peak flow"),
              ("gravity", "Gravity: the STP sits at this subnetwork's own outfall"),
              ("plant", "STP: flows 2030 → 2070 and the depth of the incoming sewer")]
@@ -129,7 +129,7 @@ def draw(d):
             a, b = boxes[i], boxes[j]
             if a[1] < b[3] and b[1] < a[3] and a[2] < b[4] and b[2] < a[4]:
                 issues.append(f"overlap: {a[0].get_text()!r} / {b[0].get_text()!r}")
-    out = os.path.join(IMG, f"W17_{d['option']}_transfer_diagram.png")
+    out = d.get("out") or os.path.join(IMG, f"W17_{d['option']}_transfer_diagram.png")
     fig.savefig(out, dpi=200, facecolor="white"); plt.close(fig)
     print(f"{d['option']}: {out}  {W * 2} x {Hf * 2} px  issues: {issues or 'none'}")
 

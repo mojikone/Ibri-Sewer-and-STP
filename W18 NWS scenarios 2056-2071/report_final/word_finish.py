@@ -20,8 +20,12 @@ try:
     print('cross-references to removed targets kept as text:', len(gone), gone[:30])
     doc.Save()
     keep = app.Options.UpdateFieldsAtPrint; app.Options.UpdateFieldsAtPrint = False
-    try: doc.ExportAsFixedFormat(pdf, 17)                   # wdExportFormatPDF
+    tmp = pdf[:-4] + "_export.pdf"                          # exported under a new name and swapped in: an export over the
+    if os.path.exists(tmp): os.remove(tmp)                  # old file once left the old PDF in place without an error
+    try: doc.ExportAsFixedFormat(OutputFileName=tmp, ExportFormat=17, OpenAfterExport=False, OptimizeFor=0, CreateBookmarks=1)
     finally: app.Options.UpdateFieldsAtPrint = keep
+    if not os.path.exists(tmp): raise SystemExit("PDF export wrote nothing")
+    os.replace(tmp, pdf)
     print("pages", doc.ComputeStatistics(2), "| saved", docx, "| pdf", pdf)
     doc.Close(False)
 finally:
