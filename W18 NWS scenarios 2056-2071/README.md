@@ -215,7 +215,7 @@ New stations in every case: O9 four (O9-M166/M167, O9-M72, O9-M763 13.6 m, O9-M8
     - chapters start on a new page;
     - tables centred, columns sized by content, header rows repeated;
     - all captions in one form; body text flush (the team's chapters had two indents).
-  - Clean gate PASSED, 201 pages.
+  - Clean gate PASSED, 206 pages.
 - **DWG drawings** (`py/final_dwg.py`, ezdxf, then AutoCAD 2026 `accoreconsole` saves DWG 2018; `report_final/deliverables/dwg/`, not in git): one per scenario, 2056 design, UTM 40N.
   - **Layers:** gravity sewers by size band (line weight 0.25-1.00 mm); manholes; deep (>12 m) and drop (>0.5 m) manholes; pump and lift rising mains; stations and plants; separate TXT- layers.
   - **Text heights:** plants 40 m and stations 25 m (read zoomed out), rising mains 6 m, pipes and manholes 1 m.
