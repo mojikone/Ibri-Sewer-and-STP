@@ -216,6 +216,16 @@ New stations in every case: O9 four (O9-M166/M167, O9-M72, O9-M763 13.6 m, O9-M8
     - tables centred, columns sized by content, header rows repeated;
     - all captions in one form; body text flush (the team's chapters had two indents).
   - Clean gate PASSED, 206 pages.
+- **Report R12 (live; R11 superseded)**, 2026-11-19, in the team's Chapter 6 structure (Hadi Zadeh's email "2621- Report Structure"):
+  - **Per scenario:** 6.3 to 6.6, each with 2051 / 2056 / 2061 blocks (network, stations, treatment, TE), then "Scenario n Options Comparison"; 2056 adopted in every scenario.
+  - **Engineer's choices:**
+    - treatment: four modules on each design year's inflow + 10 %;
+    - TE: the team's one network, in full in the 2051 block and referenced in the others;
+    - costs for all twelve designs in Chapters 8 and 14;
+    - maps: network and self-cleansing per design year; schematic and zones once per scenario.
+  - **Sources:** `py/final_financial.py` now writes `financial.json["designs"]`, with the 2056 results unchanged, checked key by key. `gis/final_maps.py --other-years` renders the 2051/2061 maps.
+  - **Not costed:** the 2051 design's relief sewers and extra module; the report says so.
+  - Clean gate PASSED, 236 pages.
 - **DWG drawings** (`py/final_dwg.py`, ezdxf, then AutoCAD 2026 `accoreconsole` saves DWG 2018; `report_final/deliverables/dwg/`, not in git): one per scenario, 2056 design, UTM 40N.
   - **Layers:** gravity sewers by size band (line weight 0.25-1.00 mm); manholes; deep (>12 m) and drop (>0.5 m) manholes; pump and lift rising mains; stations and plants; separate TXT- layers.
   - **Text heights:** plants 40 m and stations 25 m (read zoomed out), rising mains 6 m, pipes and manholes 1 m.
