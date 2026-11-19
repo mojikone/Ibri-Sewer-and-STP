@@ -290,6 +290,15 @@ def apply(g):
         if "October 2026" in (t_.text or ""): t_.text = t_.text.replace("October 2026", "November 2026"); n_dt += 1
     assert n_dt in (1, 2), ("cover date", n_dt)                # the text box and its fallback copy for older readers
     print("R12 review fixes applied: 6 references, 2 statements, 1 subheading, cover date")
+    # the portrait sections that follow a landscape run were copied from the cover's section, with 'different first page' on: their
+    # first page took the cover's blank header and footer (engineer, 2026-11-19). Only the cover keeps it.
+    sps = [e.find(qn("w:pPr") + "/" + qn("w:sectPr")) for e in body.iterchildren() if e.tag == qn("w:p")]
+    sps = [s for s in sps if s is not None] + [body.find(qn("w:sectPr"))]
+    n_tp = 0
+    for s in sps[1:]:
+        tp = s.find(qn("w:titlePg"))
+        if tp is not None: s.remove(tp); n_tp += 1
+    print("sections given the running header and footer on their first page:", n_tp)
     # ---- the team's agreed term is property, never dwelling (engineer, 2026-11-19); the clean gate now rejects it
     n_d = 0
     for q in list(d.paragraphs) + cells:

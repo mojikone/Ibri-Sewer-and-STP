@@ -327,11 +327,10 @@ for sc in F.SCEN:
     o.p(f"Scenario {sc} conveys the wastewater of the Project area to {' and '.join(stps)}. Gravity sewers collect the wastewater within each "
         "pumping system and convey it to its station; pumping stations and force mains transfer the flows between systems, combining "
         f"them for conveyance to the treatment plant{'s' if len(stps) > 1 else ''}. The network is designed for the flows of 2051, 2056 and "
-        f"2061; each design is described below and the three are compared in Section {sec}.4. The station arrangement is the same in the three "
-        "designs: the schematic shows how the pumping systems connect, with the design peaks of the 2056 design, and the map shows the sewers "
-        "by the plant they drain to.")
-    o.maps([(os.path.join(IMG, f"flow_diagram_{sc}.png"), f"Scenario {sc}: wastewater flow schematic"),
-            (os.path.join(IMG, f"map_{sc}_{F.BASE}_zones.png"), f"Scenario {sc}: the sewers by the plant they drain to")])
+        f"2061; each design is described below, with a flow schematic of how its pumping systems connect and its design peaks, and the three "
+        f"are compared in Section {sec}.4. The station arrangement is the same in the three designs; the map shows the sewers by the plant "
+        "they drain to.")
+    o.maps([(os.path.join(IMG, f"map_{sc}_{F.BASE}_zones.png"), f"Scenario {sc}: the sewers by the plant they drain to")])
     for k, y in enumerate(F.YEARS):
         f = F.case(sc, y); st = f["stations"]; plants = f["plants"]; fd = FD[f"{sc}-{y}"]; sub = f"{sec}.{k + 1}"
         o.h(f"{sc} Network Design by Flow of {y}", 3)
@@ -400,7 +399,8 @@ for sc in F.SCEN:
                 f"plant{'s' if len(plants) > 1 else ''} produce{'' if len(plants) > 1 else 's'} the same treated effluent in every design year, "
                 "since the flow reaching a plant does not depend on the year for which the sewers are sized.")
             te_map = []
-        o.maps([(os.path.join(IMG, f"map_{sc}_{y}_network.png"), f"Scenario {sc} designed for {y}: sewers, pumping and lift stations and force mains"),
+        o.maps([(os.path.join(IMG, f"flow_diagram_{sc}_{y}.png"), f"Scenario {sc} designed for {y}: wastewater flow schematic"),
+                (os.path.join(IMG, f"map_{sc}_{y}_network.png"), f"Scenario {sc} designed for {y}: sewers, pumping and lift stations and force mains"),
                 (os.path.join(IMG, f"map_{sc}_{y}_selfcleansing.png"), f"Scenario {sc} designed for {y}: self-cleansing of the sewers at the 2031 peak")]
                + te_map)
     # ---- the scenario's three designs compared
