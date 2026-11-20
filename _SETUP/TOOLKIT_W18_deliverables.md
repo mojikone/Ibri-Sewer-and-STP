@@ -14,7 +14,11 @@ as the raw material for a reusable skill. Paths are relative to `Hydraulic/Claud
 | Report maps (A3, QGIS layouts) and the QGIS project | `gis/final_maps.py`, `gis/team_maps_redraw.py`, `gis/te_map_sc4.py` |
 | Flow schematics, one per scenario and design year (R7 style) | `report_final/flow_diagram.py` driving `py/diagram_png.py` |
 | DWG drawings, one per scenario, annotated for zoom-out and zoom-in | `py/final_dwg.py` |
-| SewerGEMS models of the 12 designs (referee runs) | `py/final_sg_inputs.py`, `sewergems_api/` (VM file-drop bridge) |
+| The 12 designs: design, split, self-cleansing check, naming, products, repeated until the lifts settle | `py/final_run_all.py` (runs `final_design.py`, `split_deep_subnetworks.py`, `final_selfcleansing.py`, `final_naming.py`, `final_products.py`) |
+| Bill of quantities and network capital cost (`network_cost.json`) | `py/final_boq.py` |
+| 2051/2061 designs at the 2056 peak (`design_year_check_2056.json`) | `py/design_year_check.py` (rebuilt 2026-11-20; reproduces the report's figures exactly) |
+| SC4 TE network from the team's SC2 and SC3 models | `py/te_sc4_network.py` (rebuilt 2026-11-20; reproduces the stored network pipe for pipe) |
+| SewerGEMS models of the 12 designs (referee runs) and the comparison | `py/final_sg_inputs.py`, `py/final_sg_compare.py`, `sewergems_api/` (VM file-drop bridge) |
 | Drops-over-2-m study | `studies/drops over 2 m/drops_engine.py` |
 | Package zip, server copy, WhatsApp delivery | `py/package_final.py`, `C:\Users\mojtaba\wa_link\wa.js` |
 
@@ -111,8 +115,9 @@ as the raw material for a reusable skill. Paths are relative to `Hydraulic/Claud
   - every "Table/Figure x-y" cited exists;
   - every "Section n.n" exists and points at the right topic;
   - stale wording regexes: old option names, "Error!", TBD, superseded terms.
+- **All of the above in one tool:** `report_final/qa_report.py <pdf> --docx <docx> [--topics] [--sheets DIR]`. It exits 1 on any failure; `--topics` lists every section reference with its target's title.
 - **Visual pass:**
-  - contact sheets of every page (40 per sheet);
+  - contact sheets of every page (40 per sheet, `qa_report.py --sheets`);
   - close renders of each changed page;
   - every map and chart PNG opened and looked at before it goes in.
 - **Numbers:** check the executive summary and the conclusions against the data; assert the claims in code (for example "SC3 and SC1 are the two lowest in every design year").
@@ -188,8 +193,21 @@ as the raw material for a reusable skill. Paths are relative to `Hydraulic/Claud
 
 ## 11. Inputs and correspondence
 
-- **Outlook `.msg`:** `olefile` streams `__substg1.0_0037001F` (subject), `0C1A001F` (sender), `1000001F` (body), and the attachments' names.
+- **Outlook `.msg`:** `_SETUP/tools/read_msg.py "<file.msg>" [--save-attachments DIR]`. It uses olefile streams `__substg1.0_0037001F` (subject), `0C1A001F` (sender), `1000001F` (body), and the attachment storages.
 - **Team data:** read their server layers where they live (`W:\...\10_TSE\SHP`). Never copy their raw TE data into the public repo.
+- **`te_customers.csv` is data, not a script output.** It consolidates the team's register:
+  - coordinates from their model demand points (`Ibri_TE_Model_Demands.shp`);
+  - 2070 demands and supply hours from `identified customers MH.shp`;
+  - 2030 demands from the model points where they agree with the register (TE-02, TE-05 and TE-06 take the register's values);
+  - flow = demand / (hours × 3.6).
+
+  The one-off code that merged them was not kept, so the file is shipped as data.
+
+## Toolkit zip
+
+- `_SETUP/tools/make_toolkit_zip.py` packs this inventory, every script of the W18 `py`, `gis` and `report_final` folders, the templates, styles, tools, the report-writing skill and the project memory.
+- `MANIFEST.txt` in the zip lists every file: size, purpose (first docstring line) and source.
+- The zip holds team files, so it goes to `deliverables/` (ignored by git) and to the engineer only.
 
 ## 12. Delivery
 
@@ -202,7 +220,31 @@ as the raw material for a reusable skill. Paths are relative to `Hydraulic/Claud
   - wait for it, never kill it; resend anything that went out without an acknowledgement.
 - **Chat:** SendUserFile for the PDF.
 
-## 13. Working method that held
+## 13. Templates, styles and the look
+
+| Item | File | Used by |
+|---|---|---|
+| Firm's report template (styles, cover, headers, captions) | `Data/sample report/Sample.docx` (outside git) | project rule 5; the report-writing skill |
+| The team's report the build edits (styles, cover, chapters) | `Hydraulic/temp/recent updates by the team/Ibri_Concept_Design_Report_R8-MH.docx` (outside git) | `build_report.py` `SRC` |
+| QGIS A3 layout template: title, subtitle, scale bar, north arrow, legend, data-table frame | `gis/template_report_A3.qpt` (extracted from `QGIS 2621 ibri sewer stp2.qgz`) | `make_w17_project.py` → `final_maps.make_map` |
+| Map helpers: layout clone, data box, boundary, settlement, depth, deep-run and label styles, memory legend lines, Google background | `gis/make_w17_project.py` (imported as `M`) | every map script |
+| Manholes by depth (QML) | `qgis/styles/manholes_depth.qml` | `final_maps.py` |
+| Road centreline (QML) | `W17/Options 2026-10/_styles/Road_Centercline.qml` | `make_w17_project.py` |
+| QGIS project of the final design: 156 layers, 33 saved layouts | `results/final_0.75pc_SC1-SC4/qgis/Ibri_sewer_concept_design.qgz` | written by `final_maps.py`; shipped in the package |
+| Clean-gate term lists (regex) | `report_final/forbidden_terms.txt`, `allowed_terms.txt` | `check_clean.py` |
+
+- **Background:** Google satellite XYZ (`M.GOOGLE`) at 30 % opacity, credit "Satellite image: Google" on the map.
+- **Map export:** 200 dpi (`M.DPI`); the legend background is white at 200/255 (`M.LEGEND_ALPHA`), so the map shows through.
+- **Map labels:** `clamp(7, 8*25000/@map_scale, 36)` pt with a 0.8 mm buffer; flow arrows at pipe centres from 1:15,000 in.
+- **Colours:**
+  - plants: STP-1 #1F6FB2, STP-2 #D9730D, STP-5 #2E8B57; shades per catchment by HLS lightness;
+  - Excel charts: navy #1B2A4A, blue #1F6FB2, orange #D9730D, green #2E8B57, red #D7301F, purple #7B4FB0, light #9DC3E6;
+  - schematics: R7 red #A61B1B pumped, navy #1F3B63 gravity, box fill = plant colour at 14 %.
+- **Fonts:** Calibri in the report, schematics and Excel; Arial in the DWG (`arial.ttf` text style).
+- **Excel table style:** navy header fill with white bold text, banded rows, thin box borders, frozen header, a Contents sheet with hyperlinks, a note line under each title.
+- **DWG layers:** listed in section 9; colour and line weight are set by layer.
+
+## 14. Working method that held
 
 - **Before editing:**
   - a [PRESERVE-CHECK] before editing code;
