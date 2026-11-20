@@ -191,7 +191,75 @@ as the raw material for a reusable skill. Paths are relative to `Hydraulic/Claud
 - **Costs:** the team's method, per design year (`financial.json["designs"]`). The 2056 results are kept key for key and checked when the model changes.
 - **SewerGEMS referee:** every design rebuilt in the VM; flows within 0.1 %, no pipe over its depth-of-flow limit.
 
-## 10a. How the network, the depth, the lifts and the pumps were set (the design chain)
+## 10a. How the loads were put on the plots (`py/nws_loads.py`, the NWS basis of November 2026)
+
+- **Volume per settlement:** the team's population (the mean of the NCSI, meters × 4.8 and APSR series, sheet "Average" of their *New Calculation MH.xlsx*) × 171.03 L/person/day (their sheet "Base Demand" H4).
+- **Each settlement stops growing at its capacity.** Capacity = 2026 population + growth plots × the team's properties per plot (sheet "MOHUP DATA - NA", column D) × 4.8. There is no overflow to other settlements; Ibri is full in 2063 (engineer, 2026-11-16/17).
+- **Existing plots** keep the settlement's 2026 flow in the pattern of their 2024 metered flow: homes, commercial and government plots on their own plots. They are fixed from 2026.
+- **Growth** (everything above 2026) is shared **equally** among the settlement's growth plots. A growth plot is (engineer, 2026-11-17):
+  - a future plot inside the boundaries, of 200–3,000 m²;
+  - home-shaped: compact ≥ 0.6 and aspect ≤ 3 (W14's test), so no strips or slivers;
+  - of any zoning except agricultural, heritage (MoHUP "Tourism") and industrial;
+  - not a grove on the satellite test, and not an estate.
+- **The industrial estates are additive:** 6,300 workers × 93 L/d × 0.54 = 316.4 m³/d, on their own plots, outside the per-capita volume (W14 rule 4).
+- **No infiltration in the plot loads:** the model adds 720 L/km/day on the conduits.
+- **Plot to manhole:** each plot loads the manhole of the model's plot layer (`HMINNODE`). The 6,499 plots without one go to the nearest manhole that has a load row.
+- **Outputs (`results/loads/`):**
+  - `plot_loads.csv`, every plot every five years 2026–2091;
+  - `manhole_loads.csv`, the model's input;
+  - `settlement_flows.csv` and `check.md`.
+- **Plot layer and audit:**
+  - The plot layer 2026–2100 (`py/plot_layer_2100.py`, `gis/W18_plots_2026_2100.shp`) holds meters, land use, status, properties, residents and flow for every year.
+  - `py/audit_w18.py` recomputes everything from the raw sources without importing the scripts under test (`results/loads/audit.md`, 44 checks). Run it after any change to the loads.
+- **Check maps for the engineer:** `map_plot_flows.py` (A3 sheets per settlement) and `map_odd_plots.py` (which plots take growth and why the others do not).
+
+## 10b. The plots whose flow the network does not carry
+
+- **Two categories** (engineer, 2026-11-16):
+  - **inactive manhole**: the plot's manhole lies in the deactivated network. That means branches in planted areas, where ground levels are unreliable until the survey, and three small outlying catchments proposed for on-site treatment.
+  - **over 200 m from a sewer**: the plot's edge is more than 200 m from the nearest active sewer (land left without a network: steep ground, vegetation).
+- Their flow stays in the settlement totals and is reported as not carried: 520 + 172 = **693 m³/d in 2031**, 658 + 470 = **1,128 m³/d in 2056** (`results/loads/not_carried.csv`).
+- The plant inflow excludes it. It is connected at the preliminary design, within the plant's 10 % margin. It is stated in the report: executive summary, 6.2.2, 7.3.1, R14 and Appendix C.3.
+- **Map:** `py/map_not_carried.py` → `gis/not_carried_plots.gpkg`.
+
+## 10c. How the loads were applied in SewerGEMS
+
+- **Unit loads, not pattern loads.** The team's plot loads were pattern loads, which the Extreme Flow Setup never peaks (W17 R2 finding). They were converted to unit sanitary loads (load definition 1, one unit load per unit, units = the flow), so the model peaks them.
+- **One sanitary load per manhole.** LoadBuilder writes 2–4 rows on about 2,000 manholes even with Override, so the rows are merged into one after every reload, with totals unchanged (W17 R3). The only second load is a transfer from an upstream outfall.
+- **Peaking:** the Extreme Flow Setup's table "Peltier100-Merriamck":
+  - Peltier up to 1 L/s and Merrimack above, linear between rows, on the pipe's cumulative upstream unit load;
+  - a row 1.001 L/s → 3.56 was added so the switch is a step at 1 L/s (W17 R3).
+- **Infiltration:** 720 L/km/day on the conduits, the model's own.
+- **Years:**
+  - R3 (job 071) holds six year alternatives, 2031/2051/2056/2061/2066/2071.
+  - R4 (job 072) holds 13 years, 2031–2091 every five years. The new years were made with `Copy(loaded 2070 alternative id)`; `Add(parent)` broke the second year in jobs 060–065.
+  - Every year is set from `manhole_loads.csv` and checked that stored = file (2031: 22,391 m³/d carried; 2056: 37,892; 14,989 manholes loaded).
+  - Jobs 060–066 failed on a load at a manhole without a load row; job 067 proved the loading. Job 069 held the loads of the 1,000 m² growth limit; the final loads are R3 (job 071) and R4 (job 072).
+- **Transfers between systems:** the outfall flow of a pumped system is entered as an *additional* load at the receiving manhole. It adds to the loads there and is not peaked again. The outfall flows of every year are exported (`bridge\out\w18\f0`) and turned into transfer rows (`make_transfers.py`, then `final_sg_inputs.py` for the final cases).
+
+## 10d. How the own model was set up to give SewerGEMS's answer (`py/own_design.py`, then `final_design.py`)
+
+- **The rules were read off SewerGEMS's own SC1-2056 design (job 074) and checked on it before use:**
+  - **Flow** = PF × unit loads upstream (the pipe's upstream manhole included) + 720 L/km/day on the conduits upstream + the transfers from upstream outfalls, not peaked again. PF is the same "Peltier100-Merriamck" table with the R3 step, linear, on the cumulative base in L/s.
+  - **Gradient:** the Table 11 minimum of the pipe's size. All 19,083 pipes of SC1-2056 sit on it.
+  - **Size:** the smallest catalogue size whose Colebrook-White capacity (ks 1.5 mm, ν 1.141e-6) at the d/D limit (0.65 to DN355, 0.50 above) carries the flow at the gradient of the pipe's **current** size. This is repeated pass after pass from the modeller's sizes until nothing changes, which is SewerGEMS's own way. Sizing each candidate at its own gradient instead gives 63 pipes one size smaller.
+  - **Catalogue:** every size SewerGEMS offers, DN1200 included. Missing it was the one difference in the blind test.
+  - **Inverts:** re-laid by `split_deep_subnetworks.py`: crowns matched, 1.3 m cover over the soffit. Every one of the 3,612 head pipes of SC1-2056 sits exactly at that cover.
+  - **Velocity:** Colebrook-White at normal depth on the laid gradient.
+- **Proof** (`py/compare_own_sewergems.py`, `results/sc1_2051/COMPARISON.md`):
+  - SC1-2051 designed blind, before SewerGEMS finished, gave the same size on 19,056 of 19,083 pipes. The 27 others were DN1200, missing from the catalogue. With DN1200 added, the sizes were identical on all 19,083 pipes in 2051 and in 2056.
+  - Design flows were within 0.1 % on every pipe (largest difference 0.004 %).
+  - 2031 velocities differed by a median of 0.000 m/s (5–95 %: ±0.001).
+- **Final designs:** every one of the 12 was rebuilt in SewerGEMS (10g) and compared pipe by pipe (`final_sg_compare.py`):
+  - flows within 0.1 %, no pipe over its depth-of-flow limit;
+  - the same length above DN200 under 0.75 m/s at 2031 in the model and the own design: 4.2 km for the 2051 designs, 9.0 km for 2056, 14.1 km for 2061;
+  - the steepened pipes, laid to 0.75 m/s exactly, read 0.749–0.750 m/s in the model (249–278 per design);
+  - the records are `results/final_0.75pc_SC1-SC4/<case>/sewergems/COMPARE.md`, in the zip under `records/sewergems_compare/`.
+- **Earlier checks of the model itself:**
+  - `peak_check_r2.py`: outfall flow = PF × base + 720 L/km/day;
+  - `peaking_check.py`, `year_gap_check.py`, `loads_vs_plots.py`: loads against plots, by year.
+
+## 10e. How the network, the depth, the lifts and the pumps were set (the design chain)
 
 `py/final_run_all.py` runs it for the 12 cases (SC1-SC4 × 2051/2056/2061), in parallel. It repeats until the lift stations no longer change.
 
@@ -228,7 +296,7 @@ as the raw material for a reusable skill. Paths are relative to `Hydraulic/Claud
    - Energy: power × the hours the duty takes to pass the year's average flow.
 7. **Quantities and cost:** `final_boq.py` (BOQ and network cost at the team's rates), `final_financial.py` (plants, TE, CAPEX/OPEX).
 
-## 10b. Design constraints and standard values used (source of each)
+## 10f. Design constraints and standard values used (source of each)
 
 The register of every value, with its guideline page, is `_BRAIN/02_DESIGN_CRITERIA.md` (in the zip under `reference/`). It is the only permitted source of numeric design values in this project. The values the W18 chain uses:
 
@@ -252,7 +320,7 @@ The register of every value, with its guideline page, is `_BRAIN/02_DESIGN_CRITE
 | Treatment: four modules on design-year inflow + 10 % | plant capacity | G203 p65 Table 29 (+10 % allowance) + the team's cost method |
 | Design years 2051 / 2056 / 2061, 2056 adopted | the three designs | engineer + the design-year test (6.2.4) |
 
-## 10c. SewerGEMS through the API (how it was used)
+## 10g. SewerGEMS through the API (how it was used)
 
 - **Where it runs:**
   - SewerGEMS CONNECT 10.4 in a VirtualBox Windows 10 guest with **no internet**: never add an adapter, NAT or download.
@@ -307,6 +375,7 @@ The register of every value, with its guideline page, is `_BRAIN/02_DESIGN_CRITE
 ## Toolkit zip
 
 - `_SETUP/tools/make_toolkit_zip.py` packs this inventory, every script of the W18 `py`, `gis` and `report_final` folders, the templates, styles, tools, the report-writing skill and the project memory.
+- `records/` holds the results that prove the method: the loads audit and check, the flow not carried, the blind own-against-SewerGEMS test, and the SewerGEMS comparison of all 12 final designs.
 - `MANIFEST.txt` in the zip lists every file: size, purpose (first docstring line) and source.
 - The zip holds team files, so it goes to `deliverables/` (ignored by git) and to the engineer only.
 

@@ -78,6 +78,15 @@ for arc, src, what in (("w17_report/facts_w17.py", os.path.join(C, "W17", "repor
                        ("data/te_customers.csv", os.path.join(W, "results", "final_0.75pc_SC1-SC4", "te", "te_customers.csv"),
                         "TE customers consolidated from the team's register (team data: not for the public repo)")):
     FILES.append((arc, src, what))
+for arc, src, what in (("records/loads_audit.md", os.path.join(W, "results", "loads", "audit.md"), "loads audit: 44 checks recomputed from the raw sources (py/audit_w18.py)"),
+                       ("records/loads_check.md", os.path.join(W, "results", "loads", "check.md"), "loads check: settlement volumes, capacity years, estates (py/nws_loads.py)"),
+                       ("records/not_carried.csv", os.path.join(W, "results", "loads", "not_carried.csv"), "flow the network does not carry, by category and year"),
+                       ("records/own_vs_sewergems_SC1-2051.md", os.path.join(W, "results", "sc1_2051", "COMPARISON.md"), "blind own design against SewerGEMS: sizes, flows, velocities"),
+                       ("reference/W14_LOAD_AND_GROWTH.md", os.path.join(C, "W14", "docs", "W14_LOAD_AND_GROWTH.md"), "the W14 load rules W18 keeps (estates, home-shaped plots, heritage)")):
+    FILES.append((arc, src, what))
+for f in sorted(glob.glob(os.path.join(W, "results", "final_0.75pc_SC1-SC4", "SC*-20*", "sewergems", "COMPARE.md"))):
+    case = os.path.basename(os.path.dirname(os.path.dirname(f)))
+    FILES.append((f"records/sewergems_compare/{case}.md", f, f"{case}: SewerGEMS model against the own design, pipe by pipe (py/final_sg_compare.py)"))
 for f in sorted(glob.glob(os.path.join(W, "sewergems_api", "**", "*"), recursive=True)):
     if os.path.isfile(f): FILES.append(("sewergems_api/" + os.path.relpath(f, os.path.join(W, "sewergems_api")).replace("\\", "/"), f, "SewerGEMS API bridge: C# helpers, jobs, watcher"))
 for f in sorted(glob.glob(os.path.join(HOME, ".claude", "skills", "report-writing", "**", "*"), recursive=True)):
