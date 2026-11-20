@@ -191,6 +191,107 @@ as the raw material for a reusable skill. Paths are relative to `Hydraulic/Claud
 - **Costs:** the team's method, per design year (`financial.json["designs"]`). The 2056 results are kept key for key and checked when the model changes.
 - **SewerGEMS referee:** every design rebuilt in the VM; flows within 0.1 %, no pipe over its depth-of-flow limit.
 
+## 10a. How the network, the depth, the lifts and the pumps were set (the design chain)
+
+`py/final_run_all.py` runs it for the 12 cases (SC1-SC4 × 2051/2056/2061), in parallel. It repeats until the lift stations no longer change.
+
+1. **Design (`final_design.py SC1 2056 --lifts`).**
+   - Flow at every pipe: the plot loads at its upstream manholes, peaked by the Peltier/Merrimack table that SewerGEMS's Extreme Flow Setup uses ("Peltier100-Merrimack", on the average flow in L/s).
+   - Plus infiltration of 0.72 m³/d per km of sewer upstream.
+   - Plus the pumped transfers of other systems. A pumped flow or a lift's flow is added as a transfer of its peak, never peaked again.
+   - Size: the smallest catalogue size whose Colebrook-White capacity (ks 1.5 mm) at the d/D limit (0.65 to DN355, 0.50 above) carries the design-year peak at the Table 11 minimum gradient. Passes are repeated until no size changes.
+   - Exports: conduits at the design year and at the 2031 and 2036 check peaks.
+2. **Split (`split_deep_subnetworks.py <case> <exports> <split> 0.0075 --fixed=fixed_stations.json`).**
+   - **Steepen** pipes above DN200 to reach 0.75 m/s at their 2031 peak, up to the gradient limit (0.75 %), with one gradient per street run.
+   - **Re-lay:**
+     - a pipe's upstream invert is the lower of the lowest arriving invert and the shallowest invert its cover allows (1.3 m over the soffit at both ends);
+     - its downstream invert is the upstream invert minus gradient × length;
+     - depth is ground minus invert.
+   - **Cut:** where a subnetwork stays more than 12 m deep for good, the last manhole at 12 m or less becomes a pumping station. Its flow is lifted to the next manhole, which restarts at minimum cover. Dips that come back to 12 m are left alone. An outfall is never moved.
+   - **Join by gravity:** an outfall at 12 m or less within one standard manhole spacing (G203 Table 12, p30: 100 / 120 / 150 / 200 m by size) of the manhole it pumps to. A join is kept only if the station count goes down.
+   - Repeat until nothing changes; fewest stations wins.
+3. **Fewer stations (`reduce_stations.py`, the engineer's logic, settled in `fixed_stations.json`).**
+   - Drop a station, or merge two into one where both flows pass. A change is allowed while every added station is at most 14.65 m deep and the outfall at most 14.65 m; no manhole goes past 16.5 m.
+   - Among the allowed changes: the shallowest outfall, then the shallowest deepest station.
+   - Engineer, 2026-11-18: "we are trying to stick to 12 m depth, but at times a bit deeper can help reducing a pump or lift... I accepted up to 14.65 (~15 m)... some manholes go as deep as 16.5 m".
+4. **Self-cleansing check (`final_selfcleansing.py`).** Pipes above DN200 at 0.75 m/s at the 2031 peak (the rule). Those that miss it are checked at the 2036 peak, and the rest go on the flushing list.
+5. **Names (`final_naming.py`).**
+   - A station is a lift when its force main reaches a manhole within one standard manhole spacing; otherwise it is a pump.
+   - Pumps are P1, P2...; a lift is P<n>L<k>.
+   - Manholes and pipes are <section>-M<k> / -P<k>; a force main is <station>-RM.
+6. **Stations sized (`final_products.py`).**
+   - Duty: the design-year peak, raised so the force main keeps 1.0 m/s (G203 p50).
+   - Force main: the size from 75 mm with the least power at v ≤ 2.5 m/s.
+   - Head: static + Hazen-Williams friction (C 120) + 10 % minor losses.
+   - Wet well: 1.5 m below the incoming invert. Discharge: 0.3 m above the receiving invert, or 3.0 m above the ground at a plant.
+   - Efficiency (wire to water): 0.65. Type 1/2/3 by duty (G203 p40).
+   - Energy: power × the hours the duty takes to pass the year's average flow.
+7. **Quantities and cost:** `final_boq.py` (BOQ and network cost at the team's rates), `final_financial.py` (plants, TE, CAPEX/OPEX).
+
+## 10b. Design constraints and standard values used (source of each)
+
+The register of every value, with its guideline page, is `_BRAIN/02_DESIGN_CRITERIA.md` (in the zip under `reference/`). It is the only permitted source of numeric design values in this project. The values the W18 chain uses:
+
+| Value | Used as | Source |
+|---|---|---|
+| Colebrook-White, ks 1.5 mm, ν 1.141e-6 | sizing, velocity, depth of flow | G203 p24, p28 |
+| d/D ≤ 0.65 (D ≤ 355 mm), ≤ 0.50 above | sizing limit; the design-year check, judged at two decimals | G203 p27 Table 10 |
+| Minimum gradient by size | laid gradient before steepening | G203 p29 Table 11 |
+| Self-cleansing 0.75 m/s at the 2031 peak, pipes above DN200 | steepening target; audit; 2036 recheck | G203 p26 + engineer (W18 brief) |
+| Gradient limit 0.75 % | the most a pipe is steepened | engineer's decision after the 0.50 / 0.75 / 1.00 % study |
+| Maximum velocity 3.0 m/s | checked; none over | G203 p27 |
+| Minimum cover 1.3 m to the crown | head pipes and re-lay | G203 p33 §4.6.3 |
+| Depth 12 m to the outfall | cut into a station | G203 p33 ("approximately 10-12 m") + engineer |
+| 14.65 m for an added station or outfall; 16.5 m any manhole | caps when removing stations | engineer, 2026-11-18 |
+| Manhole spacing 100 / 120 / 150 / 200 m by size | gravity joins; lift vs pump | G203 p30 Table 12 |
+| Station types by flow (≤100, 100-300, >300 l/s) | station type | G203 p40-41 Table 17 |
+| Force main 1.0 to 2.5 m/s | force main size and duty | G203 p50 |
+| Hazen-Williams C 120, +10 % minor losses, efficiency 0.65 | head and power | the W17 R7 method (`scenario_results.py`), kept |
+| Peaking: Peltier / Merrimack table | design peaks | the SewerGEMS model's Extreme Flow Setup |
+| Infiltration 0.72 m³/d per km | added to every pipe and plant | the SewerGEMS model (720 L/km/day on the conduits) |
+| Treatment: four modules on design-year inflow + 10 % | plant capacity | G203 p65 Table 29 (+10 % allowance) + the team's cost method |
+| Design years 2051 / 2056 / 2061, 2056 adopted | the three designs | engineer + the design-year test (6.2.4) |
+
+## 10c. SewerGEMS through the API (how it was used)
+
+- **Where it runs:**
+  - SewerGEMS CONNECT 10.4 in a VirtualBox Windows 10 guest with **no internet**: never add an adapter, NAT or download.
+  - Host `D:\VBOX` is the guest's `\\VBOXSVR\VBOX`.
+  - Drive the VM headless (`VBoxManage guestcontrol`); never click in its window. Logging on needs the engineer's password, so give him the command.
+- **The bridge:**
+  - The engineer starts `bridge\watcher.ps1` in the guest. It runs every `bridge\jobs\*.ps1` in name order and writes `bridge\out\<job>.txt`, which ends `__EXIT__ <code>`. It moves the job to `done\` and rewrites `out\_alive.txt` every 2 s.
+  - Check that heartbeat before dropping a job. It stops while a job runs, so treat a job as hung only after about 35 min with no output.
+- **Before a job:**
+  - Run `bridge\compile_check.ps1` on the host. It compiles `lib\*.cs` against copies of the DLLs in `refs\` and executes nothing.
+  - The source of record is the repo's `sewergems_api\`, copied into the bridge.
+- **A job:**
+  1. Check free space on C: (stop under 2 GB).
+  2. Set the case variables and dot-source `\\VBOXSVR\VBOX\bridge\lib\load.ps1`. It resolves the OpenFlows/Haestad assemblies in the SewerGEMS folder and compiles the C# helpers with `Add-Type`.
+  3. `StartSession`, then `Open` a **copy** under `C:\IbriWork\...`.
+  4. Do the work and `SaveAs` a **new** file (R0, R1...). Never overwrite the modeller's file; only ADD files to the model share.
+  5. Export CSVs to `\\VBOXSVR\VBOX\bridge\out\...`.
+- **The final build (`lib\build_final.ps1` + `FinalBuild.cs`, jobs 080-094):**
+  - inputs from `py/final_sg_inputs.py` in the model's own element ids;
+  - every conduit's size and inverts set;
+  - each lift built as station manhole → 1 m stub → outfall, with its pipe switched off and its flow pumped to the next manhole as a transfer;
+  - gravity joins carried as transfers;
+  - every element renamed;
+  - transfers of the design year and the check years (2031, 2036);
+  - then analysis only (no design run: the sizes are the design), exports and a read-back.
+- **The check:** `py/final_sg_compare.py`, pipe by pipe. Flows at the design year agreed within 0.1 %, no pipe went over its depth-of-flow limit, and the 2031 velocities matched.
+- **Traps already paid for:**
+  - Set every scenario's alternatives and calculation options to LOCAL explicitly: an inherited DESIGN option re-sized the pipes in every analysis year.
+  - Repeat a design until no pipe size changes, and fail the job if an analysis changes a size.
+  - A new year's alternative must be created with `Copy(loaded alternative id)`; `Add(parent)` breaks the second year.
+  - The typed API's diameter is stale for catalogue pipes: read the size reference.
+  - The 10.4 API refuses text user fields: use the element Notes.
+  - Stored flows are cfs while the typed API returns display units.
+  - Colebrook-White runs about 8 times slower than Manning (about 44 min per option): drop long jobs and watch `out\` rather than waiting inside one command.
+- **Records:**
+  - the model history and every decision in `W17/README.md` (zip: `reference/W17_README_SewerGEMS.md`);
+  - the bridge rules in the global CLAUDE.md (zip: `reference/global-CLAUDE.md`);
+  - the memory notes `sewergems-new-year-alternative-copy`, `vm-headless-not-gui`.
+
 ## 11. Inputs and correspondence
 
 - **Outlook `.msg`:** `_SETUP/tools/read_msg.py "<file.msg>" [--save-attachments DIR]`. It uses olefile streams `__substg1.0_0037001F` (subject), `0C1A001F` (sender), `1000001F` (body), and the attachment storages.

@@ -53,6 +53,10 @@ FILES = [  # (path in the zip, source, what it is)
     ("tools/wa_link/package.json", os.path.join(HOME, "wa_link", "package.json"), "its dependencies"),
     ("reference/global-CLAUDE.md", os.path.join(C, "_SETUP", "global-CLAUDE.md"), "the engineer's global instructions (SewerGEMS bridge, WhatsApp, report rules)"),
     ("reference/project-CLAUDE.md", os.path.join(C, "CLAUDE.md"), "the project's rules"),
+    ("reference/02_DESIGN_CRITERIA.md", os.path.join(C, "_BRAIN", "02_DESIGN_CRITERIA.md"), "the design-criteria register: every value with its guideline page"),
+    ("reference/W17_README_SewerGEMS.md", os.path.join(C, "W17", "README.md"), "SewerGEMS through the API: the model's history, decisions and traps (W17)"),
+    ("reference/W18_README.md", os.path.join(W, "README.md"), "the W18 record: loads, splitting, stations, final design, reports"),
+    ("reference/T04_From_Meter_to_Pipe.pdf", os.path.join(C, "TUTORIALS", "T04", "T04_From_Meter_to_Pipe.pdf"), "the method tutorial: meter to plot to flow to sewer to plant"),
 ]
 import ast
 
