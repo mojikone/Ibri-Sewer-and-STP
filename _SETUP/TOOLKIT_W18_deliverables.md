@@ -1,7 +1,7 @@
-# Toolkit: how the W18 final design deliverables were produced (R10 to R12, 2026-11-18/20)
+# Toolkit: how the W18 final design and its deliverables were produced (loads to issued report R12, 2026-11-16/20)
 
-An inventory of every technique, tool and script used to take the final design from model results to an issued package, written
-as the raw material for a reusable skill. Paths are relative to `Hydraulic/Claude/W18 NWS scenarios 2056-2071/` unless stated.
+An inventory of every technique, tool and script used to take the final design from the plot loads to an issued package, written
+as the raw material for a reusable skill. It is not a skill yet: section 15 says what a skill built from it still needs. Paths are relative to `Hydraulic/Claude/W18 NWS scenarios 2056-2071/` unless stated.
 
 ## 1. What came out
 
@@ -10,6 +10,7 @@ as the raw material for a reusable skill. Paths are relative to `Hydraulic/Claud
 | Concept design report, Word and PDF, 240 pages, on the team's own Word file (R8-MH) | `report_final/build_report.py` + `r10_edits.py` + `r11_edits.py`, finished by `word_finish.py` |
 | Excel workbook of the report's tables and charts, live formulas, charts built in Excel | `report_final/report_workbook.py` |
 | Treatment, TE and financial workbook (team's cost method), all 12 designs | `py/final_financial.py` |
+| Loads per plot and per manhole 2026-2091, the plot layer 2026-2100, the loads audit, the not-carried map | `py/nws_loads.py`, `py/plot_layer_2100.py`, `py/audit_w18.py`, `py/map_not_carried.py` |
 | People and flow at every pumping and lift station, 2026-2061 | `py/final_station_flows.py` |
 | Report maps (A3, QGIS layouts) and the QGIS project | `gis/final_maps.py`, `gis/team_maps_redraw.py`, `gis/te_map_sc4.py` |
 | Flow schematics, one per scenario and design year (R7 style) | `report_final/flow_diagram.py` driving `py/diagram_png.py` |
@@ -264,15 +265,16 @@ as the raw material for a reusable skill. Paths are relative to `Hydraulic/Claud
 `py/final_run_all.py` runs it for the 12 cases (SC1-SC4 × 2051/2056/2061), in parallel. It repeats until the lift stations no longer change.
 
 1. **Design (`final_design.py SC1 2056 --lifts`).**
-   - Flow at every pipe: the plot loads at its upstream manholes, peaked by the Peltier/Merrimack table that SewerGEMS's Extreme Flow Setup uses ("Peltier100-Merrimack", on the average flow in L/s).
+   - Flow at every pipe: the plot loads at its upstream manholes, peaked by the Peltier/Merrimack table that SewerGEMS's Extreme Flow Setup uses ("Peltier100-Merriamck", the model's own spelling, on the average flow in L/s).
    - Plus infiltration of 0.72 m³/d per km of sewer upstream.
    - Plus the pumped transfers of other systems. A pumped flow or a lift's flow is added as a transfer of its peak, never peaked again.
-   - Size: the smallest catalogue size whose Colebrook-White capacity (ks 1.5 mm) at the d/D limit (0.65 to DN355, 0.50 above) carries the design-year peak at the Table 11 minimum gradient. Passes are repeated until no size changes.
+   - Size: the smallest catalogue size whose Colebrook-White capacity (ks 1.5 mm) at the d/D limit (0.65 to DN355, 0.50 above) carries the design-year peak at the Table 11 gradient of the pipe's **current** size (10d). Passes are repeated until no size changes.
+   - The gradient per size is read off SewerGEMS's own design (the most common gradient of each size in use), with the Table 11 value (p29) for a size it does not use.
    - Exports: conduits at the design year and at the 2031 and 2036 check peaks.
 2. **Split (`split_deep_subnetworks.py <case> <exports> <split> 0.0075 --fixed=fixed_stations.json`).**
    - **Steepen** pipes above DN200 to reach 0.75 m/s at their 2031 peak, up to the gradient limit (0.75 %), with one gradient per street run.
    - **Re-lay:**
-     - a pipe's upstream invert is the lower of the lowest arriving invert and the shallowest invert its cover allows (1.3 m over the soffit at both ends);
+     - a pipe's upstream invert is the lowest of: the lowest invert arriving at its upstream manhole, the lowest arriving soffit minus its own diameter (crowns matched), and the shallowest invert its cover allows (1.3 m over the soffit at both ends);
      - its downstream invert is the upstream invert minus gradient × length;
      - depth is ground minus invert.
    - **Cut:** where a subnetwork stays more than 12 m deep for good, the last manhole at 12 m or less becomes a pumping station. Its flow is lifted to the next manhole, which restarts at minimum cover. Dips that come back to 12 m are left alone. An outfall is never moved.
@@ -303,21 +305,24 @@ The register of every value, with its guideline page, is `_BRAIN/02_DESIGN_CRITE
 | Value | Used as | Source |
 |---|---|---|
 | Colebrook-White, ks 1.5 mm, ν 1.141e-6 | sizing, velocity, depth of flow | G203 p24, p28 |
-| d/D ≤ 0.65 (D ≤ 355 mm), ≤ 0.50 above | sizing limit; the design-year check, judged at two decimals | G203 p27 Table 10 |
+| d/D ≤ 0.65 to 350 mm inside diameter (to DN355, inside 313 mm), ≤ 0.50 above | sizing limit; the design-year check, judged at two decimals | G203 p27 Table 10 |
 | Minimum gradient by size | laid gradient before steepening | G203 p29 Table 11 |
 | Self-cleansing 0.75 m/s at the 2031 peak, pipes above DN200 | steepening target; audit; 2036 recheck | G203 p26 + engineer (W18 brief) |
 | Gradient limit 0.75 % | the most a pipe is steepened | engineer's decision after the 0.50 / 0.75 / 1.00 % study |
 | Maximum velocity 3.0 m/s | checked; none over | G203 p27 |
-| Minimum cover 1.3 m to the crown | head pipes and re-lay | G203 p33 §4.6.3 |
+| Minimum cover 1.3 m to the crown | head pipes and re-lay | G203 p33 |
 | Depth 12 m to the outfall | cut into a station | G203 p33 ("approximately 10-12 m") + engineer |
 | 14.65 m for an added station or outfall; 16.5 m any manhole | caps when removing stations | engineer, 2026-11-18 |
 | Manhole spacing 100 / 120 / 150 / 200 m by size | gravity joins; lift vs pump | G203 p30 Table 12 |
 | Station types by flow (≤100, 100-300, >300 l/s) | station type | G203 p40-41 Table 17 |
-| Force main 1.0 to 2.5 m/s | force main size and duty | G203 p50 |
-| Hazen-Williams C 120, +10 % minor losses, efficiency 0.65 | head and power | the W17 R7 method (`scenario_results.py`), kept |
-| Peaking: Peltier / Merrimack table | design peaks | the SewerGEMS model's Extreme Flow Setup |
-| Infiltration 0.72 m³/d per km | added to every pipe and plant | the SewerGEMS model (720 L/km/day on the conduits) |
-| Treatment: four modules on design-year inflow + 10 % | plant capacity | G203 p65 Table 29 (+10 % allowance) + the team's cost method |
+| Force main 1.0 m/s minimum (intermittent), 2.5 m/s maximum | force main size and duty | G203 p50 |
+| Wet-well live volume V = 0.25 Q T at 10 starts an hour (90 × Q per duty pump) | station size | G203 p48 |
+| Hazen-Williams, C 120, +10 % minor losses | head | the equation: G202 p104 (small diameters); C and the losses: the W17 R7 method (`scenario_results.py`), not guideline values |
+| Wet well 1.5 m below the incoming invert; discharge 0.3 m above the receiving invert, or 3.0 m above the ground at a plant; wire-to-water efficiency 0.65 | head and power | the W17 R7 method; assumptions, to confirm at preliminary design |
+| Peaking: Peltier to 1 L/s, Merrimack above (the model's table, with a step at 1 L/s) | design peaks | G201 p71 §7.4.2 (Merrimack, for over 100 properties) and p72 (Peltier, average flow in L/s); the switch at 1 L/s is the model's |
+| Infiltration 0.72 m³/d per km | added to every pipe and plant | G201 p72 §7.4.3 (new networks 720 L/d per km); the model applies it on the conduits |
+| Treatment: four modules on design-year inflow + 10 % | plant capacity | G201 p73 §7.4.5 and G203 p65 Table 29 (+10 %); the modules: the team's cost method |
+| Treated effluent: production 95 % of the plant inflow, 10 % network loss | TE supply | G201 p73 §7.4.6 |
 | Design years 2051 / 2056 / 2061, 2056 adopted | the three designs | engineer + the design-year test (6.2.4) |
 
 ## 10g. SewerGEMS through the API (how it was used)
@@ -333,7 +338,7 @@ The register of every value, with its guideline page, is `_BRAIN/02_DESIGN_CRITE
   - Run `bridge\compile_check.ps1` on the host. It compiles `lib\*.cs` against copies of the DLLs in `refs\` and executes nothing.
   - The source of record is the repo's `sewergems_api\`, copied into the bridge.
 - **A job:**
-  1. Check free space on C: (stop under 2 GB).
+  1. Check free space on C: (the final jobs from 086 stop under 2 GB).
   2. Set the case variables and dot-source `\\VBOXSVR\VBOX\bridge\lib\load.ps1`. It resolves the OpenFlows/Haestad assemblies in the SewerGEMS folder and compiles the C# helpers with `Add-Type`.
   3. `StartSession`, then `Open` a **copy** under `C:\IbriWork\...`.
   4. Do the work and `SaveAs` a **new** file (R0, R1...). Never overwrite the modeller's file; only ADD files to the model share.
@@ -360,6 +365,56 @@ The register of every value, with its guideline page, is `_BRAIN/02_DESIGN_CRITE
   - the bridge rules in the global CLAUDE.md (zip: `reference/global-CLAUDE.md`);
   - the memory notes `sewergems-new-year-alternative-copy`, `vm-headless-not-gui`.
 
+## 10h. Treatment, treated effluent and costs (`py/final_financial.py`, `py/final_boq.py`)
+
+The team's options cost estimate (October 2026: sheets "STP - CAPEX", "OPEX", "Capex/Opex Per Years") on the final design's flows. Each of the 12 designs is costed on its own design year (`case(sc, Y)`, `financial.json["designs"]`); the top-level keys hold 2056. The rates are the team's, not a guideline's.
+
+- **Treatment:**
+  - design capacity = design-year average inflow with infiltration + 10 %;
+  - four equal modules per plant, rounded up to 500 m³/d (250 below 5,000);
+  - the modules installed in 2031 cover the 2031 inflow + 10 %; another enters service in the first five-year step whose inflow + 10 % exceeds the installed capacity;
+  - rate per m³/d by design capacity: up to 1,000: 1,000 OMR; 5,000: 900; 10,000: 800; 20,000: 700; 50,000: 600; 100,000: 500;
+  - power 0.025 kW per m³/d; land 8 / 6 / 4 / 3 / 2 / 1 m² per m³/d in the same bands.
+- **Network:** quantities from each case's named network and station products, priced at the team's rates (`final_boq.py` → `network_cost.json`; amounts are formulas in the BOQ workbook).
+  - Left out until the survey: house connections, crossings, excavation and backfill volumes, reinstatement.
+  - Station land 5 m²/kW up to 10 kW, 3 m²/kW above.
+- **Treated effluent:**
+  - production 95 % of the plant inflow, 10 % network loss (G201 p73 §7.4.6);
+  - customers' demands from the team's register, 2030 and 2070, linear between; each customer supplied by the plant of the team's TE model;
+  - SC1–SC3: the team's TE networks and booster power (750 / 850 / 497 kW);
+  - SC4: STP-5's network of SC3, plus the SC2 network from STP-2 cut to the mains that reach the customers STP-2 supplies (`te_sc4_network.py`, rule in its docstring), at the team's TE pipe rates; booster power pro rata to the flow each plant supplies in the team's models;
+  - boosters 5,000 OMR/kW and 3 m²/kW.
+- **OPEX (the team's sheet):**
+  - maintenance and operation 1 % a year of the capital in service;
+  - power = installed kW × 8,760 h × 0.020 OMR/kWh × the year's flow as a share of the design flow;
+  - land 1 OMR/m² a month;
+  - staff (ROUNDUP(stations / 5) × 2 + 20 for one plant, 28 for two) × 2,500 OMR × 13;
+  - chemicals: chlorine 8 g and NaHCO3 20 g per m³ of capacity at 0.3 OMR/kg, polymer at 1 OMR/kg, × the flow share.
+- **Prices:** base 2031; capital and operating costs escalated at 5 % a year (the team's inflation rate); present value at 5 % over 25 years (2031–2055), at constant prices.
+- **Outputs:** `results/final_0.75pc_SC1-SC4/financial.json` and `network_cost.json`; the workbooks `report_final/deliverables/Ibri_Treatment_TE_and_Financial_SC1-SC4.xlsx` and `Ibri_Sewer_BOQ_and_Network_Cost_SC1-SC4.xlsx`.
+
+## 10i. People and flow at every station (`py/final_station_flows.py`)
+
+- **Own:** the catchment that drains by gravity to the station (its section):
+  - residents of the connected plots (`POP_yyyy` of the plot layer, by the manhole each plot loads);
+  - their sewage (`manhole_loads.csv`, which also carries shops, offices and the estates);
+  - the infiltration of the section's sewers (0.72 m³/d per km).
+  - The catchments are the same in the four scenarios.
+- **Through:** the own catchment plus everything pumped into it, per scenario. A plant's inlet station carries the plant's whole flow.
+- Every five years 2026–2061 (engineer, 2026-11-19), in `station_flows.csv` (long) and `station_flows_wide.csv`; Appendix D of the report.
+
+## 10j. The report's structure (R12, built on the team's R8-MH)
+
+- **Executive summary** in ten parts: A Purpose, B Project area, C Data and surveys, D Design basis, E Population and flows, F Decisions requested from NWS, G Scenarios and appraisal, H Recommendation, I Treatment plant, treated effluent and sludge, J Matters requiring attention in every scenario.
+- **Chapters:** 1 Introduction · 2 Data collection, validation and surveys · 3 Design basis · 4 Population and wastewater generation · 5 Existing systems · 6 Concept design scenarios · 7 Sewage treatment plant · 8 Financial analysis · 9 Initial environmental assessment · 10 Excess effluent, emergency provisions and tanker reception · 11 Control philosophies · 12 Environment, flood risk, odour, climate and sustainability · 13 Ground conditions, utilities, approvals and land · 14 Cost estimate, life-cycle cost and appraisal · 15 Risk management and value engineering · 16 Implementation strategy · 17 Technical and financial appraisal.
+- **Appendices:** A Compliance matrix · B Register of decisions and adopted values · C Population, land use and flow calculations · D Network quantities, station flows and depth · E Design criteria and references · F Cost estimate basis · G Meeting and workshop records · H Drawing register.
+- **Chapter 6, in the structure of the team's email of November 2026:**
+  - 6.1 Introduction;
+  - 6.2 Methodology: basis of assessment, network configuration and modelling, gradient limit, design year and self-cleansing, pumping and lift stations, treatment locations and service areas, treated effluent demands;
+  - 6.3–6.6, one per scenario: an introduction with the zones map, then for each design year "SCn Network Design by Flow of yyyy" (the flow schematic, the network map and the self-cleansing map; the TE map once), then "Scenario n Options Comparison" (table and conclusion);
+  - 6.7 Comparison of scenarios: basis, network and pumping, treatment and treated effluent, advantages and trade-offs.
+- **Costs:** Chapter 8 has CAPEX and OPEX by design year; Chapter 14 has the whole-life cost of all 12 designs.
+
 ## 11. Inputs and correspondence
 
 - **Outlook `.msg`:** `_SETUP/tools/read_msg.py "<file.msg>" [--save-attachments DIR]`. It uses olefile streams `__substg1.0_0037001F` (subject), `0C1A001F` (sender), `1000001F` (body), and the attachment storages.
@@ -372,10 +427,10 @@ The register of every value, with its guideline page, is `_BRAIN/02_DESIGN_CRITE
 
   The one-off code that merged them was not kept, so the file is shipped as data.
 
-## Toolkit zip
+## 11a. The toolkit zip
 
 - `_SETUP/tools/make_toolkit_zip.py` packs this inventory, every script of the W18 `py`, `gis` and `report_final` folders, the templates, styles, tools, the report-writing skill and the project memory.
-- `records/` holds the results that prove the method: the loads audit and check, the flow not carried, the blind own-against-SewerGEMS test, and the SewerGEMS comparison of all 12 final designs.
+- `records/` holds the results that prove the method: the loads audit and check, the flow not carried, the blind own-against-SewerGEMS test, the SewerGEMS comparison of all 12 final designs, and the design numbers the report reads (`financial.json`, `network_cost.json`, `design_year_check_2056.json`).
 - `MANIFEST.txt` in the zip lists every file: size, purpose (first docstring line) and source.
 - The zip holds team files, so it goes to `deliverables/` (ignored by git) and to the engineer only.
 
@@ -388,7 +443,7 @@ The register of every value, with its guideline page, is `_BRAIN/02_DESIGN_CRITE
 - **WhatsApp (`wa.js`):**
   - one sender at a time: another session's send on the link fails both with 440;
   - wait for it, never kill it; resend anything that went out without an acknowledgement.
-- **Chat:** SendUserFile for the PDF.
+- **Chat:** SendUserFile, up to 30 MiB for the Remote Control viewer; a larger file goes as a copy without the team's Word file, or by WhatsApp.
 
 ## 13. Templates, styles and the look
 
@@ -428,3 +483,19 @@ The register of every value, with its guideline page, is `_BRAIN/02_DESIGN_CRITE
   - live docs (root README, W18 README, `_BRAIN/00_CURRENT`, `07_PROJECT_STATE`) checked by `_SETUP/check_live_docs.py`;
   - memory updated with each trap the day it was paid for.
 - **Long runs:** in the background with a stall monitor (Word CPU unchanged means it is blocked on a dialog).
+
+## 15. Making it a skill: what is Ibri-specific
+
+- **What a skill still needs:** a `SKILL.md` with its triggers and the steps in order, and a project profile that holds everything below. Until then this file and the zip are the raw material.
+- **Paths written into the scripts (to move into the profile):**
+  - the plot layer on the model share, `C:\Users\mojtaba\Desktop\Win10 shared folder\IBRI Sewer\14 IBRI_W17\SHP\Plots\Plots.shp` (`nws_loads`, `audit_w18`, `plot_layer_2100`, `map_not_carried`, `subnetwork_flows`);
+  - the team's folder `Hydraulic/temp/recent updates by the team` (their workbooks and R8-MH: `nws_loads`, `audit_w18`, `map_odd_plots`, `mh_workbook_capacity`, `mohup_sheet_growth_plots`, `plot_layer_2100`, `settlements_2100`, `build_report`);
+  - the W: server (`final_boq`, `te_sc4_network`, `team_maps_redraw`);
+  - the bridge's output folders `D:\VBOX\bridge\out\...` and the model copies in `C:\IbriWork\W18`;
+  - the installs: QGIS 3.44.8 `python-qgis-ltr.bat`, AutoCAD 2026 `accoreconsole.exe`, `~/wa_link/wa.js`.
+- **Project values:**
+  - settlements, plant sites and their codes (STP-1 / STP-2 / STP-5 = O1 / O16 / O4), the scenarios, the design years;
+  - the colours, the team's rates and cost bands, the clean-gate term lists;
+  - the design values of 10f: the guideline values carry over; the W17 R7 assumptions and the engineer's caps do not without a decision.
+- **Reusable as they are:** the Word build on a team template and its finishing (3–4), QA (5), the Excel workbook (6), QGIS maps (7), DWG (9), the SewerGEMS bridge and its traps (10g), the method that makes the own model give SewerGEMS's answer (10d), delivery (12).
+- **Proposed split:** add sections 3–6 to the report-writing skill; a new skill for the design chain (10a–10i), driven by the project profile.

@@ -82,7 +82,11 @@ for arc, src, what in (("records/loads_audit.md", os.path.join(W, "results", "lo
                        ("records/loads_check.md", os.path.join(W, "results", "loads", "check.md"), "loads check: settlement volumes, capacity years, estates (py/nws_loads.py)"),
                        ("records/not_carried.csv", os.path.join(W, "results", "loads", "not_carried.csv"), "flow the network does not carry, by category and year"),
                        ("records/own_vs_sewergems_SC1-2051.md", os.path.join(W, "results", "sc1_2051", "COMPARISON.md"), "blind own design against SewerGEMS: sizes, flows, velocities"),
-                       ("reference/W14_LOAD_AND_GROWTH.md", os.path.join(C, "W14", "docs", "W14_LOAD_AND_GROWTH.md"), "the W14 load rules W18 keeps (estates, home-shaped plots, heritage)")):
+                       ("reference/W14_LOAD_AND_GROWTH.md", os.path.join(C, "W14", "docs", "W14_LOAD_AND_GROWTH.md"), "the W14 load rules W18 keeps (estates, home-shaped plots, heritage)"),
+                       *[(f"records/{f}", os.path.join(W, "results", "final_0.75pc_SC1-SC4", f), d) for f, d in [
+                           ("financial.json", "treatment, TE and CAPEX/OPEX of the 12 designs, as the report reads them (py/final_financial.py)"),
+                           ("network_cost.json", "network capital cost per scenario (py/final_boq.py)"),
+                           ("design_year_check_2056.json", "2051/2061 designs at the 2056 peak (py/design_year_check.py)")]]):
     FILES.append((arc, src, what))
 for f in sorted(glob.glob(os.path.join(W, "results", "final_0.75pc_SC1-SC4", "SC*-20*", "sewergems", "COMPARE.md"))):
     case = os.path.basename(os.path.dirname(os.path.dirname(f)))
