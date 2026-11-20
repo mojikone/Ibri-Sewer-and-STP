@@ -9,7 +9,9 @@ times the per-capita rate of sheet 'Base Demand' H4 (171.03 L/person/day). No in
 
 Placement (engineer 2026-11-16): the settlement's 2026 flow on its existing plots in the pattern of the plot
 layer's 2024 flow (homes, commercial and government plots on their own plots); everything above 2026 shared
-equally by the settlement's future residential and residential-commercial plots (the plots the capacity counts).
+equally by the settlement's growth plots: future plots of 200-3,000 m2, home-shaped (compact >= 0.6, aspect <= 3),
+any zoning but agricultural, heritage and industrial, not a grove or an estate (engineer 2026-11-17; the code's rule,
+see THE RULE NOW below - an earlier version of this line said residential and residential-commercial only).
 
 Plots: the model's plot layer (the W14 plots, row for row), HMINNODE = the manhole each plot loads.
 Writes results/loads/: plot_loads.csv, manhole_loads.csv, settlement_flows.csv, check.md

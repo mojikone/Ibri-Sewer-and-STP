@@ -79,7 +79,7 @@ With the 1,000 m² limit these were 684 / 1,064 / 1,336 not carried and 22,400 /
 Model loading:
 - Plots without a manhole (HMINNODE 0, 6,499 plots that carried no flow in W14) go to the nearest manhole that has a load row.
 - The six year alternatives of the model carry 2031, 2051, 2056, 2061, 2066 and 2071.
-- New year alternatives failed in jobs 060–066; the cause was a load on a manhole without a load row. Job 067 proved the loading, and job 069 has the final loads.
+- New year alternatives failed in jobs 060–066; the cause was a load on a manhole without a load row. Job 067 proved the loading; job 069 held the loads of the 1,000 m² limit, and the final loads are in R3 (job 071) and R4 (job 072), below.
 
 ## SC1 designed for 2056 (final loads) and the slope check
 
