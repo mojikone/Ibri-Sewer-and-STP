@@ -1,12 +1,14 @@
 ---
 name: concept-saturation-population-and-load
-description: "The agreed method for saturation population and load per plot (class v7 with unit-rate loads, 2026-09-10) — the engineer said \"I like it, remember this\""
+description: "SUPERSEDED by the W18 NWS basis (2026-11-16); record only. The agreed method for saturation population and load per plot (class v7 with unit-rate loads, 2026-09-10) — the engineer said \"I like it, remember this\""
 metadata: 
   node_type: memory
   type: project
   originSessionId: 4c6c2c7b-00c3-4e9a-b8fc-2e647a78c88a
   modified: 2026-09-10T22:00:00.000Z
 ---
+
+**SUPERSEDED 2026-11-16 by the NWS basis (W18, [[nws-basis-change-nov-2026]]); kept as the record of W14 and reports R2–R7. Do not use it for new work.**
 
 **The concept saturation population and load calculation, settled 2026-09-10 (class v7, live in W14).**
 Full write-up: `W14/docs/W14_LOAD_AND_GROWTH.md` and the report note `W14/docs/CONCEPT_NOTE_SATURATION_AND_LOAD.md`; scripts `W14/py/plots_meters_load.py` → `plot_class_v2_apply.py` → `growth_by_settlement.py`; the decision trail in `W14/analysis/REFINEMENTS_PENDING.md`. W13 stays the pipe-laying folder.

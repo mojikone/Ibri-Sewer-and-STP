@@ -4,13 +4,13 @@
 - [Hydraulics first, verify everything](hydraulics-first-verification.md) — never port SWNETWROK logic on trust; Table-11 ±5% solver gate, SewerGEMS as referee
 - [Exec summary is the priority section](report-exec-summary-priority.md) — write last, place first, real numbers, human tone
 - [No exemptions in compliance checks](no-exemptions-in-compliance-checks.md) — a skipped row reads as a PASS; check every element, whatever flag it carries
-- [Load basis locked: Tier A volume](load-basis-locked-tier-a-volume.md) — ratios set the volume, land use sets the placement, Table 12 unused
+- [Load basis locked: Tier A volume](load-basis-locked-tier-a-volume.md) — SUPERSEDED for the volume by the NWS basis; record: ratios set the volume, land use sets the placement, Table 12 unused
 - [Asset GIS holds proposals too](asset-gis-holds-proposals.md) — filter on the status field before quoting any length from a client dataset
 - [Response depth: AUTO by default](response-depth-auto-default.md) — no ceiling unless the user invokes L1-L5; always lead with a headline line
 - [Show drawings, not tables](show-drawings-not-tables.md) — he finds by eye what the checks miss; ship a light KMZ/DXF early
 - [List tasks before multi-step work](list-tasks-before-multistep-work.md) — "clear?" is a check, not a go; list the tasks, wait for approval
-- [Concept saturation population and load](concept-saturation-population-and-load.md) — class v7 chain with unit-rate loads: meters, NDVI groves, per-settlement occupancy, home-shaped capacity, spread by capped area; reuse, do not re-derive
-- [Design flows handoff](design-flows-handoff.md) — size on Q_ULT, self-cleansing on Q_2030 x 0.61; read W14/docs/DESIGN_FLOWS_FOR_NETWORK.md before any network design
+- [Concept saturation population and load](concept-saturation-population-and-load.md) — SUPERSEDED by the W18 NWS basis, record only: class v7 chain with unit-rate loads: meters, NDVI groves, per-settlement occupancy, home-shaped capacity, spread by capped area; reuse, do not re-derive
+- [Design flows handoff](design-flows-handoff.md) — W18 flows: manhole_loads.csv, design 2051/2056/2061, 0.75 m/s above DN200 at 2031; W14's Q_ULT / Q_2030 x 0.61 superseded
 - [PyQGIS MCP crash: dangling symbol](pyqgis-mcp-crash-dangling-symbol.md) — never chain renderer().categories()[i].symbol(); bind names or style through QML
 - [Long runs detached](long-runs-detached.md) — the whole-network engine run outlives the 10-minute Bash cap; Start-Process it and Monitor the console file
 - [Report format preferences](report-format-preferences.md) — firm's template, native captions, no revision printed until issued, control page, official headings, Justify Low, no pending lines
@@ -18,3 +18,15 @@
 - [No unexplained agent fan-out](no-unexplained-agent-fanout.md) — work solo and visibly; ask before any multi-agent workflow, ultracode or not
 - [Main pipe is not client data](main-pipe-not-client-data.md) — the engineer's own trunk input; never on a descriptive client map
 - [PowerPoint COM: save once](powerpoint-com-save-once.md) — copy, open, edit, save once; SaveAs then Save swaps his deck's maps for logos/icons
+- [NWS basis change, Nov 2026](nws-basis-change-nov-2026.md) — team's 3-method population, 4 STP scenarios, final design years 2051/2056/2061; replaces the W14 load and S1-S7 memories (adopted with the final design and R9-R12); keep R8-MH's structure
+- [VM headless, not GUI](vm-headless-not-gui.md) — VBoxManage guestcontrol from the host, never click in the VM window; logon needs his password, give him the command
+- [Report detail at the team's level](report-detail-team-level.md) — R7 was too dense for the team; edit R8-MH in place, match its depth, extra working goes to the README
+- [Say property, not dwelling](say-property-not-dwelling.md) — the team's agreed term: properties per plot, never dwellings
+- [W18 growth-plot rule](w18-growth-plot-rule.md) — existing plots fixed at 2026; growth equal on future plots 200-3,000 m2, any zoning, no odd shapes, no agricultural
+- [SewerGEMS: new year alternative = Copy](sewergems-new-year-alternative-copy.md) — Copy(loaded alt id) works, Add(parent) breaks the second year (jobs 060-065)
+- [W18 split of deep subnetworks](w18-split-deep-subnetworks.md) — steepen >DN200 for 0.75 m/s, cut where >12 m to the outfall, lift to next MH, gravity-join short mains, fewest stations
+- [QGIS label and arrow style](qgis-label-and-arrow-style.md) — labels clamp(7, 8*25000/@map_scale, 36) pt, 0.8 mm buffer; flow arrows at pipe centres from 1:15,000 in
+- [Check, then apply; don't list](check-then-apply-not-list.md) — grep the deliverable before calling anything missing; under "go ahead" decide and act, don't end with candidates
+- [W18 R11 report brief](w18-r11-report-brief.md) — 2026-11-19: flow schematics, Excel charts, DWG, map colours, layout/table QA, per-station people+flow; list tasks on "continue"
+- [W18 final design brief](w18-final-design-brief.md) — 0.75 %, SC1–SC4 × 2051/2056/2061, 2031+2036 cleansing, pumps P#/lifts P#L#, R8-MH copy, costs on W:; R10 whole-report traps (TOC finder, REF "Section 0", regex gate)
+- [WhatsApp link: one sender at a time](wa-link-one-sender-at-a-time.md) — two wa.js sends on one link fail with 440; wait for another session's send, never kill it

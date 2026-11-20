@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: feedback
   originSessionId: 19f33d71-40f1-4a1e-a505-44b3492908a2
-  modified: 2026-09-12T07:13:18.291Z
+  modified: 2026-11-18T09:45:34.766Z
 ---
 
 Three QGIS crashes on 2026-09-12 (qgis-python-crash-info files in %LOCALAPPDATA%\Temp) all
@@ -13,6 +13,10 @@ died on the same line shape: `r.categories()[0].symbol().symbolLayers()` (or `.c
 `categories()` returns a copy of the list; `[0]` is a temporary category; `.symbol()` is a
 raw pointer into it; the temporary is freed before the next call, and QGIS aborts. The
 same code with `cats = r.categories(); c = cats[0]; sym = c.symbol()` ran fine.
+**Hit again on 2026-11-18 with `r.ranges()[i].symbol()`** on a graduated renderer, in live QGIS.
+Every renderer list getter behaves the same way: `ranges()`, `categories()`, `rules`. Use
+`RG = r.ranges(); RG[i].symbol().clone()`. In a standalone script, build the symbol fully before
+passing it to `QgsRendererRange`, as `qgis_sc1_conditions.py` does.
 
 **Why:** the engineer loses his open QGIS session each time, has to relaunch and rebuild the
 project, and reads the crash as "QGIS crashes the moment you start working in it".

@@ -1,12 +1,14 @@
 ---
 name: load-basis-locked-tier-a-volume
-description: "Ibri load basis is locked — Tier A ratios set the volume, land use sets the placement, Table 12 unused"
+description: "SUPERSEDED for the volume by the W18 NWS basis (team population x 171.03 L/person/day, 2026-11-16); record only. Ibri load basis was locked — Tier A ratios set the volume, land use sets the placement, Table 12 unused"
 metadata: 
   node_type: memory
   type: project
   originSessionId: 500d9f05-728a-49e7-8634-fc0d041cfafd
   modified: 2026-08-30T19:49:03.393Z
 ---
+
+**SUPERSEDED for the volume 2026-11-16: the NWS basis sets it (the team's population × 171.03 L/person/day, [[nws-basis-change-nov-2026]]). W18 keeps W14's placement on the existing plots (homes, shops and government on their own plots). The rest is the record of W9–W14.**
 
 Locked 2026-08-30 for the rest of the 2621 Ibri project: **Tier A ratios (22 % non-domestic,
 14 % governmental) set the demand VOLUME; electricity-derived land use sets its PLACEMENT.**
