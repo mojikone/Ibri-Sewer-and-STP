@@ -1,0 +1,64 @@
+{
+ "option": "S1",
+ "drops_over_06": 2998,
+ "branch_drops_over_06": 2004,
+ "through_drops_over_06": 994,
+ "branch_drops_over_2m": 1025,
+ "stretches_with_branch_drops_over_2m": 367,
+ "stretches_by_number_of_drops": {
+  "1": 173,
+  "2": 71,
+  "3": 34,
+  "4": 19,
+  "5": 14,
+  "6": 6,
+  "7": 12,
+  "8": 6,
+  "9": 5,
+  "10": 8,
+  "11": 1,
+  "12": 2,
+  "13": 4,
+  "15": 1,
+  "16": 1,
+  "17": 2,
+  "19": 2,
+  "20": 4,
+  "31": 1,
+  "32": 1
+ },
+ "by_ground_class": {
+  "falls < 0.5 %": {
+   "stretches": 99,
+   "drops_over_2m": 246,
+   "length_km": 94.22
+  },
+  "rises: reroute": {
+   "stretches": 162,
+   "drops_over_2m": 782,
+   "length_km": 261.16
+  },
+  "falls >= 0.5 %": {
+   "stretches": 106,
+   "drops_over_2m": 161,
+   "length_km": 33.45
+  }
+ },
+ "parallel_sewer_on_falling_stretches": {
+  "drops_over_2m_removed": 186,
+  "final_drops_over_2m": 146,
+  "parallel_deeper_than_3m": 45
+ },
+ "step_down": {
+  "steps_by_drop": {
+   "2": 574,
+   "3": 306,
+   "4": 114,
+   "5": 26,
+   "6": 4,
+   "7": 1
+  },
+  "branch_too_short": 137,
+  "new_depth_over_12m": 3
+ }
+}
