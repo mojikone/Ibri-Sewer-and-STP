@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: sewergems-years-and-sizing-mismatch
+expected_outcome: |
+  answer.md diagnoses both problems: new year alternatives must be copies of a loaded alternative rather than Add(parent); SewerGEMS sizes a candidate at the gradient of the pipe's current size and iterates from the existing sizes, and the 'no size fits' trunks point at a missing catalogue size; it ends with a pipe-by-pipe comparison as the check.

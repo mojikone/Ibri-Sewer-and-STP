@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: design-plan-new-nws-project
+expected_outcome: |
+  plan.md is a staged design plan for an NWS sewer concept design: loads on plots then manholes, loading SewerGEMS, a check that the own calculation reproduces SewerGEMS before it is used, the design-year and self-cleansing test, the depth/lift/pump logic, every design value with its PAM-GUD page, and a list of decisions for the engineer.

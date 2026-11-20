@@ -1,7 +1,7 @@
 # Toolkit: how the W18 final design and its deliverables were produced (loads to issued report R12, 2026-11-16/20)
 
 An inventory of every technique, tool and script used to take the final design from the plot loads to an issued package, written
-as the raw material for a reusable skill. It is not a skill yet: section 15 says what a skill built from it still needs. Paths are relative to `Hydraulic/Claude/W18 NWS scenarios 2056-2071/` unless stated.
+as the raw material for a reusable skill. The skill built from it is `sewer-system-design` (section 15). Paths are relative to `Hydraulic/Claude/W18 NWS scenarios 2056-2071/` unless stated.
 
 ## 1. What came out
 
@@ -486,7 +486,7 @@ The team's options cost estimate (October 2026: sheets "STP - CAPEX", "OPEX", "C
 
 ## 15. Making it a skill: what is Ibri-specific
 
-- **What a skill still needs:** a `SKILL.md` with its triggers and the steps in order, and a project profile that holds everything below. Until then this file and the zip are the raw material.
+- **Built 2026-11-20: the `sewer-system-design` skill** (`_SETUP/skills/sewer-system-design/`, installed by `bootstrap.ps1` into `~/.claude/skills`). It is written for any NWS project, with Ibri as the worked example: SKILL.md (the chain and its gates), nine reference files, a project profile template, the reference scripts, and two test cases (14 of 14 checks with the skill against 6 of 14 without). This file stays the Ibri record. What the skill moves into a profile:
 - **Paths written into the scripts (to move into the profile):**
   - the plot layer on the model share, `C:\Users\mojtaba\Desktop\Win10 shared folder\IBRI Sewer\14 IBRI_W17\SHP\Plots\Plots.shp` (`nws_loads`, `audit_w18`, `plot_layer_2100`, `map_not_carried`, `subnetwork_flows`);
   - the team's folder `Hydraulic/temp/recent updates by the team` (their workbooks and R8-MH: `nws_loads`, `audit_w18`, `map_odd_plots`, `mh_workbook_capacity`, `mohup_sheet_growth_plots`, `plot_layer_2100`, `settlements_2100`, `build_report`);
@@ -498,4 +498,4 @@ The team's options cost estimate (October 2026: sheets "STP - CAPEX", "OPEX", "C
   - the colours, the team's rates and cost bands, the clean-gate term lists;
   - the design values of 10f: the guideline values carry over; the W17 R7 assumptions and the engineer's caps do not without a decision.
 - **Reusable as they are:** the Word build on a team template and its finishing (3–4), QA (5), the Excel workbook (6), QGIS maps (7), DWG (9), the SewerGEMS bridge and its traps (10g), the method that makes the own model give SewerGEMS's answer (10d), delivery (12).
-- **Proposed split:** add sections 3–6 to the report-writing skill; a new skill for the design chain (10a–10i), driven by the project profile.
+- **Still open:** sections 3–6 (the Word build on a team template, finishing, QA, the workbook) could also go into the report-writing skill; the new skill points to them in its `references/report.md`.
