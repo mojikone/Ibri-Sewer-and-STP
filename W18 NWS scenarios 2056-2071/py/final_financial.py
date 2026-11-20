@@ -1,6 +1,8 @@
 """W18 final design: treatment capacity and phasing, treated effluent supply, and the CAPEX / OPEX of the four scenarios by
 the method of the team's options cost estimate (October 2026, sheets 'STP - CAPEX', 'OPEX', 'Capex/Opex Per Years'),
 on the flows of the final design (each plant's average inflow with infiltration, 2056 design).
+Each of the 12 designs (2051/2056/2061) is costed the same way on its own design year (case(sc, Y), financial.json['designs']);
+the top-level keys and the description below hold 2056.
 
   Treatment: design capacity = 2056 average inflow + 10 %; four equal modules per plant, rounded up to 500 m3/d (250 below
              5,000); the modules installed in 2031 cover the 2031 inflow + 10 %, a further module enters service in the first
