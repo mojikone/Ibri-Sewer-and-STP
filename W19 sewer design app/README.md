@@ -33,7 +33,7 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
 - **Draw and edit:** manholes, outfalls, wet wells, pipes, pumps and catchments on the map; move, split, delete; a
   property grid with bulk edit; Nodes, Links and Results tables; undo and redo; scenarios copied and edited separately.
 - **Instant re-run:** every edit re-solves the steady sanitary hydraulics (peaked unit loads, infiltration, Colebrook-
-  White or Manning, normal depth, the d/D, velocity, cover and gradient checks); Ibri's 19,083 pipes take about 0.1 s.
+  White or Manning, normal depth, the d/D, velocity, cover and gradient checks): a small network at once; Ibri's 19,083 pipes solve in 0.35 s, an edit round trip about 1 s.
 - **Design:** sizes every conduit by the d/D limit at its size's minimum gradient and lays it with crowns matched and
   minimum cover (equal to W18's design at every node); undoable.
 - **Stormwater:** catchments, rain as a time series or a design storm from an IDF table, run on EPA SWMM 5, peaks and
@@ -81,19 +81,25 @@ The Ibri W18 viewer of phase 1B (the 12 frozen designs with their W18 tools) is 
 | 1A Sanitary engine | **passed** 2026-11-21 | `python -m pytest -m gate_p1a` |
 | 1B App and assistant | **passed** 2026-11-21 (live assistant test passed with the key) | `python -m pytest tests/api tests/e2e`; `-m live` with the key |
 | Stormwater (SWMM) | 12 of 15 EPA models equal at every step of every period; extran8a and extran9 equal on their common periods (this build writes one more final period); Example1 up to 0.68 % off. Inputs identical to EPA's, so the cause is the engine build | `python -m pytest -m gate_swmm` |
-| 2 GVF backwater, pressure network, new SewerGEMS runs | not started | — |
-| 3 Network editing on the map (add, move, delete, draw) | not started | — |
-| 4–6 Rational stormwater, inlets, reports | not started | — |
+| G1-G6 the general app | **passed** 2026-11-22 (see the table above) | `python -m pytest tests/general tests/e2e` |
+| G7 SewerGEMS models with all scenarios | app side passed; bridge job 100 queued, runs when the VM watcher is started | `python -m pytest -m gate_g7` |
 
-**Not done yet in phase 1** (in the approved scope, open):
-- only the 12 frozen Ibri cases load; no GPKG/SHP import of another network;
-- what-ifs live in memory and are lost when the app restarts;
-- no export of the SewerGEMS rebuild input set;
-- the design chain does not take a what-if's edits;
-- BOQ, costs, station flows, DWG and schematics are not in the app yet (`docs/SCRIPT_REGISTER.md`, "Planned").
+**Not done yet** (approved, open):
+- SewerGEMS models: the export job has not run yet (the watcher in the VM is not running); an opened export shows
+  SewerGEMS's stored results but cannot be re-solved by the app until the job also exports the loads;
+- EPANET `.inp` (water distribution): not started;
+- the hydraulics of pumps, wet wells and force mains (a pump passes its flow on; no pump curve or head is solved);
+  GVF backwater; rational-method storm design and inlet capture;
+- a dynamic SWMM run of a sewer from its sanitary loads (no dry-weather flow is written yet; a SWMM run needs rain);
+- Babbitt and Harmon peaking; the catalogue, minimum-gradient, d/D and peaking tables are not editable in the UI
+  (only through the Settings JSON paths);
+- a saved project file holds one scenario (Save writes the chosen scenario flattened);
+- imported US-unit SWMM models show feet and acres under the m and ha labels, and Design is not meant for them;
+- the W18 viewer (`/w18`): the design chain does not take a what-if's edits; BOQ, costs, station flows, DWG and
+  schematics are still to be placed (`docs/SCRIPT_REGISTER.md`, "Planned").
 
-All tests: `python -m pytest` — 120 passed with the key set (live assistant included), 2 expected failures (EPA Example1), 2 min
-(2026-11-21).
+All tests, one pass (2026-11-22): `python -m pytest` - 207 passed, 1 skipped (a live assistant test), 2 expected failures
+(EPA Example1, a SWMM build difference), 6 min; the editor suite has since grown to 16 tests, and all 31 end-to-end tests pass.
 
 ## Reproduction and speed (2026-11-21)
 

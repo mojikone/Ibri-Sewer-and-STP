@@ -12,9 +12,21 @@ SHOTS = os.path.join(W19, "work")
 
 
 @pytest.fixture(scope="module")
-def server():
+def sg_exports(tmp_path_factory):
+    """A SewerGEMS export folder laid out as bridge job 100 writes it (two scenarios), from the frozen W18 referee run."""
+    from sewerapp import fixtures
+    root = tmp_path_factory.mktemp("sg_exports"); d = root / "SC1-2056_final"; d.mkdir()
+    fixtures.materialize("sewergems/SC1-2056/conduits_SC1-2056.csv", str(d / "conduits_s001.csv"))
+    fixtures.materialize("sewergems/SC1-2056/conduits_SC1-2056-at-2031.csv", str(d / "conduits_s002.csv"))
+    for f in ("s001", "s002"): fixtures.materialize("sewergems/SC1-2056/manholes_SC1-2056.csv", str(d / f"manholes_{f}.csv"))
+    (d / "scenarios.csv").write_text('id,label,parent,file\n1,"SC1-2056 design",0,s001\n2,"SC1-2056 design at the 2031 peak",1,s002\n')
+    return str(root)
+
+
+@pytest.fixture(scope="module")
+def server(sg_exports):
     p = subprocess.Popen([sys.executable, "-c", "import uvicorn; uvicorn.run('sewerapp.api.app:app', host='127.0.0.1', port=8798)"],
-                         cwd=W19, env=dict(os.environ, W19_ASSISTANT_STUB="1"), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                         cwd=W19, env=dict(os.environ, W19_ASSISTANT_STUB="1", W19_SG_EXPORTS=sg_exports), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
         t0 = time.time()
         while True:
@@ -329,6 +341,90 @@ def test_assistant_answers_with_a_tool_call_and_rain_follows_the_model(page):
     page.get_by_test_id("undo-btn").click(); idle(page)
     assert page.evaluate("window.ed.state.rain.idf.length") == 0
     expect(page.locator("#rain-row-0-a")).to_have_count(0)
+
+
+def test_open_a_sewergems_export_and_read_its_stored_results(page):
+    from sewerapp import fixtures
+    page.get_by_test_id("sg-btn").click()
+    page.get_by_test_id("sg-SC1-2056_final").click()
+    page.wait_for_function("window.ed.state.pid && window.ed.state.info.name.startsWith('SewerGEMS') && window.ed.state.model && window.ed.state.model.linkFeat.length > 19000 && document.body.dataset.pending === '0'", timeout=240000)
+    opts = page.get_by_test_id("scenario-select").locator("option").all_inner_texts()
+    assert opts == ["SC1-2056 design", "SC1-2056 design at the 2031 peak"], opts
+    assert page.evaluate("window.ed.state.source") == "engine"
+    page.get_by_test_id("results-source").select_option("stored"); idle(page)
+    assert "SewerGEMS" in page.get_by_test_id("results-src").inner_text()
+    page.evaluate("window.ed.selectElement('links', 'P1-P1')")
+    q1 = float(page.get_by_test_id("res-q_ls").inner_text()); assert q1 > 0
+    sg = fixtures.read_csv("sewergems/SC1-2056/conduits_SC1-2056.csv").set_index("label")
+    assert abs(q1 - sg.flow_m3d["P1-P1"] / 86.4) < 1e-3
+    assert "sewergems" in page.get_by_test_id("prop-grid").inner_text().lower()
+    assert "Velocity" in page.get_by_test_id("legend").inner_text()
+    sid2 = page.evaluate("window.ed.state.info.scenarios[1].id")
+    page.get_by_test_id("scenario-select").select_option(sid2); idle(page)
+    page.evaluate("window.ed.selectElement('links', 'P1-P1')")
+    q2 = float(page.get_by_test_id("res-q_ls").inner_text())
+    assert 0 < q2 < q1, (q1, q2)                                          # the 2031 peak is below the design year
+    page.get_by_test_id("tools-btn").click(); page.get_by_test_id("tool-run-compare_stored").click(); idle(page)
+    expect(page.get_by_test_id("tab-toolout")).to_have_class("tab active")
+    assert int(page.locator('[data-k="links"]').first.inner_text()) > 19000
+    page.get_by_test_id("results-source").select_option("engine"); idle(page)
+    assert page.evaluate("window.ed.state.source") == "engine"
+
+
+def test_stored_results_are_disabled_for_a_plain_project(page):
+    draw_network(page)
+    assert page.get_by_test_id("results-source").locator("option[value=stored]").is_disabled()
+    page.get_by_test_id("tools-btn").click()
+    expect(page.get_by_test_id("tool-run-compare_stored")).to_have_count(0)
+    page.get_by_test_id("tools-btn").click()
+
+
+def _gis_layers(tmp):
+    """The two GeoPackages of tests/general/test_gate_g5.py::_network (foreign field names, P3's ends 0.4 m off)."""
+    import geopandas as gpd
+    from shapely.geometry import LineString, Point
+    n = gpd.GeoDataFrame(dict(MH_ID=["A", "B", "C", "OUT"], GL=[100.0, 99.5, 99.0, 98.5], IL=[98.0, 97.4, 96.8, 96.2],
+                              TYPE=["manhole", "manhole", "manhole", "outfall"]),
+                         geometry=[Point(0, 0), Point(100, 0), Point(200, 0), Point(300, 0)], crs=32640)
+    l = gpd.GeoDataFrame(dict(PIPE=["P1", "P2", "P3"], DIA=[200, 250, 315]),
+                         geometry=[LineString([(0, 0), (100, 0)]), LineString([(100, 0), (150, 10), (200, 0)]),
+                                   LineString([(200, 0.4), (300, -0.3)])], crs=32640)
+    fn, fl = os.path.join(tmp, "nodes.gpkg"), os.path.join(tmp, "links.gpkg"); n.to_file(fn); l.to_file(fl)
+    return fn, fl
+
+
+def _gis_dialog(page, fn, fl, snap):
+    page.get_by_test_id("file-btn").click(); page.get_by_test_id("gis-btn").click()
+    page.set_input_files("#gis-nodes-file", fn); page.set_input_files("#gis-links-file", fl)
+    expect(page.get_by_test_id("gis-map-nodes-ground")).to_be_visible()
+    expect(page.get_by_test_id("gis-map-links-dn_mm")).to_be_visible()
+    for f, v in (("id", "MH_ID"), ("kind", "TYPE"), ("ground", "GL"), ("invert", "IL")):
+        page.get_by_test_id(f"gis-map-nodes-{f}").select_option(v)
+    for f, v in (("id", "PIPE"), ("dn_mm", "DIA")):
+        page.get_by_test_id(f"gis-map-links-{f}").select_option(v)
+    page.get_by_test_id("gis-snap").fill(str(snap))
+    page.get_by_test_id("gis-import").click()
+
+
+def test_import_from_gis_layers_with_mapping_snapping_and_exports(page, tmp_path):
+    fn, fl = _gis_layers(str(tmp_path))
+    new_local(page)                                                       # something is open already
+    _gis_dialog(page, fn, fl, 0.1)                                        # too tight: P3's ends are 0.4 m off
+    expect(page.get_by_test_id("gis-error")).to_contain_text("tolerance")
+    page.get_by_test_id("gis-snap").fill("1.0"); pid = page.evaluate("window.ed.state.pid")
+    page.get_by_test_id("gis-import").click()
+    page.wait_for_function("p => window.ed.state.pid !== p && window.ed.state.model && document.body.dataset.pending === '0'", arg=pid)
+    assert page.evaluate("window.ed.counts()") == {"nodes": 4, "links": 3}
+    p3 = page.evaluate("window.ed.state.model.links.get('P3').properties")
+    assert (p3["from_node"], p3["to_node"], p3["dn_mm"]) == ("C", "OUT", 315)
+    assert page.evaluate("window.ed.state.info.basemap") is True
+    for btn, ext, marker in (("export-dxf-btn", ".dxf", None), ("export-csv-btn", ".csv", "v_ms")):
+        page.get_by_test_id("file-btn").click()
+        with page.expect_download() as d:
+            page.get_by_test_id(btn).click()
+        f = str(tmp_path / ("out" + ext)); d.value.save_as(f)
+        assert d.value.suggested_filename.endswith(ext) and os.path.getsize(f) > 100
+        if marker: assert marker in open(f, encoding="utf-8", errors="ignore").read().splitlines()[0]
 
 
 def test_no_javascript_errors(page):

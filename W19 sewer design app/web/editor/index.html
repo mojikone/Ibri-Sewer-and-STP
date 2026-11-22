@@ -14,11 +14,18 @@
     <button id="new-btn" class="tb" title="New project">New</button>
     <button id="sample-btn" class="tb" title="Open a sample project">Sample</button>
     <button id="open-btn" class="tb" title="Open a project file (.gpkg)">Open</button>
+    <button id="sg-btn" class="tb" title="Open a SewerGEMS model exported through the bridge, with all its scenarios">Open SewerGEMS...</button>
     <button id="import-btn" class="tb" title="Import an EPA SWMM 5 input file (.inp)">Import .inp</button>
     <input type="file" id="import-file" accept=".inp" hidden>
     <button id="export-btn" class="tb" title="Export the scenario as an EPA SWMM 5 input file" disabled>Export .inp</button>
     <input type="file" id="open-file" accept=".gpkg" hidden>
     <button id="save-btn" class="tb" title="Download the project (.gpkg)" disabled>Save</button>
+    <button id="file-btn" class="tb" title="Import from GIS, export DXF or CSV">More &#9662;</button>
+    <div id="file-menu" class="menu" hidden>
+      <button id="gis-btn">Import from GIS...</button>
+      <button id="export-dxf-btn">Export DXF</button>
+      <button id="export-csv-btn">Export CSV</button>
+    </div>
   </div>
   <div class="grp">
     <label class="lbl" for="scenario-select">Scenario</label>
@@ -43,6 +50,8 @@
       <option value="storm_cap">storm fullness</option>
       <option value="storm_flood">flooding</option>
     </select>
+    <label class="lbl" for="results-source">Results source</label>
+    <select id="results-source"><option value="engine" selected>W19 engine</option><option value="stored" disabled>SewerGEMS (stored)</option></select>
     <label class="chk" id="basemap-wrap"><input type="checkbox" id="basemap-toggle" checked> Basemap</label>
   </div>
   <div id="project-label" class="projlabel"></div>
@@ -106,7 +115,7 @@
       <div class="twrap"><table id="tbl-links" class="ft"></table></div>
     </div>
     <div id="pane-results" class="pane flex">
-      <div class="ptool"><input id="filter-results" type="search" placeholder="Filter results"><span id="count-results" class="muted"></span></div>
+      <div class="ptool"><span id="results-src" class="strong">W19 engine</span><input id="filter-results" type="search" placeholder="Filter results"><span id="count-results" class="muted"></span></div>
       <div class="twrap"><table id="tbl-results" class="ft"></table></div>
     </div>
     <div id="pane-profile" class="pane">
@@ -143,6 +152,22 @@
   <h3>Open a sample</h3>
   <div id="sample-list" class="list"></div>
   <div class="row"><button id="sample-cancel">Cancel</button></div>
+</div></div>
+<div id="dlg-sg" class="modal" hidden><div class="dlg">
+  <h3>Open a SewerGEMS model</h3>
+  <div id="sg-list" class="list"></div>
+  <div class="row"><button id="sg-cancel">Cancel</button></div>
+</div></div>
+<div id="dlg-gis" class="modal" hidden><div class="dlg wide">
+  <h3>Import from GIS layers</h3>
+  <label>Project name<input id="gis-name" type="text" value="Imported network"></label>
+  <label>Snap tolerance (m)<input id="gis-snap" type="number" step="any" value="1.0"></label>
+  <div class="cols">
+    <div><h4>Node layer</h4><input id="gis-nodes-file" type="file" accept=".gpkg,.geojson,.json,.zip"><div id="gis-nodes-info" class="muted"></div><div id="gis-nodes-map" class="mapgrid"></div></div>
+    <div><h4>Link layer</h4><input id="gis-links-file" type="file" accept=".gpkg,.geojson,.json,.zip"><div id="gis-links-info" class="muted"></div><div id="gis-links-map" class="mapgrid"></div></div>
+  </div>
+  <div id="gis-error" class="errtxt"></div>
+  <div class="row"><button id="gis-import" class="primary" disabled>Import</button><button id="gis-cancel">Cancel</button></div>
 </div></div>
 <div id="busy" hidden><div class="spin"></div><span id="busy-text">Working...</span></div>
 <div id="toast" role="alert" hidden></div>

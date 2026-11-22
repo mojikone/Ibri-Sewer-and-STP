@@ -216,3 +216,12 @@ Water distribution (WaterGEMS), water quality, cost optimisation, cloud hosting,
   claude-opus-5-5, effort high, server-side fallback on refusal. It has not yet made a live call.
 - **Stormwater:** EPA SWMM 5.2.4 through swmm-toolkit, checked against EPA's benchmark results, not against SewerGEMS.
 - **Script register:** `docs/SCRIPT_REGISTER.md`, one row per tested script with its UI place.
+
+## 15. As built, 2026-11-22: the general app (supersedes the phase table of section 11 for phases 2-5)
+
+The engineer widened the brief on 2026-11-21 ("use it as sewergems, create and run end to end for both sewer and
+stormwater"). Plan `docs/2026-11-21-general-app-plan.md`, stages G1-G7. Built and gated: the general project model and
+GeoPackage file (G1), the editor as the home page (G2), the general design engine (G3), stormwater on EPA SWMM 5 with
+.inp import/export and IDF design storms (G4), GIS import with field mapping and DXF/CSV export (G5), the assistant on
+any project (G6), SewerGEMS models opened with all scenarios through bridge job 100 (G7, app side). Still open: see the
+README's "Not done yet" list. Section 14's "no GeoPackage project file, no import" no longer holds for the general app.

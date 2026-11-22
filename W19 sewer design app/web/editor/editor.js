@@ -15,7 +15,7 @@ const state = {
   table: { nodes: { sort: "id", dir: 1, filter: "", page: 0 }, links: { sort: "id", dir: 1, filter: "", page: 0 },
            results: { sort: "id", dir: 1, filter: "", page: 0 }, toolout: { sort: "id", dir: 1, filter: "", page: 0 } },
   view: { nodes: [], links: [], results: [], toolout: [] }, anchor: {},
-  draw: null, catchPending: null, storm: null,
+  draw: null, catchPending: null, storm: null, source: "engine", stored: null, storedCache: {},
   rain: { step_min: 5, duration_min: 60, mode: "idf", idf: [], series: [] },
 };
 const tmap = table => state.model ? (table === "nodes" ? state.model.nodes : table === "links" ? state.model.links : state.model.catchments) : new Map();
@@ -243,10 +243,17 @@ function syncRain() {
 }
 async function loadResults() {
   const r = await jget(`${base()}/results`);
-  state.results = r; state.summary = r.summary; mergeResults();
+  const key = state.pid + "/" + state.sid;
+  if (!(key in state.storedCache)) { const st = await jget(`${base()}/stored`); state.storedCache[key] = Object.keys(st.links || {}).length ? st.links : null; }
+  state.stored = state.storedCache[key];
+  if (!state.stored && state.source === "stored") { state.source = "engine"; $("#results-source").value = "engine"; }
+  $("#results-source").querySelector("option[value=stored]").disabled = !state.stored;
+  state.results = r; state.summary = r.summary; mergeResults(); renderToolsMenu();
 }
+const usingStored = () => state.source === "stored" && !!state.stored;
+const srcLinks = () => usingStored() ? state.stored : (state.results ? state.results.links : {});
 function mergeResults() {
-  const m = state.model, R = state.results ? state.results.links : {}; if (!m) return;
+  const m = state.model, R = srcLinks(); if (!m) return;
   const by = state.colorBy, S = by.startsWith("storm") ? stormNow() : null;
   if (by === "storm_q" && S) {
     const mx = Math.max(1e-9, ...Object.values(S.links).map(x => x.q_peak || 0)), cs = ["#c6dbef", "#9ecae1", "#6baed6", "#3182bd", "#6a51a3", "#4a1486"];
@@ -254,8 +261,8 @@ function mergeResults() {
   }
   for (const f of m.linkFeat) {
     const r = R[f.id], p = f.properties, sl = S && S.links[f.id];
-    p._fail = r && (r.over_limit || r.over_vmax || r.surcharged || r.negative_slope) ? 1 : 0;
-    p._c = by === "storm_q" ? colourFor(by, sl && sl.q_peak) : by === "storm_cap" ? colourFor(by, sl && sl.capacity_peak) : by === "storm_flood" ? GREY : colourFor(by, r && r[by]);
+    p._fail = !usingStored() && r && (r.over_limit || r.over_vmax || r.surcharged || r.negative_slope) ? 1 : 0;
+    p._c = by === "dn_mm" && usingStored() ? colourFor(by, p.dn_mm) : by === "storm_q" ? colourFor(by, sl && sl.q_peak) : by === "storm_cap" ? colourFor(by, sl && sl.capacity_peak) : by === "storm_flood" ? GREY : colourFor(by, r && r[by]);
   }
   const wasFl = m.hasFl; let anyFl = false;
   for (const f of m.nodeFeat) {
@@ -341,6 +348,7 @@ function updateButtons() {
   }
 }
 function renderAll() {
+  $("#results-src").textContent = usingStored() ? "SewerGEMS (stored results)" : "W19 engine";
   updateStatus(); updateButtons(); pushMap(); renderProps(); renderActiveTab(); renderLegend();
 }
 
@@ -561,15 +569,15 @@ function control(table, k, ty, v) {
 }
 function renderResultsBlock() {
   const host = $("#res-block"); if (!host) return;
-  const R = state.results ? state.results.links : {};
+  const R = srcLinks(), sg = usingStored();
   if (state.sel.table !== "links" || state.sel.ids.length !== 1) { host.innerHTML = ""; return; }
   const r = R[state.sel.ids[0]];
   if (!r) { host.innerHTML = `<h5>Results</h5><p class="muted">No result (the network could not be solved, or this is a pump).</p>`; return; }
-  const rows = [["q_ls", "Flow (L/s)"], ["v_ms", "Velocity (m/s)"], ["d_over_D", "d/D"], ["limit", "d/D limit"], ["s_pc", "Slope (%)"]];
-  let h = `<h5>Results (read-only)</h5>`;
+  const rows = sg ? [["q_ls", "Flow (L/s)"], ["v_ms", "Velocity (m/s)"], ["depth_m", "Depth (m)"], ["d_over_D", "d/D"]] : [["q_ls", "Flow (L/s)"], ["v_ms", "Velocity (m/s)"], ["d_over_D", "d/D"], ["limit", "d/D limit"], ["s_pc", "Slope (%)"]];
+  let h = `<h5>Results ${sg ? "from SewerGEMS (stored)" : "(W19 engine)"}, read-only</h5>`;
   for (const [k, l] of rows) h += `<div class="pr"><label>${l}</label><span data-testid="res-${k}">${num(r[k], 4)}</span><span></span></div>`;
-  const fl = ["over_limit", "over_vmax", "surcharged", "negative_slope", "under_vmin"].filter(k => r[k]);
-  h += `<div class="pr"><label>Flags</label><span class="${fl.length ? "flag" : ""}" data-testid="res-flags">${fl.length ? fl.join(", ") : "none"}</span><span></span></div>`;
+  const fl = sg ? [] : ["over_limit", "over_vmax", "surcharged", "negative_slope", "under_vmin"].filter(k => r[k]);
+  if (!sg) h += `<div class="pr"><label>Flags</label><span class="${fl.length ? "flag" : ""}" data-testid="res-flags">${fl.length ? fl.join(", ") : "none"}</span><span></span></div>`;
   host.innerHTML = h;
 }
 async function setField(table, ids, field, value) {
@@ -587,14 +595,14 @@ const FLAGS = { over_limit: "d/D limit", over_vmax: "v max", surcharged: "surcha
 function flagText(r) { return Object.keys(FLAGS).filter(k => r && r[k]).map(k => FLAGS[k]).join(", "); }
 function rowsFor(kind) {
   const m = state.model; if (!m) return [];
-  const R = state.results ? state.results.links : {};
+  const R = srcLinks(), sg = usingStored();
   if (kind === "nodes") { const ls = m.loads[m.settings.design_load] || {}; return m.nodeFeat.map(f => ({ ...f.properties, load: ls[f.id] ?? 0 })); }
   if (kind === "links") return m.linkFeat.map(f => f.properties);
-  if (kind === "results") return m.linkFeat.filter(f => R[f.id]).map(f => ({ id: String(f.id), ...R[f.id], flags: flagText(R[f.id]) }));
+  if (kind === "results") return m.linkFeat.filter(f => R[f.id]).map(f => sg ? ({ id: String(f.id), dn_mm: f.properties.dn_mm, ...R[f.id] }) : ({ id: String(f.id), ...R[f.id], flags: flagText(R[f.id]) }));
   if (kind === "toolout") return (state.toolout && state.toolout.rows || []).map(r => ({ ...r, flags: flagText(r) }));
   return [];
 }
-function colsOf(kind) { return kind === "toolout" && state.toolout && state.toolout.cols ? state.toolout.cols : { nodes: NODE_COLS, links: LINK_COLS, results: RES_COLS, toolout: TOOL_COLS }[kind]; }
+function colsOf(kind) { if (kind === "results" && usingStored()) return ["id", "dn_mm", "q_ls", "v_ms", "depth_m", "d_over_D"]; return kind === "toolout" && state.toolout && state.toolout.cols ? state.toolout.cols : { nodes: NODE_COLS, links: LINK_COLS, results: RES_COLS, toolout: TOOL_COLS }[kind]; }
 function renderTable(kind) {
   const st = state.table[kind], tbl = $("#tbl-" + kind); if (!tbl) return;
   let rows = rowsFor(kind);
@@ -831,11 +839,17 @@ function wireRain(host) {
 /* ------------------------------------------------------------------ tools menu and tool output */
 async function loadToolList() {
   try { state.tools = await jget("/tools"); } catch (e) { state.tools = []; }
+  renderToolsMenu();
+}
+const NOT_IN_MENU = new Set(["assistant", "open_sewergems", "import_gis", "export_dxf", "export_csv"]);          // own tab, own File button, or needs a file
+const COMPARE = { name: "compare_stored", menu: "SewerGEMS", label: "Compare with SewerGEMS (stored)", endpoint: "GET /api/g/projects/{pid}/scenarios/{sid}/compare_stored" };
+function renderToolsMenu() {
   const host = $("#tools-menu"), groups = {};
-  for (const t of state.tools.filter(t => t.name !== "assistant")) (groups[t.menu || "Tools"] = groups[t.menu || "Tools"] || []).push(t);
+  const list = state.tools.filter(t => !NOT_IN_MENU.has(t.name)).concat(state.stored ? [COMPARE] : []);
+  for (const t of list) (groups[t.menu || "Tools"] = groups[t.menu || "Tools"] || []).push(t);
   host.innerHTML = Object.entries(groups).map(([g, ts]) => `<div class="mh">${esc(g)}</div>` +
     ts.map(t => `<button data-tool="${esc(t.name)}" data-testid="tool-run-${esc(t.name)}" title="${esc(t.label)}">${esc(t.label.split(/[:(]/)[0].trim())}</button>`).join("")).join("");
-  $$("button", host).forEach(b => b.addEventListener("click", () => { host.hidden = true; const t = state.tools.find(x => x.name === b.dataset.tool); enqueue(() => runTool(t)); }));
+  $$("button", host).forEach(b => b.addEventListener("click", () => { host.hidden = true; const t = [...state.tools, COMPARE].find(x => x.name === b.dataset.tool); enqueue(() => runTool(t)); }));
 }
 async function runTool(t) {
   if (!state.pid) return;
@@ -852,9 +866,9 @@ async function runTool(t) {
       state.toolout = { tool: t, rows, cols: ["id", "q_peak", "v_peak", "depth_peak", "capacity_peak"], report: { ...r.summary, seconds: r.seconds }, storm: true };
       state.colorBy = "storm_cap"; $("#color-by").value = "storm_cap"; mergeResults();
     } else {
-      state.toolout = { tool: t, rows: r.rows || [], report: r.report || null, summary: r.summary };
+      state.toolout = { tool: t, rows: r.rows || [], report: r.report || (t.name === "compare_stored" ? r : null), summary: r.summary };
       if (r.scenario) updateScenario(r.scenario);
-      if (r.summary) state.summary = r.summary;
+      if (r.summary && t.name !== "compare_stored") state.summary = r.summary;
       if (r.structural) await loadModel();
       await loadResults();
     }
@@ -953,6 +967,7 @@ async function openProject(info, fit = true) {
   state.pid = info.id; state.info = info; state.sid = "base"; state.sel = { table: null, ids: [] }; state.pipeStart = null;
   state.toolout = null; state.results = null; state.summary = null; state.storm = null; state.draw = null; state.catchPending = null;
   state.rain = { step_min: 5, duration_min: 60, mode: "idf", idf: [], series: [] }; state.rainSig = null; state.history = [];
+  state.source = "engine"; state.stored = null; state.storedCache = {}; $("#results-source").value = "engine";
   $("#asst-log").innerHTML = "";
   if (state.colorBy.startsWith("storm")) { state.colorBy = "v_ms"; $("#color-by").value = "v_ms"; }
   $("#prof-start").value = ""; $("#prof-end").value = ""; $("#settings-form").dataset.sig = "";
@@ -976,7 +991,69 @@ async function openSampleDlg() {
     }));
   } catch (e) { list.textContent = e.message; }
 }
+async function openSgDlg() {
+  const list = $("#sg-list"); list.innerHTML = "Loading..."; $("#dlg-sg").hidden = false;
+  try {
+    const x = await jget("/sewergems/exports");
+    if (!x.length) { list.innerHTML = `<p data-testid="sg-empty">No SewerGEMS exports yet: run bridge job 100 in the VM.</p>`; return; }
+    list.innerHTML = x.map(e => `<button data-name="${esc(e.name)}" id="sg-${esc(e.name)}">${esc(e.name)} (${e.scenarios} scenarios)</button>`).join(""); tag(list);
+    $$("button", list).forEach(b => b.addEventListener("click", () => {
+      $("#dlg-sg").hidden = true;
+      enqueue(() => withBusy(`Opening ${b.dataset.name} (all scenarios)...`, async () => openProject(await jpost(`/projects/open_sewergems/${encodeURIComponent(b.dataset.name)}`))));
+    }));
+  } catch (e) { list.textContent = e.message; }
+}
+/* ---- import from GIS layers: two files, a field mapping for each, a snap tolerance */
+const GIS_FIELDS = {
+  nodes: ["id", "kind", "ground", "invert"],
+  links: ["id", "from_node", "to_node", "dn_mm", "inside_mm", "up_inv", "dn_inv", "length_m"],
+};
+const gisFiles = { nodes: null, links: null };
+function gisUpdate() { $("#gis-import").disabled = !(gisFiles.nodes && gisFiles.links); }
+async function gisPick(kind, file) {
+  gisFiles[kind] = null; $("#gis-error").textContent = ""; const info = $(`#gis-${kind}-info`), grid = $(`#gis-${kind}-map`);
+  if (!file) { info.textContent = ""; grid.innerHTML = ""; gisUpdate(); return; }
+  info.textContent = "Reading..."; grid.innerHTML = "";
+  try {
+    const fd = new FormData(); fd.append("file", file);
+    const r = await (await api("/gis/fields", { method: "POST", body: fd })).json();
+    gisFiles[kind] = file;
+    info.textContent = `${r.rows} rows, ${r.geometry || "geometry"}, ${r.crs ? "EPSG:" + r.crs : "no CRS"}`;
+    const opts = `<option value="">(none)</option>` + r.fields.map(f => `<option>${esc(f)}</option>`).join("");
+    grid.innerHTML = GIS_FIELDS[kind].map(f => `<label for="gis-map-${kind}-${f}">${f}</label><select id="gis-map-${kind}-${f}" data-field="${f}">${opts}</select>`).join("");
+    for (const sel of $$("select", grid)) { const hit = r.fields.find(x => x.toLowerCase() === sel.dataset.field.toLowerCase()); if (hit) sel.value = hit; }
+    tag(grid);
+  } catch (e) { info.textContent = ""; $("#gis-error").textContent = e.message; }
+  gisUpdate();
+}
+function gisMapping() {
+  const m = { nodes: {}, links: {} };
+  for (const kind of ["nodes", "links"]) for (const sel of $$(`#gis-${kind}-map select`)) if (sel.value) m[kind][sel.dataset.field] = sel.value;
+  return m;
+}
+function openGisDlg() {
+  gisFiles.nodes = gisFiles.links = null; $("#gis-nodes-file").value = ""; $("#gis-links-file").value = "";
+  for (const k of ["nodes", "links"]) { $(`#gis-${k}-info`).textContent = ""; $(`#gis-${k}-map`).innerHTML = ""; }
+  $("#gis-error").textContent = ""; gisUpdate(); $("#dlg-gis").hidden = false;
+}
+async function gisImport() {
+  const q = new URLSearchParams({ mapping: JSON.stringify(gisMapping()), snap_m: $("#gis-snap").value || "1", name: $("#gis-name").value || "Imported network" });
+  const fd = new FormData(); fd.append("nodes", gisFiles.nodes); fd.append("links", gisFiles.links);
+  $("#gis-error").textContent = ""; busy(true, "Importing...");
+  try {
+    const info = await (await api(`/projects/import_gis?${q}`, { method: "POST", body: fd })).json();
+    $("#dlg-gis").hidden = true; await openProject(info);
+  } catch (e) { $("#gis-error").textContent = e.message; }
+  finally { busy(false); }
+}
 function wireUi() {
+  $("#file-btn").onclick = e => { e.stopPropagation(); $("#file-menu").hidden = !$("#file-menu").hidden; };
+  $("#gis-btn").onclick = openGisDlg; $("#gis-cancel").onclick = () => { $("#dlg-gis").hidden = true; };
+  $("#gis-nodes-file").onchange = e => gisPick("nodes", e.target.files[0]);
+  $("#gis-links-file").onchange = e => gisPick("links", e.target.files[0]);
+  $("#gis-import").onclick = () => enqueue(gisImport);
+  $("#export-dxf-btn").onclick = () => enqueue(async () => { if (state.pid) saveBlob(await api(`/projects/${state.pid}/export.dxf?sid=${encodeURIComponent(state.sid)}`), "network.dxf"); });
+  $("#export-csv-btn").onclick = () => enqueue(async () => { if (state.pid) saveBlob(await api(`/projects/${state.pid}/export.csv?sid=${encodeURIComponent(state.sid)}`), "links.csv"); });
   $("#new-btn").onclick = $("#welcome-new").onclick = openNew;
   $("#new-cancel").onclick = () => { $("#dlg-new").hidden = true; };
   $("#new-crs-mode").onchange = () => { $("#new-epsg-wrap").style.display = $("#new-crs-mode").value === "epsg" ? "" : "none"; };
@@ -1011,12 +1088,14 @@ function wireUi() {
   });
   $("#undo-btn").onclick = () => hist("undo"); $("#redo-btn").onclick = () => hist("redo");
   $("#tools-btn").onclick = e => { e.stopPropagation(); $("#tools-menu").hidden = !$("#tools-menu").hidden; };
-  document.addEventListener("click", () => { $("#tools-menu").hidden = true; });
+  document.addEventListener("click", () => { $("#tools-menu").hidden = true; $("#file-menu").hidden = true; });
   $("#color-by").onchange = e => { state.colorBy = e.target.value; mergeResults(); renderLegend(); pushMap(); };
   $("#basemap-toggle").onchange = e => { if (state.info && state.info.basemap) map.setLayoutProperty("osm", "visibility", e.target.checked ? "visible" : "none"); };
   $$(".tool").forEach(b => b.addEventListener("click", () => setTool(b.id.slice(5))));
   $$(".tab").forEach(b => b.addEventListener("click", () => showTab(b.id.slice(4))));
   $("#hydro-attr").onchange = drawHydro;
+  $("#results-source").onchange = e => enqueue(async () => { state.source = e.target.value; mergeResults(); renderAll(); });
+  $("#sg-btn").onclick = openSgDlg; $("#sg-cancel").onclick = () => { $("#dlg-sg").hidden = true; };
   $("#asst-form").addEventListener("submit", e => { e.preventDefault(); asstSend(); });
   $("#asst-input").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); asstSend(); } });
   $("#import-btn").onclick = () => $("#import-file").click();
