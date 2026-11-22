@@ -13,3 +13,7 @@ script with no UI place is not done. Status: `tested` (gate or unit test green) 
 | `w18port/final_products.py` | stations sized (duty, force main, head, wet well, kW, MWh), plant flows, quantities | Stations panel; Quantities panel | tested (gate P0) |
 | `w18port/final_sg_compare.py` | a case against SewerGEMS's run of it, pipe by pipe | Referee panel "Compare with SewerGEMS" | ported, not yet run in W19 |
 | `w18port/run.py` | builds a work root from the fixtures and runs the chain until the lift stations stop changing | the engine behind "Run design chain" | tested (gate P0) |
+| `engine/flows.py` | design flow in every pipe: peaked unit loads, infiltration, transfers, lifts | instant re-run on every edit (task 4); Results table "flow" | tested on all 12 cases (1e-9) |
+| `engine/hydraulics.py`, `engine/analysis.py` | normal depth, velocity, d/D against Table 10, 3 m/s check | instant re-run; map colour by v / d/D; failing pipes flagged | tested on all 12 cases (1e-9) |
+| `engine/design.py` | pass-by-pass sizing at the current size's Table 11 gradient | Design menu "Size pipes (keep layout)" | tested on all 12 cases (identical sizes) |
+| `engine/peaking.py` | Extreme Flow Setup table, Peltier, Merrimack | Settings "Peaking table" | tested (G201 p71-72) |
