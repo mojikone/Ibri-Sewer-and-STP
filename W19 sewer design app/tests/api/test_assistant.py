@@ -49,6 +49,7 @@ def test_loop_with_the_stand_in(monkeypatch):
 
 def test_without_a_key_the_endpoint_says_so(monkeypatch):
     monkeypatch.delenv("W19_ASSISTANT_STUB", raising=False); monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setattr(runner, "_key", lambda: None)              # no key in the process or the user environment
     r = C.post("/api/assistant", json=dict(sid="SC1-2056", message="hi"))
     assert r.status_code == 503 and "ANTHROPIC_API_KEY" in r.json()["detail"]
 

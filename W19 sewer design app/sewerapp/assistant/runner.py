@@ -28,9 +28,22 @@ The design basis of these designs (W18, the engineer's and client's decisions of
 - The km above DN200 under 0.75 m/s is judged with velocity at two decimals (as the SewerGEMS comparison); the report's 9.29 km for SC1-2056 uses the unrounded laid gradients."""
 
 
+def _key():
+    """The key from this process's environment, else from the Windows USER environment (a user variable set after the
+    app or its shell was started never reaches the process). Read only; never written or logged."""
+    k = os.environ.get("ANTHROPIC_API_KEY")
+    if k or os.name != "nt": return k
+    try:
+        import winreg
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment") as h:
+            return winreg.QueryValueEx(h, "ANTHROPIC_API_KEY")[0] or None
+    except OSError:
+        return None
+
+
 def available():
     if os.environ.get("W19_ASSISTANT_STUB") == "1": return dict(available=True, model="stub", reason="stand-in client (tests)")
-    if not os.environ.get("ANTHROPIC_API_KEY"):
+    if not _key():
         return dict(available=False, model=MODELS["opus"],
                     reason="ANTHROPIC_API_KEY is not set. Set it as a user environment variable and restart the app.")
     return dict(available=True, model=MODELS["opus"], reason="")
@@ -39,7 +52,7 @@ def available():
 def _client():
     if os.environ.get("W19_ASSISTANT_STUB") == "1": return StubClient()
     import anthropic
-    return anthropic.Anthropic()
+    return anthropic.Anthropic(api_key=_key())
 
 
 def ask(project, sid, message, history=None, model="opus", max_turns=12):
