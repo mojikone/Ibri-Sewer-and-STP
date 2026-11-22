@@ -4,3 +4,5 @@ __pycache__/
 .pytest_cache/
 tests/fixtures/local/
 web/node_modules/
+lid_*.txt
+*.egg-info/
