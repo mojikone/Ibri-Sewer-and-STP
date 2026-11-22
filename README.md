@@ -92,6 +92,16 @@ becomes real.
 
 | Date | Update |
 |---|---|
+| 2026-11-22 (W19 batch 2) | **Scenarios, design control and quantities in the editor.**
+- **Scenarios:** a manager (open, copy, rename, delete with copies) and compare as a difference map. SC1-2056 design against W18-2056: 1,829 size changes. Save keeps every scenario in the GeoPackage.
+- **Summary tab** with charts.
+- **Design control:** the whole network or a selection, locked pipes, and a preview before applying.
+- **Quantities** in W18's BOQ structure, plus a KMZ export.
+- **Storm:** a time slider, and the peak level on the profile; profile routes are saved by name.
+- **Assistant:** aware of the selection and the route, and able to point on the map.
+- **Finding:** 200 lone manholes in the SewerGEMS export carry 0 levels and are now excluded. The deepest manhole on a pipe is P4-M1011 at 15.88 m, beyond the 12 m cover maximum: to check.
+
+134 tests pass. |
 | 2026-11-22 (W19 batch 1) | **The editor keeps your work across a reload or restart and edits like a spreadsheet.**
 - **Reload and restart:** a page reload reopens the project, scenario and view. The app snapshots each open project to `W19…/work/sessions`, so a restart finds it too; SC1-2056's 23 scenarios come back in 9 s.
 - **Tables:** double-click a cell to edit; paste columns from Excel as one undo step, with invert changes carrying the pipe ends.
