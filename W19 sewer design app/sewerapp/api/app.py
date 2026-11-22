@@ -11,6 +11,8 @@ from sewerapp.api import exports, tools
 
 WEB = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "web")
 app = FastAPI(title="Sewer design app")
+from sewerapp.api.general_api import router as general_router
+app.include_router(general_router)
 P = Project()
 _geo = {}
 _lock = threading.Lock()
