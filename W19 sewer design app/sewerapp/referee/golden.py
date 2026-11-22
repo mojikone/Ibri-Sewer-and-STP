@@ -59,8 +59,8 @@ def engineering_differences(case_dir, case):
     """Identical sizes, depths +-1 mm, flows 0.1 %, the same stations at the same manholes, the same km under 0.75 m/s
     at 2031 and 2036 (+-0.01 km), the same deepest manhole (+-1 mm)."""
     out = []
-    a = pd.read_csv(os.path.join(case_dir, "named", "links.csv")).set_index("key")
-    b = fixtures.read_csv(f"golden/{case}/named/links.csv").set_index("key")
+    a = pd.read_csv(os.path.join(case_dir, "named", "links.csv")).astype({"key": str}).set_index("key").sort_index()
+    b = fixtures.read_csv(f"golden/{case}/named/links.csv").astype({"key": str}).set_index("key").sort_index()
     if not a.index.equals(b.index): return [f"links: different pipe keys ({len(a)} vs {len(b)})"]
     n = int((a.dn_mm != b.dn_mm).sum())
     if n: out.append(f"size: {n} pipes differ, first {a.index[a.dn_mm != b.dn_mm][0]}")

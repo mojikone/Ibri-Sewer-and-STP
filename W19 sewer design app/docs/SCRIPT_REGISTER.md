@@ -17,3 +17,4 @@ script with no UI place is not done. Status: `tested` (gate or unit test green) 
 | `engine/hydraulics.py`, `engine/analysis.py` | normal depth, velocity, d/D against Table 10, 3 m/s check | instant re-run; map colour by v / d/D; failing pipes flagged | tested on all 12 cases (1e-9) |
 | `engine/design.py` | pass-by-pass sizing at the current size's Table 11 gradient | Design menu "Size pipes (keep layout)" | tested on all 12 cases (identical sizes) |
 | `engine/peaking.py` | Extreme Flow Setup table, Peltier, Merrimack | Settings "Peaking table" | tested (G201 p71-72) |
+| `referee/golden.py`, `referee/sewergems.py` | a case against W18 at the spec's tolerances; against SewerGEMS's saved export | Referee panel "Compare with W18 / SewerGEMS" (task 5) | tested (gate P1A) |
