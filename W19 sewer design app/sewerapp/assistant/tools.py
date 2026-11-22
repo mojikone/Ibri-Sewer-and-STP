@@ -78,7 +78,9 @@ def call(project, name, a):
         return dict(count=int(len(r)), rows=r.head(max(1, min(a["limit"], 200)))[
             ["label", "dn_mm", "length_m", "s_pc", "q_ls", "v_ms", "d_over_D", "v2031_ms"] + FLAGS].round(4).to_dict("records"))
     if name == "get_pipe":
-        res, _ = project.results(a["scenario"]); _, r = _row(res, a["label"]); return _clean(r.round(4).to_dict()) if hasattr(r, "round") else r
+        res, _ = project.results(a["scenario"]); _, r = _row(res, a["label"])
+        d = _clean(r.to_dict())
+        return {k: round(v, 4) if isinstance(v, float) else v for k, v in d.items()}
     if name == "explain_pipe":
         res, _ = project.results(a["scenario"]); _, r = _row(res, a["label"])
         checks = [dict(rule=RULES[0][0], source=RULES[0][1], value=round(float(r.d_over_D), 3), limit=float(r.limit), ok=not bool(r.over_limit)),

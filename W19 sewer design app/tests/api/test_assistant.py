@@ -58,3 +58,12 @@ def test_live_answer_cites_the_page():
     r = runner.ask(P, "SC1-2056", "Why does pipe P1-P151 fail? Give its d/D, the limit and the guideline page.")
     print(r["usage"])
     assert "p27" in r["reply"] and any(c["name"] in ("explain_pipe", "get_pipe") for c in r["tool_calls"])
+
+
+def test_the_other_read_tools_run_on_real_data():
+    assert any(s["id"] == "SC1-2056" for s in T.call(P, "list_scenarios", {}))
+    p = T.call(P, "get_pipe", dict(scenario="SC1-2056", label="P1-P151"))
+    assert p["dn_mm"] == 1000 and p["kind"] == "gravity join"
+    w = T.call(P, "make_whatif", dict(scenario="SC1-2056", name="t", edits=[dict(label="P1-P151", field="dn_mm", value=1200)]))
+    c = T.call(P, "compare_scenarios", dict(a="SC1-2056", b=w["scenario"])); assert c["changed"] >= 1
+    r = T.call(P, "run_tool", dict(scenario="SC1-2056", name="checks")); assert r["rows"]
