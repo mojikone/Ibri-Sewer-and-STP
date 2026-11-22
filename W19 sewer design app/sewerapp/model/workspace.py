@@ -17,7 +17,9 @@ Edit ops (dicts with "op"):
   set_setting {path: "a.b.c", value}
   set_rain   {rain: {step_min, duration_min, series [[min, intensity]] or idf {durations_min, intensities}}}
   design     {load_set?, only?}   automated design of every conduit, or of `only` (the rest kept); locked ones kept; undoable
-  lock       {ids, locked}  lock or unlock conduits for the design (settings design.locked)"""
+  lock       {ids, locked}  lock or unlock conduits for the design (settings design.locked)
+  set_section {ids, section, dn_mm}  give conduits a box, open-rectangle or trapezoid section (engine/sections.py), or
+                             None to make them circular again, at size dn_mm (the smallest catalogue size if not given)"""
 import copy, itertools, math
 import numpy as np, pandas as pd
 from sewerapp.engine import steady
@@ -155,6 +157,28 @@ def apply(p, e):
         q, rep = design_general.design(p, e.get("load_set"), e.get("only"))
         p.links, p.nodes = q.links, q.nodes; e["report"] = rep
         return True
+    if op == "set_section":
+        from sewerapp.engine.sections import SHAPES
+        ids = [str(i) for i in e["ids"]]; missing = [i for i in ids if i not in p.links.index]
+        if missing: raise ValueError(f"no link {missing[:3]}")
+        s = e.get("section")
+        if s is not None:
+            if s.get("shape") not in SHAPES: raise ValueError(f"shape must be one of {SHAPES}")
+            keys = ["rise_m", "span_m", "n"] + (["bottom_m", "z_left", "z_right"] if s["shape"] == "trapezoid" else [])
+            if s["shape"] == "trapezoid": keys.remove("span_m")
+            bad = [k for k in keys if not (isinstance(s.get(k), (int, float)) and s[k] >= 0) or (k in ("rise_m", "n") and not s[k] > 0)]
+            if "barrels" in s and not (isinstance(s["barrels"], (int, float)) and s["barrels"] >= 1 and float(s["barrels"]).is_integer()): bad.append("barrels (a whole number)")
+            if bad: raise ValueError(f"a {s['shape']} needs positive {', '.join(bad)}")
+            for i in ids:
+                p.sections[i] = {k: (int(v) if k == "barrels" else float(v) if isinstance(v, (int, float)) else v) for k, v in s.items()
+                                 if not (k == "barrels" and v == 1)}
+                p.links.loc[i, ["dn_mm", "inside_mm"]] = [0, np.nan]
+        else:
+            dn = int(e.get("dn_mm") or p.catalogue().nominal_mm.iloc[0]); ins = p.inside_of(dn)
+            for i in ids:
+                if p.sections.pop(i, None) is not None or not p.links.loc[i, "dn_mm"] > 0:
+                    p.links.loc[i, ["dn_mm", "inside_mm"]] = [dn, ins if ins == ins else float(dn)]
+        return False
     if op == "lock":
         ids = [str(i) for i in e["ids"]]; missing = [i for i in ids if i not in p.links.index]
         if missing: raise ValueError(f"no link {missing[:3]}")

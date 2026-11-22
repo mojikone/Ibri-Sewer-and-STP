@@ -762,5 +762,26 @@ def test_settings_tables_edited_applied_and_undone(page):
     assert page.evaluate("window.ed.state.rain.idf.length") == 0                                    # the rain rows were not touched
 
 
+def test_a_pipe_becomes_a_box_with_barrels_then_a_circle_again(page):
+    nid, lid = draw_network(page)
+    page.evaluate("id => window.ed.selectElement('links', id)", lid[1]); idle(page)
+    sh = page.get_by_test_id("sec-shape"); assert sh.input_value() == "circle"
+    sh.select_option("box")
+    page.get_by_test_id("sec-span_m").fill("2"); page.get_by_test_id("sec-rise_m").fill("1"); page.get_by_test_id("sec-barrels").fill("2")
+    page.get_by_test_id("sec-apply").click(); idle(page)
+    p = page.evaluate("id => window.ed.state.model.linkFeat.find(f => f.id === id).properties", lid[1])
+    assert p["section"] == "2 x Box 2 x 1 m" and p["sec"]["barrels"] == 2 and p["dn_mm"] == 0
+    assert result(page, lid[1], "depth_m") > 0 and result(page, lid[1], "q_full_ls") > 0 and summary(page)["not_analysed"] == 0
+    expect(page.get_by_test_id("res-depth_m")).to_be_visible(); expect(page.get_by_test_id("res-yc_m")).to_be_visible()
+    assert page.get_by_test_id("sec-shape").input_value() == "box" and page.get_by_test_id("sec-barrels").input_value() == "2"
+    page.get_by_test_id("sec-barrels").fill("1.5"); page.get_by_test_id("sec-apply").click(); idle(page)   # refused in the page
+    assert page.evaluate("id => window.ed.state.model.linkFeat.find(f => f.id === id).properties.sec.barrels", lid[1]) == 2
+    page.get_by_test_id("sec-shape").select_option("circle"); page.get_by_test_id("sec-apply").click(); idle(page)
+    p = page.evaluate("id => window.ed.state.model.linkFeat.find(f => f.id === id).properties", lid[1])
+    assert "sec" not in p and p["dn_mm"] > 0 and result(page, lid[1], "d_over_D") > 0
+    page.get_by_test_id("undo-btn").click(); idle(page)
+    assert page.evaluate("id => window.ed.state.model.linkFeat.find(f => f.id === id).properties.sec.shape", lid[1]) == "box"
+
+
 def test_no_javascript_errors(page):
     assert page.errors == [], page.errors

@@ -5,7 +5,9 @@ nodes      id, kind (manhole, wetwell, outfall, storage, junction), x, y, ground
 links      id, kind (conduit, pump), from_node, to_node, length_m, dn_mm, inside_mm, up_inv, dn_inv, transfer
            (a conduit that carries its upstream flow as a transfer, unpeaked: W18's gravity joins), coords (vertices)
 catchments id, outlet, area_ha, imperv_pc, width_m, slope_pc, n_imperv, n_perv, gauge, coords (polygon)
-settings   see DEFAULT_SETTINGS; load_sets {name: {node id: m3/d}}; rain {gauges, timeseries}; passthrough {section: text}"""
+settings   see DEFAULT_SETTINGS; load_sets {name: {node id: m3/d}}; rain {gauges, timeseries}; passthrough {section: text}
+sections   {link id: {shape box|rect_open|trapezoid, rise_m, span_m, bottom_m, z_left, z_right, n}}: a conduit that is not a
+           circle (engine/sections.py); its dn_mm is 0 and inside_mm empty"""
 import copy, json
 from dataclasses import dataclass, field
 import numpy as np, pandas as pd
@@ -51,6 +53,7 @@ class Project:
     fixed_flows: dict = field(default_factory=dict)   # {load set: {pump or transfer link id: m3/d}}, held fixed
     rain: dict = field(default_factory=dict)
     passthrough: dict = field(default_factory=dict)
+    sections: dict = field(default_factory=dict)
 
     def copy(self):
         return copy.deepcopy(self)
@@ -82,4 +85,4 @@ class Project:
 
     def to_json(self):
         return dict(name=self.name, crs=self.crs, settings=self.settings, load_sets=self.load_sets, inflow_sets=self.inflow_sets, fixed_flows=self.fixed_flows, rain=self.rain,
-                    passthrough=self.passthrough)
+                    passthrough=self.passthrough, sections=self.sections)

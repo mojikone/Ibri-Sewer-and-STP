@@ -358,7 +358,10 @@ def model(pid: str, sid: str):
             a = np.array(c); x, y = coords.to_display(p.crs, a[:, 0], a[:, 1]); line = [[float(u), float(v)] for u, v in zip(x, y)]
         else:
             line = [list(map(float, ll[r["from_node"]])), list(map(float, ll[r["to_node"]]))]
-        if i in sections: r["section"] = sections[i]
+        if i in p.sections:
+            from sewerapp.engine.sections import label as _seclabel
+            r["section"] = _seclabel(p.sections[i]); r["sec"] = p.sections[i]
+        elif i in sections: r["section"] = sections[i]
         links.append(dict(type="Feature", id=i, geometry=dict(type="LineString", coordinates=line), properties=clean(dict(id=i, **r))))
     catch = []
     for i, r in zip(p.catchments.index, p.catchments.to_dict("records")):
@@ -378,7 +381,7 @@ def results(pid: str, sid: str):
     with _lock: res, summ = s.solve(sid)
     if res is None: return dict(summary=clean(summ), links={})
     cols = [c for c in ["dn_mm", "q_ls", "v_ms", "d_over_D", "limit", "s_pc", "over_limit", "over_vmax", "surcharged",
-                        "negative_slope", "q_check_ls", "v_check_ms", "under_vmin"] if c in res.columns]
+                        "negative_slope", "q_check_ls", "v_check_ms", "under_vmin", "depth_m", "yc_m", "q_full_ls"] if c in res.columns]
     out = res[cols].copy()
     for c in out.columns:
         if out[c].dtype.kind == "f": out[c] = out[c].round(4)
@@ -661,6 +664,9 @@ def profile(pid: str, sid: str, start: str, end: str | None = None, via: str | N
     for i, f, t in zip(p.links.index, p.links.from_node, p.links.to_node):
         if i not in on: at.setdefault(f, []).append((i, "out")); at.setdefault(t, []).append((i, "in"))
 
+    from sewerapp.engine.sections import label as _seclab
+    secs = p.sections or {}
+    bore = lambda i, L: secs[i]["rise_m"] * 1000.0 if i in secs else L.inside_mm      # mm: a section's rise stands for its bore
     def joins(n):
         out = []
         for i, d in at.get(n, ()):
@@ -668,7 +674,8 @@ def profile(pid: str, sid: str, start: str, end: str | None = None, via: str | N
             inv = p.nodes.invert[n] if pump else (L.up_inv if d == "out" else L.dn_inv)
             r = res.loc[i] if res is not None and i in res.index else None
             out.append(clean(dict(link=i, kind=L.kind, dir=d, other=L.to_node if d == "out" else L.from_node, dn_mm=L.dn_mm,
-                                  inside_mm=0 if pump else L.inside_mm, invert=inv, transfer=bool(L.transfer),
+                                  inside_mm=0 if pump else bore(i, L), invert=inv, transfer=bool(L.transfer),
+                                  section=_seclab(secs[i]) if i in secs else None,
                                   q_ls=None if r is None or "q_ls" not in r else r.q_ls)))
         return sorted(out, key=lambda j: (j["dir"] != "in", -(j["inside_mm"] or 0)))
     st = STORM.get((pid, sid)); sn = st["nodes"] if st else {}
@@ -676,7 +683,7 @@ def profile(pid: str, sid: str, start: str, end: str | None = None, via: str | N
     rows, ch = [], 0.0
     for i, rev in links:
         L = p.links.loc[i]; n0, n1 = (L.to_node, L.from_node) if rev else (L.from_node, L.to_node)
-        D = (L.inside_mm or 0) / 1000.0 if L.kind != "pump" else 0.0
+        D = (bore(i, L) or 0) / 1000.0 if L.kind != "pump" else 0.0
         r = res.loc[i] if res is not None and i in res.index else None
         dd = float(r.d_over_D) if r is not None and "d_over_D" in r and r.d_over_D == r.d_over_D else 0.0
         up, dn = (L.up_inv, L.dn_inv) if L.kind != "pump" else (p.nodes.invert[L.from_node], p.nodes.invert[L.to_node])
@@ -685,7 +692,7 @@ def profile(pid: str, sid: str, start: str, end: str | None = None, via: str | N
         g = lambda k: None if r is None or k not in r else r[k]
         rows.append(clean(dict(link=i, kind=L.kind, reversed=bool(rev), from_node=n0, to_node=n1, ch0=ch, ch1=ch + ln, length_m=ln,
                                ground0=p.nodes.ground[n0], ground1=p.nodes.ground[n1], inv0=i0, inv1=i1, crown0=i0 + D, crown1=i1 + D,
-                               water0=i0 + dd * D, water1=i1 + dd * D, dn_mm=L.dn_mm,
+                               water0=i0 + dd * D, water1=i1 + dd * D, dn_mm=L.dn_mm, section=_seclab(secs[i]) if i in secs else None,
                                slope_pc=(up - dn) / ln * 100 if ln > 0 and L.kind != "pump" else None,
                                q_ls=g("q_ls"), v_ms=g("v_ms"), d_over_D=g("d_over_D"),
                                fail=bool(r is not None and any(bool(g(k)) for k in ("over_limit", "over_vmax", "surcharged", "negative_slope"))),
@@ -759,13 +766,14 @@ def sewergems_models():
 class SgExport(BaseModel):
     guest: str
     tag: str | None = None
+    run: bool = False                                      # compute every scenario on the copy before exporting
 
 
 @router.post("/sewergems/export")
 def sewergems_export_job(b: SgExport):
     """Write the bridge job that exports a SewerGEMS model (every scenario, results and loads) from a copy, in the VM."""
     from sewerapp.io import bridge_jobs as B
-    try: return B.submit(b.guest, b.tag)
+    try: return B.submit(b.guest, b.tag, b.run)
     except ValueError as e: raise HTTPException(400, str(e))
 
 
@@ -820,6 +828,32 @@ def compare_stored(pid: str, sid: str):
     return clean(dict(links=int(len(j)), pc_flow_within_0_1=round(float((dq.abs() < 0.1).mean() * 100), 3),
                       largest_flow_pc=float(dq.abs().max()), dv_p05=float((j.v_ms - j.v_ms_sg).quantile(.05)),
                       dv_p95=float((j.v_ms - j.v_ms_sg).quantile(.95))))
+
+
+@router.get("/projects/{pid}/scenarios/{sid}/section_check")
+def section_check(pid: str, sid: str):
+    """The app's box and channel hydraulics against SewerGEMS, independent of the hydrology: at SewerGEMS's own flow in
+    each section conduit, the app's normal and critical depth (engine/sections.py, on the conduit's gradient) against the
+    normal and critical depth SewerGEMS reports. Needs an export with sections and results (run the scenarios first)."""
+    from sewerapp.engine import sections as X
+    s = _s(pid); r = s.external.get(sid)
+    if r is None or "yn_sg_m" not in r: raise HTTPException(400, "no SewerGEMS section results in this scenario (export it with 'run every scenario first')")
+    p = s.model(sid); ids = [i for i in r.index if i in p.sections and i in p.links.index]
+    t = r.loc[ids]; t = t[(t.q_ls > 0) & t.yn_sg_m.notna()]
+    if not len(t): raise HTTPException(400, "no section conduit carries a flow in SewerGEMS's results")
+    L = p.links.loc[t.index]; S = ((L.up_inv - L.dn_inv) / L.length_m).to_numpy()
+    code, rise, bottom, zl, zr, n = X.unpack([p.sections[i] for i in t.index])
+    q = t.q_ls.to_numpy() / 1000.0
+    with np.errstate(invalid="ignore", divide="ignore"):
+        yn, _, full = X.normal_depth(q, S, code, rise, bottom, zl, zr, n); yc = X.critical_depth(q, code, rise, bottom, zl, zr)
+    d = pd.DataFrame(dict(q_ls=t.q_ls, s_pc=S * 100, yn_m=yn, yn_sg_m=t.yn_sg_m, yc_m=yc, yc_sg_m=t.yc_sg_m, full=full), index=t.index)
+    free = d[~d.full & (d.s_pc > 0)]
+    dyn = (free.yn_m - free.yn_sg_m).abs(); dyc = (d.yc_m - d.yc_sg_m).abs()
+    pc = dyn / free.yn_sg_m.where(free.yn_sg_m > 0) * 100
+    return clean(dict(conduits=int(len(d)), compared=int(len(free)), full_or_flat=int(len(d) - len(free)),
+                      yn_within_1pc=round(float((pc < 1).mean() * 100), 2) if len(pc) else None,
+                      yn_max_diff_m=float(dyn.max()) if len(dyn) else None, yn_max_diff_pc=float(pc.max()) if len(pc) else None,
+                      yc_max_diff_m=float(dyc.max()), rows={i: x for i, x in zip(d.index, d.round(4).to_dict("records"))}))
 
 
 _init_autosave()

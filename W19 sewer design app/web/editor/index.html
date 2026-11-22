@@ -233,6 +233,7 @@
   <h4>Export from SewerGEMS <span class="muted">(SewerGEMS reads a copy of the model in the VM; the model itself is not touched)</span></h4>
   <input id="sg-filter" type="search" placeholder="Filter the models by name or folder" style="width:100%">
   <div id="sg-models" class="list sgms"></div>
+  <label class="chk" title="Compute every scenario on the copy before exporting: a model saved without results then has them. A storm model takes minutes per scenario."><input id="sg-run" type="checkbox"> Run every scenario first (for SewerGEMS's results)</label>
   <div class="row"><input id="sg-guest" type="text" placeholder="or a model's path as the VM sees it: C:\... or \\VBOXSVR\..." style="flex:1"><button id="sg-export-path">Export</button></div>
   <div id="sg-jobs"></div>
   <div class="row"><button id="sg-cancel">Close</button></div>

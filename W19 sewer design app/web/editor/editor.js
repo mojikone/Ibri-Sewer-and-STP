@@ -359,7 +359,7 @@ async function exec(op, more) {
   updateScenario(r.scenario); state.summary = r.summary;
   if (state.storm) state.storm.stale = true;
   if (op.op === "set_rain") state.rainApplied = true;
-  const reread = r.structural || op.op === "set_many" || op.op === "set_loads" || op.op === "lock" || (op.op === "set" && op.table === "nodes" && op.field === "invert");
+  const reread = r.structural || op.op === "set_many" || op.op === "set_loads" || op.op === "lock" || op.op === "set_section" || (op.op === "set" && op.table === "nodes" && op.field === "invert");
   if (reread) await loadModel(); else patchLocal(op);
   if (!more) { await loadResults(); renderAll(); }
   return r;
@@ -591,7 +591,9 @@ function renderProps() {
       `<span class="muted" data-testid="lock-state">${n ? (n === state.sel.ids.length ? "locked" : `${n} of ${state.sel.ids.length} locked`) : "free"}</span></div>`;
   }
   if (!multi && (table === "nodes" || table === "links")) h += `<div class="trace-bar">Trace <button id="trace-up" title="Everything that drains here (U)">&#8593; Upstream</button><button id="trace-down" title="The way to the outfall (D)">&#8595; Downstream</button></div>`;
+  if (table === "links" && fs.every(f => f.properties.kind === "conduit")) h += sectionEditor(fs);
   for (const k of keys) {
+    if (k === "sec" || k === "section") continue;                                   // shown by the section editor
     if (multi && ["id", "x", "y", "from_node", "to_node"].includes(k)) continue;
     const v = val(k), ty = fieldType(table, k, fs[0].properties[k]);
     h += `<div class="pr"><label for="prop-${k}">${esc(k)}</label>${control(table, k, ty, v)}<span class="u">${UNITS[k] || ""}</span></div>`;
@@ -621,6 +623,7 @@ function renderProps() {
     inp.addEventListener("change", go);
     inp.addEventListener("keydown", e => { if (e.key === "Enter") { go(); inp.blur && inp.blur(); } });
   });
+  wireSectionEditor();
   $$("[data-kind=load]", host).forEach(inp => {
     const go = () => { if (inp.value === "" || inp._sent === inp.value) return; inp._sent = inp.value; const v = Number(inp.value), set = inp.dataset.set, ids = state.sel.ids.slice(); enqueue(() => execMany(ids.map((n, k) => ({ op: "set_load", set, node: n, value: v })))); };
     inp.addEventListener("focus", () => { inp._sent = undefined; });
@@ -628,6 +631,43 @@ function renderProps() {
     inp.addEventListener("keydown", e => { if (e.key === "Enter") { go(); inp.blur(); } });
   });
   renderResultsBlock();
+}
+const szLab = r => r.section ? String(r.section) : "DN" + r.dn_mm;
+/* ---- cross-section: a catalogue circle, or a box, open rectangle or trapezoid with its own n (op set_section) */
+const SEC_SHAPES = [["circle", "Circular (catalogue size)"], ["box", "Box (closed rectangle)"], ["rect_open", "Open rectangle"], ["trapezoid", "Trapezoid (open)"]];
+const SEC_FIELDS = { box: [["span_m", "Span (width)", "m"], ["rise_m", "Rise (height)", "m"], ["n", "Manning's n", ""], ["barrels", "Barrels", ""]],
+  rect_open: [["span_m", "Width", "m"], ["rise_m", "Bank height", "m"], ["n", "Manning's n", ""], ["barrels", "Barrels", ""]],
+  trapezoid: [["bottom_m", "Bottom width", "m"], ["z_left", "Side slope left (H:1V)", ""], ["z_right", "Side slope right (H:1V)", ""], ["rise_m", "Bank height", "m"], ["n", "Manning's n", ""], ["barrels", "Barrels", ""]] };
+function sectionEditor(fs) {
+  const s0 = fs[0].properties.sec, same = fs.every(f => JSON.stringify(f.properties.sec || null) === JSON.stringify(s0 || null));
+  const shape = !same ? "" : s0 ? s0.shape : "circle";
+  let h = `<h5>Cross-section</h5><div class="pr"><label for="sec-shape">Shape</label><select id="sec-shape" data-testid="sec-shape">` +
+    (shape === "" ? `<option value="" selected>mixed</option>` : "") + SEC_SHAPES.map(([v, l]) => `<option value="${v}"${v === shape ? " selected" : ""}>${l}</option>`).join("") + `</select><span></span></div>`;
+  h += `<div id="sec-fields">${secFieldsHtml(shape, same ? s0 : null)}</div>`;
+  h += `<div class="row"><button id="sec-apply" data-testid="sec-apply" title="Apply the section to the ${fs.length > 1 ? fs.length + " selected conduits" : "conduit"} (one undoable edit)">Apply section</button></div>`;
+  return h;
+}
+function secFieldsHtml(shape, s) {
+  if (shape === "circle") return `<p class="muted">Sized from the pipe catalogue (dn_mm below); the d/D limits and velocities of the sewer rules apply.</p>`;
+  const F = SEC_FIELDS[shape]; if (!F) return "";
+  const dflt = { span_m: 2, rise_m: 1.5, bottom_m: 2, z_left: 1.5, z_right: 1.5, n: shape === "box" ? 0.015 : 0.02, barrels: 1 };
+  return F.map(([k, l, u]) => `<div class="pr"><label for="sec-${k}">${l}</label><input type="number" step="any" min="0" id="sec-${k}" data-testid="sec-${k}" value="${s && s[k] != null ? +(+s[k]).toFixed(4) : dflt[k]}"><span class="u">${u}</span></div>`).join("") +
+    `<p class="muted">Solved by Manning's equation at normal depth with this n; the sewer d/D limit and v max do not apply.${shape === "box" ? " A box that cannot carry its flow with a free surface is surcharged." : " Over the bank height it is overtopped (shown as surcharged)."}</p>`;
+}
+function wireSectionEditor() {
+  const sel = $("#sec-shape"); if (!sel) return;
+  sel.onchange = () => { $("#sec-fields").innerHTML = secFieldsHtml(sel.value, null); };
+  $("#sec-apply").onclick = () => {
+    const shape = sel.value, ids = state.sel.ids.slice(); if (!shape) return;
+    if (shape === "circle") {
+      const d = $("#prop-dn_mm"), dn = d && state.info && state.info.catalogue.includes(+d.value) ? +d.value : undefined;
+      enqueue(() => exec(dn ? { op: "set_section", ids, section: null, dn_mm: dn } : { op: "set_section", ids, section: null })); return;
+    }
+    const s = { shape }; let bad = null;
+    for (const [k, l] of SEC_FIELDS[shape]) { const v = Number($("#sec-" + k).value); if (!isFinite(v) || v < 0 || ((k === "rise_m" || k === "n" || k === "span_m") && !(v > 0)) || (k === "barrels" && !(Number.isInteger(v) && v >= 1))) bad = l; s[k] = v; }
+    if (bad) { toast(`${bad}: give a positive number.`); return; }
+    enqueue(() => exec({ op: "set_section", ids, section: s }));
+  };
 }
 function control(table, k, ty, v) {
   const a = `id="prop-${k}" data-testid="prop-${k}" data-field="${k}" data-type="${ty}"`, vs = v === undefined ? "" : esc(typeof v === "number" ? +v.toFixed(4) : (v ?? ""));   // shown to 0.1 mm; sent only if edited
@@ -648,6 +688,8 @@ function renderResultsBlock() {
   const r = R[state.sel.ids[0]];
   if (!r) { host.innerHTML = `<h5>Results</h5><p class="muted">No result (the network could not be solved, or this is a pump).</p>`; return; }
   const rows = sg ? [["q_ls", "Flow (L/s)"], ["v_ms", "Velocity (m/s)"], ["depth_m", "Depth (m)"], ["d_over_D", "d/D"]] : [["q_ls", "Flow (L/s)"], ["v_ms", "Velocity (m/s)"], ["d_over_D", "d/D"], ["limit", "d/D limit"], ["s_pc", "Slope (%)"]];
+  if (r.depth_m != null && !sg) rows.splice(2, 2, ["depth_m", "Normal depth (m)"], ["d_over_D", "Depth / rise"], ["yc_m", "Critical depth (m)"], ["q_full_ls", "Full capacity (L/s)"]);
+  if (sg && r.yn_sg_m != null) rows.push(["yn_sg_m", "Normal depth (m)"], ["yc_sg_m", "Critical depth (m)"]);
   let h = `<h5>Results ${sg ? "from SewerGEMS (stored)" : "(W19 engine)"}, read-only</h5>`;
   for (const [k, l] of rows) h += `<div class="pr"><label>${l}</label><span data-testid="res-${k}">${num(r[k], 4)}</span><span></span></div>`;
   const fl = sg ? [] : ["over_limit", "over_vmax", "surcharged", "negative_slope", "under_vmin"].filter(k => r[k]);
@@ -819,7 +861,7 @@ function renderProfile(rows) {
   if (cov.cover_max && hi - lo > 0 && Math.min(...g.map(p => p[1])) - cov.cover_max > lo) s += gline(cov.cover_max, `stroke="#c0392b" stroke-width="1" stroke-dasharray="5 3" class="covmax"`);
   for (const r of vis) {
     const x0 = X(r.ch0), x1 = X(r.ch1), pump = r.kind === "pump";
-    const tip = `${r.link}${pump ? " (pump)" : "  DN" + r.dn_mm}  ${r.slope_pc == null ? "" : num(r.slope_pc, 3) + " %  "}v ${r.v_ms == null ? "-" : num(r.v_ms, 2)} m/s${r.reversed ? "  (walked against the flow)" : ""}`;
+    const tip = `${r.link}${pump ? " (pump)" : "  " + szLab(r)}  ${r.slope_pc == null ? "" : num(r.slope_pc, 3) + " %  "}v ${r.v_ms == null ? "-" : num(r.v_ms, 2)} m/s${r.reversed ? "  (walked against the flow)" : ""}`;
     if (pump) { s += `<g class="seg pump" data-link="${esc(r.link)}"><title>${esc(tip)}</title><line class="pipe" x1="${x0}" y1="${Y(r.inv0)}" x2="${x1}" y2="${Y(r.inv1)}" stroke="#7b3fa0" stroke-width="2" stroke-dasharray="5 3"/></g>`; continue; }
     s += `<g class="seg${r.fail ? " fail" : ""}" data-link="${esc(r.link)}"><title>${esc(tip)}</title>` +
       `<polygon points="${x0},${Y(r.inv0)} ${x1},${Y(r.inv1)} ${x1},${Y(r.crown1)} ${x0},${Y(r.crown0)}" fill="${r.fail ? "#f6c9c3" : "#cfe0f5"}" fill-opacity=".75" stroke="${r.fail ? "#d7301f" : "none"}"/>` +
@@ -830,7 +872,7 @@ function renderProfile(rows) {
       const xm = (x0 + x1) / 2, ym = Y((r.crown0 + r.crown1) / 2) - 7, d = r.reversed ? -1 : 1;
       s += `<path d="M${xm - 5 * d},${ym - 3.5} L${xm + 5 * d},${ym} L${xm - 5 * d},${ym + 3.5} Z" fill="${r.reversed ? "#c2410c" : "#4c78b8"}"><title>${r.reversed ? "flow runs right to left here" : "flow"}</title></path>`;
     }
-    if (!bands && x1 - x0 > 70) s += `<text x="${(x0 + x1) / 2}" y="${Y((r.inv0 + r.inv1) / 2) + 14}" text-anchor="middle">DN${r.dn_mm}</text>`;
+    if (!bands && x1 - x0 > 70) s += `<text x="${(x0 + x1) / 2}" y="${Y((r.inv0 + r.inv1) / 2) + 14}" text-anchor="middle">${esc(szLab(r))}</text>`;
   }
   // manholes as structures; every pipe that meets one off the route drawn where it joins: a circle of its own
   // diameter at its own invert (to the vertical scale), incoming on the upstream side of the shaft, outgoing on the
@@ -857,7 +899,7 @@ function renderProfile(rows) {
         const cx = x + side * (ww / 2 + rr + 1 + k * (2 * rr + 2)), cy = Y(j.invert) - rr;
         const ref = n.out != null ? n.out : n.iv, drop = j.dir === "in" && ref != null ? j.invert - ref : null;
         const col = j.kind === "pump" ? "#7b3fa0" : j.dir === "in" ? "#1b9e77" : "#7a8696";
-        const tip = `${j.link}${j.kind === "pump" ? " (pump)" : " DN" + j.dn_mm} ${j.dir === "in" ? "joins from" : "leaves to"} ${j.other}` +
+        const tip = `${j.link}${j.kind === "pump" ? " (pump)" : " " + szLab(j)} ${j.dir === "in" ? "joins from" : "leaves to"} ${j.other}` +
           `  invert ${num(j.invert, 2)}` + (drop != null ? `  drop ${num(drop, 2)} m` : "") + (j.q_ls != null ? `  ${num(j.q_ls, 2)} L/s` : "") + (j.transfer ? "  (transfer)" : "");
         if (drop != null && drop > 0.005 && Y(ref) - Y(j.invert) > 3) s += `<line x1="${cx}" x2="${cx}" y1="${Y(j.invert)}" y2="${Y(ref)}" stroke="${col}" stroke-width="1" stroke-dasharray="2 2"/>`;
         s += `<circle class="join" data-link="${esc(j.link)}" cx="${cx}" cy="${cy}" r="${rr}" fill="${col}" fill-opacity=".28" stroke="${col}" stroke-width="1.3"${j.transfer ? ` stroke-dasharray="2 1.5"` : ""}><title>${esc(tip)}</title></circle>`;
@@ -873,7 +915,7 @@ function renderProfile(rows) {
     hd.forEach((h, k) => { s += `<text class="bandh" x="${L - 6}" y="${row(k)}" text-anchor="end">${h}</text><line x1="${L}" x2="${L + pw}" y1="${row(k) + 3}" y2="${row(k) + 3}" stroke="#eef1f5"/>`; });
     for (const r of vis) {
       const x0 = Math.max(X(r.ch0), L), x1 = Math.min(X(r.ch1), L + pw), w = x1 - x0;
-      const full = r.kind === "pump" ? "pump" : `DN${r.dn_mm} · ${num(r.slope_pc, 2)} % · ${num(r.length_m, 1)} m`, short = r.kind === "pump" ? "P" : `DN${r.dn_mm}`;
+      const full = r.kind === "pump" ? "pump" : `${szLab(r)} · ${num(r.slope_pc, 2)} % · ${num(r.length_m, 1)} m`, short = r.kind === "pump" ? "P" : r.section ? "sec." : `DN${r.dn_mm}`;
       const t = w > full.length * 5.6 ? full : w > short.length * 6 ? short : "";
       if (t) s += `<text class="band" x="${(x0 + x1) / 2}" y="${row(0)}" text-anchor="middle">${t}</text>`;
     }
@@ -936,7 +978,7 @@ function profCursor(c) {
   const x = v.X(c); el.style.display = ""; el.querySelector("line").setAttribute("x1", x); el.querySelector("line").setAttribute("x2", x);
   for (const [k, val] of [["inv", a.inv], ["wat", a.water], ["gnd", a.ground]]) { const ci = el.querySelector(`[data-k=${k}]`); ci.setAttribute("cx", x); ci.setAttribute("cy", val == null ? -99 : v.Y(val)); }
   const r = a.r;
-  ro.innerHTML = `<b>${esc(r.link)}</b> ${r.kind === "pump" ? "pump" : "DN" + esc(r.dn_mm)}${r.reversed ? " ←" : ""} · ch ${num(c, 1)} m<br>` +
+  ro.innerHTML = `<b>${esc(r.link)}</b> ${r.kind === "pump" ? "pump" : esc(szLab(r))}${r.reversed ? " ←" : ""} · ch ${num(c, 1)} m<br>` +
     `ground ${num(a.ground, 2)} · invert ${num(a.inv, 2)} · water ${num(a.water, 2)}<br>` +
     `depth ${num(a.ground - a.inv, 2)} m · cover ${num(a.ground - a.crown, 2)} m` +
     (r.v_ms != null ? `<br>${num(r.q_ls, 2)} L/s · v ${num(r.v_ms, 2)} m/s · d/D ${num(r.d_over_D, 2)}` : "");
@@ -945,7 +987,7 @@ function profCursor(c) {
     const ref = nd.out != null ? nd.out : nd.iv, low = Math.min(...[nd.ni, nd.iv, nd.out].filter(q => q != null));
     ro.innerHTML += `<hr><b>${esc(nd.id)}</b> ${esc(nd.kind || "")} · ground ${num(nd.gr, 2)} · depth ${num(nd.gr - low, 2)} m` +
       (nd.inn != null && nd.out != null ? `<br>in ${num(nd.inn, 2)} → out ${num(nd.out, 2)} (fall ${num(nd.inn - nd.out, 3)} m)` : "") +
-      nd.joins.map(j => `<br><span style="color:${j.dir === "in" ? "#1b9e77" : "var(--muted)"}">${j.dir === "in" ? "joins" : "leaves"}: ${esc(j.link)} ${j.kind === "pump" ? "pump" : "DN" + esc(j.dn_mm)} ${j.dir === "in" ? "from" : "to"} ${esc(j.other)} at ${num(j.invert, 2)}` +
+      nd.joins.map(j => `<br><span style="color:${j.dir === "in" ? "#1b9e77" : "var(--muted)"}">${j.dir === "in" ? "joins" : "leaves"}: ${esc(j.link)} ${j.kind === "pump" ? "pump" : esc(szLab(j))} ${j.dir === "in" ? "from" : "to"} ${esc(j.other)} at ${num(j.invert, 2)}` +
         (j.dir === "in" && ref != null ? ` (drop ${num(j.invert - ref, 2)} m)` : "") + `</span>`).join("");
   }
   ro.hidden = false;
@@ -1492,7 +1534,7 @@ function sgPoll() {
   }, 3000);
 }
 async function sgExport(guest, tag) {
-  try { await jpost("/sewergems/export", { guest, tag }); } catch (e) { toast(e.message); return; }
+  try { await jpost("/sewergems/export", { guest, tag, run: $("#sg-run").checked }); } catch (e) { toast(e.message); return; }
   toast(`Export of ${tag || guest} queued for the VM; it takes from seconds to several minutes, by the model's size and scenarios.`, "info");
   await refreshSg(); sgPoll();
 }
@@ -1777,7 +1819,7 @@ function hover(e) {
       setHot(null);
     } else if (link) {
       const q = link.properties, r = srcLinks()[q.id] || {}, en = (state.results && state.results.links[q.id]) || {};
-      h = `<b>${esc(q.id)}</b> · ${q.kind === "pump" ? "pump" : q.section ? "section " + esc(q.section) + " (not analysed)" : "DN" + esc(q.dn_mm)}` + (en.s_pc != null ? ` · ${num(en.s_pc, 3)} %` : "") +
+      h = `<b>${esc(q.id)}</b> · ${q.kind === "pump" ? "pump" : q.section ? "section " + esc(q.section) + (q.sec ? "" : " (not analysed)") : "DN" + esc(q.dn_mm)}` + (en.s_pc != null ? ` · ${num(en.s_pc, 3)} %` : "") +
         (r.q_ls != null ? ` · ${num(r.q_ls, 2)} L/s` : "") + (r.v_ms != null ? ` · v ${num(r.v_ms, 2)} m/s` : "") + (r.d_over_D != null ? ` · d/D ${num(r.d_over_D, 2)}` : "") +
         (q._fail ? ` · <span style="color:var(--bad)">failing</span>` : "");
       setHot(q.id);

@@ -1,7 +1,7 @@
 """EPA SWMM 5 input files (.inp, a public, documented text format) to and from the general project.
 
 Modelled (editable in the app): JUNCTIONS, OUTFALLS, STORAGE (nodes), CONDUITS, PUMPS (links), XSECTIONS (the
-diameter of a conduit), SUBCATCHMENTS, SUBAREAS (catchments), COORDINATES, VERTICES, Polygons. Each modelled element
+diameter of a conduit; RECT_CLOSED, RECT_OPEN and TRAPEZOIDAL as box and open-channel sections, n from CONDUITS), SUBCATCHMENTS, SUBAREAS (catchments), COORDINATES, VERTICES, Polygons. Each modelled element
 keeps its other SWMM fields as written, so an imported model is written back as SWMM's own; every other section is kept
 verbatim. Values stay in the file's units (US: ft, acres; SI: m, ha); the project records which.
 A project with no SWMM origin gets generated sections: options, a rain gauge with its time series (or a design storm
@@ -61,10 +61,19 @@ def to_project(text, name="SWMM model"):
     xs = {r[0]: r for r in secs.get("XSECTIONS", {}).get("rows", [])}
     elev = (_option(secs, "LINK_OFFSETS", "DEPTH") or "DEPTH").upper() == "ELEVATION"
     off = lambda v, node: (p.nodes.invert.get(node, np.nan) if v == "*" else float(v)) if elev else         p.nodes.invert.get(node, np.nan) + (0.0 if v == "*" else float(v))
-    links = []
+    links = []; sections = {}
     for r in secs.get("CONDUITS", {}).get("rows", []):
         rows[f"CONDUITS|{r[0]}"] = r; a, b = r[1], r[2]
         x = xs.get(r[0]); rows[f"XSECTIONS|{r[0]}"] = x; D = float(x[2]) * mm if x else np.nan
+        shp = SECTION_SHAPES.get(str(x[1]).upper()) if x else None
+        if shp:                                            # a box or an open channel: its own section, no bore
+            g = [float(v) for v in (list(x[2:6]) + [0, 0, 0, 0])[:4]]; m = mm / 1000.0
+            s = dict(shape=shp, rise_m=g[0] * m, n=float(r[4]))
+            if shp == "trapezoid": s.update(bottom_m=g[1] * m, z_left=g[2], z_right=g[3])
+            else: s["span_m"] = g[1] * m
+            nb = int(float(x[6])) if len(x) > 6 else 1
+            if nb > 1: s["barrels"] = nb
+            sections[r[0]] = s; D = np.nan
         ui, di = off(r[5], a), off(r[6], b)
         c = [list(xy[a])] + vert.get(r[0], []) + [list(xy[b])] if a in xy and b in xy else None
         links.append(dict(id=r[0], kind="conduit", from_node=a, to_node=b, length_m=float(r[3]), dn_mm=int(round(D)) if D == D else 0,
@@ -74,6 +83,7 @@ def to_project(text, name="SWMM model"):
         links.append(dict(id=r[0], kind="pump", from_node=r[1], to_node=r[2], length_m=0.0, dn_mm=0, inside_mm=np.nan,
                           up_inv=np.nan, dn_inv=np.nan, transfer=False, coords=None))
     p.links = pd.DataFrame(links, columns=["id"] + LINK_COLS).set_index("id")
+    p.sections = sections
     sub = {r[0]: r for r in secs.get("SUBAREAS", {}).get("rows", [])}
     poly = {}
     for r in secs.get("POLYGONS", {}).get("rows", []): poly.setdefault(r[0], []).append([float(r[1]), float(r[2])])
@@ -90,6 +100,10 @@ def to_project(text, name="SWMM model"):
                          heads={k: v["head"] for k, v in secs.items() if k in MODELLED},
                          rows=rows, xs_other={k: v for k, v in xs.items() if k not in set(p.links.index)})
     return p
+
+
+SECTION_SHAPES = {"RECT_CLOSED": "box", "RECT_OPEN": "rect_open", "TRAPEZOIDAL": "trapezoid"}
+SWMM_SHAPE = {v: k for k, v in SECTION_SHAPES.items()}
 
 
 def _fmt(tokens):
@@ -122,10 +136,17 @@ def from_project(p, rain=None):
         old = list(rows.get(f"CONDUITS|{i}", [])) or [i, r.from_node, r.to_node, 0, 0.013 if units == "SI" else 0.013, 0, 0, 0, 0]
         elev = p.settings.get("link_offsets", "DEPTH") == "ELEVATION"
         o1 = r.up_inv if elev else r.up_inv - n.invert[r.from_node]; o2 = r.dn_inv if elev else r.dn_inv - n.invert[r.to_node]
-        old[:7] = [i, r.from_node, r.to_node, _num(r.length_m), old[4], _num(o1), _num(o2)]
+        s = (p.sections or {}).get(i)
+        old[:7] = [i, r.from_node, r.to_node, _num(r.length_m), _num(s["n"]) if s else old[4], _num(o1), _num(o2)]
         out["CONDUITS"].append(old)
         x = list(rows.get(f"XSECTIONS|{i}") or []) or [i, "CIRCULAR", 0, 0, 0, 0, 1]
         x[0] = i
+        if s:                                              # a box or an open channel, in the file's length unit
+            m = 1000.0 / mm
+            g = [s["rise_m"], s.get("bottom_m", 0), s.get("z_left", 0), s.get("z_right", 0)] if s["shape"] == "trapezoid"                 else [s["rise_m"], s.get("span_m", 0), 0, 0]
+            x = [i, SWMM_SHAPE[s["shape"]], _num(g[0] * m), _num(g[1] * m), _num(g[2]), _num(g[3]), int(s.get("barrels") or 1)]
+        elif str(x[1]).upper() in SECTION_SHAPES:           # a section removed in the app: a circle again
+            x = [i, "CIRCULAR", _num(r.inside_mm / mm), 0, 0, 0, 1]
         if str(x[1]).upper() in ("CIRCULAR", "FORCE_MAIN"): x[2] = _num(r.inside_mm / mm)
         out["XSECTIONS"].append(x)
     out["XSECTIONS"] += [list(v) for v in (pt.get("xs_other") or {}).values()]

@@ -19,13 +19,16 @@ SKIP = re.compile(r"(system volume information|\$recycle|installer|licens|crack|
 
 TEMPLATE = r"""# W19: export a SewerGEMS model for the app (this job was written by the app). Every scenario: the elements, their
 # attributes, the results the model holds, the loads and the peaking support. The model is COPIED first and only the
-# copy is opened, so nothing is written beside the modeller's file. scenarios.csv is written last.
+# copy is opened, so nothing is written beside the modeller's file. scenarios.csv is written last. With $run, every
+# scenario is computed first on the copy (a model saved without results then has them; a storm model takes minutes each).
+# Boxes and open channels also get sections_<file>.csv (Sections.cs: shape, dimensions, n and their results in SI).
 $src = '__SRC__'
 $tag = '__TAG__'
+$run = $__RUN__
 . \\VBOXSVR\VBOX\bridge\lib\load.ps1
 $out = "\\VBOXSVR\VBOX\bridge\out\w19\export\$tag"; New-Item -ItemType Directory -Force $out | Out-Null
 $dir = "C:\IbriWork\W19\src\$tag"; New-Item -ItemType Directory -Force $dir | Out-Null
-Remove-Item -LiteralPath "$out\scenarios.csv" -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath "$out\scenarios.csv", "$out\log.txt" -ErrorAction SilentlyContinue
 Copy-Item -LiteralPath $src -Destination "$dir\model.stsw" -Force
 if (Test-Path -LiteralPath "$src.sqlite") { Copy-Item -LiteralPath "$src.sqlite" -Destination "$dir\model.stsw.sqlite" -Force }
 $work = "$dir\work.stsw"
@@ -44,7 +47,9 @@ try {
     $k += 1; $file = 's{0:000}' -f $k
     $rows += ('{0},"{1}",{2},{3}' -f $s.Id, ($s.Label -replace '"', "'"), $s.ParentID, $file)
     $m.SetActiveScenario($m.Scenarios.Element($s.Id))
+    if ($run) { [Scen]::Run($m, $s.Id, $log) }
     [Scen]::Export($m, $out, $file, $log)
+    [Sections]::Export($m, "$out\sections_$file.csv", $log)
     [LoadsDump]::ScenarioLoads($m, $s.Id, "$out\loads_$file.csv", $log)
     $log.WriteLine(("  scenario {0} '{1}' -> {2}" -f $s.Id, $s.Label, $file))
     [IO.File]::WriteAllText("$out\log.txt", $log.ToString())       # progress, read by the app while the job runs
@@ -98,13 +103,13 @@ def models():
     return sorted(out, key=lambda m: m["modified"], reverse=True)
 
 
-def submit(guest, tag):
+def submit(guest, tag, run=False):
     if not re.match(r"^(\\\\VBOXSVR\\|[A-Za-z]:\\)", guest or ""): raise ValueError("give the model's path as the VM sees it (C:\\... or \\\\VBOXSVR\\...)")
     if not guest.lower().endswith(".stsw"): raise ValueError("a SewerGEMS model is a .stsw file")
     tag = tag_of(tag or guest)
     name = f"w19x_{dt.datetime.now().strftime('%Y%m%d_%H%M%S')}_{tag}.ps1"
     os.makedirs(os.path.join(BRIDGE, "jobs"), exist_ok=True)
-    body = TEMPLATE.replace("__SRC__", guest.replace("'", "''")).replace("__TAG__", tag)
+    body = TEMPLATE.replace("__SRC__", guest.replace("'", "''")).replace("__TAG__", tag).replace("__RUN__", "true" if run else "false")
     with open(os.path.join(BRIDGE, "jobs", name), "w", encoding="utf-8") as f: f.write(body)
     return dict(job=name[:-4], tag=tag)
 

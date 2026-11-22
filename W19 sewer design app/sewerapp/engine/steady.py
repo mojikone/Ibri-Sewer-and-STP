@@ -99,7 +99,9 @@ def solve(project, load_set=None, check_set=None):
     load_set = load_set or s["design_load"]; check_set = check_set if check_set is not None else s.get("check_load")
     q = flows(project, load_set)
     D = L.inside_mm.astype(float).to_numpy() / 1000.0
-    noD = (L.kind == "conduit").to_numpy() & ~(np.nan_to_num(D) > 0)     # no bore (a box or a channel section): not analysed
+    secs = getattr(project, "sections", None) or {}
+    isec = L.index.isin(list(secs))                                        # a box or channel with its section given: solved below
+    noD = (L.kind == "conduit").to_numpy() & ~(np.nan_to_num(D) > 0) & ~isec   # no bore and no section: not analysed
     cond = (L.kind == "conduit").to_numpy() & ~noD
     S = ((L.up_inv.astype(float) - L.dn_inv.astype(float)) / L.length_m.astype(float)).to_numpy()
     ratio, v, full = normal_depth(project, q.to_numpy() / 86400.0, D, S)
@@ -116,6 +118,23 @@ def solve(project, load_set=None, check_set=None):
         res["under_vmin"] = cond & (dn > s.get("self_cleansing_min_dn", 0)) & (np.round(vc, 2) < d["v_min"])
     res.loc[~cond, ["v_ms", "d_over_D", "s_pc"]] = np.nan
     res["surcharged"] = res.surcharged & cond
+    if isec.any():                                                         # boxes and channels: Manning with their own n
+        from sewerapp.engine import sections as X
+        sel = L.index[isec & (L.kind == "conduit").to_numpy()]
+        code, rise, bottom, zl, zr, n = X.unpack([secs[i] for i in sel]); nb = X.barrels([secs[i] for i in sel])
+        Ssec = pd.Series(S, index=L.index)[sel].to_numpy(); qs = (q[sel] / 86400.0).to_numpy() / nb   # per barrel
+        with np.errstate(invalid="ignore", divide="ignore"):
+            y, A, full = X.normal_depth(qs, Ssec, code, rise, bottom, zl, zr, n)
+            yc = X.critical_depth(qs, code, rise, bottom, zl, zr)
+            cap = X.full_capacity(code, rise, bottom, zl, zr, n, Ssec)
+        res.loc[sel, "v_ms"] = np.where(A > 0, qs / np.where(A > 0, A, 1), 0.0)
+        res.loc[sel, "d_over_D"] = y / rise; res.loc[sel, "limit"] = np.nan; res.loc[sel, "s_pc"] = Ssec * 100
+        res.loc[sel, "depth_m"] = y; res.loc[sel, "yc_m"] = yc; res.loc[sel, "q_full_ls"] = cap * nb * 1000.0
+        res.loc[sel, "surcharged"] = full | ((code > 0) & (np.nan_to_num(y) > rise))   # a box full, an open channel over its bank
+        res.loc[sel, "over_limit"] = False; res.loc[sel, "over_vmax"] = False      # the sewer's d/D and v max are not a channel's
+        res.loc[sel, "negative_slope"] = Ssec <= 0
+        if "under_vmin" in res: res.loc[sel, "under_vmin"] = False
+        cond = cond | isec & (L.kind == "conduit").to_numpy()
     summ = dict(links=int(len(L)), conduits=int(cond.sum()), not_analysed=int(noD.sum()), km=round(float(L.length_m[cond | noD].sum()) / 1000, 3),
                 over_limit=int(res.over_limit.sum()), over_vmax=int(res.over_vmax.sum()),
                 surcharged=int((res.surcharged & cond).sum()), negative_slope=int(res.negative_slope.sum()),

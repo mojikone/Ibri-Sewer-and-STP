@@ -4,7 +4,11 @@ once). The proprietary model file itself is never read (clean room).
 
 Every SewerGEMS scenario becomes an app scenario whose edits carry what differs from the first scenario (sizes,
 inverts, active), and which holds SewerGEMS's own results (flow, velocity, depth, d/D) for colouring, tables and
-comparison with the app's engine. Flows are in the model's display units as exported (m3/d in the Ibri model)."""
+comparison with the app's engine. Flows are in the model's display units as exported (m3/d in the Ibri model).
+Box and open-channel conduits come with sections_<file>.csv (helper Sections.cs): their shape, rise, span, bottom width,
+side slopes and n become the project's sections, and SewerGEMS's results for them in m3/s and metres, normal and critical
+depth included. Where both files carry a flow, their ratio gives the conduit file's unit (m3/s in a storm model), so the
+stored flows of every conduit are read right."""
 import os
 import numpy as np, pandas as pd
 from sewerapp.model.general import Project, LINK_COLS
@@ -14,6 +18,44 @@ def _read(folder, file):
     c = pd.read_csv(os.path.join(folder, f"conduits_{file}.csv"))
     m = pd.read_csv(os.path.join(folder, f"manholes_{file}.csv"))
     return c, m
+
+
+SEC_KEYS = ("rise_m", "span_m", "bottom_m", "z_left", "z_right", "n")
+# SewerGEMS catalogue shape codes, as measured (2026-11-22, Block 04): code 3 is an open rectangle of width = span and
+# bank = rise (its critical and normal depth equal the open rectangle's to 0.1 %; the class's 0.5 side slopes and the
+# conduit's typed "BoxPipe 10 x 2.5" do not apply). Other codes keep the conduit's typed shape until measured.
+CATALOGUE_SHAPE = {"3": "rect_open"}
+
+
+def _sections(folder, file):
+    """The non-circular conduits of one scenario: ({label: section}, results by label), or ({}, None) with no file."""
+    f = os.path.join(folder, f"sections_{file}.csv")
+    if not os.path.exists(f): return {}, None
+    t = pd.read_csv(f)
+    if "catalogue_shape" in t:                             # the catalogue size decides the section (the typed shape can be stale)
+        cs = t.catalogue_shape.map(lambda v: CATALOGUE_SHAPE.get(str(v).split(".")[0]))
+        t["shape"] = cs.where(cs.notna(), t["shape"])
+    t = t[t["shape"].isin(["box", "rect_open", "trapezoid"])]
+    t.index = t.label.astype(str)
+    secs = {}
+    for lab, r in t.iterrows():
+        s = dict(shape=r["shape"], rise_m=float(r.rise_m), n=float(r.n) if r.n == r.n and r.n > 0 else 0.013)
+        if r["shape"] == "trapezoid": s.update(bottom_m=float(r.bottom_m), z_left=float(r.z_left), z_right=float(r.z_right))
+        else: s["span_m"] = float(r.span_m)
+        nb = r.get("barrels", 1)
+        if nb == nb and int(nb) > 1: s["barrels"] = int(nb)
+        secs[lab] = s
+    return secs, t
+
+
+def _flow_factor(c, t):
+    """m3/d per unit of the conduit file's flow column, from the links whose flow both files hold (1 if none)."""
+    if t is None or not len(t): return 1.0
+    j = c.assign(label=c.label.astype(str)).set_index("label").flow_m3d.astype(float).to_frame().join(t.flow_m3s, how="inner")
+    j = j[(j.flow_m3d.abs() > 1e-9) & (j.flow_m3s.abs() > 1e-9)]
+    if not len(j): return 1.0
+    k = float((j.flow_m3s * 86400.0 / j.flow_m3d).median())
+    return 1.0 if abs(k - 1) < 0.01 else k
 
 
 def load(folder, name="SewerGEMS model", crs=None):
@@ -48,7 +90,10 @@ def load(folder, name="SewerGEMS model", crs=None):
                             index=pd.Index(c.label.astype(str).values, name="id"))[LINK_COLS]
 
     p.links = link_table(c0)
-    p.meta = dict(getattr(p, "meta", {}) or {}, sections=sections)       # non-circular sections by link: shown, not analysed
+    secs0, _ = _sections(folder, first.file)
+    p.sections = {k: v for k, v in secs0.items() if k in p.links.index}   # boxes and channels with their section: solved
+    for k in p.sections: sections.pop(k, None)
+    p.meta = dict(getattr(p, "meta", {}) or {}, sections=sections)       # other non-circular sections: shown, not analysed
     loads_found = _loads(folder, sc, p, nodes_lab)
     scenarios, results = [], {}
     for r in sc.itertuples():
@@ -58,12 +103,22 @@ def load(folder, name="SewerGEMS model", crs=None):
             diff = common[(L.loc[common, field] - p.links.loc[common, field]).abs() > 1e-9]
             if len(diff): edits.append(dict(op="set_values", table="links", field=field,
                                             values={k: float(x) for k, x in L.loc[diff, field].items()}))
+        secs, t = _sections(folder, r.file)
+        for k in sorted(set(secs) | set(p.sections)):
+            if k in L.index and secs.get(k) != p.sections.get(k): edits.append(dict(op="set_section", ids=[k], section=secs.get(k)))
         act = c[c.active == True]
         D = act.diameter_mm.values / 1000.0
-        res = pd.DataFrame(dict(q_ls=act.flow_m3d.values / 86.4, v_ms=act.velocity_ms.values,
+        res = pd.DataFrame(dict(q_ls=act.flow_m3d.values * _flow_factor(c, t) / 86.4, v_ms=act.velocity_ms.values,
                                 depth_m=np.maximum(act.depth_in_m.values, act.depth_out_m.values),
                                 d_over_D=np.maximum(act.depth_in_m.values, act.depth_out_m.values) / D),
                            index=act.label.astype(str).values)
+        if t is not None and len(t):                       # boxes and channels: SewerGEMS's own values in SI
+            k = res.index.intersection(t.index); tt = t.loc[k]
+            res.loc[k, "q_ls"] = tt.flow_m3s.values * 1000.0; res.loc[k, "v_ms"] = tt.velocity_ms.values
+            dep = np.fmax(tt.depth_in_m.values, tt.depth_out_m.values)
+            res.loc[k, "depth_m"] = dep; res.loc[k, "d_over_D"] = dep / tt.rise_m.values
+            res.loc[k, "yn_sg_m"] = tt.normal_depth_m.values; res.loc[k, "yc_sg_m"] = tt.critical_depth_m.values
+            # SewerGEMS's typed full capacity is left out: on Block 04 it follows the stale typed box, not the catalogue size
         scenarios.append(dict(sg_id=int(r.id), label=str(r.label), parent=int(r.parent) if r.parent == r.parent else None, edits=edits))
         results[str(r.label)] = res
     for sc_ in scenarios: sc_["has_loads"] = loads_found
