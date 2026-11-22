@@ -225,10 +225,21 @@ async function loadModel() {
     catchments: new Map(catchFeat.map(f => [String(f.id), f])),
     fcNodes: { type: "FeatureCollection", features: nodeFeat }, fcLinks: { type: "FeatureCollection", features: linkFeat },
   };
+  state.model.rain = d.rain || {}; syncRain();
   state.dirty.nodes = state.dirty.links = state.dirty.catch = true;
   if (state.sel.table) state.sel.ids = state.sel.ids.filter(i => tmap(state.sel.table).has(i));
   if (state.pipeStart && !state.model.nodes.has(state.pipeStart)) state.pipeStart = null;
   await mapReady;
+}
+/* the Rain form shows the scenario's own rain (from the model); a typed but unapplied draft survives until the rain itself changes */
+function syncRain() {
+  const r = state.model.rain || {}, sig = JSON.stringify(r);
+  if (state.rainSig === sig) return;
+  state.rainSig = sig;
+  const R = { step_min: r.step_min ?? 5, duration_min: r.duration_min ?? 60, mode: "idf", idf: [], series: [] };
+  if (r.idf && r.idf.durations_min) R.idf = r.idf.durations_min.map((d, i) => [d, r.idf.intensities[i]]);
+  else if (Array.isArray(r.series)) { R.mode = "series"; R.series = r.series.map(x => [x[0], x[1]]); }
+  state.rain = R; $("#settings-form").dataset.sig = "";
 }
 async function loadResults() {
   const r = await jget(`${base()}/results`);
@@ -266,6 +277,8 @@ function patchLocal(op) {
     if (op.table === "nodes") state.dirty.nodes = true; else state.dirty.links = true;
   } else if (op.op === "set_load") {
     (m.loads[op.set] = m.loads[op.set] || {})[op.node] = Number(op.value);
+  } else if (op.op === "set_rain") {
+    m.rain = JSON.parse(JSON.stringify(op.rain)); syncRain();
   } else if (op.op === "set_setting") {
     const k = op.path.split("."); let d = m.settings; for (const x of k.slice(0, -1)) d = d[x]; d[k[k.length - 1]] = op.value;
   }
@@ -819,7 +832,7 @@ function wireRain(host) {
 async function loadToolList() {
   try { state.tools = await jget("/tools"); } catch (e) { state.tools = []; }
   const host = $("#tools-menu"), groups = {};
-  for (const t of state.tools) (groups[t.menu || "Tools"] = groups[t.menu || "Tools"] || []).push(t);
+  for (const t of state.tools.filter(t => t.name !== "assistant")) (groups[t.menu || "Tools"] = groups[t.menu || "Tools"] || []).push(t);
   host.innerHTML = Object.entries(groups).map(([g, ts]) => `<div class="mh">${esc(g)}</div>` +
     ts.map(t => `<button data-tool="${esc(t.name)}" data-testid="tool-run-${esc(t.name)}" title="${esc(t.label)}">${esc(t.label.split(/[:(]/)[0].trim())}</button>`).join("")).join("");
   $$("button", host).forEach(b => b.addEventListener("click", () => { host.hidden = true; const t = state.tools.find(x => x.name === b.dataset.tool); enqueue(() => runTool(t)); }));
@@ -872,6 +885,53 @@ function renderToolOut() {
   if (o.rows.length) renderTable("toolout"); else $("#tbl-toolout").innerHTML = "";
 }
 
+/* ------------------------------------------------------------------ assistant */
+function mdToHtml(src) {
+  const inline = s => esc(s).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>");
+  const lines = String(src || "").split("\n"); let out = "", i = 0;
+  while (i < lines.length) {
+    const l = lines[i];
+    if (/^\s*\|.*\|\s*$/.test(l)) {
+      const rows = []; while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) rows.push(lines[i++].trim().replace(/^\||\|$/g, "").split("|").map(c => c.trim()));
+      const body = rows.filter(r => !r.every(c => /^:?-{2,}:?$/.test(c))), head = body.shift();
+      out += `<table><thead><tr>${head.map(c => `<th>${inline(c)}</th>`).join("")}</tr></thead><tbody>${body.map(r => `<tr>${r.map(c => `<td>${inline(c)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+    } else if (/^\s*[-*]\s+/.test(l)) {
+      let li = ""; while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) li += `<li>${inline(lines[i++].replace(/^\s*[-*]\s+/, ""))}</li>`; out += `<ul>${li}</ul>`;
+    } else if (l.trim()) { out += `<p>${inline(l)}</p>`; i++; } else i++;
+  }
+  return out;
+}
+function asstAdd(cls, html) { const log = $("#asst-log"), d = document.createElement("div"); d.className = "msg " + cls; d.innerHTML = html; log.appendChild(d); log.scrollTop = log.scrollHeight; return d; }
+async function asstStatus() {
+  try {
+    const s = await jget("/assistant/status"), on = !!s.available;
+    $("#asst-status").textContent = on ? `available (${s.model})` : `not available: ${s.reason}`;
+    $("#asst-input").disabled = $("#asst-send").disabled = !on; state.asstOn = on;
+  } catch (e) { $("#asst-status").textContent = "not available: " + e.message; $("#asst-input").disabled = $("#asst-send").disabled = true; state.asstOn = false; }
+}
+function asstSend() {
+  const inp = $("#asst-input"), text = inp.value.trim();
+  if (!text || !state.asstOn) return;
+  if (!state.pid) { toast("Open a project first."); return; }
+  inp.value = ""; asstAdd("user", `<p>${esc(text)}</p>`).dataset.testid = "asst-user";
+  const wait = asstAdd("assistant", `<div class="muted">Thinking... (answers take 10-60 s)</div>`);
+  inp.disabled = $("#asst-send").disabled = true; document.body.dataset.asstBusy = "1";
+  const body = { project: state.pid, scenario: state.sid, message: text, history: state.history.slice(), model: $("#asst-model").value };
+  enqueue(async () => {
+    try {
+      const r = await jpost("/assistant", body);
+      state.history.push({ role: "user", content: text }, { role: "assistant", content: r.reply });
+      const u = r.usage || {}, tc = (r.tool_calls || []);
+      wait.dataset.testid = "asst-reply";
+      wait.innerHTML = mdToHtml(r.reply) + tc.map(c => `<div class="tc ${c.ok === false ? "bad" : ""}" data-testid="asst-tool">tool: ${esc(c.name)}(${esc(JSON.stringify(c.input || {}).slice(0, 160))}) ${c.ok === false ? "failed" : "ok"}</div>`).join("") +
+        `<div class="usage" data-testid="asst-usage">tokens: ${u.input_tokens ?? 0} in, ${u.output_tokens ?? 0} out, ${u.cache_write_tokens ?? 0} cache write, ${u.cache_read_tokens ?? 0} cache read</div>`;
+      const info = await jget(`/projects/${state.pid}`);            // the assistant may have made new scenarios
+      state.info.scenarios = info.scenarios; await loadResults(); renderAll();
+    } catch (e) { wait.className = "msg err"; wait.textContent = e.message; }
+    finally { document.body.dataset.asstBusy = "0"; if (state.asstOn) { inp.disabled = $("#asst-send").disabled = false; } $("#asst-log").scrollTop = $("#asst-log").scrollHeight; }
+  });
+}
+
 /* ------------------------------------------------------------------ tabs */
 function showTab(t) {
   state.tab = t;
@@ -892,7 +952,8 @@ function renderActiveTab() {
 async function openProject(info, fit = true) {
   state.pid = info.id; state.info = info; state.sid = "base"; state.sel = { table: null, ids: [] }; state.pipeStart = null;
   state.toolout = null; state.results = null; state.summary = null; state.storm = null; state.draw = null; state.catchPending = null;
-  state.rain = { step_min: 5, duration_min: 60, mode: "idf", idf: [], series: [] };
+  state.rain = { step_min: 5, duration_min: 60, mode: "idf", idf: [], series: [] }; state.rainSig = null; state.history = [];
+  $("#asst-log").innerHTML = "";
   if (state.colorBy.startsWith("storm")) { state.colorBy = "v_ms"; $("#color-by").value = "v_ms"; }
   $("#prof-start").value = ""; $("#prof-end").value = ""; $("#settings-form").dataset.sig = "";
   await mapReady;
@@ -956,6 +1017,8 @@ function wireUi() {
   $$(".tool").forEach(b => b.addEventListener("click", () => setTool(b.id.slice(5))));
   $$(".tab").forEach(b => b.addEventListener("click", () => showTab(b.id.slice(4))));
   $("#hydro-attr").onchange = drawHydro;
+  $("#asst-form").addEventListener("submit", e => { e.preventDefault(); asstSend(); });
+  $("#asst-input").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); asstSend(); } });
   $("#import-btn").onclick = () => $("#import-file").click();
   $("#import-file").onchange = e => {
     const f = e.target.files[0]; if (!f) return; e.target.value = "";
@@ -981,7 +1044,8 @@ function wireUi() {
 }
 
 /* ------------------------------------------------------------------ boot */
-initMap(); wireUi(); initTables(); tag(); renderLegend(); updateStatus(); updateButtons();
+state.history = [];
+initMap(); wireUi(); initTables(); tag(); renderLegend(); updateStatus(); updateButtons(); asstStatus();
 window.ed = {
   state, map,
   clickAt: (lon, lat, mods) => enqueue(() => act({ lng: lon, lat: lat }, mods)),

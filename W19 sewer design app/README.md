@@ -22,7 +22,43 @@ Needs Python 3.12 with numpy, pandas, geopandas, shapely, pyogrio, ezdxf, fastap
 file). Without it the Assistant tab says so and everything else works. A design question with several tool calls costs about $0.30-0.45 on Opus 5.5 (2026-11-21: 5.4k output, 38k cache-write, 119k cache-read tokens); `claude-sonnet-5-5` costs about half. Model `claude-opus-5-5` (effort high), with a
 `claude-sonnet-5-5` option; billed per token.
 
-## What it does
+## The general app (home page, since 2026-11-22)
+
+A network editor that works the way SewerGEMS does, on any project, sewer and stormwater (plan:
+`docs/2026-11-21-general-app-plan.md`):
+
+- **Projects:** a new project (a projected CRS with a basemap, or local metres), open or save a GeoPackage project
+  file (QGIS opens it), open an Ibri sample, import an EPA SWMM `.inp`, or import GIS layers (GeoPackage, GeoJSON,
+  zipped shapefile) with a field mapping.
+- **Draw and edit:** manholes, outfalls, wet wells, pipes, pumps and catchments on the map; move, split, delete; a
+  property grid with bulk edit; Nodes, Links and Results tables; undo and redo; scenarios copied and edited separately.
+- **Instant re-run:** every edit re-solves the steady sanitary hydraulics (peaked unit loads, infiltration, Colebrook-
+  White or Manning, normal depth, the d/D, velocity, cover and gradient checks); Ibri's 19,083 pipes take about 0.1 s.
+- **Design:** sizes every conduit by the d/D limit at its size's minimum gradient and lays it with crowns matched and
+  minimum cover (equal to W18's design at every node); undoable.
+- **Stormwater:** catchments, rain as a time series or a design storm from an IDF table, run on EPA SWMM 5, peaks and
+  flooding on the map, hydrographs.
+- **Export:** GeoPackage, SWMM `.inp`, DXF, CSV.
+- **Assistant:** answers about any open project from its solved results, explains each check with its guideline page,
+  and tries fixes, designs and storm runs in new scenarios.
+
+| Gate | What it proved (2026-11-22) |
+|---|---|
+| G1 | Ibri's 12 designs as general projects: every pipe flow equals W18's within 0.1 %, velocities within 0.003 m/s, the file round-trips |
+| G2 | the editor end to end in Chrome (12 Playwright tests): draw from blank, solve, edit, undo, save and reopen, sample, design, storm, import/export |
+| G3 | the general design gives W18's gradient table, W18's depth at every node of SC1-2056 (0.6 mm) and W18's sizes |
+| G4 | 15 EPA SWMM models round-trip through the app with zero difference; an edited size is written; a drawn storm network runs |
+| G5 | GIS layers with foreign field names import back exactly (mapping, snapping); DXF and CSV open |
+| G6 | the assistant's nine tools on any project, new scenarios only; one live run on Sonnet 5.5 |
+
+The Ibri W18 viewer of phase 1B (the 12 frozen designs with their W18 tools) is at `http://127.0.0.1:8765/w18`.
+
+**Findings for the engineer** (`docs/FINDINGS.md`):
+- the O3 → O2-M696 gravity join is over its d/D limit in SC1 and SC2 (0.55 / 0.59 / 0.63);
+- W18 took each outfall station's flow from SewerGEMS's run before the lift cuts, so stations below a lift miss the
+  lifts' extra peak (P4 / O9 in SC1-2056: 10,970 against 9,835 m³/d).
+
+## The W18 viewer (`/w18`)
 
 - **Map** of the 12 W18 designs (SC1-SC4 × 2051/2056/2061), coloured by size, velocity, velocity at 2031, d/D,
   needs-re-lay or failing; click or shift-select pipes.

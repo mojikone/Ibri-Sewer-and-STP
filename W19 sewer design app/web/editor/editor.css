@@ -129,3 +129,17 @@ table.ft td.flag { color: var(--bad); font-weight: 600; text-align: left; }
 #settings-form fieldset.wide { grid-column: 1 / -1; }
 #settings-form .rr { display: grid; grid-template-columns: 110px 110px 34px; gap: 6px; margin: 3px 0; }
 #settings-form .rr button, #settings-form button.tb2 { border: 1px solid var(--line); background: #fff; border-radius: 4px; padding: 3px 8px; }
+#asst-log { flex: 1; overflow-y: auto; padding: 8px 14px; min-height: 0; }
+#asst-log .msg { max-width: 900px; margin: 6px 0; padding: 7px 11px; border-radius: 8px; }
+#asst-log .msg.user { background: var(--sel); margin-left: auto; width: fit-content; }
+#asst-log .msg.assistant { background: var(--row); border: 1px solid var(--line); }
+#asst-log .msg.err { background: #fdecea; color: #7a1f16; }
+#asst-log .msg p { margin: 4px 0; } #asst-log .msg ul { margin: 4px 0 4px 18px; padding: 0; }
+#asst-log .msg table { border-collapse: collapse; margin: 6px 0; } #asst-log .msg th, #asst-log .msg td { border: 1px solid var(--line); padding: 2px 8px; }
+#asst-log .tc { font: 11.5px ui-monospace, Consolas, monospace; color: #44546a; margin: 2px 0 0 4px; }
+#asst-log .tc.bad { color: var(--bad); }
+#asst-log .usage { font-size: 11px; color: var(--muted); margin-top: 4px; }
+#asst-form { display: flex; gap: 8px; padding: 6px 10px; border-top: 1px solid var(--line); flex: none; }
+#asst-form textarea { flex: 1; resize: none; border: 1px solid var(--line); border-radius: 5px; padding: 5px 8px; font: inherit; }
+#asst-form button { background: var(--accent); color: #fff; border: 0; padding: 0 18px; }
+#asst-form button:disabled, #asst-form textarea:disabled { opacity: .5; }

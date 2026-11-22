@@ -14,7 +14,7 @@ SHOTS = os.path.join(W19, "work")
 @pytest.fixture(scope="module")
 def server():
     p = subprocess.Popen([sys.executable, "-c", "import uvicorn; uvicorn.run('sewerapp.api.app:app', host='127.0.0.1', port=8798)"],
-                         cwd=W19, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                         cwd=W19, env=dict(os.environ, W19_ASSISTANT_STUB="1"), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
         t0 = time.time()
         while True:
@@ -307,6 +307,28 @@ def test_import_swmm_inp_run_storm_and_export(page, tmp_path):
         page.get_by_test_id("export-btn").click()
     f = str(tmp_path / "model.inp"); d.value.save_as(f)
     assert "[CONDUITS]" in open(f, encoding="utf-8", errors="ignore").read()
+
+
+def test_assistant_answers_with_a_tool_call_and_rain_follows_the_model(page):
+    nid, lid = draw_network(page)
+    page.get_by_test_id("tab-assistant").click()
+    expect(page.get_by_test_id("asst-input")).to_be_enabled()
+    page.get_by_test_id("asst-input").fill("Which pipes fail the checks?")
+    page.get_by_test_id("asst-send").click(); idle(page)
+    expect(page.get_by_test_id("asst-reply")).to_contain_text("over the d/D limit")
+    expect(page.get_by_test_id("asst-tool")).to_have_count(1)
+    expect(page.get_by_test_id("asst-tool")).to_contain_text("project_summary")
+    assert "tokens" in page.get_by_test_id("asst-usage").inner_text()
+    assert page.evaluate("window.ed.state.history.length") == 2
+    # the Rain form is filled from the scenario's own rain: apply, undo, and the form follows
+    page.get_by_test_id("tab-settings").click()
+    page.get_by_test_id("rain-add-row").click()
+    page.get_by_test_id("rain-row-0-a").fill("10"); page.get_by_test_id("rain-row-0-b").fill("100")
+    page.get_by_test_id("rain-apply").click(); idle(page)
+    assert page.evaluate("window.ed.state.model.rain.idf.durations_min") == [10]
+    page.get_by_test_id("undo-btn").click(); idle(page)
+    assert page.evaluate("window.ed.state.rain.idf.length") == 0
+    expect(page.locator("#rain-row-0-a")).to_have_count(0)
 
 
 def test_no_javascript_errors(page):

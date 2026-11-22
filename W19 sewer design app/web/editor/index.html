@@ -92,6 +92,7 @@
     <button id="tab-settings" class="tab" role="tab">Settings</button>
     <button id="tab-hydro" class="tab" role="tab">Hydrograph</button>
     <button id="tab-toolout" class="tab" role="tab">Tool output</button>
+    <button id="tab-assistant" class="tab" role="tab">Assistant</button>
   </div>
   <div id="panes">
     <div id="pane-nodes" class="pane flex active">
@@ -114,6 +115,11 @@
       <div id="prof-wrap"><svg id="profile-svg" xmlns="http://www.w3.org/2000/svg"></svg></div>
     </div>
     <div id="pane-settings" class="pane"><div id="settings-form"></div></div>
+    <div id="pane-assistant" class="pane flex">
+      <div class="ptool"><span class="strong">Design assistant</span><span id="asst-status" class="muted"></span><span class="sp"></span><label for="asst-model">Model</label><select id="asst-model"><option value="sonnet" selected>Sonnet</option><option value="opus">Opus</option></select></div>
+      <div id="asst-log"></div>
+      <form id="asst-form"><textarea id="asst-input" rows="2" placeholder="Ask about the network, its checks, or what to change (Enter sends, Shift+Enter adds a line)"></textarea><button id="asst-send" class="tb" type="submit">Ask</button></form>
+    </div>
     <div id="pane-hydro" class="pane">
       <div class="ptool"><span id="hydro-title" class="strong">Hydrograph</span><label>Attribute</label><select id="hydro-attr"></select><span id="hydro-msg" class="muted"></span></div>
       <div id="hydro-wrap"><svg id="hydro-svg" xmlns="http://www.w3.org/2000/svg"></svg></div>
