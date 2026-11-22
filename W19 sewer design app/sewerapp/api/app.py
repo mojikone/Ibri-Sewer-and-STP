@@ -13,6 +13,18 @@ WEB = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 app = FastAPI(title="Sewer design app")
 from sewerapp.api.general_api import router as general_router
 app.include_router(general_router)
+
+
+@app.middleware("http")
+async def _autosave(request, call_next):
+    """After a change to an open project (any successful POST under /api/g/projects/<pid>/), schedule its snapshot."""
+    resp = await call_next(request)
+    if request.method == "POST" and resp.status_code < 300:
+        import re
+        from sewerapp.api import general_api
+        m = re.match(r"/api/g/projects/(p\d+)/", request.url.path)
+        if m: general_api.schedule(m.group(1))
+    return resp
 P = Project()
 _geo = {}
 _lock = threading.Lock()

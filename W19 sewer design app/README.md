@@ -39,6 +39,17 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
 - **Stormwater:** catchments, rain as a time series or a design storm from an IDF table, run on EPA SWMM 5, peaks and
   flooding on the map, hydrographs.
 - **Export:** GeoPackage, SWMM `.inp`, DXF, CSV.
+- **Kept open:** a page reload reopens the project, its scenario and the view; the app keeps a snapshot of each open
+  project in `work/sessions/` (not in git; the newest 12, at most 7 days old), so a restart of the app finds it too
+  (SC1-2056's 23 scenarios: 32 MB, back in 9 s). Save still writes the GeoPackage you keep.
+- **Tables like a spreadsheet:** double-click a cell to edit it (Enter moves down); click a cell and paste a column, or
+  several, copied from Excel: one undoable edit, with the same rules as a single edit (a manhole's invert carries the
+  pipe ends that sat at it). Editable: node kind, ground, invert, inflow, load; link kind, length, size, inverts, transfer.
+- **Trace:** upstream or downstream from a manhole or pipe (Properties, or U / D): the pipes are selected and summed
+  (length, nodes, load, flow leaving, the farthest manhole, failing pipes), with a profile from the farthest one.
+- **Box select:** Shift+drag selects the pipes whose middle is in the box, Ctrl+drag the nodes; then edit them together.
+- **Reference layers:** a GeoPackage, GeoJSON, zipped shapefile or DXF drawn under the network (Display card), with
+  hover attributes; display only, kept with the open project. A layer with no CRS is read in the project's coordinates.
 - **Profile along any route:** from a manhole or pipe down to the outfall, or to any other manhole or pipe through
   via points, along the shortest path through the network in either direction (pipes walked against the flow are
   marked); pick the route by clicking on the map; the route is lit on the map and one cursor follows both ways (map

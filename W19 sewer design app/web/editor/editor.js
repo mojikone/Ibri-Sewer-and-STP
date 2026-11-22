@@ -343,7 +343,8 @@ async function exec(op, more) {
   updateScenario(r.scenario); state.summary = r.summary;
   if (state.storm) state.storm.stale = true;
   if (op.op === "set_rain") state.rainApplied = true;
-  if (r.structural) await loadModel(); else patchLocal(op);
+  const reread = r.structural || op.op === "set_many" || op.op === "set_loads" || (op.op === "set" && op.table === "nodes" && op.field === "invert");
+  if (reread) await loadModel(); else patchLocal(op);
   if (!more) { await loadResults(); renderAll(); }
   return r;
 }
@@ -566,7 +567,8 @@ function renderProps() {
   }
   gridSig = sig;
   const head = multi ? `${fs.length} ${table}` : `${{ nodes: "Node", links: "Link", catchments: "Catchment" }[table]} ${esc(fs[0].properties.id)}`;
-  let h = `<h4 data-testid="prop-title">${head}</h4>`;
+  let h = traceBox() + `<h4 data-testid="prop-title">${head}</h4>`;
+  if (!multi && (table === "nodes" || table === "links")) h += `<div class="trace-bar">Trace <button id="trace-up" title="Everything that drains here (U)">&#8593; Upstream</button><button id="trace-down" title="The way to the outfall (D)">&#8595; Downstream</button></div>`;
   for (const k of keys) {
     if (multi && ["id", "x", "y", "from_node", "to_node"].includes(k)) continue;
     const v = val(k), ty = fieldType(table, k, fs[0].properties[k]);
@@ -671,7 +673,8 @@ function renderTable(kind) {
   const cols = colsOf(kind);
   tbl.innerHTML = `<thead><tr>${cols.map(c => `<th data-col="${c}" class="${c === k ? "sorted" + (d < 0 ? " desc" : "") : ""}">${kind === "toolout" ? esc(REPORT_LABEL[c] || c) : c}</th>`).join("")}</tr></thead><tbody>` +
     slice.map(r => `<tr data-id="${esc(r.id)}" class="${sel.has(String(r.id)) ? "sel" : ""}">${cols.map(c => {
-      const v = r[c]; return `<td class="${c === "flags" ? "flag" : ""}">${esc(typeof v === "number" ? +v.toFixed(4) : v)}</td>`;
+      const v = r[c], cur = state.cell && state.cell.kind === kind && state.cell.col === c && state.cell.id === String(r.id);
+      return `<td class="${c === "flags" ? "flag" : ""}${cur ? " cur" : ""}">${esc(typeof v === "number" ? +v.toFixed(4) : v)}</td>`;
     }).join("")}</tr>`).join("") + `</tbody>`;
   const cnt = $("#count-" + kind);
   if (cnt) cnt.innerHTML = `${rows.length} rows` + (pages > 1 ? ` &middot; <span class="pager"><button class="tb" data-pg="-1">&lsaquo;</button> page ${st.page + 1} of ${pages} <button class="tb" data-pg="1">&rsaquo;</button></span>` : "") + (sel.size ? ` &middot; ${sel.size} selected` : "");
@@ -1306,6 +1309,7 @@ function asstSend() {
 
 /* ------------------------------------------------------------------ tabs */
 function showTab(t) {
+  setTimeout(saveSession, 0);
   if (ui.bottomCollapsed) setBottom(false);
   state.tab = t;
   $$(".tab").forEach(b => b.classList.toggle("active", b.id === "tab-" + t));
@@ -1336,6 +1340,7 @@ async function openProject(info, fit = true) {
   await refreshAll(true);
   if (!state.model.nodeFeat.length && !info.basemap) map.jumpTo({ center: [150 / M_LON, 100 / M_LAT], zoom: 17 });
   updateGrid(); setTool(state.tool);
+  await loadRefs(); state.trace = null; saveSession();
 }
 async function withBusy(text, fn) { busy(true, text); try { await fn(); } catch (e) { toast(e.message || String(e)); } finally { busy(false); } }
 function openNew() { $("#dlg-new").hidden = false; $("#new-name").focus(); }
@@ -1437,7 +1442,7 @@ function wireUi() {
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = mt ? mt[1] : "project.gpkg";
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   });
-  $("#scenario-select").onchange = e => enqueue(async () => { state.sid = e.target.value; state.sel = { table: null, ids: [] }; $("#settings-form").dataset.sig = ""; await refreshAll(false); });
+  $("#scenario-select").onchange = e => enqueue(async () => { state.sid = e.target.value; state.sel = { table: null, ids: [] }; $("#settings-form").dataset.sig = ""; await refreshAll(false); saveSession(); });
   $("#copy-btn").onclick = () => enqueue(async () => {
     const r = await jpost(`${base()}/copy`, {}); state.info = r; state.sid = r.created; $("#settings-form").dataset.sig = ""; await refreshAll(false);
   });
@@ -1478,6 +1483,7 @@ function wireUi() {
     if (!e.ctrlKey && k === "h" && state.model) { fitModel(); return; }
     if (!e.ctrlKey && k === "z" && state.sel.ids.length) { zoomTo(state.sel.table, state.sel.ids); return; }
     if (!e.ctrlKey && k === "r" && state.pid) { setTool("measure"); return; }
+    if (!e.ctrlKey && (k === "u" || k === "d") && state.sel.ids.length) { trace(k === "u" ? "up" : "down"); return; }
     if (e.ctrlKey && k === "z") { e.preventDefault(); $("#undo-btn").click(); }
     else if (e.ctrlKey && k === "y") { e.preventDefault(); $("#redo-btn").click(); }
     else if (k === "enter" && state.tool === "catchment") finishCatchment();
@@ -1635,7 +1641,7 @@ function hover(e) {
         (r.q_ls != null ? ` · ${num(r.q_ls, 2)} L/s` : "") + (r.v_ms != null ? ` · v ${num(r.v_ms, 2)} m/s` : "") + (r.d_over_D != null ? ` · d/D ${num(r.d_over_D, 2)}` : "") +
         (q._fail ? ` · <span style="color:var(--bad)">failing</span>` : "");
       setHot(q.id);
-    } else setHot(null);
+    } else { setHot(null); h = refFeatureTip(p); }
     if (!h) { tip.hidden = true; return; }
     tip.innerHTML = h; tip.hidden = false;
     const W = $("#map-wrap").clientWidth, tw = tip.offsetWidth;
@@ -1716,9 +1722,282 @@ function wireView() {
   applyPanels(); document.body.classList.toggle("dark", ui.theme === "dark");
 }
 
+/* ------------------------------------------------------------------ batch 1: reload, cells and paste, trace, box select, reference layers */
+/* ---- the open project comes back after a page reload (and, with the server's snapshots, after a restart) */
+const SESS_KEY = "w19.session";
+let sessT = 0;
+function saveSession() {
+  clearTimeout(sessT);
+  sessT = setTimeout(() => {
+    try {
+      if (!state.pid) { localStorage.removeItem(SESS_KEY); return; }
+      const c = map.getCenter();
+      localStorage.setItem(SESS_KEY, JSON.stringify({ pid: state.pid, sid: state.sid, tab: state.tab, center: [c.lng, c.lat], zoom: map.getZoom() }));
+    } catch (e) { /* private window: nothing kept */ }
+  }, 300);
+}
+async function reattach() {
+  let s = null; try { s = JSON.parse(localStorage.getItem(SESS_KEY) || "null"); } catch (e) { /* none */ }
+  if (!s || !s.pid) return;
+  let info; try { info = await jget(`/projects/${encodeURIComponent(s.pid)}`); } catch (e) { try { localStorage.removeItem(SESS_KEY); } catch (x) { /* */ } return; }
+  await withBusy(`Reopening ${info.name}...`, async () => {
+    await openProject(info, false);
+    if (s.sid && s.sid !== "base" && info.scenarios.some(x => x.id === s.sid)) { state.sid = s.sid; await refreshAll(false); }
+    if (s.center) map.jumpTo({ center: s.center, zoom: s.zoom });
+    if (s.tab && s.tab !== state.tab) showTab(s.tab);
+    toast(`Reopened ${info.name} where you left it.`, "info");
+  });
+}
+
+/* ---- tables: double-click a cell to edit it; click a cell, then paste a column (or several) copied from Excel */
+const EDITABLE = { nodes: ["kind", "ground", "invert", "inflow_m3d", "load"], links: ["kind", "length_m", "dn_mm", "up_inv", "dn_inv", "transfer"] };
+function cellEditor(kind, td, id, col) {
+  const f = tmap(kind).get(id); if (!f) return;
+  const m = state.model, cur = col === "load" ? ((m.loads[m.settings.design_load] || {})[id] ?? 0) : f.properties[col];
+  let html;
+  if (col === "kind") html = `<select>${(kind === "nodes" ? state.info.node_kinds : state.info.link_kinds).map(o => `<option${o === cur ? " selected" : ""}>${o}</option>`).join("")}</select>`;
+  else if (col === "dn_mm") html = `<select>${state.info.catalogue.map(o => `<option${o === cur ? " selected" : ""}>${o}</option>`).join("")}</select>`;
+  else if (col === "transfer") html = `<select><option${cur ? " selected" : ""}>true</option><option${!cur ? " selected" : ""}>false</option></select>`;
+  else html = `<input type="number" step="any" value="${typeof cur === "number" ? +cur.toFixed(4) : ""}">`;
+  td.innerHTML = html; td.classList.add("editing");
+  const inp = td.firstChild; inp.dataset.testid = "cell-editor"; inp.focus(); if (inp.select) inp.select();
+  let done = false;
+  const commit = next => {
+    if (done) return; done = true;
+    let v = inp.value;
+    if (col === "transfer") v = v === "true"; else if (col !== "kind") { if (v === "") { renderTable(kind); return; } v = Number(v); if (!isFinite(v)) { renderTable(kind); return; } }
+    const same = typeof cur === "number" && typeof v === "number" ? +cur.toFixed(4) === v : cur === v;
+    const after = () => { if (next) { const vw = state.view[kind], i = vw.indexOf(id); if (i >= 0 && i + 1 < vw.length) openCell(kind, vw[i + 1], col); } };
+    if (same) { renderTable(kind); after(); return; }
+    enqueue(async () => {
+      if (col === "load") await execMany([{ op: "set_loads", set: m.settings.design_load, values: { [id]: v } }]);
+      else await setField(kind, [id], col, v);
+      after();
+    });
+  };
+  inp.addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); commit(true); }
+    else if (e.key === "Escape") { done = true; renderTable(kind); }
+    else if (e.key === "Tab") { e.preventDefault(); commit(false); }
+  });
+  inp.addEventListener("blur", () => commit(false));
+  if (inp.tagName === "SELECT") inp.addEventListener("change", () => commit(false));
+}
+function openCell(kind, id, col) {
+  const st = state.table[kind], i = state.view[kind].indexOf(id); if (i < 0) return;
+  const pg = Math.floor(i / PAGE); if (pg !== st.page) { st.page = pg; renderTable(kind); }
+  const tr = $(`#tbl-${kind} tr[data-id="${CSS.escape(id)}"]`), ci = colsOf(kind).indexOf(col);
+  if (tr && ci >= 0) { state.cell = { kind, id, col }; cellEditor(kind, tr.children[ci], id, col); }
+}
+function pasteCells(text) {
+  const c = state.cell; if (!c || !state.model || state.tab !== c.kind) return false;
+  const kind = c.kind, cols = colsOf(kind), c0 = cols.indexOf(c.col), view = state.view[kind], r0 = view.indexOf(c.id);
+  if (c0 < 0 || r0 < 0) return false;
+  const lines = text.replace(/\r/g, "").split("\n"); while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
+  if (!lines.length) return false;
+  const grid = lines.map(l => l.split("\t")), ops = [], skipped = [];
+  let n = 0;
+  for (let j = 0; j < Math.max(...grid.map(r => r.length)); j++) {
+    const col = cols[c0 + j];
+    if (!col || !EDITABLE[kind].includes(col)) { if (col) skipped.push(col); continue; }
+    const values = {};
+    grid.forEach((row, i) => {
+      const id = view[r0 + i]; if (id == null || row[j] == null || row[j].trim() === "") return;
+      let v = row[j].trim();
+      if (col === "transfer") v = /^(true|1|yes)$/i.test(v);
+      else if (col !== "kind") { v = Number(v.replace(/,/g, "")); if (!isFinite(v)) return; }
+      values[id] = v; n++;
+    });
+    if (!Object.keys(values).length) continue;
+    ops.push(col === "load" ? { op: "set_loads", set: state.model.settings.design_load, values } : { op: "set_many", table: kind, field: col, values });
+  }
+  if (!ops.length) { toast(`Nothing to paste into ${c.col}: only ${EDITABLE[kind].join(", ")} can be edited here.`); return true; }
+  enqueue(async () => {
+    await execMany(ops);
+    toast(`Pasted ${n} values into ${ops.map(o => o.field || "load").join(", ")} (${ops.length} undo step${ops.length > 1 ? "s" : ""})` + (skipped.length ? `; ${skipped.join(", ")} cannot be pasted into` : "") + ".", "info");
+  });
+  return true;
+}
+
+/* ---- trace upstream or downstream from a manhole or pipe: the pipes are selected and summed */
+function traceFrom(table, id, dir) {
+  const m = state.model; if (!m) return null;
+  const into = new Map(), out = new Map();
+  for (const f of m.linkFeat) {
+    const p = f.properties;
+    if (!into.has(p.to_node)) into.set(p.to_node, []); into.get(p.to_node).push(f);
+    if (!out.has(p.from_node)) out.set(p.from_node, []); out.get(p.from_node).push(f);
+  }
+  const links = new Set(), nodes = new Set(), dist = new Map();
+  let start = id;
+  if (table === "links") { const f = m.links.get(id); if (!f) return null; links.add(id); start = dir === "up" ? f.properties.from_node : f.properties.to_node; }
+  const q = [start]; nodes.add(start); dist.set(start, table === "links" ? (m.links.get(id).properties.length_m || 0) : 0);
+  while (q.length) {
+    const n = q.shift();
+    for (const f of (dir === "up" ? into : out).get(n) || []) {
+      if (links.has(String(f.id))) continue; links.add(String(f.id));
+      const nx = dir === "up" ? f.properties.from_node : f.properties.to_node;
+      if (!nodes.has(nx)) { nodes.add(nx); dist.set(nx, dist.get(n) + (f.properties.length_m || 0)); q.push(nx); }
+    }
+  }
+  const R = srcLinks(), ls = m.loads[m.settings.design_load] || {};
+  let km = 0, pumps = 0, fail = 0, vmin = null;
+  for (const l of links) {
+    const p = m.links.get(l).properties; km += (p.length_m || 0) / 1000; if (p.kind === "pump") pumps++;
+    const r = R[l]; if (r && (r.over_limit || r.over_vmax || r.surcharged || r.negative_slope)) fail++;
+    if (r && r.v_ms != null && p.kind !== "pump") vmin = vmin == null ? r.v_ms : Math.min(vmin, r.v_ms);
+  }
+  let far = start, fd = 0; for (const [n, d] of dist) if (d > fd) { fd = d; far = n; }
+  const load = dir === "up" ? [...nodes].reduce((s, n) => s + (ls[n] || 0), 0) : null;
+  const outLink = table === "links" ? id : ((out.get(id) || [])[0] || {}).id;
+  return { dir, table, id, start, links: [...links], nodes: nodes.size, km, pumps, fail, vmin, far, farKm: fd / 1000, load,
+           flow: outLink != null && R[outLink] ? R[outLink].q_ls : null, loadSet: m.settings.design_load };
+}
+function trace(dir) {
+  if (!state.sel.ids.length || !["nodes", "links"].includes(state.sel.table)) { toast("Select a manhole or a pipe to trace from.", "info"); return; }
+  const t = traceFrom(state.sel.table, state.sel.ids[0], dir); if (!t) return;
+  if (!t.links.length) { toast(dir === "up" ? `Nothing drains to ${t.id}.` : `Nothing leaves ${t.id}.`, "info"); return; }
+  state.trace = t; setSel("links", t.links, { zoom: true }); state.trace = t;
+  renderProps();
+}
+function traceBox() {
+  const t = state.trace;
+  if (!t || state.sel.table !== "links" || state.sel.ids.length !== t.links.length || state.sel.ids[0] !== t.links[0]) return "";
+  const up = t.dir === "up";
+  return `<div class="trace-box" data-testid="trace-box"><b>${up ? "Upstream of" : "Downstream of"} ${esc(t.id)}</b><br>` +
+    `${t.links.length - t.pumps} pipes${t.pumps ? ` + ${t.pumps} pumps` : ""} · ${num(t.km, 2)} km · ${t.nodes} nodes<br>` +
+    (up ? `load ${num(t.load, 1)} m3/d (${esc(t.loadSet)})` + (t.flow != null ? ` · ${num(t.flow, 2)} L/s leaving` : "") + `<br>farthest: ${esc(t.far)} at ${num(t.farKm, 2)} km`
+        : `ends at ${esc(t.far)} after ${num(t.farKm, 2)} km` + (t.vmin != null ? ` · lowest v ${num(t.vmin, 2)} m/s` : "")) +
+    (t.fail ? `<br><span class="flag">${t.fail} failing</span>` : "") +
+    `<div class="row"><button id="trace-profile">${up ? "Profile from the farthest" : "Profile to the end"}</button></div></div>`;
+}
+function traceProfile() {
+  const t = state.trace; if (!t) return;
+  $("#prof-start").value = t.dir === "up" ? t.far : t.id; $("#prof-end").value = t.dir === "up" ? (t.table === "links" ? t.id : t.id) : t.far; $("#prof-via").value = "";
+  showTab("profile"); drawProfile();
+}
+
+/* ---- box select: Shift+drag selects the pipes whose middle is inside the box, Ctrl+drag the nodes */
+let box = null;
+function boxStart(e) {
+  const o = e.originalEvent || {};
+  if (state.tool !== "select" || !state.model || !(o.shiftKey || o.ctrlKey) || o.button !== 0) return;
+  box = { a: e.point, b: e.point, nodes: o.ctrlKey && !o.shiftKey, el: null }; map.dragPan.disable();
+}
+function boxMove(e) {
+  if (!box) return; box.b = e.point;
+  if (!box.el) { box.el = document.createElement("div"); box.el.id = "selbox"; $("#map-wrap").appendChild(box.el); }
+  const x = Math.min(box.a.x, box.b.x), y = Math.min(box.a.y, box.b.y);
+  Object.assign(box.el.style, { left: x + "px", top: y + "px", width: Math.abs(box.b.x - box.a.x) + "px", height: Math.abs(box.b.y - box.a.y) + "px" });
+}
+function boxEnd(e) {
+  if (!box) return; const b = box; box = null; map.dragPan.enable(); if (b.el) b.el.remove();
+  const p = e.point, x0 = Math.min(b.a.x, p.x), x1 = Math.max(b.a.x, p.x), y0 = Math.min(b.a.y, p.y), y1 = Math.max(b.a.y, p.y);
+  if (x1 - x0 < 4 && y1 - y0 < 4) return;                      // a click: the Select tool handles it
+  suppressClick = true; setTimeout(() => { suppressClick = false; }, 80);
+  const inside = c => { const q = map.project(c); return q.x >= x0 && q.x <= x1 && q.y >= y0 && q.y <= y1; };
+  const m = state.model, ids = [];
+  if (b.nodes) { for (const f of m.nodeFeat) if (inside(f.geometry.coordinates)) ids.push(String(f.id)); }
+  else for (const f of m.linkFeat) {
+    const c = f.geometry.coordinates, a0 = c[0], a1 = c[c.length - 1];
+    if (inside([(a0[0] + a1[0]) / 2, (a0[1] + a1[1]) / 2])) ids.push(String(f.id));
+  }
+  setSel(b.nodes ? "nodes" : "links", ids);
+  toast(`${ids.length} ${b.nodes ? "nodes" : "pipes"} selected. Edit them together in Properties or with Set field in the table.`, "info");
+}
+
+/* ---- reference layers: GIS files drawn under the network for orientation; display only, kept with the project */
+const REF_COLORS = ["#d9480f", "#2b8a3e", "#5f3dc4", "#c2255c", "#1971c2", "#e67700", "#0b7285"];
+function refLayerIds(r) { return ["fill", "line", "pt"].map(k => `ref-${r.id}-${k}`); }
+function addRefToMap(r, i) {
+  const col = r.color || REF_COLORS[i % REF_COLORS.length]; r.color = col; r.visible = r.visible !== false;
+  const sid = "ref-" + r.id, before = map.getLayer("route-halo") ? "route-halo" : undefined;
+  if (!map.getSource(sid)) map.addSource(sid, { type: "geojson", data: r.geojson, tolerance: 0.4 });
+  const vis = r.visible ? "visible" : "none", gt = ["geometry-type"];
+  map.addLayer({ id: `ref-${r.id}-fill`, type: "fill", source: sid, filter: ["==", gt, "Polygon"], layout: { visibility: vis }, paint: { "fill-color": col, "fill-opacity": 0.12, "fill-outline-color": col } }, before);
+  map.addLayer({ id: `ref-${r.id}-line`, type: "line", source: sid, filter: ["in", gt, ["literal", ["LineString", "Polygon"]]], layout: { visibility: vis }, paint: { "line-color": col, "line-width": ["interpolate", ["linear"], ["zoom"], 12, 0.6, 17, 1.6], "line-opacity": 0.8 } }, before);
+  map.addLayer({ id: `ref-${r.id}-pt`, type: "circle", source: sid, filter: ["==", gt, "Point"], layout: { visibility: vis }, paint: { "circle-radius": 3, "circle-color": col, "circle-stroke-color": "#fff", "circle-stroke-width": 1 } }, before);
+}
+function removeRefFromMap(r) {
+  for (const l of refLayerIds(r)) if (map.getLayer(l)) map.removeLayer(l);
+  if (map.getSource("ref-" + r.id)) map.removeSource("ref-" + r.id);
+}
+async function loadRefs() {
+  await mapReady;
+  for (const r of state.refs || []) removeRefFromMap(r);
+  state.refs = [];
+  if (!state.pid) { renderRefs(); return; }
+  try { state.refs = await jget(`/projects/${state.pid}/reference`); } catch (e) { state.refs = []; }
+  state.refs.forEach(addRefToMap); renderRefs();
+}
+function renderRefs() {
+  const host = $("#ref-list"); if (!host) return;
+  host.innerHTML = (state.refs || []).map(r => `<div class="ref" data-rid="${esc(r.id)}"><span class="sw" style="background:${r.color}"></span>` +
+    `<label title="${esc(r.count + " features" + (r.crs ? ", EPSG:" + r.crs : ", in the project's coordinates"))}"><input type="checkbox" data-act="vis" ${r.visible ? "checked" : ""}> ${esc(r.name)}</label>` +
+    `<button class="pbtn" data-act="zoom" title="Zoom to the layer">&#9635;</button><button class="pbtn" data-act="del" title="Remove the layer">&times;</button></div>`).join("") ||
+    `<div class="muted">None. Plots, roads, a survey DXF: drawn under the network.</div>`;
+  tag(host);
+}
+async function addRefFile(file) {
+  if (!state.pid || !file) return;
+  const fd = new FormData(); fd.append("file", file);
+  const r = await (await api(`/projects/${state.pid}/reference`, { method: "POST", body: fd })).json();
+  await mapReady; state.refs = (state.refs || []).concat([r]); addRefToMap(r, state.refs.length - 1); renderRefs();
+  toast(`${r.name}: ${r.count} features drawn under the network.`, "info");
+}
+function refFeatureTip(point) {
+  const ids = (state.refs || []).filter(r => r.visible).flatMap(refLayerIds).filter(l => map.getLayer(l)); if (!ids.length) return "";
+  const f = map.queryRenderedFeatures([[point.x - 3, point.y - 3], [point.x + 3, point.y + 3]], { layers: ids })[0]; if (!f) return "";
+  const r = state.refs.find(x => f.layer.id.startsWith(`ref-${x.id}-`)), kv = Object.entries(f.properties).filter(([, v]) => v !== "" && v != null && v !== "None" && v !== "nan").slice(0, 4);
+  return `<b>${esc(r ? r.name : "layer")}</b>` + kv.map(([k, v]) => ` · ${esc(k)}: ${esc(typeof v === "number" ? +v.toFixed(3) : String(v).slice(0, 40))}`).join("");
+}
+function wireBatch1() {
+  map.on("mousedown", boxStart);
+  map.on("mousemove", e => { if (box) boxMove(e); });
+  map.on("mouseup", boxEnd);
+  map.on("moveend", saveSession);
+  for (const kind of ["nodes", "links"]) {
+    const tbl = $("#tbl-" + kind);
+    // the row click re-draws the table, so the browser's dblclick never fires on the cell: a second click on the same
+    // cell within 450 ms is the double-click
+    let last = { key: "", t: 0 };
+    tbl.addEventListener("click", e => {
+      const td = e.target.closest("td"), tr = e.target.closest("tr[data-id]"); if (!td || !tr || td.classList.contains("editing")) return;
+      const id = tr.dataset.id, col = colsOf(kind)[td.cellIndex], key = `${id}|${col}`, now = performance.now();
+      state.cell = { kind, id, col };
+      const live = $(`#tbl-${kind} tr[data-id="${CSS.escape(id)}"]`);
+      $$(`#tbl-${kind} td.cur`).forEach(x => x.classList.remove("cur")); if (live) live.children[td.cellIndex].classList.add("cur");
+      if (last.key === key && now - last.t < 450) {
+        last = { key: "", t: 0 };
+        if (!EDITABLE[kind].includes(col)) { toast(`${col} is not edited here (${EDITABLE[kind].join(", ")} are).`, "info"); return; }
+        openCell(kind, id, col); return;
+      }
+      last = { key, t: now };
+    });
+  }
+  document.addEventListener("paste", e => {
+    const tg = e.target.tagName; if (["INPUT", "SELECT", "TEXTAREA"].includes(tg)) return;
+    const t = (e.clipboardData || window.clipboardData).getData("text"); if (t && pasteCells(t)) e.preventDefault();
+  });
+  $("#ref-add").onclick = () => { if (!state.pid) { toast("Open a project first.", "info"); return; } $("#ref-file").click(); };
+  $("#ref-file").onchange = e => { const f = e.target.files[0]; e.target.value = ""; if (f) enqueue(() => withBusy(`Reading ${f.name}...`, () => addRefFile(f))); };
+  $("#ref-list").addEventListener("click", e => {
+    const row = e.target.closest(".ref"); if (!row) return; const r = state.refs.find(x => x.id === row.dataset.rid); if (!r) return;
+    const act = e.target.dataset.act;
+    if (act === "vis") { r.visible = e.target.checked; for (const l of refLayerIds(r)) if (map.getLayer(l)) map.setLayoutProperty(l, "visibility", r.visible ? "visible" : "none"); }
+    else if (act === "zoom") { const pts = []; const walk = c => typeof c[0] === "number" ? pts.push(c) : c.forEach(walk); r.geojson.features.forEach(f => walk(f.geometry.coordinates)); if (pts.length) { const b = bboxOf(pts); map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 40, maxZoom: 18, duration: 300 }); } }
+    else if (act === "del") enqueue(async () => { await jpost(`/projects/${state.pid}/reference/${encodeURIComponent(r.id)}/delete`); removeRefFromMap(r); state.refs = state.refs.filter(x => x !== r); renderRefs(); });
+  });
+  $("#props").addEventListener("click", e => {
+    if (e.target.id === "trace-up") trace("up"); else if (e.target.id === "trace-down") trace("down"); else if (e.target.id === "trace-profile") traceProfile();
+  });
+  renderRefs();
+}
+
 /* ------------------------------------------------------------------ boot */
 state.history = [];
-initMap(); wireUi(); initTables(); tag(); renderLegend(); updateStatus(); updateButtons(); asstStatus();
+initMap(); wireUi(); initTables(); wireBatch1(); tag(); renderLegend(); updateStatus(); updateButtons(); asstStatus();
+enqueue(reattach);
 window.ed = {
   state, map,
   clickAt: (lon, lat, mods) => enqueue(() => act({ lng: lon, lat: lat }, mods)),

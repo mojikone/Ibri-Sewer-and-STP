@@ -564,5 +564,58 @@ def test_profile_route_pick_cursor_sync_zoom_and_export(page, tmp_path):
     page.get_by_test_id("prof-clear").click(); assert page.evaluate("prof.segs.length") == 0
 
 
+def _screen(pg, x, y):
+    """Page pixels of a local-metre point on the map."""
+    return pg.evaluate("([lon, lat]) => { const p = window.ed.map.project([lon, lat]), r = window.ed.map.getCanvas().getBoundingClientRect(); return [p.x + r.x, p.y + r.y]; }", ll(x, y))
+
+
+def test_batch1_cells_paste_trace_box_select_reference_and_reload(page, tmp_path):
+    nid, lid = draw_network(page)
+    node = lambda i, k: page.evaluate("([i, k]) => window.ed.state.model.nodes.get(i).properties[k]", [i, k])
+    link = lambda i, k: page.evaluate("([i, k]) => window.ed.state.model.links.get(i).properties[k]", [i, k])
+    # a cell edited in place; Enter moves down a row like a spreadsheet
+    page.get_by_test_id("tab-nodes").click()
+    cols = page.locator("#tbl-nodes thead th").all_inner_texts()
+    page.locator(f'#tbl-nodes tr[data-id="{nid[1]}"] td').nth(cols.index("ground")).dblclick()
+    ed_ = page.get_by_test_id("cell-editor"); ed_.fill("101.25"); ed_.press("Enter"); idle(page)
+    assert node(nid[1], "ground") == 101.25
+    expect(page.get_by_test_id("cell-editor")).to_have_count(1); page.get_by_test_id("cell-editor").press("Escape")
+    # a column pasted from a spreadsheet: one edit, the pipe ends follow the inverts, one undo takes it back
+    page.locator(f'#tbl-nodes tr[data-id="{nid[0]}"] td').nth(cols.index("invert")).click()
+    page.evaluate("t => { const d = new DataTransfer(); d.setData('text/plain', t); document.dispatchEvent(new ClipboardEvent('paste', { clipboardData: d, bubbles: true })); }", "97.9\r\n97.4\r\n96.9\r\n")
+    idle(page)
+    assert [node(n, "invert") for n in nid[:3]] == [97.9, 97.4, 96.9] and link(lid[0], "up_inv") == 97.9 and link(lid[1], "dn_inv") == 96.9
+    page.get_by_test_id("undo-btn").click(); idle(page)
+    assert [node(n, "invert") for n in nid[:3]] == [98.0, 97.5, 97.0] and link(lid[0], "up_inv") == 98.0
+    # trace: upstream of the third manhole is two pipes; downstream of the first pipe, all three; then its profile
+    page.evaluate("id => window.ed.selectElement('nodes', id)", nid[2]); page.get_by_test_id("trace-up").click(); idle(page)
+    assert sorted(page.evaluate("window.ed.state.sel.ids")) == sorted(lid[:2])
+    expect(page.get_by_test_id("trace-box")).to_contain_text("2 pipes")
+    page.evaluate("id => window.ed.selectElement('links', id)", lid[0]); page.get_by_test_id("trace-down").click(); idle(page)
+    assert sorted(page.evaluate("window.ed.state.sel.ids")) == sorted(lid)
+    page.get_by_test_id("trace-profile").click(); idle(page); page.wait_for_function("prof.rows && prof.rows.length === 3")
+    # Shift+drag selects the pipes whose middle is in the box (P-1 at 50 m, P-2 at 150 m, not P-3 at 250 m)
+    tool(page, "select"); page.get_by_test_id("tab-nodes").click()
+    a, b = _screen(page, 20, -30), _screen(page, 180, 30)
+    page.keyboard.down("Shift"); page.mouse.move(*a); page.mouse.down(); page.mouse.move(*b, steps=6); page.mouse.up(); page.keyboard.up("Shift"); idle(page)
+    assert page.evaluate("window.ed.state.sel.table") == "links" and sorted(page.evaluate("window.ed.state.sel.ids")) == sorted(lid[:2])
+    # a reference layer (a road 20 m off the pipes, no CRS: taken in the project's coordinates), shown and removed
+    f = tmp_path / "road.geojson"
+    f.write_text('{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"name":"Road 1"},"geometry":{"type":"LineString","coordinates":[[0,20],[300,20]]}}]}')
+    page.set_input_files("#ref-file", str(f)); page.wait_for_function("window.ed.state.refs && window.ed.state.refs.length === 1")
+    rid = page.evaluate("window.ed.state.refs[0].id")
+    assert page.evaluate("id => !!window.ed.map.getLayer('ref-' + id + '-line')", rid)
+    c = page.evaluate("window.ed.state.refs[0].geojson.features[0].geometry.coordinates[1]")
+    assert abs(c[0] * M_LON - 300) < 0.01 and abs(c[1] * M_LAT - 20) < 0.01
+    expect(page.locator("#ref-list .ref")).to_have_count(1)
+    # a reload comes back to the same project, with its reference layer
+    pid = page.evaluate("window.ed.state.pid"); page.wait_for_timeout(400)
+    page.reload(); page.wait_for_function("p => window.ed && window.ed.state.pid === p && window.ed.state.model && document.body.dataset.pending === '0'", arg=pid)
+    page.wait_for_function("window.ed.state.refs && window.ed.state.refs.length === 1")
+    assert page.evaluate("window.ed.counts()") == {"nodes": 4, "links": 3}
+    page.locator('#ref-list .ref [data-act="del"]').click(); idle(page)
+    assert page.evaluate("window.ed.state.refs.length") == 0 and not page.evaluate("id => !!window.ed.map.getLayer('ref-' + id + '-line')", rid)
+
+
 def test_no_javascript_errors(page):
     assert page.errors == [], page.errors

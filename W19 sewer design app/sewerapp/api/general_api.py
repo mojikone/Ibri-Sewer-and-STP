@@ -1,7 +1,7 @@
 """The general app's API (/api/g): projects (new, sample, open, save), scenarios (copy, undo, redo), edits by element
 id with instant re-solve, the model and results for the map, the profile. Positions from the map arrive as lon/lat
 and are converted at this one boundary (api/coords.py)."""
-import io, math, os, tempfile, threading, itertools
+import io, json, math, os, pickle, re, tempfile, threading, itertools, time
 import numpy as np, pandas as pd
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from fastapi.responses import Response
@@ -25,13 +25,58 @@ def clean(x):
     return x
 
 
+# ---- snapshots: each open project is written to disk a moment after it changes, so a page reload or a restart of
+# the app finds it again. On when W19_AUTOSAVE_DIR is set (`python -m sewerapp.api` sets it); off in tests and imports.
+AUTOSAVE = os.environ.get("W19_AUTOSAVE_DIR")
+KEEP_DAYS, KEEP_N = 7, 12
+_timers: dict[str, threading.Timer] = {}
+
+
+def _snap(pid): return os.path.join(AUTOSAVE, f"{pid}.pkl")
+
+
+def snapshot(pid):
+    if not AUTOSAVE or pid not in SESSIONS: return None
+    os.makedirs(AUTOSAVE, exist_ok=True)
+    with _lock: st = SESSIONS[pid].state()                   # lists copied under the lock; the base is never changed in place
+    tmp = _snap(pid) + ".tmp"
+    with open(tmp, "wb") as f: pickle.dump(st, f, protocol=5)
+    os.replace(tmp, _snap(pid)); return _snap(pid)
+
+
+def schedule(pid, delay=2.0):
+    if not AUTOSAVE or pid not in SESSIONS: return
+    t = _timers.pop(pid, None)
+    if t: t.cancel()
+    t = threading.Timer(delay, snapshot, args=(pid,)); t.daemon = True; _timers[pid] = t; t.start()
+
+
+def _restore(pid):
+    if not AUTOSAVE or not re.fullmatch(r"p\d+", pid) or not os.path.exists(_snap(pid)): return None
+    with open(_snap(pid), "rb") as f: st = pickle.load(f)
+    SESSIONS[pid] = Session.from_state(st); return SESSIONS[pid]
+
+
+def _init_autosave():
+    """Drop snapshots older than KEEP_DAYS or beyond the newest KEEP_N, and number new projects after the kept ones."""
+    global _ids
+    if not AUTOSAVE or not os.path.isdir(AUTOSAVE): return
+    fs = sorted((f for f in os.listdir(AUTOSAVE) if re.fullmatch(r"p\d+\.pkl", f)), key=lambda f: -os.path.getmtime(os.path.join(AUTOSAVE, f)))
+    for k, f in enumerate(fs):
+        if k >= KEEP_N or time.time() - os.path.getmtime(os.path.join(AUTOSAVE, f)) > KEEP_DAYS * 86400: os.remove(os.path.join(AUTOSAVE, f))
+    left = [int(f[1:-4]) for f in os.listdir(AUTOSAVE) if re.fullmatch(r"p\d+\.pkl", f)]
+    if left: _ids = itertools.count(max(left) + 1)
+
+
 def _s(pid):
-    if pid not in SESSIONS: raise HTTPException(404, f"no open project {pid}")
+    if pid not in SESSIONS:
+        with _lock:
+            if pid not in SESSIONS and _restore(pid) is None: raise HTTPException(404, f"no open project {pid}")
     return SESSIONS[pid]
 
 
 def _open(project):
-    pid = f"p{next(_ids)}"; SESSIONS[pid] = Session(pid, project); return pid
+    pid = f"p{next(_ids)}"; SESSIONS[pid] = Session(pid, project); schedule(pid, 0.5); return pid
 
 
 def _info(pid):
@@ -399,6 +444,49 @@ def route(p, start, end=None, via=()):
     return here[0][1]
 
 
+# ---- reference layers: a GIS layer drawn under the network for orientation (plots, roads, a DXF); display only
+@router.post("/projects/{pid}/reference")
+def add_reference(pid: str, file: UploadFile = File(...)):
+    from sewerapp.io import gis_import
+    import shapely
+    s = _s(pid); crs = s.base.crs
+    with tempfile.TemporaryDirectory() as d:
+        f = os.path.join(d, os.path.basename(file.filename or "layer")); open(f, "wb").write(file.file.read())
+        try: g = gis_import.read_layer(f)
+        except Exception as e: raise HTTPException(400, f"could not read {file.filename}: {e}")
+    g = g[g.geometry.notna() & ~g.geometry.is_empty]
+    if not len(g): raise HTTPException(400, f"{file.filename} holds no geometry")
+    if len(g) > 150000: raise HTTPException(400, f"{len(g)} features: too many to draw (150,000 at most)")
+    if crs and g.crs and g.crs.to_epsg() != crs: g = g.to_crs(crs)              # no CRS: taken as the project's own
+    geom = shapely.simplify(g.geometry.values, 0.05)                              # 5 cm: invisible on screen, fewer vertices
+    geom = shapely.transform(geom, lambda xy: np.column_stack(coords.to_display(crs, xy[:, 0], xy[:, 1])))
+    cols = [c for c in g.columns if c != "geometry"][:12]
+    props = g[cols].copy()
+    for c in cols:
+        if not pd.api.types.is_numeric_dtype(props[c]): props[c] = props[c].astype(str)
+    feats = [dict(type="Feature", properties={k: (None if isinstance(v, float) and not math.isfinite(v) else v) for k, v in zip(cols, row)},
+                  geometry=json.loads(shapely.to_geojson(gm))) for row, gm in zip(props.itertuples(index=False, name=None), geom)]
+    kinds = sorted({t for t in g.geom_type.unique()})
+    ref = dict(id=f"r{len(getattr(s, 'refs', [])) + 1}_{int(time.time()) % 100000}", name=os.path.splitext(os.path.basename(file.filename or "layer"))[0],
+               count=len(feats), geom=kinds, fields=cols, crs=g.crs.to_epsg() if g.crs else None,
+               geojson=dict(type="FeatureCollection", features=feats))
+    with _lock: s.refs = getattr(s, "refs", []) + [ref]
+    schedule(pid)
+    return clean(ref)
+
+
+@router.get("/projects/{pid}/reference")
+def list_references(pid: str):
+    return clean(getattr(_s(pid), "refs", []))
+
+
+@router.post("/projects/{pid}/reference/{rid}/delete")
+def delete_reference(pid: str, rid: str):
+    s = _s(pid)
+    with _lock: s.refs = [r for r in getattr(s, "refs", []) if r["id"] != rid]
+    schedule(pid); return dict(ok=True)
+
+
 @router.get("/projects/{pid}/scenarios/{sid}/profile")
 def profile(pid: str, sid: str, start: str, end: str | None = None, via: str | None = None):
     """A long section along a route (see `route`): per link, in route order, the chainage, ground, invert, crown and
@@ -530,3 +618,6 @@ def compare_stored(pid: str, sid: str):
     return clean(dict(links=int(len(j)), pc_flow_within_0_1=round(float((dq.abs() < 0.1).mean() * 100), 3),
                       largest_flow_pc=float(dq.abs().max()), dv_p05=float((j.v_ms - j.v_ms_sg).quantile(.05)),
                       dv_p95=float((j.v_ms - j.v_ms_sg).quantile(.95))))
+
+
+_init_autosave()

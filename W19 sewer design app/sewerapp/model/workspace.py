@@ -4,6 +4,9 @@ list of edits (by element id), with undo and redo. Every edit re-solves at once 
 Edit ops (dicts with "op"):
   set        {table: nodes|links|catchments, ids: [...], field, value}         one field on one or many elements (bulk)
   set_values {table, field, values: {id: value}}                             one field, a value per element (imports)
+  set_many   {table, field, values: {id: value}}                             as `set`, a value per element (a pasted column):
+                                                                             node inverts carry link ends; one undo step
+  set_loads  {set, values: {node: m3/d}}                                     unit loads of many nodes, one undo step
   add_node   {id?, kind, x, y, ground?, invert?}                               ground 0 and invert ground - 1.5 m by default
   add_link   {id?, kind, from_node, to_node, dn_mm?, length_m?, up_inv?, dn_inv?, coords?}
   add_catchment {id?, outlet, area_ha, imperv_pc, width_m, slope_pc, coords?}
@@ -60,6 +63,17 @@ def apply(p, e):
                 if v not in allowed: raise ValueError(f"kind must be one of {allowed}")
             t.loc[ids, e["field"]] = v
         if e["table"] == "nodes" and e["field"] in ("x", "y"): _relength(p, ids); return True
+        return False
+    if op == "set_many":
+        structural = False
+        for i, v in e["values"].items():
+            structural = apply(p, dict(op="set", table=e["table"], ids=[str(i)], field=e["field"], value=v)) or structural
+        return structural
+    if op == "set_loads":
+        missing = [n for n in e["values"] if str(n) not in p.nodes.index]
+        if missing: raise ValueError(f"no node {missing[:3]}")
+        ls = p.load_sets.setdefault(str(e["set"]), {})
+        for n, v in e["values"].items(): ls[str(n)] = float(v)
         return False
     if op == "set_values":
         t = getattr(p, e["table"]); v = pd.Series(e["values"], dtype=float if e["field"] != "kind" else object)
@@ -169,6 +183,7 @@ class Session:
         self.id, self.base = pid, project
         self.scenarios = {"base": Scenario("base", "Base")}; self._cache = {}; self._n = 0
         self.external = {}                      # scenario id -> results another program computed (SewerGEMS), by link id
+        self.refs = []                          # reference layers shown under the network: [{id, name, geojson, ...}]
 
     def model(self, sid):
         """The scenario's project (the base plus the parent chain's edits plus its own)."""
@@ -223,6 +238,20 @@ class Session:
     def redo_(self, sid):
         s = self.scenarios[sid]
         if s.redo: s.edits.append(s.redo.pop())
+
+    def state(self):
+        """What a snapshot keeps: the base model, the scenarios as edit lists, results read from other programs and
+        reference layers. The base is never changed in place (scenarios copy it), so this can be pickled outside the lock."""
+        return dict(id=self.id, base=self.base, n=self._n, external=self.external, refs=getattr(self, "refs", []),
+                    scenarios=[(s.id, s.name, s.parent, list(s.edits), list(s.redo), s.fixed) for s in self.scenarios.values()])
+
+    @classmethod
+    def from_state(cls, st):
+        s = cls(st["id"], st["base"]); s._n = st["n"]; s.external = st["external"]; s.refs = st.get("refs", [])
+        s.scenarios = {}
+        for sid, name, parent, edits, redo, fixed in st["scenarios"]:
+            c = Scenario(sid, name, parent, edits); c.redo = redo; c.fixed = fixed; s.scenarios[sid] = c
+        return s
 
     def copy_scenario(self, sid, name=None):
         self._n += 1; new = f"S{self._n}"
