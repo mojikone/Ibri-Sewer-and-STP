@@ -14,5 +14,6 @@ markers = [
   "gate_p0: phase 0 gate (the W18 port reproduces W18)",
   "gate_p1a: phase 1A gate (12 cases against W18 and SewerGEMS)",
   "slow: runs the design chain",
+  "gate_swmm: stormwater engine against EPA SWMM reference results",
   "live: calls the Claude API (needs ANTHROPIC_API_KEY, spends tokens)",
 ]

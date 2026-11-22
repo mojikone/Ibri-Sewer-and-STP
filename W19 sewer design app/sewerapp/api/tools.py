@@ -18,11 +18,34 @@ REGISTER = [
          script="w18port/run.py (final_design, split, self-cleansing, naming, products)", seconds="about 40"),
     dict(name="compare_sewergems", menu="Referee", label="Compare with SewerGEMS's saved run (SC1-2056)",
          script="referee/sewergems.py", seconds="<2"),
+    dict(name="swmm_examples", menu="Stormwater", label="Run EPA's SWMM examples and compare with EPA's reference results",
+         script="engine/swmm.py", seconds="about 2"),
 ]
+
+
+def _swmm_examples():
+    import os, tempfile
+    from sewerapp.engine import swmm
+    w19 = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    fix, ref = os.path.join(w19, "tests", "fixtures", "swmm"), os.path.join(w19, "work", "swmm_ref")
+    rows = []
+    for folder, names in (("examples", [f"Example{i}" for i in range(1, 6)]),
+                          ("extran", [f"extran{i}" for i in ("1", "2", "3", "4", "5", "6", "7", "8a", "9", "10")])):
+        for n in names:
+            r = swmm.run(os.path.join(fix, folder, n + ".inp"), tempfile.mkdtemp())
+            row = dict(model=n, links=r["summary"]["links"], nodes=r["summary"]["nodes"], periods=r["summary"]["periods"],
+                       seconds=r["seconds"])
+            refdir = os.path.join(ref, n.replace("Example", "Example_") if n.startswith("Example") else n.replace("extran", "extran_"))
+            if os.path.isdir(refdir):
+                c = swmm.compare(r["out"], os.path.join(refdir, n + ".out"))
+                row.update(matches_epa=c["ok"], worst_rel=max((s.get("worst_rel", 0) for s in c["series"]), default=0))
+            rows.append(row)
+    return dict(rows=rows)
 
 
 def run(name, project, scenario):
     if name not in {t["name"] for t in REGISTER}: raise KeyError(name)
+    if name == "swmm_examples": return _swmm_examples()
     res, summ = project.results(scenario.id)
     if name == "checks":
         bad = res[res.over_limit | res.over_3ms | res.under075]

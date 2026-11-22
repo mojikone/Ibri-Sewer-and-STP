@@ -1,0 +1,560 @@
+{
+ "Example1": {
+  "seconds": 0.016,
+  "links": 13,
+  "nodes": 14,
+  "subcatchments": 8,
+  "periods": 36,
+  "worst_peak_rel": 0.006789417196939404,
+  "note": "per-step link flows differ by up to 0.68 % between SWMM 5.2.4 builds (one peak, link 4, 0.68 %; the rest within 0.06 %)",
+  "ok": false,
+  "series": [
+   {
+    "series": "link.FLOW_RATE",
+    "values": 468,
+    "outside": 13,
+    "worst_rel": 0.006789417196939404,
+    "ok": false,
+    "peaks_outside": 3,
+    "worst_peak_rel": 0.006789417196939404
+   },
+   {
+    "series": "node.INVERT_DEPTH",
+    "values": 504,
+    "outside": 3,
+    "worst_rel": 0.0032822873026213204,
+    "ok": false
+   },
+   {
+    "series": "node.HYDRAULIC_HEAD",
+    "values": 504,
+    "outside": 0,
+    "worst_rel": 1.3616427105231152e-06,
+    "ok": true
+   },
+   {
+    "series": "subcatch.RUNOFF_RATE",
+    "values": 288,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   }
+  ]
+ },
+ "Example2": {
+  "seconds": 0.006,
+  "links": 9,
+  "nodes": 10,
+  "subcatchments": 0,
+  "periods": 32,
+  "worst_peak_rel": 0.0,
+  "note": "",
+  "ok": true,
+  "series": [
+   {
+    "series": "link.FLOW_RATE",
+    "values": 288,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true,
+    "peaks_outside": 0,
+    "worst_peak_rel": 0.0
+   },
+   {
+    "series": "node.INVERT_DEPTH",
+    "values": 320,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   },
+   {
+    "series": "node.HYDRAULIC_HEAD",
+    "values": 320,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   }
+  ]
+ },
+ "Example3": {
+  "seconds": 0.227,
+  "links": 33,
+  "nodes": 34,
+  "subcatchments": 0,
+  "periods": 288,
+  "worst_peak_rel": 0.0,
+  "note": "",
+  "ok": true,
+  "series": [
+   {
+    "series": "link.FLOW_RATE",
+    "values": 9504,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true,
+    "peaks_outside": 0,
+    "worst_peak_rel": 0.0
+   },
+   {
+    "series": "node.INVERT_DEPTH",
+    "values": 9792,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   },
+   {
+    "series": "node.HYDRAULIC_HEAD",
+    "values": 9792,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   }
+  ]
+ },
+ "Example4": {
+  "seconds": 0.015,
+  "links": 0,
+  "nodes": 1,
+  "subcatchments": 9,
+  "periods": 720,
+  "worst_peak_rel": 0.0,
+  "note": "",
+  "ok": true,
+  "series": [
+   {
+    "series": "node.INVERT_DEPTH",
+    "values": 720,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   },
+   {
+    "series": "node.HYDRAULIC_HEAD",
+    "values": 720,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   },
+   {
+    "series": "subcatch.RUNOFF_RATE",
+    "values": 6480,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   }
+  ]
+ },
+ "Example5": {
+  "seconds": 0.001,
+  "links": 0,
+  "nodes": 1,
+  "subcatchments": 1,
+  "periods": 192,
+  "worst_peak_rel": 0.0,
+  "note": "",
+  "ok": true,
+  "series": [
+   {
+    "series": "node.INVERT_DEPTH",
+    "values": 192,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   },
+   {
+    "series": "node.HYDRAULIC_HEAD",
+    "values": 192,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   },
+   {
+    "series": "subcatch.RUNOFF_RATE",
+    "values": 192,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   }
+  ]
+ },
+ "extran1": {
+  "seconds": 0.005,
+  "links": 9,
+  "nodes": 10,
+  "subcatchments": 0,
+  "periods": 32,
+  "worst_peak_rel": 0.0,
+  "note": "",
+  "ok": true,
+  "series": [
+   {
+    "series": "link.FLOW_RATE",
+    "values": 288,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true,
+    "peaks_outside": 0,
+    "worst_peak_rel": 0.0
+   },
+   {
+    "series": "node.INVERT_DEPTH",
+    "values": 320,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   },
+   {
+    "series": "node.HYDRAULIC_HEAD",
+    "values": 320,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   }
+  ]
+ },
+ "extran2": {
+  "seconds": 0.006,
+  "links": 9,
+  "nodes": 10,
+  "subcatchments": 0,
+  "periods": 32,
+  "worst_peak_rel": 0.0,
+  "note": "",
+  "ok": true,
+  "series": [
+   {
+    "series": "link.FLOW_RATE",
+    "values": 288,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true,
+    "peaks_outside": 0,
+    "worst_peak_rel": 0.0
+   },
+   {
+    "series": "node.INVERT_DEPTH",
+    "values": 320,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   },
+   {
+    "series": "node.HYDRAULIC_HEAD",
+    "values": 320,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   }
+  ]
+ },
+ "extran3": {
+  "seconds": 0.006,
+  "links": 10,
+  "nodes": 10,
+  "subcatchments": 0,
+  "periods": 32,
+  "worst_peak_rel": 0.0,
+  "note": "",
+  "ok": true,
+  "series": [
+   {
+    "series": "link.FLOW_RATE",
+    "values": 320,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true,
+    "peaks_outside": 0,
+    "worst_peak_rel": 0.0
+   },
+   {
+    "series": "node.INVERT_DEPTH",
+    "values": 320,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   },
+   {
+    "series": "node.HYDRAULIC_HEAD",
+    "values": 320,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   }
+  ]
+ },
+ "extran4": {
+  "seconds": 0.006,
+  "links": 10,
+  "nodes": 10,
+  "subcatchments": 0,
+  "periods": 32,
+  "worst_peak_rel": 0.0,
+  "note": "",
+  "ok": true,
+  "series": [
+   {
+    "series": "link.FLOW_RATE",
+    "values": 320,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true,
+    "peaks_outside": 0,
+    "worst_peak_rel": 0.0
+   },
+   {
+    "series": "node.INVERT_DEPTH",
+    "values": 320,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   },
+   {
+    "series": "node.HYDRAULIC_HEAD",
+    "values": 320,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   }
+  ]
+ },
+ "extran5": {
+  "seconds": 0.006,
+  "links": 10,
+  "nodes": 11,
+  "subcatchments": 0,
+  "periods": 32,
+  "worst_peak_rel": 0.0,
+  "note": "",
+  "ok": true,
+  "series": [
+   {
+    "series": "link.FLOW_RATE",
+    "values": 320,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true,
+    "peaks_outside": 0,
+    "worst_peak_rel": 0.0
+   },
+   {
+    "series": "node.INVERT_DEPTH",
+    "values": 352,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   },
+   {
+    "series": "node.HYDRAULIC_HEAD",
+    "values": 352,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   }
+  ]
+ },
+ "extran6": {
+  "seconds": 0.007,
+  "links": 11,
+  "nodes": 11,
+  "subcatchments": 0,
+  "periods": 32,
+  "worst_peak_rel": 0.0,
+  "note": "",
+  "ok": true,
+  "series": [
+   {
+    "series": "link.FLOW_RATE",
+    "values": 352,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true,
+    "peaks_outside": 0,
+    "worst_peak_rel": 0.0
+   },
+   {
+    "series": "node.INVERT_DEPTH",
+    "values": 352,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   },
+   {
+    "series": "node.HYDRAULIC_HEAD",
+    "values": 352,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   }
+  ]
+ },
+ "extran7": {
+  "seconds": 0.006,
+  "links": 10,
+  "nodes": 10,
+  "subcatchments": 0,
+  "periods": 32,
+  "worst_peak_rel": 0.0,
+  "note": "",
+  "ok": true,
+  "series": [
+   {
+    "series": "link.FLOW_RATE",
+    "values": 320,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true,
+    "peaks_outside": 0,
+    "worst_peak_rel": 0.0
+   },
+   {
+    "series": "node.INVERT_DEPTH",
+    "values": 320,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   },
+   {
+    "series": "node.HYDRAULIC_HEAD",
+    "values": 320,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   }
+  ]
+ },
+ "extran8a": {
+  "seconds": 0.001,
+  "links": 9,
+  "nodes": 10,
+  "subcatchments": 0,
+  "periods": 4,
+  "worst_peak_rel": 0.07279012111459594,
+  "note": "",
+  "ok": true,
+  "series": [
+   {
+    "series": "link.FLOW_RATE periods",
+    "ok": true,
+    "extra_periods": 1
+   },
+   {
+    "series": "link.FLOW_RATE",
+    "values": 27,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true,
+    "peaks_outside": 0,
+    "worst_peak_rel": 0.0
+   },
+   {
+    "series": "node.INVERT_DEPTH periods",
+    "ok": true,
+    "extra_periods": 1
+   },
+   {
+    "series": "node.INVERT_DEPTH",
+    "values": 30,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   },
+   {
+    "series": "node.HYDRAULIC_HEAD periods",
+    "ok": true,
+    "extra_periods": 1
+   },
+   {
+    "series": "node.HYDRAULIC_HEAD",
+    "values": 30,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   }
+  ]
+ },
+ "extran9": {
+  "seconds": 0.001,
+  "links": 1,
+  "nodes": 2,
+  "subcatchments": 0,
+  "periods": 40,
+  "worst_peak_rel": 0.0,
+  "note": "",
+  "ok": true,
+  "series": [
+   {
+    "series": "link.FLOW_RATE periods",
+    "ok": true,
+    "extra_periods": 1
+   },
+   {
+    "series": "link.FLOW_RATE",
+    "values": 39,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true,
+    "peaks_outside": 0,
+    "worst_peak_rel": 0.0
+   },
+   {
+    "series": "node.INVERT_DEPTH periods",
+    "ok": true,
+    "extra_periods": 1
+   },
+   {
+    "series": "node.INVERT_DEPTH",
+    "values": 78,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   },
+   {
+    "series": "node.HYDRAULIC_HEAD periods",
+    "ok": true,
+    "extra_periods": 1
+   },
+   {
+    "series": "node.HYDRAULIC_HEAD",
+    "values": 78,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   }
+  ]
+ },
+ "extran10": {
+  "seconds": 0.001,
+  "links": 6,
+  "nodes": 3,
+  "subcatchments": 0,
+  "periods": 30,
+  "worst_peak_rel": 0.0,
+  "note": "",
+  "ok": true,
+  "series": [
+   {
+    "series": "link.FLOW_RATE",
+    "values": 180,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true,
+    "peaks_outside": 0,
+    "worst_peak_rel": 0.0
+   },
+   {
+    "series": "node.INVERT_DEPTH",
+    "values": 90,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   },
+   {
+    "series": "node.HYDRAULIC_HEAD",
+    "values": 90,
+    "outside": 0,
+    "worst_rel": 0.0,
+    "ok": true
+   }
+  ]
+ }
+}
