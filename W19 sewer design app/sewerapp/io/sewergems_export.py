@@ -31,19 +31,24 @@ def load(folder, name="SewerGEMS model", crs=None):
                                 x=m0.x.values, y=m0.y.values, ground=m0.ground.values, invert=m0.invert.values, inflow_m3d=0.0),
                            index=pd.Index(m0.label.astype(str).values, name="id"))
     p.nodes = p.nodes[~p.nodes.index.duplicated()]
+    sections = {}
 
     def link_table(c):
         c = c[c.active == True]
         hi = (c.start_inv >= c.stop_inv).values
         a = np.where(hi, c.start, c.stop); b = np.where(hi, c.stop, c.start)
+        circ = (c.diameter_mm.astype(float) > 0).values           # a box or an open channel has no diameter: kept, not analysed
         nom = c.size_label.astype(str).str.extract(r"(\d+)")[0].astype(float).fillna(c.diameter_mm).astype(int).values
+        nom = np.where(circ, nom, 0); ins = np.where(circ, c.diameter_mm.astype(float).values, np.nan)
+        sections.update({str(l): str(s) for l, s, k in zip(c.label, c.size_label, circ) if not k})
         return pd.DataFrame(dict(kind="conduit", from_node=[nodes_lab.get(x, str(x)) for x in a], to_node=[nodes_lab.get(x, str(x)) for x in b],
-                                 length_m=c.length_m.values, dn_mm=nom, inside_mm=c.diameter_mm.values,
+                                 length_m=c.length_m.values, dn_mm=nom, inside_mm=ins,
                                  up_inv=c[["start_inv", "stop_inv"]].max(axis=1).values, dn_inv=c[["start_inv", "stop_inv"]].min(axis=1).values,
                                  transfer=False, coords=[geo.get(l) if l in geo and len(geo[l]) > 2 else None for l in c.label.astype(str)]),
                             index=pd.Index(c.label.astype(str).values, name="id"))[LINK_COLS]
 
     p.links = link_table(c0)
+    p.meta = dict(getattr(p, "meta", {}) or {}, sections=sections)       # non-circular sections by link: shown, not analysed
     loads_found = _loads(folder, sc, p, nodes_lab)
     scenarios, results = [], {}
     for r in sc.itertuples():

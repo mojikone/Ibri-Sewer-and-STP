@@ -50,6 +50,7 @@ function busy(on, text) { $("#busy").hidden = !on; if (text) $("#busy-text").tex
 
 /* ------------------------------------------------------------------ colours and legend */
 const GREY = "#9aa5b1";
+const NO_FAIL = new Set(["compare", "storm_q", "storm_cap", "storm_flood"]);     // colourings the steady checks' red overlay would mislead
 const SCALES = {
   dn_mm: { title: "Size DN (mm)", bins: [[250, "up to 250", "#9ecae1"], [315, "280-315", "#6baed6"], [400, "355-400", "#4292c6"], [500, "450-500", "#2171b5"], [630, "560-630", "#6a51a3"], [800, "710-800", "#8c2d8c"], [1000, "900-1000", "#b0307a"], [1e9, "over 1000", "#7a0e3a"]] },
   storm_q: { title: "Storm peak flow", bins: [] },
@@ -80,7 +81,7 @@ function renderLegend() {
   el.innerHTML = (by === "none" ? "" : `<div class="t">${SCALES[by].title}${stale ? " (before the last edit)" : ""}</div>`) +
     rows.map(r => `<div class="r"><span class="sw" style="background:${r[0]}"></span>${esc(r[1])}</div>`).join("") +
     (by === "storm_flood" ? `<div class="r"><span class="sw" style="background:#d7301f;height:9px;border-radius:5px;width:9px"></span>node flooding</div>` : "") +
-    `<div class="r"><span class="sw" style="background:#d7301f"></span>failing (drawn on top)</div>` +
+    (NO_FAIL.has(by) ? "" : `<div class="r fail-row" data-testid="legend-fail" title="Click to ${ui.showFail ? "hide" : "show"} the failing pipes"><span class="sw" style="background:#d7301f;${ui.showFail ? "" : "opacity:.3"}"></span>failing ${ui.showFail ? "(drawn on top)" : "(hidden)"}</div>`) +
     `<div class="r"><span class="sw" style="background:repeating-linear-gradient(90deg,#7b3fa0 0 5px,transparent 5px 8px)"></span>pump</div>`;
 }
 
@@ -129,7 +130,7 @@ function initMap() {
     map.addLayer({ id: "drawpoly-line", type: "line", source: "drawpoly", paint: { "line-color": "#e6821e", "line-width": 2, "line-dasharray": [2, 1] } });
     map.addLayer({ id: "drawpoly-pts", type: "circle", source: "drawpoly", filter: ["==", ["geometry-type"], "Point"], paint: { "circle-radius": 4, "circle-color": "#e6821e" } });
     // pipe width grows with size and zoom (zoom must be the outer interpolation); big pipes draw on top
-    const dn = ["coalesce", ["get", "dn_mm"], 200];
+    const dn = ["case", ["has", "section"], 900, ["coalesce", ["get", "dn_mm"], 200]];   // a box or channel section draws as a large conduit
     const w = (k, add = 0) => ["interpolate", ["linear"], ["zoom"],
       10, ["+", add, ["*", k, ["step", dn, 0.7, 300, 1.2, 600, 2, 1000, 2.8]]],
       15, ["+", add, ["*", k, ["step", dn, 2, 300, 3, 600, 4.4, 1000, 6]]],
@@ -276,6 +277,8 @@ async function loadModel() {
     fcNodes: { type: "FeatureCollection", features: nodeFeat }, fcLinks: { type: "FeatureCollection", features: linkFeat },
   };
   state.model.rain = d.rain || {}; syncRain();
+  const cat = (d.settings && d.settings.design && d.settings.design.catalogue) || [];          // the scenario's own sizes
+  if (state.info && cat.length) state.info.catalogue = cat.map(r => r[0]).sort((a, b) => a - b);
   state.dirty.nodes = state.dirty.links = state.dirty.catch = true;
   if (state.sel.table) state.sel.ids = state.sel.ids.filter(i => tmap(state.sel.table).has(i));
   if (state.pipeStart && !state.model.nodes.has(state.pipeStart)) state.pipeStart = null;
@@ -294,7 +297,7 @@ function syncRain() {
 async function loadResults() {
   const r = await jget(`${base()}/results`);
   const key = state.pid + "/" + state.sid;
-  if (!(key in state.storedCache)) { const st = await jget(`${base()}/stored`); state.storedCache[key] = Object.keys(st.links || {}).length ? st.links : null; }
+  if (!(key in state.storedCache)) { const st = await jget(`${base()}/stored`); state.storedCache[key] = Object.values(st.links || {}).some(r => r && r.q_ls != null) ? st.links : null; }   // a model that holds no results offers none
   state.stored = state.storedCache[key];
   if (!state.stored && state.source === "stored") { state.source = "engine"; $("#results-source").value = "engine"; }
   $("#results-source").querySelector("option[value=stored]").disabled = !state.stored;
@@ -313,11 +316,12 @@ function mergeResults() {
   const FR = state.stormFrame && state.stormFrame.sid === state.sid ? state.stormFrame : null;
   for (const f of m.linkFeat) {
     const r = R[f.id], p = f.properties, sl = S && S.links[f.id], e = E[f.id];
-    p._lab = p.kind === "pump" ? `pump ${f.id}` : `DN${p.dn_mm ?? "?"}` + (e && e.s_pc != null ? ` · ${(+e.s_pc).toFixed(2)} %` : "");
-    p._fail = !usingStored() && r && (r.over_limit || r.over_vmax || r.surcharged || r.negative_slope) ? 1 : 0;
+    p._lab = p.kind === "pump" ? `pump ${f.id}` : p.section ? `section ${p.section}` : `DN${p.dn_mm ?? "?"}` + (e && e.s_pc != null ? ` · ${(+e.s_pc).toFixed(2)} %` : "");
+    p._fail = !usingStored() && !NO_FAIL.has(by) && r && (r.over_limit || r.over_vmax || r.surcharged || r.negative_slope) ? 1 : 0;
     p._lock = LK.has(String(f.id)) ? 1 : 0;
     const sq = FR ? (FR.links[f.id] == null ? null : Math.abs(FR.links[f.id])) : sl && sl.q_peak, scap = FR ? FR.links[f.id] : sl && sl.capacity_peak;
     p._c = by === "compare" ? CHANGE_COL[(CM && CM[f.id]) || "same"] : by === "dn_mm" && usingStored() ? colourFor(by, p.dn_mm) : by === "storm_q" ? colourFor(by, sq) : by === "storm_cap" ? colourFor(by, scap) : by === "storm_flood" ? GREY : colourFor(by, r && r[by]);
+    if (p.section && p._c === GREY && by !== "none") p._c = "#4b5563";                  // not analysed: dark enough to see on any basemap
   }
   const wasFl = m.hasFl; let anyFl = false;
   for (const f of m.nodeFeat) {
@@ -387,9 +391,10 @@ function updateStatus() {
   const cnt = k => s[k] ? `<a class="fail" data-flag="${k}" title="Click to step through them on the map">${s[k]}</a>` : `<b>0</b>`;
   el.innerHTML = `solved ${s.links} links in ${num(s.seconds, 3)} s &middot; ${num(s.km, 2)} km &middot; over d/D limit ${cnt("over_limit")}` +
     ` &middot; over v max ${cnt("over_vmax")} &middot; surcharged ${cnt("surcharged")}` +
+    (s.not_analysed ? ` &middot; <span class="warn" title="Box or open-channel sections: drawn and editable, not analysed by the steady engine">${s.not_analysed} non-circular sections not analysed</span>` : "") +
     (s.km_under_vmin == null ? ` &middot; <span class="muted" title="Choose a check load set in Settings, Flows">self-cleansing not checked</span>`
-                             : ` &middot; ${num(s.km_under_vmin, 2)} km under v min at ${esc(s.check_set)}`) + (s.negative_slope ? ` &middot; ${cnt("negative_slope")} <span class="bad">adverse</span>` : "") +
-    (bad === 0 && s.links ? ` <span class="ok">&#10003;</span>` : "");
+                             : ` &middot; ${num(s.km_under_vmin, 2)} km under v min at ${esc(s.check_set)}`) + (s.negative_slope ? ` &middot; ${cnt("negative_slope")} <span class="bad">flat or adverse</span>` : "") +
+    (bad === 0 && s.links && !s.not_analysed ? ` <span class="ok">&#10003;</span>` : "");
 }
 function updateButtons() {
   const has = !!state.pid, sc = scenario();
@@ -660,7 +665,7 @@ const LINK_COLS = ["id", "kind", "from_node", "to_node", "length_m", "dn_mm", "i
 const RES_COLS = ["id", "dn_mm", "q_ls", "v_ms", "d_over_D", "limit", "s_pc", "flags"];
 const TOOL_COLS = ["id", "dn_mm", "q_ls", "v_ms", "d_over_D", "limit", "s_pc", "flags"];
 const BULK_NODES = ["ground", "invert", "inflow_m3d", "kind"], BULK_LINKS = ["dn_mm", "kind", "length_m", "up_inv", "dn_inv", "transfer"];
-const FLAGS = { over_limit: "d/D limit", over_vmax: "v max", surcharged: "surcharged", negative_slope: "adverse", under_vmin: "v min" };
+const FLAGS = { over_limit: "d/D limit", over_vmax: "v max", surcharged: "surcharged", negative_slope: "flat or adverse", under_vmin: "v min" };
 function flagText(r) { return Object.keys(FLAGS).filter(k => r && r[k]).map(k => FLAGS[k]).join(", "); }
 function rowsFor(kind) {
   const m = state.model; if (!m) return [];
@@ -1168,7 +1173,8 @@ function renderSettings() {
     `<fieldset><legend>Friction</legend>${row("friction.method", "Method", "select", [["colebrook", "Colebrook-White"], ["manning", "Manning"]])}${row("friction.ks_mm", "ks (mm)", "num")}${row("friction.manning_n", "Manning n", "num")}</fieldset>` +
     `<fieldset><legend>Peaking</legend>${row("peaking.method", "Method", "select", ["table", "peltier", "merrimack", "constant", "none"].map(x => [x, x]))}${row("peaking.constant", "Constant factor", "num")}</fieldset>` +
     `<fieldset><legend>Flows</legend>${row("infiltration_m3d_per_km", "Infiltration (m3/d/km)", "num")}${row("design_load", "Design load set", "select", loadOpts)}${row("check_load", "Check load set", "select", [["", "(none)"], ...loadOpts])}</fieldset>` +
-    `<fieldset><legend>Design limits</legend>${row("design.v_min", "v min (m/s)", "num")}${row("design.v_max", "v max (m/s)", "num")}${row("design.cover_min", "Cover min (m)", "num")}${row("design.cover_max", "Cover max (m)", "num")}</fieldset>`;
+    `<fieldset><legend>Design limits</legend>${row("design.v_min", "v min (m/s)", "num")}${row("design.v_max", "v max (m/s)", "num")}${row("design.cover_min", "Cover min (m)", "num")}${row("design.cover_max", "Cover max (m)", "num")}${row("self_cleansing_min_dn", "Self-cleansing above DN (mm)", "num")}</fieldset>` +
+    SET_TABLES.map(t => tableHtml(t, S)).join("");
   host.insertAdjacentHTML("beforeend", rainHtml());
   host.dataset.sig = state.pid + state.sid; tag(host);
   $$("[data-path]", host).forEach(inp => inp.addEventListener("change", () => {
@@ -1176,7 +1182,51 @@ function renderSettings() {
     if (inp.dataset.path === "check_load" && v === "") v = null;
     const path = inp.dataset.path; enqueue(() => exec({ op: "set_setting", path, value: v }));
   }));
-  wireRain(host);
+  wireRain(host); wireTables(host);
+}
+/* the project's tables (catalogue, minimum gradient, d/D limit, peaking): edited as a draft, applied as one undoable edit */
+const SET_TABLES = [
+  { path: "design.catalogue", title: "Pipe catalogue", cols: ["Nominal DN (mm)", "Inside diameter (mm)"], get: S => S.design.catalogue, put: r => r,
+    note: "The sizes the design chooses from, smallest first. Pipes already laid keep their own bore." },
+  { path: "design.slope_min", title: "Minimum gradient by size", cols: ["From DN (mm)", "Minimum gradient (%)"],
+    get: S => Object.entries(S.design.slope_min).map(([k, v]) => [Number(k), +(v * 100).toFixed(5)]).sort((a, b) => a[0] - b[0]),
+    put: r => Object.fromEntries(r.map(x => [String(x[0]), x[1] / 100])),
+    note: "A size not in the table takes the gradient of the largest tabled size not above it (G203 p29 Table 11)." },
+  { path: "design.dd_limits", title: "d/D limit by size", cols: ["Up to DN (mm)", "d/D limit"], get: S => S.design.dd_limits, put: r => r,
+    note: "The limit of a size is the first row whose DN it does not exceed (G203 p27 Table 10)." },
+  { path: "peaking.table", title: "Peaking factor table", cols: ["Average flow (L/s)", "Peaking factor"], get: S => S.peaking.table, put: r => r,
+    note: "Used when the peaking method is 'table'; interpolated between rows." },
+];
+function tableHtml(t, S) {
+  state.tableDraft = state.tableDraft || {};
+  const rows = state.tableDraft[t.path] || (t.get(S) || []).map(r => r.slice()), id = t.path.replace(/\./g, "-");
+  state.tableDraft[t.path] = rows;
+  return `<fieldset class="tbl-set" data-tpath="${t.path}" id="tbl-${id}"><legend>${t.title}</legend><p class="muted small">${t.note}</p>` +
+    `<div class="rr muted"><span>${t.cols[0]}</span><span>${t.cols[1]}</span><span></span></div>` +
+    rows.map((r, i) => `<div class="rr"><input type="number" step="any" data-i="${i}" data-c="0" value="${r[0] ?? ""}"><input type="number" step="any" data-i="${i}" data-c="1" value="${r[1] ?? ""}"><button data-del="${i}" title="Remove row">&times;</button></div>`).join("") +
+    `<div class="row"><button class="tb2" data-act="add">Add row</button><button class="tb2 primary" data-act="apply" data-testid="apply-${id}">Apply</button><button class="tb2" data-act="reset">Reset</button><span class="muted" data-msg></span></div></fieldset>`;
+}
+function wireTables(host) {
+  for (const fs of $$(".tbl-set", host)) {
+    const t = SET_TABLES.find(x => x.path === fs.dataset.tpath), rows = state.tableDraft[t.path];
+    const redraw = () => { host.dataset.sig = ""; renderSettings(); };
+    fs.addEventListener("input", e => { const i = e.target.dataset.i; if (i == null) return; rows[+i][+e.target.dataset.c] = e.target.value === "" ? "" : Number(e.target.value); });
+    fs.addEventListener("click", e => {
+      const b = e.target.closest("button"); if (!b) return;
+      if (b.dataset.del != null) { rows.splice(+b.dataset.del, 1); redraw(); }
+      else if (b.dataset.act === "add") { rows.push(["", ""]); redraw(); }
+      else if (b.dataset.act === "reset") { delete state.tableDraft[t.path]; redraw(); }
+      else if (b.dataset.act === "apply") {
+        const ok = rows.filter(r => r[0] !== "" && r[1] !== "" && isFinite(r[0]) && isFinite(r[1])).map(r => [Number(r[0]), Number(r[1])]).sort((a, c) => a[0] - c[0]);
+        if (!ok.length) { fs.querySelector("[data-msg]").textContent = "Give at least one complete row."; return; }
+        enqueue(async () => {
+          await exec({ op: "set_setting", path: t.path, value: t.put(ok) });
+          if (t.path === "design.catalogue") state.info.catalogue = ok.map(r => r[0]);           // the size lists follow a new catalogue
+          delete state.tableDraft[t.path]; redraw(); toast(`${t.title}: ${ok.length} row${ok.length > 1 ? "s" : ""} applied (undo takes it back).`, "info");
+        });
+      }
+    });
+  }
 }
 /* rain: an IDF table (duration, intensity) or a time series (minute, intensity); applied as one set_rain edit */
 function rainHtml() {
@@ -1197,8 +1247,9 @@ function wireRain(host) {
   $("#rain-duration").onchange = e => { R.duration_min = Number(e.target.value); };
   $("#rain-mode").onchange = e => { R.mode = e.target.value; rerender(); };
   $("#rain-add-row").onclick = () => { rows().push(["", ""]); rerender(); };
-  $$("[data-i]", host).forEach(inp => inp.addEventListener("input", () => { rows()[+inp.dataset.i][+inp.dataset.c] = inp.value === "" ? "" : Number(inp.value); }));
-  $$("[data-del]", host).forEach(b => b.onclick = () => { rows().splice(+b.dataset.del, 1); rerender(); });
+  const box = $("#rain-box");                                   // only the rain's rows (the settings tables have their own)
+  $$("[data-i]", box).forEach(inp => inp.addEventListener("input", () => { rows()[+inp.dataset.i][+inp.dataset.c] = inp.value === "" ? "" : Number(inp.value); }));
+  $$("[data-del]", box).forEach(b => b.onclick = () => { rows().splice(+b.dataset.del, 1); rerender(); });
   $("#rain-apply").onclick = () => {
     R.step_min = Number($("#rain-step").value); R.duration_min = Number($("#rain-duration").value);
     const rs = rows().filter(r => r[0] !== "" && r[1] !== "");
@@ -1208,7 +1259,7 @@ function wireRain(host) {
     else rain = { step_min: R.step_min, series: rs.slice().sort((a, b) => a[0] - b[0]) };
     $("#rain-msg").textContent = "";
     enqueue(async () => { await exec({ op: "set_rain", rain });
-      toast(`Rain applied: ${R.mode === "idf" ? "design storm from an IDF table" : "time series"} of ${rs.length} rows. Run it with Tools, Run on EPA SWMM 5.`, "info"); });
+      toast(`Rain applied: ${R.mode === "idf" ? "design storm from an IDF table" : "time series"} of ${rs.length} row${rs.length > 1 ? "s" : ""}. Run it with Tools, Run on EPA SWMM 5.`, "info"); });
   };
 }
 
@@ -1368,7 +1419,7 @@ async function openProject(info, fit = true) {
   state.source = "engine"; state.stored = null; state.storedCache = {}; $("#results-source").value = "engine";
   $("#asst-log").innerHTML = "";
   if (state.colorBy.startsWith("storm")) { state.colorBy = "v_ms"; $("#color-by").value = "v_ms"; }
-  $("#prof-start").value = ""; $("#prof-end").value = ""; $("#prof-via").value = ""; prof.range = null; setRoute(null); if (state.routePick) finishPick(); $("#settings-form").dataset.sig = "";
+  state.tableDraft = {}; $("#prof-start").value = ""; $("#prof-end").value = ""; $("#prof-via").value = ""; prof.range = null; setRoute(null); if (state.routePick) finishPick(); $("#settings-form").dataset.sig = "";
   await mapReady;
   applyBasemap(); clearMeasure();
   await loadToolList();
@@ -1390,17 +1441,60 @@ async function openSampleDlg() {
     }));
   } catch (e) { list.textContent = e.message; }
 }
+/* ---- SewerGEMS: open an export, or export any model from the shared folders through the VM bridge (SewerGEMS's own
+   API reads it there, from a copy); the jobs' progress is followed here and the export opens when it is ready */
+let sgData = null, sgTimer = null;
 async function openSgDlg() {
   const list = $("#sg-list"); list.innerHTML = "Loading..."; $("#dlg-sg").hidden = false;
-  try {
-    const x = await jget("/sewergems/exports");
-    if (!x.length) { list.innerHTML = `<p data-testid="sg-empty">No SewerGEMS exports yet: run bridge job 100 in the VM.</p>`; return; }
-    list.innerHTML = x.map(e => `<button data-name="${esc(e.name)}" id="sg-${esc(e.name)}">${esc(e.name)} (${e.scenarios} scenarios)</button>`).join(""); tag(list);
-    $$("button", list).forEach(b => b.addEventListener("click", () => {
-      $("#dlg-sg").hidden = true;
-      enqueue(() => withBusy(`Opening ${b.dataset.name} (all scenarios)...`, async () => openProject(await jpost(`/projects/open_sewergems/${encodeURIComponent(b.dataset.name)}`))));
-    }));
-  } catch (e) { list.textContent = e.message; }
+  await refreshSg(); sgPoll();
+}
+async function refreshSg() {
+  try { sgData = await jget("/sewergems/models"); } catch (e) { $("#sg-list").textContent = e.message; return; }
+  const d = sgData, w = d.watcher, list = $("#sg-list");
+  $("#sg-watch").innerHTML = w.alive ? `<span class="ok">&#9679;</span> The VM bridge is running${w.busy ? " (busy with a job)" : ""}.`
+    : `<span class="bad">&#9679;</span> The VM bridge is not running: ${esc(w.reason || "")}. Exports wait in the queue until it runs.`;
+  list.innerHTML = d.exports.length ? d.exports.map(e => `<button data-name="${esc(e.name)}" id="sg-${esc(e.name)}">${esc(e.name)} (${e.scenarios} scenarios)</button>`).join("")
+    : `<p data-testid="sg-empty" class="muted">No exports yet: export a model below.</p>`;
+  tag(list);
+  renderSgModels(); renderSgJobs();
+}
+function openSgExport(name) {
+  const crs = Number($("#sg-crs").value) || null;
+  $("#dlg-sg").hidden = true;
+  enqueue(() => withBusy(`Opening ${name} (all scenarios)...`, async () => openProject(await jpost(`/projects/open_sewergems/${encodeURIComponent(name)}${crs ? `?crs=${crs}` : ""}`))));
+}
+function renderSgModels() {
+  const q = ($("#sg-filter").value || "").toLowerCase(), host = $("#sg-models"), d = sgData; if (!d) return;
+  const ms = d.models.filter(m => !q || (m.folder + " " + m.name).toLowerCase().includes(q));
+  host.innerHTML = ms.length ? ms.map(m => `<div class="sgm" data-guest="${esc(m.guest)}" data-tag="${esc(m.tag)}"><span class="nm" title="${esc(m.guest)}"><b>${esc(m.name)}</b> <span class="muted">${esc(m.folder)}</span></span>` +
+      `<span class="muted">${m.mb != null ? m.mb + " MB" : ""}</span><span class="muted">${esc(m.modified)}</span>` +
+      (m.exported ? `<button data-act="open">Open</button>` : `<button data-act="export">Export</button>`) + `</div>`).join("")
+    : `<p class="muted">No SewerGEMS model (.stsw) in ${d.shares.map(esc).join(" or ")}${q ? " matches the filter" : ""}.</p>`;
+  tag(host);
+}
+function renderSgJobs() {
+  const d = sgData; if (!d) return;
+  const lab = { queued: "waiting for the VM", running: "SewerGEMS is exporting", ready: "ready", failed: "failed", done: "finished", unknown: "?" };
+  $("#sg-jobs").innerHTML = d.jobs.length ? `<h4>Exports</h4>` + d.jobs.slice(0, 6).map(j => `<div class="sgj ${j.state}" data-tag="${esc(j.tag)}"><b>${esc(j.tag)}</b> <span>${lab[j.state] || j.state}` +
+      (j.state === "running" ? ` (${j.scenarios_done} scenarios so far, ${j.seconds ?? 0} s)` : "") + `</span>` +
+      (j.state === "ready" ? `<button data-act="open">Open</button>` : "") + (j.error ? `<div class="errtxt">${esc(j.error.slice(0, 300))}</div>` : "") + `</div>`).join("") : "";
+}
+function sgPoll() {
+  clearInterval(sgTimer);
+  const active = () => sgData && sgData.jobs.some(j => j.state === "queued" || j.state === "running");
+  if (!active()) return;
+  sgTimer = setInterval(async () => {
+    const before = new Map(sgData.jobs.map(j => [j.job, j.state]));
+    await refreshSg();
+    for (const j of sgData.jobs) if (before.get(j.job) && before.get(j.job) !== j.state && (j.state === "ready" || j.state === "failed"))
+      toast(j.state === "ready" ? `${j.tag} is exported: File > Open SewerGEMS model to open it.` : `The export of ${j.tag} failed (see the dialog).`, j.state === "ready" ? "info" : "err");
+    if (!active()) clearInterval(sgTimer);
+  }, 3000);
+}
+async function sgExport(guest, tag) {
+  try { await jpost("/sewergems/export", { guest, tag }); } catch (e) { toast(e.message); return; }
+  toast(`Export of ${tag || guest} queued for the VM; it takes from seconds to several minutes, by the model's size and scenarios.`, "info");
+  await refreshSg(); sgPoll();
 }
 /* ---- import from GIS layers: two files, a field mapping for each, a snap tolerance */
 const GIS_FIELDS = {
@@ -1495,6 +1589,14 @@ function wireUi() {
   $("#hydro-attr").onchange = drawHydro;
   $("#results-source").onchange = e => enqueue(async () => { state.source = e.target.value; mergeResults(); renderAll(); });
   $("#sg-btn").onclick = openSgDlg; $("#sg-cancel").onclick = () => { $("#dlg-sg").hidden = true; };
+  $("#sg-list").addEventListener("click", e => { const b = e.target.closest("button[data-name]"); if (b) openSgExport(b.dataset.name); });
+  $("#sg-filter").addEventListener("input", renderSgModels);
+  $("#sg-models").addEventListener("click", e => {
+    const b = e.target.closest("button[data-act]"); if (!b) return; const row = b.closest(".sgm");
+    if (b.dataset.act === "open") openSgExport(row.dataset.tag); else sgExport(row.dataset.guest, row.dataset.tag);
+  });
+  $("#sg-jobs").addEventListener("click", e => { const b = e.target.closest("button[data-act=open]"); if (b) openSgExport(b.closest(".sgj").dataset.tag); });
+  $("#sg-export-path").onclick = () => { const g = $("#sg-guest").value.trim(); if (g) sgExport(g, null); };
   $("#asst-form").addEventListener("submit", e => { e.preventDefault(); asstSend(); });
   $("#asst-input").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); asstSend(); } });
   $("#import-btn").onclick = () => $("#import-file").click();
@@ -1515,6 +1617,7 @@ function wireUi() {
     const k = e.key.toLowerCase();
     if (state.routePick && (k === "enter" || k === "escape")) { e.preventDefault(); finishPick(); return; }
     if (k === "/") { e.preventDefault(); $("#find-input").focus(); return; }
+    if (e.key === "?") { $("#dlg-keys").hidden = !$("#dlg-keys").hidden; return; }
     if (!e.ctrlKey && k === "h" && state.model) { fitModel(); return; }
     if (!e.ctrlKey && k === "z" && state.sel.ids.length) { zoomTo(state.sel.table, state.sel.ids); return; }
     if (!e.ctrlKey && k === "r" && state.pid) { setTool("measure"); return; }
@@ -1532,7 +1635,7 @@ function wireUi() {
 const UI_KEY = "w19.ui";
 const ui = (() => {
   const d = { pw: 320, bh: 260, propsCollapsed: false, bottomCollapsed: false, toolsCompact: false, mapOnly: null,
-              theme: "light", basemap: "osm", prevBasemap: "osm", opacity: 1, labels: true, hillshade: false, arrows: true, cardFolded: false, profBands: true, profFollow: true, profJoins: true };
+              theme: "light", basemap: "osm", prevBasemap: "osm", opacity: 1, labels: true, hillshade: false, arrows: true, cardFolded: false, profBands: true, profFollow: true, profJoins: true, showFail: true };
   try { return Object.assign(d, JSON.parse(localStorage.getItem(UI_KEY) || "{}")); } catch (e) { return d; }
 })();
 function saveUi() { try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch (e) { /* private window: sizes are not kept */ } }
@@ -1592,6 +1695,8 @@ function applyBasemap() {
   for (const k of ["sat-labels", "sat-roads"]) map.setLayoutProperty(k, "visibility", on && bm === "sat" && ui.labels ? "visible" : "none");
   map.setLayoutProperty("hillshade", "visibility", on && ui.hillshade ? "visible" : "none");
   for (const k of ["links-arrow", "links-label"]) map.setLayoutProperty(k, "visibility", ui.arrows ? "visible" : "none");
+  map.setLayoutProperty("links-fail", "visibility", ui.showFail ? "visible" : "none");
+  $("#fail-toggle").checked = ui.showFail;
   // on imagery or a dark map the pipes need a dark casing and light labels
   const darkUnder = on && (bm === "sat" || bm === "dark") || ui.theme === "dark" && (!on || bm === "none");
   map.setPaintProperty("links-casing", "line-color", darkUnder ? "#0b1118" : "#ffffff");
@@ -1672,7 +1777,7 @@ function hover(e) {
       setHot(null);
     } else if (link) {
       const q = link.properties, r = srcLinks()[q.id] || {}, en = (state.results && state.results.links[q.id]) || {};
-      h = `<b>${esc(q.id)}</b> · ${q.kind === "pump" ? "pump" : "DN" + esc(q.dn_mm)}` + (en.s_pc != null ? ` · ${num(en.s_pc, 3)} %` : "") +
+      h = `<b>${esc(q.id)}</b> · ${q.kind === "pump" ? "pump" : q.section ? "section " + esc(q.section) + " (not analysed)" : "DN" + esc(q.dn_mm)}` + (en.s_pc != null ? ` · ${num(en.s_pc, 3)} %` : "") +
         (r.q_ls != null ? ` · ${num(r.q_ls, 2)} L/s` : "") + (r.v_ms != null ? ` · v ${num(r.v_ms, 2)} m/s` : "") + (r.d_over_D != null ? ` · d/D ${num(r.d_over_D, 2)}` : "") +
         (q._fail ? ` · <span style="color:var(--bad)">failing</span>` : "");
       setHot(q.id);
@@ -1702,7 +1807,7 @@ function findElement(text) {
   $("#find-input").value = hit[1];
 }
 /* the status line's failing counts: each click selects and zooms to the next pipe with that flag */
-const FLAG_NAME = { over_limit: "over the d/D limit", over_vmax: "over v max", surcharged: "surcharged", negative_slope: "adverse" };
+const FLAG_NAME = { over_limit: "over the d/D limit", over_vmax: "over v max", surcharged: "surcharged", negative_slope: "flat or adverse" };
 function stepFailure(flag) {
   const E = state.results ? state.results.links : {};
   const ids = Object.keys(E).filter(k => E[k][flag]).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
@@ -1743,12 +1848,16 @@ function wireView() {
   $("#maxmap-btn").onclick = toggleMapOnly;
   $("#tools-compact-btn").onclick = () => { ui.toolsCompact = !ui.toolsCompact; applyPanels(); };
   $("#theme-btn").onclick = () => setTheme(ui.theme === "dark" ? "light" : "dark");
+  $("#keys-btn").onclick = () => { $("#dlg-keys").hidden = false; }; $("#keys-close").onclick = () => { $("#dlg-keys").hidden = true; };
   $("#display-head").onclick = () => { ui.cardFolded = !ui.cardFolded; applyPanels(); };
   $("#basemap-select").onchange = e => { ui.basemap = e.target.value; saveUi(); applyBasemap(); };
   $("#basemap-opacity").oninput = e => { ui.opacity = +e.target.value; saveUi(); applyBasemap(); };
   $("#labels-toggle").onchange = e => { ui.labels = e.target.checked; saveUi(); applyBasemap(); };
   $("#hillshade-toggle").onchange = e => { ui.hillshade = e.target.checked; saveUi(); applyBasemap(); };
   $("#arrows-toggle").onchange = e => { ui.arrows = e.target.checked; saveUi(); applyBasemap(); };
+  const setFail = on => { ui.showFail = on; saveUi(); applyBasemap(); renderLegend(); };
+  $("#fail-toggle").onchange = e => setFail(e.target.checked);
+  $("#legend").addEventListener("click", e => { if (e.target.closest(".fail-row")) setFail(!ui.showFail); });
   $("#find-input").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); findElement(e.target.value); } else if (e.key === "Escape") e.target.blur(); });
   $("#status-line").addEventListener("click", e => { const a = e.target.closest("a.fail"); if (a) { e.preventDefault(); stepFailure(a.dataset.flag); } });
   wireProfile();
@@ -2126,7 +2235,7 @@ function renderSummary() {
   const kpi = (lab, val, flag) => `<div class="kpi${flag ? " bad" : ""}"${flag ? ` data-flag="${flag}" title="Click to step through them"` : ""}><div class="kv">${val}</div><div class="kl">${lab}</div></div>`;
   let h = `<div class="kpis">` + kpi("pipes", L.length) + kpi("km", num(s.km, 2)) +
     kpi("over the d/D limit", s.over_limit ?? 0, s.over_limit ? "over_limit" : null) + kpi("over v max", s.over_vmax ?? 0, s.over_vmax ? "over_vmax" : null) +
-    kpi("surcharged", s.surcharged ?? 0, s.surcharged ? "surcharged" : null) + kpi("adverse", s.negative_slope ?? 0, s.negative_slope ? "negative_slope" : null) +
+    kpi("surcharged", s.surcharged ?? 0, s.surcharged ? "surcharged" : null) + kpi("flat or adverse", s.negative_slope ?? 0, s.negative_slope ? "negative_slope" : null) +
     (s.km_under_vmin != null ? kpi(`km under v min (${esc(s.check_set)})`, num(s.km_under_vmin, 2)) : "") + `</div><div class="charts">`;
   // km by size
   const byDn = new Map(); for (const f of L) { const d = f.properties.dn_mm; const e = byDn.get(d) || { value: 0, ids: [] }; e.value += km(f); e.ids.push(String(f.id)); byDn.set(d, e); }
@@ -2197,7 +2306,7 @@ async function runDesign(preview, o) {
   showTab("toolout"); renderAll();
 }
 const lockedSet = () => new Set(((state.model && state.model.settings.design) || {}).locked || []);
-async function setLock(ids, locked) { await execMany([{ op: "lock", ids, locked }]); toast(`${ids.length} pipe${ids.length > 1 ? "s" : ""} ${locked ? "locked: the design keeps their size and levels" : "unlocked"}.`, "info"); }
+async function setLock(ids, locked) { await execMany([{ op: "lock", ids, locked }]); toast(`${ids.length} pipe${ids.length > 1 ? "s" : ""} ${locked ? `locked: the design keeps ${ids.length > 1 ? "their sizes" : "its size"} and levels` : "unlocked"}.`, "info"); }
 
 /* ---- saved routes of the profile, kept with the project */
 async function loadRoutes() {

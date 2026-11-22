@@ -24,6 +24,8 @@ async def _autosave(request, call_next):
         from sewerapp.api import general_api
         m = re.match(r"/api/g/projects/(p\d+)/", request.url.path)
         if m: general_api.schedule(m.group(1))
+    if request.method == "GET" and (request.url.path in ("/", "/w18") or request.url.path.startswith("/static/")):
+        resp.headers["Cache-Control"] = "no-cache"        # the page and its script always come as a matched pair after an update
     return resp
 P = Project()
 _geo = {}

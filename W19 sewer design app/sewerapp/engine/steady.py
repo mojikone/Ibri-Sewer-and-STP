@@ -98,8 +98,9 @@ def solve(project, load_set=None, check_set=None):
     t0 = time.perf_counter(); s = project.settings; L = project.links
     load_set = load_set or s["design_load"]; check_set = check_set if check_set is not None else s.get("check_load")
     q = flows(project, load_set)
-    cond = (L.kind == "conduit").to_numpy()
     D = L.inside_mm.astype(float).to_numpy() / 1000.0
+    noD = (L.kind == "conduit").to_numpy() & ~(np.nan_to_num(D) > 0)     # no bore (a box or a channel section): not analysed
+    cond = (L.kind == "conduit").to_numpy() & ~noD
     S = ((L.up_inv.astype(float) - L.dn_inv.astype(float)) / L.length_m.astype(float)).to_numpy()
     ratio, v, full = normal_depth(project, q.to_numpy() / 86400.0, D, S)
     dn = L.dn_mm.astype(float).to_numpy(); lim = project.dd_limit(dn)
@@ -114,7 +115,8 @@ def solve(project, load_set=None, check_set=None):
         res["q_check_ls"] = qc / 86.4; res["v_check_ms"] = vc
         res["under_vmin"] = cond & (dn > s.get("self_cleansing_min_dn", 0)) & (np.round(vc, 2) < d["v_min"])
     res.loc[~cond, ["v_ms", "d_over_D", "s_pc"]] = np.nan
-    summ = dict(links=int(len(L)), conduits=int(cond.sum()), km=round(float(L.length_m[cond].sum()) / 1000, 3),
+    res["surcharged"] = res.surcharged & cond
+    summ = dict(links=int(len(L)), conduits=int(cond.sum()), not_analysed=int(noD.sum()), km=round(float(L.length_m[cond | noD].sum()) / 1000, 3),
                 over_limit=int(res.over_limit.sum()), over_vmax=int(res.over_vmax.sum()),
                 surcharged=int((res.surcharged & cond).sum()), negative_slope=int(res.negative_slope.sum()),
                 km_under_vmin=round(float(L.length_m[res.get("under_vmin", pd.Series(False, index=L.index))].sum()) / 1000, 3)

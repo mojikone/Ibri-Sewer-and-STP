@@ -24,9 +24,21 @@ def sg_exports(tmp_path_factory):
 
 
 @pytest.fixture(scope="module")
-def server(sg_exports):
+def bridge(tmp_path_factory):
+    """A stand-in VM bridge (jobs, out, done) and a model share holding one SewerGEMS model name: no job reaches the VM."""
+    root = tmp_path_factory.mktemp("bridge")
+    for d in ("jobs", "out", "done"): (root / d).mkdir()
+    (root / "out" / "_alive.txt").write_text("alive")
+    share = tmp_path_factory.mktemp("share"); (share / "Area 7").mkdir(); (share / "Area 7" / "Area 7 model.stsw").write_text("not read")
+    return dict(root=str(root), share=str(share))
+
+
+@pytest.fixture(scope="module")
+def server(sg_exports, bridge):
+    env = dict(os.environ, W19_ASSISTANT_STUB="1", W19_SG_EXPORTS=sg_exports, W19_BRIDGE=bridge["root"],
+               W19_MODEL_SHARES=bridge["share"] + "=\\\\VBOXSVR\\TestShare")
     p = subprocess.Popen([sys.executable, "-c", "import uvicorn; uvicorn.run('sewerapp.api.app:app', host='127.0.0.1', port=8798)"],
-                         cwd=W19, env=dict(os.environ, W19_ASSISTANT_STUB="1", W19_SG_EXPORTS=sg_exports), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                         cwd=W19, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
         t0 = time.time()
         while True:
@@ -690,6 +702,64 @@ def test_batch2_storm_slider_saved_route_and_assistant_on_the_map(page):
     page.unroute("**/api/g/assistant")
     assert sent["selection"] == {"table": "links", "ids": [ids[0]]} and sent["route"]["start"] == first
     assert sorted(page.evaluate("window.ed.state.sel.ids")) == sorted(ids)
+
+
+def test_any_sewergems_model_exported_through_the_bridge_then_opened(page, bridge, sg_exports):
+    import shutil, glob
+    os.utime(os.path.join(bridge["root"], "out", "_alive.txt"))                       # the watcher's heartbeat
+    file_menu(page, "sg-btn")
+    expect(page.get_by_test_id("sg-watch")).to_contain_text("bridge is running")
+    row = page.locator("#sg-models .sgm", has_text="Area 7 model.stsw"); expect(row).to_have_count(1)
+    row.locator("button[data-act=export]").click(); idle(page)
+    jobs = glob.glob(os.path.join(bridge["root"], "jobs", "w19x_*_Area_7_model.ps1")); assert len(jobs) == 1
+    body = open(jobs[0], encoding="utf-8").read()
+    assert "$src = '\\\\VBOXSVR\\TestShare\\Area 7\\Area 7 model.stsw'" in body and "$tag = 'Area_7_model'" in body
+    assert "Copy-Item -LiteralPath $src" in body and "SaveAs($work)" in body                  # a copy is opened, never the model
+    expect(page.locator("#sg-jobs .sgj")).to_contain_text("waiting for the VM")
+    # the VM's part, played here: the watcher runs the job, SewerGEMS writes the export, scenarios.csv last
+    name = os.path.basename(jobs[0])[:-4]
+    open(os.path.join(bridge["root"], "out", name + ".txt"), "w").write("ok\n__EXIT__ 0\n")
+    shutil.move(jobs[0], os.path.join(bridge["root"], "done"))
+    shutil.copytree(os.path.join(sg_exports, "SC1-2056_final"), os.path.join(sg_exports, "Area_7_model"))
+    open(os.path.join(sg_exports, "Area_7_model", "log.txt"), "w").write("  scenario 1 'design' -> s001\n  scenario 2 'check' -> s002\n")
+    page.wait_for_function("document.querySelector('#sg-jobs .sgj.ready')", timeout=15000)
+    page.locator("#sg-jobs .sgj.ready button[data-act=open]").click()
+    page.wait_for_function("window.ed.state.info && window.ed.state.info.name.includes('Area_7_model') && window.ed.state.model && document.body.dataset.pending === '0'", timeout=240000)
+    assert page.get_by_test_id("scenario-select").locator("option").count() == 2
+
+
+def test_failing_pipes_can_be_hidden_and_stay_off_other_colourings(page):
+    nid, lid = draw_network(page)
+    page.evaluate("id => window.ed.selectElement('nodes', id)", nid[0])
+    ld = page.get_by_test_id("load-design"); ld.fill("5000"); ld.press("Enter"); idle(page)
+    assert summary(page)["over_limit"] > 0
+    vis = lambda: page.evaluate("window.ed.map.getLayoutProperty('links-fail', 'visibility')")
+    assert vis() == "visible" and page.evaluate("window.ed.state.model.linkFeat.some(f => f.properties._fail === 1)")
+    page.get_by_test_id("fail-toggle").uncheck(); assert vis() == "none"
+    expect(page.get_by_test_id("legend-fail")).to_contain_text("hidden")
+    page.get_by_test_id("legend-fail").click(); assert vis() == "visible" and page.get_by_test_id("fail-toggle").is_checked()
+    page.get_by_test_id("color-by").select_option("storm_cap"); idle(page)               # another colouring: no red overlay
+    assert not page.evaluate("window.ed.state.model.linkFeat.some(f => f.properties._fail === 1)")
+    expect(page.get_by_test_id("legend-fail")).to_have_count(0)
+    page.get_by_test_id("color-by").select_option("v_ms"); idle(page)
+
+
+def test_settings_tables_edited_applied_and_undone(page):
+    draw_network(page)
+    page.get_by_test_id("tab-settings").click(); idle(page)
+    fs = page.locator("#tbl-design-slope_min")
+    first = fs.locator('input[data-c="0"]').first; assert first.input_value() == "200"
+    g = fs.locator('input[data-c="1"]').first; assert float(g.input_value()) == 0.5             # G203 Table 11: 5 mm/m for DN200
+    g.fill("0.6"); page.get_by_test_id("apply-design-slope_min").click(); idle(page)
+    assert page.evaluate("window.ed.state.model.settings.design.slope_min['200']") == pytest.approx(0.006)
+    page.get_by_test_id("undo-btn").click(); idle(page)
+    assert page.evaluate("window.ed.state.model.settings.design.slope_min['200']") == pytest.approx(0.005)
+    # a size added to the catalogue becomes a choice in the property grid
+    cat = page.locator("#tbl-design-catalogue"); cat.locator("[data-act=add]").click()
+    cat = page.locator("#tbl-design-catalogue"); cat.locator('input[data-c="0"]').last.fill("2200"); cat.locator('input[data-c="1"]').last.fill("1941")
+    page.get_by_test_id("apply-design-catalogue").click(); idle(page)
+    assert 2200 in page.evaluate("window.ed.state.info.catalogue")
+    assert page.evaluate("window.ed.state.rain.idf.length") == 0                                    # the rain rows were not touched
 
 
 def test_no_javascript_errors(page):

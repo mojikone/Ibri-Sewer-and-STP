@@ -50,6 +50,17 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
 - **Box select:** Shift+drag selects the pipes whose middle is in the box, Ctrl+drag the nodes; then edit them together.
 - **Reference layers:** a GeoPackage, GeoJSON, zipped shapefile or DXF drawn under the network (Display card), with
   hover attributes; display only, kept with the open project. A layer with no CRS is read in the project's coordinates.
+- **Any SewerGEMS model:** File > Open SewerGEMS model lists the exports ready to open and every SewerGEMS model (.stsw)
+  in the shared folders (the VM's model share and `bridge/models`). Export writes the bridge job itself: the VM copies
+  the model and SewerGEMS's own API reads the copy (every scenario, its results and loads); the dialog follows the job
+  and opens the export when it is ready (Majlas: seconds; Block 04, 8 scenarios: under a minute). A model with box or
+  open-channel sections opens with them drawn, labelled and marked not analysed (the steady engine solves circular
+  pipes only). The VM watcher must be running; the dialog says whether it is.
+- **Failing pipes:** the red overlay can be switched off (Display card, or click its legend line); it stays off over a
+  comparison or a storm colouring, where steady-state failures would mislead.
+- **Settings tables:** the pipe catalogue, minimum gradient by size, d/D limit by size and the peaking table are edited
+  in Settings and applied as one undoable edit; the self-cleansing size threshold too.
+- **Keyboard and mouse:** the ? button (or the ? key) lists every shortcut.
 - **Scenarios:** a manager (Scenarios...) as a tree: open, copy, rename, delete (with the scenarios copied from it), and
   compare: the open scenario coloured by what changed against another (size, levels, flow only, new pipes) with the
   differences in Tool output. Save keeps every scenario inside the GeoPackage (its layers stay the scenario on screen,
@@ -124,16 +135,15 @@ The Ibri W18 viewer of phase 1B (the 12 frozen designs with their W18 tools) is 
 | G7 SewerGEMS models with all scenarios | **passed** 2026-11-22: the SC1-2056 referee model's 23 scenarios exported by bridge job 101 (490 s) and opened in the app with SewerGEMS's stored results; with its loads exported (jobs 102-103) the app's engine re-solves SewerGEMS's own model, every pipe within 0.1 % of SewerGEMS's flows | `python -m pytest -m gate_g7` |
 
 **Not done yet** (approved, open):
-- SewerGEMS models: infiltration is not exported yet (the app uses 720 L/day per km, the Ibri model's value); to export
-  another model set `$src` and `$tag` in `referee/jobs/100_w19_export_scenarios.ps1` and `103_w19_export_loads.ps1` and drop
-  both into `D:\VBOX\bridge\jobs` with the watcher running; on DN200 at very low flows SewerGEMS's GVF velocities read up to
-  0.04 m/s below the app's normal-depth velocities (GVF backwater not built);
+- SewerGEMS models: infiltration is not exported yet (the app uses 720 L/day per km, the Ibri model's value); box and
+  open-channel sections are shown but not analysed (the steady engine solves circular pipes; a SWMM run can take them
+  once their shapes are exported); on DN200 at very low flows SewerGEMS's GVF velocities read up to 0.04 m/s below the
+  app's normal-depth velocities (GVF backwater not built);
 - EPANET `.inp` (water distribution): not started;
 - the hydraulics of pumps, wet wells and force mains (a pump passes its flow on; no pump curve or head is solved);
   GVF backwater; rational-method storm design and inlet capture;
 - a dynamic SWMM run of a sewer from its sanitary loads (no dry-weather flow is written yet; a SWMM run needs rain);
-- Babbitt and Harmon peaking; the catalogue, minimum-gradient, d/D and peaking tables are not editable in the UI
-  (only through the Settings JSON paths);
+- Babbitt and Harmon peaking;
 - imported US-unit SWMM models show feet and acres under the m and ha labels, and Design is not meant for them;
 - the W18 viewer (`/w18`): the design chain does not take a what-if's edits; BOQ, costs, station flows, DWG and
   schematics are still to be placed (`docs/SCRIPT_REGISTER.md`, "Planned").

@@ -351,13 +351,14 @@ def model(pid: str, sid: str):
     n = p.nodes; lon, lat = coords.to_display(p.crs, n.x.values, n.y.values); ll = dict(zip(n.index, zip(lon, lat)))
     nodes = [dict(type="Feature", id=i, geometry=dict(type="Point", coordinates=[float(ll[i][0]), float(ll[i][1])]),
                   properties=clean(dict(id=i, **r))) for i, r in zip(n.index, n.to_dict("records"))]
-    links = []
+    links = []; sections = (getattr(p, "meta", None) or {}).get("sections", {})
     for i, r in zip(p.links.index, p.links.to_dict("records")):
         c = r.pop("coords")
         if isinstance(c, list) and len(c) >= 2:
             a = np.array(c); x, y = coords.to_display(p.crs, a[:, 0], a[:, 1]); line = [[float(u), float(v)] for u, v in zip(x, y)]
         else:
             line = [list(map(float, ll[r["from_node"]])), list(map(float, ll[r["to_node"]]))]
+        if i in sections: r["section"] = sections[i]
         links.append(dict(type="Feature", id=i, geometry=dict(type="LineString", coordinates=line), properties=clean(dict(id=i, **r))))
     catch = []
     for i, r in zip(p.catchments.index, p.catchments.to_dict("records")):
@@ -745,6 +746,34 @@ def sewergems_exports():
         f = os.path.join(SG_EXPORTS, d, "scenarios.csv")
         if os.path.exists(f): out.append(dict(name=d, scenarios=max(0, len(open(f, encoding="utf-8").read().splitlines()) - 1)))
     return out
+
+
+@router.get("/sewergems/models")
+def sewergems_models():
+    """What can be opened (exports), what can be exported (SewerGEMS models in the shared folders), the VM watcher, and
+    the export jobs the app has written."""
+    from sewerapp.io import bridge_jobs as B
+    return dict(watcher=B.watcher(), exports=sewergems_exports(), models=B.models(), jobs=B.jobs(), shares=[g for _, g in B.SHARES])
+
+
+class SgExport(BaseModel):
+    guest: str
+    tag: str | None = None
+
+
+@router.post("/sewergems/export")
+def sewergems_export_job(b: SgExport):
+    """Write the bridge job that exports a SewerGEMS model (every scenario, results and loads) from a copy, in the VM."""
+    from sewerapp.io import bridge_jobs as B
+    try: return B.submit(b.guest, b.tag)
+    except ValueError as e: raise HTTPException(400, str(e))
+
+
+@router.get("/sewergems/jobs/{name}")
+def sewergems_job(name: str):
+    from sewerapp.io import bridge_jobs as B
+    if not re.fullmatch(r"w19x_[A-Za-z0-9_-]+", name): raise HTTPException(404, name)
+    return B.job(name)
 
 
 def open_sewergems_folder(folder, name, crs=None):

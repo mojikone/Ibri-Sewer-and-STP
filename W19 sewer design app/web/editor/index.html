@@ -52,6 +52,7 @@
     <button id="props-btn" class="tb icon on" title="Properties panel (F2)" aria-label="Properties panel"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></button>
     <button id="bottom-btn" class="tb icon on" title="Bottom panel (F3)" aria-label="Bottom panel"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 14h18"/></svg></button>
     <button id="maxmap-btn" class="tb icon" title="Map only (F4)" aria-label="Map only"><svg class="i" viewBox="0 0 24 24"><path d="M4 9V4h5 M20 9V4h-5 M4 15v5h5 M20 15v5h-5"/></svg></button>
+    <button id="keys-btn" class="tb icon" title="Keyboard and mouse (?)" aria-label="Keyboard and mouse">?</button>
     <button id="theme-btn" class="tb icon" title="Light or dark theme" aria-label="Theme"><svg class="i" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z"/></svg></button>
   </div>
 </header>
@@ -93,6 +94,7 @@
         </select>
         <label for="results-source">Results</label>
         <select id="results-source"><option value="engine" selected>W19 engine</option><option value="stored" disabled>SewerGEMS (stored)</option></select>
+        <div class="chks"><label title="Pipes that fail a check (d/D, v max, surcharged, adverse) drawn in red over the colouring"><input type="checkbox" id="fail-toggle" checked> Failing pipes on top</label></div>
         <div class="bm" id="basemap-wrap">
           <label for="basemap-select">Basemap</label>
           <select id="basemap-select">
@@ -222,10 +224,18 @@
   <div id="sample-list" class="list"></div>
   <div class="row"><button id="sample-cancel">Cancel</button></div>
 </div></div>
-<div id="dlg-sg" class="modal" hidden><div class="dlg">
+<div id="dlg-sg" class="modal" hidden><div class="dlg wide">
   <h3>Open a SewerGEMS model</h3>
+  <p id="sg-watch" class="muted"></p>
+  <h4>Ready to open <span class="muted">(every scenario, with SewerGEMS's results and loads)</span></h4>
   <div id="sg-list" class="list"></div>
-  <div class="row"><button id="sg-cancel">Cancel</button></div>
+  <label class="crs">Coordinates (EPSG)<input id="sg-crs" type="number" value="32640" title="The model's coordinate system; 32640 is UTM zone 40N"></label>
+  <h4>Export from SewerGEMS <span class="muted">(SewerGEMS reads a copy of the model in the VM; the model itself is not touched)</span></h4>
+  <input id="sg-filter" type="search" placeholder="Filter the models by name or folder" style="width:100%">
+  <div id="sg-models" class="list sgms"></div>
+  <div class="row"><input id="sg-guest" type="text" placeholder="or a model's path as the VM sees it: C:\... or \\VBOXSVR\..." style="flex:1"><button id="sg-export-path">Export</button></div>
+  <div id="sg-jobs"></div>
+  <div class="row"><button id="sg-cancel">Close</button></div>
 </div></div>
 <div id="dlg-gis" class="modal" hidden><div class="dlg wide">
   <h3>Import from GIS layers</h3>
@@ -255,6 +265,11 @@
   <p id="des-locked" class="muted"></p>
   <label>Load set<select id="des-load"></select></label>
   <div class="row"><button id="des-preview" class="primary">Preview</button><button id="des-run">Design now</button><button id="des-cancel">Cancel</button></div>
+</div></div>
+<div id="dlg-keys" class="modal" hidden><div class="dlg">
+  <h3>Keyboard and mouse</h3>
+  <table class="keys"><tr><td><kbd>S</kbd></td><td>Select</td></tr><tr><td><kbd>M / O / W</kbd></td><td>Manhole, outfall, wet well</td></tr><tr><td><kbd>P</kbd></td><td>Pipe (click start, then end)</td></tr><tr><td><kbd>C</kbd></td><td>Catchment (corners, Enter, outlet)</td></tr><tr><td><kbd>V</kbd></td><td>Move a node</td></tr><tr><td><kbd>R</kbd></td><td>Measure</td></tr><tr><td><kbd>Del</kbd></td><td>Delete the selection</td></tr><tr><td><kbd>Esc</kbd></td><td>Cancel drawing, clear the selection</td></tr><tr><td><kbd>U / D</kbd></td><td>Trace upstream / downstream of the selection</td></tr><tr><td><kbd>Z</kbd></td><td>Zoom to the selection</td></tr><tr><td><kbd>H</kbd></td><td>Fit the whole network</td></tr><tr><td><kbd>Ctrl+F or /</kbd></td><td>Find an element by ID</td></tr><tr><td><kbd>Ctrl+Z / Ctrl+Y</kbd></td><td>Undo / redo</td></tr><tr><td><kbd>F2 / F3</kbd></td><td>Hide or show the properties / the tables</td></tr><tr><td><kbd>F4</kbd></td><td>Map only</td></tr><tr><td><kbd>Shift+drag</kbd></td><td>Select the pipes in a box</td></tr><tr><td><kbd>Ctrl+drag</kbd></td><td>Select the nodes in a box</td></tr><tr><td><kbd>Double-click a cell</kbd></td><td>Edit it in the table; Enter moves down</td></tr><tr><td><kbd>Ctrl+V</kbd></td><td>Paste a column from Excel into the table (from the clicked cell)</td></tr><tr><td><kbd>Profile: wheel</kbd></td><td>Zoom along the chainage; Shift+wheel or drag scrolls, Ctrl+wheel zooms the levels</td></tr><tr><td><kbd>?</kbd></td><td>This list</td></tr></table>
+  <div class="row"><button id="keys-close">Close</button></div>
 </div></div>
 <div id="busy" hidden><div class="spin"></div><span id="busy-text">Working...</span></div>
 <div id="toast" role="alert" hidden></div>
