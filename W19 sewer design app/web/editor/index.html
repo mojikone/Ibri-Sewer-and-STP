@@ -9,55 +9,54 @@
 </head>
 <body data-pending="0">
 <header id="topbar">
-  <div class="brand">Sewer network editor</div>
+  <div class="brand"><span class="logo"><svg class="i" viewBox="0 0 24 24" style="stroke:#fff"><path d="M4 16c3-6 5-6 8 0s5 6 8 0"/></svg></span>Sewer network editor</div>
   <div class="grp">
-    <button id="new-btn" class="tb" title="New project">New</button>
-    <button id="sample-btn" class="tb" title="Open a sample project">Sample</button>
-    <button id="open-btn" class="tb" title="Open a project file (.gpkg)">Open</button>
-    <button id="sg-btn" class="tb" title="Open a SewerGEMS model exported through the bridge, with all its scenarios">Open SewerGEMS...</button>
-    <button id="import-btn" class="tb" title="Import an EPA SWMM 5 input file (.inp)">Import .inp</button>
-    <input type="file" id="import-file" accept=".inp" hidden>
-    <button id="export-btn" class="tb" title="Export the scenario as an EPA SWMM 5 input file" disabled>Export .inp</button>
-    <input type="file" id="open-file" accept=".gpkg" hidden>
-    <button id="save-btn" class="tb" title="Download the project (.gpkg)" disabled>Save</button>
-    <button id="file-btn" class="tb" title="Import from GIS, export DXF or CSV">More &#9662;</button>
+    <button id="file-btn" class="tb" title="New, open, import and export">File <span class="caret">&#9662;</span></button>
     <div id="file-menu" class="menu" hidden>
-      <button id="gis-btn">Import from GIS...</button>
+      <div class="mh">Project</div>
+      <button id="new-btn" title="New project">New project...</button>
+      <button id="sample-btn" title="Open a sample project">Open a sample...</button>
+      <button id="open-btn" title="Open a project file (.gpkg)">Open project file (.gpkg)...</button>
+      <button id="sg-btn" title="Open a SewerGEMS model exported through the bridge, with all its scenarios">Open SewerGEMS model...</button>
+      <hr>
+      <div class="mh">Import and export</div>
+      <button id="import-btn" title="Import an EPA SWMM 5 input file (.inp)">Import EPA SWMM .inp...</button>
+      <button id="gis-btn">Import from GIS layers...</button>
+      <button id="export-btn" title="Export the scenario as an EPA SWMM 5 input file" disabled>Export EPA SWMM .inp</button>
       <button id="export-dxf-btn">Export DXF</button>
       <button id="export-csv-btn">Export CSV</button>
     </div>
+    <input type="file" id="import-file" accept=".inp" hidden>
+    <input type="file" id="open-file" accept=".gpkg" hidden>
+    <button id="save-btn" class="tb" title="Download the project (.gpkg)" disabled><svg class="i" viewBox="0 0 24 24"><path d="M5 4h11l3 3v13H5z M8 4v5h7V4 M8 20v-6h8v6"/></svg>Save</button>
   </div>
   <div class="grp">
     <label class="lbl" for="scenario-select">Scenario</label>
     <select id="scenario-select" disabled></select>
     <button id="copy-btn" class="tb" title="Copy the scenario" disabled>Copy</button>
-    <button id="undo-btn" class="tb" title="Undo (Ctrl+Z)" disabled>Undo</button>
-    <button id="redo-btn" class="tb" title="Redo (Ctrl+Y)" disabled>Redo</button>
+    <button id="undo-btn" class="tb icon" title="Undo (Ctrl+Z)" aria-label="Undo" disabled><svg class="i" viewBox="0 0 24 24"><path d="M9 7L4 12l5 5 M4 12h11a5 5 0 010 10h-2"/></svg></button>
+    <button id="redo-btn" class="tb icon" title="Redo (Ctrl+Y)" aria-label="Redo" disabled><svg class="i" viewBox="0 0 24 24"><path d="M15 7l5 5-5 5 M20 12H9a5 5 0 000 10h2"/></svg></button>
   </div>
   <div class="grp" id="tools-grp">
-    <button id="tools-btn" class="tb" title="Tools" disabled>Tools &#9662;</button>
+    <button id="tools-btn" class="tb" title="Tools" disabled>Tools <span class="caret">&#9662;</span></button>
     <div id="tools-menu" hidden></div>
   </div>
-  <div class="grp">
-    <label class="lbl" for="color-by">Colour pipes by</label>
-    <select id="color-by">
-      <option value="none">none</option>
-      <option value="dn_mm">size DN</option>
-      <option value="v_ms" selected>velocity</option>
-      <option value="d_over_D">d/D</option>
-      <option value="q_ls">flow</option>
-      <option value="storm_q">storm peak flow</option>
-      <option value="storm_cap">storm fullness</option>
-      <option value="storm_flood">flooding</option>
-    </select>
-    <label class="lbl" for="results-source">Results source</label>
-    <select id="results-source"><option value="engine" selected>W19 engine</option><option value="stored" disabled>SewerGEMS (stored)</option></select>
-    <label class="chk" id="basemap-wrap"><input type="checkbox" id="basemap-toggle" checked> Basemap</label>
+  <div class="grp" id="find-wrap" title="Find a node, link or catchment by its ID (Ctrl+F)">
+    <svg class="i" viewBox="0 0 24 24" style="opacity:.75"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg>
+    <input id="find-input" type="search" placeholder="Find ID  (Ctrl+F)" autocomplete="off" spellcheck="false">
   </div>
-  <div id="project-label" class="projlabel"></div>
+  <div class="grp view-grp">
+    <button id="tools-compact-btn" class="tb icon" title="Toolbar labels on/off" aria-label="Toolbar labels"><svg class="i" viewBox="0 0 24 24"><path d="M4 5h4v14H4z M11 8h9 M11 12h9 M11 16h6"/></svg></button>
+    <button id="props-btn" class="tb icon on" title="Properties panel (F2)" aria-label="Properties panel"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></button>
+    <button id="bottom-btn" class="tb icon on" title="Bottom panel (F3)" aria-label="Bottom panel"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 14h18"/></svg></button>
+    <button id="maxmap-btn" class="tb icon" title="Map only (F4)" aria-label="Map only"><svg class="i" viewBox="0 0 24 24"><path d="M4 9V4h5 M20 9V4h-5 M4 15v5h5 M20 15v5h-5"/></svg></button>
+    <button id="theme-btn" class="tb icon" title="Light or dark theme" aria-label="Theme"><svg class="i" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z"/></svg></button>
+  </div>
 </header>
 <div id="status-bar">
   <div id="status-line" data-links="0" data-conduits="0" data-problems="0" data-seconds="" data-rev="0">No project open.</div>
+  <div id="coords"></div>
+  <div id="project-label" class="projlabel"></div>
 </div>
 <main id="main">
   <nav id="tools" aria-label="Element tools">
@@ -65,16 +64,55 @@
     <button id="tool-manhole" class="tool" title="Manhole: click the map; click a pipe to split it (M)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="#fff" stroke="#6b7785" stroke-width="2.5"/></svg><span>Manhole</span></button>
     <button id="tool-outfall" class="tool" title="Outfall (O)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="#123e7c"/><path d="M12 8v8M8.5 12.5L12 16l3.5-3.5" stroke="#fff" stroke-width="1.6" fill="none"/></svg><span>Outfall</span></button>
     <button id="tool-wetwell" class="tool" title="Wet well (W)"><svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="#7b3fa0"/></svg><span>Wet well</span></button>
-    <button id="tool-pipe" class="tool" title="Pipe: click start node, then end node (P)"><svg viewBox="0 0 24 24"><path d="M5 18L19 6" stroke="#1f3b73" stroke-width="3" stroke-linecap="round"/><circle cx="5" cy="18" r="2.5" fill="#fff" stroke="#6b7785" stroke-width="1.5"/><circle cx="19" cy="6" r="2.5" fill="#fff" stroke="#6b7785" stroke-width="1.5"/></svg><span>Pipe</span></button>
+    <button id="tool-pipe" class="tool" title="Pipe: click start node, then end node (P)"><svg viewBox="0 0 24 24"><path d="M5 18L19 6" stroke="#2f6fd0" stroke-width="3" stroke-linecap="round"/><circle cx="5" cy="18" r="2.5" fill="#fff" stroke="#6b7785" stroke-width="1.5"/><circle cx="19" cy="6" r="2.5" fill="#fff" stroke="#6b7785" stroke-width="1.5"/></svg><span>Pipe</span></button>
     <button id="tool-pump" class="tool" title="Pump: click start node, then end node"><svg viewBox="0 0 24 24"><path d="M4 12h16" stroke="#7b3fa0" stroke-width="2.5" stroke-dasharray="3 2"/><circle cx="12" cy="12" r="6" fill="#fff" stroke="#7b3fa0" stroke-width="2"/><path d="M10 9l5 3-5 3z" fill="#7b3fa0"/></svg><span>Pump</span></button>
     <button id="tool-catchment" class="tool" title="Catchment: click the corners, double-click or Enter to finish, then click the outlet node (C)"><svg viewBox="0 0 24 24"><path d="M5 17l3-10 9-2 3 9-6 5z" fill="rgba(74,163,162,.35)" stroke="#2d7f7e" stroke-width="1.8"/></svg><span>Catchment</span></button>
+    <div class="sep"></div>
     <button id="tool-move" class="tool" title="Move a node: drag it (V)"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg><span>Move</span></button>
+    <button id="tool-measure" class="tool" title="Measure: click points along a route; Esc clears (R)"><svg viewBox="0 0 24 24"><path d="M3 17L17 3l4 4L7 21z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M7 13l2 2M10 10l2 2M13 7l2 2" stroke="currentColor" stroke-width="1.6"/></svg><span>Measure</span></button>
     <button id="tool-delete" class="tool" title="Delete: click an element (Del)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="#c0392b" stroke-width="3" stroke-linecap="round"/></svg><span>Delete</span></button>
   </nav>
   <section id="map-wrap">
     <div id="map"></div>
-    <div id="legend"></div>
+    <div id="display-card">
+      <div class="dh" id="display-head" title="Show or hide the display options"><svg class="i" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4z M3 12l9 4 9-4 M3 17l9 4 9-4"/></svg>Display<svg class="i chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
+      <div id="display-body">
+        <label for="color-by">Colour by</label>
+        <select id="color-by">
+          <option value="none">none</option>
+          <option value="dn_mm">size DN</option>
+          <option value="v_ms" selected>velocity</option>
+          <option value="d_over_D">d/D</option>
+          <option value="q_ls">flow</option>
+          <option value="storm_q">storm peak flow</option>
+          <option value="storm_cap">storm fullness</option>
+          <option value="storm_flood">flooding</option>
+        </select>
+        <label for="results-source">Results</label>
+        <select id="results-source"><option value="engine" selected>W19 engine</option><option value="stored" disabled>SewerGEMS (stored)</option></select>
+        <div class="bm" id="basemap-wrap">
+          <label for="basemap-select">Basemap</label>
+          <select id="basemap-select">
+            <option value="osm">Streets (OSM)</option>
+            <option value="sat">Satellite (Esri)</option>
+            <option value="topo">Topographic</option>
+            <option value="light">Light grey (Esri)</option>
+            <option value="dark">Dark grey (Esri)</option>
+            <option value="none">None</option>
+          </select>
+          <label for="basemap-opacity">Opacity</label>
+          <input id="basemap-opacity" type="range" min="0.1" max="1" step="0.05" value="1">
+          <div class="chks">
+            <label title="Place and road names over the satellite image"><input type="checkbox" id="labels-toggle" checked> Labels</label>
+            <label title="Shaded relief from a global terrain model (about 30 m): wadis and ridges, not levels"><input type="checkbox" id="hillshade-toggle"> Hillshade</label>
+            <label title="Flow arrows and pipe labels when zoomed in"><input type="checkbox" id="arrows-toggle" checked> Arrows</label>
+          </div>
+        </div>
+      </div>
+      <div id="legend"></div>
+    </div>
     <div id="hint"></div>
+    <div id="maptip" hidden></div>
     <div id="welcome" hidden>
       <div class="card">
         <h2>Sewer and stormwater network editor</h2>
@@ -87,11 +125,13 @@
       </div>
     </div>
   </section>
+  <div id="split-props" class="splitter v" title="Drag to resize; double-click to hide or show the properties"></div>
   <aside id="props">
-    <div class="ph">Properties</div>
+    <div class="ph" id="props-head">Properties<button id="props-toggle" class="pbtn" title="Hide or show (F2)" aria-label="Hide or show the properties"><svg class="i" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button></div>
     <div id="prop-grid"><p class="muted">Nothing selected. Use the Select tool, or click a row in a table.</p></div>
   </aside>
 </main>
+<div id="split-bottom" class="splitter h" title="Drag to resize; double-click to hide or show the tables"></div>
 <section id="bottom">
   <div id="tabs" role="tablist">
     <button id="tab-nodes" class="tab active" role="tab">Nodes</button>
@@ -102,6 +142,7 @@
     <button id="tab-hydro" class="tab" role="tab">Hydrograph</button>
     <button id="tab-toolout" class="tab" role="tab">Tool output</button>
     <button id="tab-assistant" class="tab" role="tab">Assistant</button>
+    <div class="tabs-end"><button id="bottom-toggle" class="pbtn" title="Hide or show (F3)" aria-label="Hide or show the bottom panel"><svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button></div>
   </div>
   <div id="panes">
     <div id="pane-nodes" class="pane flex active">

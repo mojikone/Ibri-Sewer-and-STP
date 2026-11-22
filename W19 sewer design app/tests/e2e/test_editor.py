@@ -1,5 +1,5 @@
 """End-to-end tests of the general network editor (web/editor) in system Chrome against a live server on port 8798."""
-import os, subprocess, sys, time, urllib.request
+import os, re, subprocess, sys, time, urllib.request
 import pytest
 from playwright.sync_api import sync_playwright, expect
 
@@ -78,8 +78,13 @@ def click_at(pg, x, y):
 def tool(pg, name): pg.get_by_test_id("tool-" + name).click()
 
 
+def file_menu(pg, item):
+    """File actions live in the File menu: open it, then click the item."""
+    pg.get_by_test_id("file-btn").click(); pg.get_by_test_id(item).click()
+
+
 def new_local(pg, name="Test"):
-    pg.get_by_test_id("new-btn").click()
+    file_menu(pg, "new-btn")
     pg.get_by_test_id("new-name").fill(name)
     pg.get_by_test_id("new-crs-mode").select_option("local")
     pg.get_by_test_id("new-create").click()
@@ -208,7 +213,7 @@ def test_save_and_open_a_project_file(page, tmp_path):
 
 
 def test_ibri_sample_opens_copies_and_resolves_fast(page):
-    page.get_by_test_id("sample-btn").click()
+    file_menu(page, "sample-btn")
     page.get_by_test_id("sample-SC1-2056").click()
     page.wait_for_function("window.ed.state.pid && window.ed.state.model && window.ed.state.model.linkFeat.length > 19000 && document.body.dataset.pending === '0'", timeout=180000)
     assert int(status(page)["links"]) >= 19083
@@ -316,7 +321,7 @@ def test_import_swmm_inp_run_storm_and_export(page, tmp_path):
     expect(page.get_by_test_id("storm-report")).to_be_visible()
     assert page.evaluate("window.ed.state.storm.data.summary.links") == 9
     with page.expect_download() as d:
-        page.get_by_test_id("export-btn").click()
+        file_menu(page, "export-btn")
     f = str(tmp_path / "model.inp"); d.value.save_as(f)
     assert "[CONDUITS]" in open(f, encoding="utf-8", errors="ignore").read()
 
@@ -345,7 +350,7 @@ def test_assistant_answers_with_a_tool_call_and_rain_follows_the_model(page):
 
 def test_open_a_sewergems_export_and_read_its_stored_results(page):
     from sewerapp import fixtures
-    page.get_by_test_id("sg-btn").click()
+    file_menu(page, "sg-btn")
     page.get_by_test_id("sg-SC1-2056_final").click()
     page.wait_for_function("window.ed.state.pid && window.ed.state.info.name.startsWith('SewerGEMS') && window.ed.state.model && window.ed.state.model.linkFeat.length > 19000 && document.body.dataset.pending === '0'", timeout=240000)
     opts = page.get_by_test_id("scenario-select").locator("option").all_inner_texts()
@@ -435,6 +440,81 @@ def test_import_from_gis_layers_with_mapping_snapping_and_exports(page, tmp_path
         f = str(tmp_path / ("out" + ext)); d.value.save_as(f)
         assert d.value.suggested_filename.endswith(ext) and os.path.getsize(f) > 100
         if marker: assert marker in open(f, encoding="utf-8", errors="ignore").read().splitlines()[0]
+
+
+def test_panels_collapse_drag_and_are_remembered(page):
+    draw_network(page)
+    body = page.locator("body")
+    page.keyboard.press("F2"); expect(body).to_have_class(re.compile("props-collapsed"))
+    assert page.evaluate("document.getElementById('props').getBoundingClientRect().width") <= 31
+    page.keyboard.press("F2"); expect(body).not_to_have_class(re.compile("props-collapsed"))
+    page.get_by_test_id("bottom-toggle").click(); expect(body).to_have_class(re.compile("bottom-collapsed"))
+    page.get_by_test_id("tab-links").click(); expect(body).not_to_have_class(re.compile("bottom-collapsed"))  # a tab re-opens it
+    # drag the bottom splitter up by 120 px: the tables grow by 120 px, the map shrinks, and the size is stored
+    h0 = page.evaluate("document.getElementById('bottom').getBoundingClientRect().height")
+    m0 = page.evaluate("document.getElementById('map-wrap').getBoundingClientRect().height")
+    b = page.get_by_test_id("split-bottom").bounding_box()
+    page.mouse.move(b["x"] + 200, b["y"] + 3); page.mouse.down(); page.mouse.move(b["x"] + 200, b["y"] - 117, steps=6); page.mouse.up()
+    page.wait_for_timeout(200)
+    h1 = page.evaluate("document.getElementById('bottom').getBoundingClientRect().height")
+    m1 = page.evaluate("document.getElementById('map-wrap').getBoundingClientRect().height")
+    assert abs((h1 - h0) - 120) < 4 and abs((m0 - m1) - 120) < 4, (h0, h1, m0, m1)
+    assert abs(page.evaluate("JSON.parse(localStorage.getItem('w19.ui')).bh") - h1) < 2
+    # the properties splitter: drag left by 100 px
+    w0 = page.evaluate("document.getElementById('props').getBoundingClientRect().width")
+    b = page.get_by_test_id("split-props").bounding_box()
+    page.mouse.move(b["x"] + 3, b["y"] + 100); page.mouse.down(); page.mouse.move(b["x"] - 97, b["y"] + 100, steps=6); page.mouse.up()
+    page.wait_for_timeout(200)
+    assert abs(page.evaluate("document.getElementById('props').getBoundingClientRect().width") - w0 - 100) < 4
+    page.get_by_test_id("maxmap-btn").click(); expect(body).to_have_class(re.compile("props-collapsed"))
+    expect(body).to_have_class(re.compile("bottom-collapsed"))
+    page.get_by_test_id("maxmap-btn").click(); expect(body).not_to_have_class(re.compile("bottom-collapsed"))
+    page.evaluate("localStorage.removeItem('w19.ui')")
+
+
+def test_find_measure_coordinates_and_failure_stepping(page):
+    nid, lid = draw_network(page)
+    page.get_by_test_id("find-input").fill(nid[1].lower()); page.get_by_test_id("find-input").press("Enter"); idle(page)
+    assert page.evaluate("window.ed.state.sel") == {"table": "nodes", "ids": [nid[1]]}
+    tool(page, "measure"); click_at(page, 0, 0); click_at(page, 100, 0); idle(page)
+    assert abs(page.evaluate("window.ed.state.measureLength") - 100) < 0.01           # local metres: 100 m between the clicks, in plan
+    assert "Length 100" in page.get_by_test_id("hint").inner_text()
+    page.keyboard.press("Escape"); assert page.evaluate("window.ed.state.measure.length") == 0
+    page.evaluate(f"showCoords({{lng: 150 / {M_LON}, lat: 40 / {M_LAT}}})")
+    assert page.get_by_test_id("coords").text_content().startswith("E 150.0  N 40.0")
+    tool(page, "select")
+    page.evaluate("id => window.ed.selectElement('nodes', id)", nid[0])
+    ld = page.get_by_test_id("load-design"); ld.fill("5000"); ld.press("Enter"); idle(page)
+    n = summary(page)["over_limit"]; assert n > 0
+    first = page.locator('#status-line a.fail[data-flag="over_limit"]'); first.click(); idle(page)
+    s1 = page.evaluate("window.ed.state.sel.ids[0]"); assert page.evaluate("id => window.ed.state.results.links[id].over_limit", s1)
+    if n > 1:
+        page.locator('#status-line a.fail[data-flag="over_limit"]').click(); idle(page)
+        assert page.evaluate("window.ed.state.sel.ids[0]") != s1
+
+
+def test_basemaps_hillshade_theme_and_utm_readout(page):
+    file_menu(page, "new-btn"); page.get_by_test_id("new-name").fill("Basemap"); page.get_by_test_id("new-crs-mode").select_option("epsg")
+    page.get_by_test_id("new-epsg").fill("32640"); page.get_by_test_id("new-create").click()
+    page.wait_for_function("window.ed.state.pid && window.ed.state.info.name === 'Basemap' && document.body.dataset.pending === '0'")
+    vis = lambda l: page.evaluate("l => window.ed.map.getLayoutProperty(l, 'visibility')", l)
+    page.get_by_test_id("basemap-select").select_option("sat")
+    assert vis("bm-sat") == "visible" and vis("bm-osm") == "none" and vis("sat-labels") == "visible"
+    page.get_by_test_id("labels-toggle").uncheck(); assert vis("sat-labels") == "none"
+    page.get_by_test_id("hillshade-toggle").check(); assert vis("hillshade") == "visible"
+    page.get_by_test_id("basemap-opacity").fill("0.5")
+    assert page.evaluate("window.ed.map.getPaintProperty('bm-sat', 'raster-opacity')") == 0.5
+    page.get_by_test_id("theme-btn").click(); expect(page.locator("body")).to_have_class(re.compile("dark"))
+    page.get_by_test_id("basemap-select").select_option("osm")
+    page.get_by_test_id("theme-btn").click(); expect(page.locator("body")).not_to_have_class(re.compile("dark"))
+    # the E/N readout's UTM formula against PROJ, inside zone 40N and near its edge
+    from pyproj import Transformer
+    T = Transformer.from_crs(4326, 32640, always_xy=True)
+    for lon, lat in ((56.4567, 23.1756), (59.9, 16.0), (54.1, 26.3)):
+        e, n = page.evaluate("([lon, lat]) => utm(lon, lat, 40, false)", [lon, lat]); pe, pn = T.transform(lon, lat)
+        assert abs(e - pe) < 0.01 and abs(n - pn) < 0.01, (lon, lat, e - pe, n - pn)
+    page.evaluate("localStorage.removeItem('w19.ui')")
+    page.get_by_test_id("basemap-select").select_option("osm"); page.get_by_test_id("hillshade-toggle").uncheck()
 
 
 def test_no_javascript_errors(page):

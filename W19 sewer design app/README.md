@@ -39,6 +39,11 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
 - **Stormwater:** catchments, rain as a time series or a design storm from an IDF table, run on EPA SWMM 5, peaks and
   flooding on the map, hydrographs.
 - **Export:** GeoPackage, SWMM `.inp`, DXF, CSV.
+- **Interface:** panels that drag to any size and collapse (F2 properties, F3 tables, F4 map only), remembered between
+  sessions; a Display card on the map with the colour, the results source, the basemap (streets, satellite with labels,
+  topographic, light or dark grey, none), its opacity, a hillshade and flow arrows; pipes drawn by size with DN and
+  gradient labels close in; find by ID (Ctrl+F); E/N coordinates under the cursor; hover tooltips; failure counts that
+  step through the failing pipes; a measure tool; a dark theme. Satellite and map tiles are for the screen only.
 - **Assistant:** answers about any open project from its solved results, explains each check with its guideline page,
   and tries fixes, designs and storm runs in new scenarios.
 

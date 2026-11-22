@@ -33,8 +33,8 @@ async function api(path, opts) {
 }
 const jget = async p => (await api(p)).json();
 const jpost = async (p, b) => (await api(p, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b || {}) })).json();
-function toast(msg) {
-  const t = $("#toast"); t.textContent = msg; t.hidden = false;
+function toast(msg, kind = "err") {
+  const t = $("#toast"); t.textContent = msg; t.hidden = false; t.classList.toggle("err", kind === "err");
   clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, 6000);
 }
 function enqueue(fn) {
@@ -77,15 +77,32 @@ function renderLegend() {
 }
 
 /* ------------------------------------------------------------------ map */
+/* basemaps: keyless raster tiles for on-screen display only (never captured into client reports) */
+const ESRI = "https://server.arcgisonline.com/ArcGIS/rest/services/";
+const abc = u => ["a", "b", "c"].map(s => u.replace("{s}", s));
+const BASEMAPS = {
+  osm: { tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], maxzoom: 19, attribution: "&copy; OpenStreetMap contributors" },
+  sat: { tiles: [ESRI + "World_Imagery/MapServer/tile/{z}/{y}/{x}"], maxzoom: 18, attribution: "Imagery &copy; Esri, Maxar, Earthstar Geographics" },
+  topo: { tiles: abc("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"), maxzoom: 17, attribution: "&copy; OpenStreetMap contributors, SRTM | &copy; OpenTopoMap (CC-BY-SA)" },
+  // Carto's keyless tiles now carry an "API key required" watermark: Esri's grey canvas maps instead
+  light: { tiles: [ESRI + "Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"], maxzoom: 16, attribution: "&copy; Esri, HERE, Garmin, &copy; OpenStreetMap contributors" },
+  dark: { tiles: [ESRI + "Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"], maxzoom: 16, attribution: "&copy; Esri, HERE, Garmin, &copy; OpenStreetMap contributors" },
+};
 function initMap() {
+  const sources = {}, layers = [{ id: "bg", type: "background", paint: { "background-color": "#f3f5f8" } }];
+  for (const [k, b] of Object.entries(BASEMAPS)) {
+    sources["bm-" + k] = { type: "raster", tiles: b.tiles, tileSize: 256, maxzoom: b.maxzoom, attribution: b.attribution };
+    layers.push({ id: "bm-" + k, type: "raster", source: "bm-" + k, layout: { visibility: "none" } });
+  }
+  sources.dem = { type: "raster-dem", tiles: ["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"], encoding: "terrarium", tileSize: 256, maxzoom: 15, attribution: "Terrain: Mapzen, AWS Open Data" };
+  layers.push({ id: "hillshade", type: "hillshade", source: "dem", layout: { visibility: "none" }, paint: { "hillshade-exaggeration": 0.35, "hillshade-shadow-color": "#3d4a5c", "hillshade-highlight-color": "#ffffff" } });
+  for (const [k, svc] of [["sat-roads", "Reference/World_Transportation"], ["sat-labels", "Reference/World_Boundaries_and_Places"]]) {
+    sources[k] = { type: "raster", tiles: [ESRI + svc + "/MapServer/tile/{z}/{y}/{x}"], tileSize: 256, maxzoom: 18, attribution: "&copy; Esri" };
+    layers.push({ id: k, type: "raster", source: k, layout: { visibility: "none" } });
+  }
   map = new maplibregl.Map({
-    container: "map", center: [0.001, 0.0005], zoom: 17, boxZoom: false, doubleClickZoom: false, attributionControl: true,
-    style: {
-      version: 8, glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
-      sources: { osm: { type: "raster", tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"], tileSize: 256, attribution: "&copy; OpenStreetMap contributors", maxzoom: 19 } },
-      layers: [{ id: "bg", type: "background", paint: { "background-color": "#f3f5f8" } },
-               { id: "osm", type: "raster", source: "osm", layout: { visibility: "none" } }],
-    },
+    container: "map", center: [0.001, 0.0005], zoom: 17, boxZoom: false, doubleClickZoom: false, attributionControl: { compact: true },
+    style: { version: 8, glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf", sources, layers },
   });
   map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
   map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right");
@@ -95,7 +112,7 @@ function initMap() {
     const t = setInterval(() => { if (map.style && map.style._loaded) { clearInterval(t); go(); } }, 50);
   }).then(() => {
     const E = { type: "FeatureCollection", features: [] };
-    for (const id of ["grid", "catch", "catch-links", "drawpoly", "links", "nodes", "sel-links", "sel-nodes", "drag"]) map.addSource(id, { type: "geojson", data: E, tolerance: 0.4 });
+    for (const id of ["grid", "catch", "catch-links", "drawpoly", "links", "nodes", "sel-links", "sel-nodes", "drag", "hot", "measure"]) map.addSource(id, { type: "geojson", data: E, tolerance: 0.4 });
     map.addLayer({ id: "grid", type: "line", source: "grid", paint: { "line-color": "#d6dde6", "line-width": 1 } });
     map.addLayer({ id: "catch", type: "fill", source: "catch", paint: { "fill-color": "#4aa3a2", "fill-opacity": 0.22 } });
     map.addLayer({ id: "catch-line", type: "line", source: "catch", paint: { "line-color": "#2d7f7e", "line-width": 1.5 } });
@@ -103,24 +120,43 @@ function initMap() {
     map.addLayer({ id: "drawpoly-fill", type: "fill", source: "drawpoly", filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": "#e6821e", "fill-opacity": 0.2 } });
     map.addLayer({ id: "drawpoly-line", type: "line", source: "drawpoly", paint: { "line-color": "#e6821e", "line-width": 2, "line-dasharray": [2, 1] } });
     map.addLayer({ id: "drawpoly-pts", type: "circle", source: "drawpoly", filter: ["==", ["geometry-type"], "Point"], paint: { "circle-radius": 4, "circle-color": "#e6821e" } });
-    const w = k => ["interpolate", ["linear"], ["zoom"], 10, 1 * k, 15, 2.2 * k, 19, 5 * k];
-    map.addLayer({ id: "links-base", type: "line", source: "links", layout: { "line-cap": "round" }, paint: { "line-color": ["get", "_c"], "line-width": w(1) } });
-    map.addLayer({ id: "links-fail", type: "line", source: "links", filter: ["==", ["get", "_fail"], 1], paint: { "line-color": "#d7301f", "line-width": w(1.4) } });
-    map.addLayer({ id: "links-pump", type: "line", source: "links", filter: ["==", ["get", "kind"], "pump"], paint: { "line-color": "#7b3fa0", "line-width": w(1.5), "line-dasharray": [2, 1.5] } });
+    // pipe width grows with size and zoom (zoom must be the outer interpolation); big pipes draw on top
+    const dn = ["coalesce", ["get", "dn_mm"], 200];
+    const w = (k, add = 0) => ["interpolate", ["linear"], ["zoom"],
+      10, ["+", add, ["*", k, ["step", dn, 0.7, 300, 1.2, 600, 2, 1000, 2.8]]],
+      15, ["+", add, ["*", k, ["step", dn, 2, 300, 3, 600, 4.4, 1000, 6]]],
+      19, ["+", add, ["*", k, ["step", dn, 4, 300, 6, 600, 9, 1000, 12]]]];
+    map.addLayer({ id: "links-casing", type: "line", source: "links", layout: { "line-cap": "round", "line-sort-key": dn }, paint: { "line-color": "#ffffff", "line-opacity": 0.75, "line-width": w(1, 2) } });
+    map.addLayer({ id: "links-base", type: "line", source: "links", layout: { "line-cap": "round", "line-sort-key": dn }, paint: { "line-color": ["get", "_c"], "line-width": w(1) } });
+    map.addLayer({ id: "links-fail", type: "line", source: "links", filter: ["==", ["get", "_fail"], 1], layout: { "line-cap": "round" }, paint: { "line-color": "#d7301f", "line-width": w(1.3, 0.5) } });
+    map.addLayer({ id: "links-pump", type: "line", source: "links", filter: ["==", ["get", "kind"], "pump"], paint: { "line-color": "#7b3fa0", "line-width": w(1.3), "line-dasharray": [2, 1.5] } });
+    map.addImage("flow-arrow", arrowImage(), { sdf: true, pixelRatio: 2 });
+    map.addLayer({ id: "links-arrow", type: "symbol", source: "links", minzoom: 15.5, layout: { "symbol-placement": "line", "symbol-spacing": 90, "icon-image": "flow-arrow", "icon-size": 1.25, "icon-rotation-alignment": "map", "icon-allow-overlap": true, "icon-ignore-placement": true }, paint: { "icon-color": "#1d2733", "icon-opacity": 0.75 } });
+    map.addLayer({ id: "links-label", type: "symbol", source: "links", minzoom: 17, layout: { "symbol-placement": "line", "text-field": ["get", "_lab"], "text-size": 10.5, "text-font": ["Open Sans Semibold"], "text-offset": [0, -0.9], "symbol-spacing": 260 }, paint: { "text-color": "#1d2733", "text-halo-color": "#fff", "text-halo-width": 1.6 } });
+    map.addLayer({ id: "hot-link", type: "line", source: "hot", paint: { "line-color": "#ffb000", "line-width": w(1, 5), "line-opacity": 0.85 } });
     map.addLayer({ id: "sel-links-casing", type: "line", source: "sel-links", paint: { "line-color": "#fff", "line-width": 9 } });
     map.addLayer({ id: "sel-links", type: "line", source: "sel-links", paint: { "line-color": "#00b3c7", "line-width": 5 } });
     const kc = ["match", ["get", "kind"], "outfall", "#123e7c", "wetwell", "#7b3fa0", "storage", "#1b9e77", "junction", "#c9a227", "#8a94a0"];
     const fl = ["==", ["coalesce", ["get", "_fl"], 0], 1];
-    map.addLayer({ id: "nodes", type: "circle", source: "nodes", paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, ["case", fl, 3.5, 1.6], 15, ["case", fl, 7, 4], 19, ["case", fl, 12, 8]], "circle-color": ["case", fl, "#d7301f", kc], "circle-stroke-color": "#fff", "circle-stroke-width": 1.2 } });
-    map.addLayer({ id: "nodes-label", type: "symbol", source: "nodes", minzoom: 15.5, layout: { "text-field": ["get", "id"], "text-size": 11, "text-offset": [0, 1.1], "text-anchor": "top", "text-font": ["Open Sans Regular"], "text-allow-overlap": false }, paint: { "text-color": "#1d2733", "text-halo-color": "#fff", "text-halo-width": 1.5 } });
+    // at city scale plain manholes are hidden (they read as grey dots over the pipes); outfalls, wet wells and flagged nodes stay
+    const mh = ["all", ["==", ["get", "kind"], "manhole"], ["!", fl]];
+    map.addLayer({ id: "nodes", type: "circle", source: "nodes", paint: {
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, ["case", fl, 3.5, mh, 0, 3.5], 13.5, ["case", fl, 5, mh, 0, 4.5], 14.5, ["case", fl, 6, mh, 2.6, 5], 16, ["case", fl, 8, mh, 4.5, 6.5], 19, ["case", fl, 12, mh, 8, 10]],
+      "circle-color": ["case", fl, "#d7301f", kc], "circle-stroke-color": "#fff",
+      "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 13.5, ["case", mh, 0, 1.4], 14.5, 1.2] } });
+    map.addLayer({ id: "nodes-label", type: "symbol", source: "nodes", minzoom: 15.5, layout: { "text-field": ["get", "id"], "text-size": 11, "text-offset": [0, 1.1], "text-anchor": "top", "text-font": ["Open Sans Semibold"], "text-allow-overlap": false }, paint: { "text-color": "#1d2733", "text-halo-color": "#fff", "text-halo-width": 1.5 } });
     map.addLayer({ id: "sel-nodes", type: "circle", source: "sel-nodes", paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 5, 19, 12], "circle-color": "rgba(0,0,0,0)", "circle-stroke-color": ["case", ["==", ["get", "_pend"], 1], "#e6821e", "#00b3c7"], "circle-stroke-width": 3 } });
     map.addLayer({ id: "drag", type: "circle", source: "drag", paint: { "circle-radius": 8, "circle-color": "rgba(230,130,30,.35)", "circle-stroke-color": "#e6821e", "circle-stroke-width": 2 } });
+    map.addLayer({ id: "measure-line", type: "line", source: "measure", paint: { "line-color": "#e6821e", "line-width": 2.5, "line-dasharray": [2, 1] } });
+    map.addLayer({ id: "measure-pts", type: "circle", source: "measure", filter: ["==", ["geometry-type"], "Point"], paint: { "circle-radius": 4, "circle-color": "#fff", "circle-stroke-color": "#e6821e", "circle-stroke-width": 2 } });
     map.on("moveend", updateGrid);
-    updateGrid();
+    updateGrid(); applyBasemap(); applyTheme();
   });
   map.on("click", e => { if (suppressClick) return; if (state.tool === "move") return; enqueue(() => act(e.lngLat, e.originalEvent)); });
   map.on("dblclick", e => { e.preventDefault(); if (state.tool === "catchment") finishCatchment(); });
-  map.on("mousemove", e => { map.getCanvas().style.cursor = state.pid ? (state.tool === "select" ? "" : "crosshair") : ""; if (dragging) dragMove(e.lngLat); });
+  map.on("mousemove", e => { map.getCanvas().style.cursor = state.pid ? (state.tool === "select" ? "" : "crosshair") : ""; if (dragging) dragMove(e.lngLat); hover(e); });
+  map.on("mouseout", () => { $("#maptip").hidden = true; setHot(null); });
+  map.on("zoomend", () => showCoords());
   map.on("mousedown", e => dragStart(e));
   map.on("mouseup", e => dragEnd(e));
   new ResizeObserver(() => map.resize()).observe($("#map-wrap"));
@@ -259,8 +295,10 @@ function mergeResults() {
     const mx = Math.max(1e-9, ...Object.values(S.links).map(x => x.q_peak || 0)), cs = ["#c6dbef", "#9ecae1", "#6baed6", "#3182bd", "#6a51a3", "#4a1486"];
     SCALES.storm_q.bins = [0.05, 0.15, 0.35, 0.6, 0.85, 1e9].map((k, i) => [k * mx, i === 5 ? `over ${+(0.85 * mx).toPrecision(3)}` : `up to ${+(k * mx).toPrecision(3)}`, cs[i]]);
   }
+  const E = state.results ? state.results.links : {};
   for (const f of m.linkFeat) {
-    const r = R[f.id], p = f.properties, sl = S && S.links[f.id];
+    const r = R[f.id], p = f.properties, sl = S && S.links[f.id], e = E[f.id];
+    p._lab = p.kind === "pump" ? `pump ${f.id}` : `DN${p.dn_mm ?? "?"}` + (e && e.s_pc != null ? ` · ${(+e.s_pc).toFixed(2)} %` : "");
     p._fail = !usingStored() && r && (r.over_limit || r.over_vmax || r.surcharged || r.negative_slope) ? 1 : 0;
     p._c = by === "dn_mm" && usingStored() ? colourFor(by, p.dn_mm) : by === "storm_q" ? colourFor(by, sl && sl.q_peak) : by === "storm_cap" ? colourFor(by, sl && sl.capacity_peak) : by === "storm_flood" ? GREY : colourFor(by, r && r[by]);
   }
@@ -327,15 +365,17 @@ function updateStatus() {
     return;
   }
   const bad = (s.over_limit || 0) + (s.over_vmax || 0) + (s.surcharged || 0) + (s.negative_slope || 0);
-  el.innerHTML = `solved ${s.links} links in ${num(s.seconds, 3)} s &middot; ${num(s.km, 2)} km &middot; over d/D limit <b class="${s.over_limit ? "bad" : ""}">${s.over_limit ?? 0}</b>` +
-    ` &middot; over v max <b class="${s.over_vmax ? "bad" : ""}">${s.over_vmax ?? 0}</b> &middot; surcharged <b class="${s.surcharged ? "bad" : ""}">${s.surcharged ?? 0}</b>` +
+  // a non-zero count is a link: each click steps to the next pipe with that flag
+  const cnt = k => s[k] ? `<a class="fail" data-flag="${k}" title="Click to step through them on the map">${s[k]}</a>` : `<b>0</b>`;
+  el.innerHTML = `solved ${s.links} links in ${num(s.seconds, 3)} s &middot; ${num(s.km, 2)} km &middot; over d/D limit ${cnt("over_limit")}` +
+    ` &middot; over v max ${cnt("over_vmax")} &middot; surcharged ${cnt("surcharged")}` +
     (s.km_under_vmin == null ? ` &middot; <span class="muted" title="Choose a check load set in Settings, Flows">self-cleansing not checked</span>`
-                             : ` &middot; ${num(s.km_under_vmin, 2)} km under v min at ${esc(s.check_set)}`) + (s.negative_slope ? ` &middot; <span class="bad">${s.negative_slope} adverse</span>` : "") +
+                             : ` &middot; ${num(s.km_under_vmin, 2)} km under v min at ${esc(s.check_set)}`) + (s.negative_slope ? ` &middot; ${cnt("negative_slope")} <span class="bad">adverse</span>` : "") +
     (bad === 0 && s.links ? ` <span class="ok">&#10003;</span>` : "");
 }
 function updateButtons() {
   const has = !!state.pid, sc = scenario();
-  for (const id of ["save-btn", "copy-btn", "tools-btn", "export-btn"]) $("#" + id).disabled = !has;
+  for (const id of ["save-btn", "copy-btn", "tools-btn", "export-btn", "export-dxf-btn", "export-csv-btn"]) $("#" + id).disabled = !has;
   $("#scenario-select").disabled = !has;
   $("#undo-btn").disabled = !(sc && sc.can_undo); $("#redo-btn").disabled = !(sc && sc.can_redo);
   const sel = $("#scenario-select");
@@ -412,8 +452,10 @@ const HINTS = {
   select: "Click a node or pipe. Shift or Ctrl adds to the selection.", manhole: "Click the map to add a manhole; click on a pipe to split it.",
   outfall: "Click the map to add an outfall.", wetwell: "Click the map to add a wet well.", pipe: "Click the start node, then the end node (an empty spot makes a manhole).",
   pump: "Click the start node, then the end node.", catchment: "Click the corners; double-click or Enter to finish; then click the outlet node.", move: "Drag a node to move it.", delete: "Click a node or pipe to delete it.",
+  measure: "Click points along the route to measure; Esc clears.",
 };
 function setTool(t) {
+  if (t !== "measure") clearMeasure();
   state.tool = t; state.pipeStart = null; state.movePick = null; state.draw = t === "catchment" ? { pts: [] } : null; state.catchPending = null;
   if (typeof drawPreview === "function" && map && map.getSource && map.getSource("drawpoly")) drawPreview();
   $$(".tool").forEach(b => { const on = b.id === "tool-" + t; b.classList.toggle("active", on); b.setAttribute("aria-pressed", on); });
@@ -426,6 +468,7 @@ async function act(ll, mods) {
   const t = state.tool, pt = map.project(ll), lonlat = { lon: ll.lng, lat: ll.lat };
   const nn = nearestNode(pt, 12), nl = nn ? null : nearestLink(pt, 8);
   const multi = mods.shiftKey || mods.ctrlKey || mods.metaKey;
+  if (t === "measure") { addMeasure(ll); return; }
   if (t === "select") {
     if (nn) setSel("nodes", multi ? toggled("nodes", nn.id) : [nn.id]);
     else if (nl) setSel("links", multi ? toggled("links", nl.id) : [nl.id]);
@@ -485,7 +528,7 @@ function setSel(table, ids, opt) {
   state.sel = { table: ids.length ? table : null, ids: ids.slice() };
   highlight(); renderProps(); renderActiveTab();
   if (opt.zoom && ids.length) zoomTo(table, ids);
-  if (state.tab === "profile") autoProfile();
+  if (state.tab === "profile" && !opt.keepProfile) autoProfile();
   if (state.tab === "hydro") drawHydro();
 }
 
@@ -701,6 +744,7 @@ async function drawProfile() {
 }
 function niceStep(span, n) { const raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw))); return ([1, 2, 5, 10].map(k => k * p).find(v => v >= raw)) || p * 10; }
 function renderProfile(rows) {
+  state.lastProfile = rows;
   const svg = $("#profile-svg"), wrap = $("#prof-wrap");
   const W = Math.max(520, wrap.clientWidth - 16), H = Math.max(190, wrap.clientHeight - 6);
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
@@ -761,6 +805,7 @@ async function drawHydro() {
   } catch (e) { if (seq !== hydroSeq) return; svg.innerHTML = ""; msg.textContent = e.message; }
 }
 function renderHydro(ser, label) {
+  state.lastHydro = [ser, label];
   const svg = $("#hydro-svg"), wrap = $("#hydro-wrap"), W = Math.max(520, wrap.clientWidth - 16), H = Math.max(190, wrap.clientHeight - 6);
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   if (!ser.length) { svg.innerHTML = `<text x="20" y="30">No data.</text>`; return; }
@@ -834,7 +879,7 @@ function wireRain(host) {
     else rain = { step_min: R.step_min, series: rs.slice().sort((a, b) => a[0] - b[0]) };
     $("#rain-msg").textContent = "";
     enqueue(async () => { await exec({ op: "set_rain", rain });
-      toast(`Rain applied: ${R.mode === "idf" ? "design storm from an IDF table" : "time series"} of ${rs.length} rows. Run it with Tools, Run on EPA SWMM 5.`); });
+      toast(`Rain applied: ${R.mode === "idf" ? "design storm from an IDF table" : "time series"} of ${rs.length} rows. Run it with Tools, Run on EPA SWMM 5.`, "info"); });
   };
 }
 
@@ -955,6 +1000,7 @@ function asstSend() {
 
 /* ------------------------------------------------------------------ tabs */
 function showTab(t) {
+  if (ui.bottomCollapsed) setBottom(false);
   state.tab = t;
   $$(".tab").forEach(b => b.classList.toggle("active", b.id === "tab-" + t));
   $$(".pane").forEach(p => p.classList.toggle("active", p.id === "pane-" + t));
@@ -979,7 +1025,7 @@ async function openProject(info, fit = true) {
   if (state.colorBy.startsWith("storm")) { state.colorBy = "v_ms"; $("#color-by").value = "v_ms"; }
   $("#prof-start").value = ""; $("#prof-end").value = ""; $("#settings-form").dataset.sig = "";
   await mapReady;
-  map.setLayoutProperty("osm", "visibility", info.basemap && $("#basemap-toggle").checked ? "visible" : "none");
+  applyBasemap(); clearMeasure();
   await loadToolList();
   await refreshAll(true);
   if (!state.model.nodeFeat.length && !info.basemap) map.jumpTo({ center: [150 / M_LON, 100 / M_LAT], zoom: 17 });
@@ -1097,7 +1143,7 @@ function wireUi() {
   $("#tools-btn").onclick = e => { e.stopPropagation(); $("#tools-menu").hidden = !$("#tools-menu").hidden; };
   document.addEventListener("click", () => { $("#tools-menu").hidden = true; $("#file-menu").hidden = true; });
   $("#color-by").onchange = e => { state.colorBy = e.target.value; mergeResults(); renderLegend(); pushMap(); };
-  $("#basemap-toggle").onchange = e => { if (state.info && state.info.basemap) map.setLayoutProperty("osm", "visibility", e.target.checked ? "visible" : "none"); };
+  wireView();
   $$(".tool").forEach(b => b.addEventListener("click", () => setTool(b.id.slice(5))));
   $$(".tab").forEach(b => b.addEventListener("click", () => showTab(b.id.slice(4))));
   $("#hydro-attr").onchange = drawHydro;
@@ -1118,15 +1164,251 @@ function wireUi() {
   $("#prof-start").addEventListener("keydown", e => { if (e.key === "Enter") drawProfile(); });
   $("#prof-end").addEventListener("keydown", e => { if (e.key === "Enter") drawProfile(); });
   document.addEventListener("keydown", e => {
+    if (e.key === "F2") { e.preventDefault(); setProps(!ui.propsCollapsed); return; }
+    if (e.key === "F3") { e.preventDefault(); setBottom(!ui.bottomCollapsed); return; }
+    if (e.key === "F4") { e.preventDefault(); toggleMapOnly(); return; }
+    if (e.ctrlKey && e.key.toLowerCase() === "f") { e.preventDefault(); $("#find-input").focus(); $("#find-input").select(); return; }
     const tg = e.target.tagName; if (["INPUT", "SELECT", "TEXTAREA"].includes(tg)) return;
     const k = e.key.toLowerCase();
+    if (k === "/") { e.preventDefault(); $("#find-input").focus(); return; }
+    if (!e.ctrlKey && k === "h" && state.model) { fitModel(); return; }
+    if (!e.ctrlKey && k === "z" && state.sel.ids.length) { zoomTo(state.sel.table, state.sel.ids); return; }
+    if (!e.ctrlKey && k === "r" && state.pid) { setTool("measure"); return; }
     if (e.ctrlKey && k === "z") { e.preventDefault(); $("#undo-btn").click(); }
     else if (e.ctrlKey && k === "y") { e.preventDefault(); $("#redo-btn").click(); }
     else if (k === "enter" && state.tool === "catchment") finishCatchment();
-    else if (k === "escape") { state.pipeStart = null; state.movePick = null; if (state.tool === "catchment") setTool("catchment"); setSel(null, []); $("#hint").textContent = state.pid ? HINTS[state.tool] : ""; highlight(); }
+    else if (k === "escape") { clearMeasure(); state.pipeStart = null; state.movePick = null; if (state.tool === "catchment") setTool("catchment"); setSel(null, []); $("#hint").textContent = state.pid ? HINTS[state.tool] : ""; highlight(); }
     else if (k === "delete" && state.sel.ids.length) { const t = state.sel.table, ids = state.sel.ids.slice(); enqueue(() => deleteIds(t, ids)); }
     else if (!e.ctrlKey) { const m = { s: "select", m: "manhole", o: "outfall", w: "wetwell", p: "pipe", v: "move", c: "catchment" }[k]; if (m) setTool(m); }
   });
+}
+
+/* ------------------------------------------------------------------ view: panels, theme, basemaps, find, readouts */
+const UI_KEY = "w19.ui";
+const ui = (() => {
+  const d = { pw: 320, bh: 260, propsCollapsed: false, bottomCollapsed: false, toolsCompact: false, mapOnly: null,
+              theme: "light", basemap: "osm", prevBasemap: "osm", opacity: 1, labels: true, hillshade: false, arrows: true, cardFolded: false };
+  try { return Object.assign(d, JSON.parse(localStorage.getItem(UI_KEY) || "{}")); } catch (e) { return d; }
+})();
+function saveUi() { try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch (e) { /* private window: sizes are not kept */ } }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+function applyPanels() {
+  const b = document.body;
+  ui.pw = clamp(ui.pw, 220, Math.max(240, innerWidth * 0.5)); ui.bh = clamp(ui.bh, 120, Math.max(140, innerHeight * 0.75));
+  b.style.setProperty("--pw", ui.pw + "px"); b.style.setProperty("--bh", ui.bh + "px");
+  b.classList.toggle("props-collapsed", ui.propsCollapsed); b.classList.toggle("bottom-collapsed", ui.bottomCollapsed);
+  b.classList.toggle("tools-compact", ui.toolsCompact);
+  $("#props-btn").classList.toggle("on", !ui.propsCollapsed); $("#bottom-btn").classList.toggle("on", !ui.bottomCollapsed);
+  $("#tools-compact-btn").classList.toggle("on", !ui.toolsCompact); $("#maxmap-btn").classList.toggle("on", !!ui.mapOnly);
+  $("#display-card").classList.toggle("folded", ui.cardFolded);
+  saveUi();
+}
+function setProps(collapsed) { ui.propsCollapsed = collapsed; ui.mapOnly = null; applyPanels(); }
+function setBottom(collapsed) { ui.bottomCollapsed = collapsed; ui.mapOnly = null; applyPanels(); if (!collapsed) requestAnimationFrame(redrawCharts); }
+function toggleMapOnly() {
+  if (ui.mapOnly) { const m = ui.mapOnly; ui.propsCollapsed = m.p; ui.bottomCollapsed = m.b; ui.mapOnly = null; }
+  else { ui.mapOnly = { p: ui.propsCollapsed, b: ui.bottomCollapsed }; ui.propsCollapsed = ui.bottomCollapsed = true; }
+  applyPanels();
+}
+/* drag a splitter: pointer capture, the size set once per frame; dragged nearly shut it collapses; double-click toggles */
+function splitter(el, axis) {
+  let raf = 0;
+  el.addEventListener("pointerdown", ev => {
+    if (ev.button !== 0) return;
+    ev.preventDefault(); el.setPointerCapture(ev.pointerId); el.classList.add("drag"); document.body.classList.add("resizing");
+    const move = e => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        if (axis === "v") { const w = innerWidth - e.clientX - 3; ui.propsCollapsed = w < 150; if (!ui.propsCollapsed) ui.pw = w; }
+        else { const h = innerHeight - e.clientY - 3; ui.bottomCollapsed = h < 80; if (!ui.bottomCollapsed) ui.bh = h; }
+        ui.mapOnly = null; applyPanels();
+      });
+    };
+    const up = () => { el.releasePointerCapture(ev.pointerId); el.classList.remove("drag"); document.body.classList.remove("resizing");
+      el.removeEventListener("pointermove", move); el.removeEventListener("pointerup", up); redrawCharts(); };
+    el.addEventListener("pointermove", move); el.addEventListener("pointerup", up);
+  });
+  el.addEventListener("dblclick", () => axis === "v" ? setProps(!ui.propsCollapsed) : setBottom(!ui.bottomCollapsed));
+}
+let chartT = 0;
+function redrawCharts() {
+  clearTimeout(chartT);
+  chartT = setTimeout(() => {
+    if (state.tab === "profile" && state.lastProfile) renderProfile(state.lastProfile);
+    if (state.tab === "hydro" && state.lastHydro) renderHydro(...state.lastHydro);
+  }, 80);
+}
+/* basemap, opacity, satellite labels, hillshade, arrows; only for projects in a real CRS */
+function applyBasemap() {
+  if (!map || !map.getLayer || !map.getLayer("bm-osm")) return;
+  const on = !!(state.info && state.info.basemap), bm = ui.basemap;
+  for (const k of Object.keys(BASEMAPS)) map.setLayoutProperty("bm-" + k, "visibility", on && bm === k ? "visible" : "none");
+  if (on && BASEMAPS[bm]) map.setPaintProperty("bm-" + bm, "raster-opacity", +ui.opacity);
+  for (const k of ["sat-labels", "sat-roads"]) map.setLayoutProperty(k, "visibility", on && bm === "sat" && ui.labels ? "visible" : "none");
+  map.setLayoutProperty("hillshade", "visibility", on && ui.hillshade ? "visible" : "none");
+  for (const k of ["links-arrow", "links-label"]) map.setLayoutProperty(k, "visibility", ui.arrows ? "visible" : "none");
+  // on imagery or a dark map the pipes need a dark casing and light labels
+  const darkUnder = on && (bm === "sat" || bm === "dark") || ui.theme === "dark" && (!on || bm === "none");
+  map.setPaintProperty("links-casing", "line-color", darkUnder ? "#0b1118" : "#ffffff");
+  map.setPaintProperty("links-casing", "line-opacity", bm === "sat" && on ? 0.55 : 0.75);
+  for (const [l, p] of [["links-label", "text"], ["nodes-label", "text"]]) {
+    map.setPaintProperty(l, p + "-color", darkUnder ? "#f1f5f9" : "#1d2733"); map.setPaintProperty(l, p + "-halo-color", darkUnder ? "#0b1118" : "#ffffff");
+  }
+  map.setPaintProperty("links-arrow", "icon-color", darkUnder ? "#f1f5f9" : "#1d2733");
+  $("#basemap-select").value = bm; $("#basemap-opacity").value = ui.opacity;
+  $("#labels-toggle").checked = ui.labels; $("#hillshade-toggle").checked = ui.hillshade; $("#arrows-toggle").checked = ui.arrows;
+  $("#labels-toggle").disabled = bm !== "sat";
+}
+function applyTheme() {
+  document.body.classList.toggle("dark", ui.theme === "dark");
+  if (map && map.getLayer && map.getLayer("bg")) {
+    map.setPaintProperty("bg", "background-color", ui.theme === "dark" ? "#0e1319" : "#f3f5f8");
+    map.setPaintProperty("grid", "line-color", ui.theme === "dark" ? "#253140" : "#d6dde6");
+  }
+  applyBasemap(); if (state.lastProfile) redrawCharts();
+}
+function setTheme(t) {
+  ui.theme = t;
+  if (t === "dark" && (ui.basemap === "osm" || ui.basemap === "light")) { ui.prevBasemap = ui.basemap; ui.basemap = "dark"; }
+  else if (t === "light" && ui.basemap === "dark") ui.basemap = ui.prevBasemap || "osm";
+  saveUi(); applyTheme();
+}
+/* a small arrow drawn on a canvas, tinted by icon-color (SDF), placed along each pipe in its from -> to direction */
+function arrowImage() {
+  const c = document.createElement("canvas"); c.width = 24; c.height = 24; const g = c.getContext("2d");
+  g.fillStyle = "#000"; g.beginPath(); g.moveTo(5, 5); g.lineTo(20, 12); g.lineTo(5, 19); g.lineTo(9, 12); g.closePath(); g.fill();
+  return g.getImageData(0, 0, 24, 24);
+}
+/* coordinates under the cursor in the project's own system: UTM (WGS 84 zones, EPSG 326xx/327xx) computed here,
+   local metres from the plane mapping, otherwise longitude/latitude */
+function utm(lon, lat, zone, south) {
+  const a = 6378137, f = 1 / 298.257223563, k0 = 0.9996, e2 = f * (2 - f), ep2 = e2 / (1 - e2), d = Math.PI / 180;
+  const phi = lat * d, lam0 = ((zone - 1) * 6 - 180 + 3) * d, s = Math.sin(phi), c = Math.cos(phi), t = Math.tan(phi);
+  const N = a / Math.sqrt(1 - e2 * s * s), T = t * t, C = ep2 * c * c, A = c * (lon * d - lam0);
+  const M = a * ((1 - e2 / 4 - 3 * e2 ** 2 / 64 - 5 * e2 ** 3 / 256) * phi - (3 * e2 / 8 + 3 * e2 ** 2 / 32 + 45 * e2 ** 3 / 1024) * Math.sin(2 * phi)
+    + (15 * e2 ** 2 / 256 + 45 * e2 ** 3 / 1024) * Math.sin(4 * phi) - (35 * e2 ** 3 / 3072) * Math.sin(6 * phi));
+  const x = k0 * N * (A + (1 - T + C) * A ** 3 / 6 + (5 - 18 * T + T * T + 72 * C - 58 * ep2) * A ** 5 / 120) + 500000;
+  let y = k0 * (M + N * t * (A * A / 2 + (5 - T + 9 * C + 4 * C * C) * A ** 4 / 24 + (61 - 58 * T + T * T + 600 * C - 330 * ep2) * A ** 6 / 720));
+  if (south) y += 10000000;
+  return [x, y];
+}
+function projected(ll) {
+  const crs = state.info && state.info.crs;
+  if (!state.info) return null;
+  if (!crs) return { e: ll.lng * M_LON, n: ll.lat * M_LAT, unit: "m" };
+  if ((crs > 32600 && crs <= 32660) || (crs > 32700 && crs <= 32760)) { const [e, n] = utm(ll.lng, ll.lat, crs % 100, crs > 32700); return { e, n, unit: "m" }; }
+  return { lon: ll.lng, lat: ll.lat };
+}
+let lastLL = null;
+function showCoords(ll) {
+  ll = ll || lastLL; const el = $("#coords"); if (!ll || !state.info) { el.textContent = ""; return; } lastLL = ll;
+  const p = projected(ll), z = map.getZoom().toFixed(1), fmt = v => v.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  el.textContent = p.e != null ? `E ${fmt(p.e)}  N ${fmt(p.n)}  z ${z}` : `${p.lat.toFixed(6)}, ${p.lon.toFixed(6)}  z ${z}`;
+}
+/* hover: coordinates always; a tooltip with the element's key values under the Select tool; the profile segment lit */
+let hoverRaf = 0, hotId = null;
+function hover(e) {
+  cancelAnimationFrame(hoverRaf);
+  hoverRaf = requestAnimationFrame(() => {
+    showCoords(e.lngLat);
+    const tip = $("#maptip");
+    if (!state.model || dragging || !["select", "delete"].includes(state.tool)) { tip.hidden = true; return; }
+    const p = e.point, box = [[p.x - 5, p.y - 5], [p.x + 5, p.y + 5]];
+    const fs = map.queryRenderedFeatures(box, { layers: ["nodes", "links-base"] });
+    const node = fs.find(f => f.layer.id === "nodes" && (f.properties.kind !== "manhole" || map.getZoom() >= 14.5)), link = fs.find(f => f.layer.id === "links-base");
+    let h = "";
+    if (node) {
+      const q = node.properties, dep = q.ground != null && q.invert != null ? (q.ground - q.invert) : null;
+      h = `<b>${esc(q.id)}</b> · ${esc(q.kind)} · ground ${num(q.ground, 2)} · invert ${num(q.invert, 2)}` + (dep != null ? ` · depth ${num(dep, 2)} m` : "");
+      setHot(null);
+    } else if (link) {
+      const q = link.properties, r = srcLinks()[q.id] || {}, en = (state.results && state.results.links[q.id]) || {};
+      h = `<b>${esc(q.id)}</b> · ${q.kind === "pump" ? "pump" : "DN" + esc(q.dn_mm)}` + (en.s_pc != null ? ` · ${num(en.s_pc, 3)} %` : "") +
+        (r.q_ls != null ? ` · ${num(r.q_ls, 2)} L/s` : "") + (r.v_ms != null ? ` · v ${num(r.v_ms, 2)} m/s` : "") + (r.d_over_D != null ? ` · d/D ${num(r.d_over_D, 2)}` : "") +
+        (q._fail ? ` · <span style="color:var(--bad)">failing</span>` : "");
+      setHot(q.id);
+    } else setHot(null);
+    if (!h) { tip.hidden = true; return; }
+    tip.innerHTML = h; tip.hidden = false;
+    const W = $("#map-wrap").clientWidth, tw = tip.offsetWidth;
+    tip.style.left = Math.min(p.x + 14, W - tw - 6) + "px"; tip.style.top = (p.y + 16) + "px";
+  });
+}
+function setHot(id) {
+  if (id === hotId) return; hotId = id;
+  const s = map.getSource && map.getSource("hot"), f = id && state.model && state.model.links.get(String(id));
+  if (s) s.setData({ type: "FeatureCollection", features: f ? [f] : [] });
+  $$("#profile-svg .seg").forEach(g => g.classList.toggle("hot", g.dataset.link === id));
+}
+/* find an element by ID: exact, then ignoring case, then the first that starts with the text */
+function findElement(text) {
+  const q = text.trim(); if (!q || !state.model) return;
+  const tables = ["nodes", "links", "catchments"], lq = q.toLowerCase();
+  let hit = null;
+  for (const t of tables) if (tmap(t).has(q)) { hit = [t, q]; break; }
+  if (!hit) for (const t of tables) { for (const k of tmap(t).keys()) if (k.toLowerCase() === lq) { hit = [t, k]; break; } if (hit) break; }
+  if (!hit) for (const t of tables) { for (const k of tmap(t).keys()) if (k.toLowerCase().startsWith(lq)) { hit = [t, k]; break; } if (hit) break; }
+  if (!hit) { toast(`No node, link or catchment with ID "${q}".`); return; }
+  setSel(hit[0], [hit[1]], { zoom: true });
+  $("#find-input").value = hit[1];
+}
+/* the status line's failing counts: each click selects and zooms to the next pipe with that flag */
+const FLAG_NAME = { over_limit: "over the d/D limit", over_vmax: "over v max", surcharged: "surcharged", negative_slope: "adverse" };
+function stepFailure(flag) {
+  const E = state.results ? state.results.links : {};
+  const ids = Object.keys(E).filter(k => E[k][flag]).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  if (!ids.length) return;
+  const i = state.failStep && state.failStep.flag === flag ? (state.failStep.i + 1) % ids.length : 0;
+  state.failStep = { flag, i };
+  setSel("links", [ids[i]], { zoom: true });
+  toast(`${ids[i]}: ${i + 1} of ${ids.length} ${FLAG_NAME[flag]}. Click the count again for the next.`, "info");
+}
+/* measure: a route of clicked points, its length on the ground */
+function addMeasure(ll) {
+  state.measure = (state.measure || []).concat([[ll.lng, ll.lat]]); drawMeasure();
+}
+function clearMeasure() {
+  state.measure = []; if (map && map.getSource && map.getSource("measure")) drawMeasure();
+}
+function drawMeasure() {
+  const pts = state.measure || [], f = pts.map(p => ({ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: p } }));
+  let tot = 0, last = 0;
+  // plan distance in the project's own coordinates (local metres, UTM grid), as on a drawing; else on the sphere
+  const dist = (a, b) => {
+    const p = projected({ lng: a[0], lat: a[1] }), q = projected({ lng: b[0], lat: b[1] });
+    return p && p.e != null ? Math.hypot(q.e - p.e, q.n - p.n) : new maplibregl.LngLat(...a).distanceTo(new maplibregl.LngLat(...b));
+  };
+  for (let i = 1; i < pts.length; i++) { last = dist(pts[i - 1], pts[i]); tot += last; }
+  if (pts.length > 1) f.push({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: pts } });
+  map.getSource("measure").setData({ type: "FeatureCollection", features: f });
+  state.measureLength = tot;
+  if (state.tool === "measure") $("#hint").textContent = pts.length > 1 ? `Length ${tot.toFixed(1)} m` + (pts.length > 2 ? ` over ${pts.length - 1} legs (last ${last.toFixed(1)} m)` : "") + `. Esc clears.` : HINTS.measure;
+}
+function wireView() {
+  splitter($("#split-props"), "v"); splitter($("#split-bottom"), "h");
+  $("#props-toggle").onclick = e => { e.stopPropagation(); setProps(!ui.propsCollapsed); };
+  $("#props-head").onclick = () => { if (ui.propsCollapsed) setProps(false); };
+  $("#bottom-toggle").onclick = () => setBottom(!ui.bottomCollapsed);
+  $("#props-btn").onclick = () => setProps(!ui.propsCollapsed);
+  $("#bottom-btn").onclick = () => setBottom(!ui.bottomCollapsed);
+  $("#maxmap-btn").onclick = toggleMapOnly;
+  $("#tools-compact-btn").onclick = () => { ui.toolsCompact = !ui.toolsCompact; applyPanels(); };
+  $("#theme-btn").onclick = () => setTheme(ui.theme === "dark" ? "light" : "dark");
+  $("#display-head").onclick = () => { ui.cardFolded = !ui.cardFolded; applyPanels(); };
+  $("#basemap-select").onchange = e => { ui.basemap = e.target.value; saveUi(); applyBasemap(); };
+  $("#basemap-opacity").oninput = e => { ui.opacity = +e.target.value; saveUi(); applyBasemap(); };
+  $("#labels-toggle").onchange = e => { ui.labels = e.target.checked; saveUi(); applyBasemap(); };
+  $("#hillshade-toggle").onchange = e => { ui.hillshade = e.target.checked; saveUi(); applyBasemap(); };
+  $("#arrows-toggle").onchange = e => { ui.arrows = e.target.checked; saveUi(); applyBasemap(); };
+  $("#find-input").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); findElement(e.target.value); } else if (e.key === "Escape") e.target.blur(); });
+  $("#status-line").addEventListener("click", e => { const a = e.target.closest("a.fail"); if (a) { e.preventDefault(); stepFailure(a.dataset.flag); } });
+  const svg = $("#profile-svg");
+  svg.addEventListener("mouseover", e => { const g = e.target.closest(".seg"); if (g) setHot(g.dataset.link); });
+  svg.addEventListener("mouseleave", () => setHot(null));
+  svg.addEventListener("click", e => { const g = e.target.closest(".seg"); if (g) setSel("links", [g.dataset.link], { zoom: true, keepProfile: true }); });
+  new ResizeObserver(redrawCharts).observe($("#panes"));
+  addEventListener("resize", applyPanels);
+  applyPanels(); document.body.classList.toggle("dark", ui.theme === "dark");
 }
 
 /* ------------------------------------------------------------------ boot */
