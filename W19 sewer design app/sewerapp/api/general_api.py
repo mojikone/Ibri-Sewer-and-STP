@@ -79,6 +79,53 @@ async def open_file(file: UploadFile = File(...)):
     return _info(pid)
 
 
+@router.post("/projects/import")
+async def import_inp(file: UploadFile = File(...)):
+    """An EPA SWMM 5 input file (.inp) as a project (SWMM's own sections kept; values in the file's units)."""
+    text = (await file.read()).decode("utf-8", errors="ignore")
+    try:
+        from sewerapp.io import swmm_inp
+        p = swmm_inp.to_project(text, os.path.splitext(file.filename or "SWMM model")[0])
+    except Exception as e: raise HTTPException(400, f"not a SWMM input file: {e}")
+    with _lock: pid = _open(p)
+    return _info(pid)
+
+
+@router.get("/projects/{pid}/export.inp")
+def export_inp(pid: str, sid: str = "base"):
+    from sewerapp.io import swmm_inp
+    s = _s(pid)
+    try: text = swmm_inp.from_project(s.model(sid))
+    except ValueError as e: raise HTTPException(400, str(e))
+    return Response(text, media_type="text/plain", headers={"Content-Disposition": 'attachment; filename="model.inp"'})
+
+
+STORM = {}
+
+
+@router.post("/projects/{pid}/scenarios/{sid}/storm")
+def storm_run(pid: str, sid: str):
+    """Run the scenario on EPA SWMM 5: peaks per link, node and catchment, flooding, continuity."""
+    from sewerapp.engine import storm
+    s = _s(pid)
+    with _lock:
+        try: r = storm.run(s.model(sid))
+        except (ValueError, KeyError) as e: raise HTTPException(400, str(e))
+        except Exception as e: raise HTTPException(400, f"SWMM could not run the model: {e}")
+        STORM[(pid, sid)] = r
+    return clean(dict(summary=r["summary"], seconds=r["seconds"], links=r["links"], nodes=r["nodes"], subcatchments=r["subcatchments"]))
+
+
+@router.get("/projects/{pid}/scenarios/{sid}/storm/series")
+def storm_series(pid: str, sid: str, kind: str, id: str, attr: str):
+    from sewerapp.engine import storm
+    r = STORM.get((pid, sid))
+    if not r: raise HTTPException(400, "run the storm first")
+    try: return dict(kind=kind, id=id, attr=attr, series=storm.series(r["out"], kind, id, attr))
+    except StopIteration: raise HTTPException(404, f"no {kind} {id}")
+    except AttributeError: raise HTTPException(400, f"no attribute {attr}")
+
+
 @router.get("/projects/{pid}")
 def info(pid: str):
     _s(pid); return _info(pid)
@@ -195,6 +242,10 @@ def g_tools():
 GTOOLS = [
     dict(name="design", menu="Design", label="Design: size every conduit and lay it (crowns matched, minimum cover)",
          endpoint="POST /api/g/projects/{pid}/scenarios/{sid}/design", script="engine/design_general.py"),
+    dict(name="storm", menu="Stormwater", label="Run on EPA SWMM 5 (rain, catchments, dynamic routing)",
+         endpoint="POST /api/g/projects/{pid}/scenarios/{sid}/storm", script="engine/storm.py"),
+    dict(name="export_inp", menu="File", label="Export as an EPA SWMM 5 input file (.inp)",
+         endpoint="GET /api/g/projects/{pid}/export.inp?sid={sid}", script="io/swmm_inp.py"),
     dict(name="checks", menu="Checks", label="Failing links: over the d/D limit, over v max, surcharged, flat or adverse",
          endpoint="GET /api/g/projects/{pid}/scenarios/{sid}/checks", script="engine/steady.py"),
 ]

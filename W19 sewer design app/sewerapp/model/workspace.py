@@ -11,6 +11,7 @@ Edit ops (dicts with "op"):
   split_link {id, x, y}                                                        a new manhole on the link, two links
   set_load   {set, node, value}                                                unit load, m3/d
   set_setting {path: "a.b.c", value}
+  set_rain   {rain: {step_min, duration_min, series [[min, intensity]] or idf {durations_min, intensities}}}
   design     {load_set?}   automated design: sizes and inverts of every conduit (engine/design_general.py); undoable"""
 import copy, itertools, math
 import numpy as np, pandas as pd
@@ -42,7 +43,8 @@ def apply(p, e):
         if e["field"] not in t.columns: raise ValueError(f"{e['table']} has no field {e['field']}")
         v = e["value"]
         if e["table"] == "links" and e["field"] == "dn_mm":
-            t.loc[ids, "dn_mm"] = int(v); t.loc[ids, "inside_mm"] = p.inside_of(v)
+            ins = p.inside_of(v)                       # a size not in the catalogue (an imported model) is its own bore
+            t.loc[ids, "dn_mm"] = int(v); t.loc[ids, "inside_mm"] = ins if ins == ins else float(v)
         else:
             if e["field"] in ("kind",):
                 allowed = NODE_KINDS if e["table"] == "nodes" else LINK_KINDS
@@ -112,6 +114,8 @@ def apply(p, e):
         for k in keys[:-1]: d = d[k]
         if keys[-1] not in d: raise ValueError(f"no setting {e['path']}")
         d[keys[-1]] = e["value"]; return False
+    if op == "set_rain":
+        p.rain = dict(e["rain"]); return False
     if op == "design":
         from sewerapp.engine import design_general
         q, rep = design_general.design(p, e.get("load_set"))

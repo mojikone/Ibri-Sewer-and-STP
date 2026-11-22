@@ -110,4 +110,21 @@ def test_design_endpoint_sizes_lays_and_undoes(built):
     assert C.get(f"/api/g/projects/{built}/scenarios/base/checks").json()["summary"]["over_limit"] == 0
     C.post(f"/api/g/projects/{built}/scenarios/base/undo")
     assert C.get(f"/api/g/projects/{built}/scenarios/base/results").json()["summary"]["over_limit"] >= 1
-    assert [t["name"] for t in C.get("/api/g/tools").json()] == ["design", "checks"]
+    assert {"design", "checks", "storm", "export_inp"} <= {t["name"] for t in C.get("/api/g/tools").json()}
+
+
+def test_storm_from_a_drawn_project_and_an_imported_inp(built):
+    ed(built, "base", op="add_catchment", id="C1", outlet="MH1", area_ha=2.0, imperv_pc=60, width_m=150, slope_pc=1.0)
+    assert C.post(f"/api/g/projects/{built}/scenarios/base/storm").status_code == 400         # no rain yet: says so
+    ed(built, "base", op="set_rain", rain=dict(step_min=5, duration_min=30, idf=dict(durations_min=[5, 15, 30, 60], intensities=[140, 90, 62, 40])))
+    r = C.post(f"/api/g/projects/{built}/scenarios/base/storm").json()
+    assert r["subcatchments"]["C1"]["runoff_peak"] > 0 and r["links"]["P-3"]["q_peak"] > 0
+    s = C.get(f"/api/g/projects/{built}/scenarios/base/storm/series", params=dict(kind="link", id="P-3", attr="flow_rate")).json()
+    assert len(s["series"]) > 10 and max(v for _, v in s["series"]) > 0
+    assert "[CONDUITS]" in C.get(f"/api/g/projects/{built}/export.inp").text
+    import os
+    f = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "fixtures", "swmm", "extran", "extran1.inp")
+    o = C.post("/api/g/projects/import", files=dict(file=("extran1.inp", open(f, "rb").read()))).json()
+    m = C.get(f"/api/g/projects/{o['id']}/scenarios/base/model").json()
+    assert len(m["nodes"]["features"]) == 10 and len(m["links"]["features"]) == 9
+    assert C.post(f"/api/g/projects/{o['id']}/scenarios/base/storm").json()["summary"]["links"] == 9
