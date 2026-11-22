@@ -47,9 +47,13 @@ try {
     $k += 1; $file = 's{0:000}' -f $k
     $rows += ('{0},"{1}",{2},{3}' -f $s.Id, ($s.Label -replace '"', "'"), $s.ParentID, $file)
     $m.SetActiveScenario($m.Scenarios.Element($s.Id))
-    if ($run) { [Scen]::Run($m, $s.Id, $log) }
+    if ($run) {
+      $ct = ''; try { $ct = [string]$m.Scenarios.Element($s.Id).Options.GvfCalculationType } catch {}
+      if ($ct -eq 'Design') { $log.WriteLine("  calculation type Design: SewerGEMS's run re-sizes the conduits of the copy, as its Compute would") }
+      [Scen]::Run($m, $s.Id, $log)
+    }
     [Scen]::Export($m, $out, $file, $log)
-    [Sections]::Export($m, "$out\sections_$file.csv", $log)
+    try { [Sections]::Export($m, "$out\sections_$file.csv", $log) } catch { $log.WriteLine("  sections not exported: " + $_.Exception.Message) }
     [LoadsDump]::ScenarioLoads($m, $s.Id, "$out\loads_$file.csv", $log)
     $log.WriteLine(("  scenario {0} '{1}' -> {2}" -f $s.Id, $s.Label, $file))
     [IO.File]::WriteAllText("$out\log.txt", $log.ToString())       # progress, read by the app while the job runs

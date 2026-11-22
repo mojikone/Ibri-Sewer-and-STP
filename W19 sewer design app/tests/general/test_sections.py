@@ -90,6 +90,25 @@ def test_barrels_share_the_flow():
     assert p.sections["C1"]["barrels"] == 3 and " 3" in [l for l in str(swmm_inp.from_project(p)).splitlines() if "RECT_CLOSED" in l][0]
 
 
+def test_the_design_keeps_a_section_as_it_is():
+    pid, ed = _drawn()
+    ed(op="set_section", ids=["P-2"], section=dict(shape="box", rise_m=1.0, span_m=2.0, n=0.015))
+    before = {f["id"]: f["properties"] for f in C.get(f"/api/g/projects/{pid}/scenarios/base/model").json()["links"]["features"]}
+    r = C.post(f"/api/g/projects/{pid}/scenarios/base/design", json={}); assert r.status_code == 200, r.text
+    after = {f["id"]: f["properties"] for f in C.get(f"/api/g/projects/{pid}/scenarios/base/model").json()["links"]["features"]}
+    assert after["P-2"]["sec"] == before["P-2"]["sec"] and after["P-2"]["dn_mm"] == 0
+    assert (after["P-2"]["up_inv"], after["P-2"]["dn_inv"]) == (before["P-2"]["up_inv"], before["P-2"]["dn_inv"])
+    assert all(after[i]["dn_mm"] > 0 for i in ("P-1", "P-3"))
+    assert C.get(f"/api/g/projects/{pid}/scenarios/base/results").json()["summary"]["not_analysed"] == 0
+
+
+def test_a_project_pickled_before_sections_existed_still_opens():
+    import pickle
+    from sewerapp.model.general import Project
+    p = Project(name="old"); del p.__dict__["sections"]                     # as a snapshot from before 2026-11-22
+    q = pickle.loads(pickle.dumps(p)); assert q.sections == {} and q.copy().sections == {}
+
+
 def test_a_saved_project_keeps_its_sections(tmp_path):
     pid, ed = _drawn()
     ed(op="set_section", ids=["P-1"], section=dict(shape="rect_open", rise_m=1.2, span_m=3, n=0.025))

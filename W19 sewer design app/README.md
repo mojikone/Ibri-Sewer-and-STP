@@ -55,15 +55,17 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
   the model and SewerGEMS's own API reads the copy (every scenario, its results and loads); the dialog follows the job
   and opens the export when it is ready (Majlas: seconds; Block 04, 8 scenarios: under a minute). "Run every scenario
   first" computes each scenario on the copy before exporting, for a model saved without results (Block 04's storms take
-  about 13 min each). Box and open-channel conduits come with their shape, dimensions, barrels and n, and are solved;
+  about 13 min each; a scenario whose calculation type is Design is re-sized by that run, as SewerGEMS's Compute would,
+  and the job log says so). Box and open-channel conduits come with their shape, dimensions, barrels and n, and are solved;
   other non-circular shapes are drawn, labelled and marked not analysed. The VM watcher must be running; the dialog says
   whether it is.
 - **Box and channel sections:** Properties > Cross-section turns conduits into a box (closed rectangle), an open
   rectangle or an open trapezoid, with its own n and a number of barrels, or back to a catalogue circle (one undoable
   edit). The steady engine solves them by Manning at normal depth per barrel and reports the depth, depth over rise, the
-  critical depth and the full capacity; the sewer d/D limit and v max do not apply; a box beyond its free-surface maximum
-  (up to about 1.3 x its full-bore capacity, the open perimeter being shorter) flows full and is marked surcharged, an
-  open section over its bank too. The profile draws the rise as the crown or bank. SWMM files read and write
+  critical depth and the full capacity; the sewer d/D limit and v max do not apply; the design leaves them as they are.
+  A box beyond its free-surface maximum (above full bore, the open perimeter being shorter: 1.31 x for 3 x 1.5 m, 1.41 x
+  for 10 x 2.5 m) flows full and is marked surcharged, an open section over its bank too. The status line says when the
+  load set puts no load on the network (a storm model: only infiltration flows). The profile draws the rise as the crown or bank. SWMM files read and write
   RECT_CLOSED, RECT_OPEN and TRAPEZOIDAL with their barrels and n. For an export run in SewerGEMS,
   `GET .../section_check` compares the app's normal and critical depth at SewerGEMS's own flow with SewerGEMS's.
 - **Failing pipes:** the red overlay can be switched off (Display card, or click its legend line); it stays off over a
@@ -150,7 +152,9 @@ The Ibri W18 viewer of phase 1B (the 12 frozen designs with their W18 tools) is 
   catalogue's shape codes only 3 (open rectangle) is measured, so a SewerGEMS box or trapezoid class keeps the conduit's
   typed shape until one is checked; arches, ellipses and irregular channels are not analysed; on DN200 at very low flows
   SewerGEMS's GVF velocities read up to 0.04 m/s below the app's normal-depth velocities (GVF backwater not built);
-- box and channel sections are solved at normal depth (no backwater), and the design does not size them;
+- box and channel sections are solved at normal depth (no backwater), and the design does not size them; only the open
+  rectangle is checked against SewerGEMS (Block 04), the closed box and trapezoid against hand calculations only;
+  whether SewerGEMS closes its shape-3 rectangle at the rise is not settled (no Block 04 channel reached it);
 - EPANET `.inp` (water distribution): not started;
 - the hydraulics of pumps, wet wells and force mains (a pump passes its flow on; no pump curve or head is solved);
   GVF backwater; rational-method storm design and inlet capture;
@@ -160,8 +164,8 @@ The Ibri W18 viewer of phase 1B (the 12 frozen designs with their W18 tools) is 
 - the W18 viewer (`/w18`): the design chain does not take a what-if's edits; BOQ, costs, station flows, DWG and
   schematics are still to be placed (`docs/SCRIPT_REGISTER.md`, "Planned").
 
-All tests, one pass (2026-11-22, after the sections): `python -m pytest` - 247 passed, 1 skipped (a live assistant test), 2 expected
-failures (EPA Example1, a SWMM build difference), 9 min, 42 end-to-end tests among them.
+All tests, one pass (2026-11-22, after the sections): `python -m pytest` - 249 passed, 1 skipped (a live assistant test), 2 expected
+failures (EPA Example1, a SWMM build difference), 11 min, 42 end-to-end tests among them.
 
 ## Reproduction and speed (2026-11-21)
 

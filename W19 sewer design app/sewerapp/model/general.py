@@ -55,6 +55,9 @@ class Project:
     passthrough: dict = field(default_factory=dict)
     sections: dict = field(default_factory=dict)
 
+    def __setstate__(self, d):                            # a project pickled before a field existed gets its default
+        self.__dict__.update(d); self.__dict__.setdefault("sections", {})
+
     def copy(self):
         return copy.deepcopy(self)
 

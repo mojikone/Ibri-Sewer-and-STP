@@ -81,7 +81,7 @@ def design(project, load_set=None, only=None):
     """`only`: design these conduits and keep every other one as it is; locked conduits are always kept."""
     p = project.copy(); s = p.settings; load_set = load_set or s["design_load"]
     L = p.links; cond = (L.kind == "conduit")
-    fixed = set(map(str, s["design"].get("locked", [])))
+    fixed = set(map(str, s["design"].get("locked", []))) | set(map(str, getattr(p, "sections", None) or {}))
     if only is not None: fixed |= set(L.index[cond]) - set(map(str, only))
     fixed &= set(L.index[cond])
     q = steady.flows(p, load_set)

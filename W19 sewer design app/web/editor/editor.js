@@ -394,7 +394,8 @@ function updateStatus() {
     (s.not_analysed ? ` &middot; <span class="warn" title="Box or open-channel sections: drawn and editable, not analysed by the steady engine">${s.not_analysed} non-circular sections not analysed</span>` : "") +
     (s.km_under_vmin == null ? ` &middot; <span class="muted" title="Choose a check load set in Settings, Flows">self-cleansing not checked</span>`
                              : ` &middot; ${num(s.km_under_vmin, 2)} km under v min at ${esc(s.check_set)}`) + (s.negative_slope ? ` &middot; ${cnt("negative_slope")} <span class="bad">flat or adverse</span>` : "") +
-    (bad === 0 && s.links && !s.not_analysed ? ` <span class="ok">&#10003;</span>` : "");
+    (noFlow() ? ` &middot; <span class="warn" data-testid="no-flow" title="This load set puts no load on the network and no node has an inflow, so only infiltration flows (a storm model: run it on SWMM, or see SewerGEMS's stored results)">no loads in this load set</span>` : "") +
+    (bad === 0 && s.links && !s.not_analysed && !noFlow() ? ` <span class="ok">&#10003;</span>` : "");
 }
 function updateButtons() {
   const has = !!state.pid, sc = scenario();
@@ -631,6 +632,11 @@ function renderProps() {
     inp.addEventListener("keydown", e => { if (e.key === "Enter") { go(); inp.blur(); } });
   });
   renderResultsBlock();
+}
+function noFlow() {                                     // no load and no inflow anywhere: only infiltration, if any, flows
+  const m = state.model; if (!m || !state.results || usingStored() || !m.linkFeat.length) return false;
+  const ls = (m.loads || {})[m.settings.design_load] || {};
+  return !Object.values(ls).some(v => v > 0) && !m.nodeFeat.some(f => f.properties.inflow_m3d > 0);
 }
 const szLab = r => r.section ? String(r.section) : "DN" + r.dn_mm;
 /* ---- cross-section: a catalogue circle, or a box, open rectangle or trapezoid with its own n (op set_section) */

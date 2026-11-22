@@ -98,14 +98,17 @@ def load(folder, name="SewerGEMS model", crs=None):
     scenarios, results = [], {}
     for r in sc.itertuples():
         c, _ = _read(folder, r.file); L = link_table(c); edits = []
+        secs, t = _sections(folder, r.file)
+        for k in sorted(set(secs) | set(p.sections)):
+            if k in L.index and secs.get(k) != p.sections.get(k):
+                e = dict(op="set_section", ids=[k], section=secs.get(k))
+                if secs.get(k) is None and L.dn_mm[k] > 0: e["dn_mm"] = int(L.dn_mm[k])
+                edits.append(e)
         common = L.index.intersection(p.links.index)
         for field in ("dn_mm", "inside_mm", "up_inv", "dn_inv"):   # one vectorised edit per field that differs
             diff = common[(L.loc[common, field] - p.links.loc[common, field]).abs() > 1e-9]
             if len(diff): edits.append(dict(op="set_values", table="links", field=field,
                                             values={k: float(x) for k, x in L.loc[diff, field].items()}))
-        secs, t = _sections(folder, r.file)
-        for k in sorted(set(secs) | set(p.sections)):
-            if k in L.index and secs.get(k) != p.sections.get(k): edits.append(dict(op="set_section", ids=[k], section=secs.get(k)))
         act = c[c.active == True]
         D = act.diameter_mm.values / 1000.0
         res = pd.DataFrame(dict(q_ls=act.flow_m3d.values * _flow_factor(c, t) / 86.4, v_ms=act.velocity_ms.values,
