@@ -294,6 +294,8 @@ GTOOLS = [
          endpoint="GET /api/g/projects/{pid}/export.csv?sid={sid}", script="api/general_api.py"),
     dict(name="assistant", menu="Assistant", label="Ask the design assistant about this project (Claude, tool use)",
          endpoint="POST /api/g/assistant", script="assistant/gtools.py"),
+    dict(name="open_sewergems", menu="File", label="Open a SewerGEMS model with all its scenarios (exported through the bridge)",
+         endpoint="GET /api/g/sewergems/exports; POST /api/g/projects/open_sewergems/{name}", script="io/sewergems_export.py"),
     dict(name="checks", menu="Checks", label="Failing links: over the d/D limit, over v max, surcharged, flat or adverse",
          endpoint="GET /api/g/projects/{pid}/scenarios/{sid}/checks", script="engine/steady.py"),
 ]
@@ -373,3 +375,61 @@ def assistant(q: Ask):
     with _lock:
         return clean(runner.ask(None, q.scenario, q.message, q.history, q.model, toolset=gtools, system=runner.SYSTEM_GENERAL,
                                 context=f"active project: {q.project}, scenario: {q.scenario}"))
+
+
+SG_EXPORTS = os.environ.get("W19_SG_EXPORTS", r"D:\VBOX\bridge\out\w19\export")
+
+
+@router.get("/sewergems/exports")
+def sewergems_exports():
+    """SewerGEMS models exported through the bridge (job 100), ready to open with all their scenarios."""
+    if not os.path.isdir(SG_EXPORTS): return []
+    out = []
+    for d in sorted(os.listdir(SG_EXPORTS)):
+        f = os.path.join(SG_EXPORTS, d, "scenarios.csv")
+        if os.path.exists(f): out.append(dict(name=d, scenarios=max(0, len(open(f, encoding="utf-8").read().splitlines()) - 1)))
+    return out
+
+
+def open_sewergems_folder(folder, name, crs=None):
+    from sewerapp.io import sewergems_export
+    p, scen, res = sewergems_export.load(folder, name, crs)
+    with _lock:
+        pid = _open(p); s = SESSIONS[pid]
+        s.scenarios["base"].name = scen[0]["label"]; s.external["base"] = res[scen[0]["label"]]
+        for sc in scen[1:]:
+            c = s.copy_scenario("base", sc["label"])
+            for e in sc["edits"]: s.edit(c.id, e)
+            s.external[c.id] = res[sc["label"]]
+    return pid
+
+
+@router.post("/projects/open_sewergems/{name}")
+def open_sewergems(name: str, crs: int | None = 32640):
+    folder = os.path.join(SG_EXPORTS, name)
+    if not os.path.exists(os.path.join(folder, "scenarios.csv")): raise HTTPException(404, f"no export {name}")
+    try: pid = open_sewergems_folder(folder, f"SewerGEMS: {name}", crs)
+    except Exception as e: raise HTTPException(400, f"could not read the export: {e}")
+    return _info(pid)
+
+
+@router.get("/projects/{pid}/scenarios/{sid}/stored")
+def stored(pid: str, sid: str):
+    """The results SewerGEMS stored for this scenario, by link id (empty when the scenario has none)."""
+    s = _s(pid); r = s.external.get(sid)
+    if r is None: return dict(links={})
+    return dict(links=clean({i: x for i, x in zip(r.index, r.round(4).to_dict("records"))}))
+
+
+@router.get("/projects/{pid}/scenarios/{sid}/compare_stored")
+def compare_stored(pid: str, sid: str):
+    """The app's engine against SewerGEMS's stored results, link by link (flow %, velocity m/s, d/D)."""
+    s = _s(pid); r = s.external.get(sid)
+    if r is None: raise HTTPException(400, "this scenario holds no SewerGEMS results")
+    with _lock: res, _ = s.solve(sid)
+    if res is None: raise HTTPException(400, "the scenario does not solve")
+    j = res[["q_ls", "v_ms", "d_over_D"]].join(r[["q_ls", "v_ms", "d_over_D"]], rsuffix="_sg", how="inner")
+    dq = (j.q_ls - j.q_ls_sg) / j.q_ls_sg.where(j.q_ls_sg.abs() > 1e-9) * 100
+    return clean(dict(links=int(len(j)), pc_flow_within_0_1=round(float((dq.abs() < 0.1).mean() * 100), 3),
+                      largest_flow_pc=float(dq.abs().max()), dv_p05=float((j.v_ms - j.v_ms_sg).quantile(.05)),
+                      dv_p95=float((j.v_ms - j.v_ms_sg).quantile(.95))))

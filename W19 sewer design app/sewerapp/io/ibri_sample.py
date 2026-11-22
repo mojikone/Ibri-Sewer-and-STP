@@ -33,8 +33,13 @@ def build(case, w18_transfers=False):
     cuts = fixtures.read_csv(f"golden/{case}/split/cuts_{case}.csv")
     exp = fixtures.read_csv(f"golden/{case}/exports/conduits_{case}a.csv").set_index("label")
     loads = fixtures.read_csv("inputs/manhole_loads.csv", index_col="manhole_id")
-    p = Project(name=f"Ibri {case} (W18 final design)", crs=32640)
+    p = Project(name=f"Ibri {case} (W18 final design, sample)", crs=32640)
     p.settings["design_load"] = year; p.settings["check_load"] = "2031"
+    # the Ibri model's own design settings: its catalogue, and Table 11 (G203 p29) with DN200 at the model's 0.51 %
+    p.settings["design"]["slope_min"] = {"200": 0.0051, "250": 0.00375, "315": 0.0027, "400": 0.00205, "500": 0.00155,
+                                         "600": 0.00125, "700": 0.001, "800": 0.00085, "900": 0.00075}
+    cat = fixtures.read_csv("inputs/catalogue.csv").sort_values("nominal_mm")
+    p.settings["design"]["catalogue"] = cat[["nominal_mm", "inside_mm"]].values.tolist()
     kind = {"manhole": "manhole", "pump": "wetwell", "lift": "wetwell", "plant inlet": "outfall"}
     nodes = pd.DataFrame(dict(kind=N.kind.map(kind).values, x=N.x.values, y=N.y.values, ground=N.ground.values,
                               invert=(N.ground - N.depth).values, inflow_m3d=0.0), index=pd.Index(N.new.values, name="id"))
@@ -63,11 +68,13 @@ def build(case, w18_transfers=False):
         src = name
         if name in cut_station:                       # station manhole -> stub (the cut pipe) -> wet well -> pump
             ww = f"{name}-WW"; e = exp.loc[cut_station[name]]
-            nodes.loc[ww] = dict(kind="wetwell", x=nodes.x[name] + 1.0, y=nodes.y[name], ground=nodes.ground[name],
-                                 invert=nodes.invert[name] - 0.1, inflow_m3d=0.0)
             dn = int(str(e.size_label).split()[0])
+            from sewerapp.engine.design_general import slope_for
+            fall = slope_for(p.settings, dn) * float(e.length_m)     # the stub is laid at its size's Table 11 gradient
+            nodes.loc[ww] = dict(kind="wetwell", x=nodes.x[name] + 1.0, y=nodes.y[name], ground=nodes.ground[name],
+                                 invert=nodes.invert[name] - fall, inflow_m3d=0.0)
             rows.append(dict(id=f"{name}-ST", kind="conduit", from_node=name, to_node=ww, length_m=float(e.length_m), dn_mm=dn,
-                             inside_mm=float(p.inside_of(dn)), up_inv=nodes.invert[name], dn_inv=nodes.invert[name] - 0.1,
+                             inside_mm=float(p.inside_of(dn)), up_inv=nodes.invert[name], dn_inv=nodes.invert[name] - fall,
                              transfer=False, coords=None))
             src = ww
         rows.append(dict(id=f"{name}-RM", kind="pump", from_node=src, to_node=to, length_m=float(s.force_main_m),

@@ -156,6 +156,7 @@ class Session:
     def __init__(self, pid, project):
         self.id, self.base = pid, project
         self.scenarios = {"base": Scenario("base", "Base")}; self._cache = {}; self._n = 0
+        self.external = {}                      # scenario id -> results another program computed (SewerGEMS), by link id
 
     def model(self, sid):
         """The scenario's project (the base plus the parent chain's edits plus its own)."""

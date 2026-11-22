@@ -26,6 +26,7 @@ markers = [
   "gate_g4: stormwater through the general model",
   "gate_g5: import and export",
   "gate_g6: the assistant on any project",
+  "gate_g7: SewerGEMS models with all scenarios",
   "gate_swmm: stormwater engine against EPA SWMM reference results",
   "live: calls the Claude API (needs ANTHROPIC_API_KEY, spends tokens)",
 ]
