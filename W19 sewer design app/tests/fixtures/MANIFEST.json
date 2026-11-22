@@ -1,0 +1,1055 @@
+{
+ "frozen_from": "W18 NWS scenarios 2056-2071 and D:/VBOX/bridge/out, read only",
+ "files": {
+  "inputs/catalogue.csv": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\inputs\\catalogue.csv",
+   "bytes": 410,
+   "sha256": "cb4faf8e60b49b9fe9bfdda84fb42097e5935f52f1d70cc871fa1268d34b3658"
+  },
+  "inputs/conduits_network.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\inputs\\conduits_network.csv",
+   "bytes": 3779056,
+   "sha256": "fbdfd5c0115886ed0a9e1ae324002a0d488a1496d894ad7a4cd6e9d383d094e6"
+  },
+  "inputs/conduits_start_sizes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\inputs\\conduits_start_sizes.csv",
+   "bytes": 3777079,
+   "sha256": "b96e881d0483db852ad11cc94b8cbaaeb89fd74cfbd9b4393ae8396adf2ba52d"
+  },
+  "inputs/manholes_network.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\inputs\\manholes_network.csv",
+   "bytes": 2537092,
+   "sha256": "d09806f421749d6afcd04918ada83925190fd24d3f1e01e4ce1977ffeff8aae3"
+  },
+  "inputs/fixed_stations.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\fixed_stations.json",
+   "bytes": 1427,
+   "sha256": "dd5774aa03a4fc1c26760ebcd3ca47f13bf9b68405d1dbb1b9f2f1debe47406f"
+  },
+  "inputs/manhole_loads.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\loads\\manhole_loads.csv",
+   "bytes": 2059739,
+   "sha256": "5fcf4c33f36c7123206153bd222fe0de84449479fb4af621bef65be3c0013a29"
+  },
+  "inputs/rising_mains.csv": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\rising_mains.csv",
+   "bytes": 1848,
+   "sha256": "9a790b45f402dc9af09a92464dff6019f3ef56583f4aa7f13fccb92328087fef"
+  },
+  "inputs/rising_mains.gpkg.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\rising_mains.gpkg",
+   "bytes": 241664,
+   "sha256": "4a874eee7b47c058ae54f81e64a038058a064dbdc8ec6a5c4c59eac11a80f60e"
+  },
+  "bridge/f0/f0_2026.csv": {
+   "source": "D:\\VBOX\\bridge\\out\\w18\\f0\\f0_2026.csv",
+   "bytes": 523,
+   "sha256": "2d2f74feb8c2655f5afd26becdf44e206cb2a18361b68bd71bb223ca6331aac4"
+  },
+  "bridge/f0/f0_2031.csv": {
+   "source": "D:\\VBOX\\bridge\\out\\w18\\f0\\f0_2031.csv",
+   "bytes": 521,
+   "sha256": "eb9c5004690d7172c790e1669eb56fe4ec65afc7b817f7cad29f7f3b1453b4cc"
+  },
+  "bridge/f0/f0_2036.csv": {
+   "source": "D:\\VBOX\\bridge\\out\\w18\\f0\\f0_2036.csv",
+   "bytes": 521,
+   "sha256": "84618ae8275e11e7571eb2fdaba774df5d1181bcbb083a41df8057a9bee6483a"
+  },
+  "bridge/f0/f0_2041.csv": {
+   "source": "D:\\VBOX\\bridge\\out\\w18\\f0\\f0_2041.csv",
+   "bytes": 522,
+   "sha256": "ad2df95ac6843fff17b22b63bbe96453c003b6707557926dfd2fca60d3a488bc"
+  },
+  "bridge/f0/f0_2046.csv": {
+   "source": "D:\\VBOX\\bridge\\out\\w18\\f0\\f0_2046.csv",
+   "bytes": 519,
+   "sha256": "072576db7aea22052329a78acce7e8623e2a2169ca3ddbd04749e6b85ebb264f"
+  },
+  "bridge/f0/f0_2051.csv": {
+   "source": "D:\\VBOX\\bridge\\out\\w18\\f0\\f0_2051.csv",
+   "bytes": 520,
+   "sha256": "2da11f5858497d9a0b1aa879d7d9cdfb8ddfb27cb0f45d67362a4f6365d635e7"
+  },
+  "bridge/f0/f0_2056.csv": {
+   "source": "D:\\VBOX\\bridge\\out\\w18\\f0\\f0_2056.csv",
+   "bytes": 522,
+   "sha256": "5272eff33cef39ec604912c4d31af9c8dc80aee58377b8155c7fa016383dae89"
+  },
+  "bridge/f0/f0_2061.csv": {
+   "source": "D:\\VBOX\\bridge\\out\\w18\\f0\\f0_2061.csv",
+   "bytes": 518,
+   "sha256": "ea727839f5e996ebd1040ee0aae83634a81419ff9288b406223df238e5cc91b0"
+  },
+  "bridge/f0/f0_2066.csv": {
+   "source": "D:\\VBOX\\bridge\\out\\w18\\f0\\f0_2066.csv",
+   "bytes": 519,
+   "sha256": "fa1e0c24a8b4419ac5e86543e783ea5f2713c5f47206fc79372534178b461e6e"
+  },
+  "bridge/f0/f0_2071.csv": {
+   "source": "D:\\VBOX\\bridge\\out\\w18\\f0\\f0_2071.csv",
+   "bytes": 520,
+   "sha256": "a715e9de7d9ead618f692384eba2757a4bc9cc02149f46a5392d732ab364fbb3"
+  },
+  "bridge/f0/f0_2076.csv": {
+   "source": "D:\\VBOX\\bridge\\out\\w18\\f0\\f0_2076.csv",
+   "bytes": 523,
+   "sha256": "807c8c7d0ea814ecefdc11876fec6d219b08bb79204f10eb9f32c0e2cfe59e60"
+  },
+  "bridge/f0/f0_2081.csv": {
+   "source": "D:\\VBOX\\bridge\\out\\w18\\f0\\f0_2081.csv",
+   "bytes": 521,
+   "sha256": "9d477808c50e2f301be11a5e86e567212eecc893a6ceba3222ad0366ecdf28cc"
+  },
+  "bridge/f0/f0_2086.csv": {
+   "source": "D:\\VBOX\\bridge\\out\\w18\\f0\\f0_2086.csv",
+   "bytes": 522,
+   "sha256": "30f31d050e7693396141f22e45ec8e36f6653cce97058cd32050998800176aba"
+  },
+  "bridge/f0/f0_2091.csv": {
+   "source": "D:\\VBOX\\bridge\\out\\w18\\f0\\f0_2091.csv",
+   "bytes": 519,
+   "sha256": "2583ee78fe0b94137239c08b108232cb530fab1f146098193a4032c950f74f4a"
+  },
+  "bridge/inv/rename_nodes.csv.gz": {
+   "source": "D:\\VBOX\\bridge\\out\\inv\\rename_nodes.csv",
+   "bytes": 455686,
+   "sha256": "d00f41353a23687e68de5a9c5bdd84002916e4603cdd62726af46b21f30220cd"
+  },
+  "geo/S1.gpkg.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W19 sewer design app\\work\\S1_pipes_outfalls.gpkg",
+   "bytes": 3125248,
+   "sha256": "a0ce4c87741d838608d16a1b5c2e2f8aba3978fa93c5488d5669f27f7a5919af"
+  },
+  "golden/SC1-2051/design.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2051\\design.json",
+   "bytes": 458,
+   "sha256": "1f78db3eb3f1db454d2ce4a5953bed3c21cbd83a5ad27ab32a514f1004fa5167"
+  },
+  "golden/SC1-2051/selfcleansing_pipes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2051\\selfcleansing_pipes.csv",
+   "bytes": 2613,
+   "sha256": "7b7649d23570321830559d0e416c78f148a3727d44b5a3a4bb2994da8473348b"
+  },
+  "golden/SC1-2051/named/links.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2051\\named/links.csv",
+   "bytes": 2535440,
+   "sha256": "04e28ec69df658dcb1f91d4274a5a73a0c1b9eb2dcdc538b6033c97d30bb3e02"
+  },
+  "golden/SC1-2051/named/nodes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2051\\named/nodes.csv",
+   "bytes": 1389597,
+   "sha256": "c233fe96f09e4741738c4a7d08dbcf20fab4884e9d13ecbecd81607f10f482a9"
+  },
+  "golden/SC1-2051/named/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2051\\named/stations.csv",
+   "bytes": 2330,
+   "sha256": "06b5e368a4b3e917c65b8ccab8637c589d0a88a78940354a2931f7e39775b105"
+  },
+  "golden/SC1-2051/named/naming.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2051\\named/naming.json",
+   "bytes": 1275,
+   "sha256": "63a87fcbc9957cbefd7cbb940319776ca0a9793f3a8417f7101a473c73b8c290"
+  },
+  "golden/SC1-2051/products/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2051\\products/stations.csv",
+   "bytes": 3908,
+   "sha256": "b50e902dceb352db0c8c53d9ffb948ec4493c2ee63744ddec4366ee1e8a5a667"
+  },
+  "golden/SC1-2051/products/plants.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2051\\products/plants.csv",
+   "bytes": 230,
+   "sha256": "af018a7537b6863ec25478e780cc6ef62d66282b852bd987dbd5edcc66d14ddd"
+  },
+  "golden/SC1-2051/products/quantities.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2051\\products/quantities.json",
+   "bytes": 1304,
+   "sha256": "5574379460e8259d4e37c1c949bf7cc71900f8a25967c5e0f74dde192e920291"
+  },
+  "golden/SC1-2051/split/cuts_SC1-2051.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2051\\split/cuts_SC1-2051.csv",
+   "bytes": 630,
+   "sha256": "32345a081ee4e4255d01db0bfb13efca3f0f674c0796862b4de3b97e6614bd25"
+  },
+  "golden/SC1-2051/split/joins_SC1-2051.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2051\\split/joins_SC1-2051.csv",
+   "bytes": 1604,
+   "sha256": "407a71be743c9ddcd6b8c22f61f84377e8d2cd6e1ba481aa5ff0d583c6dfbf84"
+  },
+  "golden/SC1-2051/split/summary_SC1-2051.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2051\\split/summary_SC1-2051.json",
+   "bytes": 1511,
+   "sha256": "50d55a09b74ffed2421b959db26ea4084a7d0dcbd6d0bf231afc52cb058dc923"
+  },
+  "golden/SC1-2051/exports/conduits_SC1-2051a.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2051\\exports/conduits_SC1-2051a.csv",
+   "bytes": 3184914,
+   "sha256": "613f76065f1e78142cef885a1983a9cc0da44dfc6e9fc0377a1190b599823f03"
+  },
+  "golden/SC1-2051/exports/transfers_SC1-2051.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2051\\exports/transfers_SC1-2051.csv",
+   "bytes": 2533,
+   "sha256": "5c61dbcb95b1aca4e7e881bb156425bfdda0de8066fec1b4580846e319d066ec"
+  },
+  "golden/SC1-2051/exports/lift_transfers_SC1-2051.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2051\\exports/lift_transfers_SC1-2051.csv",
+   "bytes": 614,
+   "sha256": "6aa75450c9d1122afab08182cced75fceea1d7545242bd124fa32a41a3e892d6"
+  },
+  "golden/SC1-2056/design.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2056\\design.json",
+   "bytes": 446,
+   "sha256": "0a2620e4cbe1c9f2506576b4a778f771f7d16cd278376efc69632bad9562ecc4"
+  },
+  "golden/SC1-2056/selfcleansing_pipes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2056\\selfcleansing_pipes.csv",
+   "bytes": 5493,
+   "sha256": "8d417e6c158eb8f3fcaeeed9ff839e19303805a8ee8a3f22f9a17b6826f1c8c3"
+  },
+  "golden/SC1-2056/named/links.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2056\\named/links.csv",
+   "bytes": 2535962,
+   "sha256": "a33e9a69b35904ef853773879d75dac26c361bb9de683abb8123702849933597"
+  },
+  "golden/SC1-2056/named/nodes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2056\\named/nodes.csv",
+   "bytes": 1389647,
+   "sha256": "1031da7a7dca342e980e89231ba3eaf2cfe298a83ccfc82240e59664bc01f64c"
+  },
+  "golden/SC1-2056/named/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2056\\named/stations.csv",
+   "bytes": 2333,
+   "sha256": "6e99039413a8ba6bd6d32f5c7085757847f08622e938e748c426a745631c86d3"
+  },
+  "golden/SC1-2056/named/naming.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2056\\named/naming.json",
+   "bytes": 1276,
+   "sha256": "2a4b0d4394464262ee76f4921055a73e7d86a1c227beb653b0fcac6d7d864630"
+  },
+  "golden/SC1-2056/products/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2056\\products/stations.csv",
+   "bytes": 3919,
+   "sha256": "8c5a38e48a9f0d15f58b8822e3bb04c5f2457ae3ef841cfd7d90506aff65e0bd"
+  },
+  "golden/SC1-2056/products/plants.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2056\\products/plants.csv",
+   "bytes": 231,
+   "sha256": "98c4f2106e05c06a57f71a7951586e00aab021413a5efe47f1281b90c40e745d"
+  },
+  "golden/SC1-2056/products/quantities.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2056\\products/quantities.json",
+   "bytes": 1292,
+   "sha256": "c55533258561b1342cdd8de906ca916f6fbf7475db61e936a57c98402d17d21c"
+  },
+  "golden/SC1-2056/split/cuts_SC1-2056.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2056\\split/cuts_SC1-2056.csv",
+   "bytes": 631,
+   "sha256": "3f9bca23c48652f541ff217500ddd5c7cbef827e807464dcced55bc092913525"
+  },
+  "golden/SC1-2056/split/joins_SC1-2056.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2056\\split/joins_SC1-2056.csv",
+   "bytes": 1604,
+   "sha256": "8c8f14c9b6a26dfd80e993a68ecc87f49b654bc8c181bbe5d4e37cc10e442eaa"
+  },
+  "golden/SC1-2056/split/summary_SC1-2056.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2056\\split/summary_SC1-2056.json",
+   "bytes": 1379,
+   "sha256": "10dc885ea13fbf87d543aac405f9169df6fa36fd45d502689dd3f493f8818999"
+  },
+  "golden/SC1-2056/exports/conduits_SC1-2056a.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2056\\exports/conduits_SC1-2056a.csv",
+   "bytes": 3183266,
+   "sha256": "7de14936d3efa729cb8260e949d53d985b95deef5f7a87e7429ef7ed558311ad"
+  },
+  "golden/SC1-2056/exports/transfers_SC1-2056.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2056\\exports/transfers_SC1-2056.csv",
+   "bytes": 2537,
+   "sha256": "8edb2ea014aa61f257476520e2e2686f8e919507e8792c3aae545d7939016a02"
+  },
+  "golden/SC1-2056/exports/lift_transfers_SC1-2056.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2056\\exports/lift_transfers_SC1-2056.csv",
+   "bytes": 618,
+   "sha256": "98821a71da94b71b00eaff8cf9f7ee5904573c9ae70c6f0baf3c3d2e6988c812"
+  },
+  "golden/SC1-2061/design.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2061\\design.json",
+   "bytes": 463,
+   "sha256": "080dedbdf35d18e49b9c4b580f91d1a273d4cd9dbc4dd6cbfac8835f43ccad5e"
+  },
+  "golden/SC1-2061/selfcleansing_pipes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2061\\selfcleansing_pipes.csv",
+   "bytes": 8694,
+   "sha256": "4a3844a6051beea49ccb507641f959ae877dd9cb03af17ef2501b61a1f63ccac"
+  },
+  "golden/SC1-2061/named/links.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2061\\named/links.csv",
+   "bytes": 2536755,
+   "sha256": "9a03354fc0657b85c421ec38911092ab8f2dde12dd2303bac713b7e5b0b1e795"
+  },
+  "golden/SC1-2061/named/nodes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2061\\named/nodes.csv",
+   "bytes": 1389651,
+   "sha256": "7a3b502c4842db66341e46064abf650c5e79257a3ffdc5434765606b08582b72"
+  },
+  "golden/SC1-2061/named/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2061\\named/stations.csv",
+   "bytes": 2333,
+   "sha256": "967b3f4b5235f8c4f101aff1e6f5e224f4f114cd8bda44962924691c04b97038"
+  },
+  "golden/SC1-2061/named/naming.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2061\\named/naming.json",
+   "bytes": 1277,
+   "sha256": "0e17bff6d10215959229023617313aa0fbe5640d7599470defeea40cd119a44d"
+  },
+  "golden/SC1-2061/products/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2061\\products/stations.csv",
+   "bytes": 3929,
+   "sha256": "4f3baa0e273239ada4019d40bcfcd38831d61c05b4fc0b808354b6c9b62ea7d7"
+  },
+  "golden/SC1-2061/products/plants.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2061\\products/plants.csv",
+   "bytes": 231,
+   "sha256": "7869a0ff42112d528530d470cfe1e4aef866a22c7878869168a7a112485eb3a8"
+  },
+  "golden/SC1-2061/products/quantities.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2061\\products/quantities.json",
+   "bytes": 1311,
+   "sha256": "199a03f3d1f9ac288c4e92132804d7858f864383ef4b8902ac5065e1a4027f8d"
+  },
+  "golden/SC1-2061/split/cuts_SC1-2061.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2061\\split/cuts_SC1-2061.csv",
+   "bytes": 632,
+   "sha256": "9a309a1e56c0f7cf9c13960c87f22be771a91b02d8163023d997f044defea03e"
+  },
+  "golden/SC1-2061/split/joins_SC1-2061.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2061\\split/joins_SC1-2061.csv",
+   "bytes": 1603,
+   "sha256": "59d141ad9d190b6cbdaa0439f72b2646b706e1be127ecea80b2323997c91f2c0"
+  },
+  "golden/SC1-2061/split/summary_SC1-2061.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2061\\split/summary_SC1-2061.json",
+   "bytes": 1371,
+   "sha256": "c62008462e82c87ba02ec440ee14b82dafa6fc7590cba1b5e6438f7d31790f41"
+  },
+  "golden/SC1-2061/exports/conduits_SC1-2061a.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2061\\exports/conduits_SC1-2061a.csv",
+   "bytes": 3182529,
+   "sha256": "795c6f2cad8419e30e9856e7c2bd29bda6eec734ebd9ccdd304941284ea32714"
+  },
+  "golden/SC1-2061/exports/transfers_SC1-2061.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2061\\exports/transfers_SC1-2061.csv",
+   "bytes": 2537,
+   "sha256": "9eb3306d2e45e7adf6bd3f1ca1bba3456a5b92faff6c8e3e6a17a24547973885"
+  },
+  "golden/SC1-2061/exports/lift_transfers_SC1-2061.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2061\\exports/lift_transfers_SC1-2061.csv",
+   "bytes": 615,
+   "sha256": "2a62bb7848dc56929c290855038cbaf7465199d137d6074e3f71da90150912bf"
+  },
+  "golden/SC2-2051/design.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2051\\design.json",
+   "bytes": 460,
+   "sha256": "56282b4062b73d59223b988ba6f78b7c9229e9228555ed6e257218b6d99c7c63"
+  },
+  "golden/SC2-2051/selfcleansing_pipes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2051\\selfcleansing_pipes.csv",
+   "bytes": 2613,
+   "sha256": "7b7649d23570321830559d0e416c78f148a3727d44b5a3a4bb2994da8473348b"
+  },
+  "golden/SC2-2051/named/links.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2051\\named/links.csv",
+   "bytes": 2535943,
+   "sha256": "5edc09e9265fbe14381cca545f0e0aad6710e060812bad02a9ff812e59c2c6b3"
+  },
+  "golden/SC2-2051/named/nodes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2051\\named/nodes.csv",
+   "bytes": 1389568,
+   "sha256": "1fdf42d32471a1e50440390faa65961a3f416f88dececc22ccaffe118dfe49b1"
+  },
+  "golden/SC2-2051/named/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2051\\named/stations.csv",
+   "bytes": 2329,
+   "sha256": "3f460ec873a2586ad5d64e968c1c467870b637ac9fb93adc17b67b2c3f522fef"
+  },
+  "golden/SC2-2051/named/naming.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2051\\named/naming.json",
+   "bytes": 1275,
+   "sha256": "6dc1a0a48a75b0f2a27bc27eb174b5e80f70a0db079c555f8031675ab20b7956"
+  },
+  "golden/SC2-2051/products/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2051\\products/stations.csv",
+   "bytes": 3918,
+   "sha256": "8b6c66cbd4d41dd2ec7cbdf02b94701e2ac2b5f525785505085413626ebf7681"
+  },
+  "golden/SC2-2051/products/plants.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2051\\products/plants.csv",
+   "bytes": 229,
+   "sha256": "6b9e99d44bc1993261d298735d2604567dc3e59cc9b86fead3d400b5188118ca"
+  },
+  "golden/SC2-2051/products/quantities.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2051\\products/quantities.json",
+   "bytes": 1303,
+   "sha256": "ebfd6f304f64db4426e2d699e10489b3182d4cde6744f96235ea77cbcf6b1705"
+  },
+  "golden/SC2-2051/split/cuts_SC2-2051.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2051\\split/cuts_SC2-2051.csv",
+   "bytes": 630,
+   "sha256": "32345a081ee4e4255d01db0bfb13efca3f0f674c0796862b4de3b97e6614bd25"
+  },
+  "golden/SC2-2051/split/joins_SC2-2051.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2051\\split/joins_SC2-2051.csv",
+   "bytes": 1695,
+   "sha256": "e5b7598ec711e36497917741a329e8ad5c8e040de4ff61dc8edf87199495203b"
+  },
+  "golden/SC2-2051/split/summary_SC2-2051.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2051\\split/summary_SC2-2051.json",
+   "bytes": 1503,
+   "sha256": "7cb9b4fad99238e2d193e3fea13da81a46c13a4d4e8ffc0029f43187fb1abe89"
+  },
+  "golden/SC2-2051/exports/conduits_SC2-2051a.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2051\\exports/conduits_SC2-2051a.csv",
+   "bytes": 3184817,
+   "sha256": "ef7741ccac013240a7f933fc8d09ecd26b404ab505d8d18896b0542bb35e8548"
+  },
+  "golden/SC2-2051/exports/transfers_SC2-2051.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2051\\exports/transfers_SC2-2051.csv",
+   "bytes": 2659,
+   "sha256": "be0cc0ab2960d238058e555dbc42388b90ddf0fba6cd7223ac62ae57813b760d"
+  },
+  "golden/SC2-2051/exports/lift_transfers_SC2-2051.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2051\\exports/lift_transfers_SC2-2051.csv",
+   "bytes": 614,
+   "sha256": "6aa75450c9d1122afab08182cced75fceea1d7545242bd124fa32a41a3e892d6"
+  },
+  "golden/SC2-2056/design.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2056\\design.json",
+   "bytes": 448,
+   "sha256": "3f5b4a244a7ba7e80ab90929ff28bb2da9ab0d98198710ef5819639f05fa8b4c"
+  },
+  "golden/SC2-2056/selfcleansing_pipes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2056\\selfcleansing_pipes.csv",
+   "bytes": 5493,
+   "sha256": "8d417e6c158eb8f3fcaeeed9ff839e19303805a8ee8a3f22f9a17b6826f1c8c3"
+  },
+  "golden/SC2-2056/named/links.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2056\\named/links.csv",
+   "bytes": 2536465,
+   "sha256": "90e9bbb40545648ab923e01cea897a2ff163d0c4616fac102003ce1264f54fe7"
+  },
+  "golden/SC2-2056/named/nodes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2056\\named/nodes.csv",
+   "bytes": 1389618,
+   "sha256": "608343e115dc46ec477002b115a04e1bbd335a3787b9de7bcda5f62b478ab924"
+  },
+  "golden/SC2-2056/named/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2056\\named/stations.csv",
+   "bytes": 2333,
+   "sha256": "0be968bfb259934a35b5c7e6c5e406dde91fe04fa171dc7f18c7e5b4daa2ad98"
+  },
+  "golden/SC2-2056/named/naming.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2056\\named/naming.json",
+   "bytes": 1277,
+   "sha256": "b978f3f8f09ad0c6b45a566ce323d6484d23d2a682507d5e006038780e965188"
+  },
+  "golden/SC2-2056/products/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2056\\products/stations.csv",
+   "bytes": 3927,
+   "sha256": "9956cfd555431a91e919238e9e3f30ecaa9f0cc86318fa61f12f6a2e753d71e7"
+  },
+  "golden/SC2-2056/products/plants.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2056\\products/plants.csv",
+   "bytes": 230,
+   "sha256": "aea6ff5abe7e25be1421513ec37d46dc9dacf8229ab89bc2013a89c78d222230"
+  },
+  "golden/SC2-2056/products/quantities.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2056\\products/quantities.json",
+   "bytes": 1293,
+   "sha256": "b1d462dfdaa67fed31083578daa35672246a67163fa2e88d210a768b6ea1dde9"
+  },
+  "golden/SC2-2056/split/cuts_SC2-2056.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2056\\split/cuts_SC2-2056.csv",
+   "bytes": 631,
+   "sha256": "3f9bca23c48652f541ff217500ddd5c7cbef827e807464dcced55bc092913525"
+  },
+  "golden/SC2-2056/split/joins_SC2-2056.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2056\\split/joins_SC2-2056.csv",
+   "bytes": 1695,
+   "sha256": "d3a2b5c628047b803575e58b9a55c661bc077fb6d6172dafd11a3adddf7f61e2"
+  },
+  "golden/SC2-2056/split/summary_SC2-2056.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2056\\split/summary_SC2-2056.json",
+   "bytes": 1371,
+   "sha256": "1b3c6f52fcfc7a6fde0dedc403a01ec0e1554b7ab1d342b6e1fbe83d6d558dcd"
+  },
+  "golden/SC2-2056/exports/conduits_SC2-2056a.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2056\\exports/conduits_SC2-2056a.csv",
+   "bytes": 3183200,
+   "sha256": "eeed9045ae75cf02c9f815174858d6bc59870c0cf66b2a48964c10c126a8eac4"
+  },
+  "golden/SC2-2056/exports/transfers_SC2-2056.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2056\\exports/transfers_SC2-2056.csv",
+   "bytes": 2663,
+   "sha256": "6f2b26703f7282be73a95489c4bf35e2ac7d9dc8ec4c56994523ce80c1b98d82"
+  },
+  "golden/SC2-2056/exports/lift_transfers_SC2-2056.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2056\\exports/lift_transfers_SC2-2056.csv",
+   "bytes": 618,
+   "sha256": "98821a71da94b71b00eaff8cf9f7ee5904573c9ae70c6f0baf3c3d2e6988c812"
+  },
+  "golden/SC2-2061/design.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2061\\design.json",
+   "bytes": 479,
+   "sha256": "68fe49006c8a9124fe6d510b898f63983878f6c1ea82c3f7d2e62d6b99044344"
+  },
+  "golden/SC2-2061/selfcleansing_pipes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2061\\selfcleansing_pipes.csv",
+   "bytes": 8694,
+   "sha256": "4a3844a6051beea49ccb507641f959ae877dd9cb03af17ef2501b61a1f63ccac"
+  },
+  "golden/SC2-2061/named/links.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2061\\named/links.csv",
+   "bytes": 2537255,
+   "sha256": "22f14219121402c2fa620dbfe015a1614050168f2c8505246e96658652692d85"
+  },
+  "golden/SC2-2061/named/nodes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2061\\named/nodes.csv",
+   "bytes": 1389622,
+   "sha256": "11956f56b15db4a380aed661d5d9424b2bea74e424ac1aefafd036e5d4e49991"
+  },
+  "golden/SC2-2061/named/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2061\\named/stations.csv",
+   "bytes": 2333,
+   "sha256": "4aea36879db2187ee4ba60b91c56f53baecfc297db1ec1956ffb86ef9696b2bc"
+  },
+  "golden/SC2-2061/named/naming.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2061\\named/naming.json",
+   "bytes": 1278,
+   "sha256": "19dc305fd5070c79ecd9ee62f742075f1100e981d62eaa395387140ffe91a9cb"
+  },
+  "golden/SC2-2061/products/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2061\\products/stations.csv",
+   "bytes": 3937,
+   "sha256": "61533c61207216bf958f2a44bc74807700dfdebacc87afedb34b4e221076cc81"
+  },
+  "golden/SC2-2061/products/plants.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2061\\products/plants.csv",
+   "bytes": 230,
+   "sha256": "09b7a9d74f3bd3e743da06cb8a029966ee21cacf51ce40b52d31cac149a2b008"
+  },
+  "golden/SC2-2061/products/quantities.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2061\\products/quantities.json",
+   "bytes": 1329,
+   "sha256": "c007f507ea1155b903f4bf2d9c53fdea96d00a73052f963d21f34ffc47dd9ee9"
+  },
+  "golden/SC2-2061/split/cuts_SC2-2061.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2061\\split/cuts_SC2-2061.csv",
+   "bytes": 632,
+   "sha256": "9a309a1e56c0f7cf9c13960c87f22be771a91b02d8163023d997f044defea03e"
+  },
+  "golden/SC2-2061/split/joins_SC2-2061.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2061\\split/joins_SC2-2061.csv",
+   "bytes": 1694,
+   "sha256": "a142a254763e73b8105b7eb389749bab7808a4319d0bba6123741210f9234ece"
+  },
+  "golden/SC2-2061/split/summary_SC2-2061.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2061\\split/summary_SC2-2061.json",
+   "bytes": 1402,
+   "sha256": "3502a3e72faf3ad9b7bfac62783aee673ea8bd3ca3850d4c8948d035d69df4c5"
+  },
+  "golden/SC2-2061/exports/conduits_SC2-2061a.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2061\\exports/conduits_SC2-2061a.csv",
+   "bytes": 3182416,
+   "sha256": "e8c972bb144448ddb726c5f7b413fda5d065de0fd2dd3011617950572c264bc4"
+  },
+  "golden/SC2-2061/exports/transfers_SC2-2061.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2061\\exports/transfers_SC2-2061.csv",
+   "bytes": 2663,
+   "sha256": "d9c5a36a76a39b14412707a8bf016459ef381c0fc78717907b78aa8208bd5361"
+  },
+  "golden/SC2-2061/exports/lift_transfers_SC2-2061.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC2-2061\\exports/lift_transfers_SC2-2061.csv",
+   "bytes": 615,
+   "sha256": "2a62bb7848dc56929c290855038cbaf7465199d137d6074e3f71da90150912bf"
+  },
+  "golden/SC3-2051/design.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2051\\design.json",
+   "bytes": 452,
+   "sha256": "473f776c6b12e6e62181e89999f4c5e79316d619a483745c6519a7f01fbdbc1c"
+  },
+  "golden/SC3-2051/selfcleansing_pipes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2051\\selfcleansing_pipes.csv",
+   "bytes": 2613,
+   "sha256": "7b7649d23570321830559d0e416c78f148a3727d44b5a3a4bb2994da8473348b"
+  },
+  "golden/SC3-2051/named/links.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2051\\named/links.csv",
+   "bytes": 2534965,
+   "sha256": "b211172584ca06a98c809aa5b9bac7627fd6e804214a7f9e147c896a2a06cd4b"
+  },
+  "golden/SC3-2051/named/nodes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2051\\named/nodes.csv",
+   "bytes": 1389604,
+   "sha256": "56356d86afcdfca0026370eb5452545973b99b10b95dd3988b19ce6635303df0"
+  },
+  "golden/SC3-2051/named/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2051\\named/stations.csv",
+   "bytes": 2331,
+   "sha256": "4d0cb54462ea7f9a72df8e0ed43b446107ddb9e5101fb77e942619413599faec"
+  },
+  "golden/SC3-2051/named/naming.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2051\\named/naming.json",
+   "bytes": 1281,
+   "sha256": "3d6b4015555c0e2d98e3097f7f86d020d27a5f4a0adc8cbf1c160b3756939553"
+  },
+  "golden/SC3-2051/products/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2051\\products/stations.csv",
+   "bytes": 3903,
+   "sha256": "cf2e421616ebcdbae5f625806953600e4ab36f20d8ece4b42f73734a1203c41e"
+  },
+  "golden/SC3-2051/products/plants.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2051\\products/plants.csv",
+   "bytes": 306,
+   "sha256": "fe41099a58229da20f464d6abe36450f702cd5d51b34ac64f17d9a9c99a9c9fe"
+  },
+  "golden/SC3-2051/products/quantities.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2051\\products/quantities.json",
+   "bytes": 1539,
+   "sha256": "5326cffe4a080b97930a3cc0e2e2b4770679dcb116cacf6f48e9fae089624d6b"
+  },
+  "golden/SC3-2051/split/cuts_SC3-2051.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2051\\split/cuts_SC3-2051.csv",
+   "bytes": 630,
+   "sha256": "32345a081ee4e4255d01db0bfb13efca3f0f674c0796862b4de3b97e6614bd25"
+  },
+  "golden/SC3-2051/split/joins_SC3-2051.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2051\\split/joins_SC3-2051.csv",
+   "bytes": 1517,
+   "sha256": "9976667c9eafaf89a2fb3908f0362b9a1319a387d5ca92131cfbd189f58cafdf"
+  },
+  "golden/SC3-2051/split/summary_SC3-2051.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2051\\split/summary_SC3-2051.json",
+   "bytes": 1532,
+   "sha256": "16bfc0f9b2be876c6414df151cbb2d4064b9c3730c3e2193961a4c6512f3b524"
+  },
+  "golden/SC3-2051/exports/conduits_SC3-2051a.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2051\\exports/conduits_SC3-2051a.csv",
+   "bytes": 3185043,
+   "sha256": "736cdedc6642b465c5737855b9d43692ede91650cfd3c778d93171e8b3792d92"
+  },
+  "golden/SC3-2051/exports/transfers_SC3-2051.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2051\\exports/transfers_SC3-2051.csv",
+   "bytes": 2405,
+   "sha256": "e8cf5f187e7a19c1a4f42abff7fdada933f7cc245b33422097009d6c692b2109"
+  },
+  "golden/SC3-2051/exports/lift_transfers_SC3-2051.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2051\\exports/lift_transfers_SC3-2051.csv",
+   "bytes": 614,
+   "sha256": "6aa75450c9d1122afab08182cced75fceea1d7545242bd124fa32a41a3e892d6"
+  },
+  "golden/SC3-2056/design.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2056\\design.json",
+   "bytes": 483,
+   "sha256": "713e578574b0e4d670693e08c854fcd6d45df6156ad221a005b066d3c931e571"
+  },
+  "golden/SC3-2056/selfcleansing_pipes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2056\\selfcleansing_pipes.csv",
+   "bytes": 5493,
+   "sha256": "8d417e6c158eb8f3fcaeeed9ff839e19303805a8ee8a3f22f9a17b6826f1c8c3"
+  },
+  "golden/SC3-2056/named/links.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2056\\named/links.csv",
+   "bytes": 2535694,
+   "sha256": "2bdb8aa5ae9eb9fbb6058d1c6578a405d640edac6b4a15327d2bcd7a63c1644f"
+  },
+  "golden/SC3-2056/named/nodes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2056\\named/nodes.csv",
+   "bytes": 1389649,
+   "sha256": "1b85cf716218aaef21acecb9ae0bcc14ee3215f2c95150a64a1a6ecc957140b7"
+  },
+  "golden/SC3-2056/named/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2056\\named/stations.csv",
+   "bytes": 2335,
+   "sha256": "2a70cdafa08d0314d82d6c03eed00c2c94f11005cb405a634538fc46228b241d"
+  },
+  "golden/SC3-2056/named/naming.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2056\\named/naming.json",
+   "bytes": 1283,
+   "sha256": "32d734692bf7813e1475bf08c428d9170ec5524d60f16691596ccdcd952a3e64"
+  },
+  "golden/SC3-2056/products/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2056\\products/stations.csv",
+   "bytes": 3914,
+   "sha256": "b4a2802e91cd27dacff57d6ed9efc331d46b6a381faa92b60a5312b436a8c5c4"
+  },
+  "golden/SC3-2056/products/plants.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2056\\products/plants.csv",
+   "bytes": 307,
+   "sha256": "24e03a81276ec15e5b1658c1c711d2305ce5ba9c4a2f62a0c0cde989dc9004ef"
+  },
+  "golden/SC3-2056/products/quantities.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2056\\products/quantities.json",
+   "bytes": 1579,
+   "sha256": "af79c1622fa18d3c17d4a09093e3d5e944a82720a601c69f0900b94028cdb2c2"
+  },
+  "golden/SC3-2056/split/cuts_SC3-2056.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2056\\split/cuts_SC3-2056.csv",
+   "bytes": 631,
+   "sha256": "3f9bca23c48652f541ff217500ddd5c7cbef827e807464dcced55bc092913525"
+  },
+  "golden/SC3-2056/split/joins_SC3-2056.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2056\\split/joins_SC3-2056.csv",
+   "bytes": 1517,
+   "sha256": "5f1781ae28a706f9edebab910256bb7df57fd2a7c262d5cf6a2b60029224070e"
+  },
+  "golden/SC3-2056/split/summary_SC3-2056.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2056\\split/summary_SC3-2056.json",
+   "bytes": 1399,
+   "sha256": "0669bc64c2463b666dcbd1d153490138ec15954cb9d17c14346251ab3935bbf2"
+  },
+  "golden/SC3-2056/exports/conduits_SC3-2056a.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2056\\exports/conduits_SC3-2056a.csv",
+   "bytes": 3183440,
+   "sha256": "ce183a63d7d8606f7ae52266b439743dc3276fe35a061f2b6a06c8f735db88c3"
+  },
+  "golden/SC3-2056/exports/transfers_SC3-2056.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2056\\exports/transfers_SC3-2056.csv",
+   "bytes": 2408,
+   "sha256": "9cebaf63e9f46e132fafc388819c1102b84fe51c557957bd9119061a2cc7141f"
+  },
+  "golden/SC3-2056/exports/lift_transfers_SC3-2056.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2056\\exports/lift_transfers_SC3-2056.csv",
+   "bytes": 618,
+   "sha256": "98821a71da94b71b00eaff8cf9f7ee5904573c9ae70c6f0baf3c3d2e6988c812"
+  },
+  "golden/SC3-2061/design.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2061\\design.json",
+   "bytes": 483,
+   "sha256": "37fa05d1f8efb08493fa1c7de19ed07a54807f32d68a1a70f40b7b7fc26e8189"
+  },
+  "golden/SC3-2061/selfcleansing_pipes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2061\\selfcleansing_pipes.csv",
+   "bytes": 8694,
+   "sha256": "4a3844a6051beea49ccb507641f959ae877dd9cb03af17ef2501b61a1f63ccac"
+  },
+  "golden/SC3-2061/named/links.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2061\\named/links.csv",
+   "bytes": 2536466,
+   "sha256": "58d6357916f8b9baeaf0ba3f0d380f9f61dd9adcd5a1b51e9049875e2eff5563"
+  },
+  "golden/SC3-2061/named/nodes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2061\\named/nodes.csv",
+   "bytes": 1389655,
+   "sha256": "53b18d9e9a6adb2de58ac81515aebcc48215249765716e1364eb415156a2cd54"
+  },
+  "golden/SC3-2061/named/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2061\\named/stations.csv",
+   "bytes": 2334,
+   "sha256": "c41711acb34b6e3d30a686785f6eb11087dc40932618457c46b39346018f9e44"
+  },
+  "golden/SC3-2061/named/naming.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2061\\named/naming.json",
+   "bytes": 1283,
+   "sha256": "afb8f8002915bab4644ba9f30c6233ba399ee86db0f39faaa8b2e598f9f4cb0c"
+  },
+  "golden/SC3-2061/products/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2061\\products/stations.csv",
+   "bytes": 3922,
+   "sha256": "74106b94e941e6770e33ee861837fe46aaf4861a2863fd8f1221996e23d1cc89"
+  },
+  "golden/SC3-2061/products/plants.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2061\\products/plants.csv",
+   "bytes": 307,
+   "sha256": "e6276c0ab706e5ece79e5fd8d8af41897df4999438bd70ddd0d3d1ca0b3302ac"
+  },
+  "golden/SC3-2061/products/quantities.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2061\\products/quantities.json",
+   "bytes": 1583,
+   "sha256": "5ebf85994eaf2ed41db43a4027418dc91fe330621b08737fddd47af8df3ddfaa"
+  },
+  "golden/SC3-2061/split/cuts_SC3-2061.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2061\\split/cuts_SC3-2061.csv",
+   "bytes": 632,
+   "sha256": "9a309a1e56c0f7cf9c13960c87f22be771a91b02d8163023d997f044defea03e"
+  },
+  "golden/SC3-2061/split/joins_SC3-2061.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2061\\split/joins_SC3-2061.csv",
+   "bytes": 1515,
+   "sha256": "051a34b0b4a4f7fe530192e3af574be689f9e58333e5a11340c9df65ce070507"
+  },
+  "golden/SC3-2061/split/summary_SC3-2061.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2061\\split/summary_SC3-2061.json",
+   "bytes": 1380,
+   "sha256": "ae2b8abc2277277f9ba866e2a51e1c380892cabd763ebec2ce2ea913f20a375d"
+  },
+  "golden/SC3-2061/exports/conduits_SC3-2061a.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2061\\exports/conduits_SC3-2061a.csv",
+   "bytes": 3182603,
+   "sha256": "0a64f80ead86f4c17236e19adf4be196c7dd505eae36398f9e938083a5bd940d"
+  },
+  "golden/SC3-2061/exports/transfers_SC3-2061.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2061\\exports/transfers_SC3-2061.csv",
+   "bytes": 2405,
+   "sha256": "43efaa9577a7f60279bf158d5cdcda0b5b26be13b5bc6360457a988fd31ec3b4"
+  },
+  "golden/SC3-2061/exports/lift_transfers_SC3-2061.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC3-2061\\exports/lift_transfers_SC3-2061.csv",
+   "bytes": 615,
+   "sha256": "2a62bb7848dc56929c290855038cbaf7465199d137d6074e3f71da90150912bf"
+  },
+  "golden/SC4-2051/design.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2051\\design.json",
+   "bytes": 453,
+   "sha256": "c6310d3a76a39f15c547c9f2cb604bbd8ac116420390b4f1058173f65112d729"
+  },
+  "golden/SC4-2051/selfcleansing_pipes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2051\\selfcleansing_pipes.csv",
+   "bytes": 2613,
+   "sha256": "7b7649d23570321830559d0e416c78f148a3727d44b5a3a4bb2994da8473348b"
+  },
+  "golden/SC4-2051/named/links.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2051\\named/links.csv",
+   "bytes": 2535468,
+   "sha256": "213cb69013a5153ce8318f9e39f3967762e6bd6c9a871117946790cff7f981fc"
+  },
+  "golden/SC4-2051/named/nodes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2051\\named/nodes.csv",
+   "bytes": 1389575,
+   "sha256": "8ecbd180ca5d7b0de0df417e9123e0e3b7d84b3481d5e01c7390251465e95b12"
+  },
+  "golden/SC4-2051/named/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2051\\named/stations.csv",
+   "bytes": 2330,
+   "sha256": "9b9bf3ad634949fbbd5590742951a525c464ee71fe5ade04fc74932120108c32"
+  },
+  "golden/SC4-2051/named/naming.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2051\\named/naming.json",
+   "bytes": 1281,
+   "sha256": "9a376dd1057a2b13fa0008ba3559f61e2bd2c9aa5c7a39a88700c4d6b82086fb"
+  },
+  "golden/SC4-2051/products/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2051\\products/stations.csv",
+   "bytes": 3909,
+   "sha256": "ce1884f7f8ef770f5d89730028a9acca1b5ed5539703a30831fc71a67971371d"
+  },
+  "golden/SC4-2051/products/plants.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2051\\products/plants.csv",
+   "bytes": 306,
+   "sha256": "87e7df8a510ed49f618039b7faf0a7f520d034aa1e2513f2ac8daf588331d1ad"
+  },
+  "golden/SC4-2051/products/quantities.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2051\\products/quantities.json",
+   "bytes": 1542,
+   "sha256": "9b95adffd006f0e5d1f6598bed0c6d818ab032d7509af53ff55bc342c5790af8"
+  },
+  "golden/SC4-2051/split/cuts_SC4-2051.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2051\\split/cuts_SC4-2051.csv",
+   "bytes": 630,
+   "sha256": "32345a081ee4e4255d01db0bfb13efca3f0f674c0796862b4de3b97e6614bd25"
+  },
+  "golden/SC4-2051/split/joins_SC4-2051.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2051\\split/joins_SC4-2051.csv",
+   "bytes": 1607,
+   "sha256": "ae2c226cb8df9d40d1a88dec365b5669d8389d068759cb5cfef3d0e82486dbb2"
+  },
+  "golden/SC4-2051/split/summary_SC4-2051.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2051\\split/summary_SC4-2051.json",
+   "bytes": 1521,
+   "sha256": "ca70bf35b8593153aa59a329384a79597600c0e22bf1ea0064ade6b9023d9622"
+  },
+  "golden/SC4-2051/exports/conduits_SC4-2051a.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2051\\exports/conduits_SC4-2051a.csv",
+   "bytes": 3184934,
+   "sha256": "240200c686f0f57ded551733ab25f0543472cc97060224d7cb29b327f6971be7"
+  },
+  "golden/SC4-2051/exports/transfers_SC4-2051.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2051\\exports/transfers_SC4-2051.csv",
+   "bytes": 2533,
+   "sha256": "7e90fc824de12e7e443611ae896cc242a072f83470e3266ca9e156e643bbeb3d"
+  },
+  "golden/SC4-2051/exports/lift_transfers_SC4-2051.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2051\\exports/lift_transfers_SC4-2051.csv",
+   "bytes": 614,
+   "sha256": "6aa75450c9d1122afab08182cced75fceea1d7545242bd124fa32a41a3e892d6"
+  },
+  "golden/SC4-2056/design.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2056\\design.json",
+   "bytes": 485,
+   "sha256": "3d8fab1e0af1895be6b28e38c542bb5cb91bf89b75ecfe736d06d7080b2dc759"
+  },
+  "golden/SC4-2056/selfcleansing_pipes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2056\\selfcleansing_pipes.csv",
+   "bytes": 5493,
+   "sha256": "8d417e6c158eb8f3fcaeeed9ff839e19303805a8ee8a3f22f9a17b6826f1c8c3"
+  },
+  "golden/SC4-2056/named/links.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2056\\named/links.csv",
+   "bytes": 2536197,
+   "sha256": "b8f6b6e3881a23b0353b2db16ff3a5900833da9b1b8f1ef4cbb21244e94585ca"
+  },
+  "golden/SC4-2056/named/nodes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2056\\named/nodes.csv",
+   "bytes": 1389620,
+   "sha256": "d1a29066b9a8a087977d81c005e57a6173da17a4146f1933895f222c75c72d7a"
+  },
+  "golden/SC4-2056/named/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2056\\named/stations.csv",
+   "bytes": 2334,
+   "sha256": "fe282b6d25b93c206475bfe4432c41edadcac034df244fe5ddd4bd4200ab1c75"
+  },
+  "golden/SC4-2056/named/naming.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2056\\named/naming.json",
+   "bytes": 1283,
+   "sha256": "73e871d8c9bfd49f2f8717235f4e95c96903d28f8402a1307d2b811bb99fbde0"
+  },
+  "golden/SC4-2056/products/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2056\\products/stations.csv",
+   "bytes": 3922,
+   "sha256": "c7d73360c97a1201a6a477d6b8d0a266491d5ee87dfa503f5525ae652b62b5f9"
+  },
+  "golden/SC4-2056/products/plants.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2056\\products/plants.csv",
+   "bytes": 306,
+   "sha256": "84dec96409ea781b0b0712a09e1d4efe85c546f5a8646d0663bd46d7e222e73d"
+  },
+  "golden/SC4-2056/products/quantities.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2056\\products/quantities.json",
+   "bytes": 1579,
+   "sha256": "87f7c60fb0ee6bf111816881da5f31732a896bb5e59f2dc62c75af43d39d64da"
+  },
+  "golden/SC4-2056/split/cuts_SC4-2056.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2056\\split/cuts_SC4-2056.csv",
+   "bytes": 631,
+   "sha256": "3f9bca23c48652f541ff217500ddd5c7cbef827e807464dcced55bc092913525"
+  },
+  "golden/SC4-2056/split/joins_SC4-2056.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2056\\split/joins_SC4-2056.csv",
+   "bytes": 1608,
+   "sha256": "a3278453b380471b5ce9f824951debf65816d745ce9d58705fc4f6520f842e74"
+  },
+  "golden/SC4-2056/split/summary_SC4-2056.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2056\\split/summary_SC4-2056.json",
+   "bytes": 1381,
+   "sha256": "cd3e42fd8bff92473c19ec5f71b7d2e41f85b594f5bf14576144156078447b43"
+  },
+  "golden/SC4-2056/exports/conduits_SC4-2056a.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2056\\exports/conduits_SC4-2056a.csv",
+   "bytes": 3183350,
+   "sha256": "2d13966ba45222f1b739f6a53d249e8aa0cd98eb564377464a9c1dc44d70f384"
+  },
+  "golden/SC4-2056/exports/transfers_SC4-2056.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2056\\exports/transfers_SC4-2056.csv",
+   "bytes": 2534,
+   "sha256": "918e85515f1231e8f4ab5646926be1ba0f80943a4f844d8c39a09a01e62bd6c2"
+  },
+  "golden/SC4-2056/exports/lift_transfers_SC4-2056.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2056\\exports/lift_transfers_SC4-2056.csv",
+   "bytes": 618,
+   "sha256": "98821a71da94b71b00eaff8cf9f7ee5904573c9ae70c6f0baf3c3d2e6988c812"
+  },
+  "golden/SC4-2061/design.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2061\\design.json",
+   "bytes": 485,
+   "sha256": "5c9b99e054c1265dbe1df3b0fcfbf217858e4f4216d0bd43e86caf53c73cb721"
+  },
+  "golden/SC4-2061/selfcleansing_pipes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2061\\selfcleansing_pipes.csv",
+   "bytes": 8694,
+   "sha256": "4a3844a6051beea49ccb507641f959ae877dd9cb03af17ef2501b61a1f63ccac"
+  },
+  "golden/SC4-2061/named/links.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2061\\named/links.csv",
+   "bytes": 2536966,
+   "sha256": "3c432524532a1b473cdda06e8dfc0e93b48b56f6198dd25841992d01ac7e0baa"
+  },
+  "golden/SC4-2061/named/nodes.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2061\\named/nodes.csv",
+   "bytes": 1389626,
+   "sha256": "cf228a5a878a23fc7786a129bc01069a8e920520fd556c91aa0e7f2ea84015e5"
+  },
+  "golden/SC4-2061/named/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2061\\named/stations.csv",
+   "bytes": 2333,
+   "sha256": "8d5f85da1e723160f03a4a2ce09cbacd1ec3b0bbb88fa5b570be209da9e28db5"
+  },
+  "golden/SC4-2061/named/naming.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2061\\named/naming.json",
+   "bytes": 1283,
+   "sha256": "bb63b0f9bf2e9f98734ceb0e69254db79749f12900b81be45cb4546f56e33821"
+  },
+  "golden/SC4-2061/products/stations.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2061\\products/stations.csv",
+   "bytes": 3930,
+   "sha256": "8ae388481fe8ee39b8500c26fcbfa20ee61717dce1d7d4360029d3294469b2b8"
+  },
+  "golden/SC4-2061/products/plants.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2061\\products/plants.csv",
+   "bytes": 306,
+   "sha256": "138632a9af3ac95f682354787b0bb7e4a8603be98ca141ab77b8262fa3bd954e"
+  },
+  "golden/SC4-2061/products/quantities.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2061\\products/quantities.json",
+   "bytes": 1582,
+   "sha256": "c0797fed0a5af4a89ee284d980a544086b5af2f063aa5bf7fa843cc71316939a"
+  },
+  "golden/SC4-2061/split/cuts_SC4-2061.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2061\\split/cuts_SC4-2061.csv",
+   "bytes": 632,
+   "sha256": "9a309a1e56c0f7cf9c13960c87f22be771a91b02d8163023d997f044defea03e"
+  },
+  "golden/SC4-2061/split/joins_SC4-2061.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2061\\split/joins_SC4-2061.csv",
+   "bytes": 1606,
+   "sha256": "f32cedeadcf03fd8b5ddd98208540dc04161c5a6d334a3fb1b0d16fe7945999f"
+  },
+  "golden/SC4-2061/split/summary_SC4-2061.json": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2061\\split/summary_SC4-2061.json",
+   "bytes": 1400,
+   "sha256": "6b0c3c40770687279dd639404001b71d337b3d1eec2d15e7770af45496ca3707"
+  },
+  "golden/SC4-2061/exports/conduits_SC4-2061a.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2061\\exports/conduits_SC4-2061a.csv",
+   "bytes": 3182489,
+   "sha256": "04e31d0bb79e9b6c6ff08a7d000a5933dc928c39d966532fbb5f4be1f9300d32"
+  },
+  "golden/SC4-2061/exports/transfers_SC4-2061.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2061\\exports/transfers_SC4-2061.csv",
+   "bytes": 2532,
+   "sha256": "970ab66764f67cf12e9a98c1082ac03fab96e8e465865d344df58b0cd72b0542"
+  },
+  "golden/SC4-2061/exports/lift_transfers_SC4-2061.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC4-2061\\exports/lift_transfers_SC4-2061.csv",
+   "bytes": 615,
+   "sha256": "2a62bb7848dc56929c290855038cbaf7465199d137d6074e3f71da90150912bf"
+  },
+  "golden/SC1-2056/exports/conduits_SC1-2056-at-2031.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2056\\exports/conduits_SC1-2056-at-2031.csv",
+   "bytes": 3192434,
+   "sha256": "3ae96f34b23c99f546bcb538612ce3f1cf7c7c8553a3f4b0b8a41691317001a4"
+  },
+  "golden/SC1-2056/exports/conduits_SC1-2056-at-2036.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2056\\exports/conduits_SC1-2056-at-2036.csv",
+   "bytes": 3189972,
+   "sha256": "1bd786f1ae1c15b9f60fb908608d17838c3e350fa5f2c2803c028c7c5a2c04ee"
+  },
+  "golden/SC1-2056/split/pipes_SC1-2056.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2056\\split/pipes_SC1-2056.csv",
+   "bytes": 1940235,
+   "sha256": "8f382b23e9059aa9d2b9044b8fb3646c1b6f56f8b352363b55d0b6e7d3756462"
+  },
+  "golden/SC1-2056/split/nodes_SC1-2056.csv.gz": {
+   "source": "D:\\Mojtaba\\Renardet\\2621 Ibri Sewer STP\\Hydraulic\\Claude\\W18 NWS scenarios 2056-2071\\results\\final_0.75pc_SC1-SC4\\SC1-2056\\split/nodes_SC1-2056.csv",
+   "bytes": 796736,
+   "sha256": "42e123b9ca1b0e80f331f1e998d72e47320046ae4bd1df55690ce75928e0cd68"
+  },
+  "sewergems/SC1-2056/conduits_SC1-2056.csv.gz": {
+   "source": "D:\\VBOX\\bridge\\out\\w18\\final\\SC1-2056\\conduits_SC1-2056.csv",
+   "bytes": 3477518,
+   "sha256": "ab8b9cfd2fdc5f8794d650df3e6b36e99e45610e2b49a8df2fa590b2b9fb94f1"
+  },
+  "sewergems/SC1-2056/conduits_SC1-2056-at-2031.csv.gz": {
+   "source": "D:\\VBOX\\bridge\\out\\w18\\final\\SC1-2056\\conduits_SC1-2056-at-2031.csv",
+   "bytes": 3486804,
+   "sha256": "13ba93c5f5006236e80ee45e19cb2f3e11c278ed61a62b8525ad802d5aa9c731"
+  }
+ }
+}
