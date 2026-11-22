@@ -49,7 +49,7 @@ def page(server, browser):
     pg.set_default_timeout(60000)
     pg.errors = []
     pg.on("pageerror", lambda e: pg.errors.append(str(e)))
-    pg.goto(server + "/")
+    pg.goto(server + "/w18")
     pg.wait_for_function("window.app && window.app.state.ready", timeout=120000)
     yield pg
     ctx.close()

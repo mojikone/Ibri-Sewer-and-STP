@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sewer network editor</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="/static/editor/editor.css">
+</head>
+<body data-pending="0">
+<header id="topbar">
+  <div class="brand">Sewer network editor</div>
+  <div class="grp">
+    <button id="new-btn" class="tb" title="New project">New</button>
+    <button id="sample-btn" class="tb" title="Open a sample project">Sample</button>
+    <button id="open-btn" class="tb" title="Open a project file (.gpkg)">Open</button>
+    <button id="import-btn" class="tb" title="Import an EPA SWMM 5 input file (.inp)">Import .inp</button>
+    <input type="file" id="import-file" accept=".inp" hidden>
+    <button id="export-btn" class="tb" title="Export the scenario as an EPA SWMM 5 input file" disabled>Export .inp</button>
+    <input type="file" id="open-file" accept=".gpkg" hidden>
+    <button id="save-btn" class="tb" title="Download the project (.gpkg)" disabled>Save</button>
+  </div>
+  <div class="grp">
+    <label class="lbl" for="scenario-select">Scenario</label>
+    <select id="scenario-select" disabled></select>
+    <button id="copy-btn" class="tb" title="Copy the scenario" disabled>Copy</button>
+    <button id="undo-btn" class="tb" title="Undo (Ctrl+Z)" disabled>Undo</button>
+    <button id="redo-btn" class="tb" title="Redo (Ctrl+Y)" disabled>Redo</button>
+  </div>
+  <div class="grp" id="tools-grp">
+    <button id="tools-btn" class="tb" title="Tools" disabled>Tools &#9662;</button>
+    <div id="tools-menu" hidden></div>
+  </div>
+  <div class="grp">
+    <label class="lbl" for="color-by">Colour pipes by</label>
+    <select id="color-by">
+      <option value="none">none</option>
+      <option value="dn_mm">size DN</option>
+      <option value="v_ms" selected>velocity</option>
+      <option value="d_over_D">d/D</option>
+      <option value="q_ls">flow</option>
+      <option value="storm_q">storm peak flow</option>
+      <option value="storm_cap">storm fullness</option>
+      <option value="storm_flood">flooding</option>
+    </select>
+    <label class="chk" id="basemap-wrap"><input type="checkbox" id="basemap-toggle" checked> Basemap</label>
+  </div>
+  <div id="project-label" class="projlabel"></div>
+</header>
+<div id="status-bar">
+  <div id="status-line" data-links="0" data-conduits="0" data-problems="0" data-seconds="" data-rev="0">No project open.</div>
+</div>
+<main id="main">
+  <nav id="tools" aria-label="Element tools">
+    <button id="tool-select" class="tool active" title="Select (S)"><svg viewBox="0 0 24 24"><path d="M5 3l12 8-5 1.5L9.5 18z" fill="currentColor"/></svg><span>Select</span></button>
+    <button id="tool-manhole" class="tool" title="Manhole: click the map; click a pipe to split it (M)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="#fff" stroke="#6b7785" stroke-width="2.5"/></svg><span>Manhole</span></button>
+    <button id="tool-outfall" class="tool" title="Outfall (O)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="#123e7c"/><path d="M12 8v8M8.5 12.5L12 16l3.5-3.5" stroke="#fff" stroke-width="1.6" fill="none"/></svg><span>Outfall</span></button>
+    <button id="tool-wetwell" class="tool" title="Wet well (W)"><svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="#7b3fa0"/></svg><span>Wet well</span></button>
+    <button id="tool-pipe" class="tool" title="Pipe: click start node, then end node (P)"><svg viewBox="0 0 24 24"><path d="M5 18L19 6" stroke="#1f3b73" stroke-width="3" stroke-linecap="round"/><circle cx="5" cy="18" r="2.5" fill="#fff" stroke="#6b7785" stroke-width="1.5"/><circle cx="19" cy="6" r="2.5" fill="#fff" stroke="#6b7785" stroke-width="1.5"/></svg><span>Pipe</span></button>
+    <button id="tool-pump" class="tool" title="Pump: click start node, then end node"><svg viewBox="0 0 24 24"><path d="M4 12h16" stroke="#7b3fa0" stroke-width="2.5" stroke-dasharray="3 2"/><circle cx="12" cy="12" r="6" fill="#fff" stroke="#7b3fa0" stroke-width="2"/><path d="M10 9l5 3-5 3z" fill="#7b3fa0"/></svg><span>Pump</span></button>
+    <button id="tool-catchment" class="tool" title="Catchment: click the corners, double-click or Enter to finish, then click the outlet node (C)"><svg viewBox="0 0 24 24"><path d="M5 17l3-10 9-2 3 9-6 5z" fill="rgba(74,163,162,.35)" stroke="#2d7f7e" stroke-width="1.8"/></svg><span>Catchment</span></button>
+    <button id="tool-move" class="tool" title="Move a node: drag it (V)"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg><span>Move</span></button>
+    <button id="tool-delete" class="tool" title="Delete: click an element (Del)"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="#c0392b" stroke-width="3" stroke-linecap="round"/></svg><span>Delete</span></button>
+  </nav>
+  <section id="map-wrap">
+    <div id="map"></div>
+    <div id="legend"></div>
+    <div id="hint"></div>
+    <div id="welcome" hidden>
+      <div class="card">
+        <h2>Sewer and stormwater network editor</h2>
+        <p>Draw a network, edit it in tables, and watch it re-solve after every edit.</p>
+        <div class="row">
+          <button id="welcome-new" class="primary">New project</button>
+          <button id="welcome-sample">Open a sample</button>
+          <button id="welcome-open">Open a file</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <aside id="props">
+    <div class="ph">Properties</div>
+    <div id="prop-grid"><p class="muted">Nothing selected. Use the Select tool, or click a row in a table.</p></div>
+  </aside>
+</main>
+<section id="bottom">
+  <div id="tabs" role="tablist">
+    <button id="tab-nodes" class="tab active" role="tab">Nodes</button>
+    <button id="tab-links" class="tab" role="tab">Links</button>
+    <button id="tab-results" class="tab" role="tab">Results</button>
+    <button id="tab-profile" class="tab" role="tab">Profile</button>
+    <button id="tab-settings" class="tab" role="tab">Settings</button>
+    <button id="tab-hydro" class="tab" role="tab">Hydrograph</button>
+    <button id="tab-toolout" class="tab" role="tab">Tool output</button>
+  </div>
+  <div id="panes">
+    <div id="pane-nodes" class="pane flex active">
+      <div class="ptool"><input id="filter-nodes" type="search" placeholder="Filter nodes"><span id="count-nodes" class="muted"></span><span class="sp"></span>
+        <span class="bulk"><label>Set field</label><select id="bulk-field-nodes"></select><span id="bulk-val-nodes"></span><button id="bulk-apply-nodes" class="tb">Apply to selected</button></span></div>
+      <div class="twrap"><table id="tbl-nodes" class="ft"></table></div>
+    </div>
+    <div id="pane-links" class="pane flex">
+      <div class="ptool"><input id="filter-links" type="search" placeholder="Filter links"><span id="count-links" class="muted"></span><span class="sp"></span>
+        <span class="bulk"><label>Set field</label><select id="bulk-field-links"></select><span id="bulk-val-links"></span><button id="bulk-apply-links" class="tb">Apply to selected</button></span></div>
+      <div class="twrap"><table id="tbl-links" class="ft"></table></div>
+    </div>
+    <div id="pane-results" class="pane flex">
+      <div class="ptool"><input id="filter-results" type="search" placeholder="Filter results"><span id="count-results" class="muted"></span></div>
+      <div class="twrap"><table id="tbl-results" class="ft"></table></div>
+    </div>
+    <div id="pane-profile" class="pane">
+      <div class="ptool"><label>Start node</label><input id="prof-start" type="text" size="12"><label>End node (optional)</label><input id="prof-end" type="text" size="12">
+        <button id="prof-draw" class="tb">Draw</button><span id="prof-msg" class="muted"></span></div>
+      <div id="prof-wrap"><svg id="profile-svg" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    </div>
+    <div id="pane-settings" class="pane"><div id="settings-form"></div></div>
+    <div id="pane-hydro" class="pane">
+      <div class="ptool"><span id="hydro-title" class="strong">Hydrograph</span><label>Attribute</label><select id="hydro-attr"></select><span id="hydro-msg" class="muted"></span></div>
+      <div id="hydro-wrap"><svg id="hydro-svg" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    </div>
+    <div id="pane-toolout" class="pane flex">
+      <div class="ptool"><span id="toolout-title" class="strong">No tool run yet.</span><span class="sp"></span></div>
+      <div id="toolout-report"></div>
+      <div class="twrap"><table id="tbl-toolout" class="ft"></table></div>
+    </div>
+  </div>
+</section>
+
+<div id="dlg-new" class="modal" hidden><div class="dlg">
+  <h3>New project</h3>
+  <label>Name<input id="new-name" type="text" value="New project"></label>
+  <label>Coordinates<select id="new-crs-mode"><option value="epsg">EPSG code</option><option value="local">Local metres (no basemap)</option></select></label>
+  <label id="new-epsg-wrap">EPSG<input id="new-epsg" type="number" value="32640"></label>
+  <div class="row"><button id="new-create" class="primary">Create</button><button id="new-cancel">Cancel</button></div>
+</div></div>
+<div id="dlg-sample" class="modal" hidden><div class="dlg">
+  <h3>Open a sample</h3>
+  <div id="sample-list" class="list"></div>
+  <div class="row"><button id="sample-cancel">Cancel</button></div>
+</div></div>
+<div id="busy" hidden><div class="spin"></div><span id="busy-text">Working...</span></div>
+<div id="toast" role="alert" hidden></div>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="/static/editor/editor.js"></script>
+</body>
+</html>

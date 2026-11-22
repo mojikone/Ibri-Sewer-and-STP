@@ -215,7 +215,7 @@ def model(pid: str, sid: str):
             catch.append(dict(type="Feature", id=i, geometry=dict(type="Polygon", coordinates=[[[float(u), float(v)] for u, v in zip(x, y)]]),
                               properties=clean(dict(id=i, **r))))
     return dict(nodes=dict(type="FeatureCollection", features=nodes), links=dict(type="FeatureCollection", features=links),
-                catchments=dict(type="FeatureCollection", features=catch), settings=clean(p.settings),
+                catchments=dict(type="FeatureCollection", features=catch), settings=clean(p.settings), rain=clean(p.rain),
                 loads=clean({k: v for k, v in p.load_sets.items()}))
 
 

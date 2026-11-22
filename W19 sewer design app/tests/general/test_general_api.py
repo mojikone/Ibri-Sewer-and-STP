@@ -128,3 +128,13 @@ def test_storm_from_a_drawn_project_and_an_imported_inp(built):
     m = C.get(f"/api/g/projects/{o['id']}/scenarios/base/model").json()
     assert len(m["nodes"]["features"]) == 10 and len(m["links"]["features"]) == 9
     assert C.post(f"/api/g/projects/{o['id']}/scenarios/base/storm").json()["summary"]["links"] == 9
+
+
+def test_node_invert_carries_into_link_ends_and_rain_is_returned(built):
+    ed(built, "base", op="set", table="links", ids=["P-2"], field="dn_inv", value=96.0)       # a deliberately offset end
+    ed(built, "base", op="set", table="nodes", ids=["MH2"], field="invert", value=97.2)
+    m = C.get(f"/api/g/projects/{built}/scenarios/base/model").json()
+    L = {f["id"]: f["properties"] for f in m["links"]["features"]}
+    assert L["P-1"]["dn_inv"] == 97.2 and L["P-2"]["up_inv"] == 97.2 and L["P-2"]["dn_inv"] == 96.0
+    ed(built, "base", op="set_rain", rain=dict(step_min=5, series=[[0, 10.0], [5, 20.0]]))
+    assert C.get(f"/api/g/projects/{built}/scenarios/base/model").json()["rain"]["series"] == [[0, 10.0], [5, 20.0]]

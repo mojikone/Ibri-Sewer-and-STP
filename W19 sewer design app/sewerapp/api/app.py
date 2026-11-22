@@ -203,4 +203,11 @@ if os.path.isdir(WEB):
 
 @app.get("/")
 def index():
+    """The general editor (any project, sewer and stormwater)."""
+    return FileResponse(os.path.join(WEB, "editor", "index.html"))
+
+
+@app.get("/w18")
+def w18_viewer():
+    """The Ibri W18 viewer of phase 1B (the 12 frozen designs, what-ifs, tools)."""
     return FileResponse(os.path.join(WEB, "index.html"))

@@ -45,6 +45,14 @@ def apply(p, e):
         if e["table"] == "links" and e["field"] == "dn_mm":
             ins = p.inside_of(v)                       # a size not in the catalogue (an imported model) is its own bore
             t.loc[ids, "dn_mm"] = int(v); t.loc[ids, "inside_mm"] = ins if ins == ins else float(v)
+        elif e["table"] == "nodes" and e["field"] == "invert":
+            # link ends that sat at a node's old invert follow it (a deliberately offset end keeps its level)
+            for nid in ids:
+                old = t.invert[nid]
+                for col, end in (("up_inv", "from_node"), ("dn_inv", "to_node")):
+                    m = (p.links[end] == nid) & ((p.links[col] - old).abs() < 1e-9)
+                    p.links.loc[m, col] = float(v)
+            t.loc[ids, "invert"] = float(v)
         else:
             if e["field"] in ("kind",):
                 allowed = NODE_KINDS if e["table"] == "nodes" else LINK_KINDS
