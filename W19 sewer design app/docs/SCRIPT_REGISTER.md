@@ -24,3 +24,16 @@ script with no UI place is not done. Status: `tested` (gate or unit test green) 
 | `assistant/runner.py`, `assistant/tools.py` | the AI assistant: Claude API (claude-opus-5-5, sonnet-5-5 switch) with tools list/summary/query/get/explain (checks with guideline pages)/make_whatif (new scenario only)/compare/run_tool/lookup_criterion | Assistant tab | tested with a stand-in client; live test waits for ANTHROPIC_API_KEY |
 | `engine/swmm.py` | stormwater and dynamic routing on EPA SWMM 5.2.4 (swmm-toolkit); run a model, compare every time step with a reference | Tools menu "Stormwater → Run EPA's SWMM examples and compare" | tested (gate SWMM: 14 of 15 EPA models equal at every step; Example1 a build difference) |
 | `engine/design_year.py` | the 2051 and 2061 designs of a scenario at the 2056 peak: pipes and km over the d/D limit, surcharged | Tools menu "Checks → Design-year check" | tested (equal to W18 on all 8 cases) |
+
+## Planned: W18 tools not yet in the app (each with what it needs; source list `_SETUP/TOOLKIT_W18_deliverables.md`)
+
+| W18 script | What it does | Planned UI place | Needs |
+|---|---|---|---|
+| `final_boq.py` | bill of quantities and network capital cost of the 12 designs | Tools "Quantities → BOQ and network cost (Excel)" | the team's rates workbook on W: (team data: read in place at run time, never copied into the repo) |
+| `final_financial.py` | CAPEX/OPEX, STP modules, TE supply of the 12 designs | Tools "Costs → Financial summary" | the same rates, `te_customers.csv`, `SC4_TE_lengths.csv` |
+| `final_station_flows.py` | people and flow at every station 2026-2061 | Stations panel "Flows by year" | W18's plot layer `W18_plots_2026_2100.shp` (local, not in git) |
+| `final_dwg.py` | DWG/DXF drawings of a scenario | File "Export drawing (DWG)" | `financial.json`; the app's DXF export covers pipes and manholes today |
+| `diagram_layout.py`, `diagram_png.py` | flow schematics in the R7 form | Tools "Schematic of the stations" | the station flows above |
+| `nws_loads.py`, `map_not_carried.py` | loads on plots and manholes; the flow the network does not carry | Loads menu | the plot layer and the bridge's W17 inventory (local) |
+| `te_sc4_network.py` | treated effluent network of SC4 | Tools "TE network" | the S2/S3 TE shapefiles (local) |
+| `reduce_stations.py` | fewer stations by the engineer's caps | Design "Fewer stations…" | runs on the port's split; next after the UI |
