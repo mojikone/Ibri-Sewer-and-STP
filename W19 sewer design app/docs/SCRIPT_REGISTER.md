@@ -18,3 +18,6 @@ script with no UI place is not done. Status: `tested` (gate or unit test green) 
 | `engine/design.py` | pass-by-pass sizing at the current size's Table 11 gradient | Design menu "Size pipes (keep layout)" | tested on all 12 cases (identical sizes) |
 | `engine/peaking.py` | Extreme Flow Setup table, Peltier, Merrimack | Settings "Peaking table" | tested (G201 p71-72) |
 | `referee/golden.py`, `referee/sewergems.py` | a case against W18 at the spec's tolerances; against SewerGEMS's saved export | Referee panel "Compare with W18 / SewerGEMS" (task 5) | tested (gate P1A) |
+| `model/project.py` | scenarios = a W18 case + edits; instant re-run (laid gradient, inverts held, needs-relay flag downstream); undo/redo; copy; compare; profile | the whole UI: Scenarios bar, property grid edits, Undo/Redo, Compare, Profile | tested (API tests) |
+| `api/exports.py` | GeoPackage (pipes + manholes with results, EPSG:32640) and DXF (one layer per size) | File menu "Export GPKG / DXF / CSV" | tested (API tests) |
+| `api/tools.py` | the tools menu: checks, self-cleansing list, stations, quantities, design chain, SewerGEMS comparison | Tools menu (one entry each) | tested (API tests; design chain via gate P0) |
