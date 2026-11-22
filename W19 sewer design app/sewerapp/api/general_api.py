@@ -91,6 +91,46 @@ async def import_inp(file: UploadFile = File(...)):
     return _info(pid)
 
 
+@router.post("/gis/fields")
+async def gis_fields(file: UploadFile = File(...)):
+    """The fields of an uploaded layer (GeoPackage, GeoJSON or zipped shapefile), for the field-mapping dialog."""
+    from sewerapp.io import gis_import
+    f = os.path.join(tempfile.mkdtemp(), file.filename or "layer"); open(f, "wb").write(await file.read())
+    try: return gis_import.fields(f)
+    except Exception as e: raise HTTPException(400, f"not a readable layer: {e}")
+
+
+@router.post("/projects/import_gis")
+async def import_gis(nodes: UploadFile = File(...), links: UploadFile = File(...), mapping: str = "{}", name: str = "Imported network",
+                     snap_m: float = 1.0):
+    """A network from a node layer and a link layer with a field mapping {"nodes": {...}, "links": {...}}."""
+    import json as _json
+    from sewerapp.io import gis_import
+    d = tempfile.mkdtemp(); fn = os.path.join(d, "n_" + (nodes.filename or "n")); fl = os.path.join(d, "l_" + (links.filename or "l"))
+    open(fn, "wb").write(await nodes.read()); open(fl, "wb").write(await links.read())
+    try:
+        m = _json.loads(mapping or "{}")
+        p = gis_import.import_layers(fn, fl, m.get("nodes"), m.get("links"), name=name, snap_m=snap_m)
+    except Exception as e: raise HTTPException(400, str(e))
+    with _lock: pid = _open(p)
+    return _info(pid)
+
+
+@router.get("/projects/{pid}/export.dxf")
+def export_dxf(pid: str, sid: str = "base"):
+    from sewerapp.io import gis_import
+    s = _s(pid)
+    return Response(gis_import.dxf_bytes(s.model(sid)), media_type="application/dxf", headers={"Content-Disposition": 'attachment; filename="network.dxf"'})
+
+
+@router.get("/projects/{pid}/export.csv")
+def export_csv(pid: str, sid: str = "base"):
+    s = _s(pid)
+    with _lock: res, _ = s.solve(sid)
+    p = s.model(sid); t = p.links.drop(columns=["coords"]).join(res.drop(columns=[c for c in ("kind", "dn_mm", "length_m") if c in res.columns]), how="left") if res is not None else p.links.drop(columns=["coords"])
+    return Response(t.to_csv(index_label="id"), media_type="text/csv", headers={"Content-Disposition": 'attachment; filename="links.csv"'})
+
+
 @router.get("/projects/{pid}/export.inp")
 def export_inp(pid: str, sid: str = "base"):
     from sewerapp.io import swmm_inp
@@ -246,6 +286,12 @@ GTOOLS = [
          endpoint="POST /api/g/projects/{pid}/scenarios/{sid}/storm", script="engine/storm.py"),
     dict(name="export_inp", menu="File", label="Export as an EPA SWMM 5 input file (.inp)",
          endpoint="GET /api/g/projects/{pid}/export.inp?sid={sid}", script="io/swmm_inp.py"),
+    dict(name="import_gis", menu="File", label="Import a network from GIS layers (nodes + links, field mapping)",
+         endpoint="POST /api/g/projects/import_gis", script="io/gis_import.py"),
+    dict(name="export_dxf", menu="File", label="Export a DXF drawing (links by size, nodes, labels)",
+         endpoint="GET /api/g/projects/{pid}/export.dxf?sid={sid}", script="io/gis_import.py"),
+    dict(name="export_csv", menu="File", label="Export links and results as CSV",
+         endpoint="GET /api/g/projects/{pid}/export.csv?sid={sid}", script="api/general_api.py"),
     dict(name="checks", menu="Checks", label="Failing links: over the d/D limit, over v max, surcharged, flat or adverse",
          endpoint="GET /api/g/projects/{pid}/scenarios/{sid}/checks", script="engine/steady.py"),
 ]

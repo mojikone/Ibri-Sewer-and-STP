@@ -24,6 +24,7 @@ markers = [
   "gate_g1: general projects reproduce W18 and round-trip the file",
   "gate_g3: general design engine against W18",
   "gate_g4: stormwater through the general model",
+  "gate_g5: import and export",
   "gate_swmm: stormwater engine against EPA SWMM reference results",
   "live: calls the Claude API (needs ANTHROPIC_API_KEY, spends tokens)",
 ]
