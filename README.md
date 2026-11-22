@@ -92,6 +92,14 @@ becomes real.
 
 | Date | Update |
 |---|---|
+| 2026-11-22 (W19 batch 1) | **The editor keeps your work across a reload or restart and edits like a spreadsheet.**
+- **Reload and restart:** a page reload reopens the project, scenario and view. The app snapshots each open project to `W19…/work/sessions`, so a restart finds it too; SC1-2056's 23 scenarios come back in 9 s.
+- **Tables:** double-click a cell to edit; paste columns from Excel as one undo step, with invert changes carrying the pipe ends.
+- **Trace:** upstream or downstream with sums (length, load, flow, the farthest manhole), and a profile from it.
+- **Box select:** Shift+drag selects pipes, Ctrl+drag selects nodes.
+- **Reference layers:** GeoPackage, GeoJSON, zipped shapefile or DXF drawn under the network.
+
+126 tests pass. |
 | 2026-11-22 (W19 profile) | **The profile runs along any route the engineer picks, with what joins each manhole.**
 - **Route:** from a manhole or pipe down to the outfall, as before, or to any manhole or pipe through via points. It follows the shortest path through the network in either direction, and is typed or clicked on the map.
 - **Map link:** the route is lit on the map, and one cursor follows on map and profile, with a readout of levels, depth, cover, flow and d/D.
