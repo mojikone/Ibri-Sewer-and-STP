@@ -99,3 +99,15 @@ def test_ibri_sample_opens_edits_and_profiles():
     assert not C.get(f"/api/g/projects/{pid}/scenarios/{sc}/results").json()["links"]["P1-P151"]["over_limit"]
     p = C.get(f"/api/g/projects/{pid}/scenarios/base/profile", params=dict(start="P4L8-M38")).json()
     assert len(p) > 3 and all(x["inv0"] < x["ground0"] for x in p)
+
+
+def test_design_endpoint_sizes_lays_and_undoes(built):
+    ed(built, "base", op="set_load", set="design", node="MH1", value=5000.0)
+    before = C.get(f"/api/g/projects/{built}/scenarios/base/checks").json()
+    assert any(r["over_limit"] for r in before["rows"])                    # DN200 cannot carry it
+    d = C.post(f"/api/g/projects/{built}/scenarios/base/design").json()
+    assert d["report"]["sizes_changed"] >= 1 and d["summary"]["over_limit"] == 0
+    assert C.get(f"/api/g/projects/{built}/scenarios/base/checks").json()["summary"]["over_limit"] == 0
+    C.post(f"/api/g/projects/{built}/scenarios/base/undo")
+    assert C.get(f"/api/g/projects/{built}/scenarios/base/results").json()["summary"]["over_limit"] >= 1
+    assert [t["name"] for t in C.get("/api/g/tools").json()] == ["design", "checks"]

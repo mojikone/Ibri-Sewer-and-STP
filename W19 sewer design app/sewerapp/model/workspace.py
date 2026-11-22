@@ -10,7 +10,8 @@ Edit ops (dicts with "op"):
   move_node  {id, x, y}
   split_link {id, x, y}                                                        a new manhole on the link, two links
   set_load   {set, node, value}                                                unit load, m3/d
-  set_setting {path: "a.b.c", value}"""
+  set_setting {path: "a.b.c", value}
+  design     {load_set?}   automated design: sizes and inverts of every conduit (engine/design_general.py); undoable"""
 import copy, itertools, math
 import numpy as np, pandas as pd
 from sewerapp.engine import steady
@@ -111,6 +112,11 @@ def apply(p, e):
         for k in keys[:-1]: d = d[k]
         if keys[-1] not in d: raise ValueError(f"no setting {e['path']}")
         d[keys[-1]] = e["value"]; return False
+    if op == "design":
+        from sewerapp.engine import design_general
+        q, rep = design_general.design(p, e.get("load_set"))
+        p.links, p.nodes = q.links, q.nodes; e["report"] = rep
+        return True
     raise ValueError(f"unknown edit op {op}")
 
 

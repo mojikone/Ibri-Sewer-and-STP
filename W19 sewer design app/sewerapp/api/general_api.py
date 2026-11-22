@@ -173,6 +173,43 @@ def edit(pid: str, sid: str, e: Edit):
     return dict(summary=clean(summ), structural=structural, scenario=s.scenarios[sid].to_dict())
 
 
+@router.post("/projects/{pid}/scenarios/{sid}/design")
+def run_design(pid: str, sid: str, load_set: str | None = None):
+    """Automated design into the scenario (undoable): sizes by the d/D limit at the size's minimum gradient, then the
+    re-lay with crowns matched and minimum cover."""
+    s = _s(pid)
+    with _lock:
+        e = dict(op="design", load_set=load_set)
+        try: s.edit(sid, e)
+        except (ValueError, KeyError, RuntimeError) as x: raise HTTPException(400, str(x))
+        _, summ = s.solve(sid)
+    return dict(summary=clean(summ), report=clean(s.scenarios[sid].edits[-1].get("report", {})), structural=True,
+                scenario=s.scenarios[sid].to_dict())
+
+
+@router.get("/tools")
+def g_tools():
+    return GTOOLS
+
+
+GTOOLS = [
+    dict(name="design", menu="Design", label="Design: size every conduit and lay it (crowns matched, minimum cover)",
+         endpoint="POST /api/g/projects/{pid}/scenarios/{sid}/design", script="engine/design_general.py"),
+    dict(name="checks", menu="Checks", label="Failing links: over the d/D limit, over v max, surcharged, flat or adverse",
+         endpoint="GET /api/g/projects/{pid}/scenarios/{sid}/checks", script="engine/steady.py"),
+]
+
+
+@router.get("/projects/{pid}/scenarios/{sid}/checks")
+def checks(pid: str, sid: str):
+    s = _s(pid)
+    with _lock: res, summ = s.solve(sid)
+    if res is None: return dict(summary=clean(summ), rows=[])
+    flags = [c for c in ("over_limit", "over_vmax", "surcharged", "negative_slope", "under_vmin") if c in res.columns]
+    bad = res[res[flags].any(axis=1)]
+    return dict(summary=clean(summ), rows=clean([dict(id=i, **r) for i, r in zip(bad.index, bad[["dn_mm", "q_ls", "v_ms", "d_over_D", "limit", "s_pc"] + flags].round(4).to_dict("records"))]))
+
+
 @router.post("/projects/{pid}/scenarios/{sid}/undo")
 def undo(pid: str, sid: str):
     s = _s(pid)
