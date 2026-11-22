@@ -82,11 +82,12 @@ The Ibri W18 viewer of phase 1B (the 12 frozen designs with their W18 tools) is 
 | 1B App and assistant | **passed** 2026-11-21 (live assistant test passed with the key) | `python -m pytest tests/api tests/e2e`; `-m live` with the key |
 | Stormwater (SWMM) | 12 of 15 EPA models equal at every step of every period; extran8a and extran9 equal on their common periods (this build writes one more final period); Example1 up to 0.68 % off. Inputs identical to EPA's, so the cause is the engine build | `python -m pytest -m gate_swmm` |
 | G1-G6 the general app | **passed** 2026-11-22 (see the table above) | `python -m pytest tests/general tests/e2e` |
-| G7 SewerGEMS models with all scenarios | app side passed; bridge job 100 queued, runs when the VM watcher is started | `python -m pytest -m gate_g7` |
+| G7 SewerGEMS models with all scenarios | **passed** 2026-11-22: the SC1-2056 referee model's 23 scenarios exported by bridge job 101 (490 s) and opened in the app in 5.4 s with SewerGEMS's stored results | `python -m pytest -m gate_g7` |
 
 **Not done yet** (approved, open):
-- SewerGEMS models: the export job has not run yet (the watcher in the VM is not running); an opened export shows
-  SewerGEMS's stored results but cannot be re-solved by the app until the job also exports the loads;
+- SewerGEMS models: an opened export shows SewerGEMS's stored results but cannot be re-solved by the app until the
+  export job also writes the loads; to export another model, set `$src` and `$tag` in `referee/jobs/100_w19_export_scenarios.ps1`
+  and drop it into `D:\VBOXridge\jobs` with the watcher running;
 - EPANET `.inp` (water distribution): not started;
 - the hydraulics of pumps, wet wells and force mains (a pump passes its flow on; no pump curve or head is solved);
   GVF backwater; rational-method storm design and inlet capture;

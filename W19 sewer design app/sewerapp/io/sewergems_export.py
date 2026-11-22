@@ -48,10 +48,10 @@ def load(folder, name="SewerGEMS model", crs=None):
     for r in sc.itertuples():
         c, _ = _read(folder, r.file); L = link_table(c); edits = []
         common = L.index.intersection(p.links.index)
-        for field in ("dn_mm", "up_inv", "dn_inv"):
+        for field in ("dn_mm", "inside_mm", "up_inv", "dn_inv"):   # one vectorised edit per field that differs
             diff = common[(L.loc[common, field] - p.links.loc[common, field]).abs() > 1e-9]
-            for v, ids in pd.Series(diff, index=diff).groupby(L.loc[diff, field]).groups.items() if len(diff) else []:
-                edits.append(dict(op="set", table="links", ids=list(ids), field=field, value=float(v)))
+            if len(diff): edits.append(dict(op="set_values", table="links", field=field,
+                                            values={k: float(x) for k, x in L.loc[diff, field].items()}))
         act = c[c.active == True]
         D = act.diameter_mm.values / 1000.0
         res = pd.DataFrame(dict(q_ls=act.flow_m3d.values / 86.4, v_ms=act.velocity_ms.values,

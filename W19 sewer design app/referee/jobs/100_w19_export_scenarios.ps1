@@ -23,7 +23,7 @@ try {
     $m.SetActiveScenario($m.Scenarios.Element($s.Id))
     if ($run) { [Scen]::Run($m, $s.Id, $log) }
     [Scen]::Export($m, $out, $file, $log)
-    $log.WriteLine("  scenario {0} '{1}' -> {2}" -f $s.Id, $s.Label, $file)
+    $log.WriteLine(("  scenario {0} '{1}' -> {2}" -f $s.Id, $s.Label, $file))   # parentheses: -f inside a call's arguments
   }
   [IO.File]::WriteAllLines("$out\scenarios.csv", $rows)
   $m.Close()

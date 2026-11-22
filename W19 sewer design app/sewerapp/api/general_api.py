@@ -399,7 +399,7 @@ def open_sewergems_folder(folder, name, crs=None):
         s.scenarios["base"].name = scen[0]["label"]; s.external["base"] = res[scen[0]["label"]]
         for sc in scen[1:]:
             c = s.copy_scenario("base", sc["label"])
-            for e in sc["edits"]: s.edit(c.id, e)
+            s.edit_many(c.id, sc["edits"])
             s.external[c.id] = res[sc["label"]]
     return pid
 

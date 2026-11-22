@@ -3,6 +3,7 @@ list of edits (by element id), with undo and redo. Every edit re-solves at once 
 
 Edit ops (dicts with "op"):
   set        {table: nodes|links|catchments, ids: [...], field, value}         one field on one or many elements (bulk)
+  set_values {table, field, values: {id: value}}                             one field, a value per element (imports)
   add_node   {id?, kind, x, y, ground?, invert?}                               ground 0 and invert ground - 1.5 m by default
   add_link   {id?, kind, from_node, to_node, dn_mm?, length_m?, up_inv?, dn_inv?, coords?}
   add_catchment {id?, outlet, area_ha, imperv_pc, width_m, slope_pc, coords?}
@@ -59,6 +60,16 @@ def apply(p, e):
                 if v not in allowed: raise ValueError(f"kind must be one of {allowed}")
             t.loc[ids, e["field"]] = v
         if e["table"] == "nodes" and e["field"] in ("x", "y"): _relength(p, ids); return True
+        return False
+    if op == "set_values":
+        t = getattr(p, e["table"]); v = pd.Series(e["values"], dtype=float if e["field"] != "kind" else object)
+        missing = v.index.difference(t.index)
+        if len(missing): raise ValueError(f"no {e['table'][:-1]} {list(missing[:3])}")
+        if e["field"] not in t.columns: raise ValueError(f"{e['table']} has no field {e['field']}")
+        t.loc[v.index, e["field"]] = v.values
+        if e["table"] == "links" and e["field"] == "dn_mm":
+            ins = [p.inside_of(x) for x in v.values]
+            t.loc[v.index, "inside_mm"] = [a if a == a else float(x) for a, x in zip(ins, v.values)]
         return False
     if op == "add_node":
         nid = str(e.get("id") or _new_id(p.nodes, {"outfall": "O-", "wetwell": "WW-"}.get(e.get("kind", "manhole"), "MH-")))
@@ -187,6 +198,17 @@ class Session:
         structural = apply(trial, e)                               # validates: raises before anything is recorded
         s.edits.append(e); s.redo = []
         chain, c = [], s                                           # the validated copy is the new state: no replay
+        while c: chain.append(c); c = self.scenarios.get(c.parent) if c.parent else None
+        self._cache = dict(model_key=tuple((c.id, len(c.edits)) for c in chain), model=trial)
+        return structural
+
+    def edit_many(self, sid, edits):
+        """Several edits validated on ONE copy (opening a model with many scenarios), each still its own undo step."""
+        if not edits: return False
+        s = self.scenarios[sid]; trial = self.model(sid).copy(); structural = False
+        for e in edits: structural = apply(trial, e) or structural
+        s.edits.extend(edits); s.redo = []
+        chain, c = [], s
         while c: chain.append(c); c = self.scenarios.get(c.parent) if c.parent else None
         self._cache = dict(model_key=tuple((c.id, len(c.edits)) for c in chain), model=trial)
         return structural
