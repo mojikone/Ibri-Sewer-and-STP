@@ -52,7 +52,7 @@ def test_exports():
     assert C.get("/api/scenarios/SC1-2056/export.csv").text.startswith("label,")
 
 
-@pytest.mark.parametrize("tool", ["checks", "selfcleansing", "stations", "quantities", "compare_sewergems", "swmm_examples"])
+@pytest.mark.parametrize("tool", ["checks", "selfcleansing", "stations", "quantities", "compare_sewergems", "swmm_examples", "design_year_check"])
 def test_quick_tools(tool):
     r = C.post(f"/api/tools/{tool}", params=dict(sid="SC1-2056")); assert r.status_code == 200, r.text
     if tool == "compare_sewergems": assert r.json()["pc_within_0_1"] == 100.0

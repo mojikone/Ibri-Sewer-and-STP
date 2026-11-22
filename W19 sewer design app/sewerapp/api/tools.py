@@ -10,6 +10,8 @@ REGISTER = [
          script="engine/analysis.py", seconds="<1"),
     dict(name="selfcleansing", menu="Checks", label="Self-cleansing list: above DN200 under 0.75 m/s at the 2031 peak",
          script="engine/analysis.py (rule of w18port/final_selfcleansing.py)", seconds="<1"),
+    dict(name="design_year_check", menu="Checks", label="Design-year check: the 2051 and 2061 designs at the 2056 peak",
+         script="engine/design_year.py (port of W18 py/design_year_check.py)", seconds="<2"),
     dict(name="stations", menu="Stations", label="Pumping and lift stations: duty, force main, head, kW, MWh",
          script="w18port/final_products.py", seconds="<1"),
     dict(name="quantities", menu="Stations", label="Quantities of the design (km, stations, energy, deepest)",
@@ -46,6 +48,11 @@ def _swmm_examples():
 def run(name, project, scenario):
     if name not in {t["name"] for t in REGISTER}: raise KeyError(name)
     if name == "swmm_examples": return _swmm_examples()
+    if name == "design_year_check":
+        from sewerapp.engine import design_year
+        sc = scenario.case.case.split("-")[0]
+        return dict(rows=[dict(design=f"{sc}-{y}", at_peak_of=f"{sc}-2056", **design_year.check(f"{sc}-{y}", f"{sc}-2056"))
+                          for y in ("2051", "2061")])
     res, summ = project.results(scenario.id)
     if name == "checks":
         bad = res[res.over_limit | res.over_3ms | res.under075]
