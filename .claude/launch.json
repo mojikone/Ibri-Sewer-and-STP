@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "w19-sewer-app",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "sewerapp.api"],
+      "cwd": "W19 sewer design app",
+      "port": 8765
+    }
+  ]
+}

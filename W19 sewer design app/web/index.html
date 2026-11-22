@@ -1,1 +1,112 @@
-<!doctype html><title>Sewer design app</title>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sewer design app</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header id="topbar">
+  <div class="grp">
+    <label for="scenario-select" class="lbl">Scenario</label>
+    <select id="scenario-select" data-testid="scenario-select"></select>
+    <button id="copy-btn" data-testid="copy-btn" title="Copy the selected scenario to an editable what-if">Copy to what-if</button>
+    <button id="undo-btn" data-testid="undo-btn" disabled>Undo</button>
+    <button id="redo-btn" data-testid="redo-btn" disabled>Redo</button>
+  </div>
+  <div class="grp">
+    <select id="compare-select" data-testid="compare-select" title="Compare the selected scenario with another"><option value="">Compare with…</option></select>
+    <div class="menu" id="export-menu">
+      <button id="export-btn" data-testid="export-btn">Export ▾</button>
+      <div class="menu-list" id="export-list" hidden>
+        <a id="export-gpkg" data-testid="export-gpkg" href="#" download>GeoPackage (.gpkg)</a>
+        <a id="export-dxf" data-testid="export-dxf" href="#" download>DXF (.dxf)</a>
+        <a id="export-csv" data-testid="export-csv" href="#" download>Pipe table (.csv)</a>
+      </div>
+    </div>
+    <div class="menu" id="tools-wrap">
+      <button id="tools-menu" data-testid="tools-menu">Tools ▾</button>
+      <div class="menu-list" id="tools-list" hidden></div>
+    </div>
+  </div>
+  <div class="grp">
+    <label for="color-by" class="lbl">Colour by</label>
+    <select id="color-by" data-testid="color-by">
+      <option value="dn_mm">size (DN)</option>
+      <option value="v_ms">velocity (design year)</option>
+      <option value="v2031_ms">velocity at 2031</option>
+      <option value="d_over_D">d/D</option>
+      <option value="needs_relay">needs re-lay</option>
+      <option value="failing">failing</option>
+    </select>
+    <label class="chk"><input type="checkbox" id="basemap-toggle" data-testid="basemap-toggle" checked> OSM basemap</label>
+  </div>
+  <div id="status-line" data-testid="status-line" aria-live="polite">loading…</div>
+</header>
+
+<main id="mid">
+  <section id="mapwrap">
+    <div id="map"></div>
+    <div id="legend" data-testid="legend"></div>
+    <div id="maphint">Click a pipe · Shift+click or Shift+drag adds to the selection</div>
+    <div id="loading" data-testid="loading">Loading network…</div>
+  </section>
+  <aside id="props-panel">
+    <h2>Properties</h2>
+    <div id="readonly-hint" data-testid="readonly-hint" hidden>Read-only W18 case. Copy to what-if to edit.</div>
+    <div id="props" data-testid="props"><p class="muted">Select a pipe on the map or in the Results table.</p></div>
+  </aside>
+</main>
+
+<section id="bottom">
+  <nav id="tabs">
+    <button class="tab active" id="tab-results" data-testid="tab-results" data-pane="pane-results">Results</button>
+    <button class="tab" id="tab-profile" data-testid="tab-profile" data-pane="pane-profile">Profile</button>
+    <button class="tab" id="tab-tool" data-testid="tab-tool" data-pane="pane-tool">Tool output</button>
+    <button class="tab" id="tab-compare" data-testid="tab-compare" data-pane="pane-compare">Compare</button>
+    <button class="tab" id="tab-assistant" data-testid="tab-assistant" data-pane="pane-assistant">Assistant</button>
+  </nav>
+  <div id="panes">
+    <div class="pane active" id="pane-results">
+      <div class="pane-bar">
+        <input id="results-filter" data-testid="results-filter" type="search" placeholder="Filter by label…">
+        <span id="results-count" class="muted"></span>
+        <button id="results-more" data-testid="results-more">Show 200 more</button>
+      </div>
+      <div class="scroll"><table class="grid" id="results-table" data-testid="results-table"><thead></thead><tbody></tbody></table></div>
+    </div>
+    <div class="pane" id="pane-profile">
+      <div class="pane-bar">
+        <label>From manhole <input id="profile-start" data-testid="profile-start" size="14"></label>
+        <label>to <input id="profile-end" data-testid="profile-end" size="14" placeholder="outfall"></label>
+        <button id="profile-run" data-testid="profile-run">Profile from selected pipe to outfall</button>
+        <span id="profile-info" class="muted"></span>
+      </div>
+      <div id="profile-wrap"><svg id="profile-svg" data-testid="profile-svg" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    </div>
+    <div class="pane" id="pane-tool">
+      <div class="pane-bar"><b id="tool-title">No tool run yet</b><span id="tool-meta" class="muted"></span></div>
+      <div class="scroll" id="tool-output" data-testid="tool-output"></div>
+    </div>
+    <div class="pane" id="pane-compare">
+      <div class="pane-bar"><b id="compare-title">Choose a scenario in "Compare with…"</b></div>
+      <div class="scroll" id="compare-output" data-testid="compare-output"></div>
+    </div>
+    <div class="pane" id="pane-assistant">
+      <div id="assistant-status" data-testid="assistant-status" class="muted"></div>
+      <div id="assistant-log" data-testid="assistant-log"></div>
+      <form id="assistant-form">
+        <input id="assistant-input" data-testid="assistant-input" autocomplete="off" placeholder="Ask about this scenario…">
+        <button id="assistant-send" data-testid="assistant-send" type="submit">Send</button>
+      </form>
+    </div>
+  </div>
+</section>
+<div id="busy" data-testid="busy" hidden><div class="box"><div class="spin"></div><span id="busy-text">Working…</span></div></div>
+<div id="toast" data-testid="toast" hidden></div>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

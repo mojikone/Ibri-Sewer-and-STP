@@ -37,3 +37,9 @@ script with no UI place is not done. Status: `tested` (gate or unit test green) 
 | `nws_loads.py`, `map_not_carried.py` | loads on plots and manholes; the flow the network does not carry | Loads menu | the plot layer and the bridge's W17 inventory (local) |
 | `te_sc4_network.py` | treated effluent network of SC4 | Tools "TE network" | the S2/S3 TE shapefiles (local) |
 | `reduce_stations.py` | fewer stations by the engineer's caps | Design "Fewer stations…" | runs on the port's split; next after the UI |
+
+## The interface (web/)
+
+| Part | What it does | Tested by |
+|---|---|---|
+| `web/index.html`, `web/app.js`, `web/style.css` | map (MapLibre, OSM basemap toggle), colour by size / velocity / v2031 / d/D / re-lay / failing, click and shift-select, property grid with bulk edit in what-ifs, scenarios bar, copy, undo/redo, compare, export menu, tools menu from `/api/tools`, results table, profile (ground, invert, crown, water; re-lay in orange), assistant pane | `tests/e2e/test_e2e.py` (Playwright, 15 tests) |
