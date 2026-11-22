@@ -329,7 +329,8 @@ function updateStatus() {
   const bad = (s.over_limit || 0) + (s.over_vmax || 0) + (s.surcharged || 0) + (s.negative_slope || 0);
   el.innerHTML = `solved ${s.links} links in ${num(s.seconds, 3)} s &middot; ${num(s.km, 2)} km &middot; over d/D limit <b class="${s.over_limit ? "bad" : ""}">${s.over_limit ?? 0}</b>` +
     ` &middot; over v max <b class="${s.over_vmax ? "bad" : ""}">${s.over_vmax ?? 0}</b> &middot; surcharged <b class="${s.surcharged ? "bad" : ""}">${s.surcharged ?? 0}</b>` +
-    ` &middot; ${num(s.km_under_vmin, 2)} km under v min` + (s.negative_slope ? ` &middot; <span class="bad">${s.negative_slope} adverse</span>` : "") +
+    (s.km_under_vmin == null ? ` &middot; <span class="muted" title="Choose a check load set in Settings, Flows">self-cleansing not checked</span>`
+                             : ` &middot; ${num(s.km_under_vmin, 2)} km under v min at ${esc(s.check_set)}`) + (s.negative_slope ? ` &middot; <span class="bad">${s.negative_slope} adverse</span>` : "") +
     (bad === 0 && s.links ? ` <span class="ok">&#10003;</span>` : "");
 }
 function updateButtons() {
@@ -538,7 +539,7 @@ function renderProps() {
       if (inp.dataset.kind === "load") return;
       let v = inp.type === "checkbox" ? inp.checked : inp.value;
       if (ty === "num" || ty === "dn") { if (v === "") return; v = Number(v); if (!isFinite(v)) return; }
-      const cur = val(field); if (cur !== undefined && cur === v) return;
+      const cur = val(field); if (cur !== undefined && (cur === v || (typeof cur === "number" && +cur.toFixed(4) === v))) return;   // unchanged as shown
       if (inp._sent === v) return; inp._sent = v;
       const ids = state.sel.ids.slice(), tb = state.sel.table;
       enqueue(() => setField(tb, ids, field, v));
@@ -556,7 +557,7 @@ function renderProps() {
   renderResultsBlock();
 }
 function control(table, k, ty, v) {
-  const a = `id="prop-${k}" data-testid="prop-${k}" data-field="${k}" data-type="${ty}"`, vs = v === undefined ? "" : esc(v ?? "");
+  const a = `id="prop-${k}" data-testid="prop-${k}" data-field="${k}" data-type="${ty}"`, vs = v === undefined ? "" : esc(typeof v === "number" ? +v.toFixed(4) : (v ?? ""));   // shown to 0.1 mm; sent only if edited
   const ph = v === undefined ? ` placeholder="mixed"` : "";
   if (ty === "ro") return `<input type="text" ${a} value="${vs}"${ph} readonly>`;
   if (ty === "kind") {
@@ -619,7 +620,7 @@ function renderTable(kind) {
   const selTable = kind === "results" || kind === "toolout" ? "links" : kind;
   const sel = new Set(state.sel.table === selTable ? state.sel.ids : []);
   const cols = colsOf(kind);
-  tbl.innerHTML = `<thead><tr>${cols.map(c => `<th data-col="${c}" class="${c === k ? "sorted" + (d < 0 ? " desc" : "") : ""}">${c}</th>`).join("")}</tr></thead><tbody>` +
+  tbl.innerHTML = `<thead><tr>${cols.map(c => `<th data-col="${c}" class="${c === k ? "sorted" + (d < 0 ? " desc" : "") : ""}">${kind === "toolout" ? esc(REPORT_LABEL[c] || c) : c}</th>`).join("")}</tr></thead><tbody>` +
     slice.map(r => `<tr data-id="${esc(r.id)}" class="${sel.has(String(r.id)) ? "sel" : ""}">${cols.map(c => {
       const v = r[c]; return `<td class="${c === "flags" ? "flag" : ""}">${esc(typeof v === "number" ? +v.toFixed(4) : v)}</td>`;
     }).join("")}</tr>`).join("") + `</tbody>`;
@@ -832,7 +833,8 @@ function wireRain(host) {
     if (R.mode === "idf") { const s = rs.slice().sort((a, b) => a[0] - b[0]); rain = { step_min: R.step_min, duration_min: R.duration_min, idf: { durations_min: s.map(r => r[0]), intensities: s.map(r => r[1]) } }; }
     else rain = { step_min: R.step_min, series: rs.slice().sort((a, b) => a[0] - b[0]) };
     $("#rain-msg").textContent = "";
-    enqueue(() => exec({ op: "set_rain", rain }));
+    enqueue(async () => { await exec({ op: "set_rain", rain });
+      toast(`Rain applied: ${R.mode === "idf" ? "design storm from an IDF table" : "time series"} of ${rs.length} rows. Run it with Tools, Run on EPA SWMM 5.`); });
   };
 }
 
@@ -880,6 +882,11 @@ async function saveBlob(resp, fallback) {
   const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = mt ? mt[1] : fallback;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
+const REPORT_LABEL = {                      // plain names for the keys a tool returns (the data-k attribute keeps the key)
+  pc_flow_within_0_1: "flows within 0.1 % of SewerGEMS (%)", largest_flow_pc: "largest flow difference (%)",
+  dv_p05: "velocity difference, 5th percentile (m/s)", dv_p95: "velocity difference, 95th percentile (m/s)",
+  q_peak: "peak flow (m³/s)", v_peak: "peak velocity (m/s)", depth_peak: "peak depth (m)", capacity_peak: "peak fullness (depth/height)",
+};
 function renderToolOut() {
   const o = state.toolout, title = $("#toolout-title"), rep = $("#toolout-report");
   if (!o) { title.textContent = "No tool run yet. Use the Tools menu."; rep.innerHTML = ""; $("#tbl-toolout").innerHTML = ""; return; }
@@ -889,7 +896,7 @@ function renderToolOut() {
     const r = o.report, flat = [];
     const walk = (obj, pre) => { for (const [k, v] of Object.entries(obj)) { if (k === "sizes") continue; if (v && typeof v === "object" && !Array.isArray(v)) walk(v, pre + k + "."); else flat.push([pre + k, v]); } };
     walk(r, "");
-    h += `<div class="kv" data-testid="${o.storm ? "storm-report" : "design-report"}">` + flat.map(([k, v]) => `<span>${esc(k.replace(/_/g, " "))}: <b data-k="${esc(k)}">${esc(typeof v === "number" ? +v.toFixed(4) : Array.isArray(v) ? v.join(", ") : v)}</b></span>`).join("") + `</div>`;
+    h += `<div class="kv" data-testid="${o.storm ? "storm-report" : "design-report"}">` + flat.map(([k, v]) => `<span>${esc(REPORT_LABEL[k] || k.replace(/_/g, " "))}: <b data-k="${esc(k)}">${esc(typeof v === "number" ? +v.toFixed(4) : Array.isArray(v) ? v.join(", ") : v)}</b></span>`).join("") + `</div>`;
     if (r.sizes && typeof r.sizes === "object") h += `<div class="muted">sizes: ${esc(JSON.stringify(r.sizes))}</div>`;
   } else {
     h += `<div class="kv" data-testid="checks-count"><span>failing links: <b>${o.rows.length}</b></span></div>`;
@@ -919,7 +926,7 @@ function asstAdd(cls, html) { const log = $("#asst-log"), d = document.createEle
 async function asstStatus() {
   try {
     const s = await jget("/assistant/status"), on = !!s.available;
-    $("#asst-status").textContent = on ? `available (${s.model})` : `not available: ${s.reason}`;
+    $("#asst-status").textContent = on ? "available (the model is chosen on the right)" : `not available: ${s.reason}`;
     $("#asst-input").disabled = $("#asst-send").disabled = !on; state.asstOn = on;
   } catch (e) { $("#asst-status").textContent = "not available: " + e.message; $("#asst-input").disabled = $("#asst-send").disabled = true; state.asstOn = false; }
 }
@@ -1116,7 +1123,7 @@ function wireUi() {
     if (e.ctrlKey && k === "z") { e.preventDefault(); $("#undo-btn").click(); }
     else if (e.ctrlKey && k === "y") { e.preventDefault(); $("#redo-btn").click(); }
     else if (k === "enter" && state.tool === "catchment") finishCatchment();
-    else if (k === "escape") { state.pipeStart = null; state.movePick = null; if (state.tool === "catchment") setTool("catchment"); setSel(null, []); }
+    else if (k === "escape") { state.pipeStart = null; state.movePick = null; if (state.tool === "catchment") setTool("catchment"); setSel(null, []); $("#hint").textContent = state.pid ? HINTS[state.tool] : ""; highlight(); }
     else if (k === "delete" && state.sel.ids.length) { const t = state.sel.table, ids = state.sel.ids.slice(); enqueue(() => deleteIds(t, ids)); }
     else if (!e.ctrlKey) { const m = { s: "select", m: "manhole", o: "outfall", w: "wetwell", p: "pipe", v: "move", c: "catchment" }[k]; if (m) setTool(m); }
   });

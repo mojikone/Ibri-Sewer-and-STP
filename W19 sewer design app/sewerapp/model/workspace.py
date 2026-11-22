@@ -155,9 +155,10 @@ class Scenario:
     def __init__(self, sid, name, parent=None, edits=None):
         self.id, self.name, self.parent = sid, name, parent
         self.edits = list(edits or []); self.redo = []
+        self.fixed = 0                          # leading edits that define the scenario (an opened model's): not undoable
 
     def to_dict(self):
-        return dict(id=self.id, name=self.name, parent=self.parent, edits=len(self.edits), can_undo=bool(self.edits),
+        return dict(id=self.id, name=self.name, parent=self.parent, edits=len(self.edits), can_undo=len(self.edits) > self.fixed,
                     can_redo=bool(self.redo))
 
 
@@ -202,12 +203,14 @@ class Session:
         self._cache = dict(model_key=tuple((c.id, len(c.edits)) for c in chain), model=trial)
         return structural
 
-    def edit_many(self, sid, edits):
-        """Several edits validated on ONE copy (opening a model with many scenarios), each still its own undo step."""
+    def edit_many(self, sid, edits, fixed=False):
+        """Several edits validated on ONE copy (opening a model with many scenarios), each still its own undo step;
+        fixed=True makes them the scenario's definition, which undo never removes."""
         if not edits: return False
         s = self.scenarios[sid]; trial = self.model(sid).copy(); structural = False
         for e in edits: structural = apply(trial, e) or structural
         s.edits.extend(edits); s.redo = []
+        if fixed: s.fixed = len(s.edits)
         chain, c = [], s
         while c: chain.append(c); c = self.scenarios.get(c.parent) if c.parent else None
         self._cache = dict(model_key=tuple((c.id, len(c.edits)) for c in chain), model=trial)
@@ -215,7 +218,7 @@ class Session:
 
     def undo(self, sid):
         s = self.scenarios[sid]
-        if s.edits: s.redo.append(s.edits.pop())
+        if len(s.edits) > s.fixed: s.redo.append(s.edits.pop())
 
     def redo_(self, sid):
         s = self.scenarios[sid]

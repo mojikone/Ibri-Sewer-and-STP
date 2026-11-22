@@ -38,6 +38,9 @@ def test_open_a_sewergems_export_with_all_scenarios(export):
     sg = fixtures.read_csv("sewergems/SC1-2056/conduits_SC1-2056.csv").set_index("label")
     lab = "P1-P1"
     assert abs(a[lab]["q_ls"] - sg.flow_m3d[lab] / 86.4) < 1e-3 and b[lab]["q_ls"] < a[lab]["q_ls"]     # 2031 below the design year
+    assert not info["scenarios"][1]["can_undo"]              # the model's own scenario definition is not an undoable edit
+    r = C.post(f"/api/g/projects/{pid}/scenarios/{sid2}/undo").json()
+    assert not r["scenario"]["can_undo"] and r["scenario"]["edits"] == info["scenarios"][1]["edits"]
     dd = pd.Series({k: v["d_over_D"] for k, v in a.items()})
     assert dd.max() <= 0.655                                 # no pipe over its d/D limit in SewerGEMS's own run (W18's referee)
 

@@ -401,7 +401,7 @@ def open_sewergems_folder(folder, name, crs=None):
         for sc in scen[1:]:
             c = s.copy_scenario("base", sc["label"])
             own = [dict(op="set_setting", path="design_load", value=sc["label"])] if sc.get("has_loads") else []
-            s.edit_many(c.id, sc["edits"] + own)               # each scenario solves at its own loads
+            s.edit_many(c.id, sc["edits"] + own, fixed=True)   # each scenario solves at its own loads; not undoable
             s.external[c.id] = res[sc["label"]]
     return pid
 

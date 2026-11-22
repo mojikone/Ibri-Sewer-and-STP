@@ -364,9 +364,19 @@ def test_open_a_sewergems_export_and_read_its_stored_results(page):
     page.evaluate("window.ed.selectElement('links', 'P1-P1')")
     q2 = float(page.get_by_test_id("res-q_ls").inner_text())
     assert 0 < q2 < q1, (q1, q2)                                          # the 2031 peak is below the design year
+    expect(page.get_by_test_id("undo-btn")).to_be_disabled()             # the model's own scenario is not an undoable edit
     page.get_by_test_id("tools-btn").click(); page.get_by_test_id("tool-run-compare_stored").click(); idle(page)
     expect(page.get_by_test_id("tab-toolout")).to_have_class("tab active")
     assert int(page.locator('[data-k="links"]').first.inner_text()) > 19000
+    assert "flows within 0.1 % of SewerGEMS" in page.get_by_test_id("design-report").inner_text()
+    # a narrower window with a long project name: the toolbar wraps, the property grid stays on screen
+    page.set_viewport_size({"width": 1280, "height": 800})
+    try:
+        page.wait_for_timeout(300)
+        w = page.evaluate("[document.documentElement.scrollWidth, innerWidth, document.getElementById('props').getBoundingClientRect().right]")
+        assert w[0] == w[1] and w[2] <= w[1] + 0.5, w
+    finally:
+        page.set_viewport_size({"width": 1600, "height": 950})
     page.get_by_test_id("results-source").select_option("engine"); idle(page)
     assert page.evaluate("window.ed.state.source") == "engine"
 
