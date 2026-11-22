@@ -138,6 +138,11 @@ of git; tests that need them are skipped when absent.
 - **Property grid** from the element schema; editable fields write to the scenario's alternative, never the base.
 - **Scenarios bar**: SC1–SC4 × 2051/2056/2061, plus any what-if; run analysis or the design chain; run time shown.
 - **Results tables** with filter and sort; **profile** between two manholes (ground, invert, crown, water surface).
+- **Instant re-run** (2026-11-21):
+  - every edit re-solves flows, velocity and d/D in-process at the laid gradient, with inverts held;
+  - the edited pipe and everything downstream are flagged "needs re-lay" until the design chain is run;
+  - a size edit never silently changes a gradient.
+- **Every tested script has a named place in the UI** (`docs/SCRIPT_REGISTER.md`).
 - **Export** of the active scenario to GPKG, DXF and CSV, plus the input set the SewerGEMS rebuild job reads.
 - **Assistant pane** (below).
 - Runs on `http://127.0.0.1:8765`, opened in a browser on this PC. Not reachable from the phone (no tunnel); that is

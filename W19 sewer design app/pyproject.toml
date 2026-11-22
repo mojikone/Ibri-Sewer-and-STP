@@ -1,0 +1,17 @@
+[project]
+name = "sewerapp"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = ["numpy", "pandas", "geopandas", "shapely", "pyogrio", "pyproj", "matplotlib", "ezdxf"]
+
+[project.optional-dependencies]
+app = ["fastapi", "uvicorn", "anthropic", "httpx", "playwright", "swmm-toolkit"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+markers = [
+  "gate_p0: phase 0 gate (the W18 port reproduces W18)",
+  "gate_p1a: phase 1A gate (12 cases against W18 and SewerGEMS)",
+  "slow: runs the design chain",
+]
