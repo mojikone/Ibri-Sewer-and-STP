@@ -92,6 +92,7 @@ becomes real.
 
 | Date | Update |
 |---|---|
+| 2026-11-22 (W19 sections) | **Box and channel sections are solved, and match SewerGEMS on Block 04.** A conduit can be a box, open rectangle or trapezoid with its own n and barrels (Properties > Cross-section, SWMM files, SewerGEMS exports); the steady engine solves it by Manning at normal depth and the profile draws its rise. On Block 04's 2-year storm, run by SewerGEMS in the VM and exported by the app, the normal depth is within 0.025 % on all 185 flowing channels and the critical depth within 0.19 mm (gate `-m gate_sections`). Found: SewerGEMS's typed API reports the channels as 'BoxPipe 10 x 2.5 m' while their catalogue sizes, which its hydraulics use, run 2.5 x 10 to 3 x 19.5 m; its normal and critical depth are GVF result fields, not on the typed results. The SewerGEMS dialog can run every scenario first (Block 04: about 13 min a storm). |
 | 2026-11-22 (W19 batch 3) | **Every control checked as a user would, and what failed fixed.**
 - **Any SewerGEMS model:** opens from the app. The dialog lists the 33 models in the shared folders and writes the VM bridge job itself (a copy is opened); Majlas and Block 04 were exported and opened this way.
 - **Box and channel sections:** shown and marked not analysed, no longer zero-bore pipes with a tick.
