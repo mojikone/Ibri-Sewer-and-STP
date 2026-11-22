@@ -258,7 +258,8 @@ def test_checks_and_design_tools_with_undo(page):
     n = page.locator("#tbl-toolout tbody tr").count(); assert n > 0
     page.locator("#tbl-toolout tbody tr").first.click()
     assert page.evaluate("window.ed.state.sel.table") == "links"
-    page.get_by_test_id("tools-btn").click(); page.get_by_test_id("tool-run-design").click(); idle(page)
+    page.get_by_test_id("tools-btn").click(); page.get_by_test_id("tool-run-design").click()
+    expect(page.get_by_test_id("dlg-design")).to_be_visible(); page.get_by_test_id("des-run").click(); idle(page)   # the whole network
     assert summary(page)["over_limit"] == 0, summary(page)
     dn1 = page.evaluate("Object.values(window.ed.state.results.links).map(r => r.dn_mm)")
     assert dn1 != dn0
@@ -615,6 +616,80 @@ def test_batch1_cells_paste_trace_box_select_reference_and_reload(page, tmp_path
     assert page.evaluate("window.ed.counts()") == {"nodes": 4, "links": 3}
     page.locator('#ref-list .ref [data-act="del"]').click(); idle(page)
     assert page.evaluate("window.ed.state.refs.length") == 0 and not page.evaluate("id => !!window.ed.map.getLayer('ref-' + id + '-line')", rid)
+
+
+def test_batch2_scenarios_summary_design_quantities(page, tmp_path):
+    nid, lid = draw_network(page)
+    sel_link = lambda l: page.evaluate("id => window.ed.selectElement('links', id)", l)
+    # a copy, renamed in the scenario manager, with a bigger pipe; compared with the base
+    page.get_by_test_id("copy-btn").click(); idle(page)
+    page.get_by_test_id("scen-btn").click(); expect(page.locator("#scen-list .scrow")).to_have_count(2)
+    page.locator("#scen-list .scrow.cur [data-a=rename]").click(); page.get_by_test_id("ask-input").fill("bigger"); page.get_by_test_id("ask-ok").click(); idle(page)
+    expect(page.locator("#scen-list .scrow.cur .scname")).to_contain_text("bigger")
+    page.get_by_test_id("scen-close").click()
+    sel_link(lid[1]); page.get_by_test_id("prop-dn_mm").select_option("315"); idle(page)
+    page.get_by_test_id("scen-btn").click(); page.locator("#scen-list .scrow:not(.cur) [data-a=compare]").click(); idle(page)
+    assert page.evaluate("window.ed.state.colorBy") == "compare" and page.evaluate(f"window.ed.state.compare.change['{lid[1]}']") == "size"
+    expect(page.get_by_test_id("legend")).to_contain_text("size changed (1)")
+    assert lid[1] in page.locator("#tbl-toolout").inner_text()
+    # the summary: tiles and bar charts; a bar selects its pipes
+    page.get_by_test_id("tab-summary").click(); idle(page)
+    expect(page.locator("#ch-dn .bar")).to_have_count(2)                       # DN200 and DN315
+    page.locator("#ch-dn .bar").last.click(); assert page.evaluate("window.ed.state.sel.ids") == [lid[1]]
+    # design: a locked pipe keeps its size; the preview changes nothing until applied
+    sel_link(lid[0]); page.get_by_test_id("lock-on").click(); idle(page)
+    expect(page.get_by_test_id("lock-state")).to_have_text("locked")
+    page.evaluate("id => window.ed.selectElement('nodes', id)", nid[0])
+    ld = page.get_by_test_id("load-design"); ld.fill("5000"); ld.press("Enter"); idle(page)
+    before = page.evaluate("Object.fromEntries([...window.ed.state.model.links.values()].map(f => [f.id, f.properties.dn_mm]))")
+    page.get_by_test_id("tools-btn").click(); page.get_by_test_id("tool-run-design").click(); page.get_by_test_id("des-preview").click(); idle(page)
+    expect(page.get_by_test_id("toolout-apply")).to_be_visible()
+    assert page.evaluate("Object.fromEntries([...window.ed.state.model.links.values()].map(f => [f.id, f.properties.dn_mm]))") == before
+    page.get_by_test_id("toolout-apply").click(); idle(page)
+    after = page.evaluate("Object.fromEntries([...window.ed.state.model.links.values()].map(f => [f.id, f.properties.dn_mm]))")
+    assert after[lid[0]] == 200 and after[lid[2]] > 200, after
+    # quantities in the BOQ structure, and their CSV
+    page.get_by_test_id("tools-btn").click(); page.get_by_test_id("tool-run-quantities").click(); idle(page)
+    assert "Pipe DN" in page.locator("#tbl-toolout").inner_text() and "Manhole Type" in page.locator("#tbl-toolout").inner_text()
+    with page.expect_download() as d: page.get_by_test_id("toolout-csv").click()
+    f = str(tmp_path / "q.csv"); d.value.save_as(f); assert open(f).readline().startswith("item,band,unit,qty")
+    # the copy deleted from the manager: back on the base
+    page.get_by_test_id("scen-btn").click(); page.locator("#scen-list .scrow.cur [data-a=del]").click(); page.get_by_test_id("ask-ok").click(); idle(page)
+    assert page.evaluate("window.ed.state.sid") == "base" and page.get_by_test_id("scenario-select").locator("option").count() == 1
+    page.get_by_test_id("scen-close").click()
+
+
+def test_batch2_storm_slider_saved_route_and_assistant_on_the_map(page):
+    pid = page.evaluate("window.ed.state.pid")
+    page.set_input_files("#import-file", EXTRAN1)
+    page.wait_for_function("p => window.ed.state.pid !== p && window.ed.state.model && document.body.dataset.pending === '0'", arg=pid)
+    page.get_by_test_id("tools-btn").click(); page.get_by_test_id("tool-run-storm").click(); idle(page)
+    expect(page.get_by_test_id("storm-bar")).to_be_visible()
+    page.get_by_test_id("storm-t").fill("20"); idle(page); page.wait_for_function("window.ed.state.stormFrame && window.ed.state.stormFrame.period === 20")
+    assert page.get_by_test_id("storm-time").inner_text().startswith("t = ")
+    page.get_by_test_id("storm-peak").click(); assert page.evaluate("window.ed.state.stormFrame") is None
+    # the profile carries the storm's peak level; the route is saved with the project
+    first = page.evaluate("window.ed.state.model.linkFeat[0].properties.from_node")
+    page.get_by_test_id("tab-profile").click(); page.get_by_test_id("prof-start").fill(first); page.get_by_test_id("prof-draw").click(); idle(page)
+    page.wait_for_function("prof.rows && prof.rows.length > 0"); expect(page.locator("#profile-svg polyline.storm")).to_have_count(1)
+    page.get_by_test_id("prof-save-route").click(); page.get_by_test_id("ask-input").fill("main"); page.get_by_test_id("ask-ok").click(); idle(page)
+    assert page.evaluate("window.ed.state.routes.map(r => r.name)") == ["main"]
+    # the assistant gets the selection and the route, and its map actions are applied (reply mocked)
+    ids = page.evaluate("window.ed.state.model.linkFeat.slice(0, 2).map(f => String(f.id))")
+    page.get_by_test_id("tab-assistant").click()                    # (on the Profile tab a selection would redraw the profile from it)
+    page.evaluate("id => window.ed.selectElement('links', id)", ids[0])
+    sent = {}
+    def fake(route):
+        import json as _j
+        sent.update(_j.loads(route.request.post_data))
+        route.fulfill(status=200, content_type="application/json", body=_j.dumps(dict(reply="Here they are.", tool_calls=[], usage={},
+                      ui_actions=[dict(kind="select", table="links", ids=ids)])))
+    page.route("**/api/g/assistant", fake)
+    page.get_by_test_id("tab-assistant").click(); page.get_by_test_id("asst-input").fill("Show me these"); page.get_by_test_id("asst-input").press("Enter")
+    expect(page.get_by_test_id("asst-action")).to_contain_text("shown on the map: 2 links"); idle(page)
+    page.unroute("**/api/g/assistant")
+    assert sent["selection"] == {"table": "links", "ids": [ids[0]]} and sent["route"]["start"] == first
+    assert sorted(page.evaluate("window.ed.state.sel.ids")) == sorted(ids)
 
 
 def test_no_javascript_errors(page):

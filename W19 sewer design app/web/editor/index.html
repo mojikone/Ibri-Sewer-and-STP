@@ -25,6 +25,7 @@
       <button id="export-btn" title="Export the scenario as an EPA SWMM 5 input file" disabled>Export EPA SWMM .inp</button>
       <button id="export-dxf-btn">Export DXF</button>
       <button id="export-csv-btn">Export CSV</button>
+      <button id="export-kmz-btn" title="Pipes by size and the structures, for Google Earth">Export KMZ (Google Earth)</button>
     </div>
     <input type="file" id="import-file" accept=".inp" hidden>
     <input type="file" id="open-file" accept=".gpkg" hidden>
@@ -34,6 +35,7 @@
     <label class="lbl" for="scenario-select">Scenario</label>
     <select id="scenario-select" disabled></select>
     <button id="copy-btn" class="tb" title="Copy the scenario" disabled>Copy</button>
+    <button id="scen-btn" class="tb" title="Scenario manager: open, copy, rename, delete, compare">Scenarios...</button>
     <button id="undo-btn" class="tb icon" title="Undo (Ctrl+Z)" aria-label="Undo" disabled><svg class="i" viewBox="0 0 24 24"><path d="M9 7L4 12l5 5 M4 12h11a5 5 0 010 10h-2"/></svg></button>
     <button id="redo-btn" class="tb icon" title="Redo (Ctrl+Y)" aria-label="Redo" disabled><svg class="i" viewBox="0 0 24 24"><path d="M15 7l5 5-5 5 M20 12H9a5 5 0 000 10h2"/></svg></button>
   </div>
@@ -87,6 +89,7 @@
           <option value="storm_q">storm peak flow</option>
           <option value="storm_cap">storm fullness</option>
           <option value="storm_flood">flooding</option>
+          <option value="compare">change vs scenario</option>
         </select>
         <label for="results-source">Results</label>
         <select id="results-source"><option value="engine" selected>W19 engine</option><option value="stored" disabled>SewerGEMS (stored)</option></select>
@@ -118,6 +121,8 @@
     </div>
     <div id="hint"></div>
     <div id="maptip" hidden></div>
+    <div id="storm-bar" hidden><button id="storm-play" title="Play the storm">▶</button><input id="storm-t" type="range" min="0" max="0" step="1" title="Reporting period">
+      <span id="storm-time"></span><button id="storm-peak" title="Back to the peaks of the run">Peaks</button></div>
     <div id="welcome" hidden>
       <div class="card">
         <h2>Sewer and stormwater network editor</h2>
@@ -142,6 +147,7 @@
     <button id="tab-nodes" class="tab active" role="tab">Nodes</button>
     <button id="tab-links" class="tab" role="tab">Links</button>
     <button id="tab-results" class="tab" role="tab">Results</button>
+    <button id="tab-summary" class="tab" role="tab">Summary</button>
     <button id="tab-profile" class="tab" role="tab">Profile</button>
     <button id="tab-settings" class="tab" role="tab">Settings</button>
     <button id="tab-hydro" class="tab" role="tab">Hydrograph</button>
@@ -173,6 +179,7 @@
         <button id="prof-pick" class="tb" title="Click manholes or pipes on the map in order: the start, any via points, the end. Enter finishes.">Pick on map</button>
         <button id="prof-swap" class="tb icon" title="Reverse the route" aria-label="Reverse the route">&#8644;</button>
         <button id="prof-clear" class="tb icon" title="Clear the route" aria-label="Clear the route">&times;</button>
+        <select id="prof-routes" title="Routes saved with the project"></select><button id="prof-save-route" class="tb" title="Save this route with the project">Save</button><button id="prof-del-route" class="tb icon" title="Delete the saved route" aria-label="Delete the saved route" disabled>&#128465;</button>
         <button id="prof-fit" class="tb icon" title="Zoom the map to the route" aria-label="Zoom the map to the route">&#9635;</button>
         <span id="prof-msg" class="muted"></span><span class="sp"></span>
         <label class="chk2" title="Pan the map to keep the cursor in view while you move along the profile"><input type="checkbox" id="prof-follow" checked> Map follows</label>
@@ -185,6 +192,7 @@
       <div id="prof-scroll" hidden title="The part of the route shown: drag it, or click to jump"><div id="prof-thumb"></div><span id="prof-zinfo"></span></div>
     </div>
     <div id="pane-settings" class="pane"><div id="settings-form"></div></div>
+    <div id="pane-summary" class="pane"><div id="summary"></div></div>
     <div id="pane-assistant" class="pane flex">
       <div class="ptool"><span class="strong">Design assistant</span><span id="asst-status" class="muted"></span><span class="sp"></span><label for="asst-model">Model</label><select id="asst-model"><option value="sonnet" selected>Sonnet</option><option value="opus">Opus</option></select></div>
       <div id="asst-log"></div>
@@ -195,7 +203,7 @@
       <div id="hydro-wrap"><svg id="hydro-svg" xmlns="http://www.w3.org/2000/svg"></svg></div>
     </div>
     <div id="pane-toolout" class="pane flex">
-      <div class="ptool"><span id="toolout-title" class="strong">No tool run yet.</span><span class="sp"></span></div>
+      <div class="ptool"><span id="toolout-title" class="strong">No tool run yet.</span><span class="sp"></span><button id="toolout-apply" class="tb" hidden>Apply this design</button><button id="toolout-csv" class="tb" title="These rows as CSV">CSV</button></div>
       <div id="toolout-report"></div>
       <div class="twrap"><table id="tbl-toolout" class="ft"></table></div>
     </div>
@@ -229,6 +237,24 @@
   </div>
   <div id="gis-error" class="errtxt"></div>
   <div class="row"><button id="gis-import" class="primary" disabled>Import</button><button id="gis-cancel">Cancel</button></div>
+</div></div>
+<div id="dlg-ask" class="modal" hidden><div class="dlg">
+  <h3 id="ask-title"></h3><p id="ask-label" class="muted"></p><input id="ask-input" type="text" style="width:100%">
+  <div class="row"><button id="ask-ok" class="primary">OK</button><button id="ask-cancel">Cancel</button></div>
+</div></div>
+<div id="dlg-scen" class="modal" hidden><div class="dlg wide">
+  <h3>Scenarios</h3><p class="muted">Each scenario is its parent plus its own edits. Compare colours the open scenario by what changed.</p>
+  <div id="scen-list"></div>
+  <div class="row"><button id="scen-close">Close</button></div>
+</div></div>
+<div id="dlg-design" class="modal" hidden><div class="dlg">
+  <h3>Design</h3>
+  <p class="muted">Sizes by the d/D limit at each size's minimum gradient, then the levels: crowns matched and minimum cover. Undo takes it back.</p>
+  <label class="rad"><input type="radio" name="des-scope" id="des-scope-all" checked> The whole network</label>
+  <label class="rad"><input type="radio" name="des-scope" id="des-scope-sel"> Only <span id="des-sel-n"></span>; the rest kept</label>
+  <p id="des-locked" class="muted"></p>
+  <label>Load set<select id="des-load"></select></label>
+  <div class="row"><button id="des-preview" class="primary">Preview</button><button id="des-run">Design now</button><button id="des-cancel">Cancel</button></div>
 </div></div>
 <div id="busy" hidden><div class="spin"></div><span id="busy-text">Working...</span></div>
 <div id="toast" role="alert" hidden></div>

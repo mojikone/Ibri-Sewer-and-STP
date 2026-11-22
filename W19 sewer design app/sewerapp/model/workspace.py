@@ -16,7 +16,8 @@ Edit ops (dicts with "op"):
   set_load   {set, node, value}                                                unit load, m3/d
   set_setting {path: "a.b.c", value}
   set_rain   {rain: {step_min, duration_min, series [[min, intensity]] or idf {durations_min, intensities}}}
-  design     {load_set?}   automated design: sizes and inverts of every conduit (engine/design_general.py); undoable"""
+  design     {load_set?, only?}   automated design of every conduit, or of `only` (the rest kept); locked ones kept; undoable
+  lock       {ids, locked}  lock or unlock conduits for the design (settings design.locked)"""
 import copy, itertools, math
 import numpy as np, pandas as pd
 from sewerapp.engine import steady
@@ -151,9 +152,15 @@ def apply(p, e):
         p.rain = dict(e["rain"]); return False
     if op == "design":
         from sewerapp.engine import design_general
-        q, rep = design_general.design(p, e.get("load_set"))
+        q, rep = design_general.design(p, e.get("load_set"), e.get("only"))
         p.links, p.nodes = q.links, q.nodes; e["report"] = rep
         return True
+    if op == "lock":
+        ids = [str(i) for i in e["ids"]]; missing = [i for i in ids if i not in p.links.index]
+        if missing: raise ValueError(f"no link {missing[:3]}")
+        cur = set(p.settings["design"].get("locked", []))
+        p.settings["design"]["locked"] = sorted(cur | set(ids)) if e.get("locked", True) else sorted(cur - set(ids))
+        return False
     raise ValueError(f"unknown edit op {op}")
 
 
@@ -242,12 +249,12 @@ class Session:
     def state(self):
         """What a snapshot keeps: the base model, the scenarios as edit lists, results read from other programs and
         reference layers. The base is never changed in place (scenarios copy it), so this can be pickled outside the lock."""
-        return dict(id=self.id, base=self.base, n=self._n, external=self.external, refs=getattr(self, "refs", []),
+        return dict(id=self.id, base=self.base, n=self._n, external=self.external, refs=getattr(self, "refs", []), routes=getattr(self, "routes", []),
                     scenarios=[(s.id, s.name, s.parent, list(s.edits), list(s.redo), s.fixed) for s in self.scenarios.values()])
 
     @classmethod
     def from_state(cls, st):
-        s = cls(st["id"], st["base"]); s._n = st["n"]; s.external = st["external"]; s.refs = st.get("refs", [])
+        s = cls(st["id"], st["base"]); s._n = st["n"]; s.external = st["external"]; s.refs = st.get("refs", []); s.routes = st.get("routes", [])
         s.scenarios = {}
         for sid, name, parent, edits, redo, fixed in st["scenarios"]:
             c = Scenario(sid, name, parent, edits); c.redo = redo; c.fixed = fixed; s.scenarios[sid] = c

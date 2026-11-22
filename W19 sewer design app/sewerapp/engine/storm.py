@@ -54,6 +54,22 @@ def read(out_path, rpt_path=None):
     return dict(summary=summary, links=links, nodes=nodes, subcatchments=subs)
 
 
+def frame(out_path, period, attr="capacity"):
+    """Every link's value of one attribute at one reporting period (0-based), and every node's flooding then."""
+    la = {"capacity": E.LinkAttribute.CAPACITY, "flow_rate": E.LinkAttribute.FLOW_RATE, "flow_depth": E.LinkAttribute.FLOW_DEPTH,
+          "flow_velocity": E.LinkAttribute.FLOW_VELOCITY}[attr]
+    h = output.init(); output.open(h, out_path)
+    try:
+        nt = output.get_times(h, E.Time.NUM_PERIODS); step = output.get_times(h, E.Time.REPORT_STEP); k = max(0, min(int(period), nt - 1))
+        nl, nn = output.get_proj_size(h)[2], output.get_proj_size(h)[1]
+        lv = output.get_link_attribute(h, k, la); nv = output.get_node_attribute(h, k, E.NodeAttribute.FLOODING_LOSSES)
+        links = {output.get_elem_name(h, E.ElementType.LINK, j): float(lv[j]) for j in range(nl)}
+        nodes = {output.get_elem_name(h, E.ElementType.NODE, j): float(nv[j]) for j in range(nn) if nv[j] > 0}
+        return dict(period=k, periods=int(nt), t_s=float((k + 1) * step), attr=attr, links=links, flooding=nodes)
+    finally:
+        output.close(h)
+
+
 def series(out_path, kind, name, attr):
     """Time series (seconds from the start, value) of one element's attribute."""
     enum = {"link": E.LinkAttribute, "node": E.NodeAttribute, "subcatch": E.SubcatchAttribute}[kind]

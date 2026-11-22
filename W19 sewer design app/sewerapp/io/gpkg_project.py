@@ -12,6 +12,28 @@ def _crs(p):
     return f"EPSG:{p.crs}" if p.crs else None
 
 
+def project_dict(p):
+    """A project as plain JSON (its tables in pandas' split layout): kept inside the file to bring the scenarios back."""
+    def tab(df):
+        d = df.copy(); d.index.name = "id"
+        return json.loads(d.reset_index().to_json(orient="split", default_handler=str))
+    return dict(p.to_json(), meta=getattr(p, "meta", {}), nodes=tab(p.nodes), links=tab(p.links), catchments=tab(p.catchments))
+
+
+def project_from_dict(d):
+    p = Project(name=d["name"], crs=d["crs"], settings=d["settings"], load_sets=d["load_sets"], inflow_sets=d.get("inflow_sets", {}),
+                fixed_flows=d.get("fixed_flows", {}), rain=d.get("rain", {}), passthrough=d.get("passthrough", {}))
+    for key, cols in (("nodes", NODE_COLS), ("links", LINK_COLS), ("catchments", CATCH_COLS)):
+        t = d[key]; df = pd.DataFrame(t["data"], columns=t["columns"])
+        df["id"] = df["id"].astype(str); df = df.set_index("id")
+        for c in cols:
+            if c not in df.columns: df[c] = None
+        if key == "links": df["transfer"] = df["transfer"].fillna(False).astype(bool)
+        setattr(p, key, df[cols])
+    p.meta = d.get("meta", {})
+    return p
+
+
 def save(project, path, extra=None):
     if os.path.exists(path): os.remove(path)
     n = project.nodes

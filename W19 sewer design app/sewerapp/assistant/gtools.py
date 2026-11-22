@@ -7,6 +7,7 @@ from sewerapp.assistant.tools import RULES, CURRENT, CRITERIA
 from sewerapp.model.workspace import apply
 
 FLAGS = ["over_limit", "over_vmax", "surcharged", "negative_slope", "under_vmin"]
+ACTIONS: list = []                 # what the assistant asks the editor to show (select, zoom, profile); read by the endpoint
 OPS = ["set", "add_node", "add_link", "add_catchment", "delete", "move_node", "split_link", "set_load", "set_setting", "set_rain"]
 
 
@@ -45,6 +46,12 @@ def definitions():
                                ["project", "scenario", "top"])),
         dict(name="lookup_criterion", description="Search the design values with their guideline pages (current values first).",
              input_schema=_obj(dict(query=dict(type="string")), ["query"])),
+        dict(name="show_on_map", description="Select elements in the engineer's editor and zoom the map to them (changes nothing in the model). Use it to point at the pipes or nodes you are talking about.",
+             input_schema=_obj(dict(project=P, table=dict(type="string", enum=["nodes", "links"]), ids=dict(type="array", items=dict(type="string"))),
+                               ["project", "table", "ids"])),
+        dict(name="show_profile", description="Draw a long section in the engineer's editor: from a manhole or pipe to another (empty end: to the outfall), through optional via points (comma-separated). Changes nothing in the model.",
+             input_schema=_obj(dict(project=P, scenario=S, start=dict(type="string"), end=dict(type="string"), via=dict(type="string")),
+                               ["project", "scenario", "start", "end", "via"])),
     ]
     for t in d: t["strict"] = True
     return d
@@ -115,4 +122,13 @@ def call(ctx, name, a):
     if name == "lookup_criterion":
         from sewerapp.assistant import tools as T
         return T.call(None, "lookup_criterion", a)
+    if name == "show_on_map":
+        s = _sess(a); p = s.base; t = getattr(p, a["table"])
+        ids = [str(i) for i in a["ids"]][:5000]
+        ACTIONS.append(dict(kind="select", table=a["table"], ids=ids)); return dict(shown=len(ids))
+    if name == "show_profile":
+        s = _sess(a); p = s.model(a["scenario"])
+        for x in [a["start"], a["end"]] + [v.strip() for v in a["via"].split(",") if v.strip()]:
+            if x and x not in p.nodes.index and x not in p.links.index: raise ValueError(f"no node or pipe {x}")
+        ACTIONS.append(dict(kind="profile", start=a["start"], end=a["end"], via=a["via"])); return dict(drawn=True)
     raise ValueError(f"unknown tool {name}")

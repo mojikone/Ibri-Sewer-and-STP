@@ -61,6 +61,8 @@ Rules:
 - Every number you give comes from a tool result in this conversation; never estimate a flow, velocity, depth or gradient yourself.
 - The project's own settings (friction, peaking, design limits, units) govern; quote them from project_summary. Cite the guideline page for a rule you apply (PAM-GUD-203 / -201 pages through lookup_criterion); never quote a value from memory.
 - Never change an existing scenario: make_scenario, design_scenario and storm testing work in NEW scenarios; say which one you created.
+- The message starts with what the engineer has selected and the profile route on screen; "this pipe", "these", "the route" refer to them.
+- Point at what you discuss: show_on_map selects and zooms to the pipes or nodes, show_profile draws a long section. Both change nothing.
 - Units: a project imported from SWMM may be in US units (ft, cfs, acres); say the units with every number.
 - For the Ibri sample projects the W18 basis applies: steepening above DN200 to 0.75 m/s at the 2031 peak up to 0.75 % is the adopted design; tractive force is not used for gradients."""
 
@@ -114,7 +116,7 @@ class StubClient:
         if isinstance(last, str):
             ctx = last.split("]")[0].lstrip("[")
             if "project_summary" in names:      # general app: "[active project: p1, scenario: base]"
-                kv = dict(x.strip().split(": ") for x in ctx.replace("active ", "").split(","))
+                kv = dict(x.strip().split(": ") for x in ctx.split(";")[0].replace("active ", "").split(","))   # selection follows a ";"
                 block = SimpleNamespace(type="tool_use", id="t1", name="project_summary", input={"project": kv["project"], "scenario": kv["scenario"]})
             else:
                 block = SimpleNamespace(type="tool_use", id="t1", name="get_summary", input={"scenario": ctx.split(": ")[1]})

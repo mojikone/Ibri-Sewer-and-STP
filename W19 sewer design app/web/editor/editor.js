@@ -67,6 +67,14 @@ function colourFor(by, v) {
 const stormNow = () => state.storm && state.storm.sid === state.sid ? state.storm.data : null;
 function renderLegend() {
   const el = $("#legend"), by = state.colorBy, stale = by.startsWith("storm") && state.storm && state.storm.stale;
+  if (by === "compare") {
+    const c = state.compare && state.compare.b === state.sid ? state.compare : null;
+    if (!c) { el.innerHTML = `<div class="t">Change</div><div class="r muted">Scenarios... &gt; Compare first</div>`; return; }
+    const lab = { size: "size changed", levels: "levels changed", flow: "flow changed only", added: "new pipe", same: "unchanged" };
+    el.innerHTML = `<div class="t">Against ${esc(c.aName)}</div>` + Object.entries(CHANGE_COL).map(([k, col]) => `<div class="r"><span class="sw" style="background:${col}"></span>${lab[k]} (${c.counts[k] ?? 0})</div>`).join("") +
+      (c.counts.removed ? `<div class="r muted">${c.counts.removed} pipes only in ${esc(c.aName)}</div>` : "");
+    return;
+  }
   if (by.startsWith("storm") && !stormNow()) { el.innerHTML = `<div class="t">${SCALES[by].title}</div><div class="r muted">run Tools &gt; Run on EPA SWMM first</div>`; return; }
   const rows = by === "none" || by === "storm_flood" ? [] : SCALES[by].bins.map(b => [b[2], b[1]]);
   el.innerHTML = (by === "none" ? "" : `<div class="t">${SCALES[by].title}${stale ? " (before the last edit)" : ""}</div>`) +
@@ -130,6 +138,7 @@ function initMap() {
     map.addLayer({ id: "links-base", type: "line", source: "links", layout: { "line-cap": "round", "line-sort-key": dn }, paint: { "line-color": ["get", "_c"], "line-width": w(1) } });
     map.addLayer({ id: "links-fail", type: "line", source: "links", filter: ["==", ["get", "_fail"], 1], layout: { "line-cap": "round" }, paint: { "line-color": "#d7301f", "line-width": w(1.3, 0.5) } });
     map.addLayer({ id: "links-pump", type: "line", source: "links", filter: ["==", ["get", "kind"], "pump"], paint: { "line-color": "#7b3fa0", "line-width": w(1.3), "line-dasharray": [2, 1.5] } });
+    map.addLayer({ id: "links-locked", type: "line", source: "links", filter: ["==", ["get", "_lock"], 1], paint: { "line-color": "#ffffff", "line-width": w(0.35), "line-dasharray": [1.5, 1.5] } });
     map.addImage("flow-arrow", arrowImage(), { sdf: true, pixelRatio: 2 });
     map.addLayer({ id: "links-arrow", type: "symbol", source: "links", minzoom: 15.5, layout: { "symbol-placement": "line", "symbol-spacing": 90, "icon-image": "flow-arrow", "icon-size": 1.25, "icon-rotation-alignment": "map", "icon-allow-overlap": true, "icon-ignore-placement": true }, paint: { "icon-color": "#1d2733", "icon-opacity": 0.75 } });
     map.addLayer({ id: "links-label", type: "symbol", source: "links", minzoom: 17, layout: { "symbol-placement": "line", "text-field": ["get", "_lab"], "text-size": 10.5, "text-font": ["Open Sans Semibold"], "text-offset": [0, -0.9], "symbol-spacing": 260 }, paint: { "text-color": "#1d2733", "text-halo-color": "#fff", "text-halo-width": 1.6 } });
@@ -300,16 +309,19 @@ function mergeResults() {
     const mx = Math.max(1e-9, ...Object.values(S.links).map(x => x.q_peak || 0)), cs = ["#c6dbef", "#9ecae1", "#6baed6", "#3182bd", "#6a51a3", "#4a1486"];
     SCALES.storm_q.bins = [0.05, 0.15, 0.35, 0.6, 0.85, 1e9].map((k, i) => [k * mx, i === 5 ? `over ${+(0.85 * mx).toPrecision(3)}` : `up to ${+(k * mx).toPrecision(3)}`, cs[i]]);
   }
-  const E = state.results ? state.results.links : {};
+  const E = state.results ? state.results.links : {}, LK = lockedSet(), CM = state.compare && state.compare.b === state.sid ? state.compare.change : null;
+  const FR = state.stormFrame && state.stormFrame.sid === state.sid ? state.stormFrame : null;
   for (const f of m.linkFeat) {
     const r = R[f.id], p = f.properties, sl = S && S.links[f.id], e = E[f.id];
     p._lab = p.kind === "pump" ? `pump ${f.id}` : `DN${p.dn_mm ?? "?"}` + (e && e.s_pc != null ? ` · ${(+e.s_pc).toFixed(2)} %` : "");
     p._fail = !usingStored() && r && (r.over_limit || r.over_vmax || r.surcharged || r.negative_slope) ? 1 : 0;
-    p._c = by === "dn_mm" && usingStored() ? colourFor(by, p.dn_mm) : by === "storm_q" ? colourFor(by, sl && sl.q_peak) : by === "storm_cap" ? colourFor(by, sl && sl.capacity_peak) : by === "storm_flood" ? GREY : colourFor(by, r && r[by]);
+    p._lock = LK.has(String(f.id)) ? 1 : 0;
+    const sq = FR ? (FR.links[f.id] == null ? null : Math.abs(FR.links[f.id])) : sl && sl.q_peak, scap = FR ? FR.links[f.id] : sl && sl.capacity_peak;
+    p._c = by === "compare" ? CHANGE_COL[(CM && CM[f.id]) || "same"] : by === "dn_mm" && usingStored() ? colourFor(by, p.dn_mm) : by === "storm_q" ? colourFor(by, sq) : by === "storm_cap" ? colourFor(by, scap) : by === "storm_flood" ? GREY : colourFor(by, r && r[by]);
   }
   const wasFl = m.hasFl; let anyFl = false;
   for (const f of m.nodeFeat) {
-    const fl = by === "storm_flood" && S && S.nodes[f.id] && S.nodes[f.id].flooding_peak > 0 ? 1 : 0;
+    const fl = by === "storm_flood" && S && (FR ? (FR.flooding[f.id] || 0) > 0 : S.nodes[f.id] && S.nodes[f.id].flooding_peak > 0) ? 1 : 0;
     if (fl) anyFl = true; f.properties._fl = fl;
   }
   m.hasFl = anyFl; if (anyFl || wasFl) state.dirty.nodes = true;
@@ -343,7 +355,7 @@ async function exec(op, more) {
   updateScenario(r.scenario); state.summary = r.summary;
   if (state.storm) state.storm.stale = true;
   if (op.op === "set_rain") state.rainApplied = true;
-  const reread = r.structural || op.op === "set_many" || op.op === "set_loads" || (op.op === "set" && op.table === "nodes" && op.field === "invert");
+  const reread = r.structural || op.op === "set_many" || op.op === "set_loads" || op.op === "lock" || (op.op === "set" && op.table === "nodes" && op.field === "invert");
   if (reread) await loadModel(); else patchLocal(op);
   if (!more) { await loadResults(); renderAll(); }
   return r;
@@ -396,7 +408,7 @@ function updateButtons() {
 }
 function renderAll() {
   $("#results-src").textContent = usingStored() ? "SewerGEMS (stored results)" : "W19 engine";
-  updateStatus(); updateButtons(); pushMap(); renderProps(); renderActiveTab(); renderLegend();
+  updateStatus(); updateButtons(); pushMap(); renderProps(); renderActiveTab(); renderLegend(); stormBar();
 }
 
 /* ------------------------------------------------------------------ geometry hit testing */
@@ -568,6 +580,11 @@ function renderProps() {
   gridSig = sig;
   const head = multi ? `${fs.length} ${table}` : `${{ nodes: "Node", links: "Link", catchments: "Catchment" }[table]} ${esc(fs[0].properties.id)}`;
   let h = traceBox() + `<h4 data-testid="prop-title">${head}</h4>`;
+  if (table === "links") {
+    const LK = lockedSet(), n = state.sel.ids.filter(i => LK.has(i)).length;
+    h += `<div class="trace-bar">Design <button id="lock-on" title="The design keeps these pipes' size and levels">Lock</button><button id="lock-off">Unlock</button>` +
+      `<span class="muted" data-testid="lock-state">${n ? (n === state.sel.ids.length ? "locked" : `${n} of ${state.sel.ids.length} locked`) : "free"}</span></div>`;
+  }
   if (!multi && (table === "nodes" || table === "links")) h += `<div class="trace-bar">Trace <button id="trace-up" title="Everything that drains here (U)">&#8593; Upstream</button><button id="trace-down" title="The way to the outfall (D)">&#8595; Downstream</button></div>`;
   for (const k of keys) {
     if (multi && ["id", "x", "y", "from_node", "to_node"].includes(k)) continue;
@@ -774,7 +791,7 @@ function renderProfile(rows) {
   const total = rows[rows.length - 1].ch1 || 1, [c0, c1] = prof.range || [0, total], span = Math.max(c1 - c0, 1e-6);
   const vis = rows.filter(r => r.ch1 >= c0 && r.ch0 <= c1);
   let lo = 1e9, hi = -1e9;
-  for (const r of vis) for (const v of [r.ground0, r.ground1, r.inv0, r.inv1, r.crown0, r.crown1]) if (v != null) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  for (const r of vis) for (const v of [r.ground0, r.ground1, r.inv0, r.inv1, r.crown0, r.crown1, r.storm0, r.storm1]) if (v != null) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
   const pad = Math.max((hi - lo) * 0.06, 0.2); lo -= pad; hi += pad;
   if (prof.vz && prof.vz > 1) {                              // level zoom about the middle of what is shown, or about the cursor's level
     const mid = prof.vmid != null ? prof.vmid : (lo + hi) / 2, h = (hi - lo) / prof.vz; lo = mid - h / 2; hi = mid + h / 2;
@@ -813,6 +830,8 @@ function renderProfile(rows) {
   // manholes as structures; every pipe that meets one off the route drawn where it joins: a circle of its own
   // diameter at its own invert (to the vertical scale), incoming on the upstream side of the shaft, outgoing on the
   // downstream side; a dashed line shows the drop from an incoming invert to the outgoing one
+  const stormPts = [[0, rows[0].storm0]].concat(rows.map(r => [r.ch1, r.storm1])).filter(p => p[1] != null);
+  if (stormPts.length > 1) s += `<polyline class="storm" points="${stormPts.map(p => `${X(p[0])},${Y(p[1])}`).join(" ")}" fill="none" stroke="#d7301f" stroke-width="1.6" stroke-dasharray="6 3"><title>Peak water level of the last storm run</title></polyline>`;
   const nodes = [{ id: rows[0].from_node, c: 0, gr: rows[0].ground0, iv: rows[0].inv0, ni: rows[0].node_inv0, kind: rows[0].kind0, joins: rows[0].joins0 || [], out: rows[0].inv0, inn: null }];
   rows.forEach((r, k) => nodes.push({ id: r.to_node, c: r.ch1, gr: r.ground1, iv: r.inv1, ni: r.node_inv1, kind: r.kind1, joins: r.joins1 || [],
     out: k + 1 < rows.length ? rows[k + 1].inv0 : null, inn: r.inv1 }));
@@ -864,6 +883,7 @@ function renderProfile(rows) {
   const lg = [["#8a6d3b", "Ground", ""], ["#1f3b73", "Invert", ""], ["#4c78b8", "Crown", ""], ["#2a9df4", "Water surface", ""]];
   if (cov.cover_min) lg.push(["#2e9e5b", `Min cover ${cov.cover_min} m`, "5 3"]);
   if (ui.profJoins !== false) lg.push(["#1b9e77", "Joining pipe (at its invert)", "o"]);
+  if (rows.some(r => r.storm1 != null)) lg.push(["#d7301f", "Storm peak level", "6 3"]);
   let lx = L;
   for (const [c, t, da] of lg) {
     s += da === "o" ? `<circle cx="${lx + 9}" cy="${H - 10}" r="5" fill="${c}" fill-opacity=".28" stroke="${c}" stroke-width="1.3"/>`
@@ -1205,7 +1225,11 @@ function renderToolsMenu() {
   for (const t of list) (groups[t.menu || "Tools"] = groups[t.menu || "Tools"] || []).push(t);
   host.innerHTML = Object.entries(groups).map(([g, ts]) => `<div class="mh">${esc(g)}</div>` +
     ts.map(t => `<button data-tool="${esc(t.name)}" data-testid="tool-run-${esc(t.name)}" title="${esc(t.label)}">${esc(t.label.split(/[:(]/)[0].trim())}</button>`).join("")).join("");
-  $$("button", host).forEach(b => b.addEventListener("click", () => { host.hidden = true; const t = [...state.tools, COMPARE].find(x => x.name === b.dataset.tool); enqueue(() => runTool(t)); }));
+  $$("button", host).forEach(b => b.addEventListener("click", () => {
+    host.hidden = true;
+    if (b.dataset.tool === "design") { openDesignDlg(); return; }                  // scope, preview, then apply
+    const t = [...state.tools, COMPARE].find(x => x.name === b.dataset.tool); enqueue(() => runTool(t));
+  }));
 }
 async function runTool(t) {
   if (!state.pid) return;
@@ -1217,12 +1241,14 @@ async function runTool(t) {
     if (!/json/.test(resp.headers.get("content-type") || "")) { await saveBlob(resp, "model.inp"); return; }
     const r = await resp.json();
     if (r.subcatchments) {                                   // a storm run: its summary is SWMM's, not the steady solver's
-      state.storm = { sid: state.sid, data: r, stale: false };
+      state.storm = { sid: state.sid, data: r, stale: false }; state.stormFrame = null; stopStormPlay();
       const rows = Object.entries(r.links).map(([id, v]) => ({ id, ...v })).sort((a, b) => (b.capacity_peak || 0) - (a.capacity_peak || 0));
       state.toolout = { tool: t, rows, cols: ["id", "q_peak", "v_peak", "depth_peak", "capacity_peak"], report: { ...r.summary, seconds: r.seconds }, storm: true };
       state.colorBy = "storm_cap"; $("#color-by").value = "storm_cap"; mergeResults();
     } else {
-      state.toolout = { tool: t, rows: r.rows || [], report: r.report || (t.name === "compare_stored" ? r : null), summary: r.summary };
+      let rows = r.rows || [], cols;
+      if (rows.length && rows[0].id == null) { rows = rows.map((x, k) => ({ id: String(k + 1), ...x })); cols = Object.keys(rows[0]).filter(k => k !== "id"); }
+      state.toolout = { tool: t, rows, cols, report: r.report || r.totals || (t.name === "compare_stored" ? r : null), summary: r.summary };
       if (r.scenario) updateScenario(r.scenario);
       if (r.summary && t.name !== "compare_stored") state.summary = r.summary;
       if (r.structural) await loadModel();
@@ -1243,6 +1269,7 @@ const REPORT_LABEL = {                      // plain names for the keys a tool r
 };
 function renderToolOut() {
   const o = state.toolout, title = $("#toolout-title"), rep = $("#toolout-report");
+  $("#toolout-apply").hidden = !(o && o.apply); $("#toolout-csv").disabled = !(o && o.rows.length);
   if (!o) { title.textContent = "No tool run yet. Use the Tools menu."; rep.innerHTML = ""; $("#tbl-toolout").innerHTML = ""; return; }
   title.textContent = o.tool.label;
   let h = "";
@@ -1291,7 +1318,9 @@ function asstSend() {
   inp.value = ""; asstAdd("user", `<p>${esc(text)}</p>`).dataset.testid = "asst-user";
   const wait = asstAdd("assistant", `<div class="muted">Thinking... (answers take 10-60 s)</div>`);
   inp.disabled = $("#asst-send").disabled = true; document.body.dataset.asstBusy = "1";
-  const body = { project: state.pid, scenario: state.sid, message: text, history: state.history.slice(), model: $("#asst-model").value };
+  const body = { project: state.pid, scenario: state.sid, message: text, history: state.history.slice(), model: $("#asst-model").value,
+                 selection: state.sel.ids.length ? { table: state.sel.table, ids: state.sel.ids.slice(0, 500) } : null,
+                 route: $("#prof-start").value.trim() ? { start: $("#prof-start").value.trim(), end: $("#prof-end").value.trim(), via: $("#prof-via").value.trim() } : null };
   enqueue(async () => {
     try {
       const r = await jpost("/assistant", body);
@@ -1302,6 +1331,11 @@ function asstSend() {
         `<div class="usage" data-testid="asst-usage">tokens: ${u.input_tokens ?? 0} in, ${u.output_tokens ?? 0} out, ${u.cache_write_tokens ?? 0} cache write, ${u.cache_read_tokens ?? 0} cache read</div>`;
       const info = await jget(`/projects/${state.pid}`);            // the assistant may have made new scenarios
       state.info.scenarios = info.scenarios; await loadResults(); renderAll();
+      for (const a of r.ui_actions || []) {                          // what it pointed at: selected and zoomed, or a profile drawn
+        if (a.kind === "select") { setSel(a.table, a.ids, { zoom: true }); wait.insertAdjacentHTML("beforeend", `<div class="tc" data-testid="asst-action">shown on the map: ${a.ids.length} ${esc(a.table)}</div>`); }
+        else if (a.kind === "profile") { $("#prof-start").value = a.start; $("#prof-end").value = a.end || ""; $("#prof-via").value = a.via || ""; await drawProfile();
+          wait.insertAdjacentHTML("beforeend", `<div class="tc" data-testid="asst-action">profile drawn from ${esc(a.start)} (Profile tab)</div>`); }
+      }
     } catch (e) { wait.className = "msg err"; wait.textContent = e.message; }
     finally { document.body.dataset.asstBusy = "0"; if (state.asstOn) { inp.disabled = $("#asst-send").disabled = false; } $("#asst-log").scrollTop = $("#asst-log").scrollHeight; }
   });
@@ -1321,6 +1355,7 @@ function renderActiveTab() {
   if (t === "nodes" || t === "links" || t === "results") renderTable(t);
   else if (t === "settings") renderSettings();
   else if (t === "toolout") renderToolOut();
+  else if (t === "summary") renderSummary();
   else if (t === "hydro") drawHydro();
   else if (t === "profile") { if (!$("#prof-start").value) autoProfile(); else drawProfile(true); }
 }
@@ -1340,7 +1375,7 @@ async function openProject(info, fit = true) {
   await refreshAll(true);
   if (!state.model.nodeFeat.length && !info.basemap) map.jumpTo({ center: [150 / M_LON, 100 / M_LAT], zoom: 17 });
   updateGrid(); setTool(state.tool);
-  await loadRefs(); state.trace = null; saveSession();
+  await loadRefs(); state.trace = null; clearCompare(); state.stormFrame = null; stopStormPlay(); await loadRoutes(); saveSession();
 }
 async function withBusy(text, fn) { busy(true, text); try { await fn(); } catch (e) { toast(e.message || String(e)); } finally { busy(false); } }
 function openNew() { $("#dlg-new").hidden = false; $("#new-name").focus(); }
@@ -1442,7 +1477,7 @@ function wireUi() {
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = mt ? mt[1] : "project.gpkg";
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   });
-  $("#scenario-select").onchange = e => enqueue(async () => { state.sid = e.target.value; state.sel = { table: null, ids: [] }; $("#settings-form").dataset.sig = ""; await refreshAll(false); saveSession(); });
+  $("#scenario-select").onchange = e => enqueue(() => switchScenario(e.target.value));
   $("#copy-btn").onclick = () => enqueue(async () => {
     const r = await jpost(`${base()}/copy`, {}); state.info = r; state.sid = r.created; $("#settings-form").dataset.sig = ""; await refreshAll(false);
   });
@@ -1453,7 +1488,7 @@ function wireUi() {
   $("#undo-btn").onclick = () => hist("undo"); $("#redo-btn").onclick = () => hist("redo");
   $("#tools-btn").onclick = e => { e.stopPropagation(); $("#tools-menu").hidden = !$("#tools-menu").hidden; };
   document.addEventListener("click", () => { $("#tools-menu").hidden = true; $("#file-menu").hidden = true; });
-  $("#color-by").onchange = e => { state.colorBy = e.target.value; mergeResults(); renderLegend(); pushMap(); };
+  $("#color-by").onchange = e => { state.colorBy = e.target.value; mergeResults(); renderLegend(); pushMap(); stormBar(); if (state.stormFrame) enqueue(() => loadFrame(state.stormFrame.period)); };
   wireView();
   $$(".tool").forEach(b => b.addEventListener("click", () => setTool(b.id.slice(5))));
   $$(".tab").forEach(b => b.addEventListener("click", () => showTab(b.id.slice(4))));
@@ -1994,9 +2029,228 @@ function wireBatch1() {
   renderRefs();
 }
 
+/* ------------------------------------------------------------------ batch 2: scenarios, summary, storm slider, design control, quantities, assistant on the map */
+/* ---- a small modal for a name or a yes/no */
+function askText(title, label, value, confirmOnly) {
+  return new Promise(res => {
+    const d = $("#dlg-ask"), i = $("#ask-input");
+    $("#ask-title").textContent = title; $("#ask-label").textContent = label || ""; i.value = value || "";
+    i.style.display = confirmOnly ? "none" : ""; $("#ask-ok").textContent = confirmOnly ? "Yes" : "OK"; d.hidden = false;
+    setTimeout(() => (confirmOnly ? $("#ask-ok") : i).focus(), 0); if (!confirmOnly) i.select();
+    const done = v => { d.hidden = true; $("#ask-ok").onclick = $("#ask-cancel").onclick = null; d.onkeydown = null; res(v); };
+    $("#ask-ok").onclick = () => done(confirmOnly ? true : (i.value.trim() || null));
+    $("#ask-cancel").onclick = () => done(null);
+    d.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); $("#ask-ok").click(); } else if (e.key === "Escape") done(null); };
+  });
+}
+
+/* ---- scenario manager: the scenarios as a tree; open, copy, rename, delete (with their copies), compare */
+function scenTree() {
+  const sc = state.info.scenarios, out = [];
+  const walk = (parent, d) => { for (const s of sc.filter(x => (x.parent || null) === parent)) { out.push([s, d]); walk(s.id, d + 1); } };
+  walk(null, 0); return out;
+}
+function openScenDlg() { if (!state.pid) return; renderScenDlg(); $("#dlg-scen").hidden = false; }
+function renderScenDlg() {
+  $("#scen-list").innerHTML = scenTree().map(([s, d]) => `<div class="scrow${s.id === state.sid ? " cur" : ""}" data-sid="${esc(s.id)}">` +
+    `<span class="scname" style="padding-left:${d * 16}px">${d ? "└ " : ""}${esc(s.name)}</span><span class="muted">${s.edits} edits</span>` +
+    `<button data-a="open" ${s.id === state.sid ? "disabled" : ""}>Open</button><button data-a="copy">Copy</button><button data-a="rename">Rename</button>` +
+    `<button data-a="compare" ${s.id === state.sid ? "disabled" : ""} title="Colour the open scenario by what changed against this one">Compare</button>` +
+    `<button data-a="del" ${s.id === "base" ? "disabled" : ""}>Delete</button></div>`).join("");
+  tag($("#scen-list"));
+}
+async function switchScenario(sid) {
+  state.sid = sid; state.sel = { table: null, ids: [] }; $("#settings-form").dataset.sig = "";
+  if (state.compare && state.compare.b !== sid) clearCompare();
+  stopStormPlay(); state.stormFrame = null;
+  await refreshAll(false); saveSession();
+}
+async function scenAction(a, sid) {
+  // the questions are asked here, outside the edit queue (an open prompt must not hold up other work); the server calls queue
+  const s = state.info.scenarios.find(x => x.id === sid); if (!s) return;
+  const after = () => { if (!$("#dlg-scen").hidden) renderScenDlg(); };
+  if (a === "open") return enqueue(async () => { await switchScenario(sid); after(); });
+  if (a === "compare") return enqueue(async () => { await compareWith(sid); $("#dlg-scen").hidden = true; });
+  if (a === "copy") {
+    const name = await askText("Copy scenario", "Name of the copy", `${s.name} copy`); if (!name) return;
+    return enqueue(async () => { const r = await jpost(`/projects/${state.pid}/scenarios/${encodeURIComponent(sid)}/copy`, { name }); state.info = r; await switchScenario(r.created); after(); });
+  }
+  if (a === "rename") {
+    const name = await askText("Rename scenario", "New name", s.name); if (!name) return;
+    return enqueue(async () => { state.info = await jpost(`/projects/${state.pid}/scenarios/${encodeURIComponent(sid)}/rename`, { name }); updateButtons(); after(); });
+  }
+  if (a === "del") {
+    const kids = scenTree().filter(([x]) => { let p = x; while (p && p.parent) { if (p.parent === sid) return true; p = state.info.scenarios.find(y => y.id === p.parent); } return false; }).length;
+    if (!await askText("Delete scenario", `Delete "${s.name}"${kids ? ` and the ${kids} scenario${kids > 1 ? "s" : ""} copied from it` : ""}? Undo cannot bring it back.`, "", true)) return;
+    return enqueue(async () => {
+      const r = await jpost(`/projects/${state.pid}/scenarios/${encodeURIComponent(sid)}/delete`); state.info = r;
+      if (!r.scenarios.some(x => x.id === state.sid)) await switchScenario("base"); else updateButtons();
+      after();
+    });
+  }
+}
+/* ---- compare: the open scenario coloured by what changed against another; the differences in Tool output */
+const CHANGE_COL = { size: "#8e44ad", levels: "#e67e22", flow: "#2e86de", added: "#27ae60", same: "#c3cad3" };
+async function compareWith(a) {
+  const r = await jget(`/projects/${state.pid}/compare?a=${encodeURIComponent(a)}&b=${encodeURIComponent(state.sid)}`);
+  const an = state.info.scenarios.find(x => x.id === a).name;
+  state.compare = { ...r, aName: an };
+  state.colorBy = "compare"; $("#color-by").value = "compare";
+  state.toolout = { tool: { name: "compare", label: `Compared with ${an}: what changed in the open scenario` }, rows: r.rows.map(x => ({ ...x, change: r.change[x.id] })),
+                    cols: ["id", "change", "dn_mm_a", "dn_mm_b", "up_inv_a", "up_inv_b", "dn_inv_a", "dn_inv_b", "q_ls_a", "q_ls_b", "v_ms_a", "v_ms_b", "dv"], report: { ...r.counts } };
+  mergeResults(); showTab("toolout"); renderAll();
+}
+function clearCompare() {
+  const was = state.colorBy === "compare"; state.compare = null;
+  if (was) { state.colorBy = "v_ms"; $("#color-by").value = "v_ms"; if (state.model) { mergeResults(); pushMap(); } renderLegend(); }
+}
+
+/* ---- the summary: the network at a glance, from the solved results; every bar selects its pipes */
+function barChart(id, title, unit, bars, onClick) {
+  const W = 360, rowH = 17, H = 26 + bars.length * rowH + 6, mx = Math.max(1e-9, ...bars.map(b => b.value));
+  let s = `<svg id="${id}" class="bars" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}"><text x="0" y="13" class="bt">${esc(title)}</text>`;
+  bars.forEach((b, k) => {
+    const y = 24 + k * rowH, w = Math.max(b.value > 0 ? 1.5 : 0, (W - 150) * b.value / mx);
+    s += `<g class="bar" data-k="${k}"><title>${esc(b.label)}: ${num(b.value, 2)} ${unit}${b.n != null ? ` (${b.n})` : ""}</title><text x="78" y="${y + 11}" text-anchor="end">${esc(b.label)}</text>` +
+      `<rect x="84" y="${y + 2}" width="${w}" height="${rowH - 5}" rx="2" fill="${b.color || "#4c78b8"}"/><text x="${88 + w}" y="${y + 11}">${num(b.value, b.value >= 100 ? 0 : 2)}</text></g>`;
+  });
+  s += `</svg>`;
+  return { html: s, wire: () => $$(`#${id} .bar`).forEach(g => g.addEventListener("click", () => onClick && onClick(bars[+g.dataset.k]))) };
+}
+function renderSummary() {
+  const host = $("#summary"); if (!host) return;
+  const m = state.model, R = srcLinks(), s = state.summary;
+  if (!m || !s) { host.innerHTML = `<p class="muted">Open a project.</p>`; return; }
+  const L = m.linkFeat.filter(f => f.properties.kind !== "pump"), km = f => (f.properties.length_m || 0) / 1000;
+  const sel = ids => { setSel("links", ids, { zoom: true }); toast(`${ids.length} pipes selected.`, "info"); };
+  const kpi = (lab, val, flag) => `<div class="kpi${flag ? " bad" : ""}"${flag ? ` data-flag="${flag}" title="Click to step through them"` : ""}><div class="kv">${val}</div><div class="kl">${lab}</div></div>`;
+  let h = `<div class="kpis">` + kpi("pipes", L.length) + kpi("km", num(s.km, 2)) +
+    kpi("over the d/D limit", s.over_limit ?? 0, s.over_limit ? "over_limit" : null) + kpi("over v max", s.over_vmax ?? 0, s.over_vmax ? "over_vmax" : null) +
+    kpi("surcharged", s.surcharged ?? 0, s.surcharged ? "surcharged" : null) + kpi("adverse", s.negative_slope ?? 0, s.negative_slope ? "negative_slope" : null) +
+    (s.km_under_vmin != null ? kpi(`km under v min (${esc(s.check_set)})`, num(s.km_under_vmin, 2)) : "") + `</div><div class="charts">`;
+  // km by size
+  const byDn = new Map(); for (const f of L) { const d = f.properties.dn_mm; const e = byDn.get(d) || { value: 0, ids: [] }; e.value += km(f); e.ids.push(String(f.id)); byDn.set(d, e); }
+  const c1 = barChart("ch-dn", "Length by size (km)", "km", [...byDn.entries()].sort((a, b) => a[0] - b[0]).map(([d, e]) => ({ label: `DN${d}`, value: e.value, n: e.ids.length, ids: e.ids, color: colourFor("dn_mm", d) })), b => sel(b.ids));
+  const binned = (by, sc) => sc.bins.map((bin, k) => {
+    const lo = k ? sc.bins[k - 1][0] : -Infinity, fs = L.filter(f => { const r = R[f.id]; return r && r[by] != null && r[by] > lo && r[by] <= bin[0]; });
+    return { label: bin[1], value: fs.reduce((a, f) => a + km(f), 0), n: fs.length, ids: fs.map(f => String(f.id)), color: bin[2] };
+  });
+  const c2 = barChart("ch-v", "Velocity (km of pipe)", "km", binned("v_ms", SCALES.v_ms), b => sel(b.ids));
+  const c3 = barChart("ch-dd", "d/D (km of pipe)", "km", binned("d_over_D", SCALES.d_over_D), b => sel(b.ids));
+  h += c1.html + c2.html + c3.html + `</div>`;
+  host.innerHTML = h; c1.wire(); c2.wire(); c3.wire();
+  $$("#summary .kpi[data-flag]").forEach(k => k.addEventListener("click", () => stepFailure(k.dataset.flag)));
+}
+
+/* ---- storm time slider: colour the map at any reporting period of the last storm run, or play it */
+let stormTimer = null, frameSeq = 0;
+function stormBar() {
+  const bar = $("#storm-bar"), S = stormNow(), show = !!S && ["storm_cap", "storm_q", "storm_flood"].includes(state.colorBy);
+  bar.hidden = !show; if (!show) { stopStormPlay(); return; }
+  const n = S.summary.periods, t = $("#storm-t"); t.max = Math.max(0, n - 1);
+  if (!state.stormFrame) t.value = t.max;
+  const f = state.stormFrame, step = S.summary.report_step_s || 60;
+  const hhmm = s => `${String(Math.floor(s / 3600)).padStart(2, "0")}:${String(Math.floor(s % 3600 / 60)).padStart(2, "0")}`;
+  $("#storm-time").textContent = f ? `t = ${hhmm(f.t_s)}` : `peaks over ${hhmm(n * step)}`;
+  $("#storm-peak").disabled = !f;
+}
+async function loadFrame(k) {
+  const S = stormNow(); if (!S) return;
+  const attr = state.colorBy === "storm_q" ? "flow_rate" : "capacity", seq = ++frameSeq;
+  const f = await jget(`${base()}/storm/frame?period=${k}&attr=${attr}`);
+  if (seq !== frameSeq) return;
+  state.stormFrame = { ...f, sid: state.sid }; mergeResults(); pushMap(); renderLegend(); stormBar();
+}
+function stopStormPlay() { if (stormTimer) { clearInterval(stormTimer); stormTimer = null; } const b = $("#storm-play"); if (b) b.textContent = "▶"; }
+function toggleStormPlay() {
+  if (stormTimer) { stopStormPlay(); return; }
+  const t = $("#storm-t"); if (+t.value >= +t.max) t.value = 0;
+  $("#storm-play").textContent = "❚❚";
+  stormTimer = setInterval(() => { const k = +t.value + 1; if (k > +t.max) { stopStormPlay(); return; } t.value = k; loadFrame(k); }, 260);
+}
+
+/* ---- design: the whole network or the selected pipes, previewed before it is applied; locked pipes kept */
+function openDesignDlg() {
+  if (!state.pid) return;
+  const nsel = state.sel.table === "links" ? state.sel.ids.length : 0, locked = lockedSet().size;
+  $("#des-sel-n").textContent = nsel ? `${nsel} selected pipe${nsel > 1 ? "s" : ""}` : "(select pipes first)";
+  $("#des-scope-sel").disabled = !nsel; if (!nsel) $("#des-scope-all").checked = true;
+  $("#des-locked").textContent = locked ? `${locked} locked pipe${locked > 1 ? "s" : ""} keep their size and levels.` : "No pipe is locked.";
+  $("#des-load").innerHTML = Object.keys(state.model.loads || {}).map(k => `<option${k === state.model.settings.design_load ? " selected" : ""}>${esc(k)}</option>`).join("");
+  $("#dlg-design").hidden = false;
+}
+function designOpts() {
+  const only = $("#des-scope-sel").checked && state.sel.table === "links" ? state.sel.ids.slice() : null;
+  return { only, load: $("#des-load").value };
+}
+async function runDesign(preview, o) {
+  o = o || designOpts();
+  const r = await jpost(`${base()}/design?load_set=${encodeURIComponent(o.load)}`, { only: o.only, preview });
+  if (preview) {
+    state.toolout = { tool: { name: "design_preview", label: `Design preview${o.only ? ` (${o.only.length} selected pipes)` : ""}: nothing is changed until you apply it` },
+                      rows: r.rows, cols: ["id", "dn_old", "dn_new", "up_old", "up_new", "dn_inv_old", "dn_inv_new", "d_up"],
+                      report: { links_changed: r.links_changed, sizes_changed: r.sizes_changed, nodes_moved: r.nodes_moved, ...r.report }, apply: o };
+  } else {
+    state.toolout = { tool: { name: "design", label: `Design${o.only ? ` of ${o.only.length} selected pipes` : ""}: sizes and levels (undo takes it back)` }, rows: [], report: r.report };
+    if (r.scenario) updateScenario(r.scenario); state.summary = r.summary; await loadModel(); await loadResults();
+  }
+  showTab("toolout"); renderAll();
+}
+const lockedSet = () => new Set(((state.model && state.model.settings.design) || {}).locked || []);
+async function setLock(ids, locked) { await execMany([{ op: "lock", ids, locked }]); toast(`${ids.length} pipe${ids.length > 1 ? "s" : ""} ${locked ? "locked: the design keeps their size and levels" : "unlocked"}.`, "info"); }
+
+/* ---- saved routes of the profile, kept with the project */
+async function loadRoutes() {
+  state.routes = state.pid ? await jget(`/projects/${state.pid}/routes`).catch(() => []) : []; renderRoutes();
+}
+function renderRoutes() {
+  const s = $("#prof-routes"); if (!s) return;
+  s.innerHTML = `<option value="">Saved routes (${(state.routes || []).length})</option>` + (state.routes || []).map(r => `<option value="${esc(r.name)}">${esc(r.name)}</option>`).join("");
+  $("#prof-del-route").disabled = true;
+}
+
+/* ---- the CSV of whatever is in Tool output */
+function toolCsv() {
+  const o = state.toolout; if (!o || !o.rows.length) return;
+  const cols = o.cols || Object.keys(o.rows[0]);
+  const cell = v => v == null ? "" : /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : v;
+  downloadBlob(new Blob([[cols.join(",")].concat(o.rows.map(r => cols.map(c => cell(r[c])).join(","))).join("\n")], { type: "text/csv" }), `${o.tool.name || "tool"}.csv`);
+}
+
+function wireBatch2() {
+  $("#scen-btn").onclick = openScenDlg; $("#scen-close").onclick = () => { $("#dlg-scen").hidden = true; };
+  $("#scen-list").addEventListener("click", e => { const b = e.target.closest("button[data-a]"); if (!b) return; scenAction(b.dataset.a, b.closest(".scrow").dataset.sid); });
+  $("#storm-t").addEventListener("input", e => { stopStormPlay(); enqueue(() => loadFrame(+e.target.value)); });
+  $("#storm-play").onclick = toggleStormPlay;
+  $("#storm-peak").onclick = () => { stopStormPlay(); state.stormFrame = null; mergeResults(); pushMap(); renderLegend(); stormBar(); };
+  $("#des-preview").onclick = () => { $("#dlg-design").hidden = true; enqueue(() => withBusy("Design preview...", () => runDesign(true))); };
+  $("#des-run").onclick = () => { $("#dlg-design").hidden = true; enqueue(() => withBusy("Design...", () => runDesign(false))); };
+  $("#des-cancel").onclick = () => { $("#dlg-design").hidden = true; };
+  $("#toolout-apply").onclick = () => { const o = state.toolout && state.toolout.apply; if (o) enqueue(() => withBusy("Design...", () => runDesign(false, o))); };
+  $("#toolout-csv").onclick = toolCsv;
+  $("#export-kmz-btn").onclick = () => enqueue(async () => { if (state.pid) saveBlob(await api(`/projects/${state.pid}/export.kmz?sid=${encodeURIComponent(state.sid)}`), "network.kmz"); });
+  $("#prof-routes").onchange = e => {
+    const r = (state.routes || []).find(x => x.name === e.target.value); $("#prof-del-route").disabled = !r; if (!r) return;
+    $("#prof-start").value = r.start; $("#prof-end").value = r.end || ""; $("#prof-via").value = r.via || ""; drawProfile();
+  };
+  $("#prof-save-route").onclick = async () => {
+    const start = $("#prof-start").value.trim(); if (!start) { toast("Draw a route first.", "info"); return; }
+    const name = await askText("Save route", "Name of the route", `${start} to ${$("#prof-end").value.trim() || "outfall"}`); if (!name) return;
+    const body = { name, start, end: $("#prof-end").value.trim(), via: $("#prof-via").value.trim() };
+    enqueue(async () => { state.routes = await jpost(`/projects/${state.pid}/routes`, body); renderRoutes(); $("#prof-routes").value = name; $("#prof-del-route").disabled = false; });
+  };
+  $("#prof-del-route").onclick = () => enqueue(async () => {
+    const name = $("#prof-routes").value; if (!name) return;
+    state.routes = await jpost(`/projects/${state.pid}/routes/delete`, { name }); renderRoutes();
+  });
+  $("#props").addEventListener("click", e => {
+    if (e.target.id === "lock-on" || e.target.id === "lock-off") { const ids = state.sel.ids.slice(); enqueue(() => setLock(ids, e.target.id === "lock-on")); }
+  });
+}
+
 /* ------------------------------------------------------------------ boot */
 state.history = [];
-initMap(); wireUi(); initTables(); wireBatch1(); tag(); renderLegend(); updateStatus(); updateButtons(); asstStatus();
+initMap(); wireUi(); initTables(); wireBatch1(); wireBatch2(); tag(); renderLegend(); updateStatus(); updateButtons(); asstStatus();
 enqueue(reattach);
 window.ed = {
   state, map,

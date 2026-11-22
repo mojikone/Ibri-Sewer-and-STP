@@ -50,13 +50,28 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
 - **Box select:** Shift+drag selects the pipes whose middle is in the box, Ctrl+drag the nodes; then edit them together.
 - **Reference layers:** a GeoPackage, GeoJSON, zipped shapefile or DXF drawn under the network (Display card), with
   hover attributes; display only, kept with the open project. A layer with no CRS is read in the project's coordinates.
+- **Scenarios:** a manager (Scenarios...) as a tree: open, copy, rename, delete (with the scenarios copied from it), and
+  compare: the open scenario coloured by what changed against another (size, levels, flow only, new pipes) with the
+  differences in Tool output. Save keeps every scenario inside the GeoPackage (its layers stay the scenario on screen,
+  for QGIS); Open brings them all back with their undo history and saved routes.
+- **Summary tab:** pipes, km and failures as tiles (a failure tile steps through them), and length by size, by velocity
+  and by d/D as bars; a bar selects its pipes.
+- **Design control:** Tools > Design asks the scope (the whole network or the selected pipes), the load set, and offers
+  a preview (what would change, nothing recorded) before applying; pipes locked in Properties keep their size and levels.
+- **Quantities** in the team's BOQ structure (W18 `final_boq.py`): pipes by size and by size and depth band (up to
+  1.5 m, every 0.5 m to 15 m, over 15 m), manholes by type (Type 1/2/3 by the largest pipe) and depth band; CSV of any
+  Tool output. Rates are not read. **KMZ** for Google Earth (File menu).
+- **Storm:** a time slider and play button colour the map at any reporting period of the last run; the profile shows
+  the storm's peak water level at the manholes.
+- **Assistant:** it is told what is selected and which profile is on screen, and can select and zoom to pipes or draw a
+  profile in the editor (show_on_map, show_profile; they change nothing in the model).
 - **Profile along any route:** from a manhole or pipe down to the outfall, or to any other manhole or pipe through
   via points, along the shortest path through the network in either direction (pipes walked against the flow are
   marked); pick the route by clicking on the map; the route is lit on the map and one cursor follows both ways (map
   and profile) with a readout of levels, depth, cover, flow and d/D; data bands, the minimum-cover line, flow arrows,
   CSV, PNG and SVG export. Manholes are drawn as shafts, and every pipe that joins a manhole off the route as a circle
   of its own diameter at its own invert, with a dashed line for the drop to the outgoing invert (the readout lists them).
-  Long sections: zoom buttons, a scrollbar, wheel zoom at the cursor, Shift+wheel or drag to scroll, Ctrl+wheel to
+  Routes are saved by name with the project. Long sections: zoom buttons, a scrollbar, wheel zoom at the cursor, Shift+wheel or drag to scroll, Ctrl+wheel to
   zoom the levels, double-click for the whole route.
 - **Interface:** panels that drag to any size and collapse (F2 properties, F3 tables, F4 map only), remembered between
   sessions; a Display card on the map with the colour, the results source, the basemap (streets, satellite with labels,
@@ -119,7 +134,6 @@ The Ibri W18 viewer of phase 1B (the 12 frozen designs with their W18 tools) is 
 - a dynamic SWMM run of a sewer from its sanitary loads (no dry-weather flow is written yet; a SWMM run needs rain);
 - Babbitt and Harmon peaking; the catalogue, minimum-gradient, d/D and peaking tables are not editable in the UI
   (only through the Settings JSON paths);
-- a saved project file holds one scenario (Save writes the chosen scenario flattened);
 - imported US-unit SWMM models show feet and acres under the m and ha labels, and Design is not meant for them;
 - the W18 viewer (`/w18`): the design chain does not take a what-if's edits; BOQ, costs, station flows, DWG and
   schematics are still to be placed (`docs/SCRIPT_REGISTER.md`, "Planned").

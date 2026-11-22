@@ -117,11 +117,26 @@ def sample(case: str):
 
 @router.post("/projects/open")
 async def open_file(file: UploadFile = File(...)):
+    """A project file; when it carries its scenarios (saved by this app since batch 2) they all come back, opened at
+    the one it was saved from."""
     d = tempfile.mkdtemp(); f = os.path.join(d, "upload.gpkg"); open(f, "wb").write(await file.read())
-    try: p, _ = gpkg_project.load(f)
+    try: p, extra = gpkg_project.load(f)
     except Exception as e: raise HTTPException(400, f"not a project file: {e}")
-    with _lock: pid = _open(p)
-    return _info(pid)
+    ss = (extra or {}).get("session")
+    with _lock:
+        if not ss: pid = _open(p); return _info(pid)
+        try:
+            base = gpkg_project.project_from_dict(ss["base"])
+            from sewerapp.model.workspace import Scenario
+            pid = _open(base); s = SESSIONS[pid]; s.scenarios = {}
+            for c in ss["scenarios"]:
+                sc = Scenario(c["id"], c["name"], c.get("parent"), c["edits"]); sc.fixed = c.get("fixed", 0); s.scenarios[c["id"]] = sc
+            s._n = max([int(k[1:]) for k in s.scenarios if re.fullmatch(r"S\d+", k)] or [0])
+            s.routes = ss.get("routes", [])
+            for k in s.scenarios: s.model(k)                   # every scenario replays: a broken file fails here, not later
+        except Exception as e:
+            SESSIONS.pop(pid, None); raise HTTPException(400, f"the file's scenarios could not be rebuilt: {e}")
+    return _info(pid) | dict(current=ss.get("current", "base") if ss.get("current") in s.scenarios else "base")
 
 
 @router.post("/projects/import")
@@ -176,6 +191,25 @@ def export_csv(pid: str, sid: str = "base"):
     return Response(t.to_csv(index_label="id"), media_type="text/csv", headers={"Content-Disposition": 'attachment; filename="links.csv"'})
 
 
+@router.get("/projects/{pid}/scenarios/{sid}/quantities")
+def quantities(pid: str, sid: str):
+    """Pipes by size and by size and depth band, manholes by type and depth band (the team's BOQ structure)."""
+    from sewerapp.engine import quantities as qty
+    s = _s(pid)
+    with _lock: p = s.model(sid)
+    return clean(qty.quantities(p))
+
+
+@router.get("/projects/{pid}/export.kmz")
+def export_kmz(pid: str, sid: str = "base"):
+    from sewerapp.io import kmz
+    s = _s(pid)
+    with _lock: p = s.model(sid); res, _ = s.solve(sid)
+    try: data = kmz.kmz_bytes(p, res, f"{p.name} - {s.scenarios[sid].name}")
+    except ValueError as e: raise HTTPException(400, str(e))
+    return Response(data, media_type="application/vnd.google-earth.kmz", headers={"Content-Disposition": 'attachment; filename="network.kmz"'})
+
+
 @router.get("/projects/{pid}/export.inp")
 def export_inp(pid: str, sid: str = "base"):
     from sewerapp.io import swmm_inp
@@ -201,6 +235,15 @@ def storm_run(pid: str, sid: str):
     return clean(dict(summary=r["summary"], seconds=r["seconds"], links=r["links"], nodes=r["nodes"], subcatchments=r["subcatchments"]))
 
 
+@router.get("/projects/{pid}/scenarios/{sid}/storm/frame")
+def storm_frame(pid: str, sid: str, period: int, attr: str = "capacity"):
+    from sewerapp.engine import storm
+    r = STORM.get((pid, sid))
+    if not r: raise HTTPException(400, "run the storm first")
+    try: return storm.frame(r["out"], period, attr)
+    except KeyError: raise HTTPException(400, f"no attribute {attr}")
+
+
 @router.get("/projects/{pid}/scenarios/{sid}/storm/series")
 def storm_series(pid: str, sid: str, kind: str, id: str, attr: str):
     from sewerapp.engine import storm
@@ -218,8 +261,14 @@ def info(pid: str):
 
 @router.get("/projects/{pid}/save")
 def save(pid: str, sid: str = "base"):
-    s = _s(pid); p = s.model(sid)
-    f = os.path.join(tempfile.mkdtemp(), "project.gpkg"); gpkg_project.save(p, f)
+    """The GeoPackage: its layers are the scenario on screen (what QGIS shows); every scenario is kept inside it as the
+    base model and each scenario's edits, so Open brings them all back."""
+    s = _s(pid)
+    with _lock:
+        p = s.model(sid)
+        ss = dict(version=1, current=sid, base=gpkg_project.project_dict(s.base), routes=getattr(s, "routes", []),
+                  scenarios=[dict(id=c.id, name=c.name, parent=c.parent, edits=clean(c.edits), fixed=c.fixed) for c in s.scenarios.values()])
+    f = os.path.join(tempfile.mkdtemp(), "project.gpkg"); gpkg_project.save(p, f, extra=dict(session=ss))
     name = "".join(ch if ch.isalnum() or ch in "-_ " else "_" for ch in p.name).strip() or "project"
     return Response(open(f, "rb").read(), media_type="application/geopackage+sqlite3",
                     headers={"Content-Disposition": f'attachment; filename="{name}.gpkg"'})
@@ -227,6 +276,64 @@ def save(pid: str, sid: str = "base"):
 
 class CopyS(BaseModel):
     name: str | None = None
+
+
+class Rename(BaseModel):
+    name: str
+
+
+@router.post("/projects/{pid}/scenarios/{sid}/rename")
+def rename_scenario(pid: str, sid: str, b: Rename):
+    s = _s(pid)
+    if sid not in s.scenarios: raise HTTPException(404, sid)
+    if not b.name.strip(): raise HTTPException(400, "a scenario needs a name")
+    with _lock: s.scenarios[sid].name = b.name.strip()
+    return _info(pid)
+
+
+@router.post("/projects/{pid}/scenarios/{sid}/delete")
+def delete_scenario(pid: str, sid: str):
+    """Delete a scenario and the scenarios copied from it (the base stays)."""
+    s = _s(pid)
+    if sid == "base": raise HTTPException(400, "the base scenario cannot be deleted")
+    if sid not in s.scenarios: raise HTTPException(404, sid)
+    with _lock:
+        gone, grow = {sid}, True
+        while grow:
+            add = {k for k, c in s.scenarios.items() if c.parent in gone and k not in gone}; grow = bool(add); gone |= add
+        for k in gone:
+            s.scenarios.pop(k, None); s.external.pop(k, None); STORM.pop((pid, k), None)
+        s._cache = {}
+    return _info(pid) | dict(deleted=sorted(gone))
+
+
+@router.get("/projects/{pid}/compare")
+def compare(pid: str, a: str, b: str):
+    """Scenario b against scenario a, link by link: size, inverts, flow, velocity and d/D in both, and what changed
+    (size, levels, flow only); links only in one of them."""
+    s = _s(pid)
+    for k in (a, b):
+        if k not in s.scenarios: raise HTTPException(404, k)
+    with _lock:
+        pa = s.model(a); ra, _ = s.solve(a); pb = s.model(b); rb, _ = s.solve(b)
+    A, B = pa.links, pb.links; both = A.index.intersection(B.index)
+    t = pd.DataFrame(index=both)
+    for k in ("dn_mm", "up_inv", "dn_inv"): t[k + "_a"] = A.loc[both, k].astype(float); t[k + "_b"] = B.loc[both, k].astype(float)
+    for k in ("q_ls", "v_ms", "d_over_D"):
+        t[k + "_a"] = ra[k].reindex(both).astype(float) if ra is not None and k in ra else np.nan
+        t[k + "_b"] = rb[k].reindex(both).astype(float) if rb is not None and k in rb else np.nan
+    size = (t.dn_mm_a != t.dn_mm_b)
+    lev = ((t.up_inv_a - t.up_inv_b).abs() > 5e-4) | ((t.dn_inv_a - t.dn_inv_b).abs() > 5e-4)
+    flow = ((t.q_ls_a - t.q_ls_b).abs() > 1e-3 * t.q_ls_a.abs().clip(lower=1e-6))
+    t["change"] = np.where(size, "size", np.where(lev, "levels", np.where(flow, "flow", "same")))
+    ch = t[t.change != "same"].copy(); ch["dv"] = ch.v_ms_b - ch.v_ms_a
+    counts = t.change.value_counts().to_dict()
+    added, removed = sorted(B.index.difference(A.index)), sorted(A.index.difference(B.index))
+    return clean(dict(a=a, b=b, counts=dict(size=counts.get("size", 0), levels=counts.get("levels", 0), flow=counts.get("flow", 0),
+                                            same=counts.get("same", 0), added=len(added), removed=len(removed)),
+                      change={**{i: c for i, c in zip(t.index, t.change) if c != "same"}, **{i: "added" for i in added}},
+                      removed=removed[:500],
+                      rows=[dict(id=i, **r) for i, r in zip(ch.index[:2000], ch.round(4).to_dict("records")[:2000])]))
 
 
 @router.post("/projects/{pid}/scenarios/{sid}/copy")
@@ -305,13 +412,32 @@ def edit(pid: str, sid: str, e: Edit):
     return dict(summary=clean(summ), structural=structural, scenario=s.scenarios[sid].to_dict())
 
 
+class DesignOpts(BaseModel):
+    only: list[str] | None = None
+    preview: bool = False
+
+
 @router.post("/projects/{pid}/scenarios/{sid}/design")
-def run_design(pid: str, sid: str, load_set: str | None = None):
+def run_design(pid: str, sid: str, load_set: str | None = None, b: DesignOpts | None = None):
     """Automated design into the scenario (undoable): sizes by the d/D limit at the size's minimum gradient, then the
-    re-lay with crowns matched and minimum cover."""
-    s = _s(pid)
+    re-lay with crowns matched and minimum cover. `only`: design those conduits and keep the rest; locked conduits are
+    always kept. `preview`: what would change, with nothing recorded."""
+    s = _s(pid); b = b or DesignOpts()
+    if b.preview:
+        from sewerapp.engine import design_general
+        with _lock:
+            p = s.model(sid)
+            try: q, rep = design_general.design(p, load_set, b.only)
+            except (ValueError, KeyError, RuntimeError) as x: raise HTTPException(400, str(x))
+        L0, L1 = p.links, q.links
+        d = pd.DataFrame(dict(dn_old=L0.dn_mm, dn_new=L1.dn_mm, up_old=L0.up_inv, up_new=L1.up_inv, dn_inv_old=L0.dn_inv, dn_inv_new=L1.dn_inv))
+        moved = (d.dn_old != d.dn_new) | ((d.up_old - d.up_new).abs() > 5e-4) | ((d.dn_inv_old - d.dn_inv_new).abs() > 5e-4)
+        ch = d[moved & (L0.kind == "conduit")].copy(); ch["d_up"] = ch.up_new - ch.up_old
+        nd = (p.nodes.invert - q.nodes.invert).abs() > 5e-4
+        return clean(dict(preview=True, report=rep, links_changed=int(len(ch)), sizes_changed=int((ch.dn_old != ch.dn_new).sum()),
+                          nodes_moved=int(nd.sum()), rows=[dict(id=i, **r) for i, r in zip(ch.index[:3000], ch.round(4).to_dict("records")[:3000])]))
     with _lock:
-        e = dict(op="design", load_set=load_set)
+        e = dict(op="design", load_set=load_set, only=b.only)
         try: s.edit(sid, e)
         except (ValueError, KeyError, RuntimeError) as x: raise HTTPException(400, str(x))
         _, summ = s.solve(sid)
@@ -343,6 +469,10 @@ GTOOLS = [
          endpoint="GET /api/g/sewergems/exports; POST /api/g/projects/open_sewergems/{name}", script="io/sewergems_export.py"),
     dict(name="checks", menu="Checks", label="Failing links: over the d/D limit, over v max, surcharged, flat or adverse",
          endpoint="GET /api/g/projects/{pid}/scenarios/{sid}/checks", script="engine/steady.py"),
+    dict(name="quantities", menu="Quantities", label="Quantities: pipes by size and depth band, manholes by type and depth (the BOQ structure)",
+         endpoint="GET /api/g/projects/{pid}/scenarios/{sid}/quantities", script="engine/quantities.py"),
+    dict(name="export_kmz", menu="File", label="Export a KMZ for Google Earth (pipes by size, structures)",
+         endpoint="GET /api/g/projects/{pid}/export.kmz?sid={sid}", script="io/kmz.py"),
 ]
 
 
@@ -487,6 +617,35 @@ def delete_reference(pid: str, rid: str):
     schedule(pid); return dict(ok=True)
 
 
+class Route(BaseModel):
+    name: str
+    start: str
+    end: str | None = None
+    via: str | None = None
+
+
+@router.get("/projects/{pid}/routes")
+def list_routes(pid: str):
+    return getattr(_s(pid), "routes", [])
+
+
+@router.post("/projects/{pid}/routes")
+def save_route(pid: str, b: Route):
+    s = _s(pid)
+    if not b.name.strip() or not b.start.strip(): raise HTTPException(400, "a route needs a name and a start")
+    with _lock:
+        rs = [r for r in getattr(s, "routes", []) if r["name"] != b.name.strip()]
+        s.routes = rs + [dict(name=b.name.strip(), start=b.start.strip(), end=(b.end or "").strip(), via=(b.via or "").strip())]
+    return s.routes
+
+
+@router.post("/projects/{pid}/routes/delete")
+def delete_route(pid: str, b: Rename):
+    s = _s(pid)
+    with _lock: s.routes = [r for r in getattr(s, "routes", []) if r["name"] != b.name]
+    return s.routes
+
+
 @router.get("/projects/{pid}/scenarios/{sid}/profile")
 def profile(pid: str, sid: str, start: str, end: str | None = None, via: str | None = None):
     """A long section along a route (see `route`): per link, in route order, the chainage, ground, invert, crown and
@@ -511,6 +670,8 @@ def profile(pid: str, sid: str, start: str, end: str | None = None, via: str | N
                                   inside_mm=0 if pump else L.inside_mm, invert=inv, transfer=bool(L.transfer),
                                   q_ls=None if r is None or "q_ls" not in r else r.q_ls)))
         return sorted(out, key=lambda j: (j["dir"] != "in", -(j["inside_mm"] or 0)))
+    st = STORM.get((pid, sid)); sn = st["nodes"] if st else {}
+    head = lambda n: sn[n]["head_peak"] if n in sn else None
     rows, ch = [], 0.0
     for i, rev in links:
         L = p.links.loc[i]; n0, n1 = (L.to_node, L.from_node) if rev else (L.from_node, L.to_node)
@@ -527,7 +688,8 @@ def profile(pid: str, sid: str, start: str, end: str | None = None, via: str | N
                                slope_pc=(up - dn) / ln * 100 if ln > 0 and L.kind != "pump" else None,
                                q_ls=g("q_ls"), v_ms=g("v_ms"), d_over_D=g("d_over_D"),
                                fail=bool(r is not None and any(bool(g(k)) for k in ("over_limit", "over_vmax", "surcharged", "negative_slope"))),
-                               node_inv1=p.nodes.invert[n1], kind1=p.nodes.kind[n1], joins1=joins(n1))))
+                               node_inv1=p.nodes.invert[n1], kind1=p.nodes.kind[n1], joins1=joins(n1),
+                               storm0=head(n0), storm1=head(n1))))
         if len(rows) == 1: rows[0].update(node_inv0=clean(p.nodes.invert[n0]), kind0=p.nodes.kind[n0], joins0=joins(n0))
         ch += ln
     return rows
@@ -539,6 +701,8 @@ class Ask(BaseModel):
     message: str
     history: list[dict] = []
     model: str = "opus"
+    selection: dict | None = None            # {table, ids}: what the engineer has selected in the editor
+    route: dict | None = None                # {start, end, via}: the profile on screen
 
 
 @router.get("/assistant/status")
@@ -555,9 +719,18 @@ def assistant(q: Ask):
     if not st["available"]: raise HTTPException(503, st["reason"])
     s = _s(q.project)
     if q.scenario not in s.scenarios: raise HTTPException(404, q.scenario)
+    ctx = f"active project: {q.project}, scenario: {q.scenario}"
+    sel = q.selection or {}
+    if sel.get("ids"):
+        ids = [str(i) for i in sel["ids"]]
+        ctx += f"; selected {sel.get('table')}: {', '.join(ids[:40])}" + (f" and {len(ids) - 40} more" if len(ids) > 40 else "")
+    if q.route and q.route.get("start"):
+        ctx += f"; profile on screen from {q.route['start']} to {q.route.get('end') or 'the outfall'}" + (f" via {q.route['via']}" if q.route.get("via") else "")
     with _lock:
-        return clean(runner.ask(None, q.scenario, q.message, q.history, q.model, toolset=gtools, system=runner.SYSTEM_GENERAL,
-                                context=f"active project: {q.project}, scenario: {q.scenario}"))
+        gtools.ACTIONS.clear()
+        out = runner.ask(None, q.scenario, q.message, q.history, q.model, toolset=gtools, system=runner.SYSTEM_GENERAL, context=ctx)
+        out["ui_actions"] = list(gtools.ACTIONS); gtools.ACTIONS.clear()
+        return clean(out)
 
 
 SG_EXPORTS = os.environ.get("W19_SG_EXPORTS", r"D:\VBOX\bridge\out\w19\export")

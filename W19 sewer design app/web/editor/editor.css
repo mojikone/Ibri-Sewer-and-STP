@@ -13,6 +13,7 @@ body.dark {
   --overlay: rgba(22,28,35,.93); --shadow: 0 6px 22px rgba(0,0,0,.5); --focus: #3f7fd6;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }          /* a class's display (.tb is inline-flex) must not show a hidden element */
 html, body { height: 100%; margin: 0; }
 body { display: grid; grid-template-rows: auto 26px minmax(0, 1fr) 6px var(--bh); grid-template-columns: minmax(0, 1fr);
   background: var(--bg); color: var(--ink); font: 13px/1.35 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
@@ -119,6 +120,31 @@ body.tools-compact .tool svg { width: 22px; height: 22px; }
 #ref-list .ref label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; gap: 4px; align-items: center; }
 #ref-list .sw { width: 10px; height: 10px; border-radius: 2px; flex: none; }
 #ref-list .pbtn { margin: 0; width: 20px; height: 18px; }
+#dlg-ask { z-index: 70; }
+#storm-bar { position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; background: var(--overlay); border: 1px solid var(--line); border-radius: 18px; padding: 4px 12px; box-shadow: var(--shadow); z-index: 6; }
+#storm-bar[hidden] { display: none; }
+#storm-bar input { width: 260px; }
+#storm-bar button { border: 1px solid var(--line); background: var(--panel); border-radius: 12px; padding: 1px 10px; }
+#storm-time { font: 12px ui-monospace, Consolas, monospace; min-width: 110px; }
+#scen-list { max-height: 55vh; overflow-y: auto; }
+.scrow { display: grid; grid-template-columns: 1fr 70px repeat(5, auto); gap: 6px; align-items: center; padding: 4px 6px; border-radius: 6px; }
+.scrow:hover { background: var(--row); }
+.scrow.cur { background: var(--sel); }
+.scrow .scname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scrow button { padding: 2px 8px !important; font-size: 12px; }
+.dlg label.rad { display: flex; gap: 8px; grid-template-columns: none; }
+#summary { padding: 10px 14px; }
+.kpis { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+.kpi { background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; min-width: 96px; }
+.kpi .kv { font-size: 18px; font-weight: 650; }
+.kpi .kl { font-size: 11px; color: var(--muted); }
+.kpi.bad { border-color: var(--bad); cursor: pointer; }
+.kpi.bad .kv { color: var(--bad); }
+.charts { display: flex; flex-wrap: wrap; gap: 26px; }
+svg.bars text { font: 11px system-ui, sans-serif; fill: var(--ink2); }
+svg.bars text.bt { font-weight: 650; fill: var(--ink); }
+svg.bars .bar { cursor: pointer; }
+svg.bars .bar:hover rect { opacity: .75; }
 #selbox { position: absolute; border: 1.5px dashed var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); z-index: 6; pointer-events: none; }
 .trace-bar { display: flex; align-items: center; gap: 6px; margin: 2px 0 8px; color: var(--ink2); font-size: 12px; }
 .trace-bar button, .trace-box button { border: 1px solid var(--line); background: var(--panel); border-radius: 5px; padding: 2px 8px; font-size: 12px; }
