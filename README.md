@@ -92,6 +92,15 @@ becomes real.
 
 | Date | Update |
 |---|---|
+| 2026-11-22 (W19 batch 3) | **Every control checked as a user would, and what failed fixed.**
+- **Any SewerGEMS model:** opens from the app. The dialog lists the 33 models in the shared folders and writes the VM bridge job itself (a copy is opened); Majlas and Block 04 were exported and opened this way.
+- **Box and channel sections:** shown and marked not analysed, no longer zero-bore pipes with a tick.
+- **Failing pipes:** the red overlay can be switched off.
+- **Settings:** the catalogue, minimum gradient, d/D and peaking tables are editable.
+- **Keyboard help:** a ? button lists every shortcut.
+- **Page cache:** a stale cached page can no longer stop the editor at start.
+
+140 tests pass. |
 | 2026-11-22 (W19 batch 2) | **Scenarios, design control and quantities in the editor.**
 - **Scenarios:** a manager (open, copy, rename, delete with copies) and compare as a difference map. SC1-2056 design against W18-2056: 1,829 size changes. Save keeps every scenario in the GeoPackage.
 - **Summary tab** with charts.
