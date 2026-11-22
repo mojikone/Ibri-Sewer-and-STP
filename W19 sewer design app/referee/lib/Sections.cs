@@ -86,6 +86,27 @@ public static class Sections
         var best = units.OrderBy(u => Math.Abs(Math.Log(med / u))).First();
         return Math.Abs(Math.Log(med / best)) < Math.Log(1.25) ? best : double.NaN;
     }
+    // The model's own display units, read from its Units API (m.Units.Conduit.FlowUnit / LengthUnit, e.g.
+    // "cubicMetersPerSecond : m3/s"); NaN when the name is not known, so the measurement below is the fallback.
+    static readonly Dictionary<string, double> FLOW_NAMES = new Dictionary<string, double> {
+        { "cubicmeterspersecond", 1 }, { "literspersecond", 0.001 }, { "litrespersecond", 0.001 }, { "cubicmetersperhour", 1 / 3600.0 },
+        { "cubicmetersperday", 1 / 86400.0 }, { "cubicfeetpersecond", 0.028316846592 }, { "gallonsperminute", 6.30901964e-5 },
+        { "milliongallonsperday", 0.0438126364 } };
+    static readonly Dictionary<string, double> LENGTH_NAMES = new Dictionary<string, double> {
+        { "meters", 1 }, { "metres", 1 }, { "feet", 0.3048 }, { "millimeters", 0.001 }, { "inches", 0.0254 } };
+    static double Named(IStormSewerModel m, string unitProperty, Dictionary<string, double> names)
+    {
+        try
+        {
+            var u = m.GetType().GetProperty("Units").GetValue(m, null);
+            var c = u.GetType().GetProperty("Conduit").GetValue(u, null);
+            string s = Convert.ToString(c.GetType().GetProperty(unitProperty).GetValue(c, null), CI) ?? "";
+            string key = s.Split(':')[0].Trim().ToLowerInvariant(); double f;
+            return names.TryGetValue(key, out f) ? f : double.NaN;
+        }
+        catch { return double.NaN; }
+    }
+
     static double FullManning(string code, double rise, double span, double bottom, double zl, double zr, double n, double S)
     {
         if (!(S > 0) || !(n > 0) || !(rise > 0)) return double.NaN;
@@ -116,8 +137,9 @@ public static class Sections
             items.Add(Tuple.Create(c, row, Code(shape)));
             if (row != null && row.Rise > 0 && i.ConduitRise > 0) lr.Add(row.Rise / i.ConduitRise);
         }
-        double lengthToM = Snap(lr, LENGTHS);
-        if (double.IsNaN(lengthToM)) lengthToM = 1.0;          // no catalogue rows to measure against: metres assumed
+        double lengthToM = Named(m, "LengthUnit", LENGTH_NAMES);
+        if (double.IsNaN(lengthToM)) lengthToM = Snap(lr, LENGTHS);
+        if (double.IsNaN(lengthToM)) lengthToM = 1.0;          // no units and no catalogue rows to measure against: metres assumed
         foreach (var it in items)
         {
             var i = it.Item1.Input; var row = it.Item2; double L = i.Length * lengthToM;
@@ -126,7 +148,10 @@ public static class Sections
                 L > 0 ? (i.StartInvert - i.StopInvert) * lengthToM / L : double.NaN);
             fr.Add(q / R(B4.Res(it.Item1), "FullFlowCapacity"));
         }
-        double flowToM3s = Snap(fr, FLOWS);
+        // the model's own flow unit first; the measurement against the typed full capacity fails once a Design run has
+        // re-sized the conduits (the typed shape does not follow), as on Block 04's 200-year storm
+        double flowToM3s = Named(m, "FlowUnit", FLOW_NAMES);
+        if (double.IsNaN(flowToM3s)) flowToM3s = Snap(fr, FLOWS);
         log.WriteLine("  section units: length x{0}, flow x{1} (to m and m3/s)", lengthToM.ToString("R", CI), double.IsNaN(flowToM3s) ? "unknown" : flowToM3s.ToString("R", CI));
         int n = 0, box = 0, open = 0, other = 0;
         using (var w = new StreamWriter(csv, false, new UTF8Encoding(false)))

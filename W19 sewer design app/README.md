@@ -154,7 +154,8 @@ The Ibri W18 viewer of phase 1B (the 12 frozen designs with their W18 tools) is 
   SewerGEMS's GVF velocities read up to 0.04 m/s below the app's normal-depth velocities (GVF backwater not built);
 - box and channel sections are solved at normal depth (no backwater), and the design does not size them; only the open
   rectangle is checked against SewerGEMS (Block 04), the closed box and trapezoid against hand calculations only;
-  whether SewerGEMS closes its shape-3 rectangle at the rise is not settled (no Block 04 channel reached it);
+  whether SewerGEMS closes its shape-3 rectangle at the rise is not settled: its Design runs hold every Block 04 channel
+  at 0.75 of the rise (2- and 200-year storms), so it needs an Analysis run with the sizes held;
 - EPANET `.inp` (water distribution): not started;
 - the hydraulics of pumps, wet wells and force mains (a pump passes its flow on; no pump curve or head is solved);
   GVF backwater; rational-method storm design and inlet capture;
