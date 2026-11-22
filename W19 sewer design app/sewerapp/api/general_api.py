@@ -325,28 +325,123 @@ def redo(pid: str, sid: str):
     return dict(summary=clean(summ), scenario=s.scenarios[sid].to_dict())
 
 
-@router.get("/projects/{pid}/scenarios/{sid}/profile")
-def profile(pid: str, sid: str, start: str, end: str | None = None):
-    """From node `start` down to `end` or the last node: chainage, ground, invert, crown, water surface per link."""
-    s = _s(pid)
-    with _lock: p = s.model(sid); res, _ = s.solve(sid)
+def _downstream(p, start, end=None):
+    """The links from node `start` following the flow, to `end` or the last node; a gravity section ends at a pump."""
     leave = {f: i for i, f in zip(p.links.index, p.links.from_node)}
-    if start not in leave: raise HTTPException(400, f"no link leaves {start}")
-    rows, ch, i, seen = [], 0.0, leave[start], set()
+    out, i, seen = [], leave.get(start), set()
     while i is not None and i not in seen:
         seen.add(i); L = p.links.loc[i]
-        if L.kind == "pump": break                         # a gravity long section ends at the station
-        D = (L.inside_mm or 0) / 1000.0
-        r = res.loc[i] if res is not None and i in res.index else None
-        dd = float(r.d_over_D) if r is not None and r.d_over_D == r.d_over_D else 0.0
-        rows.append(clean(dict(link=i, kind=L.kind, from_node=L.from_node, to_node=L.to_node, ch0=ch, ch1=ch + float(L.length_m),
-                               ground0=p.nodes.ground[L.from_node], ground1=p.nodes.ground[L.to_node],
-                               inv0=L.up_inv, inv1=L.dn_inv, crown0=L.up_inv + D, crown1=L.dn_inv + D,
-                               water0=L.up_inv + dd * D, water1=L.dn_inv + dd * D, dn_mm=L.dn_mm,
-                               v_ms=None if r is None else r.v_ms)))
-        ch += float(L.length_m)
-        if L.to_node == end: break
+        if L.kind == "pump": break
+        out.append((i, False))
+        if L.to_node == end: return out
         i = leave.get(L.to_node)
+    return None if end else out
+
+
+def _shortest(p, a, b):
+    """Shortest route by length from node a to node b through the network in either direction: [(link, reversed)]."""
+    import heapq
+    if a == b: return []
+    adj = {}
+    for i, f, t, l in zip(p.links.index, p.links.from_node, p.links.to_node, p.links.length_m):
+        w = float(l) if l == l and l > 0 else 1.0
+        adj.setdefault(f, []).append((t, i, False, w)); adj.setdefault(t, []).append((f, i, True, w))
+    dist, prev, q = {a: 0.0}, {}, [(0.0, a)]
+    while q:
+        d, n = heapq.heappop(q)
+        if n == b: break
+        if d > dist[n]: continue
+        for m, i, rev, w in adj.get(n, ()):
+            if d + w < dist.get(m, math.inf): dist[m] = d + w; prev[m] = (n, i, rev); heapq.heappush(q, (d + w, m))
+    if b not in prev: return None
+    out, n = [], b
+    while n != a: n0, i, rev = prev[n]; out.append((i, rev)); n = n0
+    return out[::-1]
+
+
+def _ends(p, x, first):
+    """A route end given as a node, or as a pipe (the route then starts or ends with that whole pipe)."""
+    if x in p.nodes.index: return [(x, [])]
+    if x in p.links.index:
+        L = p.links.loc[x]
+        # starting with a pipe: walk it from either end; ending with one: arrive at either end and walk through it
+        return ([(L.to_node, [(x, False)]), (L.from_node, [(x, True)])] if first else
+                [(L.from_node, [(x, False)]), (L.to_node, [(x, True)])])
+    raise HTTPException(400, f"no node or pipe {x}")
+
+
+def route(p, start, end=None, via=()):
+    """The route of a long section: with no end, downstream to the outfall (a pump ends it); with an end (and any via
+    points), the flow path when it reaches the end, otherwise the shortest path through the network."""
+    if not end and not via:
+        if start in p.links.index: L = p.links.loc[start]; return [(start, False)] + (_downstream(p, L.to_node) or [])
+        if start not in p.nodes.index: raise HTTPException(400, f"no node or pipe {start}")
+        r = _downstream(p, start)
+        if not r: raise HTTPException(400, f"no pipe leaves {start}")
+        return r
+    stops = [start, *via, end] if end else [start, *via]
+    legs, here = [], None                                   # here: (node, links so far)
+    for k, x in enumerate(stops):
+        opts = _ends(p, x, first=(k == 0))
+        if k == 0: here = [(n, list(pre)) for n, pre in opts]; continue
+        best = None
+        for n0, pre0 in here:
+            for n1, tail in opts:
+                arrive = n1 if not tail else (p.links.loc[tail[0][0]].from_node if not tail[0][1] else p.links.loc[tail[0][0]].to_node)
+                leg = _downstream(p, n0, arrive) if arrive != n0 else []
+                leg = leg if leg is not None else _shortest(p, n0, arrive)
+                if leg is None: continue
+                cand = pre0 + leg + tail
+                ln = sum(float(p.links.length_m[i]) for i, _ in cand)
+                if best is None or ln < best[0]: best = (ln, n1, cand)
+        if best is None: raise HTTPException(400, f"no route from {stops[k - 1]} to {x}")
+        here = [(best[1], best[2])]
+    return here[0][1]
+
+
+@router.get("/projects/{pid}/scenarios/{sid}/profile")
+def profile(pid: str, sid: str, start: str, end: str | None = None, via: str | None = None):
+    """A long section along a route (see `route`): per link, in route order, the chainage, ground, invert, crown and
+    water surface at both ends, with the size, gradient, flow, velocity and d/D; `reversed` marks a link walked against
+    its flow."""
+    s = _s(pid)
+    with _lock: p = s.model(sid); res, _ = s.solve(sid)
+    vias = [v.strip() for v in (via or "").split(",") if v.strip()]
+    links = route(p, start.strip(), (end or "").strip() or None, vias)
+    on = {i for i, _ in links}
+    at = {}                                                  # node -> the links that meet it and are not on the route
+    for i, f, t in zip(p.links.index, p.links.from_node, p.links.to_node):
+        if i not in on: at.setdefault(f, []).append((i, "out")); at.setdefault(t, []).append((i, "in"))
+
+    def joins(n):
+        out = []
+        for i, d in at.get(n, ()):
+            L = p.links.loc[i]; pump = L.kind == "pump"
+            inv = p.nodes.invert[n] if pump else (L.up_inv if d == "out" else L.dn_inv)
+            r = res.loc[i] if res is not None and i in res.index else None
+            out.append(clean(dict(link=i, kind=L.kind, dir=d, other=L.to_node if d == "out" else L.from_node, dn_mm=L.dn_mm,
+                                  inside_mm=0 if pump else L.inside_mm, invert=inv, transfer=bool(L.transfer),
+                                  q_ls=None if r is None or "q_ls" not in r else r.q_ls)))
+        return sorted(out, key=lambda j: (j["dir"] != "in", -(j["inside_mm"] or 0)))
+    rows, ch = [], 0.0
+    for i, rev in links:
+        L = p.links.loc[i]; n0, n1 = (L.to_node, L.from_node) if rev else (L.from_node, L.to_node)
+        D = (L.inside_mm or 0) / 1000.0 if L.kind != "pump" else 0.0
+        r = res.loc[i] if res is not None and i in res.index else None
+        dd = float(r.d_over_D) if r is not None and "d_over_D" in r and r.d_over_D == r.d_over_D else 0.0
+        up, dn = (L.up_inv, L.dn_inv) if L.kind != "pump" else (p.nodes.invert[L.from_node], p.nodes.invert[L.to_node])
+        i0, i1 = (dn, up) if rev else (up, dn)
+        ln = float(L.length_m) if L.length_m == L.length_m else 0.0
+        g = lambda k: None if r is None or k not in r else r[k]
+        rows.append(clean(dict(link=i, kind=L.kind, reversed=bool(rev), from_node=n0, to_node=n1, ch0=ch, ch1=ch + ln, length_m=ln,
+                               ground0=p.nodes.ground[n0], ground1=p.nodes.ground[n1], inv0=i0, inv1=i1, crown0=i0 + D, crown1=i1 + D,
+                               water0=i0 + dd * D, water1=i1 + dd * D, dn_mm=L.dn_mm,
+                               slope_pc=(up - dn) / ln * 100 if ln > 0 and L.kind != "pump" else None,
+                               q_ls=g("q_ls"), v_ms=g("v_ms"), d_over_D=g("d_over_D"),
+                               fail=bool(r is not None and any(bool(g(k)) for k in ("over_limit", "over_vmax", "surcharged", "negative_slope"))),
+                               node_inv1=p.nodes.invert[n1], kind1=p.nodes.kind[n1], joins1=joins(n1))))
+        if len(rows) == 1: rows[0].update(node_inv0=clean(p.nodes.invert[n0]), kind0=p.nodes.kind[n0], joins0=joins(n0))
+        ch += ln
     return rows
 
 

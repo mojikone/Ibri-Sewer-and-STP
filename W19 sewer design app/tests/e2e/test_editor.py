@@ -517,5 +517,52 @@ def test_basemaps_hillshade_theme_and_utm_readout(page):
     page.get_by_test_id("basemap-select").select_option("osm"); page.get_by_test_id("hillshade-toggle").uncheck()
 
 
+def test_profile_route_pick_cursor_sync_zoom_and_export(page, tmp_path):
+    nid, lid = draw_network(page)
+    page.get_by_test_id("tab-profile").click(); idle(page)
+    # a route typed against the flow: from the third manhole back up to the first
+    page.get_by_test_id("prof-start").fill(nid[2]); page.get_by_test_id("prof-end").fill(nid[0]); page.get_by_test_id("prof-draw").click(); idle(page)
+    page.wait_for_function("prof.rows && prof.rows.length === 2")
+    expect(page.locator("#profile-svg .seg")).to_have_count(2)
+    assert page.evaluate("prof.rows.every(r => r.reversed)") and "against the flow" in page.get_by_test_id("prof-msg").inner_text()
+    assert page.evaluate("prof.segs.length") == 2 and page.evaluate("window.ed.map.getSource('route')._data.features.length") == 4   # 2 lines + S and E
+    # manholes drawn as shafts; the pipe that leaves the start manhole off the route (to the outfall) drawn as a circle at its invert
+    expect(page.locator("#profile-svg rect.mh")).to_have_count(3)
+    j = page.locator("#profile-svg circle.join"); expect(j).to_have_count(1)
+    assert lid[2] in j.locator("title").text_content() and "leaves to" in j.locator("title").text_content()
+    # picked on the map instead: the first manhole, then the outfall
+    page.get_by_test_id("prof-pick").click(); click_at(page, 0, 0); click_at(page, 300, 0); idle(page); page.keyboard.press("Enter")
+    page.wait_for_function("prof.rows && prof.rows.length === 3")
+    assert page.get_by_test_id("prof-start").input_value() == nid[0] and page.get_by_test_id("prof-end").input_value() == nid[3]
+    assert page.evaluate("window.ed.state.routePick") is None
+    # the cursor on the profile puts the marker on the map, and the map's cursor on the route moves the profile's
+    b = page.locator("#profile-svg").bounding_box()
+    page.mouse.move(b["x"] + b["width"] / 2, b["y"] + b["height"] / 3)
+    assert page.evaluate("prof.cursorFrom") == "profile" and page.evaluate("window.ed.map.getSource('cursor')._data.features.length") == 1
+    expect(page.get_by_test_id("prof-readout")).to_be_visible()
+    xy = page.evaluate("(() => { const p = window.ed.map.project(routePoint(150)), r = window.ed.map.getCanvas().getBoundingClientRect(); return [p.x + r.x, p.y + r.y]; })()")
+    page.mouse.move(*xy); page.wait_for_timeout(100)
+    assert page.evaluate("prof.cursorFrom") == "map" and abs(page.evaluate("prof.cursor") - 150) < 2
+    # zoom along the chainage with the wheel; a double-click shows it all again
+    page.mouse.move(b["x"] + b["width"] / 2, b["y"] + b["height"] / 3); page.mouse.wheel(0, -300); page.wait_for_timeout(100)
+    r = page.evaluate("prof.range"); assert r and r[1] - r[0] < 300
+    page.mouse.dblclick(b["x"] + b["width"] / 2, b["y"] + b["height"] / 3); assert page.evaluate("prof.range") is None
+    # the buttons and the scrollbar for long sections
+    page.get_by_test_id("prof-zin").click(); r = page.evaluate("prof.range"); assert r and abs((r[1] - r[0]) - 150) < 1
+    expect(page.get_by_test_id("prof-scroll")).to_be_visible()
+    tb = page.get_by_test_id("prof-thumb").bounding_box(); sb = page.get_by_test_id("prof-scroll").bounding_box()
+    page.mouse.move(tb["x"] + tb["width"] / 2, tb["y"] + 5); page.mouse.down(); page.mouse.move(tb["x"] + tb["width"] / 2 + sb["width"] / 4, tb["y"] + 5, steps=5); page.mouse.up()
+    r2 = page.evaluate("prof.range"); assert r2[0] > r[0] + 50, (r, r2)
+    page.get_by_test_id("prof-zall").click(); assert page.evaluate("prof.range") is None
+    expect(page.get_by_test_id("prof-scroll")).to_be_hidden()
+    # reverse it, then export
+    page.get_by_test_id("prof-swap").click(); idle(page); page.wait_for_function(f"prof.rows && prof.rows[0].from_node === '{nid[3]}'")
+    with page.expect_download() as d: page.get_by_test_id("prof-csv").click()
+    f = str(tmp_path / "p.csv"); d.value.save_as(f); assert len(open(f).read().strip().splitlines()) == 4
+    with page.expect_download() as d: page.get_by_test_id("prof-png").click()
+    f = str(tmp_path / "p.png"); d.value.save_as(f); assert open(f, "rb").read(4) == b"\x89PNG"
+    page.get_by_test_id("prof-clear").click(); assert page.evaluate("prof.segs.length") == 0
+
+
 def test_no_javascript_errors(page):
     assert page.errors == [], page.errors

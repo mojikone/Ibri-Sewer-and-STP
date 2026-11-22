@@ -159,10 +159,25 @@
       <div class="ptool"><span id="results-src" class="strong">W19 engine</span><input id="filter-results" type="search" placeholder="Filter results"><span id="count-results" class="muted"></span></div>
       <div class="twrap"><table id="tbl-results" class="ft"></table></div>
     </div>
-    <div id="pane-profile" class="pane">
-      <div class="ptool"><label>Start node</label><input id="prof-start" type="text" size="12"><label>End node (optional)</label><input id="prof-end" type="text" size="12">
-        <button id="prof-draw" class="tb">Draw</button><span id="prof-msg" class="muted"></span></div>
-      <div id="prof-wrap"><svg id="profile-svg" xmlns="http://www.w3.org/2000/svg"></svg></div>
+    <div id="pane-profile" class="pane flex">
+      <div class="ptool" id="prof-bar">
+        <label for="prof-start">From</label><input id="prof-start" type="text" size="11" placeholder="manhole or pipe" spellcheck="false">
+        <label for="prof-via">via</label><input id="prof-via" type="text" size="11" placeholder="optional: A, B" spellcheck="false">
+        <label for="prof-end">to</label><input id="prof-end" type="text" size="11" placeholder="blank: the outfall" spellcheck="false">
+        <button id="prof-draw" class="tb" title="Draw the long section (Enter in a box)">Draw</button>
+        <button id="prof-pick" class="tb" title="Click manholes or pipes on the map in order: the start, any via points, the end. Enter finishes.">Pick on map</button>
+        <button id="prof-swap" class="tb icon" title="Reverse the route" aria-label="Reverse the route">&#8644;</button>
+        <button id="prof-clear" class="tb icon" title="Clear the route" aria-label="Clear the route">&times;</button>
+        <button id="prof-fit" class="tb icon" title="Zoom the map to the route" aria-label="Zoom the map to the route">&#9635;</button>
+        <span id="prof-msg" class="muted"></span><span class="sp"></span>
+        <label class="chk2" title="Pan the map to keep the cursor in view while you move along the profile"><input type="checkbox" id="prof-follow" checked> Map follows</label>
+        <span class="zgrp"><button id="prof-zout" class="tb icon" title="Zoom out along the chainage (or the wheel)" aria-label="Zoom out">&minus;</button><button id="prof-zin" class="tb icon" title="Zoom in along the chainage (or the wheel)" aria-label="Zoom in">+</button><button id="prof-zall" class="tb" title="Show the whole route at true levels (or double-click)">All</button></span>
+        <label class="chk2" title="Pipes that join each manhole off the route, as circles of their own diameter at their own invert"><input type="checkbox" id="prof-joins" checked> Joining pipes</label>
+        <label class="chk2" title="Size, gradient and length per pipe; ground, invert and depth per manhole"><input type="checkbox" id="prof-bands" checked> Data bands</label>
+        <button id="prof-csv" class="tb" title="The section's rows as CSV">CSV</button><button id="prof-png" class="tb" title="The drawing as a PNG">PNG</button><button id="prof-svgdl" class="tb" title="The drawing as an SVG (vector)">SVG</button>
+      </div>
+      <div id="prof-wrap"><svg id="profile-svg" xmlns="http://www.w3.org/2000/svg"></svg><div id="prof-readout" hidden></div></div>
+      <div id="prof-scroll" hidden title="The part of the route shown: drag it, or click to jump"><div id="prof-thumb"></div><span id="prof-zinfo"></span></div>
     </div>
     <div id="pane-settings" class="pane"><div id="settings-form"></div></div>
     <div id="pane-assistant" class="pane flex">

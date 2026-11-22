@@ -112,7 +112,7 @@ function initMap() {
     const t = setInterval(() => { if (map.style && map.style._loaded) { clearInterval(t); go(); } }, 50);
   }).then(() => {
     const E = { type: "FeatureCollection", features: [] };
-    for (const id of ["grid", "catch", "catch-links", "drawpoly", "links", "nodes", "sel-links", "sel-nodes", "drag", "hot", "measure"]) map.addSource(id, { type: "geojson", data: E, tolerance: 0.4 });
+    for (const id of ["grid", "catch", "catch-links", "drawpoly", "links", "nodes", "sel-links", "sel-nodes", "drag", "hot", "measure", "route", "cursor"]) map.addSource(id, { type: "geojson", data: E, tolerance: 0.4 });
     map.addLayer({ id: "grid", type: "line", source: "grid", paint: { "line-color": "#d6dde6", "line-width": 1 } });
     map.addLayer({ id: "catch", type: "fill", source: "catch", paint: { "fill-color": "#4aa3a2", "fill-opacity": 0.22 } });
     map.addLayer({ id: "catch-line", type: "line", source: "catch", paint: { "line-color": "#2d7f7e", "line-width": 1.5 } });
@@ -147,6 +147,11 @@ function initMap() {
     map.addLayer({ id: "nodes-label", type: "symbol", source: "nodes", minzoom: 15.5, layout: { "text-field": ["get", "id"], "text-size": 11, "text-offset": [0, 1.1], "text-anchor": "top", "text-font": ["Open Sans Semibold"], "text-allow-overlap": false }, paint: { "text-color": "#1d2733", "text-halo-color": "#fff", "text-halo-width": 1.5 } });
     map.addLayer({ id: "sel-nodes", type: "circle", source: "sel-nodes", paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 5, 19, 12], "circle-color": "rgba(0,0,0,0)", "circle-stroke-color": ["case", ["==", ["get", "_pend"], 1], "#e6821e", "#00b3c7"], "circle-stroke-width": 3 } });
     map.addLayer({ id: "drag", type: "circle", source: "drag", paint: { "circle-radius": 8, "circle-color": "rgba(230,130,30,.35)", "circle-stroke-color": "#e6821e", "circle-stroke-width": 2 } });
+    map.addLayer({ id: "route-halo", type: "line", source: "route", filter: ["==", ["geometry-type"], "LineString"], layout: { "line-cap": "round", "line-join": "round" },
+      paint: { "line-color": "#ff7a1a", "line-opacity": 0.6, "line-blur": 1, "line-width": ["interpolate", ["linear"], ["zoom"], 10, 8, 15, 15, 19, 26] } }, "links-casing");
+    map.addLayer({ id: "route-pts", type: "circle", source: "route", filter: ["==", ["geometry-type"], "Point"], paint: { "circle-radius": 9, "circle-color": "#ff7a1a", "circle-stroke-color": "#fff", "circle-stroke-width": 2 } });
+    map.addLayer({ id: "route-lab", type: "symbol", source: "route", filter: ["==", ["geometry-type"], "Point"], layout: { "text-field": ["get", "lab"], "text-size": 11, "text-font": ["Open Sans Semibold"], "text-allow-overlap": true }, paint: { "text-color": "#fff" } });
+    map.addLayer({ id: "cursor", type: "circle", source: "cursor", paint: { "circle-radius": 7, "circle-color": "#ff7a1a", "circle-stroke-color": "#fff", "circle-stroke-width": 2.5 } });
     map.addLayer({ id: "measure-line", type: "line", source: "measure", paint: { "line-color": "#e6821e", "line-width": 2.5, "line-dasharray": [2, 1] } });
     map.addLayer({ id: "measure-pts", type: "circle", source: "measure", filter: ["==", ["geometry-type"], "Point"], paint: { "circle-radius": 4, "circle-color": "#fff", "circle-stroke-color": "#e6821e", "circle-stroke-width": 2 } });
     map.on("moveend", updateGrid);
@@ -468,6 +473,7 @@ async function act(ll, mods) {
   const t = state.tool, pt = map.project(ll), lonlat = { lon: ll.lng, lat: ll.lat };
   const nn = nearestNode(pt, 12), nl = nn ? null : nearestLink(pt, 8);
   const multi = mods.shiftKey || mods.ctrlKey || mods.metaKey;
+  if (state.routePick) { const id = nn ? nn.id : nl ? nl.id : null; if (id) pickStop(id); else toast("Click a manhole or a pipe.", "info"); return; }
   if (t === "measure") { addMeasure(ll); return; }
   if (t === "select") {
     if (nn) setSel("nodes", multi ? toggled("nodes", nn.id) : [nn.id]);
@@ -721,69 +727,369 @@ function updateBulk(kind) {
 }
 
 /* ------------------------------------------------------------------ profile */
+/* ---- profile: a long section along a route. From a start (manhole or pipe) down to the outfall, or to an end
+   through any via points along the network in either direction. The route is lit on the map; the cursor on the map
+   and on the profile follow each other. The profile zooms (wheel) and pans (drag) along the chainage. */
 let profSeq = 0;
+const prof = { rows: null, segs: [], range: null, view: null, cursor: null, drag: null };
 function autoProfile() {
-  const m = state.model; if (!m) return;
+  const m = state.model; if (!m || state.routePick) return;
+  if ($("#prof-end").value.trim() || $("#prof-via").value.trim()) { drawProfile(true); return; }   // a set route stays until changed
   let start = "";
   if (state.sel.table === "nodes" && state.sel.ids.length) start = state.sel.ids[0];
-  else if (state.sel.table === "links" && state.sel.ids.length) { const f = m.links.get(state.sel.ids[0]); if (f) start = f.properties.from_node; }
+  else if (state.sel.table === "links" && state.sel.ids.length) start = state.sel.ids[0];          // a pipe: the section starts with it
   if (start) $("#prof-start").value = start;
   drawProfile();
 }
-async function drawProfile() {
-  const start = $("#prof-start").value.trim(), end = $("#prof-end").value.trim(), msg = $("#prof-msg"), svg = $("#profile-svg");
+async function drawProfile(keepRange) {
+  const start = $("#prof-start").value.trim(), end = $("#prof-end").value.trim(), via = $("#prof-via").value.trim();
+  const msg = $("#prof-msg"), svg = $("#profile-svg");
   if (!state.pid) return;
-  if (!start) { msg.textContent = "Select a node or a pipe, or type a start node."; svg.innerHTML = ""; return; }
+  if (!start) { msg.textContent = "Select a manhole or pipe, type a start, or use Pick on map."; svg.innerHTML = ""; setRoute(null); return; }
   const seq = ++profSeq;
   try {
-    const rows = await jget(`${base()}/profile?start=${encodeURIComponent(start)}` + (end ? `&end=${encodeURIComponent(end)}` : ""));
+    const q = new URLSearchParams({ start }); if (end) q.set("end", end); if (via) q.set("via", via);
+    const rows = await jget(`${base()}/profile?${q}`);
     if (seq !== profSeq) return;
-    msg.textContent = `${rows.length} links from ${start}`;
-    renderProfile(rows);
-  } catch (e) { if (seq !== profSeq) return; msg.textContent = e.message; svg.innerHTML = ""; }
+    if (keepRange !== true) { prof.range = null; prof.vz = 1; prof.vmid = null; }
+    const len = rows.length ? rows[rows.length - 1].ch1 : 0, rev = rows.filter(r => r.reversed).length;
+    msg.textContent = rows.length ? `${rows.length} links, ${num(len, 1)} m, ${rows[0].from_node} to ${rows[rows.length - 1].to_node}` +
+      (end ? "" : " (the outfall)") + (rev ? `, ${rev} against the flow` : "") : "No links.";
+    setRoute(rows); renderProfile(rows);
+  } catch (e) { if (seq !== profSeq) return; msg.textContent = e.message; svg.innerHTML = ""; setRoute(null); }
 }
 function niceStep(span, n) { const raw = span / n, p = Math.pow(10, Math.floor(Math.log10(raw))); return ([1, 2, 5, 10].map(k => k * p).find(v => v >= raw)) || p * 10; }
+const lerp = (a, b, f) => a == null || b == null ? null : a + (b - a) * f;
 function renderProfile(rows) {
-  state.lastProfile = rows;
+  state.lastProfile = rows; prof.rows = rows;
   const svg = $("#profile-svg"), wrap = $("#prof-wrap");
   const W = Math.max(520, wrap.clientWidth - 16), H = Math.max(190, wrap.clientHeight - 6);
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-  if (!rows.length) { svg.innerHTML = `<text x="20" y="30">No links.</text>`; return; }
-  const L = 58, R = 18, T = 26, B = 66, pw = W - L - R, ph = H - T - B;
-  const xmax = rows[rows.length - 1].ch1 || 1;
+  if (!rows.length) { svg.innerHTML = `<text x="20" y="30">No links.</text>`; prof.view = null; return; }
+  const bands = ui.profBands, NB = bands ? 4 : 0;
+  const L = 64, R = 18, T = 26, B = 20 + NB * 14 + 24, pw = W - L - R, ph = Math.max(60, H - T - B);
+  const total = rows[rows.length - 1].ch1 || 1, [c0, c1] = prof.range || [0, total], span = Math.max(c1 - c0, 1e-6);
+  const vis = rows.filter(r => r.ch1 >= c0 && r.ch0 <= c1);
   let lo = 1e9, hi = -1e9;
-  for (const r of rows) for (const v of [r.ground0, r.ground1, r.inv0, r.inv1, r.crown0, r.crown1]) if (v != null) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
+  for (const r of vis) for (const v of [r.ground0, r.ground1, r.inv0, r.inv1, r.crown0, r.crown1]) if (v != null) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
   const pad = Math.max((hi - lo) * 0.06, 0.2); lo -= pad; hi += pad;
-  const X = c => L + c / xmax * pw, Y = v => T + (hi - v) / (hi - lo) * ph;
+  if (prof.vz && prof.vz > 1) {                              // level zoom about the middle of what is shown, or about the cursor's level
+    const mid = prof.vmid != null ? prof.vmid : (lo + hi) / 2, h = (hi - lo) / prof.vz; lo = mid - h / 2; hi = mid + h / 2;
+  }
+  const X = c => L + (c - c0) / span * pw, Y = v => T + (hi - v) / (hi - lo) * ph;
+  prof.view = { L, T, pw, ph, c0, c1, total, X, Y, W, H, lo, hi };
   let s = `<rect x="${L}" y="${T}" width="${pw}" height="${ph}" fill="#fafbfc" stroke="#d5dbe3"/>`;
-  const sx = niceStep(xmax, Math.max(2, pw / 90)), sy = niceStep(hi - lo, Math.max(2, ph / 36));
-  for (let c = 0; c <= xmax + 1e-9; c += sx) s += `<line x1="${X(c)}" x2="${X(c)}" y1="${T}" y2="${T + ph}" stroke="#eef1f5"/><text x="${X(c)}" y="${T + ph + 14}" text-anchor="middle">${+c.toFixed(1)}</text>`;
+  s += `<defs><clipPath id="pclip"><rect x="${L}" y="${T - 20}" width="${pw}" height="${ph + 20}"/></clipPath></defs>`;
+  const sx = niceStep(span, Math.max(2, pw / 90)), sy = niceStep(hi - lo, Math.max(2, ph / 36));
+  for (let c = Math.ceil(c0 / sx) * sx; c <= c1 + 1e-9; c += sx) s += `<line x1="${X(c)}" x2="${X(c)}" y1="${T}" y2="${T + ph}" stroke="#eef1f5"/><text x="${X(c)}" y="${T + ph + 13}" text-anchor="middle">${+c.toFixed(1)}</text>`;
   for (let v = Math.ceil(lo / sy) * sy; v <= hi; v += sy) s += `<line x1="${L}" x2="${L + pw}" y1="${Y(v)}" y2="${Y(v)}" stroke="#eef1f5"/><text x="${L - 6}" y="${Y(v) + 3}" text-anchor="end">${+v.toFixed(2)}</text>`;
-  s += `<text x="${L + pw / 2}" y="${T + ph + 30}" text-anchor="middle">Chainage (m)</text><text transform="translate(14 ${T + ph / 2}) rotate(-90)" text-anchor="middle">Level (m)</text>`;
-  // ground
+  s += `<text transform="translate(14 ${T + ph / 2}) rotate(-90)" text-anchor="middle">Level (m)</text>`;
+  s += `<g clip-path="url(#pclip)">`;
+  // ground, and the cover limits under it (crowns below the minimum-cover line, inverts above the maximum)
   const g = [[0, rows[0].ground0]]; for (const r of rows) g.push([r.ch1, r.ground1]);
-  s += `<polyline points="${g.map(p => `${X(p[0])},${Y(p[1])}`).join(" ")}" fill="none" stroke="#8a6d3b" stroke-width="2"/>`;
-  // links
-  for (const r of rows) {
-    const x0 = X(r.ch0), x1 = X(r.ch1), tip = `${r.link}  DN${r.dn_mm}  v ${r.v_ms == null ? "-" : (+r.v_ms).toFixed(2)} m/s`;
-    s += `<g class="seg" data-link="${esc(r.link)}"><title>${esc(tip)}</title>` +
-      `<polygon points="${x0},${Y(r.inv0)} ${x1},${Y(r.inv1)} ${x1},${Y(r.crown1)} ${x0},${Y(r.crown0)}" fill="#cfe0f5" fill-opacity=".7" stroke="none"/>` +
+  const cov = (state.model && state.model.settings && state.model.settings.design) || {};
+  const gline = (dz, attrs) => `<polyline points="${g.map(p => `${X(p[0])},${Y(p[1] - dz)}`).join(" ")}" fill="none" ${attrs}/>`;
+  s += gline(0, `stroke="#8a6d3b" stroke-width="2"`);
+  if (cov.cover_min) s += gline(cov.cover_min, `stroke="#2e9e5b" stroke-width="1" stroke-dasharray="5 3" class="covmin"`);
+  if (cov.cover_max && hi - lo > 0 && Math.min(...g.map(p => p[1])) - cov.cover_max > lo) s += gline(cov.cover_max, `stroke="#c0392b" stroke-width="1" stroke-dasharray="5 3" class="covmax"`);
+  for (const r of vis) {
+    const x0 = X(r.ch0), x1 = X(r.ch1), pump = r.kind === "pump";
+    const tip = `${r.link}${pump ? " (pump)" : "  DN" + r.dn_mm}  ${r.slope_pc == null ? "" : num(r.slope_pc, 3) + " %  "}v ${r.v_ms == null ? "-" : num(r.v_ms, 2)} m/s${r.reversed ? "  (walked against the flow)" : ""}`;
+    if (pump) { s += `<g class="seg pump" data-link="${esc(r.link)}"><title>${esc(tip)}</title><line class="pipe" x1="${x0}" y1="${Y(r.inv0)}" x2="${x1}" y2="${Y(r.inv1)}" stroke="#7b3fa0" stroke-width="2" stroke-dasharray="5 3"/></g>`; continue; }
+    s += `<g class="seg${r.fail ? " fail" : ""}" data-link="${esc(r.link)}"><title>${esc(tip)}</title>` +
+      `<polygon points="${x0},${Y(r.inv0)} ${x1},${Y(r.inv1)} ${x1},${Y(r.crown1)} ${x0},${Y(r.crown0)}" fill="${r.fail ? "#f6c9c3" : "#cfe0f5"}" fill-opacity=".75" stroke="${r.fail ? "#d7301f" : "none"}"/>` +
       `<line class="pipe" x1="${x0}" y1="${Y(r.inv0)}" x2="${x1}" y2="${Y(r.inv1)}" stroke="#1f3b73" stroke-width="1.6"/>` +
       `<line class="pipe" x1="${x0}" y1="${Y(r.crown0)}" x2="${x1}" y2="${Y(r.crown1)}" stroke="#4c78b8" stroke-width="1.6"/>` +
       `<line class="pipe" x1="${x0}" y1="${Y(r.water0)}" x2="${x1}" y2="${Y(r.water1)}" stroke="#2a9df4" stroke-width="1.6"/></g>`;
-    if (x1 - x0 > 70) s += `<text x="${(x0 + x1) / 2}" y="${Y((r.inv0 + r.inv1) / 2) + 14}" text-anchor="middle">DN${r.dn_mm}</text>`;
+    if (x1 - x0 > 34) {                              // flow direction: the route may walk a pipe against its flow
+      const xm = (x0 + x1) / 2, ym = Y((r.crown0 + r.crown1) / 2) - 7, d = r.reversed ? -1 : 1;
+      s += `<path d="M${xm - 5 * d},${ym - 3.5} L${xm + 5 * d},${ym} L${xm - 5 * d},${ym + 3.5} Z" fill="${r.reversed ? "#c2410c" : "#4c78b8"}"><title>${r.reversed ? "flow runs right to left here" : "flow"}</title></path>`;
+    }
+    if (!bands && x1 - x0 > 70) s += `<text x="${(x0 + x1) / 2}" y="${Y((r.inv0 + r.inv1) / 2) + 14}" text-anchor="middle">DN${r.dn_mm}</text>`;
   }
-  // node shafts and labels
-  const nodes = [[rows[0].from_node, 0, rows[0].ground0, rows[0].inv0]]; for (const r of rows) nodes.push([r.to_node, r.ch1, r.ground1, r.inv1]);
+  // manholes as structures; every pipe that meets one off the route drawn where it joins: a circle of its own
+  // diameter at its own invert (to the vertical scale), incoming on the upstream side of the shaft, outgoing on the
+  // downstream side; a dashed line shows the drop from an incoming invert to the outgoing one
+  const nodes = [{ id: rows[0].from_node, c: 0, gr: rows[0].ground0, iv: rows[0].inv0, ni: rows[0].node_inv0, kind: rows[0].kind0, joins: rows[0].joins0 || [], out: rows[0].inv0, inn: null }];
+  rows.forEach((r, k) => nodes.push({ id: r.to_node, c: r.ch1, gr: r.ground1, iv: r.inv1, ni: r.node_inv1, kind: r.kind1, joins: r.joins1 || [],
+    out: k + 1 < rows.length ? rows[k + 1].inv0 : null, inn: r.inv1 }));
+  prof.view.nodes = nodes;
+  const ws = clamp(Math.abs(X(1.2) - X(0)), 3, 26);       // the shaft: a 1.2 m chamber to scale when zoomed in, a symbol when not
   let lastX = -99;
-  for (const [id, c, gr, iv] of nodes) {
-    s += `<line x1="${X(c)}" x2="${X(c)}" y1="${Y(gr)}" y2="${Y(iv)}" stroke="#7a8696" stroke-dasharray="3 2"/>`;
-    if (X(c) - lastX > 16) { s += `<text transform="translate(${X(c) + 3} ${Y(gr) - 5}) rotate(-60)">${esc(id)}</text>`; lastX = X(c); }
+  for (const n of nodes) {
+    if (n.c < c0 - 1e-6 || n.c > c1 + 1e-6) continue;
+    const x = X(n.c), all = [n.ni, n.iv, n.out, ...n.joins.map(j => j.invert)].filter(v => v != null), bot = Math.min(...all);
+    const ww = n.kind === "wetwell" ? ws * 1.8 : ws, stroke = n.kind === "outfall" ? "#123e7c" : n.kind === "wetwell" ? "#7b3fa0" : "#7a8696";
+    const fill = n.kind === "wetwell" ? "#efe3f8" : "#ffffff";
+    s += `<rect class="mh" data-node="${esc(n.id)}" x="${x - ww / 2}" y="${Y(n.gr)}" width="${ww}" height="${Math.max(1, Y(bot) - Y(n.gr))}" fill="${fill}" fill-opacity=".55" stroke="${stroke}" stroke-width="1.1"><title>${esc(n.id)} (${esc(n.kind || "node")})  ground ${num(n.gr, 2)}  invert ${num(bot, 2)}  depth ${num(n.gr - bot, 2)} m</title></rect>`;
+    if (ui.profJoins !== false) {
+      let li = 0, lo2 = 0;
+      for (const j of n.joins) {
+        const D = (j.inside_mm || 0) / 1000, rr = Math.max(3.5, (Y(j.invert) - Y(j.invert + Math.max(D, 0.05))) / 2);
+        const side = j.dir === "in" ? -1 : 1, k = j.dir === "in" ? li++ : lo2++;
+        const cx = x + side * (ww / 2 + rr + 1 + k * (2 * rr + 2)), cy = Y(j.invert) - rr;
+        const ref = n.out != null ? n.out : n.iv, drop = j.dir === "in" && ref != null ? j.invert - ref : null;
+        const col = j.kind === "pump" ? "#7b3fa0" : j.dir === "in" ? "#1b9e77" : "#7a8696";
+        const tip = `${j.link}${j.kind === "pump" ? " (pump)" : " DN" + j.dn_mm} ${j.dir === "in" ? "joins from" : "leaves to"} ${j.other}` +
+          `  invert ${num(j.invert, 2)}` + (drop != null ? `  drop ${num(drop, 2)} m` : "") + (j.q_ls != null ? `  ${num(j.q_ls, 2)} L/s` : "") + (j.transfer ? "  (transfer)" : "");
+        if (drop != null && drop > 0.005 && Y(ref) - Y(j.invert) > 3) s += `<line x1="${cx}" x2="${cx}" y1="${Y(j.invert)}" y2="${Y(ref)}" stroke="${col}" stroke-width="1" stroke-dasharray="2 2"/>`;
+        s += `<circle class="join" data-link="${esc(j.link)}" cx="${cx}" cy="${cy}" r="${rr}" fill="${col}" fill-opacity=".28" stroke="${col}" stroke-width="1.3"${j.transfer ? ` stroke-dasharray="2 1.5"` : ""}><title>${esc(tip)}</title></circle>`;
+      }
+    }
+    if (x - lastX > 22) { s += `<text class="nlab" data-node="${esc(n.id)}" transform="translate(${x + 3} ${Y(n.gr) - 5}) rotate(-60)">${esc(n.id)}</text>`; lastX = x; }
   }
-  // legend under the axis
-  const lg = [["#8a6d3b", "Ground"], ["#1f3b73", "Invert"], ["#4c78b8", "Crown"], ["#2a9df4", "Water surface"]]; let lx = L;
-  for (const [c, t] of lg) { s += `<line x1="${lx}" x2="${lx + 18}" y1="${H - 10}" y2="${H - 10}" stroke="${c}" stroke-width="2.4"/><text x="${lx + 24}" y="${H - 6}">${t}</text>`; lx += 24 + t.length * 6.2 + 22; }
+  s += `</g>`;
+  // data bands: per pipe its size, gradient and length; per manhole its ground, invert and depth
+  if (bands) {
+    const y0 = T + ph + 20, row = k => y0 + 11 + k * 14;
+    const hd = ["Pipe", "Ground", "Invert", "Depth"];
+    hd.forEach((h, k) => { s += `<text class="bandh" x="${L - 6}" y="${row(k)}" text-anchor="end">${h}</text><line x1="${L}" x2="${L + pw}" y1="${row(k) + 3}" y2="${row(k) + 3}" stroke="#eef1f5"/>`; });
+    for (const r of vis) {
+      const x0 = Math.max(X(r.ch0), L), x1 = Math.min(X(r.ch1), L + pw), w = x1 - x0;
+      const full = r.kind === "pump" ? "pump" : `DN${r.dn_mm} · ${num(r.slope_pc, 2)} % · ${num(r.length_m, 1)} m`, short = r.kind === "pump" ? "P" : `DN${r.dn_mm}`;
+      const t = w > full.length * 5.6 ? full : w > short.length * 6 ? short : "";
+      if (t) s += `<text class="band" x="${(x0 + x1) / 2}" y="${row(0)}" text-anchor="middle">${t}</text>`;
+    }
+    let lx = -99;
+    for (const { c, gr, iv } of nodes) {
+      if (c < c0 - 1e-6 || c > c1 + 1e-6 || X(c) - lx < 40 || X(c) < L + 18 || X(c) > L + pw - 18) continue; lx = X(c);
+      s += `<text class="band" x="${X(c)}" y="${row(1)}" text-anchor="middle">${num(gr, 2)}</text><text class="band" x="${X(c)}" y="${row(2)}" text-anchor="middle">${num(iv, 2)}</text>` +
+        `<text class="band" x="${X(c)}" y="${row(3)}" text-anchor="middle">${num(gr - iv, 2)}</text>`;
+    }
+  }
+  // legend and the axis title on the last line
+  const lg = [["#8a6d3b", "Ground", ""], ["#1f3b73", "Invert", ""], ["#4c78b8", "Crown", ""], ["#2a9df4", "Water surface", ""]];
+  if (cov.cover_min) lg.push(["#2e9e5b", `Min cover ${cov.cover_min} m`, "5 3"]);
+  if (ui.profJoins !== false) lg.push(["#1b9e77", "Joining pipe (at its invert)", "o"]);
+  let lx = L;
+  for (const [c, t, da] of lg) {
+    s += da === "o" ? `<circle cx="${lx + 9}" cy="${H - 10}" r="5" fill="${c}" fill-opacity=".28" stroke="${c}" stroke-width="1.3"/>`
+                    : `<line x1="${lx}" x2="${lx + 18}" y1="${H - 10}" y2="${H - 10}" stroke="${c}" stroke-width="2.4"${da ? ` stroke-dasharray="${da}"` : ""}/>`;
+    s += `<text x="${lx + 24}" y="${H - 6}">${t}</text>`; lx += 24 + t.length * 6.2 + 22;
+  }
+  s += `<text x="${L + pw}" y="${H - 6}" text-anchor="end">Chainage (m)${prof.range || prof.vz > 1 ? "  ·  wheel: zoom · Shift+wheel or drag: scroll · Ctrl+wheel: levels · double-click: all" : ""}</text>`;
+  s += `<g id="prof-cursor" style="display:none"><line y1="${T}" y2="${T + ph}" stroke="#ff7a1a" stroke-width="1.4"/><circle r="3.5" fill="#ff7a1a" data-k="inv"/><circle r="3.5" fill="#2a9df4" data-k="wat"/><circle r="3.5" fill="#8a6d3b" data-k="gnd"/></g>`;
   svg.innerHTML = s;
+  if (prof.cursor != null) profCursor(prof.cursor);
+  profScrollbar();
+}
+/* the scrollbar under the profile: the thumb is the part shown; drag it, or click the track to jump */
+function profScrollbar() {
+  const bar = $("#prof-scroll"), th = $("#prof-thumb"), v = prof.view;
+  if (!v || !prof.range) { bar.hidden = true; return; }
+  bar.hidden = false;
+  th.style.left = (prof.range[0] / v.total * 100) + "%"; th.style.width = Math.max(1.5, (prof.range[1] - prof.range[0]) / v.total * 100) + "%";
+  $("#prof-zinfo").textContent = `${num(prof.range[0], 0)}-${num(prof.range[1], 0)} m of ${num(v.total, 0)} m`;
+}
+function profZoom(k, about) {
+  const v = prof.view; if (!v) return;
+  const [a, b] = prof.range || [0, v.total], c = about != null ? about : (a + b) / 2;
+  let a2 = c - (c - a) * k, b2 = c + (b - c) * k;
+  if (b2 - a2 >= v.total * 0.999) prof.range = null;
+  else { if (b2 - a2 < 5) return; if (a2 < 0) { b2 -= a2; a2 = 0; } if (b2 > v.total) { a2 -= b2 - v.total; b2 = v.total; } prof.range = [Math.max(0, a2), b2]; }
+  renderProfile(prof.rows);
+}
+function profPan(dc) {
+  const v = prof.view; if (!v || !prof.range) return;
+  const w = prof.range[1] - prof.range[0], a = clamp(prof.range[0] + dc, 0, Math.max(0, v.total - w));
+  prof.range = [a, a + w]; renderProfile(prof.rows);
+}
+/* the values along the route at chainage c: the pipe there and its levels interpolated */
+function profAt(c) {
+  const rows = prof.rows; if (!rows || !rows.length) return null;
+  let r = rows.find(x => c >= x.ch0 && c <= x.ch1) || (c < rows[0].ch0 ? rows[0] : rows[rows.length - 1]);
+  const f = r.ch1 > r.ch0 ? clamp((c - r.ch0) / (r.ch1 - r.ch0), 0, 1) : 0;
+  return { r, f, ground: lerp(r.ground0, r.ground1, f), inv: lerp(r.inv0, r.inv1, f), crown: lerp(r.crown0, r.crown1, f), water: lerp(r.water0, r.water1, f) };
+}
+function profCursor(c) {
+  const v = prof.view, el = $("#prof-cursor"), ro = $("#prof-readout");
+  if (!v || !el || c == null || c < v.c0 || c > v.c1) { if (el) el.style.display = "none"; ro.hidden = true; return; }
+  const a = profAt(c); if (!a) return;
+  const x = v.X(c); el.style.display = ""; el.querySelector("line").setAttribute("x1", x); el.querySelector("line").setAttribute("x2", x);
+  for (const [k, val] of [["inv", a.inv], ["wat", a.water], ["gnd", a.ground]]) { const ci = el.querySelector(`[data-k=${k}]`); ci.setAttribute("cx", x); ci.setAttribute("cy", val == null ? -99 : v.Y(val)); }
+  const r = a.r;
+  ro.innerHTML = `<b>${esc(r.link)}</b> ${r.kind === "pump" ? "pump" : "DN" + esc(r.dn_mm)}${r.reversed ? " ←" : ""} · ch ${num(c, 1)} m<br>` +
+    `ground ${num(a.ground, 2)} · invert ${num(a.inv, 2)} · water ${num(a.water, 2)}<br>` +
+    `depth ${num(a.ground - a.inv, 2)} m · cover ${num(a.ground - a.crown, 2)} m` +
+    (r.v_ms != null ? `<br>${num(r.q_ls, 2)} L/s · v ${num(r.v_ms, 2)} m/s · d/D ${num(r.d_over_D, 2)}` : "");
+  const nd = (v.nodes || []).find(n => Math.abs(v.X(n.c) - x) <= 7);
+  if (nd) {
+    const ref = nd.out != null ? nd.out : nd.iv, low = Math.min(...[nd.ni, nd.iv, nd.out].filter(q => q != null));
+    ro.innerHTML += `<hr><b>${esc(nd.id)}</b> ${esc(nd.kind || "")} · ground ${num(nd.gr, 2)} · depth ${num(nd.gr - low, 2)} m` +
+      (nd.inn != null && nd.out != null ? `<br>in ${num(nd.inn, 2)} → out ${num(nd.out, 2)} (fall ${num(nd.inn - nd.out, 3)} m)` : "") +
+      nd.joins.map(j => `<br><span style="color:${j.dir === "in" ? "#1b9e77" : "var(--muted)"}">${j.dir === "in" ? "joins" : "leaves"}: ${esc(j.link)} ${j.kind === "pump" ? "pump" : "DN" + esc(j.dn_mm)} ${j.dir === "in" ? "from" : "to"} ${esc(j.other)} at ${num(j.invert, 2)}` +
+        (j.dir === "in" && ref != null ? ` (drop ${num(j.invert - ref, 2)} m)` : "") + `</span>`).join("");
+  }
+  ro.hidden = false;
+}
+/* the route on the map: each link's drawn line in route order, its plan length, and the chainage it spans */
+function planDist(a, b) {
+  const p = projected({ lng: a[0], lat: a[1] }), q = projected({ lng: b[0], lat: b[1] });
+  return p && p.e != null ? Math.hypot(q.e - p.e, q.n - p.n) : new maplibregl.LngLat(...a).distanceTo(new maplibregl.LngLat(...b));
+}
+function setRoute(rows) {
+  prof.segs = []; prof.rows = rows || null;
+  const fs = [];
+  if (rows && rows.length && state.model) {
+    for (const r of rows) {
+      const f = state.model.links.get(String(r.link)); if (!f) continue;
+      const c = r.reversed ? f.geometry.coordinates.slice().reverse() : f.geometry.coordinates.slice(), cum = [0];
+      for (let i = 1; i < c.length; i++) cum.push(cum[i - 1] + planDist(c[i - 1], c[i]));
+      prof.segs.push({ r, c, cum, glen: cum[cum.length - 1] || 1e-9 });
+      fs.push({ type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: c } });
+    }
+    const mk = (id, lab) => { const n = state.model.nodes.get(String(id)); if (n) fs.push({ type: "Feature", properties: { lab }, geometry: n.geometry }); };
+    mk(rows[0].from_node, "S"); mk(rows[rows.length - 1].to_node, "E");
+  }
+  if (map && map.getSource && map.getSource("route")) map.getSource("route").setData({ type: "FeatureCollection", features: fs });
+  setCursor(null);
+}
+function routePoint(c) {
+  const s = prof.segs.find(x => c >= x.r.ch0 && c <= x.r.ch1) || prof.segs[prof.segs.length - 1]; if (!s) return null;
+  const f = s.r.ch1 > s.r.ch0 ? clamp((c - s.r.ch0) / (s.r.ch1 - s.r.ch0), 0, 1) : 0, d = f * s.glen;
+  for (let i = 1; i < s.c.length; i++) if (s.cum[i] >= d) {
+    const t = s.cum[i] > s.cum[i - 1] ? (d - s.cum[i - 1]) / (s.cum[i] - s.cum[i - 1]) : 0;
+    return [s.c[i - 1][0] + t * (s.c[i][0] - s.c[i - 1][0]), s.c[i - 1][1] + t * (s.c[i][1] - s.c[i - 1][1])];
+  }
+  return s.c[s.c.length - 1];
+}
+function nearestOnRoute(pt) {
+  let best = null, bd = 14;
+  for (const s of prof.segs) {
+    const P = s.c.map(x => map.project(x));
+    for (let i = 1; i < P.length; i++) {
+      const a = P[i - 1], b = P[i], dx = b.x - a.x, dy = b.y - a.y, L2 = dx * dx + dy * dy;
+      const t = L2 ? clamp(((pt.x - a.x) * dx + (pt.y - a.y) * dy) / L2, 0, 1) : 0, d = Math.hypot(a.x + t * dx - pt.x, a.y + t * dy - pt.y);
+      if (d < bd) { bd = d; best = s.r.ch0 + (s.cum[i - 1] + t * (s.cum[i] - s.cum[i - 1])) / s.glen * (s.r.ch1 - s.r.ch0); }
+    }
+  }
+  return best;
+}
+/* one cursor for both views: a marker on the map, a line and a readout on the profile */
+function setCursor(c, from) {
+  prof.cursor = c; prof.cursorFrom = c == null ? null : from;
+  const src = map && map.getSource && map.getSource("cursor"), p = c == null ? null : routePoint(c);
+  if (src) src.setData({ type: "FeatureCollection", features: p ? [{ type: "Feature", properties: {}, geometry: { type: "Point", coordinates: p } }] : [] });
+  profCursor(c);
+  if (p && from === "profile" && ui.profFollow && !map.isMoving()) {          // keep the marker in view
+    const q = map.project(p), w = map.getCanvas().clientWidth, h = map.getCanvas().clientHeight;
+    if (q.x < 40 || q.y < 40 || q.x > w - 40 || q.y > h - 40) map.easeTo({ center: p, duration: 250 });
+  }
+}
+function fitRoute() {
+  const pts = prof.segs.flatMap(s => s.c); if (!pts.length) return;
+  const b = bboxOf(pts); map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 60, maxZoom: 18, duration: 300 });
+}
+/* pick a route on the map: each click on a manhole or pipe adds a stop (start, via points, end); Enter finishes */
+function startPick() {
+  state.routePick = { stops: [] }; $("#prof-pick").classList.add("on"); showTab("profile");
+  $("#hint").textContent = "Route: click manholes or pipes in order (start, via points, end). Enter or Pick again to finish.";
+}
+function finishPick() {
+  state.routePick = null; $("#prof-pick").classList.remove("on"); $("#hint").textContent = state.pid ? HINTS[state.tool] : "";
+}
+function pickStop(id) {
+  const st = state.routePick.stops; st.push(id);
+  $("#prof-start").value = st[0]; $("#prof-end").value = st.length > 1 ? st[st.length - 1] : "";
+  $("#prof-via").value = st.slice(1, -1).join(", ");
+  if (st.length > 1) drawProfile(); else $("#prof-msg").textContent = `From ${id}: now click the end, or via points first.`;
+}
+function profileCsv() {
+  const rows = prof.rows || []; if (!rows.length) return;
+  const cols = ["link", "kind", "reversed", "from_node", "to_node", "ch0", "ch1", "length_m", "dn_mm", "slope_pc", "ground0", "ground1", "inv0", "inv1", "crown0", "crown1", "water0", "water1", "q_ls", "v_ms", "d_over_D", "fail"];
+  const txt = [cols.join(",")].concat(rows.map(r => cols.map(k => r[k] == null ? "" : String(r[k]).includes(",") ? `"${r[k]}"` : r[k]).join(","))).join("\n");
+  downloadBlob(new Blob([txt], { type: "text/csv" }), `profile_${rows[0].from_node}_${rows[rows.length - 1].to_node}.csv`);
+}
+/* the profile as a standalone SVG (styles from the page written into it) or a PNG at twice the size */
+function profileSvgText() {
+  const svg = $("#profile-svg").cloneNode(true), v = prof.view; if (!v) return null;
+  svg.setAttribute("width", v.W); svg.setAttribute("height", v.H); svg.querySelector("#prof-cursor")?.remove();
+  const live = $$("#profile-svg text"), ink = getComputedStyle(live[0] || document.body).fill || "#44546a";
+  svg.querySelectorAll("text").forEach(t => { t.setAttribute("fill", ink); t.setAttribute("font-family", "system-ui, Segoe UI, sans-serif"); t.setAttribute("font-size", t.classList.contains("band") ? "10" : "10.5"); });
+  svg.insertAdjacentHTML("afterbegin", `<rect width="${v.W}" height="${v.H}" fill="${getComputedStyle(document.body).backgroundColor}"/>`);
+  return new XMLSerializer().serializeToString(svg);
+}
+function profileSvg() { const t = profileSvgText(); if (t) downloadBlob(new Blob([t], { type: "image/svg+xml" }), "profile.svg"); }
+function profilePng() {
+  const t = profileSvgText(), v = prof.view; if (!t) return;
+  const img = new Image(), url = URL.createObjectURL(new Blob([t], { type: "image/svg+xml" }));
+  img.onload = () => { const c = document.createElement("canvas"); c.width = v.W * 2; c.height = v.H * 2; const g = c.getContext("2d"); g.scale(2, 2); g.drawImage(img, 0, 0); URL.revokeObjectURL(url); c.toBlob(b => downloadBlob(b, "profile.png")); };
+  img.src = url;
+}
+function downloadBlob(blob, name) {
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
+function wireProfile() {
+  const svg = $("#profile-svg");
+  const chAt = e => { const v = prof.view; if (!v) return null; const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; const q = p.matrixTransform(svg.getScreenCTM().inverse()); return v.c0 + (q.x - v.L) / v.pw * (v.c1 - v.c0); };
+  svg.addEventListener("mousemove", e => {
+    const v = prof.view; if (!v) return;
+    if (prof.drag) {                                         // pan along the chainage
+      const d = (e.clientX - prof.drag.x) / svg.getBoundingClientRect().width * v.W / v.pw * (prof.drag.r[1] - prof.drag.r[0]);
+      if (Math.abs(e.clientX - prof.drag.x) > 3) prof.drag.moved = true;
+      const w = prof.drag.r[1] - prof.drag.r[0], a = clamp(prof.drag.r[0] - d, 0, Math.max(0, v.total - w));
+      if (prof.drag.moved && prof.range) { prof.range = [a, a + w]; renderProfile(prof.rows); }
+      return;
+    }
+    const c = chAt(e); if (c == null || c < v.c0 || c > v.c1) { setCursor(null); return; }
+    setCursor(c, "profile");
+    const a = profAt(c); setHot(a ? a.r.link : null);
+  });
+  svg.addEventListener("mouseleave", () => { prof.drag = null; setCursor(null); setHot(null); });
+  svg.addEventListener("wheel", e => {                        // wheel: zoom at the cursor; Shift+wheel or a sideways swipe: scroll along;
+    const v = prof.view; if (!v) return; e.preventDefault();  // Ctrl+wheel: zoom the levels
+    const [a, b] = prof.range || [0, v.total];
+    if (e.ctrlKey) { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; const q = p.matrixTransform(svg.getScreenCTM().inverse());
+      const lv = v.hi - (q.y - v.T) / v.ph * (v.hi - v.lo); prof.vmid = lv; prof.vz = clamp((prof.vz || 1) * (e.deltaY > 0 ? 0.8 : 1.25), 1, 40);
+      if (prof.vz <= 1.001) { prof.vz = 1; prof.vmid = null; } renderProfile(prof.rows); return; }
+    if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) { profPan(((e.shiftKey ? e.deltaY : e.deltaX) > 0 ? 1 : -1) * (b - a) * 0.15); return; }
+    profZoom(e.deltaY > 0 ? 1.25 : 0.8, chAt(e));
+  }, { passive: false });
+  $("#prof-zin").onclick = () => profZoom(0.5);
+  $("#prof-zout").onclick = () => profZoom(2);
+  $("#prof-zall").onclick = () => { prof.range = null; prof.vz = 1; prof.vmid = null; if (prof.rows) renderProfile(prof.rows); };
+  const track = $("#prof-scroll"), thumb = $("#prof-thumb");
+  thumb.addEventListener("pointerdown", e => {
+    e.preventDefault(); e.stopPropagation(); thumb.setPointerCapture(e.pointerId);
+    const x0 = e.clientX, r0 = prof.range.slice(), W = track.getBoundingClientRect().width;
+    const mv = ev => { const w = r0[1] - r0[0], a = clamp(r0[0] + (ev.clientX - x0) / W * prof.view.total, 0, prof.view.total - w); prof.range = [a, a + w]; renderProfile(prof.rows); };
+    const up = () => { thumb.removeEventListener("pointermove", mv); thumb.removeEventListener("pointerup", up); };
+    thumb.addEventListener("pointermove", mv); thumb.addEventListener("pointerup", up);
+  });
+  track.addEventListener("pointerdown", e => {
+    if (e.target !== track || !prof.range) return;
+    const f = (e.clientX - track.getBoundingClientRect().left) / track.getBoundingClientRect().width, w = prof.range[1] - prof.range[0];
+    const a = clamp(f * prof.view.total - w / 2, 0, prof.view.total - w); prof.range = [a, a + w]; renderProfile(prof.rows);
+  });
+  svg.addEventListener("mousedown", e => { if (e.button === 0 && prof.view) prof.drag = { x: e.clientX, r: prof.range || [0, prof.view.total], moved: false }; });
+  addEventListener("mouseup", () => { setTimeout(() => { prof.drag = null; }, 0); });
+  svg.addEventListener("dblclick", () => { prof.range = null; prof.vz = 1; prof.vmid = null; if (prof.rows) renderProfile(prof.rows); });
+  svg.addEventListener("click", e => {
+    if (prof.drag && prof.drag.moved) return;
+    const n = e.target.closest(".nlab, .mh"); if (n) { setSel("nodes", [n.dataset.node], { zoom: true, keepProfile: true }); return; }
+    const jn = e.target.closest(".join"); if (jn) { setSel("links", [jn.dataset.link], { zoom: true, keepProfile: true }); return; }
+    const g = e.target.closest(".seg"); if (g) setSel("links", [g.dataset.link], { zoom: true, keepProfile: true });
+  });
+  $("#prof-draw").onclick = () => drawProfile();
+  for (const id of ["#prof-start", "#prof-end", "#prof-via"]) $(id).addEventListener("keydown", e => { if (e.key === "Enter") drawProfile(); });
+  $("#prof-pick").onclick = e => { e.currentTarget.blur(); state.routePick ? finishPick() : startPick(); };
+  $("#prof-swap").onclick = () => {
+    const rows = prof.rows, s0 = $("#prof-start").value.trim(), e0 = $("#prof-end").value.trim() || (rows && rows.length ? rows[rows.length - 1].to_node : "");
+    if (!e0) return;
+    $("#prof-start").value = e0; $("#prof-end").value = s0;
+    $("#prof-via").value = $("#prof-via").value.split(",").map(x => x.trim()).filter(Boolean).reverse().join(", ");
+    drawProfile();
+  };
+  $("#prof-clear").onclick = () => { for (const id of ["#prof-start", "#prof-end", "#prof-via"]) $(id).value = ""; prof.range = null; $("#profile-svg").innerHTML = ""; $("#prof-msg").textContent = ""; state.lastProfile = null; setRoute(null); finishPick(); };
+  $("#prof-bands").checked = ui.profBands;
+  $("#prof-bands").onchange = e => { ui.profBands = e.target.checked; saveUi(); if (prof.rows) renderProfile(prof.rows); };
+  $("#prof-joins").checked = ui.profJoins !== false;
+  $("#prof-joins").onchange = e => { ui.profJoins = e.target.checked; saveUi(); if (prof.rows) renderProfile(prof.rows); };
+  $("#prof-follow").checked = ui.profFollow;
+  $("#prof-follow").onchange = e => { ui.profFollow = e.target.checked; saveUi(); };
+  $("#prof-fit").onclick = fitRoute;
+  $("#prof-csv").onclick = profileCsv; $("#prof-svgdl").onclick = profileSvg; $("#prof-png").onclick = profilePng;
 }
 
 /* ------------------------------------------------------------------ hydrograph (after a storm run) */
@@ -1012,7 +1318,7 @@ function renderActiveTab() {
   else if (t === "settings") renderSettings();
   else if (t === "toolout") renderToolOut();
   else if (t === "hydro") drawHydro();
-  else if (t === "profile") { if (!$("#prof-start").value) autoProfile(); else drawProfile(); }
+  else if (t === "profile") { if (!$("#prof-start").value) autoProfile(); else drawProfile(true); }
 }
 
 /* ------------------------------------------------------------------ project actions */
@@ -1023,7 +1329,7 @@ async function openProject(info, fit = true) {
   state.source = "engine"; state.stored = null; state.storedCache = {}; $("#results-source").value = "engine";
   $("#asst-log").innerHTML = "";
   if (state.colorBy.startsWith("storm")) { state.colorBy = "v_ms"; $("#color-by").value = "v_ms"; }
-  $("#prof-start").value = ""; $("#prof-end").value = ""; $("#settings-form").dataset.sig = "";
+  $("#prof-start").value = ""; $("#prof-end").value = ""; $("#prof-via").value = ""; prof.range = null; setRoute(null); if (state.routePick) finishPick(); $("#settings-form").dataset.sig = "";
   await mapReady;
   applyBasemap(); clearMeasure();
   await loadToolList();
@@ -1160,9 +1466,6 @@ function wireUi() {
     }));
   };
   $("#export-btn").onclick = () => enqueue(async () => saveBlob(await api(`/projects/${state.pid}/export.inp?sid=${encodeURIComponent(state.sid)}`), "model.inp"));
-  $("#prof-draw").onclick = drawProfile;
-  $("#prof-start").addEventListener("keydown", e => { if (e.key === "Enter") drawProfile(); });
-  $("#prof-end").addEventListener("keydown", e => { if (e.key === "Enter") drawProfile(); });
   document.addEventListener("keydown", e => {
     if (e.key === "F2") { e.preventDefault(); setProps(!ui.propsCollapsed); return; }
     if (e.key === "F3") { e.preventDefault(); setBottom(!ui.bottomCollapsed); return; }
@@ -1170,6 +1473,7 @@ function wireUi() {
     if (e.ctrlKey && e.key.toLowerCase() === "f") { e.preventDefault(); $("#find-input").focus(); $("#find-input").select(); return; }
     const tg = e.target.tagName; if (["INPUT", "SELECT", "TEXTAREA"].includes(tg)) return;
     const k = e.key.toLowerCase();
+    if (state.routePick && (k === "enter" || k === "escape")) { e.preventDefault(); finishPick(); return; }
     if (k === "/") { e.preventDefault(); $("#find-input").focus(); return; }
     if (!e.ctrlKey && k === "h" && state.model) { fitModel(); return; }
     if (!e.ctrlKey && k === "z" && state.sel.ids.length) { zoomTo(state.sel.table, state.sel.ids); return; }
@@ -1187,7 +1491,7 @@ function wireUi() {
 const UI_KEY = "w19.ui";
 const ui = (() => {
   const d = { pw: 320, bh: 260, propsCollapsed: false, bottomCollapsed: false, toolsCompact: false, mapOnly: null,
-              theme: "light", basemap: "osm", prevBasemap: "osm", opacity: 1, labels: true, hillshade: false, arrows: true, cardFolded: false };
+              theme: "light", basemap: "osm", prevBasemap: "osm", opacity: 1, labels: true, hillshade: false, arrows: true, cardFolded: false, profBands: true, profFollow: true, profJoins: true };
   try { return Object.assign(d, JSON.parse(localStorage.getItem(UI_KEY) || "{}")); } catch (e) { return d; }
 })();
 function saveUi() { try { localStorage.setItem(UI_KEY, JSON.stringify(ui)); } catch (e) { /* private window: sizes are not kept */ } }
@@ -1311,6 +1615,10 @@ function hover(e) {
   cancelAnimationFrame(hoverRaf);
   hoverRaf = requestAnimationFrame(() => {
     showCoords(e.lngLat);
+    if (prof.segs.length && !dragging) {                    // near the profiled route: the profile shows where the cursor is
+      const c = nearestOnRoute(e.point);
+      if (c != null) setCursor(c, "map"); else if (prof.cursorFrom === "map") setCursor(null);
+    }
     const tip = $("#maptip");
     if (!state.model || dragging || !["select", "delete"].includes(state.tool)) { tip.hidden = true; return; }
     const p = e.point, box = [[p.x - 5, p.y - 5], [p.x + 5, p.y + 5]];
@@ -1402,10 +1710,7 @@ function wireView() {
   $("#arrows-toggle").onchange = e => { ui.arrows = e.target.checked; saveUi(); applyBasemap(); };
   $("#find-input").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); findElement(e.target.value); } else if (e.key === "Escape") e.target.blur(); });
   $("#status-line").addEventListener("click", e => { const a = e.target.closest("a.fail"); if (a) { e.preventDefault(); stepFailure(a.dataset.flag); } });
-  const svg = $("#profile-svg");
-  svg.addEventListener("mouseover", e => { const g = e.target.closest(".seg"); if (g) setHot(g.dataset.link); });
-  svg.addEventListener("mouseleave", () => setHot(null));
-  svg.addEventListener("click", e => { const g = e.target.closest(".seg"); if (g) setSel("links", [g.dataset.link], { zoom: true, keepProfile: true }); });
+  wireProfile();
   new ResizeObserver(redrawCharts).observe($("#panes"));
   addEventListener("resize", applyPanels);
   applyPanels(); document.body.classList.toggle("dark", ui.theme === "dark");

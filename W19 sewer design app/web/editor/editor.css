@@ -182,10 +182,27 @@ table.ft tr:hover td { background: var(--row); }
 table.ft tr.sel td { background: var(--sel); }
 table.ft td.flag { color: var(--bad); font-weight: 600; text-align: left; }
 .pager { display: flex; align-items: center; gap: 6px; }
-#prof-wrap, #hydro-wrap { padding: 4px 8px; height: calc(100% - 40px); }
+#hydro-wrap { padding: 4px 8px; height: calc(100% - 40px); }
+#prof-wrap { padding: 4px 8px; flex: 1; min-height: 0; position: relative; }
+#prof-readout { position: absolute; top: 8px; right: 22px; background: var(--overlay); border: 1px solid var(--line); border-radius: 7px; padding: 5px 9px; font-size: 11.5px; line-height: 1.45; box-shadow: var(--shadow); pointer-events: none; font-variant-numeric: tabular-nums; }
+#prof-readout[hidden] { display: none; }
+#profile-svg { cursor: crosshair; }
+#profile-svg .nlab, #profile-svg .seg, #profile-svg .mh, #profile-svg .join { cursor: pointer; }
+#profile-svg .join:hover { fill-opacity: .6; stroke-width: 2; }
+#prof-readout hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+.zgrp { display: inline-flex; gap: 2px; }
+#prof-scroll { position: relative; height: 14px; margin: 0 26px 4px 72px; background: var(--panel2); border: 1px solid var(--line); border-radius: 7px; flex: none; cursor: pointer; }
+#prof-scroll[hidden] { display: none; }
+#prof-thumb { position: absolute; top: 1px; bottom: 1px; background: color-mix(in srgb, var(--accent) 45%, transparent); border-radius: 6px; cursor: grab; min-width: 8px; }
+#prof-zinfo { position: absolute; right: 6px; top: -1px; font-size: 10px; color: var(--muted); pointer-events: none; }
+#profile-svg .nlab:hover { fill: var(--accent); }
+#profile-svg text.band { font-size: 10px; } #profile-svg text.bandh { font-weight: 600; }
+.ptool .tb.on { background: var(--sel); border-color: var(--focus); color: var(--accent); }
+.ptool .tb.icon { width: 26px; padding: 0; justify-content: center; }
+.chk2 { display: flex; align-items: center; gap: 4px; color: var(--ink2); }
 #profile-svg, #hydro-svg { width: 100%; height: 100%; display: block; }
 #profile-svg text, #hydro-svg text { font: 10.5px system-ui, sans-serif; fill: var(--ink2); }
-#profile-svg > rect:first-child, #hydro-svg > rect:first-child { fill: var(--panel2); stroke: var(--line); }
+#profile-svg > rect:first-of-type, #hydro-svg > rect:first-of-type { fill: var(--panel2); stroke: var(--line); }
 #profile-svg line[stroke="#eef1f5"], #hydro-svg line[stroke="#eef1f5"] { stroke: var(--line2); }
 #profile-svg .seg:hover .pipe, #profile-svg .seg.hot .pipe { stroke-width: 3; }
 #profile-svg .seg.hot polygon { fill: #ffd66b; }

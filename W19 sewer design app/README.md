@@ -39,6 +39,14 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
 - **Stormwater:** catchments, rain as a time series or a design storm from an IDF table, run on EPA SWMM 5, peaks and
   flooding on the map, hydrographs.
 - **Export:** GeoPackage, SWMM `.inp`, DXF, CSV.
+- **Profile along any route:** from a manhole or pipe down to the outfall, or to any other manhole or pipe through
+  via points, along the shortest path through the network in either direction (pipes walked against the flow are
+  marked); pick the route by clicking on the map; the route is lit on the map and one cursor follows both ways (map
+  and profile) with a readout of levels, depth, cover, flow and d/D; data bands, the minimum-cover line, flow arrows,
+  CSV, PNG and SVG export. Manholes are drawn as shafts, and every pipe that joins a manhole off the route as a circle
+  of its own diameter at its own invert, with a dashed line for the drop to the outgoing invert (the readout lists them).
+  Long sections: zoom buttons, a scrollbar, wheel zoom at the cursor, Shift+wheel or drag to scroll, Ctrl+wheel to
+  zoom the levels, double-click for the whole route.
 - **Interface:** panels that drag to any size and collapse (F2 properties, F3 tables, F4 map only), remembered between
   sessions; a Display card on the map with the colour, the results source, the basemap (streets, satellite with labels,
   topographic, light or dark grey, none), its opacity, a hillshade and flow arrows; pipes drawn by size with DN and
