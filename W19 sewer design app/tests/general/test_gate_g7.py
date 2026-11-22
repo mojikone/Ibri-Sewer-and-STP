@@ -17,6 +17,9 @@ def export(tmp_path, monkeypatch):
     fixtures.materialize("sewergems/SC1-2056/conduits_SC1-2056.csv", str(d / "conduits_s001.csv"))
     fixtures.materialize("sewergems/SC1-2056/conduits_SC1-2056-at-2031.csv", str(d / "conduits_s002.csv"))
     for f in ("s001", "s002"): fixtures.materialize("sewergems/SC1-2056/manholes_SC1-2056.csv", str(d / f"manholes_{f}.csv"))
+    fixtures.materialize("sewergems/SC1-2056/loads_design.csv", str(d / "loads_s001.csv"))
+    fixtures.materialize("sewergems/SC1-2056/loads_at_2031.csv", str(d / "loads_s002.csv"))
+    fixtures.materialize("sewergems/SC1-2056/support_loads.csv", str(d / "support_loads.csv"))
     (d / "scenarios.csv").write_text('id,label,parent,file\n1,"SC1-2056 design",0,s001\n2,"SC1-2056 design at the 2031 peak",1,s002\n')
     monkeypatch.setattr(general_api, "SG_EXPORTS", str(tmp_path))
     return d
@@ -44,3 +47,15 @@ def test_the_job_file_is_intact():
     f = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "referee", "jobs", "100_w19_export_scenarios.ps1")
     t = open(f, encoding="utf-8").read()
     assert "\\\\VBOXSVR\\VBOX\\bridge\\lib\\load.ps1" in t and "\f" not in t and "\b" not in t and "SaveAs($work)" in t
+
+
+@pytest.mark.gate_g7
+def test_the_app_re_solves_the_sewergems_model_from_its_own_loads(export):
+    """Loads (unit and pattern) and the peaking table exported by bridge job 103: the app's engine re-solves SewerGEMS's
+    model and every pipe's flow equals SewerGEMS's stored flow within 0.1 %, in both scenarios."""
+    info = C.post("/api/g/projects/open_sewergems/SC1-2056_final").json(); pid = info["id"]
+    m = C.get(f"/api/g/projects/{pid}/scenarios/base/model").json()
+    assert m["settings"]["peaking"]["table"][0] == [pytest.approx(0.1, rel=1e-6), 4.66]      # the model's own table
+    for sc in info["scenarios"]:
+        r = C.get(f"/api/g/projects/{pid}/scenarios/{sc['id']}/compare_stored").json()
+        assert r["links"] >= 19083 and r["pc_flow_within_0_1"] == 100.0, (sc["name"], r)

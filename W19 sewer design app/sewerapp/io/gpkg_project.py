@@ -42,7 +42,7 @@ def load(path):
         meta = json.loads(db.execute("SELECT value FROM w19_project WHERE key='project'").fetchone()[0])
     import pyogrio
     layers = {l[0] for l in pyogrio.list_layers(path)}
-    p = Project(name=meta["name"], crs=meta["crs"], settings=meta["settings"], load_sets=meta["load_sets"], fixed_flows=meta.get("fixed_flows", {}),
+    p = Project(name=meta["name"], crs=meta["crs"], settings=meta["settings"], load_sets=meta["load_sets"], fixed_flows=meta.get("fixed_flows", {}), inflow_sets=meta.get("inflow_sets", {}),
                 rain=meta.get("rain", {}), passthrough=meta.get("passthrough", {}))
     n = gpd.read_file(path, layer="nodes")
     n["x"] = n.geometry.x; n["y"] = n.geometry.y

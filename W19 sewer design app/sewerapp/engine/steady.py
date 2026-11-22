@@ -42,6 +42,7 @@ def flows(project, load_set):
     """Design flow in every link, m3/d, for one load set."""
     L = project.links; s = project.settings
     base = project.load_sets.get(load_set, {}); inflow = project.nodes.inflow_m3d.fillna(0).to_dict()
+    for n_, q_ in (getattr(project, "inflow_sets", {}) or {}).get(load_set, {}).items(): inflow[n_] = inflow.get(n_, 0.0) + q_
     fixed = project.fixed_flows.get(load_set, {}); ids = L.index.to_numpy()
     inf = float(s["infiltration_m3d_per_km"])
     fr, to = L.from_node.to_numpy(), L.to_node.to_numpy()

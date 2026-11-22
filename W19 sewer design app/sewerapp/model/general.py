@@ -47,6 +47,7 @@ class Project:
     catchments: pd.DataFrame = field(default_factory=lambda: pd.DataFrame(columns=CATCH_COLS, index=pd.Index([], name="id")))
     settings: dict = field(default_factory=lambda: copy.deepcopy(DEFAULT_SETTINGS))
     load_sets: dict = field(default_factory=dict)
+    inflow_sets: dict = field(default_factory=dict)   # {load set: {node id: m3/d}} added unpeaked (pattern loads, transfers)
     fixed_flows: dict = field(default_factory=dict)   # {load set: {pump or transfer link id: m3/d}}, held fixed
     rain: dict = field(default_factory=dict)
     passthrough: dict = field(default_factory=dict)
@@ -80,5 +81,5 @@ class Project:
         return msgs
 
     def to_json(self):
-        return dict(name=self.name, crs=self.crs, settings=self.settings, load_sets=self.load_sets, fixed_flows=self.fixed_flows, rain=self.rain,
+        return dict(name=self.name, crs=self.crs, settings=self.settings, load_sets=self.load_sets, inflow_sets=self.inflow_sets, fixed_flows=self.fixed_flows, rain=self.rain,
                     passthrough=self.passthrough)

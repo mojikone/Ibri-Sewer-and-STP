@@ -44,6 +44,7 @@ def load(folder, name="SewerGEMS model", crs=None):
                             index=pd.Index(c.label.astype(str).values, name="id"))[LINK_COLS]
 
     p.links = link_table(c0)
+    loads_found = _loads(folder, sc, p, nodes_lab)
     scenarios, results = [], {}
     for r in sc.itertuples():
         c, _ = _read(folder, r.file); L = link_table(c); edits = []
@@ -60,4 +61,43 @@ def load(folder, name="SewerGEMS model", crs=None):
                            index=act.label.astype(str).values)
         scenarios.append(dict(sg_id=int(r.id), label=str(r.label), parent=int(r.parent) if r.parent == r.parent else None, edits=edits))
         results[str(r.label)] = res
+    for sc_ in scenarios: sc_["has_loads"] = loads_found
     return p, scenarios, results
+
+
+M3D_PER_CFS = 2446.575545
+LS_PER_CFS = 28.316846592
+
+
+def _peaking(folder):
+    """The Extreme Flow Setup's factor table (base load in cfs -> L/s, factor), from support_loads.csv."""
+    f = os.path.join(folder, "support_loads.csv")
+    if not os.path.exists(f): return None
+    t = pd.read_csv(f, dtype=str)
+    setup = t[(t.type == "ExtremeFlowSetup") & (t.field == "ExtremeFlowSetupCollection")].value
+    if setup.empty: return None
+    method = dict(kv.split("=", 1) for kv in setup.iloc[0].split(" ; ")[0].split("|")).get("ExtremeFlowSetupCollection_EffExtemeFlowMethod")
+    curve = t[(t.type == "ExtremeFlowFactor") & (t.element_id == method) & (t.field == "EffTableCurve")].value
+    if curve.empty: return None
+    rows = []
+    for item in curve.iloc[0].split(" ; "):
+        d = dict(kv.split("=", 1) for kv in item.split("|"))
+        rows.append([float(d["EffTableCurve_BaseLoad"]) * LS_PER_CFS, float(d["EffTableCurve_ExtremeFlowFactor"])])
+    return sorted(rows)
+
+
+def _loads(folder, sc, p, nodes_lab):
+    """Each scenario's unit loads (load set) and pattern loads (inflow set, unpeaked) by its label; peaking table."""
+    found = False
+    for r in sc.itertuples():
+        f = os.path.join(folder, f"loads_{r.file}.csv")
+        if not os.path.exists(f): continue
+        found = True; L = pd.read_csv(f)
+        lab = str(r.label); ids = [nodes_lab.get(i, str(i)) for i in L.element_id]
+        p.load_sets[lab] = {n: float(q) for n, q in zip(ids, L.unit_m3d) if q}
+        p.inflow_sets[lab] = {n: float(q) for n, q in zip(ids, L.pattern_m3d) if q}
+    tab = _peaking(folder)
+    if tab:
+        p.settings["peaking"]["method"] = "table"; p.settings["peaking"]["table"] = [[round(a, 9), b] for a, b in tab]
+    p.settings["infiltration_m3d_per_km"] = 0.72      # not exported yet: the Ibri model's 720 L/day per km (G201 p72)
+    return found
