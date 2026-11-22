@@ -28,10 +28,11 @@ file). Without it the Assistant tab says so and everything else works. Model `cl
   needs-re-lay or failing; click or shift-select pipes.
 - **What-if scenarios:** copy a case, edit pipe size or gradient (one or many pipes), and the whole network re-solves
   in under 0.1 s. Inverts are held and the laid gradient kept; the edited pipe and everything downstream are flagged
-  "needs re-lay" until the design chain runs. Undo, redo, compare two scenarios.
+  "needs re-lay". The design chain runs on the base cases only, so a what-if's re-lay is not done in the app yet. Undo,
+  redo, compare two scenarios.
 - **Profile** from any manhole to the outfall: ground, invert, crown, water surface at the peak.
 - **Tools menu** (each a tested script): failing pipes, self-cleansing list, design-year check, stations, quantities,
-  the whole W18 design chain (about 40 s), comparison with SewerGEMS, EPA SWMM stormwater examples.
+  the whole W18 design chain on a base case (about 60 s, checked against W18), comparison with SewerGEMS, EPA SWMM stormwater examples.
 - **Export** GeoPackage (opens in QGIS), DXF, CSV.
 - **Assistant:** answers questions on a design from the solved results, explains every check with its guideline page,
   and tests a fix as a new what-if (never edits an existing scenario).
@@ -43,12 +44,20 @@ file). Without it the Assistant tab says so and everything else works. Model `cl
 | 0 Foundations | **passed** 2026-11-21 | `python -m pytest -m gate_p0` |
 | 1A Sanitary engine | **passed** 2026-11-21 | `python -m pytest -m gate_p1a` |
 | 1B App and assistant | **passed** 2026-11-21 (live assistant test waits for the key) | `python -m pytest tests/api tests/e2e`; `-m live` with the key |
-| Stormwater (SWMM) | **passed** 14 of 15 EPA models exactly; Example1 a build difference, reported | `python -m pytest -m gate_swmm` |
+| Stormwater (SWMM) | 12 of 15 EPA models equal at every step of every period; extran8a and extran9 equal on their common periods (this build writes one more final period); Example1 up to 0.68 % off. Inputs identical to EPA's, so the cause is the engine build | `python -m pytest -m gate_swmm` |
 | 2 GVF backwater, pressure network, new SewerGEMS runs | not started | — |
 | 3 Network editing on the map (add, move, delete, draw) | not started | — |
 | 4–6 Rational stormwater, inlets, reports | not started | — |
 
-All tests: `python -m pytest` — 118 passed, 1 skipped (live assistant), 2 expected failures (EPA Example1), 2 min
+**Not done yet in phase 1** (in the approved scope, open):
+- only the 12 frozen Ibri cases load; no GPKG/SHP import of another network;
+- what-ifs live in memory and are lost when the app restarts;
+- no export of the SewerGEMS rebuild input set;
+- the design chain does not take a what-if's edits;
+- the assistant has never made a real API call: it is tested with a stand-in client only; the live test waits for the key;
+- BOQ, costs, station flows, DWG and schematics are not in the app yet (`docs/SCRIPT_REGISTER.md`, "Planned").
+
+All tests: `python -m pytest` — 119 passed, 1 skipped (live assistant), 2 expected failures (EPA Example1), 2 min
 (2026-11-21).
 
 ## Reproduction and speed (2026-11-21)
@@ -59,13 +68,20 @@ All tests: `python -m pytest` — 118 passed, 1 skipped (live assistant), 2 expe
 | SC1-2056 against SewerGEMS's saved export | 19,078 pipes, 100 % within 0.1 % (largest 0.0036 %), 0 over d/D, velocity 5-95 % -0.0008 to +0.0006 m/s, 9.01 km under 0.75 m/s in both |
 | In-process engine, every pipe of all 12 cases | flows and velocities to 1e-9, identical sizes |
 | Design-year check | equal to W18 on all 8 cases |
-| EPA SWMM examples (Example1-5, extran1-10) against EPA's benchmark | 14 of 15 equal at every time step (worst 0.0); Example1 up to 0.68 % on 13 of 468 values |
+| EPA SWMM examples (Example1-5, extran1-10) against EPA's benchmark | 12 of 15 equal at every step (worst 0.0); 2 equal on the common periods; Example1 up to 0.68 % on 13 of 468 values. The inputs are the same git blobs as EPA's at the benchmark tag |
 | Speed | re-solve of 19,083 pipes 0.03-0.09 s; design chain one case 38 s, 12 cases 67 s in parallel; SWMM 15 models 1.4 s (SewerGEMS: about 44 min per design) |
 
 Saved comparisons: `docs/GATE_P1A.json`, `docs/GATE_SWMM.json`.
 
-**Finding:** the gravity join O3 → O2-M696 (P1-P151, DN1000) runs at d/D 0.59 against 0.50 at 2056 in W18's design;
-DN1200 passes. SewerGEMS never analysed it because the join was carried as a transfer. Decision for the engineer.
+**Finding:** the gravity join O3 → O2-M696 (P1-P151, DN1000) runs over its d/D limit of 0.50 (G203 p27) in SC1 and SC2:
+0.553 in 2051, 0.591 in 2056, 0.630 in 2061. It is the only one of the 60 joins in the 12 cases that does; SC3 and SC4
+pass. DN1200 passes. Likely cause: SewerGEMS carried joins as transfers, so the join pipe was never analysed there.
+Decision for the engineer.
+
+**Self-cleansing length:** the app reports 9.01 km above DN200 under 0.75 m/s at 2031 for SC1-2056, judging velocity
+at two decimals (the definition of W18's SewerGEMS comparison, which gives 9.01 km in both). W18's quantities and R12
+say 9.29 km. W18 used the unrounded steepened gradients; the published files round them to three decimals of a
+percent, so pipes laid to exactly 0.75 m/s read 0.749 in the app.
 
 ## Data
 

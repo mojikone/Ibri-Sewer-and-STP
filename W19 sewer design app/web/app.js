@@ -175,7 +175,7 @@ function setStatus(s, verb) {
   const cls = (n, c) => n > 0 ? ` class="${c}"` : "";
   el.innerHTML = `${verb} <b>${fmt(s.pipes)} pipes</b> in <b id="st-seconds">${s.seconds.toFixed(2)}</b> s · <b>${fmt(s.km, 1)}</b> km · ` +
     `over limit <b id="st-over"${cls(s.over_limit, "bad")}>${fmt(s.over_limit)}</b> · over 3 m/s <b id="st-3ms"${cls(s.over_3ms, "bad")}>${fmt(s.over_3ms)}</b> · ` +
-    `<b id="st-under">${fmt(s.km_under075_2031, 2)}</b> km under 0.75 m/s at 2031 · needs re-lay <b id="st-relay"${cls(s.needs_relay, "warn")}>${fmt(s.needs_relay)}</b>`;
+    `<b id="st-under">${fmt(s.km_under075_2031, 2)}</b> km above DN200 under 0.75 m/s at 2031 (v at 2 d.p.) · needs re-lay <b id="st-relay"${cls(s.needs_relay, "warn")}>${fmt(s.needs_relay)}</b>`;
 }
 function updateButtons() {
   const s = current();

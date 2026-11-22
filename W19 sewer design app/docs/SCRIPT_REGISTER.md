@@ -6,7 +6,7 @@ script with no UI place is not done. Status: `tested` (gate or unit test green) 
 
 | Script | What it does | UI place | Status |
 |---|---|---|---|
-| `w18port/final_design.py` | flows (unit loads, peaking, infiltration, transfers, lifts) and pass-by-pass sizing of one case | Design menu → "Run design chain" (task 4) | tested (gate P0) |
+| `w18port/final_design.py` | flows (unit loads, peaking, infiltration, transfers, lifts) and pass-by-pass sizing of one case | Tools "Design → Re-run the W18 design chain" (base cases; a what-if's edits are not carried yet) | tested (gate P0) |
 | `w18port/split_deep_subnetworks.py` | steepen to 0.75 m/s up to 0.75 %, re-lay (crowns matched, 1.3 m cover), cut, gravity joins, fixed stations | Design menu → "Run design chain"; results view "Cuts and joins" | tested (gate P0) |
 | `w18port/final_selfcleansing.py` | self-cleansing above DN200 at the 2031 peak, rechecked at 2036 | results view "Self-cleansing" check | tested (gate P0) |
 | `w18port/final_naming.py` | names pumps P#, lifts P#L#, manholes and pipes; lift or pump by Table 12 spacing | applied on every chain run; map labels | tested (gate P0) |
@@ -22,7 +22,7 @@ script with no UI place is not done. Status: `tested` (gate or unit test green) 
 | `api/exports.py` | GeoPackage (pipes + manholes with results, EPSG:32640) and DXF (one layer per size) | File menu "Export GPKG / DXF / CSV" | tested (API tests) |
 | `api/tools.py` | the tools menu: checks, self-cleansing list, stations, quantities, design chain, SewerGEMS comparison | Tools menu (one entry each) | tested (API tests; design chain via gate P0) |
 | `assistant/runner.py`, `assistant/tools.py` | the AI assistant: Claude API (claude-opus-5-5, sonnet-5-5 switch) with tools list/summary/query/get/explain (checks with guideline pages)/make_whatif (new scenario only)/compare/run_tool/lookup_criterion | Assistant tab | tested with a stand-in client; live test waits for ANTHROPIC_API_KEY |
-| `engine/swmm.py` | stormwater and dynamic routing on EPA SWMM 5.2.4 (swmm-toolkit); run a model, compare every time step with a reference | Tools menu "Stormwater → Run EPA's SWMM examples and compare" | tested (gate SWMM: 14 of 15 EPA models equal at every step; Example1 a build difference) |
+| `engine/swmm.py` | stormwater and dynamic routing on EPA SWMM 5.2.4 (swmm-toolkit); run a model, compare every time step with a reference | Tools menu "Stormwater → Run EPA's SWMM examples and compare" | tested (gate SWMM: 12 of 15 EPA models equal at every step, 2 on their common periods, Example1 up to 0.68 % off) |
 | `engine/design_year.py` | the 2051 and 2061 designs of a scenario at the 2056 peak: pipes and km over the d/D limit, surcharged | Tools menu "Checks → Design-year check" | tested (equal to W18 on all 8 cases) |
 
 ## Planned: W18 tools not yet in the app (each with what it needs; source list `_SETUP/TOOLKIT_W18_deliverables.md`)

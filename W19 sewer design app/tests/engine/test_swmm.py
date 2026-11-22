@@ -13,7 +13,7 @@ FIX = os.path.join(W19, "tests", "fixtures", "swmm")
 REF = os.path.join(W19, "work", "swmm_ref")
 MODELS = [("examples", f"Example{i}", f"Example_{i}") for i in range(1, 6)] + \
          [("extran", f"extran{i}", f"extran_{i}") for i in ("1", "2", "3", "4", "5", "6", "7", "8a", "9", "10")]
-# Example1 (kinematic wave with water quality): 13 of 468 link-flow values differ by up to 0.68 % (link 4's peak too), the report's peaks within 0.06 %
+# Inputs are the same git blobs as EPA ran (tag v2.5.0-dev). Example1 (kinematic wave with water quality): 13 of 468 link-flow values differ by up to 0.68 % (link 4's peak too), the report's peaks within 0.06 %
 # and continuity error 0.087 % vs 0.090 %: a difference between SWMM 5.2.4 builds (EPA's benchmark is build 70be2f5),
 # reported, not exempted: strict xfail flags the day it passes.
 BUILD_DIFF = {"Example1": "per-step link flows differ by up to 0.68 % between SWMM 5.2.4 builds (one peak, link 4, 0.68 %; the rest within 0.06 %)"}

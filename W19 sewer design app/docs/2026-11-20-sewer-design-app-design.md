@@ -203,3 +203,16 @@ app, so stopping after any phase loses nothing.
 ## 13. Out of scope
 
 Water distribution (WaterGEMS), water quality, cost optimisation, cloud hosting, multi-user editing, phone access.
+
+## 14. As built, 2026-11-21 (where the build differs from sections 5–9)
+
+- **Interface:** plain HTML, JavaScript and CSS with MapLibre GL from a CDN and OpenStreetMap tiles; no React, Vite or
+  AG Grid, and no build step.
+- **Project:** the 12 W18 designs loaded from the frozen fixtures, with what-ifs held in memory as lists of edits. There
+  is no GeoPackage project file, no import of another network, and what-ifs are lost on restart.
+- **Engine:** W18's chain runs as the port (`w18port/`). The in-process engine does flows and normal depth for instant
+  re-run only. The design chain runs on base cases; a what-if's edits are not carried into it.
+- **Assistant:** Messages API with a manual tool loop (not the beta tool runner), so tests run a stand-in client. Model
+  claude-opus-5-5, effort high, server-side fallback on refusal. It has not yet made a live call.
+- **Stormwater:** EPA SWMM 5.2.4 through swmm-toolkit, checked against EPA's benchmark results, not against SewerGEMS.
+- **Script register:** `docs/SCRIPT_REGISTER.md`, one row per tested script with its UI place.

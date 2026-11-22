@@ -16,7 +16,7 @@ REGISTER = [
          script="w18port/final_products.py", seconds="<1"),
     dict(name="quantities", menu="Stations", label="Quantities of the design (km, stations, energy, deepest)",
          script="w18port/final_products.py", seconds="<1"),
-    dict(name="design_chain", menu="Design", label="Run the W18 design chain for this case and compare with W18",
+    dict(name="design_chain", menu="Design", label="Re-run the W18 design chain on this base case and check it against W18 (a what-if's edits are not carried into the chain yet)",
          script="w18port/run.py (final_design, split, self-cleansing, naming, products)", seconds="about 40"),
     dict(name="compare_sewergems", menu="Referee", label="Compare with SewerGEMS's saved run (SC1-2056)",
          script="referee/sewergems.py", seconds="<2"),

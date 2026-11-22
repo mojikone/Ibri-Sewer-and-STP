@@ -1,6 +1,6 @@
 {
  "Example1": {
-  "seconds": 0.016,
+  "seconds": 0.015,
   "links": 13,
   "nodes": 14,
   "subcatchments": 8,
@@ -112,7 +112,7 @@
   ]
  },
  "Example4": {
-  "seconds": 0.015,
+  "seconds": 0.012,
   "links": 0,
   "nodes": 1,
   "subcatchments": 9,
@@ -213,7 +213,7 @@
   ]
  },
  "extran2": {
-  "seconds": 0.006,
+  "seconds": 0.005,
   "links": 9,
   "nodes": 10,
   "subcatchments": 0,
@@ -248,7 +248,7 @@
   ]
  },
  "extran3": {
-  "seconds": 0.006,
+  "seconds": 0.005,
   "links": 10,
   "nodes": 10,
   "subcatchments": 0,
