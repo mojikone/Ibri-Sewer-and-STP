@@ -68,6 +68,20 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
   load set puts no load on the network (a storm model: only infiltration flows). The profile draws the rise as the crown or bank. SWMM files read and write
   RECT_CLOSED, RECT_OPEN and TRAPEZOIDAL with their barrels and n. For an export run in SewerGEMS,
   `GET .../section_check` compares the app's normal and critical depth at SewerGEMS's own flow with SewerGEMS's.
+- **Symbology (colour coding and labels), as in SewerGEMS's Element Symbology:** Display card > Symbology > Edit...
+  opens a panel beside the map (the map stays live). For pipes, structures and catchments:
+  - colour coding by any field: inputs (size or section, DN, length, gradient, inverts, depth at either end, ground,
+    load, area, imperviousness...) and results (flow, velocity, d/D, normal and critical depth, failed checks, storm flow,
+    fullness, head and flooding); calculated range, steps, equal widths or equal counts, five colour ramps, reverse,
+    editable classes, an above-range class; shown as colour, line width / symbol size, or both; all elements or a kept
+    selection; text fields get one class per value. The pipes' coding is picked in Colour by, the structures' and
+    catchments' in their own selects (shown once a coding exists); the legend shows each class's count and a click
+    selects its elements; storm fields follow the time slider;
+  - labels: any number per element type, each a field with prefix, suffix (%u = its unit) and decimals, or free text
+    with fields in braces ({id} L={length_m:1:u}); on the same line or the next; text size, the zoom they show from and
+    whether they may overlap. Pipe labels sit at the pipe's middle along its direction;
+  - named symbologies ("Default" reproduces the map as it was), switched on the Display card, kept with the project
+    (its file and its session snapshot). File > Export KMZ takes the map's colouring and labels.
 - **Failing pipes:** the red overlay can be switched off (Display card, or click its legend line); it stays off over a
   comparison or a storm colouring, where steady-state failures would mislead.
 - **Settings tables:** the pipe catalogue, minimum gradient by size, d/D limit by size and the peaking table are edited
@@ -165,8 +179,8 @@ The Ibri W18 viewer of phase 1B (the 12 frozen designs with their W18 tools) is 
 - the W18 viewer (`/w18`): the design chain does not take a what-if's edits; BOQ, costs, station flows, DWG and
   schematics are still to be placed (`docs/SCRIPT_REGISTER.md`, "Planned").
 
-All tests, one pass (2026-11-22, after the sections): `python -m pytest` - 249 passed, 1 skipped (a live assistant test), 2 expected
-failures (EPA Example1, a SWMM build difference), 11 min, 42 end-to-end tests among them.
+All tests, one pass (2026-11-22, after the symbology): `python -m pytest` - 252 passed, 1 skipped (a live assistant test), 2 expected
+failures (EPA Example1, a SWMM build difference), 11 min, 43 end-to-end tests among them.
 
 ## Reproduction and speed (2026-11-21)
 

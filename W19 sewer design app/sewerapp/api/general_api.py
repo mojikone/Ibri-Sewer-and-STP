@@ -132,7 +132,7 @@ async def open_file(file: UploadFile = File(...)):
             for c in ss["scenarios"]:
                 sc = Scenario(c["id"], c["name"], c.get("parent"), c["edits"]); sc.fixed = c.get("fixed", 0); s.scenarios[c["id"]] = sc
             s._n = max([int(k[1:]) for k in s.scenarios if re.fullmatch(r"S\d+", k)] or [0])
-            s.routes = ss.get("routes", [])
+            s.routes = ss.get("routes", []); s.symbology = ss.get("symbology")
             for k in s.scenarios: s.model(k)                   # every scenario replays: a broken file fails here, not later
         except Exception as e:
             SESSIONS.pop(pid, None); raise HTTPException(400, f"the file's scenarios could not be rebuilt: {e}")
@@ -266,7 +266,7 @@ def save(pid: str, sid: str = "base"):
     s = _s(pid)
     with _lock:
         p = s.model(sid)
-        ss = dict(version=1, current=sid, base=gpkg_project.project_dict(s.base), routes=getattr(s, "routes", []),
+        ss = dict(version=1, current=sid, base=gpkg_project.project_dict(s.base), routes=getattr(s, "routes", []), symbology=getattr(s, "symbology", None),
                   scenarios=[dict(id=c.id, name=c.name, parent=c.parent, edits=clean(c.edits), fixed=c.fixed) for c in s.scenarios.values()])
     f = os.path.join(tempfile.mkdtemp(), "project.gpkg"); gpkg_project.save(p, f, extra=dict(session=ss))
     name = "".join(ch if ch.isalnum() or ch in "-_ " else "_" for ch in p.name).strip() or "project"
@@ -626,6 +626,43 @@ class Route(BaseModel):
     start: str
     end: str | None = None
     via: str | None = None
+
+
+@router.get("/projects/{pid}/symbology")
+def get_symbology(pid: str):
+    """The project's symbology: named definitions of colour codings and labels per element type, and the active one
+    (built and read by the editor, web/editor/symbology.js); null until one is saved."""
+    return getattr(_s(pid), "symbology", None)
+
+
+@router.post("/projects/{pid}/symbology")
+def put_symbology(pid: str, b: dict):
+    s = _s(pid)
+    if not isinstance(b.get("defs"), dict) or not b["defs"] or b.get("active") not in b["defs"]:
+        raise HTTPException(400, "symbology needs named definitions and an active one")
+    if len(json.dumps(b)) > 2_000_000: raise HTTPException(400, "symbology too large")
+    with _lock: s.symbology = b
+    return dict(ok=True)
+
+
+class KmzStyle(BaseModel):
+    sid: str = "base"
+    title: str | None = None
+    classes: list = []                                     # [[label, "#rrggbb"], ...] in legend order
+    links: dict = {}                                       # link id -> "#rrggbb"
+    labels: dict = {}                                      # link id -> label text
+
+
+@router.post("/projects/{pid}/export.kmz")
+def export_kmz_styled(pid: str, b: KmzStyle):
+    """The KMZ coloured and labelled as the map shows it (the active colouring and labels sent by the editor)."""
+    from sewerapp.io import kmz
+    s = _s(pid)
+    if b.sid not in s.scenarios: raise HTTPException(404, f"no scenario {b.sid}")
+    with _lock: p = s.model(b.sid); res, _ = s.solve(b.sid)
+    try: data = kmz.kmz_bytes(p, res, f"{p.name} - {s.scenarios[b.sid].name}", style=b.model_dump())
+    except ValueError as e: raise HTTPException(400, str(e))
+    return Response(data, media_type="application/vnd.google-earth.kmz", headers={"Content-Disposition": 'attachment; filename="network.kmz"'})
 
 
 @router.get("/projects/{pid}/routes")

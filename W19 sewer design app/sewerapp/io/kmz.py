@@ -1,5 +1,8 @@
 """A light KMZ of a scenario for Google Earth: pipes coloured by size with their data in the balloon, outfalls and wet
-wells as pins, and the manholes in a folder that starts hidden (thousands of pins are slow to draw)."""
+wells as pins, and the manholes in a folder that starts hidden (thousands of pins are slow to draw). With `style` (sent
+by the editor) the pipes take the map's own colouring and labels instead: one folder per legend class, the label at the
+top of the balloon."""
+import re
 import io, zipfile
 from xml.sax.saxutils import escape
 import numpy as np
@@ -24,7 +27,12 @@ def _cls(dn):
     return len(DN_CLASSES) - 1
 
 
-def kmz_bytes(p, results=None, name=None):
+def _hex6(c):
+    c = str(c or "").strip().lstrip("#")
+    return c.lower() if re.fullmatch(r"[0-9a-fA-F]{6}", c) else "9aa5b1"
+
+
+def kmz_bytes(p, results=None, name=None, style=None):
     if not p.crs: raise ValueError("a project in local metres has no place on the earth: give it a CRS first")
     n = p.nodes; lon, lat = coords.to_display(p.crs, n.x.values, n.y.values); ll = dict(zip(n.index, zip(lon, lat)))
     out = [f'<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>{escape(name or p.name)}</name>']
@@ -35,6 +43,15 @@ def kmz_bytes(p, results=None, name=None):
     out.append('<Style id="out"><IconStyle><scale>0.9</scale><Icon><href>http://maps.google.com/mapfiles/kml/paddle/blu-circle.png</href></Icon></IconStyle></Style>')
     out.append('<Style id="ww"><IconStyle><scale>0.9</scale><Icon><href>http://maps.google.com/mapfiles/kml/paddle/purple-square.png</href></Icon></IconStyle></Style>')
     folders = {k: [] for k in range(len(DN_CLASSES))}; pumps = []
+    st_links = {str(k): _hex6(v) for k, v in ((style or {}).get("links") or {}).items()}
+    st_lab = (style or {}).get("labels") or {}
+    st_cls = [(str(lab), _hex6(col)) for lab, col in ((style or {}).get("classes") or [])]
+    by_hex = {}
+    if style:
+        for lab, col in st_cls: by_hex.setdefault(col, lab)
+        for col in set(st_links.values()) | set(by_hex):
+            out.append(f'<Style id="c{col}"><LineStyle><color>{_kml_colour(col)}</color><width>3</width></LineStyle></Style>')
+        styled = {}
     for i, r in zip(p.links.index, p.links.to_dict("records")):
         c = r.get("coords")
         if isinstance(c, list) and len(c) >= 2:
@@ -44,13 +61,26 @@ def kmz_bytes(p, results=None, name=None):
         res = results.loc[i] if results is not None and i in results.index else None
         desc = f"DN{r['dn_mm']} &#183; {f2(r['length_m'], 1)} m &#183; inverts {f2(r['up_inv'])} / {f2(r['dn_inv'])}" if r["kind"] != "pump" else "pump"
         if res is not None and "v_ms" in res and res.v_ms == res.v_ms: desc += f" &#183; {f2(res.q_ls)} L/s &#183; v {f2(res.v_ms)} m/s &#183; d/D {f2(res.d_over_D)}"
+        if style and r["kind"] != "pump":
+            col = st_links.get(str(i), "9aa5b1"); lab = st_lab.get(str(i))
+            d2 = (f"<b>{escape(str(lab)).replace(chr(10), '<br>')}</b><br>" if lab else "") + desc
+            styled.setdefault(col, []).append(f'<Placemark><name>{escape(str(i))}</name><description>{d2}</description><styleUrl>#c{col}</styleUrl>'
+                                             f'<LineString><tessellate>1</tessellate><coordinates>{" ".join(f"{u:.7f},{v:.7f},0" for u, v in line)}</coordinates></LineString></Placemark>')
+            continue
         pm = (f'<Placemark><name>{escape(str(i))}</name><description>{desc}</description><styleUrl>#{"pump" if r["kind"] == "pump" else "dn" + str(_cls(r["dn_mm"]))}</styleUrl>'
               f'<LineString><tessellate>1</tessellate><coordinates>{" ".join(f"{u:.7f},{v:.7f},0" for u, v in line)}</coordinates></LineString></Placemark>')
         (pumps if r["kind"] == "pump" else folders[_cls(r["dn_mm"])]).append(pm)
-    out.append("<Folder><name>Pipes by size</name>")
-    for k, pms in folders.items():
-        if pms: out.append(f"<Folder><name>DN {DN_CLASSES[k][1]} ({len(pms)})</name>{''.join(pms)}</Folder>")
-    out.append("</Folder>")
+    if style:
+        out.append(f"<Folder><name>{escape(style.get('title') or 'Pipes')}</name>")
+        order = [c for _, c in st_cls if c in styled] + sorted(c for c in styled if c not in by_hex)
+        for col in dict.fromkeys(order):
+            pms = styled[col]; out.append(f"<Folder><name>{escape(by_hex.get(col, 'no value' if col == '9aa5b1' else '#' + col))} ({len(pms)})</name>{''.join(pms)}</Folder>")
+        out.append("</Folder>")
+    else:
+        out.append("<Folder><name>Pipes by size</name>")
+        for k, pms in folders.items():
+            if pms: out.append(f"<Folder><name>DN {DN_CLASSES[k][1]} ({len(pms)})</name>{''.join(pms)}</Folder>")
+        out.append("</Folder>")
     if pumps: out.append(f"<Folder><name>Pumps ({len(pumps)})</name>{''.join(pumps)}</Folder>")
     pins = {"outfall": [], "wetwell": [], "manhole": []}
     for i, r in zip(n.index, n.to_dict("records")):

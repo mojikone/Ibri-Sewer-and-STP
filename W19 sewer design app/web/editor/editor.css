@@ -13,6 +13,13 @@ body.dark {
   --overlay: rgba(22,28,35,.93); --shadow: 0 6px 22px rgba(0,0,0,.5); --focus: #3f7fd6;
 }
 * { box-sizing: border-box; }
+.symrow{display:flex;gap:4px;align-items:center}.symrow select{flex:1;min-width:0}
+#dlg-sym{background:transparent;pointer-events:none;justify-content:flex-end;align-items:flex-start;z-index:55}
+#dlg-sym .dlg{pointer-events:auto;margin:64px 16px 0 0;max-height:calc(100vh - 90px);overflow:auto;max-width:720px;min-width:560px}.tabs-mini{display:flex;gap:4px;margin:6px 0}.tabs-mini button.on{background:var(--accent,#1a73e8);color:#fff}
+.sym-c{display:flex;gap:8px;align-items:center;padding:3px 6px;border-radius:4px;cursor:pointer}.sym-c.on{background:rgba(26,115,232,.12)}.sym-c label{flex:1}
+.sym-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px 10px;margin:6px 0}#dlg-sym .sym-grid label{display:flex;flex-direction:column;gap:2px;font-size:12px;margin:0}#dlg-sym .sym-grid label.chk{flex-direction:row;align-items:center;align-self:end}#dlg-sym .sym-c label,#dlg-sym .row label{display:flex;grid-template-columns:none;gap:6px;align-items:center;margin:0}#dlg-sym .row label input{width:70px}#dlg-sym .sym-c{padding:2px 6px}#dlg-sym h4{display:flex;gap:8px;align-items:center;margin:12px 0 4px}
+.sym-tab{border-collapse:collapse;margin:6px 0}.sym-tab td,.sym-tab th{padding:2px 4px;font-size:12px}.sym-tab input[type=number]{width:80px}.sym-tab input[type=text]{width:100%}
+.sym-tab input[type=color]{width:42px;height:22px;padding:0;border:1px solid #ccd}.sym-row{cursor:pointer}.sym-row:hover{background:rgba(0,0,0,.05)}
 [hidden] { display: none !important; }          /* a class's display (.tb is inline-flex) must not show a hidden element */
 html, body { height: 100%; margin: 0; }
 body { display: grid; grid-template-rows: auto 26px minmax(0, 1fr) 6px var(--bh); grid-template-columns: minmax(0, 1fr);

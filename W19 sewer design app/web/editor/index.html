@@ -92,6 +92,12 @@
           <option value="storm_flood">flooding</option>
           <option value="compare">change vs scenario</option>
         </select>
+        <label for="node-color-by" hidden>Structures by</label>
+        <select id="node-color-by" hidden title="Colour the structures by a custom colour coding (Symbology...)"><option value="">type</option></select>
+        <label for="catch-color-by" hidden>Catchments by</label>
+        <select id="catch-color-by" hidden title="Colour the catchments by a custom colour coding (Symbology...)"><option value="">plain</option></select>
+        <label for="sym-def">Symbology</label>
+        <div class="symrow"><select id="sym-def" title="Named symbology: colour codings and labels, kept with the project"><option>Default</option></select><button id="sym-edit" class="mini" title="Colour coding and labels for pipes, structures and catchments">Edit...</button></div>
         <label for="results-source">Results</label>
         <select id="results-source"><option value="engine" selected>W19 engine</option><option value="stored" disabled>SewerGEMS (stored)</option></select>
         <div class="chks"><label title="Pipes that fail a check (d/D, v max, surcharged, adverse) drawn in red over the colouring"><input type="checkbox" id="fail-toggle" checked> Failing pipes on top</label></div>
@@ -267,6 +273,17 @@
   <label>Load set<select id="des-load"></select></label>
   <div class="row"><button id="des-preview" class="primary">Preview</button><button id="des-run">Design now</button><button id="des-cancel">Cancel</button></div>
 </div></div>
+<div id="dlg-sym" class="modal" hidden><div class="dlg wide sym">
+  <h3>Symbology <span class="muted">- <span id="sym-def-name">Default</span></span></h3>
+  <div class="row"><button id="sym-def-new" title="A new named symbology, copied from this one">New symbology...</button><button id="sym-def-rename">Rename...</button><button id="sym-def-del">Delete</button></div>
+  <div id="sym-tabs" class="tabs-mini"><button data-type="links" class="on">Pipes</button><button data-type="nodes">Structures</button><button data-type="catchments">Catchments</button></div>
+  <h4>Colour coding <button id="sym-new" class="mini" title="A colour coding by any field">New</button></h4>
+  <div id="sym-codings" class="list"></div>
+  <div id="sym-coding-ed"></div>
+  <h4>Labels</h4>
+  <div id="sym-labels"></div>
+  <div class="row"><button id="sym-close">Close</button></div>
+</div></div>
 <div id="dlg-keys" class="modal" hidden><div class="dlg">
   <h3>Keyboard and mouse</h3>
   <table class="keys"><tr><td><kbd>S</kbd></td><td>Select</td></tr><tr><td><kbd>M / O / W</kbd></td><td>Manhole, outfall, wet well</td></tr><tr><td><kbd>P</kbd></td><td>Pipe (click start, then end)</td></tr><tr><td><kbd>C</kbd></td><td>Catchment (corners, Enter, outlet)</td></tr><tr><td><kbd>V</kbd></td><td>Move a node</td></tr><tr><td><kbd>R</kbd></td><td>Measure</td></tr><tr><td><kbd>Del</kbd></td><td>Delete the selection</td></tr><tr><td><kbd>Esc</kbd></td><td>Cancel drawing, clear the selection</td></tr><tr><td><kbd>U / D</kbd></td><td>Trace upstream / downstream of the selection</td></tr><tr><td><kbd>Z</kbd></td><td>Zoom to the selection</td></tr><tr><td><kbd>H</kbd></td><td>Fit the whole network</td></tr><tr><td><kbd>Ctrl+F or /</kbd></td><td>Find an element by ID</td></tr><tr><td><kbd>Ctrl+Z / Ctrl+Y</kbd></td><td>Undo / redo</td></tr><tr><td><kbd>F2 / F3</kbd></td><td>Hide or show the properties / the tables</td></tr><tr><td><kbd>F4</kbd></td><td>Map only</td></tr><tr><td><kbd>Shift+drag</kbd></td><td>Select the pipes in a box</td></tr><tr><td><kbd>Ctrl+drag</kbd></td><td>Select the nodes in a box</td></tr><tr><td><kbd>Double-click a cell</kbd></td><td>Edit it in the table; Enter moves down</td></tr><tr><td><kbd>Ctrl+V</kbd></td><td>Paste a column from Excel into the table (from the clicked cell)</td></tr><tr><td><kbd>Profile: wheel</kbd></td><td>Zoom along the chainage; Shift+wheel or drag scrolls, Ctrl+wheel zooms the levels</td></tr><tr><td><kbd>?</kbd></td><td>This list</td></tr></table>
@@ -275,6 +292,7 @@
 <div id="busy" hidden><div class="spin"></div><span id="busy-text">Working...</span></div>
 <div id="toast" role="alert" hidden></div>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="/static/editor/symbology.js"></script>
 <script src="/static/editor/editor.js"></script>
 </body>
 </html>

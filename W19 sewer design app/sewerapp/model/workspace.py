@@ -274,11 +274,12 @@ class Session:
         """What a snapshot keeps: the base model, the scenarios as edit lists, results read from other programs and
         reference layers. The base is never changed in place (scenarios copy it), so this can be pickled outside the lock."""
         return dict(id=self.id, base=self.base, n=self._n, external=self.external, refs=getattr(self, "refs", []), routes=getattr(self, "routes", []),
+                    symbology=getattr(self, "symbology", None),
                     scenarios=[(s.id, s.name, s.parent, list(s.edits), list(s.redo), s.fixed) for s in self.scenarios.values()])
 
     @classmethod
     def from_state(cls, st):
-        s = cls(st["id"], st["base"]); s._n = st["n"]; s.external = st["external"]; s.refs = st.get("refs", []); s.routes = st.get("routes", [])
+        s = cls(st["id"], st["base"]); s._n = st["n"]; s.external = st["external"]; s.refs = st.get("refs", []); s.routes = st.get("routes", []); s.symbology = st.get("symbology")
         s.scenarios = {}
         for sid, name, parent, edits, redo, fixed in st["scenarios"]:
             c = Scenario(sid, name, parent, edits); c.redo = redo; c.fixed = fixed; s.scenarios[sid] = c

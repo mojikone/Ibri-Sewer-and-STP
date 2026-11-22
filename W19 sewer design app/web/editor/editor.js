@@ -67,7 +67,17 @@ function colourFor(by, v) {
 }
 const stormNow = () => state.storm && state.storm.sid === state.sid ? state.storm.data : null;
 function renderLegend() {
+  renderLegendPipes();
+  const x = state.model ? symLegend("nodes") + symLegend("catchments") : "";
+  if (x) $("#legend").insertAdjacentHTML("beforeend", x);
+}
+function renderLegendPipes() {
   const el = $("#legend"), by = state.colorBy, stale = by.startsWith("storm") && state.storm && state.storm.stale;
+  if (by.startsWith("sym:")) {
+    el.innerHTML = (state.model ? symLegend("links") : "") + `<div class="r"><span class="sw" style="background:${GREY}"></span>no value</div>` +
+      `<div class="r fail-row" data-testid="legend-fail" title="Click to ${ui.showFail ? "hide" : "show"} the failing pipes"><span class="sw" style="background:#d7301f;${ui.showFail ? "" : "opacity:.3"}"></span>failing ${ui.showFail ? "(drawn on top)" : "(hidden)"}</div>`;
+    return;
+  }
   if (by === "compare") {
     const c = state.compare && state.compare.b === state.sid ? state.compare : null;
     if (!c) { el.innerHTML = `<div class="t">Change</div><div class="r muted">Scenarios... &gt; Compare first</div>`; return; }
@@ -121,9 +131,9 @@ function initMap() {
     const t = setInterval(() => { if (map.style && map.style._loaded) { clearInterval(t); go(); } }, 50);
   }).then(() => {
     const E = { type: "FeatureCollection", features: [] };
-    for (const id of ["grid", "catch", "catch-links", "drawpoly", "links", "nodes", "sel-links", "sel-nodes", "drag", "hot", "measure", "route", "cursor"]) map.addSource(id, { type: "geojson", data: E, tolerance: 0.4 });
+    for (const id of ["grid", "catch", "catch-links", "drawpoly", "links", "link-labels", "nodes", "sel-links", "sel-nodes", "drag", "hot", "measure", "route", "cursor"]) map.addSource(id, { type: "geojson", data: E, tolerance: 0.4 });
     map.addLayer({ id: "grid", type: "line", source: "grid", paint: { "line-color": "#d6dde6", "line-width": 1 } });
-    map.addLayer({ id: "catch", type: "fill", source: "catch", paint: { "fill-color": "#4aa3a2", "fill-opacity": 0.22 } });
+    map.addLayer({ id: "catch", type: "fill", source: "catch", paint: { "fill-color": ["coalesce", ["get", "_c"], "#4aa3a2"], "fill-opacity": ["case", ["has", "_c"], 0.45, 0.22] } });
     map.addLayer({ id: "catch-line", type: "line", source: "catch", paint: { "line-color": "#2d7f7e", "line-width": 1.5 } });
     map.addLayer({ id: "catch-links", type: "line", source: "catch-links", paint: { "line-color": "#2d7f7e", "line-width": 1.2, "line-dasharray": [1, 2] } });
     map.addLayer({ id: "drawpoly-fill", type: "fill", source: "drawpoly", filter: ["==", ["geometry-type"], "Polygon"], paint: { "fill-color": "#e6821e", "fill-opacity": 0.2 } });
@@ -135,14 +145,19 @@ function initMap() {
       10, ["+", add, ["*", k, ["step", dn, 0.7, 300, 1.2, 600, 2, 1000, 2.8]]],
       15, ["+", add, ["*", k, ["step", dn, 2, 300, 3, 600, 4.4, 1000, 6]]],
       19, ["+", add, ["*", k, ["step", dn, 4, 300, 6, 600, 9, 1000, 12]]]];
-    map.addLayer({ id: "links-casing", type: "line", source: "links", layout: { "line-cap": "round", "line-sort-key": dn }, paint: { "line-color": "#ffffff", "line-opacity": 0.75, "line-width": w(1, 2) } });
-    map.addLayer({ id: "links-base", type: "line", source: "links", layout: { "line-cap": "round", "line-sort-key": dn }, paint: { "line-color": ["get", "_c"], "line-width": w(1) } });
+    // a size coding (Symbology) sets the width itself: _w px at zoom 15, scaled with zoom
+    const ws = (k, add = 0) => ["interpolate", ["linear"], ["zoom"],
+      10, ["case", ["has", "_w"], ["+", add, ["*", 0.4, ["get", "_w"]]], ["+", add, ["*", k, ["step", dn, 0.7, 300, 1.2, 600, 2, 1000, 2.8]]]],
+      15, ["case", ["has", "_w"], ["+", add, ["get", "_w"]], ["+", add, ["*", k, ["step", dn, 2, 300, 3, 600, 4.4, 1000, 6]]]],
+      19, ["case", ["has", "_w"], ["+", add, ["*", 1.8, ["get", "_w"]]], ["+", add, ["*", k, ["step", dn, 4, 300, 6, 600, 9, 1000, 12]]]]];
+    map.addLayer({ id: "links-casing", type: "line", source: "links", layout: { "line-cap": "round", "line-sort-key": dn }, paint: { "line-color": "#ffffff", "line-opacity": 0.75, "line-width": ws(1, 2) } });
+    map.addLayer({ id: "links-base", type: "line", source: "links", layout: { "line-cap": "round", "line-sort-key": dn }, paint: { "line-color": ["get", "_c"], "line-width": ws(1) } });
     map.addLayer({ id: "links-fail", type: "line", source: "links", filter: ["==", ["get", "_fail"], 1], layout: { "line-cap": "round" }, paint: { "line-color": "#d7301f", "line-width": w(1.3, 0.5) } });
     map.addLayer({ id: "links-pump", type: "line", source: "links", filter: ["==", ["get", "kind"], "pump"], paint: { "line-color": "#7b3fa0", "line-width": w(1.3), "line-dasharray": [2, 1.5] } });
     map.addLayer({ id: "links-locked", type: "line", source: "links", filter: ["==", ["get", "_lock"], 1], paint: { "line-color": "#ffffff", "line-width": w(0.35), "line-dasharray": [1.5, 1.5] } });
     map.addImage("flow-arrow", arrowImage(), { sdf: true, pixelRatio: 2 });
     map.addLayer({ id: "links-arrow", type: "symbol", source: "links", minzoom: 15.5, layout: { "symbol-placement": "line", "symbol-spacing": 90, "icon-image": "flow-arrow", "icon-size": 1.25, "icon-rotation-alignment": "map", "icon-allow-overlap": true, "icon-ignore-placement": true }, paint: { "icon-color": "#1d2733", "icon-opacity": 0.75 } });
-    map.addLayer({ id: "links-label", type: "symbol", source: "links", minzoom: 17, layout: { "symbol-placement": "line", "text-field": ["get", "_lab"], "text-size": 10.5, "text-font": ["Open Sans Semibold"], "text-offset": [0, -0.9], "symbol-spacing": 260 }, paint: { "text-color": "#1d2733", "text-halo-color": "#fff", "text-halo-width": 1.6 } });
+    map.addLayer({ id: "links-label", type: "symbol", source: "link-labels", minzoom: 17, layout: { "text-field": ["get", "_lab"], "text-size": 10.5, "text-font": ["Open Sans Semibold"], "text-rotate": ["get", "_rot"], "text-rotation-alignment": "map", "text-anchor": "bottom", "text-offset": [0, -0.35], "text-max-width": 40 }, paint: { "text-color": "#1d2733", "text-halo-color": "#fff", "text-halo-width": 1.6 } });
     map.addLayer({ id: "hot-link", type: "line", source: "hot", paint: { "line-color": "#ffb000", "line-width": w(1, 5), "line-opacity": 0.85 } });
     map.addLayer({ id: "sel-links-casing", type: "line", source: "sel-links", paint: { "line-color": "#fff", "line-width": 9 } });
     map.addLayer({ id: "sel-links", type: "line", source: "sel-links", paint: { "line-color": "#00b3c7", "line-width": 5 } });
@@ -150,11 +165,14 @@ function initMap() {
     const fl = ["==", ["coalesce", ["get", "_fl"], 0], 1];
     // at city scale plain manholes are hidden (they read as grey dots over the pipes); outfalls, wet wells and flagged nodes stay
     const mh = ["all", ["==", ["get", "kind"], "manhole"], ["!", fl]];
+    // a node colour or size coding (Symbology) sets _c / _r; a coded manhole shows at every zoom
+    const sz = (z, plain) => ["case", ["has", "_r"], ["*", z, ["get", "_r"]], ["has", "_c"], ["max", 3, plain], plain];
     map.addLayer({ id: "nodes", type: "circle", source: "nodes", paint: {
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, ["case", fl, 3.5, mh, 0, 3.5], 13.5, ["case", fl, 5, mh, 0, 4.5], 14.5, ["case", fl, 6, mh, 2.6, 5], 16, ["case", fl, 8, mh, 4.5, 6.5], 19, ["case", fl, 12, mh, 8, 10]],
-      "circle-color": ["case", fl, "#d7301f", kc], "circle-stroke-color": "#fff",
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, sz(0.5, ["case", fl, 3.5, mh, 0, 3.5]), 13.5, sz(0.75, ["case", fl, 5, mh, 0, 4.5]), 14.5, sz(0.9, ["case", fl, 6, mh, 2.6, 5]), 16, sz(1, ["case", fl, 8, mh, 4.5, 6.5]), 19, sz(1.5, ["case", fl, 12, mh, 8, 10])],
+      "circle-color": ["case", fl, "#d7301f", ["has", "_c"], ["get", "_c"], kc], "circle-stroke-color": "#fff",
       "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 13.5, ["case", mh, 0, 1.4], 14.5, 1.2] } });
-    map.addLayer({ id: "nodes-label", type: "symbol", source: "nodes", minzoom: 15.5, layout: { "text-field": ["get", "id"], "text-size": 11, "text-offset": [0, 1.1], "text-anchor": "top", "text-font": ["Open Sans Semibold"], "text-allow-overlap": false }, paint: { "text-color": "#1d2733", "text-halo-color": "#fff", "text-halo-width": 1.5 } });
+    map.addLayer({ id: "catch-label", type: "symbol", source: "catch", minzoom: 14, layout: { "text-field": ["coalesce", ["get", "_lab"], ""], "text-size": 11, "text-font": ["Open Sans Semibold"] }, paint: { "text-color": "#1d4d4c", "text-halo-color": "#fff", "text-halo-width": 1.5 } });
+    map.addLayer({ id: "nodes-label", type: "symbol", source: "nodes", minzoom: 15.5, layout: { "text-field": ["coalesce", ["get", "_lab"], ["get", "id"]], "text-max-width": 30, "text-size": 11, "text-offset": [0, 1.1], "text-anchor": "top", "text-font": ["Open Sans Semibold"], "text-allow-overlap": false }, paint: { "text-color": "#1d2733", "text-halo-color": "#fff", "text-halo-width": 1.5 } });
     map.addLayer({ id: "sel-nodes", type: "circle", source: "sel-nodes", paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 5, 19, 12], "circle-color": "rgba(0,0,0,0)", "circle-stroke-color": ["case", ["==", ["get", "_pend"], 1], "#e6821e", "#00b3c7"], "circle-stroke-width": 3 } });
     map.addLayer({ id: "drag", type: "circle", source: "drag", paint: { "circle-radius": 8, "circle-color": "rgba(230,130,30,.35)", "circle-stroke-color": "#e6821e", "circle-stroke-width": 2 } });
     map.addLayer({ id: "route-halo", type: "line", source: "route", filter: ["==", ["geometry-type"], "LineString"], layout: { "line-cap": "round", "line-join": "round" },
@@ -209,7 +227,7 @@ function updateGrid() {
 async function pushMap() {
   await mapReady;
   const m = state.model; if (!m) return;
-  if (state.dirty.links) { map.getSource("links").setData(m.fcLinks); state.dirty.links = false; }
+  if (state.dirty.links) { map.getSource("links").setData(m.fcLinks); map.getSource("link-labels").setData(symLabelPoints()); state.dirty.links = false; }
   if (state.dirty.nodes) { map.getSource("nodes").setData(m.fcNodes); state.dirty.nodes = false; }
   if (state.dirty.catch) { pushCatch(); state.dirty.catch = false; }
   highlight();
@@ -316,7 +334,6 @@ function mergeResults() {
   const FR = state.stormFrame && state.stormFrame.sid === state.sid ? state.stormFrame : null;
   for (const f of m.linkFeat) {
     const r = R[f.id], p = f.properties, sl = S && S.links[f.id], e = E[f.id];
-    p._lab = p.kind === "pump" ? `pump ${f.id}` : p.section ? `section ${p.section}` : `DN${p.dn_mm ?? "?"}` + (e && e.s_pc != null ? ` · ${(+e.s_pc).toFixed(2)} %` : "");
     p._fail = !usingStored() && !NO_FAIL.has(by) && r && (r.over_limit || r.over_vmax || r.surcharged || r.negative_slope) ? 1 : 0;
     p._lock = LK.has(String(f.id)) ? 1 : 0;
     const sq = FR ? (FR.links[f.id] == null ? null : Math.abs(FR.links[f.id])) : sl && sl.q_peak, scap = FR ? FR.links[f.id] : sl && sl.capacity_peak;
@@ -328,8 +345,9 @@ function mergeResults() {
     const fl = by === "storm_flood" && S && (FR ? (FR.flooding[f.id] || 0) > 0 : S.nodes[f.id] && S.nodes[f.id].flooding_peak > 0) ? 1 : 0;
     if (fl) anyFl = true; f.properties._fl = fl;
   }
-  m.hasFl = anyFl; if (anyFl || wasFl) state.dirty.nodes = true;
-  state.dirty.links = true;
+  m.hasFl = anyFl;
+  symApply();                                              // custom colour codings and the labels (symbology.js)
+  state.dirty.nodes = true; state.dirty.links = true;
 }
 const catalogueMap = () => { const o = {}; for (const [n, i] of (state.model.settings.design.catalogue || [])) o[n] = i; return o; };
 function patchLocal(op) {
@@ -1470,6 +1488,7 @@ async function openProject(info, fit = true) {
   state.tableDraft = {}; $("#prof-start").value = ""; $("#prof-end").value = ""; $("#prof-via").value = ""; prof.range = null; setRoute(null); if (state.routePick) finishPick(); $("#settings-form").dataset.sig = "";
   await mapReady;
   applyBasemap(); clearMeasure();
+  await symLoad();                                         // the project's symbology (colour codings and labels)
   await loadToolList();
   await refreshAll(true);
   if (!state.model.nodeFeat.length && !info.basemap) map.jumpTo({ center: [150 / M_LON, 100 / M_LAT], zoom: 17 });
@@ -1630,7 +1649,7 @@ function wireUi() {
   $("#undo-btn").onclick = () => hist("undo"); $("#redo-btn").onclick = () => hist("redo");
   $("#tools-btn").onclick = e => { e.stopPropagation(); $("#tools-menu").hidden = !$("#tools-menu").hidden; };
   document.addEventListener("click", () => { $("#tools-menu").hidden = true; $("#file-menu").hidden = true; });
-  $("#color-by").onchange = e => { state.colorBy = e.target.value; mergeResults(); renderLegend(); pushMap(); stormBar(); if (state.stormFrame) enqueue(() => loadFrame(state.stormFrame.period)); };
+  $("#color-by").onchange = e => { state.colorBy = e.target.value; symPickLinks(e.target.value); mergeResults(); renderLegend(); pushMap(); stormBar(); if (state.stormFrame) enqueue(() => loadFrame(state.stormFrame.period)); };
   wireView();
   $$(".tool").forEach(b => b.addEventListener("click", () => setTool(b.id.slice(5))));
   $$(".tab").forEach(b => b.addEventListener("click", () => showTab(b.id.slice(4))));
@@ -2302,7 +2321,7 @@ function renderSummary() {
 /* ---- storm time slider: colour the map at any reporting period of the last storm run, or play it */
 let stormTimer = null, frameSeq = 0;
 function stormBar() {
-  const bar = $("#storm-bar"), S = stormNow(), show = !!S && ["storm_cap", "storm_q", "storm_flood"].includes(state.colorBy);
+  const bar = $("#storm-bar"), S = stormNow(), show = !!S && (["storm_cap", "storm_q", "storm_flood"].includes(state.colorBy) || symStorm());
   bar.hidden = !show; if (!show) { stopStormPlay(); return; }
   const n = S.summary.periods, t = $("#storm-t"); t.max = Math.max(0, n - 1);
   if (!state.stormFrame) t.value = t.max;
@@ -2385,7 +2404,16 @@ function wireBatch2() {
   $("#des-cancel").onclick = () => { $("#dlg-design").hidden = true; };
   $("#toolout-apply").onclick = () => { const o = state.toolout && state.toolout.apply; if (o) enqueue(() => withBusy("Design...", () => runDesign(false, o))); };
   $("#toolout-csv").onclick = toolCsv;
-  $("#export-kmz-btn").onclick = () => enqueue(async () => { if (state.pid) saveBlob(await api(`/projects/${state.pid}/export.kmz?sid=${encodeURIComponent(state.sid)}`), "network.kmz"); });
+  $("#export-kmz-btn").onclick = () => enqueue(async () => {
+    if (!state.pid || !state.model) return;
+    const by = state.colorBy, links = {}, labels = {};
+    for (const f of state.model.linkFeat) { links[f.id] = f.properties._c; if (f.properties._lab) labels[f.id] = f.properties._lab; }
+    let title = "Pipes", classes = [];
+    if (by.startsWith("sym:")) { const cd = symActive("links"); if (cd) { title = cd.name || symField("links", cd.field)[1]; classes = symRows(cd, "links").map(r => [r.label, r.color]); } }
+    else if (SCALES[by]) { title = SCALES[by].title; classes = SCALES[by].bins.map(b => [b[1], b[2]]); }
+    else if (by === "compare") { title = "Change"; classes = Object.entries(CHANGE_COL).map(([k, c]) => [k, c]); }
+    saveBlob(await api(`/projects/${state.pid}/export.kmz`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sid: state.sid, title, classes, links, labels }) }), "network.kmz");
+  });
   $("#prof-routes").onchange = e => {
     const r = (state.routes || []).find(x => x.name === e.target.value); $("#prof-del-route").disabled = !r; if (!r) return;
     $("#prof-start").value = r.start; $("#prof-end").value = r.end || ""; $("#prof-via").value = r.via || ""; drawProfile();
@@ -2407,7 +2435,7 @@ function wireBatch2() {
 
 /* ------------------------------------------------------------------ boot */
 state.history = [];
-initMap(); wireUi(); initTables(); wireBatch1(); wireBatch2(); tag(); renderLegend(); updateStatus(); updateButtons(); asstStatus();
+initMap(); wireUi(); initTables(); wireBatch1(); wireBatch2(); wireSymbology(); tag(); renderLegend(); updateStatus(); updateButtons(); asstStatus();
 enqueue(reattach);
 window.ed = {
   state, map,

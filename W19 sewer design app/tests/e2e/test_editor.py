@@ -609,9 +609,11 @@ def test_batch1_cells_paste_trace_box_select_reference_and_reload(page, tmp_path
     page.get_by_test_id("trace-profile").click(); idle(page); page.wait_for_function("prof.rows && prof.rows.length === 3")
     # Shift+drag selects the pipes whose middle is in the box (P-1 at 50 m, P-2 at 150 m, not P-3 at 250 m)
     tool(page, "select"); page.get_by_test_id("tab-nodes").click()
+    page.get_by_test_id("display-head").click()                         # the Display card folded: it must not lie under the drag
     a, b = _screen(page, 20, -30), _screen(page, 180, 30)
     page.keyboard.down("Shift"); page.mouse.move(*a); page.mouse.down(); page.mouse.move(*b, steps=6); page.mouse.up(); page.keyboard.up("Shift"); idle(page)
     assert page.evaluate("window.ed.state.sel.table") == "links" and sorted(page.evaluate("window.ed.state.sel.ids")) == sorted(lid[:2])
+    page.get_by_test_id("display-head").click()
     # a reference layer (a road 20 m off the pipes, no CRS: taken in the project's coordinates), shown and removed
     f = tmp_path / "road.geojson"
     f.write_text('{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"name":"Road 1"},"geometry":{"type":"LineString","coordinates":[[0,20],[300,20]]}}]}')
@@ -781,6 +783,51 @@ def test_a_pipe_becomes_a_box_with_barrels_then_a_circle_again(page):
     assert "sec" not in p and p["dn_mm"] > 0 and result(page, lid[1], "d_over_D") > 0
     page.get_by_test_id("undo-btn").click(); idle(page)
     assert page.evaluate("id => window.ed.state.model.linkFeat.find(f => f.id === id).properties.sec.shape", lid[1]) == "box"
+
+
+def test_symbology_colour_by_any_field_labels_and_named_definitions(page):
+    nid, lid = draw_network(page)
+    feat = lambda t, i: page.evaluate("([t, i]) => window.ed.state.model[t].find(f => f.id === i).properties", [t, i])
+    assert feat("linkFeat", lid[0])["_lab"].startswith("DN")                       # the Default labels: as before
+    page.get_by_test_id("sym-edit").click(); expect(page.get_by_test_id("dlg-sym")).to_be_visible()
+    page.get_by_test_id("sym-new").click()
+    page.get_by_test_id("sym-field").select_option("up_inv")                         # pipes by upstream invert, 3 classes
+    page.get_by_test_id("sym-steps").fill("3"); page.get_by_test_id("sym-init").click()
+    assert page.locator("#sym-coding-ed tbody tr").count() == 4                       # 3 classes and the one above
+    page.get_by_test_id("sym-apply").click(); idle(page)
+    cb = page.evaluate("window.ed.state.colorBy"); assert cb.startswith("sym:")
+    assert page.get_by_test_id("color-by").input_value() == cb
+    cols = {feat("linkFeat", i)["_c"] for i in lid}; assert len(cols) >= 2, cols        # the pipes differ in invert
+    rows = page.locator("#legend .sym-row"); assert rows.count() == 4
+    first = rows.first; first.click(); idle(page)                                      # a legend row selects its pipes
+    assert page.evaluate("window.ed.state.sel.table") == "links" and len(page.evaluate("window.ed.state.sel.ids")) >= 1
+    # size instead of colour: line widths follow the classes
+    page.get_by_test_id("sym-mode").select_option("size"); page.get_by_test_id("sym-apply").click(); idle(page)
+    assert all("_w" in feat("linkFeat", i) for i in lid)
+    # labels: a free-text label with a field, its decimals and unit
+    page.get_by_test_id("sym-lab-free").click()
+    page.locator("#sym-labels tbody tr").last.locator("[data-k=template]").fill("L={length_m:1:u}")
+    page.get_by_test_id("sym-lab-apply").click(); idle(page)
+    assert "L=100.0 m" in feat("linkFeat", lid[0])["_lab"]
+    # structures by depth: their own select appears on the Display card
+    page.locator("#sym-tabs button[data-type=nodes]").click(); page.get_by_test_id("sym-new").click()
+    page.get_by_test_id("sym-apply").click(); idle(page)
+    expect(page.get_by_test_id("node-color-by")).to_be_visible()
+    assert all("_c" in feat("nodeFeat", i) for i in nid)
+    page.get_by_test_id("sym-close").click()
+    # a second named symbology starts as a copy; switching back restores the first
+    page.get_by_test_id("sym-edit").click(); page.get_by_test_id("sym-def-new").click()
+    page.get_by_test_id("ask-input").fill("Review"); page.get_by_test_id("ask-ok").click(); idle(page)
+    assert page.get_by_test_id("sym-def").input_value() == "Review"
+    page.get_by_test_id("sym-close").click()
+    page.get_by_test_id("sym-def").select_option("Default"); idle(page)
+    # kept with the project: the server has both definitions
+    pid = page.evaluate("window.ed.state.pid")
+    s = page.evaluate("pid => fetch(`/api/g/projects/${pid}/symbology`).then(r => r.json())", pid)
+    assert set(s["defs"]) == {"Default", "Review"} and s["active"] == "Default"
+    # back to a built-in colouring: the custom coding stops painting the pipes
+    page.get_by_test_id("color-by").select_option("v_ms"); idle(page)
+    assert "_w" not in feat("linkFeat", lid[0]) and page.locator("#legend .sym-row[data-type=links]").count() == 0
 
 
 def test_no_javascript_errors(page):
