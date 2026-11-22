@@ -172,6 +172,29 @@ def run_tool(name: str, sid: str):
     except KeyError: raise HTTPException(404, f"no tool {name}")
 
 
+class Ask(BaseModel):
+    sid: str
+    message: str
+    history: list[dict] = []
+    model: str = "opus"
+
+
+@app.get("/api/assistant/status")
+def assistant_status():
+    from sewerapp.assistant import runner
+    return runner.available()
+
+
+@app.post("/api/assistant")
+def assistant(q: Ask):
+    from sewerapp.assistant import runner
+    st = runner.available()
+    if not st["available"]: raise HTTPException(503, st["reason"])
+    _sc(q.sid)
+    with _lock:
+        return clean(runner.ask(P, q.sid, q.message, q.history, q.model))
+
+
 if os.path.isdir(WEB):
     app.mount("/static", StaticFiles(directory=WEB), name="static")
 
