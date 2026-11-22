@@ -292,6 +292,8 @@ GTOOLS = [
          endpoint="GET /api/g/projects/{pid}/export.dxf?sid={sid}", script="io/gis_import.py"),
     dict(name="export_csv", menu="File", label="Export links and results as CSV",
          endpoint="GET /api/g/projects/{pid}/export.csv?sid={sid}", script="api/general_api.py"),
+    dict(name="assistant", menu="Assistant", label="Ask the design assistant about this project (Claude, tool use)",
+         endpoint="POST /api/g/assistant", script="assistant/gtools.py"),
     dict(name="checks", menu="Checks", label="Failing links: over the d/D limit, over v max, surcharged, flat or adverse",
          endpoint="GET /api/g/projects/{pid}/scenarios/{sid}/checks", script="engine/steady.py"),
 ]
@@ -344,3 +346,30 @@ def profile(pid: str, sid: str, start: str, end: str | None = None):
         if L.to_node == end: break
         i = leave.get(L.to_node)
     return rows
+
+
+class Ask(BaseModel):
+    project: str
+    scenario: str = "base"
+    message: str
+    history: list[dict] = []
+    model: str = "opus"
+
+
+@router.get("/assistant/status")
+def assistant_status():
+    from sewerapp.assistant import runner
+    return runner.available()
+
+
+@router.post("/assistant")
+def assistant(q: Ask):
+    """The assistant on an open project: reads results, explains checks with guideline pages, works in new scenarios."""
+    from sewerapp.assistant import gtools, runner
+    st = runner.available()
+    if not st["available"]: raise HTTPException(503, st["reason"])
+    s = _s(q.project)
+    if q.scenario not in s.scenarios: raise HTTPException(404, q.scenario)
+    with _lock:
+        return clean(runner.ask(None, q.scenario, q.message, q.history, q.model, toolset=gtools, system=runner.SYSTEM_GENERAL,
+                                context=f"active project: {q.project}, scenario: {q.scenario}"))

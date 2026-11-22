@@ -55,14 +55,25 @@ def _client():
     return anthropic.Anthropic(api_key=_key())
 
 
-def ask(project, sid, message, history=None, model="opus", max_turns=12):
+SYSTEM_GENERAL = """You are the design assistant inside a general sewer and stormwater modelling application (a clean-room tool that works like SewerGEMS, with EPA SWMM 5 for stormwater). The engineer is a hydraulic design engineer: answer concisely, bullets and tables, technical register, no fundamentals explained.
+
+Rules:
+- Every number you give comes from a tool result in this conversation; never estimate a flow, velocity, depth or gradient yourself.
+- The project's own settings (friction, peaking, design limits, units) govern; quote them from project_summary. Cite the guideline page for a rule you apply (PAM-GUD-203 / -201 pages through lookup_criterion); never quote a value from memory.
+- Never change an existing scenario: make_scenario, design_scenario and storm testing work in NEW scenarios; say which one you created.
+- Units: a project imported from SWMM may be in US units (ft, cfs, acres); say the units with every number.
+- For the Ibri sample projects the W18 basis applies: steepening above DN200 to 0.75 m/s at the 2031 peak up to 0.75 % is the adopted design; tractive force is not used for gradients."""
+
+
+def ask(project, sid, message, history=None, model="opus", max_turns=12, toolset=None, system=None, context=None):
     """One user message, answered with as many tool calls as the model needs. Returns reply, tool_calls, usage."""
-    client = _client(); tools = T.definitions()
-    messages = [*(history or []), {"role": "user", "content": f"[active scenario: {sid}]\n{message}"}]
+    toolset = toolset or T; client = _client(); tools = toolset.definitions()
+    ctx = context or f"active scenario: {sid}"
+    messages = [*(history or []), {"role": "user", "content": f"[{ctx}]\n{message}"}]
     calls, usage = [], dict(input_tokens=0, output_tokens=0, cache_write_tokens=0, cache_read_tokens=0)
     for _ in range(max_turns):
         r = client.beta.messages.create(
-            model=MODELS.get(model, model), max_tokens=16000, system=SYSTEM, tools=tools, messages=messages,
+            model=MODELS.get(model, model), max_tokens=16000, system=system or SYSTEM, tools=tools, messages=messages,
             output_config={"effort": "high"}, cache_control={"type": "ephemeral"},
             betas=["server-side-fallback-2026-07-01"], fallbacks="default")
         usage["input_tokens"] += r.usage.input_tokens; usage["output_tokens"] += r.usage.output_tokens
@@ -80,7 +91,7 @@ def ask(project, sid, message, history=None, model="opus", max_turns=12):
         results = []
         for b in uses:
             try:
-                out = T.call(project, b.name, b.input); ok = True
+                out = toolset.call(project, b.name, b.input); ok = True
             except Exception as e:                       # the model sees the error and can correct itself
                 out = dict(error=f"{type(e).__name__}: {e}"); ok = False
             calls.append(dict(name=b.name, input=b.input, ok=ok))
@@ -99,11 +110,16 @@ class StubClient:
     def _create(self, **kw):
         last = kw["messages"][-1]["content"]
         u = SimpleNamespace(input_tokens=10, output_tokens=5)
+        names = {t["name"] for t in kw["tools"]}
         if isinstance(last, str):
-            sid = last.split("]")[0].split(": ")[1]
-            block = SimpleNamespace(type="tool_use", id="t1", name="get_summary", input={"scenario": sid})
+            ctx = last.split("]")[0].lstrip("[")
+            if "project_summary" in names:      # general app: "[active project: p1, scenario: base]"
+                kv = dict(x.strip().split(": ") for x in ctx.replace("active ", "").split(","))
+                block = SimpleNamespace(type="tool_use", id="t1", name="project_summary", input={"project": kv["project"], "scenario": kv["scenario"]})
+            else:
+                block = SimpleNamespace(type="tool_use", id="t1", name="get_summary", input={"scenario": ctx.split(": ")[1]})
             return SimpleNamespace(stop_reason="tool_use", content=[block], usage=u)
-        s = json.loads(last[0]["content"])
+        s = json.loads(last[0]["content"]); s = s.get("summary", s)
         text = (f"Stub answer: {s.get('pipes')} pipes, {s.get('km_under075_2031')} km above DN200 under 0.75 m/s at "
                 f"2031 (PAM-GUD-203 p26), {s.get('over_limit')} over the d/D limit.")
         return SimpleNamespace(stop_reason="end_turn", content=[SimpleNamespace(type="text", text=text)], usage=u)
