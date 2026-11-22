@@ -17,7 +17,15 @@ Rules:
 - Cite the guideline page for every rule you apply (e.g. PAM-GUD-203 p26 for 0.75 m/s self-cleansing). Use lookup_criterion when unsure of a value or page; never quote a value from memory.
 - The 12 W18 cases (SC1-SC4 x 2051/2056/2061) are read only. To test a fix, call make_whatif, which creates a NEW scenario; say which scenario you created.
 - Analysis after an edit holds the inverts and the laid gradient: pipes flagged needs_relay need the design chain before their depths can be trusted. Say so when it matters.
-- Pipe labels look like P1-P151 (pipe), manholes P1-M151; P# is a pump system, P#L# a lift system."""
+- Pipe labels look like P1-P151 (pipe), manholes P1-M151; P# is a pump system, P#L# a lift system.
+
+The design basis of these designs (W18, the engineer's and client's decisions of November 2026; these govern over any older register line lookup_criterion returns):
+- Flows: unit loads peaked by the model's Peltier/Merrimack table, 720 L/day per km infiltration (G201 p71-72); design years 2051/2056/2061, 2056 adopted.
+- Gradients: the Table 11 minimum of each size (G203 p29), then pipes ABOVE DN200 are STEEPENED, one gradient per street run, up to a 0.75 % limit, to reach 0.75 m/s at the 2031 peak. Steepening is the adopted design, not a forbidden option. DN200 pipes are not steepened.
+- Self-cleansing test: pipes above DN200 at 0.75 m/s at the 2031 peak, rechecked at 2036; the rest go on a flushing list (G203 4.2.6).
+- Tractive force is NOT used to set gradients (dropped by the engineer for this basis; record it as a departure from G203 4.2.2.1). Do not propose it as the first fix, and never use Q_2030 x 0.61 or tau = 1 Pa: those are superseded.
+- Depth: 12 m to an outfall as a hard limit, up to 14.65 m for a station or outfall where that saves a station, 16.5 m for any manhole (engineer's caps); cover 1.3 m (G203 p33).
+- The km above DN200 under 0.75 m/s is judged with velocity at two decimals (as the SewerGEMS comparison); the report's 9.29 km for SC1-2056 uses the unrounded laid gradients."""
 
 
 def available():
@@ -38,13 +46,15 @@ def ask(project, sid, message, history=None, model="opus", max_turns=12):
     """One user message, answered with as many tool calls as the model needs. Returns reply, tool_calls, usage."""
     client = _client(); tools = T.definitions()
     messages = [*(history or []), {"role": "user", "content": f"[active scenario: {sid}]\n{message}"}]
-    calls, usage = [], dict(input_tokens=0, output_tokens=0)
+    calls, usage = [], dict(input_tokens=0, output_tokens=0, cache_write_tokens=0, cache_read_tokens=0)
     for _ in range(max_turns):
         r = client.beta.messages.create(
             model=MODELS.get(model, model), max_tokens=16000, system=SYSTEM, tools=tools, messages=messages,
             output_config={"effort": "high"}, cache_control={"type": "ephemeral"},
             betas=["server-side-fallback-2026-07-01"], fallbacks="default")
         usage["input_tokens"] += r.usage.input_tokens; usage["output_tokens"] += r.usage.output_tokens
+        usage["cache_write_tokens"] += getattr(r.usage, "cache_creation_input_tokens", 0) or 0   # cached prompt parts are
+        usage["cache_read_tokens"] += getattr(r.usage, "cache_read_input_tokens", 0) or 0       # billed outside input_tokens
         if r.stop_reason == "refusal":
             return dict(reply="The request was declined by the model's safety checks.", tool_calls=calls, usage=usage)
         messages.append({"role": "assistant", "content": r.content})

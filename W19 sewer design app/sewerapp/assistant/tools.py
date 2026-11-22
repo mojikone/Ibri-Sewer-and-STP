@@ -5,7 +5,8 @@ import numpy as np
 from sewerapp.api import tools as menu
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-CRITERIA = os.path.join(REPO, "_BRAIN", "02_DESIGN_CRITERIA.md")
+CURRENT = os.path.join(REPO, "_SETUP", "skills", "sewer-system-design", "references", "design_values.md")  # W18 basis
+CRITERIA = os.path.join(REPO, "_BRAIN", "02_DESIGN_CRITERIA.md")    # the older register (W13-W14 rules, some superseded)
 FLAGS = ["over_limit", "over_3ms", "under075", "needs_relay"]
 # the rules explain_pipe applies, each with its source (PAM-GUD-203 pages as in _BRAIN/02_DESIGN_CRITERIA.md)
 RULES = [("d/D at the design-year peak <= 0.65 to DN355, <= 0.50 above", "PAM-GUD-203 p27 Table 10"),
@@ -106,8 +107,9 @@ def call(project, name, a):
         if "rows" in out: out = dict(out, rows=out["rows"][:200])
         return out
     if name == "lookup_criterion":
-        if not os.path.exists(CRITERIA): return dict(error="criteria register not found")
-        q = a["query"].lower()
-        hits = [l.strip() for l in open(CRITERIA, encoding="utf-8") if q in l.lower()]
-        return dict(query=a["query"], hits=hits[:30])
+        words = [w for w in re.split(r"\s+", a["query"].lower()) if w]           # every word, anywhere in the line
+        find = lambda p: [l.strip() for l in open(p, encoding="utf-8") if all(w in l.lower() for w in words)] if os.path.exists(p) else []
+        return dict(query=a["query"], current_values=find(CURRENT)[:20],
+                    older_register_superseded_where_it_differs=find(CRITERIA)[:10],
+                    note="current_values (the W18 basis) govern; the older register's rules hold only where current_values agree")
     raise ValueError(f"unknown tool {name}")

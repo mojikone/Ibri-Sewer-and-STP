@@ -36,8 +36,9 @@ def test_make_whatif_never_edits_an_existing_scenario():
     assert P.results("SC1-2056")[1] == before
 
 
-def test_lookup_criterion_finds_the_register():
-    assert T.call(P, "lookup_criterion", dict(query="0.75"))["hits"]
+def test_lookup_criterion_finds_the_current_values_first():
+    r = T.call(P, "lookup_criterion", dict(query="Table 11 DN200"))
+    assert any("5.00" in h and "p29" in h for h in r["current_values"])        # G203 p29: DN200 5.00 mm/m
 
 
 def test_loop_with_the_stand_in(monkeypatch):
