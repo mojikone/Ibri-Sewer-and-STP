@@ -87,7 +87,7 @@ The Ibri W18 viewer of phase 1B (the 12 frozen designs with their W18 tools) is 
 **Not done yet** (approved, open):
 - SewerGEMS models: infiltration is not exported yet (the app uses 720 L/day per km, the Ibri model's value); to export
   another model set `$src` and `$tag` in `referee/jobs/100_w19_export_scenarios.ps1` and `103_w19_export_loads.ps1` and drop
-  both into `D:\VBOXridge\jobs` with the watcher running; on DN200 at very low flows SewerGEMS's GVF velocities read up to
+  both into `D:\VBOX\bridge\jobs` with the watcher running; on DN200 at very low flows SewerGEMS's GVF velocities read up to
   0.04 m/s below the app's normal-depth velocities (GVF backwater not built);
 - EPANET `.inp` (water distribution): not started;
 - the hydraulics of pumps, wet wells and force mains (a pump passes its flow on; no pump curve or head is solved);
