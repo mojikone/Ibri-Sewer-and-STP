@@ -19,7 +19,7 @@ Needs Python 3.12 with numpy, pandas, geopandas, shapely, pyogrio, ezdxf, fastap
 (`pip install -e ".[app]"`). The map loads MapLibre and the OpenStreetMap tiles from the internet.
 
 **The assistant** needs `ANTHROPIC_API_KEY` as a user environment variable (set it yourself; it is never written to a
-file). Without it the Assistant tab says so and everything else works. Model `claude-opus-5-5` (effort high), with a
+file). Without it the Assistant tab says so and everything else works. A design question with several tool calls costs about $0.30-0.45 on Opus 5.5 (2026-11-21: 5.4k output, 38k cache-write, 119k cache-read tokens); `claude-sonnet-5-5` costs about half. Model `claude-opus-5-5` (effort high), with a
 `claude-sonnet-5-5` option; billed per token.
 
 ## What it does
@@ -43,7 +43,7 @@ file). Without it the Assistant tab says so and everything else works. Model `cl
 |---|---|---|
 | 0 Foundations | **passed** 2026-11-21 | `python -m pytest -m gate_p0` |
 | 1A Sanitary engine | **passed** 2026-11-21 | `python -m pytest -m gate_p1a` |
-| 1B App and assistant | **passed** 2026-11-21 (live assistant test waits for the key) | `python -m pytest tests/api tests/e2e`; `-m live` with the key |
+| 1B App and assistant | **passed** 2026-11-21 (live assistant test passed with the key) | `python -m pytest tests/api tests/e2e`; `-m live` with the key |
 | Stormwater (SWMM) | 12 of 15 EPA models equal at every step of every period; extran8a and extran9 equal on their common periods (this build writes one more final period); Example1 up to 0.68 % off. Inputs identical to EPA's, so the cause is the engine build | `python -m pytest -m gate_swmm` |
 | 2 GVF backwater, pressure network, new SewerGEMS runs | not started | — |
 | 3 Network editing on the map (add, move, delete, draw) | not started | — |
@@ -54,10 +54,9 @@ file). Without it the Assistant tab says so and everything else works. Model `cl
 - what-ifs live in memory and are lost when the app restarts;
 - no export of the SewerGEMS rebuild input set;
 - the design chain does not take a what-if's edits;
-- the assistant has never made a real API call: it is tested with a stand-in client only; the live test waits for the key;
 - BOQ, costs, station flows, DWG and schematics are not in the app yet (`docs/SCRIPT_REGISTER.md`, "Planned").
 
-All tests: `python -m pytest` — 119 passed, 1 skipped (live assistant), 2 expected failures (EPA Example1), 2 min
+All tests: `python -m pytest` — 120 passed with the key set (live assistant included), 2 expected failures (EPA Example1), 2 min
 (2026-11-21).
 
 ## Reproduction and speed (2026-11-21)
