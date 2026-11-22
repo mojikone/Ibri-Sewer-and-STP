@@ -43,3 +43,12 @@ script with no UI place is not done. Status: `tested` (gate or unit test green) 
 | Part | What it does | Tested by |
 |---|---|---|
 | `web/index.html`, `web/app.js`, `web/style.css` | map (MapLibre, OSM basemap toggle), colour by size / velocity / v2031 / d/D / re-lay / failing, click and shift-select, property grid with bulk edit in what-ifs, scenarios bar, copy, undo/redo, compare, export menu, tools menu from `/api/tools`, results table, profile (ground, invert, crown, water; re-lay in orange), assistant pane | `tests/e2e/test_e2e.py` (Playwright, 15 tests) |
+
+## The general app (G1-G6, plan `docs/2026-11-21-general-app-plan.md`)
+
+| Script | What it does | UI place | Status |
+|---|---|---|---|
+| `model/general.py` | the general project: nodes, links (conduit, pump, transfer), catchments, settings, load sets, fixed flows | File menu New / Open / Save; element tables | tested (gate G1) |
+| `engine/steady.py` | steady sanitary solve of any project: flows (W18 rule, station = sum of arriving peaked flows), peaking table / Peltier / Merrimack / constant, Colebrook-White or Manning, normal depth, checks | Run (instant re-run on every edit) | tested (gate G1: 12 Ibri cases) |
+| `io/gpkg_project.py` | the project file (GeoPackage, opens in QGIS) | File menu Open / Save | tested (round trip) |
+| `io/ibri_sample.py` | Ibri's 12 W18 designs as sample projects | File menu "Open sample: Ibri SC#-year" | tested (gate G1) |
