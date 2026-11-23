@@ -123,19 +123,25 @@ def from_project(p, rain=None):
     def node_row(sec, i, r):
         old = list(rows.get(f"{sec}|{i}", []))
         if sec == "JUNCTIONS":
-            base = old or [i, 0, 0, 0, 0, 0]; base[0], base[1], base[2] = i, _num(r.invert), _num(max(r.ground - r.invert, 0)); return base
+            base = old or [i, 0, 0, 0, 0, 0]; base[0], base[1], base[2] = i, _num(r.invert), _num(max(r.ground - r.invert, 0))
+            if r.kind == "pressure_junction": base[4] = _num(max(100.0, 2 * (r.ground - r.invert)) * 1000.0 / mm)   # a closed main: surcharge, never flood
+            return base
         if sec == "OUTFALLS":
-            base = old or [i, 0, "FREE", "NO"]; base[0], base[1] = i, _num(r.invert); return base
+            base = old or [i, 0, "FREE", "NO"]; base[0], base[1] = i, _num(r.invert)
+            tw = (getattr(p, "tailwater", None) or {}).get(i)
+            if tw is not None: base = [i, _num(r.invert), "FIXED", _num(tw * 1000.0 / mm), "NO"]
+            return base
         base = old or [i, 0, 0, 0, "FUNCTIONAL", 1000, 0, 0, 0]
         base[0], base[1], base[2] = i, _num(r.invert), _num(max(r.ground - r.invert, 0))
         st = (getattr(p, "storage", None) or {}).get(i)
         if st and st.get("curve"): base = base[:4] + ["TABULAR", f"ST_{i}", 0, 0]; curves.append((f"ST_{i}", "Storage", st["curve"]))
         elif st: base = base[:4] + ["FUNCTIONAL", 0, 0, _num(st["area_m2"] / mm2), 0, 0]
         return base
-    kind_sec = {"junction": "JUNCTIONS", "manhole": "JUNCTIONS", "wetwell": "STORAGE", "storage": "STORAGE", "outfall": "OUTFALLS"}
+    kind_sec = {"junction": "JUNCTIONS", "manhole": "JUNCTIONS", "pressure_junction": "JUNCTIONS", "wetwell": "STORAGE", "storage": "STORAGE", "outfall": "OUTFALLS"}
     for sec in ("JUNCTIONS", "OUTFALLS", "STORAGE"):
         out[sec] = [node_row(sec, i, r) for i, r in n.iterrows() if kind_sec.get(r.kind) == sec]
-    cond = L[L.kind == "conduit"]
+    cond = L[L.kind.isin(["conduit", "pressure_pipe"])]
+    pres = {"method": "hazen", "C": 130.0, "e_mm": 0.1, **(p.settings.get("pressure") or {})}
     out["CONDUITS"] = []; out["XSECTIONS"] = []
     for i, r in cond.iterrows():
         old = list(rows.get(f"CONDUITS|{i}", [])) or [i, r.from_node, r.to_node, 0, 0.013 if units == "SI" else 0.013, 0, 0, 0, 0]
@@ -152,6 +158,10 @@ def from_project(p, rain=None):
             x = [i, SWMM_SHAPE[s["shape"]], _num(g[0] * m), _num(g[1] * m), _num(g[2]), _num(g[3]), int(s.get("barrels") or 1)]
         elif str(x[1]).upper() in SECTION_SHAPES:           # a section removed in the app: a circle again
             x = [i, "CIRCULAR", _num(r.inside_mm / mm), 0, 0, 0, 1]
+        if r.kind == "pressure_pipe":                       # a force main: SWMM's FORCE_MAIN with H-W C or D-W roughness
+            o = (getattr(p, "ppipes", None) or {}).get(i, {})
+            rough = o.get("C", pres["C"]) if pres["method"] == "hazen" else o.get("e_mm", pres["e_mm"]) * (1.0 if units == "SI" else 1 / 25.4)   # D-W: mm (inches in a US file)
+            x = [i, "FORCE_MAIN", _num(r.inside_mm / mm), _num(rough), 0, 0, 1]
         if str(x[1]).upper() in ("CIRCULAR", "FORCE_MAIN"): x[2] = _num(r.inside_mm / mm)
         out["XSECTIONS"].append(x)
     out["XSECTIONS"] += [list(v) for v in (pt.get("xs_other") or {}).values()]
@@ -159,11 +169,32 @@ def from_project(p, rain=None):
     for i, r in L[L.kind == "pump"].iterrows():
         old = list(rows.get(f"PUMPS|{i}") or [i, r.from_node, r.to_node, "*", "ON", 0, 0]); old[0:3] = [i, r.from_node, r.to_node]
         pu = (getattr(p, "pumps", None) or {}).get(i)
-        if pu:                                             # a constant-capacity pump (a Type 2 curve of one step) with its depths
+        lib = {d["name"]: d for d in ((p.settings.get("libraries") or {}).get("pumps") or [])}
+        dfn = lib.get((pu or {}).get("definition"))
+        if dfn and dfn.get("type") != "constant_flow":    # a head-flow curve: SWMM Type 3 (head, flow), sampled from the definition
+            from sewerapp.engine import pressure as P
+            Hf, qmax = P.curve(dfn); qs = np.linspace(0.0, qmax, 12); hs = Hf(qs)
+            k = 1.0 if units == "SI" else 35.3147                          # m3/s to the file's flow unit
+            curves.append((f"PC_{i}", "Pump3", [[float(h), float(q) * k] for h, q in sorted(zip(hs, qs), key=lambda t: t[0])]))
+            old = [i, r.from_node, r.to_node, f"PC_{i}", "ON", _num(pu.get("on_m", 0) * 1000.0 / mm), _num(pu.get("off_m", 0) * 1000.0 / mm)]
+        elif pu and dfn: pu = dict(pu, q_ls=float(dfn["q_ls"]))
+        if pu and not (dfn and dfn.get("type") != "constant_flow"):                 # a constant-capacity pump (a Type 2 curve of one step)
             q = pu["q_ls"] / 1000.0 * (1.0 if units == "SI" else 35.3147)
             curves.append((f"PC_{i}", "Pump2", [[0, q]]))
             old = [i, r.from_node, r.to_node, f"PC_{i}", "ON", _num(pu.get("on_m", 0) * 1000.0 / mm), _num(pu.get("off_m", 0) * 1000.0 / mm)]
         out["PUMPS"].append(old)
+    out["ORIFICES"], out["WEIRS"] = [], []                 # pond outlets drawn in the app
+    for i, r in L[L.kind.isin(["orifice", "weir"])].iterrows():
+        o = (getattr(p, "outlets", None) or {}).get(i, {}); m = 1000.0 / mm
+        if r.kind == "orifice":
+            out["ORIFICES"].append([i, r.from_node, r.to_node, "SIDE", _num(o.get("offset_m", 0) * m), _num(o.get("cd", 0.65)), "YES" if o.get("gated") else "NO", 0])
+            out["XSECTIONS"].append([i, "RECT_CLOSED", _num(o.get("h_m", 0.3) * m), _num(o.get("w_m", 0.3) * m), 0, 0] if o.get("shape") == "rect" else [i, "CIRCULAR", _num(o.get("d_m", 0.3) * m), 0, 0, 0])
+        else:
+            vn = o.get("type") == "v_notch"
+            out["WEIRS"].append([i, r.from_node, r.to_node, "V-NOTCH" if vn else "TRANSVERSE", _num(o.get("crest_m", 0) * m), _num(o.get("cd", 1.84 if not vn else 1.38)), "NO", 0, 0])
+            out["XSECTIONS"].append([i, "TRIANGULAR" if vn else "RECT_OPEN", _num(o.get("height_m", 1.0) * m), _num(o.get("top_m" if vn else "length_m", 1.0) * m), 0, 0])
+    if not out["ORIFICES"]: del out["ORIFICES"]
+    if not out["WEIRS"]: del out["WEIRS"]
     out["SUBCATCHMENTS"], out["SUBAREAS"] = [], []
     for i, r in C.iterrows():
         old = list(rows.get(f"SUBCATCHMENTS|{i}", [])) or [i, r.gauge, r.outlet, 0, 0, 0, 0, 0]
@@ -180,7 +211,7 @@ def from_project(p, rain=None):
     order = list(pt.get("order") or [])
     if not order: order, extra = _generated(p, rain)
     else: extra = {}
-    for k in MODELLED:
+    for k in MODELLED + ["ORIFICES", "WEIRS"]:
         if k not in order and out.get(k): order.insert(order.index("REPORT") if "REPORT" in order else len(order), k)
     if my_curves and "CURVES" not in order: order.insert(order.index("REPORT") if "REPORT" in order else len(order), "CURVES")
     lines = []
@@ -216,14 +247,18 @@ def design_storm(idf, duration_min, step_min):
 def _generated(p, rain):
     """Sections for a project with no SWMM origin (SI: CMS, m, ha, mm/h)."""
     rain = rain or p.rain or {}
+    dwf = dwf_lines(p)                                     # dry weather: base flows with their pattern (an EPS sanitary run)
     step = int(rain.get("step_min", 5)); series = rain.get("series")
     if not series and rain.get("idf"): series = design_storm(rain["idf"], rain.get("duration_min", 60), step)
-    if not series: raise ValueError("no rain: give the project a rain series or an IDF table (Settings → Rain)")
+    if not series and dwf: series = [[0, 0.0], [step, 0.0]]
+    if not series: raise ValueError("no rain: give the project a rain series or an IDF table (Settings → Rain), or switch on the dry-weather flow")
     dur = series[-1][0] + step
     end_h = int(dur // 60) + 3
+    if dwf: end_h = max(end_h, int((p.settings.get("swmm_dwf") or {}).get("hours") or 48))
     extra = OrderedDict()
     extra["TITLE"] = [p.name]
-    extra["OPTIONS"] = ["FLOW_UNITS CMS", "INFILTRATION HORTON", "FLOW_ROUTING DYNWAVE", "LINK_OFFSETS DEPTH",
+    pm = (p.settings.get("pressure") or {}).get("method", "hazen")
+    extra["OPTIONS"] = ["FLOW_UNITS CMS", "INFILTRATION HORTON", "FLOW_ROUTING DYNWAVE", "LINK_OFFSETS DEPTH", "FORCE_MAIN_EQUATION " + ("D-W" if pm == "darcy" else "H-W"),
                         "START_DATE 01/01/2026", "START_TIME 00:00:00", "REPORT_START_DATE 01/01/2026", "REPORT_START_TIME 00:00:00",
                         "END_DATE 01/01/2026", f"END_TIME {end_h:02d}:00:00", "REPORT_STEP 00:01:00", "WET_STEP 00:01:00",
                         "DRY_STEP 01:00:00", "ROUTING_STEP 0:00:05", "ALLOW_PONDING NO", "INERTIAL_DAMPING PARTIAL",
@@ -233,6 +268,34 @@ def _generated(p, rain):
     extra["INFILTRATION"] = [f"{i} 76.2 3.81 4 7 0" for i in p.catchments.index]     # Horton, the SWMM manual's typical values (mm/h)
     extra["TIMESERIES"] = [f"TS1 {int(t // 60)}:{int(t % 60):02d} {v:.4f}" for t, v in series]
     extra["REPORT"] = ["SUBCATCHMENTS ALL", "NODES ALL", "LINKS ALL"]
+    if dwf: extra["DWF"], extra["PATTERNS"] = dwf
+    if end_h >= 24:                                         # a run longer than a day: the end date moves on
+        days, hh = divmod(end_h, 24)
+        extra["OPTIONS"] = [f"END_DATE 01/{1 + days:02d}/2026" if o.startswith("END_DATE") else f"END_TIME {hh:02d}:00:00" if o.startswith("END_TIME") else o for o in extra["OPTIONS"]]
     order = ["TITLE", "OPTIONS", "RAINGAGES", "SUBCATCHMENTS", "SUBAREAS", "INFILTRATION", "JUNCTIONS", "OUTFALLS",
-             "STORAGE", "CONDUITS", "PUMPS", "XSECTIONS", "CURVES", "TIMESERIES", "REPORT", "COORDINATES", "VERTICES", "POLYGONS"]
+             "STORAGE", "CONDUITS", "PUMPS", "ORIFICES", "WEIRS", "XSECTIONS", "CURVES", "DWF", "PATTERNS", "TIMESERIES", "REPORT", "COORDINATES", "VERTICES", "POLYGONS"]
     return order, extra
+
+
+def dwf_lines(p):
+    """[DWF] and [PATTERNS] for the project's dry-weather flow, when settings.swmm_dwf.on: each node's average load
+    (the design load set's unit loads, their unit-load rows and the node's own sanitary load, never peaked) as a base
+    flow in m3/s with the chosen hourly pattern (24 multipliers, mean 1). None when off."""
+    o = p.settings.get("swmm_dwf") or {}
+    if not o.get("on"): return None
+    ls = o.get("load_set") or p.settings.get("design_load")
+    base = dict(p.load_sets.get(ls, {}))
+    units = {u["name"]: u for u in ((p.settings.get("libraries") or {}).get("unit_loads") or [])}
+    for n, rows in ((getattr(p, "unit_rows", None) or {}).get(ls, {}) or {}).items():
+        for name, count in rows:
+            if name in units: base[n] = base.get(n, 0.0) + float(count) * float(units[name]["rate_m3d"])
+    for n, v in p.nodes.inflow_m3d.fillna(0).items(): base[n] = base.get(n, 0.0) + float(v)
+    pats = {x["name"]: x for x in ((p.settings.get("libraries") or {}).get("patterns") or [])}
+    pat = pats.get(o.get("pattern")); pname = f"DW_{pat['name']}".replace(" ", "_") if pat else None
+    lines = [f'{n} FLOW {v / 86400.0:.9g}' + (f' "{pname}"' if pname else "") for n, v in base.items() if v > 0 and n in p.nodes.index and p.nodes.kind[n] != "outfall"]
+    pl = []
+    if pat:
+        h = [float(x) for x in pat["hourly"]]
+        if len(h) != 24: raise ValueError(f"pattern {pat['name']}: 24 hourly multipliers")
+        pl = [f"{pname} HOURLY " + " ".join(f"{x:.4g}" for x in h[:6])] + [f"{pname} " + " ".join(f"{x:.4g}" for x in h[k:k + 6]) for k in (6, 12, 18)]
+    return lines, pl

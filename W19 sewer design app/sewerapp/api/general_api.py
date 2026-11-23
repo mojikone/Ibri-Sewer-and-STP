@@ -355,7 +355,8 @@ def model(pid: str, sid: str):
     with _lock: p = s.model(sid)
     n = p.nodes; lon, lat = coords.to_display(p.crs, n.x.values, n.y.values); ll = dict(zip(n.index, zip(lon, lat)))
     nodes = [dict(type="Feature", id=i, geometry=dict(type="Point", coordinates=[float(ll[i][0]), float(ll[i][1])]),
-                  properties=clean(dict(id=i, **r, **({"storage": p.storage[i]} if i in getattr(p, "storage", {}) else {}))))
+                  properties=clean(dict(id=i, **r, **({"storage": p.storage[i]} if i in getattr(p, "storage", {}) else {}),
+                                        **({"tailwater": p.tailwater[i]} if i in getattr(p, "tailwater", {}) else {}))))
              for i, r in zip(n.index, n.to_dict("records"))]
     links = []; sections = (getattr(p, "meta", None) or {}).get("sections", {})
     for i, r in zip(p.links.index, p.links.to_dict("records")):
@@ -370,6 +371,8 @@ def model(pid: str, sid: str):
         elif i in sections: r["section"] = sections[i]
         if i in p.infil: r["infil"] = p.infil[i]                          # the conduit's own infiltration rate
         if i in getattr(p, "pumps", {}): r["pump"] = p.pumps[i]           # a pump's capacity and start/stop depths
+        if i in getattr(p, "ppipes", {}): r["ppipe"] = p.ppipes[i]        # a pressure pipe's own friction and minor loss
+        if i in getattr(p, "outlets", {}): r["outlet"] = p.outlets[i]     # an orifice's or a weir's geometry
         links.append(dict(type="Feature", id=i, geometry=dict(type="LineString", coordinates=line), properties=clean(dict(id=i, **r))))
     catch = []
     for i, r in zip(p.catchments.index, p.catchments.to_dict("records")):
@@ -380,7 +383,7 @@ def model(pid: str, sid: str):
                               properties=clean(dict(id=i, **r))))
     return dict(nodes=dict(type="FeatureCollection", features=nodes), links=dict(type="FeatureCollection", features=links),
                 catchments=dict(type="FeatureCollection", features=catch), settings=clean(p.settings), rain=clean(p.rain),
-                loads=clean({k: v for k, v in p.load_sets.items()}))
+                loads=clean({k: v for k, v in p.load_sets.items()}), unit_rows=clean(getattr(p, "unit_rows", {}) or {}))
 
 
 @router.get("/projects/{pid}/scenarios/{sid}/results")
@@ -393,7 +396,16 @@ def results(pid: str, sid: str):
     out = res[cols].copy()
     for c in out.columns:
         if out[c].dtype.kind == "f": out[c] = out[c].round(4)
-    return dict(summary=clean(summ), links=clean({i: r for i, r in zip(out.index, out.to_dict("records"))}))
+    links = clean({i: r for i, r in zip(out.index, out.to_dict("records"))})
+    # pumps and force mains (engine/pressure.py): their own values, on their rows only
+    pcols = [c for c in ["tdh_m", "static_m", "hgl_out", "suction_m", "pump_head_m", "pump_q_ls", "op_q_ls", "op_h_m", "op_q_off_ls", "op_h_off_m",
+                         "op_q_on_ls", "op_h_on_m", "pumps_running", "short", "cannot_lift", "hf_m", "hm_m", "hgl_up", "hgl_dn", "p_up_m", "p_dn_m",
+                         "s_f_m_per_km", "negative_pressure"] if c in res.columns]
+    if pcols:
+        sub_ = res.loc[res.kind.isin(["pump", "pressure_pipe"]), pcols]
+        for i, r in zip(sub_.index, sub_.to_dict("records")):
+            links.setdefault(i, {}).update(clean({k: (round(v, 4) if isinstance(v, float) else v) for k, v in r.items() if v == v and v is not None}))
+    return dict(summary=clean(summ), links=links)
 
 
 class Edit(BaseModel):
@@ -424,6 +436,32 @@ def edit(pid: str, sid: str, e: Edit):
         _, summ = s.solve(sid)
     made = {k: ev[k] for k in ("end_id", "mid_ids", "link_ids") if k in ev}       # what a layout run created
     return dict(summary=clean(summ), structural=structural, scenario=s.scenarios[sid].to_dict(), **({"created": made} if made else {}))
+
+
+@router.get("/projects/{pid}/scenarios/{sid}/validate")
+def validate(pid: str, sid: str):
+    """User notifications: errors and warnings per element (engine/validate.py)."""
+    from sewerapp.engine import validate as V
+    s = _s(pid)
+    with _lock:
+        p = s.model(sid); res, _ = s.solve(sid)
+        return clean(dict(items=V.run(p, res)))
+
+
+@router.get("/projects/{pid}/scenarios/{sid}/pump_system")
+def pump_system(pid: str, sid: str, id: str, qmax: float):
+    """A pump's force main as a system curve (head needed at 0..qmax L/s) and its steady duty, for the pump-definition graph."""
+    from sewerapp.engine import pressure
+    s = _s(pid)
+    with _lock:
+        p = s.model(sid)
+        if id not in p.links.index or p.links.kind[id] != "pump": raise HTTPException(404, f"no pump {id}")
+        qs = [float(qmax) * k / 24 for k in range(25)]
+        try: h = pressure.system_curve(p, id, qs)
+        except (ValueError, KeyError) as x: raise HTTPException(400, str(x))
+        res, _ = s.solve(sid)
+    duty = res.loc[id] if res is not None and id in res.index and "tdh_m" in res.columns else None
+    return clean(dict(q=qs, h=h, duty_q=float(duty.q_ls) if duty is not None else None, duty_h=float(duty.tdh_m) if duty is not None else None))
 
 
 class DesignOpts(BaseModel):

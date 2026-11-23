@@ -10,7 +10,12 @@ sections   {link id: {shape box|rect_open|trapezoid, rise_m, span_m, bottom_m, z
            circle (engine/sections.py); its dn_mm is 0 and inside_mm empty
 storage    {node id: {area_m2} or {curve: [[depth m, area m2], ...]}}: a pond, tank or wet well's plan area for the storm
            run (SWMM STORAGE); none given: SWMM's default
-pumps      {link id: {q_ls, on_m, off_m}}: a pump's capacity and the inlet depths at which it starts and stops (storm run)
+pumps      {link id: {q_ls, on_m, off_m, definition}}: a pump's capacity (or its definition, by name, from
+           settings.libraries.pumps) and the inlet depths at which it starts and stops
+outlets    {link id: {...}}: an orifice (shape circular|rect, d_m or h_m and w_m, cd, offset_m, gated) or a weir (type
+           transverse|v_notch, crest_m above the inlet invert, length_m or top_m, height_m, cd) for the storm run
+tailwater  {outfall id: level m}: a fixed water level at an outfall (SWMM FIXED)
+ppipes     {link id: {method, C, e_mm, n, K, check}}: a pressure pipe's own friction and minor loss (engine/pressure.py)
 infil      {link id: rate}: a conduit's own infiltration rate, in the basis of settings.infiltration.method (the project
            rate when absent)"""
 import copy, json
@@ -20,8 +25,8 @@ import numpy as np, pandas as pd
 NODE_COLS = ["kind", "x", "y", "ground", "invert", "inflow_m3d"]
 LINK_COLS = ["kind", "from_node", "to_node", "length_m", "dn_mm", "inside_mm", "up_inv", "dn_inv", "transfer", "coords"]
 CATCH_COLS = ["outlet", "area_ha", "imperv_pc", "width_m", "slope_pc", "n_imperv", "n_perv", "gauge", "coords"]
-NODE_KINDS = ("manhole", "wetwell", "outfall", "storage", "junction")
-LINK_KINDS = ("conduit", "pump")
+NODE_KINDS = ("manhole", "wetwell", "outfall", "storage", "junction", "pressure_junction")
+LINK_KINDS = ("conduit", "pump", "pressure_pipe", "orifice", "weir")
 
 # PE pressure-pipe sizes, inside diameters of the Ibri model's catalogue (the user may replace them per project)
 DEFAULT_CATALOGUE = [[200, 176.4], [250, 220.6], [280, 247.0], [315, 278.0], [355, 313.2], [400, 353.0], [450, 397.0],
@@ -34,7 +39,7 @@ DEFAULT_SETTINGS = dict(
                                         [1, 2.5], [1.001, 3.56], [1.5, 3.39], [2, 3.28], [3, 3.12], [5, 2.93], [7.5, 2.79],
                                         [10, 2.7], [15, 2.57], [20, 2.48], [30, 2.36], [50, 2.22], [75, 2.11], [100, 2.04],
                                         [150, 1.94], [200, 1.88], [300, 1.79], [500, 1.68], [750, 1.6], [1000, 1.54]],
-                 constant=1.0),                                                        # G201 p71-72 (Peltier, Merrimack)
+                 constant=1.0, cutoff=None, pe_per_m3d=None),                          # G201 p71-72 (Peltier, Merrimack)
     infiltration_m3d_per_km=0.72,                                                      # G201 p72
     # how a conduit's infiltration is counted (SewerGEMS's conduit infiltration): "length" uses infiltration_m3d_per_km;
     # the others use `rate`, in m3/d per km per m of inside diameter (length_diameter), per m2 of inside surface
@@ -45,7 +50,15 @@ DEFAULT_SETTINGS = dict(
                     conduit=dict(dn_mm=None, section=None),
                     catchment=dict(imperv_pc=50.0, width_m=100.0, slope_pc=1.0, n_imperv=0.013, n_perv=0.15)),
     # the project's engineering libraries beyond the size catalogue: named cross-sections a conduit can take
-    libraries=dict(sections=[]),
+    # unit_loads: [{name, type population|area|discharge|count, rate_m3d per unit, unit, pe people per unit}]
+    # patterns: [{name, hourly: 24 multipliers}] for dry-weather runs on SWMM
+    libraries=dict(sections=[], pumps=[], unit_loads=[], patterns=[]),
+    # the dry-weather flow in the SWMM run: off (a storm run alone) or on with a load set and an hourly pattern
+    swmm_dwf=dict(on=False, load_set=None, pattern=None, hours=48),
+    # named selections kept with the project (SewerGEMS's selection sets): {name: {table, ids}}
+    selection_sets={},
+    # the force mains' friction (SewerGEMS's pressure friction method) and the wet-well level the pump lifts from
+    pressure=dict(method="hazen", C=130.0, e_mm=0.1, n=0.012, suction="off"),
     design=dict(v_min=0.75, v_max=3.0, cover_min=1.3, cover_max=12.0,                  # G203 p26, p27, p33
                 dd_limits=[[355, 0.65], [99999, 0.50]],                                # G203 p27 Table 10
                 slope_min={"200": 0.005, "250": 0.00375, "315": 0.0027, "400": 0.00205, "500": 0.00155, "600": 0.00125,
@@ -72,10 +85,14 @@ class Project:
     infil: dict = field(default_factory=dict)
     storage: dict = field(default_factory=dict)
     pumps: dict = field(default_factory=dict)
+    ppipes: dict = field(default_factory=dict)
+    unit_rows: dict = field(default_factory=dict)   # {load set: {node id: [[unit load name, count], ...]}}
+    outlets: dict = field(default_factory=dict)
+    tailwater: dict = field(default_factory=dict)
 
     def __setstate__(self, d):                            # a project pickled before a field existed gets its default
         self.__dict__.update(d)
-        for k in ("sections", "infil", "storage", "pumps"): self.__dict__.setdefault(k, {})
+        for k in ("sections", "infil", "storage", "pumps", "ppipes", "unit_rows", "outlets", "tailwater"): self.__dict__.setdefault(k, {})
 
     def setting(self, key):
         """A top-level setting, the default filled in for a project made before the key existed."""
@@ -111,10 +128,10 @@ class Project:
         for lid, r in self.links.iterrows():
             for end in (r.from_node, r.to_node):
                 if end not in n: msgs.append(f"link {lid}: node {end} does not exist")
-        lv = self.links.from_node.value_counts()
+        lv = self.links[~self.links.kind.isin(["orifice", "weir"])].from_node.value_counts()     # pond outlets may share a pond
         msgs += [f"node {k} has {v} leaving links (a sewer network is a tree)" for k, v in lv[lv > 1].items()]
         return msgs
 
     def to_json(self):
         return dict(name=self.name, crs=self.crs, settings=self.settings, load_sets=self.load_sets, inflow_sets=self.inflow_sets, fixed_flows=self.fixed_flows, rain=self.rain,
-                    passthrough=self.passthrough, sections=self.sections, infil=self.infil, storage=self.storage, pumps=self.pumps)
+                    passthrough=self.passthrough, sections=self.sections, infil=self.infil, storage=self.storage, pumps=self.pumps, ppipes=self.ppipes, unit_rows=self.unit_rows, outlets=self.outlets, tailwater=self.tailwater)

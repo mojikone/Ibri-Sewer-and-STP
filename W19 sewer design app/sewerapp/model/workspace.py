@@ -28,7 +28,11 @@ Edit ops (dicts with "op"):
   reverse    {ids}           turn links round (from and to, their end inverts and vertices swapped)
   set_infiltration {ids, rate}  a conduit's own infiltration rate (basis: settings.infiltration.method); None clears it
   set_storage {ids, area_m2 | curve [[depth, area]] | None}  a storage node's plan area for the storm run
-  set_pump   {ids, q_ls, on_m, off_m | None}  a pump's capacity and its start/stop depths at the inlet (storm run)
+  set_unit_rows {set, ids, rows [[unit load, count]]}  nodes' unit-load rows (library settings.libraries.unit_loads)
+  set_outlet {ids, values}   an orifice's or a weir's geometry (Project.outlets)
+  set_tailwater {ids, level | None}  a fixed water level at outfalls
+  set_ppipe  {ids, method, C, e_mm, n, K, check | clear}  a pressure pipe's own friction and minor loss
+  set_pump   {ids, q_ls, on_m, off_m, definition | None}  a pump's capacity and its start/stop depths at the inlet (storm run)
   set_prototype {kind, values}  what a new element of that kind gets (manhole/outfall/wetwell: ground, depth;
                              conduit: dn_mm, section; catchment: imperv_pc, width_m, slope_pc, n_imperv, n_perv)
 New elements take their prototype for every value the edit does not give."""
@@ -162,9 +166,13 @@ def apply(p, e):
         if e["node"] not in p.nodes.index: raise ValueError(f"no node {e['node']}")
         p.load_sets.setdefault(str(e["set"]), {})[str(e["node"])] = float(e["value"]); return False
     if op == "set_setting":
-        keys = e["path"].split("."); p.setting(keys[0]); d = p.settings
-        for k in keys[:-1]: d = d[k]
-        if keys[-1] not in d: raise ValueError(f"no setting {e['path']}")
+        from sewerapp.model.general import DEFAULT_SETTINGS
+        keys = e["path"].split("."); p.setting(keys[0]); d = p.settings; dd = DEFAULT_SETTINGS
+        for k in keys[:-1]:
+            dd = dd.get(k, {}) if isinstance(dd, dict) else {}
+            if k not in d and k in dd: d[k] = copy.deepcopy(dd[k])           # a sub-setting added since the project was made
+            d = d[k]
+        if keys[-1] not in d and not (isinstance(dd, dict) and keys[-1] in dd): raise ValueError(f"no setting {e['path']}")
         d[keys[-1]] = e["value"]; return False
     if op == "set_rain":
         p.rain = dict(e["rain"]); return False
@@ -304,13 +312,59 @@ def apply(p, e):
     if op == "set_pump":
         ids = [str(i) for i in e["ids"]]; missing = [i for i in ids if i not in p.links.index or p.links.kind[i] != "pump"]
         if missing: raise ValueError(f"not a pump: {missing[:3]}")
-        if e.get("q_ls") is None:
+        d = e.get("definition")
+        if e.get("q_ls") is None and not d:
             for i in ids: p.pumps.pop(i, None)
             return False
-        q, on, off = float(e["q_ls"]), float(e.get("on_m") or 0), float(e.get("off_m") or 0)
-        if not q > 0: raise ValueError("a pump's capacity is a positive flow")
+        if d and d not in {x["name"] for x in ((p.settings.get("libraries") or {}).get("pumps") or [])}: raise ValueError(f"no pump definition {d}")
+        q, on, off = (float(e["q_ls"]) if e.get("q_ls") is not None else None), float(e.get("on_m") or 0), float(e.get("off_m") or 0)
+        if q is not None and not q > 0: raise ValueError("a pump's capacity is a positive flow")
         if on and off and off >= on: raise ValueError("a pump stops at a lower depth than it starts")
-        for i in ids: p.pumps[i] = dict(q_ls=q, on_m=on, off_m=off)
+        cnt = int(e.get("count") or 1)
+        if cnt < 1: raise ValueError("the number of pumps running is 1 or more")
+        for i in ids: p.pumps[i] = {k: v for k, v in dict(q_ls=q, on_m=on, off_m=off, definition=d, count=cnt if cnt > 1 else None).items() if v is not None}
+        return False
+    if op == "set_unit_rows":                                            # a node's unit-load rows in a load set
+        units = {u["name"] for u in ((p.settings.get("libraries") or {}).get("unit_loads") or [])}
+        rows = [[str(a), float(b)] for a, b in (e.get("rows") or [])]
+        bad = [a for a, _ in rows if a not in units]
+        if bad: raise ValueError(f"no unit load {bad[:3]} in the library")
+        if any(b < 0 for _, b in rows): raise ValueError("a count is 0 or more")
+        ids = [str(i) for i in e["ids"]]; missing = [i for i in ids if i not in p.nodes.index]
+        if missing: raise ValueError(f"no node {missing[:3]}")
+        S = p.unit_rows.setdefault(str(e["set"]), {})
+        for i in ids:
+            if rows: S[i] = [list(r) for r in rows]
+            else: S.pop(i, None)
+        return False
+    if op == "set_outlet":                                               # an orifice's or a weir's geometry
+        ids = [str(i) for i in e["ids"]]; bad = [i for i in ids if i not in p.links.index or p.links.kind[i] not in ("orifice", "weir")]
+        if bad: raise ValueError(f"not an orifice or a weir: {bad[:3]}")
+        v = {k: x for k, x in (e.get("values") or {}).items() if x is not None}
+        for k, x in v.items():
+            if k not in ("shape", "type", "gated") and not (isinstance(x, (int, float)) and x >= 0): raise ValueError(f"{k} is a number, 0 or more")
+        for i in ids: p.outlets[i] = dict(v)
+        return False
+    if op == "set_tailwater":
+        ids = [str(i) for i in e["ids"]]; bad = [i for i in ids if i not in p.nodes.index or p.nodes.kind[i] != "outfall"]
+        if bad: raise ValueError(f"not an outfall: {bad[:3]}")
+        for i in ids:
+            if e.get("level") is None: p.tailwater.pop(i, None)
+            else: p.tailwater[i] = float(e["level"])
+        return False
+    if op == "set_ppipe":
+        ids = [str(i) for i in e["ids"]]; missing = [i for i in ids if i not in p.links.index or p.links.kind[i] != "pressure_pipe"]
+        if missing: raise ValueError(f"not a pressure pipe: {missing[:3]}")
+        vals = {k: e[k] for k in ("method", "C", "e_mm", "n", "K", "check") if k in e and e[k] is not None}
+        if vals.get("method") not in (None, "hazen", "darcy", "manning"): raise ValueError("friction method: hazen, darcy or manning")
+        for k in ("C", "e_mm", "n", "K"):
+            if k in vals and not (isinstance(vals[k], (int, float)) and vals[k] >= 0): raise ValueError(f"{k} is a number, 0 or more")
+        for i in ids:
+            if e.get("clear"): p.ppipes.pop(i, None); continue
+            o = p.ppipes.setdefault(i, {}); o.update(vals)
+            for k in ("method", "C", "e_mm", "n", "K"):                  # a value sent as None goes back to the project's
+                if k in e and e[k] is None: o.pop(k, None)
+            if not o: p.ppipes.pop(i, None)
         return False
     if op == "set_prototype":
         from sewerapp.model.general import DEFAULT_SETTINGS

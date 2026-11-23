@@ -11,9 +11,31 @@ import numpy as np, pandas as pd
 from sewerapp.engine.hydraulics import section, v_colebrook
 
 
-def peaking_factor(settings, q_ls):
+POPULATION_METHODS = ("harmon", "ten_states", "babbitt")
+STORM_ONLY = ("orifice", "weir")
+
+
+def _without_storm_only(project):
+    q = project.copy(); q.links = q.links[~q.links.kind.isin(STORM_ONLY)]; return q
+
+
+def peaking_factor(settings, q_ls, pop=None):
+    """The peaking (extreme flow) factor of an average unit load q (L/s) carrying a population pop (people). Flow-based:
+    the project's table, Peltier, Merrimack (G201 p71-72), Federov (2.69 / Q^0.121, Q in L/s), a constant. Population-
+    based (P in thousands): Harmon 1 + 14 / (4 + sqrt P), Ten States (18 + sqrt P) / (4 + sqrt P) (the same function),
+    Babbitt 5 / P^0.2; with no population they give 1. An optional cutoff caps the factor (SewerGEMS's Cutoff Value)."""
     p = settings["peaking"]; q = np.asarray(q_ls, float)
     m = p.get("method", "table")
+    if m in POPULATION_METHODS:
+        P = np.asarray(0.0 if pop is None else pop, float) / 1000.0
+        with np.errstate(divide="ignore", invalid="ignore"):
+            f = {"harmon": lambda: 1 + 14 / (4 + np.sqrt(P)), "ten_states": lambda: (18 + np.sqrt(P)) / (4 + np.sqrt(P)),
+                 "babbitt": lambda: 5 / P ** 0.2}[m]()
+        f = np.where(P > 0, f, 1.0)
+        return np.minimum(f, float(p["cutoff"])) if p.get("cutoff") else f
+    if m == "federov":
+        f = np.where(q > 0, 2.69 / np.maximum(q, 1e-12) ** 0.121, 1.0)
+        return np.minimum(f, float(p["cutoff"])) if p.get("cutoff") else f
     if m == "table":
         t = sorted(p["table"]); return np.interp(q, [r[0] for r in t], [r[1] for r in t])
     if m == "peltier":   # G201 p72
@@ -63,11 +85,26 @@ def order(links):
 
 
 def flows(project, load_set):
-    """Design flow in every link, m3/d, for one load set."""
+    """Design flow in every link, m3/d, for one load set. Orifices and weirs (pond outlets) belong to the storm run: the
+    steady sanitary run leaves them out (they carry 0)."""
     L = project.links; s = project.settings
+    if L.kind.isin(STORM_ONLY).any():
+        q = pd.Series(0.0, index=L.index); keep = ~L.kind.isin(STORM_ONLY)
+        q[keep] = flows(_without_storm_only(project), load_set); return q
     base = project.load_sets.get(load_set, {}); inflow = project.nodes.inflow_m3d.fillna(0).to_dict()
     for n_, q_ in (getattr(project, "inflow_sets", {}) or {}).get(load_set, {}).items(): inflow[n_] = inflow.get(n_, 0.0) + q_
     fixed = project.fixed_flows.get(load_set, {}); ids = L.index.to_numpy()
+    # unit-load rows (unit, count) add to a node's load; their population (people, or a type's population equivalent)
+    # feeds the population-based methods; a plain load counts pe_per_m3d people per m3/d when the project gives one
+    units = {u["name"]: u for u in ((s.get("libraries") or {}).get("unit_loads") or [])}
+    pe_plain = float((s.get("peaking") or {}).get("pe_per_m3d") or 0.0)
+    base = dict(base); popn = {n_: v * pe_plain for n_, v in base.items()} if pe_plain else {}
+    for n_, rows in ((getattr(project, "unit_rows", None) or {}).get(load_set, {}) or {}).items():
+        for name, count in rows:
+            u = units.get(name)
+            if not u: continue
+            base[n_] = base.get(n_, 0.0) + float(count) * float(u["rate_m3d"])
+            popn[n_] = popn.get(n_, 0.0) + float(count) * (1.0 if u.get("type") == "population" else float(u.get("pe") or 0.0))
     own_inf = infiltration(project)
     fr, to = L.from_node.to_numpy(), L.to_node.to_numpy()
     kind = L.kind.to_numpy(); transfer = L.transfer.fillna(False).astype(bool).to_numpy()
@@ -75,22 +112,24 @@ def flows(project, load_set):
     n = len(L); cb = np.zeros(n); cl = np.zeros(n); ct = np.zeros(n); q = np.zeros(n)
     # per node: unit load, length, transfers carried by arriving gravity links (acc_t), their peaked flows (acc_q), and
     # flows pumped or transferred straight into the node (acc_p, part of acc_t too)
-    acc_b, acc_i, acc_t, acc_q, acc_p = {}, {}, {}, {}, {}
-    pf = lambda x: float(peaking_factor(s, np.array([x / 86.4]))[0])
+    acc_b, acc_i, acc_t, acc_q, acc_p, acc_n = {}, {}, {}, {}, {}, {}
+    pf = lambda x, pop=0.0: float(peaking_factor(s, np.array([x / 86.4]), np.array([pop]))[0])
     for i in order(L):
         u, d = fr[i], to[i]
-        if kind[i] == "pump" or transfer[i]:
+        if kind[i] in ("pump", "pressure_pipe", "orifice", "weir") or transfer[i]:          # pumped and pressurised flow is carried, not re-peaked
             own = base.get(u, 0.0)          # a conduit's flow already holds the transfers above it: add only direct ones
-            q[i] = acc_q.get(u, 0.0) + acc_p.get(u, 0.0) + inflow.get(u, 0.0) + own * pf(own)
+            q[i] = acc_q.get(u, 0.0) + acc_p.get(u, 0.0) + inflow.get(u, 0.0) + own * pf(own, popn.get(u, 0.0))
             if ids[i] in fixed: q[i] = float(fixed[ids[i]])    # a pump held at a fixed flow for this load set
             acc_t[d] = acc_t.get(d, 0.0) + q[i]; acc_p[d] = acc_p.get(d, 0.0) + q[i]
             ct[i] = q[i]
         else:
             cb[i] = base.get(u, 0.0) + acc_b.get(u, 0.0)
+            cn = popn.get(u, 0.0) + acc_n.get(u, 0.0)                   # the population carried down with the load
             ct[i] = acc_t.get(u, 0.0) + inflow.get(u, 0.0)
             cl[i] = own_inf[i] + acc_i.get(u, 0.0)                  # infiltration carried down, m3/d (not peaked)
-            q[i] = cb[i] * pf(cb[i]) + cl[i] + ct[i]
+            q[i] = cb[i] * pf(cb[i], cn) + cl[i] + ct[i]
             acc_b[d] = acc_b.get(d, 0.0) + cb[i]; acc_i[d] = acc_i.get(d, 0.0) + cl[i]; acc_t[d] = acc_t.get(d, 0.0) + ct[i]
+            acc_n[d] = acc_n.get(d, 0.0) + cn
             acc_q[d] = acc_q.get(d, 0.0) + q[i]
     return pd.Series(q, index=L.index)
 
@@ -119,6 +158,7 @@ def normal_depth(project, Q, D, S, iters=50):
 
 def solve(project, load_set=None, check_set=None):
     """Flows and hydraulics; returns a DataFrame indexed by link id and a summary."""
+    if project.links.kind.isin(STORM_ONLY).any(): project = _without_storm_only(project)     # pond outlets: storm run only
     t0 = time.perf_counter(); s = project.settings; L = project.links
     load_set = load_set or s["design_load"]; check_set = check_set if check_set is not None else s.get("check_load")
     q = flows(project, load_set)
@@ -140,7 +180,7 @@ def solve(project, load_set=None, check_set=None):
         qc = flows(project, check_set); rc, vc, _ = normal_depth(project, qc.to_numpy() / 86400.0, D, S)
         res["q_check_ls"] = qc / 86.4; res["v_check_ms"] = vc
         res["under_vmin"] = cond & (dn > s.get("self_cleansing_min_dn", 0)) & (np.round(vc, 2) < d["v_min"])
-    res.loc[~cond, ["v_ms", "d_over_D", "s_pc"]] = np.nan
+    res.loc[~cond, ["v_ms", "d_over_D", "s_pc", "limit"]] = np.nan
     res["surcharged"] = res.surcharged & cond
     if isec.any():                                                         # boxes and channels: Manning with their own n
         from sewerapp.engine import sections as X
@@ -159,9 +199,26 @@ def solve(project, load_set=None, check_set=None):
         res.loc[sel, "negative_slope"] = Ssec <= 0
         if "under_vmin" in res: res.loc[sel, "under_vmin"] = False
         cond = cond | isec & (L.kind == "conduit").to_numpy()
+    if (L.kind != "conduit").any():                                       # pump stations and force mains (engine/pressure.py)
+        from sewerapp.engine import pressure
+        dep = {}                                                          # the water depth in each structure: its leaving conduit's flow depth
+        for lid in L.index[(L.kind == "conduit").to_numpy()]:
+            r = res.loc[lid]
+            if "depth_m" in res.columns and r["depth_m"] == r["depth_m"]: y = float(r["depth_m"])            # a box or channel
+            elif r.d_over_D == r.d_over_D and L.inside_mm[lid] == L.inside_mm[lid]: y = float(r.d_over_D) * float(L.inside_mm[lid]) / 1000.0
+            else: continue
+            dep[L.from_node[lid]] = y
+        prow, psum = pressure.solve(project, q.to_dict(), dep)
+        for lid, r in prow.items():
+            for k, v in r.items():
+                if k in ("main", "discharges_to", "kind"): continue
+                if k not in res.columns: res[k] = np.nan if not isinstance(v, bool) else False
+                res.at[lid, k] = v
+    else: psum = None
     summ = dict(links=int(len(L)), conduits=int(cond.sum()), not_analysed=int(noD.sum()), km=round(float(L.length_m[cond | noD].sum()) / 1000, 3),
                 over_limit=int(res.over_limit.sum()), over_vmax=int(res.over_vmax.sum()),
                 surcharged=int((res.surcharged & cond).sum()), negative_slope=int(res.negative_slope.sum()),
                 km_under_vmin=round(float(L.length_m[res.get("under_vmin", pd.Series(False, index=L.index))].sum()) / 1000, 3)
                 if check_set else None, load_set=load_set, check_set=check_set, seconds=round(time.perf_counter() - t0, 3))
+    if psum: summ["pressure"] = psum
     return res, summ

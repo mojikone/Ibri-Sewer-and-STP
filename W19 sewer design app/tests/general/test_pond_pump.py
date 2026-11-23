@@ -63,3 +63,23 @@ def test_the_pond_demo_sample_opens_and_its_pump_starts():
     assert next(f for f in m["links"]["features"] if f["id"] == "PMP-1")["properties"]["pump"]["on_m"] == 1.0
     r = storm.run(demo_pond.build())
     assert r["links"]["PMP-1"]["q_peak"] == pytest.approx(0.120, rel=0.01) and r["nodes"]["WW-1"]["depth_peak"] >= 1.0
+
+
+def test_pond_outlets_orifice_weir_and_a_fixed_tailwater():
+    from sewerapp.io import demo_pond
+    from sewerapp.engine import steady, validate
+    p = demo_pond.build()
+    for o, x in (("O2", 632760.0), ("O3", 632770.0)): W.apply(p, dict(op="add_node", id=o, kind="outfall", x=x, y=2612000.0, ground=101.0, invert=99.0))
+    W.apply(p, dict(op="add_link", id="OR-1", kind="orifice", from_node="BO-1", to_node="O2"))
+    W.apply(p, dict(op="add_link", id="WR-1", kind="weir", from_node="BO-1", to_node="O3"))
+    W.apply(p, dict(op="set_outlet", ids=["OR-1"], values=dict(shape="circular", d_m=0.15, cd=0.62, offset_m=0.0)))
+    W.apply(p, dict(op="set_outlet", ids=["WR-1"], values=dict(type="transverse", crest_m=0.5, length_m=2.0, height_m=1.0, cd=1.84)))
+    W.apply(p, dict(op="set_tailwater", ids=["O2"], level=99.5))
+    t = swmm_inp.from_project(p)
+    assert "[ORIFICES]" in t and "[WEIRS]" in t and any(l.startswith("O2 ") and "FIXED" in l for l in t.splitlines())
+    r = storm.run(p)
+    assert r["links"]["OR-1"]["q_peak"] > 0 and r["links"]["WR-1"]["q_peak"] > 0          # the pond rose over the crest
+    res, summ = steady.solve(p)                                                           # the steady run leaves them out
+    assert "OR-1" not in res.index and not p.check()
+    assert not [i for i in validate.run(p) if i["level"] == "error"]
+    with pytest.raises(ValueError, match="not an orifice"): W.apply(p, dict(op="set_outlet", ids=["PMP-1"], values={}))
