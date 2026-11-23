@@ -24,7 +24,7 @@ async def _autosave(request, call_next):
         from sewerapp.api import general_api
         m = re.match(r"/api/g/projects/(p\d+)/", request.url.path)
         if m: general_api.schedule(m.group(1))
-    if request.method == "GET" and (request.url.path in ("/", "/w18") or request.url.path.startswith("/static/")):
+    if request.method == "GET" and (request.url.path in ("/", "/v2", "/w18") or request.url.path.startswith("/static/")):
         resp.headers["Cache-Control"] = "no-cache"        # the page and its script always come as a matched pair after an update
     return resp
 P = Project()
@@ -218,6 +218,12 @@ if os.path.isdir(WEB):
 @app.get("/")
 def index():
     """The general editor (any project, sewer and stormwater)."""
+    return FileResponse(os.path.join(WEB, "editor", "index.html"))
+
+
+@app.get("/v2")
+def index_v2():
+    """The same editor with the ribbon interface (web/editor/ribbon.js switches it on for this path)."""
     return FileResponse(os.path.join(WEB, "editor", "index.html"))
 
 

@@ -1,6 +1,6 @@
 """Steady sanitary solve of a general project: flows (the W18 rule) and gravity hydraulics on every conduit.
 
-Flow in a conduit = PF(cumulative unit load, L/s) x cumulative unit load + infiltration x cumulative conduit length +
+Flow in a conduit = PF(cumulative unit load, L/s) x cumulative unit load + cumulative infiltration (see `infiltration`) +
 transfers and inflows arriving upstream (not re-peaked). A pump, or a conduit marked `transfer`, passes downstream the
 SUM of the peaked flows arriving at its upstream node plus that node's own inflow and own load (peaked alone), as an
 unpeaked transfer: the rule SewerGEMS applies to an outfall flow (checked 2026-11-22: within 0.0007 % of its outfall
@@ -24,6 +24,30 @@ def peaking_factor(settings, q_ls):
     return np.ones(q.shape)
 
 
+INFIL_METHODS = ("length", "length_diameter", "surface_area", "count")
+
+
+def infiltration(project):
+    """Each conduit's own infiltration, m3/d (SewerGEMS's conduit infiltration): by length at the project's
+    infiltration_m3d_per_km (the default, G201 p72), or by length x inside diameter, inside surface or per conduit at
+    settings.infiltration.rate; a conduit's own rate (project.infil) replaces the project's. Pumps take none."""
+    L = project.links; s = project.settings; meth = (s.get("infiltration") or {}).get("method", "length")
+    if meth not in INFIL_METHODS: raise ValueError(f"infiltration method must be one of {INFIL_METHODS}")
+    rate0 = float(s["infiltration_m3d_per_km"]) if meth == "length" else float((s.get("infiltration") or {}).get("rate") or 0.0)
+    own = getattr(project, "infil", None) or {}
+    r = np.array([float(own[i]) if i in own and own[i] is not None else rate0 for i in L.index]) if own else np.full(len(L), rate0)
+    length = L.length_m.fillna(0).astype(float).to_numpy()
+    if meth == "length": q = length / 1000.0 * r
+    else:
+        D = L.inside_mm.astype(float).to_numpy() / 1000.0
+        secs = getattr(project, "sections", None) or {}
+        if secs:                                                       # a box or channel: its rise stands for the bore
+            D = np.where(np.isfinite(D), D, [float(secs[i].get("rise_m", 0)) if i in secs else np.nan for i in L.index])
+        D = np.nan_to_num(D)
+        q = {"length_diameter": length / 1000.0 * D * r, "surface_area": np.pi * D * length * r, "count": r}[meth]
+    return np.where((L.kind == "conduit").to_numpy(), q, 0.0)
+
+
 def order(links):
     """Links in topological order (every link after all links arriving at its upstream node)."""
     fr, to = links.from_node.to_numpy(), links.to_node.to_numpy(); ids = links.index.to_numpy()
@@ -44,14 +68,14 @@ def flows(project, load_set):
     base = project.load_sets.get(load_set, {}); inflow = project.nodes.inflow_m3d.fillna(0).to_dict()
     for n_, q_ in (getattr(project, "inflow_sets", {}) or {}).get(load_set, {}).items(): inflow[n_] = inflow.get(n_, 0.0) + q_
     fixed = project.fixed_flows.get(load_set, {}); ids = L.index.to_numpy()
-    inf = float(s["infiltration_m3d_per_km"])
+    own_inf = infiltration(project)
     fr, to = L.from_node.to_numpy(), L.to_node.to_numpy()
     kind = L.kind.to_numpy(); transfer = L.transfer.fillna(False).astype(bool).to_numpy()
     length = L.length_m.fillna(0).astype(float).to_numpy()
     n = len(L); cb = np.zeros(n); cl = np.zeros(n); ct = np.zeros(n); q = np.zeros(n)
     # per node: unit load, length, transfers carried by arriving gravity links (acc_t), their peaked flows (acc_q), and
     # flows pumped or transferred straight into the node (acc_p, part of acc_t too)
-    acc_b, acc_l, acc_t, acc_q, acc_p = {}, {}, {}, {}, {}
+    acc_b, acc_i, acc_t, acc_q, acc_p = {}, {}, {}, {}, {}
     pf = lambda x: float(peaking_factor(s, np.array([x / 86.4]))[0])
     for i in order(L):
         u, d = fr[i], to[i]
@@ -63,10 +87,10 @@ def flows(project, load_set):
             ct[i] = q[i]
         else:
             cb[i] = base.get(u, 0.0) + acc_b.get(u, 0.0)
-            cl[i] = length[i] + acc_l.get(u, 0.0)
             ct[i] = acc_t.get(u, 0.0) + inflow.get(u, 0.0)
-            q[i] = cb[i] * pf(cb[i]) + cl[i] / 1000.0 * inf + ct[i]
-            acc_b[d] = acc_b.get(d, 0.0) + cb[i]; acc_l[d] = acc_l.get(d, 0.0) + cl[i]; acc_t[d] = acc_t.get(d, 0.0) + ct[i]
+            cl[i] = own_inf[i] + acc_i.get(u, 0.0)                  # infiltration carried down, m3/d (not peaked)
+            q[i] = cb[i] * pf(cb[i]) + cl[i] + ct[i]
+            acc_b[d] = acc_b.get(d, 0.0) + cb[i]; acc_i[d] = acc_i.get(d, 0.0) + cl[i]; acc_t[d] = acc_t.get(d, 0.0) + ct[i]
             acc_q[d] = acc_q.get(d, 0.0) + q[i]
     return pd.Series(q, index=L.index)
 

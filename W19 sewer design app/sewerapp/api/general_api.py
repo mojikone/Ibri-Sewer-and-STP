@@ -105,11 +105,16 @@ def new(b: New):
 
 @router.get("/samples")
 def samples():
-    return [dict(id=c, name=f"Ibri {c} (W18 final design)") for c in ibri_sample.CASES]
+    from sewerapp.io import demo_pond
+    return [dict(id=c, name=f"Ibri {c} (W18 final design)") for c in ibri_sample.CASES] + [dict(id="pond", name=demo_pond.NAME)]
 
 
 @router.post("/projects/sample/{case}")
 def sample(case: str):
+    if case == "pond":                                          # a pond, rain and a pump with start/stop depths (storm run)
+        from sewerapp.io import demo_pond
+        with _lock: pid = _open(demo_pond.build())
+        return _info(pid)
     if case not in ibri_sample.CASES: raise HTTPException(404, case)
     with _lock: pid = _open(ibri_sample.build(case))
     return _info(pid)
@@ -350,7 +355,8 @@ def model(pid: str, sid: str):
     with _lock: p = s.model(sid)
     n = p.nodes; lon, lat = coords.to_display(p.crs, n.x.values, n.y.values); ll = dict(zip(n.index, zip(lon, lat)))
     nodes = [dict(type="Feature", id=i, geometry=dict(type="Point", coordinates=[float(ll[i][0]), float(ll[i][1])]),
-                  properties=clean(dict(id=i, **r))) for i, r in zip(n.index, n.to_dict("records"))]
+                  properties=clean(dict(id=i, **r, **({"storage": p.storage[i]} if i in getattr(p, "storage", {}) else {}))))
+             for i, r in zip(n.index, n.to_dict("records"))]
     links = []; sections = (getattr(p, "meta", None) or {}).get("sections", {})
     for i, r in zip(p.links.index, p.links.to_dict("records")):
         c = r.pop("coords")
@@ -362,6 +368,8 @@ def model(pid: str, sid: str):
             from sewerapp.engine.sections import label as _seclabel
             r["section"] = _seclabel(p.sections[i]); r["sec"] = p.sections[i]
         elif i in sections: r["section"] = sections[i]
+        if i in p.infil: r["infil"] = p.infil[i]                          # the conduit's own infiltration rate
+        if i in getattr(p, "pumps", {}): r["pump"] = p.pumps[i]           # a pump's capacity and start/stop depths
         links.append(dict(type="Feature", id=i, geometry=dict(type="LineString", coordinates=line), properties=clean(dict(id=i, **r))))
     catch = []
     for i, r in zip(p.catchments.index, p.catchments.to_dict("records")):
@@ -400,6 +408,7 @@ def _from_map(p, e):
     if e.get("coords_ll"):
         a = np.array(e.pop("coords_ll")); x, y = coords.from_display(p.crs, a[:, 0], a[:, 1])
         e["coords"] = [[float(u), float(v)] for u, v in zip(x, y)]
+    if e.get("op") == "batch": e["ops"] = [_from_map(p, dict(x)) for x in (e.get("ops") or [])]
     return e
 
 
@@ -413,7 +422,8 @@ def edit(pid: str, sid: str, e: Edit):
         except (ValueError, KeyError) as x:
             raise HTTPException(400, str(x))
         _, summ = s.solve(sid)
-    return dict(summary=clean(summ), structural=structural, scenario=s.scenarios[sid].to_dict())
+    made = {k: ev[k] for k in ("end_id", "mid_ids", "link_ids") if k in ev}       # what a layout run created
+    return dict(summary=clean(summ), structural=structural, scenario=s.scenarios[sid].to_dict(), **({"created": made} if made else {}))
 
 
 class DesignOpts(BaseModel):

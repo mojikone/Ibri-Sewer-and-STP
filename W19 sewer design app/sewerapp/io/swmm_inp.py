@@ -118,7 +118,8 @@ def from_project(p, rain=None):
     pt = p.passthrough or {}; rows = pt.get("rows", {}); units = p.settings.get("units", "SI")
     mm = 304.8 if units == "US" else 1000.0
     n, L, C = p.nodes, p.links, p.catchments
-    out = OrderedDict()
+    out = OrderedDict(); curves = []                      # (name, type, rows) written to [CURVES]
+    mm2 = (mm / 1000.0) ** 2                              # m2 to the file's area unit (ft2 for a US file)
     def node_row(sec, i, r):
         old = list(rows.get(f"{sec}|{i}", []))
         if sec == "JUNCTIONS":
@@ -126,7 +127,11 @@ def from_project(p, rain=None):
         if sec == "OUTFALLS":
             base = old or [i, 0, "FREE", "NO"]; base[0], base[1] = i, _num(r.invert); return base
         base = old or [i, 0, 0, 0, "FUNCTIONAL", 1000, 0, 0, 0]
-        base[0], base[1], base[2] = i, _num(r.invert), _num(max(r.ground - r.invert, 0)); return base
+        base[0], base[1], base[2] = i, _num(r.invert), _num(max(r.ground - r.invert, 0))
+        st = (getattr(p, "storage", None) or {}).get(i)
+        if st and st.get("curve"): base = base[:4] + ["TABULAR", f"ST_{i}", 0, 0]; curves.append((f"ST_{i}", "Storage", st["curve"]))
+        elif st: base = base[:4] + ["FUNCTIONAL", 0, 0, _num(st["area_m2"] / mm2), 0, 0]
+        return base
     kind_sec = {"junction": "JUNCTIONS", "manhole": "JUNCTIONS", "wetwell": "STORAGE", "storage": "STORAGE", "outfall": "OUTFALLS"}
     for sec in ("JUNCTIONS", "OUTFALLS", "STORAGE"):
         out[sec] = [node_row(sec, i, r) for i, r in n.iterrows() if kind_sec.get(r.kind) == sec]
@@ -153,6 +158,11 @@ def from_project(p, rain=None):
     out["PUMPS"] = []
     for i, r in L[L.kind == "pump"].iterrows():
         old = list(rows.get(f"PUMPS|{i}") or [i, r.from_node, r.to_node, "*", "ON", 0, 0]); old[0:3] = [i, r.from_node, r.to_node]
+        pu = (getattr(p, "pumps", None) or {}).get(i)
+        if pu:                                             # a constant-capacity pump (a Type 2 curve of one step) with its depths
+            q = pu["q_ls"] / 1000.0 * (1.0 if units == "SI" else 35.3147)
+            curves.append((f"PC_{i}", "Pump2", [[0, q]]))
+            old = [i, r.from_node, r.to_node, f"PC_{i}", "ON", _num(pu.get("on_m", 0) * 1000.0 / mm), _num(pu.get("off_m", 0) * 1000.0 / mm)]
         out["PUMPS"].append(old)
     out["SUBCATCHMENTS"], out["SUBAREAS"] = [], []
     for i, r in C.iterrows():
@@ -161,6 +171,9 @@ def from_project(p, rain=None):
         out["SUBCATCHMENTS"].append(old)
         s = list(rows.get(f"SUBAREAS|{i}") or []) or [i, 0, 0, 1.27, 5.08, 25, "OUTLET"]
         s[0], s[1], s[2] = i, _num(r.n_imperv), _num(r.n_perv); out["SUBAREAS"].append(s)
+    my_curves = [[name, typ if k == 0 else "", _num(a * 1000.0 / mm), _num(b / mm2 if typ == "Storage" else b)]
+                 for name, typ, pts in curves for k, (a, b) in enumerate(pts)]   # the app's own curves (ST_, PC_)
+    if my_curves and "CURVES" not in (pt.get("sections") or {}): out["CURVES"] = my_curves
     out["COORDINATES"] = [[i, _num(r.x), _num(r.y)] for i, r in n.iterrows()]
     out["VERTICES"] = [[i, _num(x), _num(y)] for i, r in L.iterrows() if isinstance(r.coords, list) and len(r.coords) > 2 for x, y in r.coords[1:-1]]
     out["POLYGONS"] = [[i, _num(x), _num(y)] for i, r in C.iterrows() if isinstance(r.coords, list) for x, y in r.coords]
@@ -169,6 +182,7 @@ def from_project(p, rain=None):
     else: extra = {}
     for k in MODELLED:
         if k not in order and out.get(k): order.insert(order.index("REPORT") if "REPORT" in order else len(order), k)
+    if my_curves and "CURVES" not in order: order.insert(order.index("REPORT") if "REPORT" in order else len(order), "CURVES")
     lines = []
     titles = pt.get("titles", {})
     for k in order:
@@ -178,7 +192,9 @@ def from_project(p, rain=None):
             lines += [_fmt(r) for r in out[k]]
             lines.append("")
         elif k in extra: lines += extra[k] + [""]
-        else: lines.append(pt["sections"].get(k, ""))
+        else:
+            lines.append((pt.get("sections") or {}).get(k, ""))
+            if k == "CURVES" and my_curves: lines += [_fmt(r) for r in my_curves] + [""]   # after the file's own curves
     return "\n".join(lines) + "\n"
 
 
@@ -218,5 +234,5 @@ def _generated(p, rain):
     extra["TIMESERIES"] = [f"TS1 {int(t // 60)}:{int(t % 60):02d} {v:.4f}" for t, v in series]
     extra["REPORT"] = ["SUBCATCHMENTS ALL", "NODES ALL", "LINKS ALL"]
     order = ["TITLE", "OPTIONS", "RAINGAGES", "SUBCATCHMENTS", "SUBAREAS", "INFILTRATION", "JUNCTIONS", "OUTFALLS",
-             "STORAGE", "CONDUITS", "PUMPS", "XSECTIONS", "TIMESERIES", "REPORT", "COORDINATES", "VERTICES", "POLYGONS"]
+             "STORAGE", "CONDUITS", "PUMPS", "XSECTIONS", "CURVES", "TIMESERIES", "REPORT", "COORDINATES", "VERTICES", "POLYGONS"]
     return order, extra
