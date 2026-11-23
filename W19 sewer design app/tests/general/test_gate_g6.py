@@ -24,7 +24,9 @@ def pid():
 @pytest.mark.gate_g6
 def test_tool_schemas_are_strict_and_closed():
     for t in gtools.definitions():
-        s = t["input_schema"]; assert t["strict"] and s["additionalProperties"] is False and set(s["required"]) == set(s["properties"])
+        s = t["input_schema"]; assert s["additionalProperties"] is False and set(s["required"]) == set(s["properties"])
+    assert {t["name"] for t in gtools.definitions() if t["strict"]} == gtools.STRICT                # the original tools stay strict (v5:
+    assert len(gtools.STRICT) <= 20                                                                 # the API caps strict tools and grammar size)
 
 
 @pytest.mark.gate_g6

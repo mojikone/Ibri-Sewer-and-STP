@@ -1,7 +1,7 @@
 """The app's HTTP API (FastAPI), served on 127.0.0.1 only, and the web page. Start: python -m sewerapp.api"""
 import io, json, math, os, threading, time
 import numpy as np, pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -202,13 +202,18 @@ def assistant_status():
 
 
 @app.post("/api/assistant")
-def assistant(q: Ask):
-    from sewerapp.assistant import runner
+def assistant(q: Ask, request: Request):
+    from sewerapp.assistant import runner, budget
+    from sewerapp.api.general_api import _client_key
     st = runner.available()
     if not st["available"]: raise HTTPException(503, st["reason"])
     _sc(q.sid)
+    who = _client_key(request); left = budget.remaining(who)            # the same daily limit as the general assistant
+    if left < budget.MIN_START_USD: raise HTTPException(429, "today's spending limit for the assistant is reached; it resets at midnight")
     with _lock:
-        return clean(runner.ask(P, q.sid, q.message, q.history, q.model))
+        out = runner.ask(P, q.sid, q.message, q.history, q.model, max_usd=left)
+        budget.charge(who, out["usage"].get("usd", 0.0)); out["budget"] = budget.status(who)
+        return clean(out)
 
 
 if os.path.isdir(WEB):

@@ -53,8 +53,20 @@ def definitions():
              input_schema=_obj(dict(project=P, scenario=S, start=dict(type="string"), end=dict(type="string"), via=dict(type="string")),
                                ["project", "scenario", "start", "end", "via"])),
     ]
-    for t in d: t["strict"] = True
+    from sewerapp.assistant import agent
+    from sewerapp.assistant import qgis_link
+    d += agent.definitions()                       # the agent's tools (F21): folders, building and running models
+    d += qgis_link.definitions()                   # the engineer's open QGIS, read only
+    for t in d:                                    # the API takes at most 20 strict tools: strict where a tool changes or builds
+        t["strict"] = t["name"] in STRICT          # something; the read-only ones check their own inputs and report errors back
+    assert sum(t["strict"] for t in d) <= 20, "the Messages API allows at most 20 strict tools"
     return d
+
+
+# the eleven tools that passed the live API strict; more strict tools made "the compiled grammar too large" (live test,
+# 2026-11-23): the agent's and QGIS tools check their own inputs and send errors back to the model
+STRICT = {"list_projects", "project_summary", "query_links", "get_element", "explain_link", "make_scenario", "design_scenario", "storm_scenario",
+          "lookup_criterion", "show_on_map", "show_profile"}
 
 
 def _sess(a):
@@ -65,6 +77,17 @@ def _sess(a):
 
 
 def call(ctx, name, a):
+    from sewerapp.api.general_api import _lock
+    with _lock:                                    # each tool call holds the app lock; the model's thinking does not
+        return _call(ctx, name, a)
+
+
+def _call(ctx, name, a):
+    from sewerapp.assistant import agent, qgis_link
+    if name in qgis_link.NAMES: return clean(qgis_link.run(name, a, agent.resolve))
+    if name in agent.NAMES:
+        from sewerapp.api.general_api import _open
+        return agent.call(name, a, SESSIONS, _open, clean, ACTIONS)
     if name == "list_projects":
         return [dict(id=k, name=s.base.name, scenarios=[c.to_dict() for c in s.scenarios.values()]) for k, s in SESSIONS.items()]
     if name == "project_summary":
@@ -105,13 +128,16 @@ def call(ctx, name, a):
                            limit=d["cover_min"], ok=bool(min(cover) >= d["cover_min"] - 1e-9)))
         return clean(dict(link=a["id"], dn_mm=L.dn_mm, q_ls=r.q_ls, checks=checks))
     if name == "make_scenario":
-        s = _sess(a); c = s.copy_scenario(a["scenario"], a["name"]); done = []
+        from sewerapp.assistant import agent
+        s = _sess(a); c = s.copy_scenario(a["scenario"], a["name"]); done = []; agent.MADE.add((a["project"], c.id))
+        s.fork_alts(c.id)                                   # its own child alternatives: its edits change no other scenario
         for e in a["edits"]:
             ev = dict(json.loads(e["args"]), op=e["op"]); s.edit(c.id, ev); done.append(e["op"])
         _, summ = s.solve(c.id)
         return clean(dict(scenario=c.id, edits=done, summary=summ))
     if name == "design_scenario":
-        s = _sess(a); c = s.copy_scenario(a["scenario"], a["name"]); e = dict(op="design"); s.edit(c.id, e)
+        from sewerapp.assistant import agent
+        s = _sess(a); c = s.copy_scenario(a["scenario"], a["name"]); agent.MADE.add((a["project"], c.id)); s.fork_alts(c.id); e = dict(op="design"); s.edit(c.id, e)
         _, summ = s.solve(c.id); return clean(dict(scenario=c.id, report=s.scenarios[c.id].edits[-1].get("report"), summary=summ))
     if name == "storm_scenario":
         from sewerapp.engine import storm

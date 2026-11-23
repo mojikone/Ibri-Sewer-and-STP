@@ -3,7 +3,7 @@ id with instant re-solve, the model and results for the map, the profile. Positi
 and are converted at this one boundary (api/coords.py)."""
 import io, json, math, os, pickle, re, tempfile, threading, itertools, time
 import numpy as np, pandas as pd
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Request
 from fastapi.responses import Response
 from pydantic import BaseModel
 from sewerapp.api import coords
@@ -14,6 +14,7 @@ from sewerapp.model.workspace import Session
 router = APIRouter(prefix="/api/g")
 SESSIONS: dict[str, Session] = {}
 _lock = threading.RLock()
+_alock = threading.Lock()                     # the assistant: one answer at a time
 _ids = itertools.count(1)
 
 
@@ -137,7 +138,10 @@ async def open_file(file: UploadFile = File(...)):
             for c in ss["scenarios"]:
                 sc = Scenario(c["id"], c["name"], c.get("parent"), c["edits"]); sc.fixed = c.get("fixed", 0); s.scenarios[c["id"]] = sc
             s._n = max([int(k[1:]) for k in s.scenarios if re.fullmatch(r"S\d+", k)] or [0])
-            s.routes = ss.get("routes", []); s.symbology = ss.get("symbology")
+            s.routes = ss.get("routes", []); s.symbology = ss.get("symbology"); s.alternatives = ss.get("alternatives", {}) or {}
+            for c in ss["scenarios"]:
+                if c.get("alts"): s.scenarios[c["id"]].alts = dict(c["alts"])
+            s._alt_n = int(ss.get("alt_n", 0) or 0); s._rescan()
             for k in s.scenarios: s.model(k)                   # every scenario replays: a broken file fails here, not later
         except Exception as e:
             SESSIONS.pop(pid, None); raise HTTPException(400, f"the file's scenarios could not be rebuilt: {e}")
@@ -156,11 +160,17 @@ async def import_inp(file: UploadFile = File(...)):
     return _info(pid)
 
 
+def _safe_name(name, default):
+    """An uploaded file's name without any folder part (a visitor's name must never choose where the file is written)."""
+    b = os.path.basename((name or "").replace("\\", "/"))
+    return b if b not in ("", ".", "..") else default
+
+
 @router.post("/gis/fields")
 async def gis_fields(file: UploadFile = File(...)):
     """The fields of an uploaded layer (GeoPackage, GeoJSON or zipped shapefile), for the field-mapping dialog."""
     from sewerapp.io import gis_import
-    f = os.path.join(tempfile.mkdtemp(), file.filename or "layer"); open(f, "wb").write(await file.read())
+    f = os.path.join(tempfile.mkdtemp(), _safe_name(file.filename, "layer")); open(f, "wb").write(await file.read())
     try: return gis_import.fields(f)
     except Exception as e: raise HTTPException(400, f"not a readable layer: {e}")
 
@@ -171,7 +181,7 @@ async def import_gis(nodes: UploadFile = File(...), links: UploadFile = File(...
     """A network from a node layer and a link layer with a field mapping {"nodes": {...}, "links": {...}}."""
     import json as _json
     from sewerapp.io import gis_import
-    d = tempfile.mkdtemp(); fn = os.path.join(d, "n_" + (nodes.filename or "n")); fl = os.path.join(d, "l_" + (links.filename or "l"))
+    d = tempfile.mkdtemp(); fn = os.path.join(d, "n_" + _safe_name(nodes.filename, "n")); fl = os.path.join(d, "l_" + _safe_name(links.filename, "l"))
     open(fn, "wb").write(await nodes.read()); open(fl, "wb").write(await links.read())
     try:
         m = _json.loads(mapping or "{}")
@@ -272,7 +282,8 @@ def save(pid: str, sid: str = "base"):
     with _lock:
         p = s.model(sid)
         ss = dict(version=1, current=sid, base=gpkg_project.project_dict(s.base), routes=getattr(s, "routes", []), symbology=getattr(s, "symbology", None),
-                  scenarios=[dict(id=c.id, name=c.name, parent=c.parent, edits=clean(c.edits), fixed=c.fixed) for c in s.scenarios.values()])
+                  alternatives=clean(getattr(s, "alternatives", {}) or {}), alt_n=getattr(s, "_alt_n", 0),
+                  scenarios=[dict(id=c.id, name=c.name, parent=c.parent, edits=clean(c.edits), fixed=c.fixed, alts=dict(getattr(c, "alts", {}) or {})) for c in s.scenarios.values()])
     f = os.path.join(tempfile.mkdtemp(), "project.gpkg"); gpkg_project.save(p, f, extra=dict(session=ss))
     name = "".join(ch if ch.isalnum() or ch in "-_ " else "_" for ch in p.name).strip() or "project"
     return Response(open(f, "rb").read(), media_type="application/geopackage+sqlite3",
@@ -281,6 +292,96 @@ def save(pid: str, sid: str = "base"):
 
 class CopyS(BaseModel):
     name: str | None = None
+
+
+# ---- alternatives (F14), as SewerGEMS's: named per-category edit sets with parents, taken by scenarios
+@router.get("/projects/{pid}/alternatives")
+def alternatives(pid: str):
+    from sewerapp.model.workspace import CATEGORIES
+    s = _s(pid); A = getattr(s, "alternatives", {}) or {}
+    with _lock:
+        used = {sid: s.alts_of(sid) for sid in s.scenarios}
+        own = {}
+        from sewerapp.model.workspace import split_by_category
+        for sid, sc in s.scenarios.items():
+            n = {}
+            for e in sc.edits:
+                mine = e.get("own") if e.get("op") == "_alt" else e
+                if not mine: continue
+                for c, _ in split_by_category(mine): n[c] = n.get(c, 0) + 1
+            own[sid] = n
+    return clean(dict(categories=[dict(id=c, name=n) for c, n in CATEGORIES],
+                      alternatives={c: [dict(id=k, name=v["name"], parent=v.get("parent"), edits=len(v["edits"]),
+                                             used_by=[sid for sid, a in used.items() if a.get(c) == k]) for k, v in A.get(c, {}).items()] for c, _ in CATEGORIES},
+                      scenarios={sid: dict(name=sc.name, alts=used[sid], own_edits=own[sid]) for sid, sc in s.scenarios.items()}))
+
+
+class AltB(BaseModel):
+    cat: str
+    name: str | None = None
+    parent: str | None = None
+    from_scenario: str | None = None
+    id: str | None = None
+
+
+@router.post("/projects/{pid}/alternatives/new")
+def alternative_new(pid: str, b: AltB):
+    """A new alternative: empty, a child of another, or holding a scenario's own edits of that category."""
+    from sewerapp.model.workspace import CAT_ORDER, split_by_category, CATEGORIES as CATEGORIES_
+    s = _s(pid)
+    if b.cat not in CAT_ORDER: raise HTTPException(400, f"no category {b.cat}")
+    with _lock:
+        A = s.alternatives.setdefault(b.cat, {})
+        if b.parent and b.parent not in A: raise HTTPException(404, f"no alternative {b.parent}")
+        edits = []
+        if b.from_scenario:
+            if b.from_scenario not in s.scenarios: raise HTTPException(404, f"no scenario {b.from_scenario}")
+            chain, c = [], s.scenarios[b.from_scenario]
+            while c: chain.append(c); c = s.scenarios.get(c.parent) if c.parent else None
+            edits = [x for c in reversed(chain) for e in c.edits for own in [e.get("own") if e.get("op") == "_alt" else e] if own
+                     for k, x in split_by_category(own) if k == b.cat]
+        name = (b.name or "").strip() or f"{dict(CATEGORIES_)[b.cat]} {len(A) + 1}"
+        aid = s.new_alternative(b.cat, name, parent=b.parent, edits=[dict(x) for x in edits])
+    return alternatives(pid) | dict(created=aid)
+
+
+@router.post("/projects/{pid}/alternatives/rename")
+def alternative_rename(pid: str, b: AltB):
+    s = _s(pid); A = s.alternatives.get(b.cat, {})
+    if b.id not in A: raise HTTPException(404, f"no alternative {b.id}")
+    A[b.id]["name"] = (b.name or A[b.id]["name"]).strip(); return alternatives(pid)
+
+
+@router.post("/projects/{pid}/alternatives/delete")
+def alternative_delete(pid: str, b: AltB):
+    s = _s(pid); A = s.alternatives.get(b.cat, {})
+    if b.id not in A: raise HTTPException(404, f"no alternative {b.id}")
+    if any(s.alts_of(sid).get(b.cat) == b.id for sid in s.scenarios): raise HTTPException(400, "a scenario takes this alternative: give it another first")
+    if any(v.get("parent") == b.id for v in A.values()): raise HTTPException(400, "this alternative has children")
+    with _lock: A.pop(b.id); s._cache = {}
+    return alternatives(pid)
+
+
+class UseAltB(BaseModel):
+    cat: str
+    aid: str | None = None
+
+
+@router.post("/projects/{pid}/scenarios/{sid}/alts")
+def scenario_alts(pid: str, sid: str, b: UseAltB):
+    """The alternative a scenario takes for a category (None: its own edits, as before)."""
+    s = _s(pid)
+    if sid not in s.scenarios: raise HTTPException(404, f"no scenario {sid}")
+    if b.aid and b.aid not in s.alternatives.get(b.cat, {}): raise HTTPException(404, f"no alternative {b.aid}")
+    with _lock:
+        sc = s.scenarios[sid]; sc.alts = dict(getattr(sc, "alts", {}) or {})
+        sc.alts[b.cat] = b.aid or ""                               # "" : its own edits, even when a parent takes one
+        s._cache = {}
+        try: _, summ = s.solve(sid)
+        except Exception as x: raise HTTPException(400, f"the scenario cannot be built with it: {x}")
+        skipped = (getattr(s.model(sid), "meta", {}) or {}).get("alternatives_skipped", 0)
+    schedule(pid)
+    return clean(dict(summary=summ, scenario=sc.to_dict(), skipped=skipped))
 
 
 class Rename(BaseModel):
@@ -457,7 +558,7 @@ async def loadbuilder(pid: str, sid: str, file: UploadFile = File(...), field: s
     import tempfile
     from sewerapp.engine import tools_v4
     from sewerapp.io import gis_import
-    s = _s(pid); d = tempfile.mkdtemp(prefix="w19lb_"); path = os.path.join(d, os.path.basename(file.filename or "layer.gpkg"))
+    s = _s(pid); d = tempfile.mkdtemp(prefix="w19lb_"); path = os.path.join(d, _safe_name(file.filename, "layer.gpkg"))
     open(path, "wb").write(await file.read())
     try: g = gis_import.read_layer(path)
     except Exception as x: raise HTTPException(400, f"not a GIS layer: {x}")
@@ -484,13 +585,15 @@ async def loadbuilder(pid: str, sid: str, file: UploadFile = File(...), field: s
 
 
 @router.post("/projects/{pid}/scenarios/{sid}/trex")
-async def trex(pid: str, sid: str, file: UploadFile | None = File(None), path: str = "", keep_depth: bool = True, ids: str = ""):
+async def trex(pid: str, sid: str, request: Request, file: UploadFile | None = File(None), path: str = "", keep_depth: bool = True, ids: str = ""):
     """TRex: ground levels from a terrain GeoTIFF or VRT (an upload, or a path on this computer, e.g. the project's
     0.5 m VRT); one undoable edit; the inverts follow when depths are kept (where the old depth is known)."""
     import tempfile, shutil
     from sewerapp.engine import tools_v4
     s = _s(pid); d = None
     if path:
+        if _remote(request): raise HTTPException(403, "a path on this computer can be read only from the computer itself, not over the shared web link: upload the file instead")
+        if path.startswith(("\\\\", "//")): raise HTTPException(400, "a network path is not read: copy the terrain to this computer or upload it")
         if not os.path.exists(path): raise HTTPException(400, f"no file {path}")
         src = path
     elif file is not None:
@@ -745,7 +848,7 @@ def add_reference(pid: str, file: UploadFile = File(...)):
     import shapely
     s = _s(pid); crs = s.base.crs
     with tempfile.TemporaryDirectory() as d:
-        f = os.path.join(d, os.path.basename(file.filename or "layer")); open(f, "wb").write(file.file.read())
+        f = os.path.join(d, _safe_name(file.filename, "layer")); open(f, "wb").write(file.file.read())
         try: g = gis_import.read_layer(f)
         except Exception as e: raise HTTPException(400, f"could not read {file.filename}: {e}")
     g = g[g.geometry.notna() & ~g.geometry.is_empty]
@@ -917,8 +1020,72 @@ def assistant_status():
     return runner.available()
 
 
+def _remote(request) -> bool:
+    """True when the request came through the shared web link (Cloudflare adds cf-connecting-ip) or from another computer."""
+    h = request.headers
+    if h.get("cf-connecting-ip") or h.get("x-forwarded-for"): return True
+    host = request.client.host if request.client else ""
+    if host not in ("127.0.0.1", "::1", "localhost", "testclient"): return True
+    name = (h.get("host") or "").rsplit(":", 1)[0].strip("[]").lower()     # a page elsewhere reaching this computer's port
+    return name not in ("127.0.0.1", "localhost", "::1", "testserver")       # (DNS rebinding) carries its own host name
+
+
+class FolderB(BaseModel):
+    path: str
+
+
+def _client_key(request) -> str:
+    """Who spends: this computer, or one visitor of the shared link (by the address Cloudflare reports)."""
+    if not _remote(request): return "local"
+    h = request.headers
+    return "web:" + (h.get("cf-connecting-ip") or (h.get("x-forwarded-for") or "").split(",")[0].strip() or (request.client.host if request.client else "?"))
+
+
+@router.get("/assistant/usage")
+def assistant_usage(request: Request):
+    from sewerapp.assistant import budget
+    return budget.status(_client_key(request))
+
+
+class LimitsB(BaseModel):
+    local_daily_usd: float | None = None
+    web_daily_usd: float | None = None
+    web_all_daily_usd: float | None = None
+
+
+@router.post("/assistant/limits")
+def assistant_limits(b: LimitsB, request: Request):
+    from sewerapp.assistant import budget
+    if _remote(request): raise HTTPException(403, "the assistant's limits are set only on the engineer's own computer")
+    try: budget.set_limits({k: v for k, v in b.model_dump().items() if v is not None})
+    except ValueError as x: raise HTTPException(400, str(x))
+    return budget.status("local")
+
+
+@router.get("/assistant/folders")
+def assistant_folders(request: Request):
+    from sewerapp.assistant import agent
+    if _remote(request): return dict(folders=[], remote=True, note="folders are managed on the engineer's own computer only")
+    return dict(folders=agent.folders(), remote=False)
+
+
+@router.post("/assistant/folders")
+def assistant_folder_add(b: FolderB, request: Request):
+    from sewerapp.assistant import agent
+    if _remote(request): raise HTTPException(403, "folders can be registered only on the engineer's own computer, not over the shared web link")
+    try: return dict(folders=agent.add_folder(b.path), remote=False)
+    except ValueError as x: raise HTTPException(400, str(x))
+
+
+@router.post("/assistant/folders/remove")
+def assistant_folder_remove(b: FolderB, request: Request):
+    from sewerapp.assistant import agent
+    if _remote(request): raise HTTPException(403, "folders can be changed only on the engineer's own computer")
+    return dict(folders=agent.remove_folder(b.path), remote=False)
+
+
 @router.post("/assistant")
-def assistant(q: Ask):
+def assistant(q: Ask, request: Request):
     """The assistant on an open project: reads results, explains checks with guideline pages, works in new scenarios."""
     from sewerapp.assistant import gtools, runner
     st = runner.available()
@@ -932,9 +1099,15 @@ def assistant(q: Ask):
         ctx += f"; selected {sel.get('table')}: {', '.join(ids[:40])}" + (f" and {len(ids) - 40} more" if len(ids) > 40 else "")
     if q.route and q.route.get("start"):
         ctx += f"; profile on screen from {q.route['start']} to {q.route.get('end') or 'the outfall'}" + (f" via {q.route['via']}" if q.route.get("via") else "")
-    with _lock:
-        gtools.ACTIONS.clear()
-        out = runner.ask(None, q.scenario, q.message, q.history, q.model, toolset=gtools, system=runner.SYSTEM_GENERAL, context=ctx)
+    from sewerapp.assistant import agent, budget
+    who = _client_key(request); left = budget.remaining(who)
+    if left < budget.MIN_START_USD:
+        raise HTTPException(429, f"today's spending limit for the assistant is reached ({budget.status(who)['limit_today_usd']:.2f} USD a day for {budget.status(who)['client']}); it resets at midnight")
+    with _alock:                                     # one answer at a time; the model's turns run outside the app lock, each
+        gtools.ACTIONS.clear(); agent.CTX["remote"] = _remote(request)          # tool call takes it (gtools.call)
+        try: out = runner.ask(None, q.scenario, q.message, q.history, q.model, toolset=gtools, system=runner.SYSTEM_GENERAL, context=ctx, max_turns=30, max_usd=left)
+        finally: agent.CTX["remote"] = False
+        budget.charge(who, out["usage"].get("usd", 0.0)); out["budget"] = budget.status(who)
         out["ui_actions"] = list(gtools.ACTIONS); gtools.ACTIONS.clear()
         return clean(out)
 
