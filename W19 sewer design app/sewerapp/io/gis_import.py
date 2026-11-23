@@ -69,6 +69,7 @@ def import_layers(nodes_path, links_path, node_map=None, link_map=None, name="Im
                          coords=[list(map(float, xy_[:2])) for xy_ in c] if len(c) > 2 else None))
     p.links = pd.DataFrame(rows, columns=["id"] + LINK_COLS).set_index("id")
     if p.links.index.duplicated().any(): raise ValueError("duplicate link ids")
+    p.orient_lines()
     return p
 
 

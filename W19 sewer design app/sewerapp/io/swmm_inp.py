@@ -99,6 +99,7 @@ def to_project(text, name="SWMM model"):
                          sections={k: "\n".join(v["raw"]) for k, v in secs.items() if k not in MODELLED},
                          heads={k: v["head"] for k, v in secs.items() if k in MODELLED},
                          rows=rows, xs_other={k: v for k, v in xs.items() if k not in set(p.links.index)})
+    p.orient_lines()
     return p
 
 

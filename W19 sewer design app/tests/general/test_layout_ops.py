@@ -131,3 +131,18 @@ def test_a_run_from_a_manhole_that_drains_becomes_a_branch_into_it():
 def test_reverse_turns_a_link_round():
     p = _p(); W.apply(p, dict(op="reverse", ids=["P-3"]))
     r = p.links.loc["P-3"]; assert (r.from_node, r.to_node, r.up_inv, r.dn_inv) == ("O", "N2", 95.0, 96.0)
+
+
+def test_a_line_drawn_from_the_downstream_end_is_turned_to_run_with_the_flow():
+    """Flow arrows follow the stored line: a line digitised downstream-first is turned on entry (2026-11-23)."""
+    from sewerapp.model.general import Project
+    from sewerapp.model import workspace as W
+    from sewerapp.engine import validate
+    p = Project("o", crs=32640)
+    W.apply(p, dict(op="add_node", id="A", x=0, y=0, ground=10, invert=8)); W.apply(p, dict(op="add_node", id="B", kind="outfall", x=100, y=0, ground=9, invert=7))
+    W.apply(p, dict(op="add_link", id="P", from_node="A", to_node="B", coords=[[100, 0], [50, 5], [0, 0]]))
+    assert p.links.coords["P"][0] == [0, 0] and p.links.coords["P"][-1] == [100, 0]
+    p.links.at["P", "coords"] = [[100, 0], [0, 0]]; assert p.orient_lines() == 1 and p.links.coords["P"][0] == [0, 0]
+    assert not [x for x in validate.run(p) if "drawn line" in x["message"]]
+    p.links.at["P", "coords"] = [[0, 0], [40, 0]]                                      # a line that stops short of B
+    assert [x for x in validate.run(p) if "drawn line" in x["message"]][0]["id"] == "P"

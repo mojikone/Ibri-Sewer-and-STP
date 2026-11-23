@@ -156,6 +156,7 @@ def apply(p, e):
                                 inside_mm=p.inside_of(dn), up_inv=float(e.get("up_inv", p.nodes.invert[a])),
                                 dn_inv=float(e.get("dn_inv", p.nodes.invert[b])), transfer=bool(e.get("transfer", False)),
                                 coords=coords)
+        if coords: p.orient_lines({lid})                    # a line drawn from the downstream end runs with the flow
         sec = e.get("section", pr.get("section"))
         if sec: apply(p, dict(op="set_section", ids=[lid], section=dict(sec)))
         return True

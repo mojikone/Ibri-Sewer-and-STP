@@ -69,5 +69,12 @@ def run(p, res=None):
         key = (round(r.x / k), round(r.y / k))
         if key in seen: add("warning", "nodes", n, f"on top of {seen[key]}")
         else: seen[key] = n
+    xs, ys = N.x.to_dict(), N.y.to_dict()                                         # a drawn line that misses a structure
+    for lid, c, a, b in zip(p.links.index, p.links.coords, p.links.from_node, p.links.to_node):
+        if not (isinstance(c, list) and len(c) >= 2) or a not in xs or b not in xs: continue
+        da, db = math.dist(c[0][:2], (xs[a], ys[a])), math.dist(c[-1][:2], (xs[b], ys[b]))
+        if max(da, db) > 1.0:
+            add("warning", "links", lid, f"its drawn line misses {'its upstream' if da >= db else 'its downstream'} structure by {max(da, db):.1f} m "
+                                         f"(the line {sum(math.dist(c[i][:2], c[i + 1][:2]) for i in range(len(c) - 1)):.1f} m, the structures {math.dist((xs[a], ys[a]), (xs[b], ys[b])):.1f} m apart)")
     order = {"error": 0, "warning": 1}
     return sorted(out, key=lambda x: (order[x["level"]], x["table"], x["id"]))

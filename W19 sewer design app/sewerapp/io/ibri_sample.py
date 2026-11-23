@@ -95,4 +95,5 @@ def build(case, w18_transfers=False):
             p.fixed_flows[y] = f
     p.meta = dict(case=case, old_of_link=dict(zip(K.new, K.old)), station_old=ST_N.old.to_dict(),
                   cut_pipe=cut_station)
+    p.orient_lines()                                         # 46 % of the W18 lines were digitised downstream-first
     return p

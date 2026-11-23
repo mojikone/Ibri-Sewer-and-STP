@@ -31,6 +31,7 @@ def project_from_dict(d):
         if key == "links": df["transfer"] = df["transfer"].fillna(False).astype(bool)
         setattr(p, key, df[cols])
     p.meta = d.get("meta", {})
+    p.orient_lines()                                         # files saved before 2026-11-23 kept the source's direction
     return p
 
 

@@ -118,6 +118,21 @@ class Project:
     def copy(self):
         return copy.deepcopy(self)
 
+    def orient_lines(self, ids=None):
+        """Turn each stored polyline to run from its from-node to its to-node (a source digitised the other way is
+        flipped), so the flow arrows, SWMM vertices and exports follow the flow. Returns how many were turned."""
+        L = self.links
+        if not len(L) or "coords" not in L.columns: return 0
+        xs, ys = self.nodes.x.to_dict(), self.nodes.y.to_dict(); turned = 0
+        for i, c, a, b in zip(L.index, L.coords, L.from_node, L.to_node):
+            if ids is not None and i not in ids: continue
+            if not (isinstance(c, (list, tuple)) and len(c) >= 2) or a not in xs or b not in xs: continue
+            (x0, y0), (x1, y1) = c[0][:2], c[-1][:2]
+            s_a, e_a = (x0 - xs[a]) ** 2 + (y0 - ys[a]) ** 2, (x1 - xs[a]) ** 2 + (y1 - ys[a]) ** 2      # the upstream end decides;
+            s_b, e_b = (x0 - xs[b]) ** 2 + (y0 - ys[b]) ** 2, (x1 - xs[b]) ** 2 + (y1 - ys[b]) ** 2      # a tie goes to the downstream one
+            if e_a < s_a or (e_a == s_a and s_b < e_b): L.at[i, "coords"] = [list(v) for v in c[::-1]]; turned += 1
+        return turned
+
     def catalogue(self):
         c = pd.DataFrame(self.settings["design"]["catalogue"], columns=["nominal_mm", "inside_mm"]).sort_values("nominal_mm")
         return c.reset_index(drop=True)
