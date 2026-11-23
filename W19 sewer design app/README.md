@@ -68,6 +68,36 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
   load set puts no load on the network (a storm model: only infiltration flows). The profile draws the rise as the crown or bank. SWMM files read and write
   RECT_CLOSED, RECT_OPEN and TRAPEZOIDAL with their barrels and n. For an export run in SewerGEMS,
   `GET .../section_check` compares the app's normal and critical depth at SewerGEMS's own flow with SewerGEMS's.
+- **v5 (2026-11-23): the engineer's trial items F13-F21.**
+  - **Mixed selection** (F13): a box or a click takes every element type by default; Ctrl or Shift adds and removes any
+    element; the bar above Properties names each type ("2 pipes 3 structures") and switches the one being edited;
+    Delete removes them all in one undo step.
+  - **Alternatives** (F14, Home > Alternatives): seven kinds of data under a name and a parent, taken by scenarios and
+    inherited by their children; what you change of that kind goes into the alternative, shared by every scenario that
+    takes it; undo takes it back out.
+  - The tool hint is a tooltip by the cursor that fades (F15); **selection sets** hold any types and are the scope of a
+    design, a check or a selection (F16); profile labels stay inside the drawing (F17); the **Element Symbology pane docks
+    on the left** (F18, View); **Settings by group** with paste from Excel into any table and named pipe catalogues (F19);
+    **Design constraints** as their own group (F20).
+  - **The assistant as an agent** (F21): it reads the folders the engineer registers (Assistant > Folders, this computer
+    only, never over the shared link), inspects layers and tables, builds a project from GIS layers or a SWMM file,
+    loads it with LoadBuilder, sets levels from a terrain file, edits, validates and runs it, and offers the project it
+    built. It changes only what it made; each change is one undo step. It reads the open QGIS project (layers,
+    fields, attribute rows, the selection) through the QGIS MCP plugin, read only, and adds a layer to a "W19"
+    group when asked; it never sends QGIS code to run.
+  - **A daily spending limit for the assistant** (Assistant > Limits, set on this computer only): this computer, each
+    shared-link visitor and all visitors together, estimated from each answer's tokens at list prices; an answer stops
+    between steps at the limit; the spend shows in the assistant pane.
+  - **Phones and tablets:** below 900 px wide or 520 px high the map keeps the screen, Properties opens over it as a
+    drawer when one element is chosen, the ribbon starts folded on phones, Find shrinks to its lens, dialogs fit the
+    screen, touch targets grow.
+  - Fixed after a Fable 5.2 review: an uploaded file's name could choose where the server wrote it (any folder, from
+    the shared link); alternatives now replay in the order things were done (a session-wide edit clock), undo removes
+    exactly its own edit from a shared alternative, a mixed batch is one undo step, a child can take its own edits,
+    alternative ids are never reused, the agent's copies get private alternatives; the long section drew nothing
+    (a comment swallowed two variables); a stale mixed selection could delete hidden elements; the app no longer
+    locks during an assistant answer; a foreign Host header counts as remote; at most 20 strict tools (the API's
+    limit, found by the live test).
 - **v4 (2026-11-23): the rest of the SewerGEMS list.**
   - **GVF water profile** (Settings > Water profile, `engine/gvf.py`): from the outfalls up, direct step M1/M2 (checked on
     10 m and 5 m pipes against an independent fine integration within 2 mm), steep pipes under entrance control,

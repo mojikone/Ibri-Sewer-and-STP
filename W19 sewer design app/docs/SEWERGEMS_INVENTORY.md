@@ -103,10 +103,10 @@ No SewerGEMS file was read. A Fable 5.2 review of the first draft found that it 
 | SewerGEMS | App | Notes |
 |---|---|---|
 | Scenarios | have | Edit lists with inheritance; compare; batch run of several scenarios side by side (v4). |
-| Alternatives (19 types) | part | Scenarios carry all edits; separate alternatives: gap. |
+| Alternatives (19 types) | v5 | Seven kinds (physical, sanitary loading, infiltration, hydrology and rain, boundary conditions, operational, calculation options) with parents, taken per scenario and inherited by its children; an edit of a kind goes into the alternative the scenario takes (Home > Alternatives). SewerGEMS splits physical and the rest further: 7 of 19. |
 | FlexTables | v3 | Sort, filter, global edit, paste and CSV, plus v3: choose columns, and a statistics row (mean, range, sum). |
 | Element Symbology, Background layers, Network Navigator, Prototypes, Profiles, Time Browser | have | |
-| Selection sets | v3 | Named, kept with the project (Home > Sets, Ctrl+3). |
+| Selection sets | v5 | Named, any element types together, kept with the project; design, check or select just a set (Home > Sets, Ctrl+3). |
 | Queries | v3 | Field, operator, value; a new selection, added to it, or within it (Ctrl+5). |
 | Engineering libraries | v3 | Pipe catalogue, sections, pump definitions, unit loads, patterns. |
 | User Notifications | v3 | Validate (F8). Errors: tree, missing nodes, inverts above ground, no outfall, zero length, no size, a pump that cannot lift. Warnings: isolated, ends that are not outfalls, flat or adverse, a short pump, negative pressure, two links into an outfall, coincident structures. Each takes you to its element. |
@@ -128,4 +128,4 @@ No SewerGEMS file was read. A Fable 5.2 review of the first draft found that it 
 
 ## 9. Next
 
-The engineer's trial items F13-F22 (`docs/USER_TRIAL_FEEDBACK.md`): a mixed selection by default, alternatives, the hint as a fading tooltip, selection sets as the scope of runs and edits, profile labels kept in view, the Element Symbology pane on the left, settings as dedicated managers with paste and several catalogues, a Design constraints manager, the assistant as a full agent working from a project folder. Then: structure loss methods (HEC-22, AASHTO), logical controls, SCS unit hydrographs and Tc methods, RDII, energy cost.
+v5 built the engineer's F13-F21 (`docs/USER_TRIAL_FEEDBACK.md`). Then: structure loss methods (HEC-22, AASHTO), logical controls, SCS unit hydrographs and Tc methods, RDII, energy cost.
