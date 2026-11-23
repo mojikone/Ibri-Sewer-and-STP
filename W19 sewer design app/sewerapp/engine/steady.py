@@ -20,6 +20,11 @@ def _without_storm_only(project):
 
 
 def peaking_factor(settings, q_ls, pop=None):
+    f = _peaking_factor(settings, q_ls, pop); c = (settings.get("peaking") or {}).get("cutoff")
+    return np.minimum(f, float(c)) if c else f
+
+
+def _peaking_factor(settings, q_ls, pop=None):
     """The peaking (extreme flow) factor of an average unit load q (L/s) carrying a population pop (people). Flow-based:
     the project's table, Peltier, Merrimack (G201 p71-72), Federov (2.69 / Q^0.121, Q in L/s), a constant. Population-
     based (P in thousands): Harmon 1 + 14 / (4 + sqrt P), Ten States (18 + sqrt P) / (4 + sqrt P) (the same function),
@@ -99,7 +104,8 @@ def flows(project, load_set):
     units = {u["name"]: u for u in ((s.get("libraries") or {}).get("unit_loads") or [])}
     pe_plain = float((s.get("peaking") or {}).get("pe_per_m3d") or 0.0)
     base = dict(base); popn = {n_: v * pe_plain for n_, v in base.items()} if pe_plain else {}
-    for n_, rows in ((getattr(project, "unit_rows", None) or {}).get(load_set, {}) or {}).items():
+    UR = getattr(project, "unit_rows", None) or {}
+    for n_, rows in {**(UR.get("*") or {}), **(UR.get(load_set) or {})}.items():
         for name, count in rows:
             u = units.get(name)
             if not u: continue
@@ -201,13 +207,12 @@ def solve(project, load_set=None, check_set=None):
         cond = cond | isec & (L.kind == "conduit").to_numpy()
     if (L.kind != "conduit").any():                                       # pump stations and force mains (engine/pressure.py)
         from sewerapp.engine import pressure
-        dep = {}                                                          # the water depth in each structure: its leaving conduit's flow depth
-        for lid in L.index[(L.kind == "conduit").to_numpy()]:
-            r = res.loc[lid]
-            if "depth_m" in res.columns and r["depth_m"] == r["depth_m"]: y = float(r["depth_m"])            # a box or channel
-            elif r.d_over_D == r.d_over_D and L.inside_mm[lid] == L.inside_mm[lid]: y = float(r.d_over_D) * float(L.inside_mm[lid]) / 1000.0
-            else: continue
-            dep[L.from_node[lid]] = y
+        # the water depth in each structure: its leaving conduit's flow depth (vectorised: 19,000 pipes in milliseconds)
+        cm = (L.kind == "conduit").to_numpy()
+        y = res.d_over_D.to_numpy(float) * L.inside_mm.astype(float).to_numpy() / 1000.0
+        if "depth_m" in res.columns: y = np.where(np.isfinite(res.depth_m.to_numpy(float)), res.depth_m.to_numpy(float), y)
+        ok = cm & np.isfinite(y)
+        dep = dict(zip(L.from_node.to_numpy()[ok], y[ok]))
         prow, psum = pressure.solve(project, q.to_dict(), dep)
         for lid, r in prow.items():
             for k, v in r.items():

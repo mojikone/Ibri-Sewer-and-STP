@@ -47,6 +47,7 @@ DEFAULT_SETTINGS = dict(
     infiltration=dict(method="length", rate=0.0),
     # what a new element gets when it is drawn (SewerGEMS's prototypes); depth = ground - invert
     prototypes=dict(manhole=dict(ground=0.0, depth=1.5), outfall=dict(ground=0.0, depth=1.5), wetwell=dict(ground=0.0, depth=3.0),
+                    pressure_junction=dict(ground=0.0, depth=1.5),
                     conduit=dict(dn_mm=None, section=None),
                     catchment=dict(imperv_pc=50.0, width_m=100.0, slope_pc=1.0, n_imperv=0.013, n_perv=0.15)),
     # the project's engineering libraries beyond the size catalogue: named cross-sections a conduit can take

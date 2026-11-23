@@ -694,7 +694,7 @@ function renderProps() {
     // method); a sanitary load is added as it is and carried down unpeaked
     const sets = Object.keys(state.model.loads || {}), lu = unitOf("load").u, v0 = val("inflow_m3d");
     h += `<h5>Loads</h5><div class="pr"><label for="prop-inflow_m3d" title="Added as it is and carried down unpeaked (a fixed flow, a transfer)">${LABELS.inflow_m3d}</label>${control(table, "inflow_m3d", "num", v0)}<span class="u">${lu}</span></div>`;
-    h += `<p class="muted small">Unit load (peaked), per load set:</p>`;
+    h += `<p class="muted small" title="A flow typed directly for each load set, peaked with the load upstream">Load typed per load set (peaked):</p>`;
     for (const s of sets) {
       const vals = fs.map(f => (state.model.loads[s] || {})[f.id] ?? 0), v = vals.every(x => x === vals[0]) ? +toShow("load", vals[0]).toFixed(6) : "";
       h += `<div class="pr"><label title="Peaked with the load upstream by the project's peaking method">${esc(s)}${s === state.model.settings.design_load ? " (design)" : ""}</label><input type="number" step="any" id="load-${esc(s)}" data-testid="load-${esc(s)}" data-kind="load" data-set="${esc(s)}" value="${v}"><span class="u">${lu}</span></div>`;
@@ -1342,6 +1342,8 @@ function renderSettings() {
     `<fieldset><legend>Flows</legend>${row("design_load", "Design load set", "select", loadOpts)}${row("check_load", "Check load set", "select", [["", "(none)"], ...loadOpts])}` +
     `<p class="muted small">Unit loads are peaked with the load upstream; sanitary loads (each structure's own) are added unpeaked.</p></fieldset>` +
     infilHtml(S, row) +
+    `<fieldset><legend>Force mains</legend>${row("pressure.method", "Friction", "select", [["hazen", "Hazen-Williams"], ["darcy", "Darcy-Weisbach"], ["manning", "Manning"]])}${row("pressure.C", "Hazen-Williams C", "num")}${row("pressure.e_mm", "Darcy roughness e (mm)", "num")}${row("pressure.n", "Manning's n", "num")}` +
+    `${row("pressure.suction", "Pumps lift from", "select", [["off", "the stop level (largest lift)"], ["on", "the start level"]])}<p class="muted small">A pipe's own values are set in its Properties; the pump curves in Components &gt; Pump definitions.</p></fieldset>` +
     `<fieldset><legend>Design limits</legend>${row("design.v_min", "v min (m/s)", "num")}${row("design.v_max", "v max (m/s)", "num")}${row("design.cover_min", "Cover min (m)", "num")}${row("design.cover_max", "Cover max (m)", "num")}${row("self_cleansing_min_dn", "Self-cleansing above DN (mm)", "num")}</fieldset>` +
     SET_TABLES.map(t => tableHtml(t, S)).join("");
   host.insertAdjacentHTML("beforeend", rainHtml());

@@ -160,8 +160,12 @@ def from_project(p, rain=None):
             x = [i, "CIRCULAR", _num(r.inside_mm / mm), 0, 0, 0, 1]
         if r.kind == "pressure_pipe":                       # a force main: SWMM's FORCE_MAIN with H-W C or D-W roughness
             o = (getattr(p, "ppipes", None) or {}).get(i, {})
-            rough = o.get("C", pres["C"]) if pres["method"] == "hazen" else o.get("e_mm", pres["e_mm"]) * (1.0 if units == "SI" else 1 / 25.4)   # D-W: mm (inches in a US file)
-            x = [i, "FORCE_MAIN", _num(r.inside_mm / mm), _num(rough), 0, 0, 1]
+            if pres["method"] == "manning":                   # SWMM's force mains take H-W or D-W: a Manning main is a full circular conduit
+                out["CONDUITS"][-1][4] = _num(o.get("n", pres.get("n", 0.012)))
+                x = [i, "CIRCULAR", _num(r.inside_mm / mm), 0, 0, 0, 1]
+            else:
+                rough = o.get("C", pres["C"]) if pres["method"] == "hazen" else o.get("e_mm", pres["e_mm"]) * (1.0 if units == "SI" else 1 / 25.4)   # D-W: mm (inches in a US file)
+                x = [i, "FORCE_MAIN", _num(r.inside_mm / mm), _num(rough), 0, 0, 1]
         if str(x[1]).upper() in ("CIRCULAR", "FORCE_MAIN"): x[2] = _num(r.inside_mm / mm)
         out["XSECTIONS"].append(x)
     out["XSECTIONS"] += [list(v) for v in (pt.get("xs_other") or {}).values()]
@@ -171,30 +175,38 @@ def from_project(p, rain=None):
         pu = (getattr(p, "pumps", None) or {}).get(i)
         lib = {d["name"]: d for d in ((p.settings.get("libraries") or {}).get("pumps") or [])}
         dfn = lib.get((pu or {}).get("definition"))
+        npump = max(1, int((pu or {}).get("count") or 1))         # identical pumps in parallel: n times the flow at a head
         if dfn and dfn.get("type") != "constant_flow":    # a head-flow curve: SWMM Type 3 (head, flow), sampled from the definition
             from sewerapp.engine import pressure as P
-            Hf, qmax = P.curve(dfn); qs = np.linspace(0.0, qmax, 12); hs = Hf(qs)
-            k = 1.0 if units == "SI" else 35.3147                          # m3/s to the file's flow unit
-            curves.append((f"PC_{i}", "Pump3", [[float(h), float(q) * k] for h, q in sorted(zip(hs, qs), key=lambda t: t[0])]))
+            Hf, qmax = P.curve(dfn); qs = np.linspace(0.0, qmax, 16); hs = Hf(qs)
+            k = (1.0 if units == "SI" else 35.3147) * npump               # m3/s to the file's flow unit
+            pts, last = [], None                          # strictly falling head with rising flow, or SWMM refuses it (error 171)
+            for q, h in zip(qs, hs):
+                if last is None or h < last - 1e-6: pts.append([float(h), float(q) * k]); last = h
+            curves.append((f"PC_{i}", "Pump3", sorted(pts)))
             old = [i, r.from_node, r.to_node, f"PC_{i}", "ON", _num(pu.get("on_m", 0) * 1000.0 / mm), _num(pu.get("off_m", 0) * 1000.0 / mm)]
         elif pu and dfn: pu = dict(pu, q_ls=float(dfn["q_ls"]))
         if pu and not (dfn and dfn.get("type") != "constant_flow"):                 # a constant-capacity pump (a Type 2 curve of one step)
-            q = pu["q_ls"] / 1000.0 * (1.0 if units == "SI" else 35.3147)
+            q = pu["q_ls"] / 1000.0 * (1.0 if units == "SI" else 35.3147) * npump
             curves.append((f"PC_{i}", "Pump2", [[0, q]]))
             old = [i, r.from_node, r.to_node, f"PC_{i}", "ON", _num(pu.get("on_m", 0) * 1000.0 / mm), _num(pu.get("off_m", 0) * 1000.0 / mm)]
         out["PUMPS"].append(old)
     out["ORIFICES"], out["WEIRS"] = [], []                 # pond outlets drawn in the app
+    elev_off = p.settings.get("link_offsets", "DEPTH") == "ELEVATION"
     for i, r in L[L.kind.isin(["orifice", "weir"])].iterrows():
         o = (getattr(p, "outlets", None) or {}).get(i, {}); m = 1000.0 / mm
+        base_z = float(n.invert[r.from_node]) if elev_off else 0.0      # an ELEVATION file takes offsets as levels
         if r.kind == "orifice":
-            out["ORIFICES"].append([i, r.from_node, r.to_node, "SIDE", _num(o.get("offset_m", 0) * m), _num(o.get("cd", 0.65)), "YES" if o.get("gated") else "NO", 0])
+            out["ORIFICES"].append([i, r.from_node, r.to_node, "SIDE", _num((base_z + o.get("offset_m", 0)) * m), _num(o.get("cd", 0.65)), "YES" if o.get("gated") else "NO", 0])
             out["XSECTIONS"].append([i, "RECT_CLOSED", _num(o.get("h_m", 0.3) * m), _num(o.get("w_m", 0.3) * m), 0, 0] if o.get("shape") == "rect" else [i, "CIRCULAR", _num(o.get("d_m", 0.3) * m), 0, 0, 0])
         else:
             vn = o.get("type") == "v_notch"
-            out["WEIRS"].append([i, r.from_node, r.to_node, "V-NOTCH" if vn else "TRANSVERSE", _num(o.get("crest_m", 0) * m), _num(o.get("cd", 1.84 if not vn else 1.38)), "NO", 0, 0])
+            out["WEIRS"].append([i, r.from_node, r.to_node, "V-NOTCH" if vn else "TRANSVERSE", _num((base_z + o.get("crest_m", 0)) * m), _num(o.get("cd", 1.84 if not vn else 1.38)), "NO", 0, 0])
             out["XSECTIONS"].append([i, "TRIANGULAR" if vn else "RECT_OPEN", _num(o.get("height_m", 1.0) * m), _num(o.get("top_m" if vn else "length_m", 1.0) * m), 0, 0])
-    if not out["ORIFICES"]: del out["ORIFICES"]
-    if not out["WEIRS"]: del out["WEIRS"]
+    app_outlets = {}                                         # an imported file's own orifices and weirs stay; the app's follow them
+    for k in ("ORIFICES", "WEIRS"):
+        if not out[k]: del out[k]
+        elif k in (pt.get("sections") or {}): app_outlets[k] = out.pop(k)
     out["SUBCATCHMENTS"], out["SUBAREAS"] = [], []
     for i, r in C.iterrows():
         old = list(rows.get(f"SUBCATCHMENTS|{i}", [])) or [i, r.gauge, r.outlet, 0, 0, 0, 0, 0]
@@ -226,6 +238,7 @@ def from_project(p, rain=None):
         else:
             lines.append((pt.get("sections") or {}).get(k, ""))
             if k == "CURVES" and my_curves: lines += [_fmt(r) for r in my_curves] + [""]   # after the file's own curves
+            if k in app_outlets: lines += [_fmt(r) for r in app_outlets[k]] + [""]
     return "\n".join(lines) + "\n"
 
 

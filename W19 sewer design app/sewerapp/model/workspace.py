@@ -148,16 +148,28 @@ def apply(p, e):
             for s in p.load_sets.values():
                 for i in ids: s.pop(i, None)
         t = getattr(p, e["table"]); setattr(p, e["table"], t.drop(index=[i for i in ids if i in t.index]))
+        live_l, live_n = set(p.links.index), set(p.nodes.index)
+        for dct in (p.pumps, p.ppipes, p.outlets, p.infil, p.sections):
+            for k in [k for k in dct if k not in live_l]: dct.pop(k)
+        for dct in (p.storage, p.tailwater):
+            for k in [k for k in dct if k not in live_n]: dct.pop(k)
+        for S in p.unit_rows.values():
+            for k in [k for k in S if k not in live_n]: S.pop(k)
         return True
     if op == "move_node":
         p.nodes.loc[str(e["id"]), ["x", "y"]] = [float(e["x"]), float(e["y"])]; _relength(p, [str(e["id"])]); return True
     if op == "split_link":
         lid = str(e["id"]); L = p.links.loc[lid].copy()
-        nid = _new_id(p.nodes, "MH-"); x, y = float(e["x"]), float(e["y"])
+        pres = L.kind == "pressure_pipe"
+        nid = str(e.get("id") or _new_id(p.nodes, "J-" if pres else "MH-")); x, y = float(e["x"]), float(e["y"])
         f = _length(p, L.from_node, L.to_node) and math.dist((p.nodes.x[L.from_node], p.nodes.y[L.from_node]), (x, y)) / max(_length(p, L.from_node, L.to_node), 1e-9)
         inv = L.up_inv + (L.dn_inv - L.up_inv) * f; g = p.nodes.ground[L.from_node] + (p.nodes.ground[L.to_node] - p.nodes.ground[L.from_node]) * f
-        p.nodes.loc[nid] = dict(kind="manhole", x=x, y=y, ground=g, invert=inv, inflow_m3d=0.0)
+        p.nodes.loc[nid] = dict(kind="pressure_junction" if pres else "manhole", x=x, y=y, ground=g, invert=inv, inflow_m3d=0.0)
         p.links = p.links.drop(index=lid)
+        for dct in (p.ppipes, p.infil, p.sections):                      # the halves keep the pipe's own values
+            if lid in dct:
+                v = dct.pop(lid)
+                for half in ("a", "b"): dct[f"{lid}-{half}"] = copy.deepcopy(v)
         for k, (a, b, ui, di) in enumerate(((L.from_node, nid, L.up_inv, inv), (nid, L.to_node, inv, L.dn_inv))):
             p.links.loc[f"{lid}-{'ab'[k]}"] = dict(kind=L.kind, from_node=a, to_node=b, length_m=_length(p, a, b), dn_mm=L.dn_mm,
                                                    inside_mm=L.inside_mm, up_inv=ui, dn_inv=di, transfer=L.transfer, coords=None)
@@ -173,6 +185,17 @@ def apply(p, e):
             if k not in d and k in dd: d[k] = copy.deepcopy(dd[k])           # a sub-setting added since the project was made
             d = d[k]
         if keys[-1] not in d and not (isinstance(dd, dict) and keys[-1] in dd): raise ValueError(f"no setting {e['path']}")
+        if e["path"] == "libraries.pumps":
+            from sewerapp.engine import pressure
+            names = set()
+            for x in e["value"] or []:
+                if x.get("name") in names: raise ValueError(f"two pump definitions are called {x.get('name')}")
+                names.add(x.get("name")); pressure.curve(x)                     # raises on an incomplete curve
+            used = sorted({v["definition"] for v in p.pumps.values() if v.get("definition")} - names)
+            if used: raise ValueError(f"pump definition {used[0]} is used by a pump: give that pump another definition first")
+        if e["path"] == "pressure" and isinstance(e["value"], dict):
+            for k in ("C", "n"):
+                if k in e["value"] and not (isinstance(e["value"][k], (int, float)) and e["value"][k] > 0): raise ValueError(f"{k} must be above 0")
         d[keys[-1]] = e["value"]; return False
     if op == "set_rain":
         p.rain = dict(e["rain"]); return False
@@ -319,7 +342,7 @@ def apply(p, e):
         if d and d not in {x["name"] for x in ((p.settings.get("libraries") or {}).get("pumps") or [])}: raise ValueError(f"no pump definition {d}")
         q, on, off = (float(e["q_ls"]) if e.get("q_ls") is not None else None), float(e.get("on_m") or 0), float(e.get("off_m") or 0)
         if q is not None and not q > 0: raise ValueError("a pump's capacity is a positive flow")
-        if on and off and off >= on: raise ValueError("a pump stops at a lower depth than it starts")
+        if e.get("on_m") is not None and e.get("off_m") is not None and off >= on: raise ValueError("a pump stops at a lower depth than it starts")
         cnt = int(e.get("count") or 1)
         if cnt < 1: raise ValueError("the number of pumps running is 1 or more")
         for i in ids: p.pumps[i] = {k: v for k, v in dict(q_ls=q, on_m=on, off_m=off, definition=d, count=cnt if cnt > 1 else None).items() if v is not None}
@@ -359,6 +382,8 @@ def apply(p, e):
         if vals.get("method") not in (None, "hazen", "darcy", "manning"): raise ValueError("friction method: hazen, darcy or manning")
         for k in ("C", "e_mm", "n", "K"):
             if k in vals and not (isinstance(vals[k], (int, float)) and vals[k] >= 0): raise ValueError(f"{k} is a number, 0 or more")
+        for k in ("C", "n"):
+            if k in vals and not vals[k] > 0: raise ValueError(f"{'Hazen-Williams C' if k == 'C' else 'Manning n'} must be above 0")
         for i in ids:
             if e.get("clear"): p.ppipes.pop(i, None); continue
             o = p.ppipes.setdefault(i, {}); o.update(vals)

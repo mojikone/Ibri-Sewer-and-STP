@@ -1,4 +1,4 @@
-﻿"""Steady pressure hydraulics of pump stations and their force mains (2026-11-23, v3), the part of a sewer model that
+"""Steady pressure hydraulics of pump stations and their force mains (2026-11-23, v3), the part of a sewer model that
 SewerGEMS solves with its pressure engine.
 
 A pump (a link from a wet well) delivers, in the steady run, the flow that reaches its wet well (the sanitary engine's
@@ -69,15 +69,16 @@ def headloss(method, Q, D, L, C=130.0, e_mm=0.1, n=0.012, nu=1.141e-6):
     raise ValueError(f"pressure friction method must be hazen, darcy or manning, not {method}")
 
 
-def solve(project, q_m3d, depth_at=None):
+def solve(project, q_m3d, depth_at=None, only=None, flow_of=None):
     """Per pressure pipe and per pump: flow, velocity, losses, hydraulic grade; per pump: head needed, the pump's head
     at that flow and the operating point. Returns (rows by link id, summary)."""
     L, N = project.links, project.nodes; s = dict(PRESSURE_DEFAULT, **(project.settings.get("pressure") or {}))
     nu = float(project.settings.get("friction", {}).get("nu", 1.141e-6))
     own = getattr(project, "ppipes", None) or {}; pumps = getattr(project, "pumps", None) or {}
     lib = {d["name"]: d for d in ((project.settings.get("libraries") or {}).get("pumps") or [])}
-    leaving = {}
-    for i, r in L.iterrows(): leaving.setdefault(r.from_node, []).append(i)
+    leaving = {}                                                        # pressure pipes by their start node (a few, of many)
+    pp = L[L.kind == "pressure_pipe"]
+    for i, a in zip(pp.index, pp.from_node): leaving.setdefault(a, []).append(i)
     out, summ = {}, dict(pumps=0, pumps_short=0, mains=0, km_mains=0.0)
 
     def pipe_loss(lid, Q):
@@ -87,8 +88,11 @@ def solve(project, q_m3d, depth_at=None):
         v = abs(Q) / (math.pi * D * D / 4) if D > 0 else 0.0
         return hf, float(o.get("K", 0.0)) * v * v / (2 * G), v, D
 
+    tail = getattr(project, "tailwater", None) or {}
     for pid in L.index[L.kind == "pump"]:
+        if only is not None and pid != only: continue
         pr = L.loc[pid]; Q = float(q_m3d.get(pid, 0.0)) / 86400.0
+        if flow_of is not None: Q = float(flow_of) / 1000.0
         main, n = [], pr.to_node                                          # the force main: pressure pipes from the pump on
         while n in leaving and len(main) < 10000:
             nxt = [l for l in leaving[n] if L.kind[l] == "pressure_pipe"]
@@ -97,10 +101,14 @@ def solve(project, q_m3d, depth_at=None):
         end = n
         crown = (float(L.dn_inv[main[-1]]) + pipe_loss(main[-1], 0)[3]) if main else float(N.invert[end])
         level = float(N.invert[end]) + float((depth_at or {}).get(end, 0.0))     # the water in the receiving structure
+        if end in tail: level = max(level, float(tail[end]))              # an outfall held at a fixed level
         out_level = max(crown, level)
+        Q0 = float(q_m3d.get(pid, 0.0)) / 86400.0
+        def in_pipe(lid, Qx):                                             # a shared main: the other pumps' flow held
+            return max(float(q_m3d.get(lid, Q0 * 86400.0)) / 86400.0 - Q0 + Qx, 0.0)
         def system(Qx):                                                   # hydraulic grade at the pump's outlet for a flow
             h = out_level
-            for lid in reversed(main): hf, hm, _, _ = pipe_loss(lid, Qx); h += hf + hm
+            for lid in reversed(main): hf, hm, _, _ = pipe_loss(lid, in_pipe(lid, Qx)); h += hf + hm
             return h
         pu = pumps.get(pid, {}); ww = pr.from_node; npump = max(1, int(pu.get("count") or 1))
         lvl = {"off": pu.get("off_m"), "on": pu.get("on_m")}.get(s.get("suction", "off"))
@@ -109,6 +117,9 @@ def solve(project, q_m3d, depth_at=None):
         row = dict(kind="pump", q_ls=Q * 1000.0, tdh_m=tdh, static_m=out_level - suction, hgl_out=h_out, suction_m=suction,
                    main=",".join(main), discharges_to=end, pumps_running=npump)
         d = lib.get(pu.get("definition")) if pu.get("definition") else None
+        if not d and pu.get("q_ls") is not None:                           # a fixed capacity: is it enough?
+            cap = float(pu["q_ls"]) / 1000.0 * npump; row.update(pump_q_ls=cap * 1000.0, short=Q > cap * 1.0001)
+            summ["pumps_short"] += int(bool(row["short"]))
         if d:
             H1, qmax1 = curve(d)
             if H1 is None: row.update(pump_q_ls=qmax1 * 1000.0 * npump, short=Q > qmax1 * npump * 1.0001)
@@ -116,27 +127,31 @@ def solve(project, q_m3d, depth_at=None):
                 Hf = lambda q, H1=H1: H1(np.asarray(q, float) / npump); qmax = qmax1 * npump   # n identical pumps in parallel
                 hp = float(Hf(Q)); row.update(pump_head_m=hp, short=hp + 1e-6 < tdh)
                 def op(suct):                                             # operating point: pump curve meets system curve
-                    if float(Hf(0.0)) <= system(0.0) - suct: return 0.0, float(Hf(0.0)), True
+                    if float(Hf(0.0)) <= system(0.0) - suct: return 0.0, float(Hf(0.0)), True, False
+                    if float(Hf(qmax)) > system(qmax) - suct: return qmax, float(Hf(qmax)), False, True   # runs off its curve
                     lo, hi = 0.0, qmax
                     for _ in range(80):
                         mid = (lo + hi) / 2
                         if float(Hf(mid)) > system(mid) - suct: lo = mid
                         else: hi = mid
-                    return lo, float(Hf(lo)), False
-                q0, h0, cl = op(suction); row.update(op_q_ls=q0 * 1000.0, op_h_m=h0, cannot_lift=cl)
+                    return lo, float(Hf(lo)), False, False
+                q0, h0, cl, off = op(suction); row.update(op_q_ls=q0 * 1000.0, op_h_m=h0, cannot_lift=cl, off_curve=off)
                 if cl: row["short"] = True
                 for name, dep in (("off", pu.get("off_m")), ("on", pu.get("on_m"))):     # at the stop and start levels
                     if dep is not None:
-                        qx, hx, _ = op(float(N.invert[ww]) + float(dep)); row[f"op_q_{name}_ls"] = qx * 1000.0; row[f"op_h_{name}_m"] = hx
+                        qx, hx, _, _ = op(float(N.invert[ww]) + float(dep)); row[f"op_q_{name}_ls"] = qx * 1000.0; row[f"op_h_{name}_m"] = hx
             summ["pumps_short"] += int(bool(row.get("short")))
+        row["discharge_level"] = out_level
         out[pid] = row; summ["pumps"] += 1
+        if flow_of is not None: continue
         h = system(Q)                                                     # the grade along the main at the duty flow
         for lid in main:
-            hf, hm, v, D = pipe_loss(lid, Q); r = L.loc[lid]
+            if lid in out: break                                          # a shared stretch: done from the first pump
+            Qp = in_pipe(lid, Q); hf, hm, v, D = pipe_loss(lid, Qp); r = L.loc[lid]
             z0, z1 = float(r.up_inv), float(r.dn_inv)
-            out[lid] = dict(kind="pressure_pipe", q_ls=Q * 1000.0, v_ms=v, hf_m=hf, hm_m=hm, hgl_up=h, hgl_dn=h - hf - hm,
+            out[lid] = dict(kind="pressure_pipe", q_ls=Qp * 1000.0, v_ms=v, hf_m=hf, hm_m=hm, hgl_up=h, hgl_dn=h - hf - hm,
                             p_up_m=h - z0, p_dn_m=h - hf - hm - z1, s_f_m_per_km=hf / float(r.length_m) * 1000.0 if r.length_m else 0.0,
-                            negative_pressure=bool(Q > 0 and min(h - z0, h - hf - hm - z1) < 0))
+                            negative_pressure=bool(Qp > 0 and min(h - z0, h - hf - hm - z1) < 0))
             summ["negative_pressure"] = summ.get("negative_pressure", 0) + int(out[lid]["negative_pressure"])
             h -= hf + hm
         summ["mains"] += int(bool(main)); summ["km_mains"] += float(L.length_m[main].sum()) / 1000.0 if main else 0.0
@@ -144,9 +159,8 @@ def solve(project, q_m3d, depth_at=None):
     return out, summ
 
 
-def system_curve(project, pid, q_ls_points, q_m3d=None):
-    """Head needed by pump `pid` at each flow (L/s): its main's system curve, for the pump-definition graph."""
-    res = []
-    for qls in q_ls_points:
-        qq = pd.Series({pid: qls * 86.4}); r, _ = solve(project, qq.to_dict()); res.append(r[pid]["tdh_m"])
-    return res
+def system_curve(project, pid, q_ls_points, q_m3d=None, depth_at=None):
+    """Head needed by pump `pid` at each flow (L/s): its main's system curve (the other pumps' flows and the receiving
+    water as in the steady run), for the pump-definition graph."""
+    q = dict(q_m3d or {})
+    return [solve(project, q, depth_at, only=pid, flow_of=qls)[0][pid]["tdh_m"] for qls in q_ls_points]

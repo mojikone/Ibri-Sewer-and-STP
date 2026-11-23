@@ -433,7 +433,10 @@ def edit(pid: str, sid: str, e: Edit):
             structural = s.edit(sid, ev)
         except (ValueError, KeyError) as x:
             raise HTTPException(400, str(x))
-        _, summ = s.solve(sid)
+        try: _, summ = s.solve(sid)
+        except Exception as x:                                            # the edit cannot be solved: it is taken back
+            s.undo(sid); s.scenarios[sid].redo.pop(); s.solve(sid)
+            raise HTTPException(400, f"not applied: the model could not be solved with it ({type(x).__name__}: {x})")
     made = {k: ev[k] for k in ("end_id", "mid_ids", "link_ids") if k in ev}       # what a layout run created
     return dict(summary=clean(summ), structural=structural, scenario=s.scenarios[sid].to_dict(), **({"created": made} if made else {}))
 
@@ -457,9 +460,17 @@ def pump_system(pid: str, sid: str, id: str, qmax: float):
         p = s.model(sid)
         if id not in p.links.index or p.links.kind[id] != "pump": raise HTTPException(404, f"no pump {id}")
         qs = [float(qmax) * k / 24 for k in range(25)]
-        try: h = pressure.system_curve(p, id, qs)
-        except (ValueError, KeyError) as x: raise HTTPException(400, str(x))
         res, _ = s.solve(sid)
+        from sewerapp.engine import steady
+        try:
+            qd = steady.flows(p, p.settings["design_load"]).to_dict()
+            dep = {}
+            if res is not None:
+                for lid in p.links.index[(p.links.kind == "conduit").to_numpy()]:
+                    if lid in res.index and res.d_over_D[lid] == res.d_over_D[lid] and p.links.inside_mm[lid] == p.links.inside_mm[lid]:
+                        dep[p.links.from_node[lid]] = float(res.d_over_D[lid]) * float(p.links.inside_mm[lid]) / 1000.0
+            h = pressure.system_curve(p, id, qs, qd, dep)
+        except (ValueError, KeyError) as x: raise HTTPException(400, str(x))
     duty = res.loc[id] if res is not None and id in res.index and "tdh_m" in res.columns else None
     return clean(dict(q=qs, h=h, duty_q=float(duty.q_ls) if duty is not None else None, duty_h=float(duty.tdh_m) if duty is not None else None))
 

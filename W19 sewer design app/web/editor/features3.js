@@ -35,22 +35,26 @@ function openUnitLoads() {
 }
 function unitRowsBlock(table, fs) {
   if (table !== "nodes") return "";
-  const ls = state.model.settings.design_load, R = ((state.model.unit_rows || {})[ls] || {}), lib = unitLoads();
+  const sets = Object.keys(state.model.loads || {}), ls = unitRowsSet in (state.model.unit_rows || {}) || unitRowsSet === "*" || sets.includes(unitRowsSet) ? unitRowsSet : "*";
+  const R = ((state.model.unit_rows || {})[ls] || {}), lib = unitLoads();
   const rows0 = JSON.stringify(R[fs[0].id] || []), same = fs.every(f => JSON.stringify(R[f.id] || []) === rows0), rows = same ? JSON.parse(rows0) : [];
   const total = rows.reduce((s, [n, c]) => { const u = lib.find(x => x.name === n); return s + (u ? c * u.rate_m3d : 0); }, 0);
-  return `<h5>Unit loads <span class="muted small">(${esc(ls)}, peaked)</span></h5>` + (!lib.length ? `<p class="muted small">No unit loads in the library yet: Components &gt; Unit loads.</p>` :
+  return `<h5>Unit-load rows <span class="muted small">(unit x count, peaked)</span></h5>` + (!lib.length ? `<p class="muted small">No unit loads in the library yet: Components &gt; Unit loads.</p>` :
+    `<div class="pr"><label for="ur-set">Applies to</label><select id="ur-set">${[["*", "every load set"], ...sets.map(s => [s, `load set ${s} only`])].map(([v, l]) => `<option value="${esc(v)}"${v === ls ? " selected" : ""}>${esc(l)}</option>`).join("")}</select><span></span></div>` +
     `<div id="ur-rows">${!same ? `<p class="muted small">Different rows on the selected structures; rows set here replace them on all.</p>` : ""}` +
     rows.map(([n, c], i) => `<div class="pr ur" data-i="${i}"><select data-k="u">${lib.map(u => `<option${u.name === n ? " selected" : ""}>${esc(u.name)}</option>`).join("")}</select><input type="number" step="any" min="0" data-k="c" value="${c}"><button class="mini" data-k="x" title="Remove">&times;</button></div>`).join("") +
     `</div><div class="row"><button id="ur-add" data-testid="ur-add">Add row</button><button id="ur-apply" data-testid="ur-apply">Apply rows</button><span class="muted small">${same && rows.length ? `${num(toShow("load", total), 3)} ${unitOf("load").u} on each` : ""}</span></div>`);
 }
+let unitRowsSet = "*";
 function wireUnitRows(host) {
   const box = $("#ur-rows", host); if (!box) return;
+  $("#ur-set", host).onchange = e => { unitRowsSet = e.target.value; gridSig = ""; renderProps(); };
   const lib = unitLoads();
   $("#ur-add", host).onclick = () => { box.insertAdjacentHTML("beforeend", `<div class="pr ur"><select data-k="u">${lib.map(u => `<option>${esc(u.name)}</option>`).join("")}</select><input type="number" step="any" min="0" data-k="c" value="1"><button class="mini" data-k="x">&times;</button></div>`); };
   box.onclick = e => { if (e.target.dataset.k === "x") e.target.closest(".ur").remove(); };
   $("#ur-apply", host).onclick = () => {
     const rows = $$(".ur", box).map(r => [$("[data-k=u]", r).value, Number($("[data-k=c]", r).value || 0)]).filter(r => r[1] > 0);
-    const ids = state.sel.ids.slice(), set = state.model.settings.design_load;
+    const ids = state.sel.ids.slice(), set = $("#ur-set", host).value || "*";
     enqueue(async () => { await exec({ op: "set_unit_rows", set, ids, rows }); toast(`Unit-load rows set on ${ids.length} structure${ids.length > 1 ? "s" : ""}.`, "info"); });
   };
 }
@@ -109,7 +113,7 @@ let notes = null;
 async function runValidate() {
   if (!state.pid) { toast("Open a project first.", "info"); return; }
   notes = (await jget(`${base()}/validate`)).items;
-  const err = notes.filter(n => n.level === "error").length, b = $("#notes-badge");
+  const err = notes.filter(n => n.level === "error").length, b = $("#notes-badge"); b.classList.remove("stale");
   b.hidden = !notes.length; b.textContent = notes.length; b.classList.toggle("err", err > 0);
   showTab("notes");
 }
@@ -183,6 +187,8 @@ function columnsMenu(kind, x, y) {
 
 /* ------------------------------------------------------------------ wiring */
 (function wireV3() {
+  const ex = exec;                                                   // after an edit the notifications are re-checked when shown
+  exec = async function (op, more) { const r = await ex(op, more); if (notes && !more) { if (state.tab === "notes") runValidate().catch(() => {}); else { const b = $("#notes-badge"); if (b) b.classList.add("stale"); } } return r; };
   const sb = stormBlock, wb = wireStormBlock;
   stormBlock = function (t, fs) { return unitRowsBlock(t, fs) + sb(t, fs); };
   wireStormBlock = function (host) { wb(host); wireUnitRows(host); };

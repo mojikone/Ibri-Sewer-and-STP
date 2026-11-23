@@ -116,3 +116,7 @@ table.ft tfoot tr.stats td { background: var(--panel2); border-top: 2px solid va
 .pd-list fieldset label { grid-template-columns: 92px minmax(0, 1fr) !important; }
 .pd-list fieldset input, .pd-list fieldset select { width: 100%; min-width: 0; }
 .pd-list { min-width: 0; }
+.badge.stale { opacity: .45; }
+#tbl-notes td, #tbl-notes th { text-align: left !important; }
+#tbl-notes td:first-child, #tbl-notes th:first-child { width: 28px; }
+#tbl-notes td:nth-child(2), #tbl-notes th:nth-child(2) { width: 160px; white-space: nowrap; }

@@ -213,7 +213,7 @@ function stormBlock(table, fs) {
   if (table === "nodes" && (p.kind === "storage" || p.kind === "wetwell")) {
     const s = p.storage || {}, rows = (s.curve || []).map(r => r.join(" ")).join("\n");
     return `<h5>Storage (storm run)</h5><p class="muted small">The plan area SWMM stores water over: one area, or a depth-area table (a pond's banks). Rain falls on it through a catchment drawn over it with this outlet.</p>` +
-      `<div class="pr"><label for="st-area">Area (constant)</label><input type="number" step="any" min="0" id="st-area" value="${s.area_m2 ?? ""}" placeholder="${s.curve ? "table below" : "SWMM default"}"><span class="u">m2</span></div>` +
+      `<div class="pr"><label for="st-area">Area (constant)</label><input type="number" step="any" min="0" id="st-area" value="${s.area_m2 ?? ""}" placeholder="${s.curve ? "table below" : "none: SWMM takes 1,000 m2"}"><span class="u">m2</span></div>` +
       `<div class="pr" style="align-items:start"><label for="st-curve">or depth-area<br><span class="muted small">depth area, a row a line</span></label><textarea id="st-curve" rows="4" style="width:100%;font:12px monospace">${esc(rows)}</textarea><span class="u">m, m2</span></div>` +
       `<div class="row"><button id="st-apply">Apply storage</button><button id="st-clear">Clear</button></div>`;
   }
@@ -223,15 +223,19 @@ function stormBlock(table, fs) {
     let h = `<h5>Pump</h5>` +
       `<div class="pr"><label for="pu-def">Definition</label><select id="pu-def" data-testid="pu-def"><option value="">(none: a fixed capacity)</option>${defs.map(d => `<option${d.name === u.definition ? " selected" : ""}>${esc(d.name)}</option>`).join("")}</select><button class="mini" id="pu-defs" title="Pump definitions: curves and the force main's system curve">Edit...</button></div>` +
       `<div class="pr" id="pu-q-row"${u.definition ? " hidden" : ""}><label for="pu-q">Capacity</label><input type="number" step="any" min="0" id="pu-q" value="${u.q_ls != null ? +(u.q_ls * k).toFixed(4) : ""}" placeholder="ideal: passes its inflow"><span class="u">${fu}</span></div>` +
+      `<div class="pr"><label for="pu-n" title="Identical duty pumps running together (standby pumps are not counted)">Pumps running</label><input type="number" step="1" min="1" id="pu-n" data-testid="pu-n" value="${u.count ?? 1}"><span class="u"></span></div>` +
       `<div class="pr"><label for="pu-on">Starts at depth</label><input type="number" step="any" min="0" id="pu-on" value="${u.on_m ?? ""}"><span class="u">m</span></div>` +
       `<div class="pr"><label for="pu-off">Stops at depth</label><input type="number" step="any" min="0" id="pu-off" value="${u.off_m ?? ""}"><span class="u">m</span></div>` +
       (wwInv != null ? `<p class="muted small" id="pu-elev">In the wet well (invert ${num(wwInv, 2)} m): starts at ${u.on_m != null ? num(wwInv + u.on_m, 2) : "-"} m, stops at ${u.off_m != null ? num(wwInv + u.off_m, 2) : "-"} m.</p>` : "") +
       `<div class="row"><button id="pu-apply" data-testid="pu-apply">Apply pump</button><button id="pu-clear">Clear</button></div>`;
     if (r.tdh_m != null) {
-      const st = r.cannot_lift ? ["bad", "cannot lift: the pump's shutoff head is below the static lift"] : r.short ? ["bad", "SHORT: less head than the main needs"] : r.pump_head_m != null || r.pump_q_ls != null ? ["ok", "delivers the flow"] : ["", "no definition: head needed only"];
+      const st = r.cannot_lift ? ["bad", "cannot lift: the pump's shutoff head is below the static lift"]
+        : r.short ? ["bad", r.pump_head_m != null ? "SHORT: less head than the main needs" : `SHORT: its capacity, ${num(toShow("q_ls", r.pump_q_ls), 3)} ${fu}, is below the flow`]
+        : r.pump_head_m != null || r.pump_q_ls != null ? ["ok", "delivers the flow"] : ["", "no definition or capacity: the head needed only"];
       h += `<div class="pump-res ${st[0]}" data-testid="pump-status"><b>${st[1]}</b><br>` +
         `pumped ${num(toShow("q_ls", r.q_ls), 3)} ${fu} against ${num(r.tdh_m, 2)} m (static ${num(r.static_m, 2)} m, from ${num(r.suction_m, 2)} m)` +
-        (r.pump_head_m != null ? `<br>the pump gives ${num(r.pump_head_m, 2)} m at that flow; on its curve it runs at ${num(toShow("q_ls", r.op_q_ls), 3)} ${fu} and ${num(r.op_h_m, 2)} m` : "") + `</div>`;
+        (r.pump_head_m != null ? `<br>${(u.count || 1) > 1 ? `${u.count} pumps give` : "the pump gives"} ${num(r.pump_head_m, 2)} m at that flow; on ${(u.count || 1) > 1 ? "their" : "its"} curve ${(u.count || 1) > 1 ? "they run" : "it runs"} at ${num(toShow("q_ls", r.op_q_ls), 3)} ${fu} and ${num(r.op_h_m, 2)} m${r.off_curve ? " (the end of the curve)" : ""}` : "") +
+        (r.op_q_on_ls != null && r.op_q_off_ls != null ? `<br>from the start level ${num(toShow("q_ls", r.op_q_on_ls), 3)}, from the stop level ${num(toShow("q_ls", r.op_q_off_ls), 3)} ${fu}` : "") + `</div>`;
     }
     return h;
   }
@@ -240,7 +244,7 @@ function stormBlock(table, fs) {
     const r = (state.storm && state.storm.sid === state.sid && state.storm.data.links || {})[p.id];
     return (p.kind === "orifice"
       ? `<h5>Orifice (storm run)</h5><div class="pr"><label for="ol-shape">Shape</label><select id="ol-shape" data-k="shape"><option value="circular"${o.shape !== "rect" ? " selected" : ""}>Circular</option><option value="rect"${o.shape === "rect" ? " selected" : ""}>Rectangular</option></select><span></span></div>` +
-        (o.shape === "rect" ? f("h_m", "Height", "m", 0.3) + f("w_m", "Width", "m", 0.3) : f("d_m", "Diameter", "m", 0.3)) + f("offset_m", "Invert above the pond's", "m", 0) + f("cd", "Discharge coefficient", "", 0.65) +
+        (o.shape === "rect" ? f("h_m", "Height", "m", 0.3) + f("w_m", "Width", "m", 0.3) : f("d_m", "Diameter", "m", 0.3)) + f("offset_m", "Offset above the inlet invert", "m", 0) + f("cd", "Discharge coefficient", "", 0.65) +
         `<div class="pr"><label for="ol-gated">Flap gate</label><input type="checkbox" id="ol-gated" data-k="gated"${o.gated ? " checked" : ""}><span></span></div>`
       : `<h5>Weir (storm run)</h5><div class="pr"><label for="ol-type">Type</label><select id="ol-type" data-k="type"><option value="transverse"${o.type !== "v_notch" ? " selected" : ""}>Rectangular (transverse)</option><option value="v_notch"${o.type === "v_notch" ? " selected" : ""}>V-notch</option></select><span></span></div>` +
         f("crest_m", "Crest above the inlet invert", "m", 0) + (o.type === "v_notch" ? f("top_m", "Top width", "m", 1) : f("length_m", "Crest length", "m", 1)) + f("height_m", "Opening height", "m", 1) + f("cd", "Discharge coefficient", "", o.type === "v_notch" ? 1.38 : 1.84)) +
@@ -258,10 +262,9 @@ function stormBlock(table, fs) {
     const fld = (k, l, u, d) => `<div class="pr"><label for="pp-${k}">${l}</label><input type="number" step="any" min="0" id="pp-${k}" value="${o[k] ?? ""}" placeholder="project: ${d ?? ""}"><span class="u">${u}</span></div>`;
     return `<h5>Force main</h5><div class="pr"><label for="pp-method">Friction</label><select id="pp-method"><option value="">project (${PFRIC[S.method || "hazen"]})</option>${Object.entries(PFRIC).map(([k, l]) => `<option value="${k}"${o.method === k ? " selected" : ""}>${l}</option>`).join("")}</select><span></span></div>` +
       (meth === "hazen" ? fld("C", "Hazen-Williams C", "", S.C ?? 130) : meth === "darcy" ? fld("e_mm", "Roughness e", "mm", S.e_mm ?? 0.1) : fld("n", "Manning's n", "", S.n ?? 0.012)) +
-      fld("K", "Minor loss K (sum)", "", 0) +
-      `<div class="pr"><label for="pp-check">Check valve</label><input type="checkbox" id="pp-check"${o.check ? " checked" : ""}><span></span></div>` +
+      fld("K", "Minor loss K (sum)", "", 0) + `<p class="muted small">Blank a value and Apply to take the project's.</p>` +
       `<div class="row"><button id="pp-apply" data-testid="pp-apply">Apply</button><button id="pp-clear">Project values</button></div>` +
-      (r.hf_m != null ? `<div class="pump-res" data-testid="pp-res">${num(toShow("q_ls", r.q_ls), 3)} ${unitOf("q_ls").u} at ${num(r.v_ms, 2)} m/s; friction ${num(r.hf_m, 2)} m (${num(r.s_f_m_per_km, 2)} m/km), minor ${num(r.hm_m, 2)} m<br>grade ${num(r.hgl_up, 2)} to ${num(r.hgl_dn, 2)} m; pressure head ${num(r.p_up_m, 1)} to ${num(r.p_dn_m, 1)} m</div>` : "");
+      (r.hf_m != null ? `<div class="pump-res${r.negative_pressure ? " bad" : ""}" data-testid="pp-res">${r.negative_pressure ? "<b>Negative pressure along this main (a high point): the grade falls below the pipe.</b><br>" : ""}${num(toShow("q_ls", r.q_ls), 3)} ${unitOf("q_ls").u} at ${num(r.v_ms, 2)} m/s; friction ${num(r.hf_m, 2)} m (${num(r.s_f_m_per_km, 2)} m/km), minor ${num(r.hm_m, 2)} m<br>grade ${num(r.hgl_up, 2)} to ${num(r.hgl_dn, 2)} m; pressure head ${num(r.p_up_m, 1)} to ${num(r.p_dn_m, 1)} m</div>` : "");
   }
   return "";
 }
@@ -289,13 +292,16 @@ function wireStormBlock(host) {
     pa.onclick = () => {
       const def = $("#pu-def", host).value, q = $("#pu-q", host).value;
       if (!def && q === "") { toast("Choose a pump definition, or give a fixed capacity."); return; }
-      enqueue(() => exec({ op: "set_pump", ids: [id()], definition: def || null, q_ls: def ? null : Number(q) / unitOf("q_ls").k, on_m: Number($("#pu-on", host).value || 0), off_m: Number($("#pu-off", host).value || 0) }));
+      const on = $("#pu-on", host).value, off = $("#pu-off", host).value, nn = Math.max(1, Math.round(Number($("#pu-n", host).value || 1)));
+      enqueue(() => exec({ op: "set_pump", ids: [id()], definition: def || null, q_ls: def ? null : Number(q) / unitOf("q_ls").k, on_m: on === "" ? null : Number(on), off_m: off === "" ? null : Number(off), count: nn }));
     };
     $("#pu-clear", host).onclick = () => enqueue(() => exec({ op: "set_pump", ids: [id()] }));
   }
   const oa = $("#ol-apply", host);
   if (oa) {
-    for (const s of $$("#ol-shape, #ol-type", host)) s.onchange = () => { const f = state.model.links.get(id()); f.properties.outlet = Object.assign({}, f.properties.outlet, { [s.dataset.k]: s.value }); gridSig = ""; renderProps(); };
+    for (const s of $$("#ol-shape, #ol-type", host)) s.onchange = () => {            // a draft: the model changes on Apply
+      const f = state.model.links.get(id()), keep = f.properties.outlet; f.properties.outlet = Object.assign({}, keep, { [s.dataset.k]: s.value });
+      gridSig = ""; renderProps(); f.properties.outlet = keep; };
     oa.onclick = () => { const v = {}; for (const el of $$("[data-k]", host)) { if (!el.closest(".pr") || !el.id.startsWith("ol-")) continue; v[el.dataset.k] = el.type === "checkbox" ? el.checked : el.tagName === "SELECT" ? el.value : (el.value === "" ? null : Number(el.value)); }
       enqueue(() => exec({ op: "set_outlet", ids: [id()], values: v })); };
   }
@@ -305,8 +311,8 @@ function wireStormBlock(host) {
   if (pp) {
     $("#pp-method", host).onchange = e => enqueue(() => exec({ op: "set_ppipe", ids: state.sel.ids.slice(), method: e.target.value || null, clear: !e.target.value && false }));
     pp.onclick = () => {
-      const v = k => { const el = $("#pp-" + k, host); return el && el.value !== "" ? Number(el.value) : undefined; };
-      enqueue(() => exec({ op: "set_ppipe", ids: state.sel.ids.slice(), C: v("C"), e_mm: v("e_mm"), n: v("n"), K: v("K"), check: $("#pp-check", host).checked }));
+      const v = k => { const el = $("#pp-" + k, host); return !el ? undefined : el.value !== "" ? Number(el.value) : null; };   // blank: the project's
+      enqueue(() => exec({ op: "set_ppipe", ids: state.sel.ids.slice(), C: v("C"), e_mm: v("e_mm"), n: v("n"), K: v("K") }));
     };
     $("#pp-clear", host).onclick = () => enqueue(() => exec({ op: "set_ppipe", ids: state.sel.ids.slice(), clear: true }));
   }
@@ -354,7 +360,9 @@ function openPumpDefs(pumpId) {
   };
   // the curve, the design point and, for the pump selected on the map, its force main's system curve
   const graph = async () => {
-    const svg = $("#pd-graph", b); if (!svg) return; collect(); const x = draft[cur], c = pdefCurve(x);
+    const svg = $("#pd-graph", b); if (!svg) return; collect(); const x = draft[cur], c1 = pdefCurve(x);
+    const pu = pumpId && state.model.links.get(pumpId) ? (state.model.links.get(pumpId).properties.pump || {}) : {}, npu = pu.definition === x.name ? Math.max(1, pu.count || 1) : 1;
+    const c = c1 && { f: q => c1.f(q / npu), qmax: c1.qmax * npu };                    // n identical pumps in parallel
     const note = $("#pd-note", b); note.textContent = "";
     if (!c || !isFinite(c.qmax) || !(c.qmax > 0)) { svg.innerHTML = `<text x="20" y="40" fill="currentColor">${x.type === "constant_flow" ? "A constant-flow pump: no head curve." : "Give the points to see the curve."}</text>`; return; }
     let sys = null;
@@ -372,7 +380,10 @@ function openPumpDefs(pumpId) {
     if (sys) {
       s += `<polyline fill="none" stroke="#c0392b" stroke-width="2" stroke-dasharray="5 3" points="${sys.q.map((q, i) => X(q) + "," + Y(sys.h[i])).join(" ")}"/>`;
       if (sys.duty_q != null) s += `<circle cx="${X(sys.duty_q)}" cy="${Y(sys.duty_h)}" r="4" fill="#c0392b"/>`;
-      note.innerHTML = `<span style="color:#1f6feb">&#9644;</span> pump curve &nbsp; <span style="color:#c0392b">&#9644;</span> ${esc(pumpId)}'s force main (system curve); the red dot is the steady duty (${num(sys.duty_q, 2)} L/s, ${num(sys.duty_h, 2)} m).`;
+      const R = (state.results && state.results.links || {})[pumpId] || {};
+      if (R.op_q_ls != null && pu.definition === x.name) s += `<circle cx="${X(R.op_q_ls)}" cy="${Y(R.op_h_m)}" r="5" fill="none" stroke="#111" stroke-width="2"/>`;
+      note.innerHTML = `<span style="color:#1f6feb">&#9644;</span> ${npu > 1 ? npu + " pumps in parallel" : "pump curve"} &nbsp; <span style="color:#c0392b">&#9644;</span> ${esc(pumpId)}'s force main (system curve); red dot: the steady duty (${num(sys.duty_q, 2)} L/s at ${num(sys.duty_h, 2)} m)` +
+        (R.op_q_ls != null && pu.definition === x.name ? `; ring: where the pump runs on its curve (${num(R.op_q_ls, 2)} L/s at ${num(R.op_h_m, 2)} m).` : ".");
     } else note.textContent = "Select a pump on the map and open this from its Properties to draw its force main's system curve.";
     svg.innerHTML = s;
   };
