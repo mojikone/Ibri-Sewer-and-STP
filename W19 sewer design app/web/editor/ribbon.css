@@ -120,3 +120,67 @@ table.ft tfoot tr.stats td { background: var(--panel2); border-top: 2px solid va
 #tbl-notes td, #tbl-notes th { text-align: left !important; }
 #tbl-notes td:first-child, #tbl-notes th:first-child { width: 28px; }
 #tbl-notes td:nth-child(2), #tbl-notes th:nth-child(2) { width: 160px; white-space: nowrap; }
+/* v5 (2026-11-23): mixed selection bar, hint tooltip, docked symbology, settings managers */
+.mix-bar { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; padding: 6px 0 8px; font-size: 12px; border-bottom: 1px solid var(--line2); margin-bottom: 6px; }
+.mix-bar button { border: 1px solid var(--line); background: var(--panel); border-radius: 12px; padding: 2px 10px; }
+.mix-bar button.on { background: var(--sel); border-color: var(--focus); font-weight: 600; }
+#hint.tip { transform: none; max-width: 320px; opacity: 0; transition: opacity .35s; left: 10px; top: 10px; }
+#hint.tip.show { opacity: .96; }
+body.sym-docked #dlg-sym { inset: auto; left: 0; top: var(--dock-top, 130px); bottom: var(--dock-bottom, 0); width: 380px; display: block; }
+body.sym-docked #dlg-sym .dlg { margin: 0; width: 380px; min-width: 0; max-width: none; height: 100%; max-height: none; border-radius: 0; box-shadow: 2px 0 10px rgba(0,0,0,.12); overflow: auto; }
+body.sym-docked #dlg-sym .dlg h3::before { content: "Element "; }
+body.sym-docked #map { left: 380px; }
+body.sym-docked #legend-panel, body.sym-docked #layout-card, body.sym-docked #select-card { left: 390px; }
+#pane-settings.with-nav { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 10px; }
+#pane-settings.with-nav:not(.active) { display: none; }
+#set-nav { display: flex; flex-direction: column; gap: 2px; padding: 6px 0; border-right: 1px solid var(--line2); position: sticky; top: 0; align-self: start; }
+#set-nav button { text-align: left; background: none; border: 0; border-radius: 5px; padding: 6px 10px; }
+#set-nav button:hover { background: var(--sel); }
+#set-nav button.on { background: var(--sel); font-weight: 600; }
+.cat-bar { gap: 8px; align-items: end; margin: 4px 0 8px; }
+.cat-bar label { display: flex; gap: 6px; align-items: center; }
+
+/* ---- responsive (2026-11-23 v5): tablets, phones, phones on their side. body.compact-ui is set by features5.js
+   below 900 px wide or 520 px high; the map keeps the screen, the panels come over it. */
+.dlg { max-width: calc(100vw - 16px); max-height: calc(100vh - 16px); overflow: auto; box-sizing: border-box; }
+@media (max-width: 1100px) {
+  #rb-top .brand { font-size: 0; gap: 0; }                         /* the logo stays, the name goes */
+  #find-input { width: 96px; }
+}
+body.compact-ui { overflow: hidden; }
+body.compact-ui #rb-top { gap: 4px; padding: 0 4px; }
+body.compact-ui #rb-qat { padding-right: 4px; }
+body.compact-ui #rb-tabs { flex: 1 1 auto; min-width: 0; }
+body.compact-ui .rb-tab { padding: 7px 9px 8px; }
+body.compact-ui #rb-right { flex: 0 1 auto; min-width: 0; }
+body.compact-ui #find-input { width: 64px; }
+body.compact-ui .rb-btn:not(.big) { height: 28px; }
+body.compact-ui .rb-items { max-height: 96px; }
+body.compact-ui .rb-page { min-height: 0; }
+body.compact-ui #status-bar { gap: 8px; padding: 0 6px; }
+body.compact-ui #status-bar > :not(#status-line) { display: none; }
+/* Properties: a drawer over the map instead of a column beside it */
+body.compact-ui #main { position: relative; grid-template-columns: minmax(0, 1fr) 0 30px !important; }
+body.compact-ui #split-props { display: none; }
+body.compact-ui:not(.props-collapsed) #props { position: absolute; top: 0; right: 0; bottom: 0; width: min(360px, 92vw); z-index: 40; box-shadow: -6px 0 18px rgba(0,0,0,.22); }
+/* dialogs and cards fit the screen */
+body.compact-ui .dlg { min-width: 0 !important; padding: 12px 12px; border-radius: 10px; }
+body.compact-ui .dlg label { grid-template-columns: 1fr minmax(0, 1.2fr); }
+body.compact-ui #dlg-sym .dlg { min-width: 0; margin: 8px; }
+body.compact-ui.sym-docked #dlg-sym .dlg { width: min(380px, 100vw); }
+body.compact-ui #display-card, body.compact-ui #layout-card, body.compact-ui #select-card, body.compact-ui #legend-panel { max-width: calc(100vw - 60px); }
+body.compact-ui #hint.tip { max-width: calc(100vw - 30px); }
+body.compact-ui .ptool { flex-wrap: wrap; }
+body.compact-ui #asst-form textarea { font-size: 16px; }                   /* no zoom-in on focus (iOS) */
+@media (pointer: coarse) {
+  .rb-btn:not(.big), .tab, .dlg button, #ctx-menu button { min-height: 30px; }
+  .maplibregl-ctrl-group button { width: 36px; height: 36px; }
+}
+body.compact-ui #rb-top > .sp { display: none; }
+body.compact-ui #find-wrap { width: 34px; min-width: 34px; overflow: hidden; flex: 0 0 auto; }                 /* the lens only... */
+body.compact-ui #find-wrap:focus-within { position: absolute; left: 6px; right: 6px; top: 3px; width: auto; z-index: 60;     /* ...a full-width box while typing */
+  background: var(--brand, #13294b); }
+body.compact-ui #find-wrap:focus-within #find-input { width: 100%; }
+body.compact-ui.props-collapsed #main { grid-template-columns: minmax(0, 1fr) 0 0 !important; }   /* no empty strip: it opens on a choice */
+body.compact-ui.props-collapsed #props { display: none; }
+body.compact-ui #find-wrap:not(:focus-within) #find-input { width: 0; padding: 0; opacity: 0; }

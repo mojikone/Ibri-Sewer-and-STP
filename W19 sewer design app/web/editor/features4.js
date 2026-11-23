@@ -148,7 +148,7 @@ function calcMenu(x, y) {
       const n = await askText("Calculation options", "Name of this set of options", `Options ${Object.keys(sets).length + 1}`); if (!n) return;
       const v = Object.assign({}, sets, { [n]: Object.fromEntries(CALC_KEYS.map(k => [k, get(k)]).filter(([, x]) => x !== undefined)) });
       enqueue(async () => { await exec({ op: "set_setting", path: "calc_option_sets", value: v }); toast(`Options "${n}" saved with the project.`, "info"); }); } },
-    { label: "Edit the options (Settings)", run: () => { showTab("settings"); if (ui.bottomCollapsed) setBottom(false); } }]);
+    { label: "Edit the options (Settings)", run: () => { if (typeof openSettingsGroup === "function") openSettingsGroup("*"); else { showTab("settings"); if (ui.bottomCollapsed) setBottom(false); } } }]);
 }
 
 /* ------------------------------------------------------------------ catchment hydrology and GVF results in Properties */

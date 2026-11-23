@@ -36,7 +36,7 @@ def bridge(tmp_path_factory):
 @pytest.fixture(scope="module")
 def server(sg_exports, bridge):
     env = dict(os.environ, W19_ASSISTANT_STUB="1", W19_SG_EXPORTS=sg_exports, W19_BRIDGE=bridge["root"],
-               W19_MODEL_SHARES=bridge["share"] + "=\\\\VBOXSVR\\TestShare")
+               W19_MODEL_SHARES=bridge["share"] + "=\\\\VBOXSVR\\TestShare", W19_AGENT_FOLDERS=os.path.join(bridge["root"], "agent_folders.json"))
     p = subprocess.Popen([sys.executable, "-c", "import uvicorn; uvicorn.run('sewerapp.api.app:app', host='127.0.0.1', port=8798)"],
                          cwd=W19, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     try:
@@ -75,6 +75,11 @@ def page(server, browser):
 
 
 # ------------------------------------------------------------------ helpers
+def settings_all(pg):
+    """The Settings tab, every group shown (Settings opens on one group since v5)."""
+    pg.get_by_test_id("tab-settings").click(); pg.locator("#set-nav button[data-g='*']").click()
+
+
 def idle(pg):
     pg.evaluate("window.ed.idle()")
     pg.wait_for_function("document.body.dataset.pending === '0'")
@@ -252,7 +257,7 @@ def test_profile_tab_draws_the_long_section(page):
 def test_settings_friction_method_changes_velocities(page):
     nid, lid = draw_network(page)
     v0 = result(page, lid[2], "v_ms")
-    page.get_by_test_id("tab-settings").click()
+    settings_all(page)
     page.get_by_test_id("set-friction.method").select_option("manning"); idle(page)
     assert page.evaluate("window.ed.state.model.settings.friction.method") == "manning"
     v1 = result(page, lid[2], "v_ms")
@@ -300,7 +305,7 @@ def test_catchment_rain_and_storm_run_with_hydrograph(page):
     # a storm with no rain says so
     page.get_by_test_id("tools-btn").click(); page.get_by_test_id("tool-run-storm").click(); idle(page)
     expect(page.get_by_test_id("toast")).to_contain_text("rain")
-    page.get_by_test_id("tab-settings").click()
+    settings_all(page)
     page.get_by_test_id("rain-step").fill("5"); page.get_by_test_id("rain-duration").fill("30")
     for i, (d, q) in enumerate(((5, 140), (15, 90), (30, 62), (60, 40))):
         page.get_by_test_id("rain-add-row").click()
@@ -351,7 +356,7 @@ def test_assistant_answers_with_a_tool_call_and_rain_follows_the_model(page):
     assert "tokens" in page.get_by_test_id("asst-usage").inner_text()
     assert page.evaluate("window.ed.state.history.length") == 2
     # the Rain form is filled from the scenario's own rain: apply, undo, and the form follows
-    page.get_by_test_id("tab-settings").click()
+    settings_all(page)
     page.get_by_test_id("rain-add-row").click()
     page.get_by_test_id("rain-row-0-a").fill("10"); page.get_by_test_id("rain-row-0-b").fill("100")
     page.get_by_test_id("rain-apply").click(); idle(page)
@@ -748,7 +753,7 @@ def test_failing_pipes_can_be_hidden_and_stay_off_other_colourings(page):
 
 def test_settings_tables_edited_applied_and_undone(page):
     draw_network(page)
-    page.get_by_test_id("tab-settings").click(); idle(page)
+    settings_all(page); idle(page)
     fs = page.locator("#tbl-design-slope_min")
     first = fs.locator('input[data-c="0"]').first; assert first.input_value() == "200"
     g = fs.locator('input[data-c="1"]').first; assert float(g.input_value()) == 0.5             # G203 Table 11: 5 mm/m for DN200
@@ -965,7 +970,7 @@ def test_v4_gvf_profile_controls_rational_batch_and_option_sets(server, browser)
     pg.evaluate("window.ed.selectElement('catchments', 'CM-1')"); pg.wait_for_timeout(200)
     pg.fill("#hy-C", "0.85"); pg.fill("#hy-tc", "12"); pg.fill("#hy-cn", "88"); pg.get_by_test_id("hy-apply").click(); idle(pg)
     # Settings: curve-number infiltration and the GVF profile
-    pg.evaluate("document.getElementById('tab-settings').click()"); pg.wait_for_timeout(300)
+    pg.evaluate("document.getElementById('tab-settings').click()"); pg.wait_for_timeout(300); pg.locator("#set-nav button[data-g='*']").click()
     pg.select_option("[data-testid='set-storm_infiltration']", "curve_number"); idle(pg)
     pg.select_option("[data-testid='set-flow_profile']", "gvf"); idle(pg)
     pg.click("#rb-tab-home"); pg.locator("#rb-page-home .rb-btn", has_text="Run storm").click(); idle(pg)
@@ -982,3 +987,71 @@ def test_v4_gvf_profile_controls_rational_batch_and_option_sets(server, browser)
     assert "GVF storm" in pg.evaluate("Object.keys(window.ed.state.model.settings.calc_option_sets)")
     assert errs == [], errs
     pg.screenshot(path=os.path.join(SHOTS, "screenshot_v4.png")); ctx.close()
+
+
+def test_v5_mixed_selection_settings_alternatives_and_agent_folders(server, browser, tmp_path):
+    """Pipes and structures selected together and deleted in one step; Settings by group; a loading alternative shared
+    by two scenarios; the assistant's folders and a stand-in answer (2026-11-23 v5, F13-F21)."""
+    ctx = browser.new_context(viewport={"width": 1600, "height": 950}); pg = ctx.new_page(); pg.set_default_timeout(60000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
+    pg.click("#rb-tab-file"); pg.get_by_test_id("rb-new").click(); pg.get_by_test_id("new-name").fill("Mixed")
+    pg.get_by_test_id("new-crs-mode").select_option("local"); pg.get_by_test_id("new-create").click()
+    pg.wait_for_function("window.ed.state.pid && window.ed.state.model && document.body.dataset.pending === '0'")
+    pg.click("#rb-tab-layout"); pg.locator("#rb-page-layout .rb-btn", has_text="Layout").first.click()
+    pg.select_option("#layout-spacing", "custom"); pg.fill("#layout-custom", "100"); pg.dispatch_event("#layout-custom", "change")
+    click_at(pg, 0, 0); idle(pg); click_at(pg, 230, 0); idle(pg); pg.keyboard.press("Escape"); vtool(pg, "select")
+    L, N = ids(pg, "links"), ids(pg, "nodes")
+    # F13: a pipe, then Ctrl+click a structure: both selected, the bar names them, Delete removes both in one step
+    pg.evaluate("([l, n]) => { selClick('links', l, false); selClick('nodes', n, true); }", [L[0], N[-1]])
+    expect(pg.get_by_test_id("mix-bar")).to_contain_text("1 pipe"); expect(pg.get_by_test_id("mix-bar")).to_contain_text("1 structure")
+    pg.evaluate("document.activeElement && document.activeElement.blur()"); pg.keyboard.press("Delete"); idle(pg)
+    assert L[0] not in ids(pg, "links") and N[-1] not in ids(pg, "nodes")
+    pg.get_by_test_id("qat-undo-btn").click(); idle(pg)
+    assert sorted(ids(pg, "links")) == sorted(L) and sorted(ids(pg, "nodes")) == sorted(N)
+    # F19/F20: Settings by group, Design constraints on its own
+    pg.evaluate("document.getElementById('tab-settings').click()"); pg.wait_for_timeout(300)
+    pg.locator("#set-nav button[data-g='Design constraints']").click()
+    vis = pg.evaluate("[...document.querySelectorAll('#settings-form > fieldset')].filter(f => !f.hidden).map(f => f.querySelector('legend').textContent.trim())")
+    assert "Design limits" in vis and "Friction" not in vis, vis
+    # F14: a loading alternative made in the base and taken by a copy: a load set in one shows in the other
+    pg.click("#rb-tab-home"); pg.locator("#rb-page-home .rb-btn", has_text="Alternatives").click()
+    pg.get_by_test_id("alt-new-loading").click(); pg.get_by_test_id("ask-input").fill("Loads 2051"); pg.get_by_test_id("ask-ok").click(); idle(pg)
+    expect(pg.get_by_test_id("alt-use-loading")).to_have_value("A1")
+    pg.locator("#dlg-alts [data-act=close]").click()
+    n0 = N[0]; pg.evaluate("id => window.ed.selectElement('nodes', id)", n0)
+    ld = pg.get_by_test_id("load-design"); ld.fill("100"); ld.press("Enter"); idle(pg)
+    pg.evaluate("document.getElementById('copy-btn').click()"); idle(pg)
+    sid = pg.evaluate("window.ed.state.sid"); assert sid != "base"
+    assert abs(pg.evaluate("id => window.ed.state.model.loads.design[id]", n0) - 100) < 1e-6         # the copy takes A1 too
+    alts = pg.evaluate("fetch('/api/g/projects/' + window.ed.state.pid + '/alternatives').then(r => r.json())")
+    assert alts["alternatives"]["loading"][0]["edits"] == 1 and set(alts["alternatives"]["loading"][0]["used_by"]) == {"base", sid}
+    # F21: the assistant's folders, then a stand-in answer
+    (tmp_path / "gis").mkdir()
+    pg.evaluate("document.getElementById('tab-assistant').click()"); pg.click("#asst-folders")
+    pg.get_by_test_id("folder-path").fill(str(tmp_path / "gis")); pg.locator("#dlg-folders [data-act=ok]").click()
+    expect(pg.get_by_test_id("folder-list")).to_contain_text("gis"); pg.locator("#dlg-folders [data-act=close]").click()
+    pg.fill("#asst-input", "How many pipes?"); pg.click("#asst-send")
+    expect(pg.get_by_test_id("asst-reply")).to_contain_text("Stub answer")
+    assert errs == [], errs
+    pg.screenshot(path=os.path.join(SHOTS, "screenshot_v5.png")); ctx.close()
+
+
+def test_v5_phone_layout_keeps_the_map_and_opens_properties_as_a_drawer(server, browser):
+    """On a phone the map keeps the screen: Properties opens over it when an element is chosen, and closes again."""
+    ctx = browser.new_context(viewport={"width": 375, "height": 812}, has_touch=True, is_mobile=True); pg = ctx.new_page(); pg.set_default_timeout(60000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
+    pg.evaluate("fetch('/api/g/projects/sample/pond', {method: 'POST'}).then(r => r.json()).then(i => openProject(i))"); idle(pg)
+    pg.wait_for_function("document.body.classList.contains('compact-ui')")
+    mw = pg.evaluate("document.getElementById('map-wrap').getBoundingClientRect().width")
+    assert mw > 360, mw                                                     # the map has the width
+    assert not pg.locator("#props").is_visible()
+    pg.evaluate("window.ed.selectElement('nodes', 'WW-1')"); pg.wait_for_timeout(200)
+    expect(pg.locator("#props")).to_be_visible()
+    pw = pg.evaluate("document.getElementById('props').getBoundingClientRect()")
+    assert pw["width"] <= 360 and pw["right"] <= 376                        # a drawer inside the screen
+    pg.evaluate("setSel(null, [])"); pg.wait_for_timeout(200)
+    assert not pg.locator("#props").is_visible()
+    assert errs == [], errs
+    pg.screenshot(path=os.path.join(SHOTS, "screenshot_v5_phone.png")); ctx.close()

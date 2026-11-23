@@ -204,7 +204,7 @@ function columnsMenu(kind, x, y) {
   document.addEventListener("keydown", e => {                       // SewerGEMS's manager shortcuts
     if (e.key === "F8") { e.preventDefault(); enqueue(runValidate); return; }
     if (!e.ctrlKey || e.shiftKey || e.altKey) return;
-    const k = { "1": () => $("#sym-edit").click(), "3": () => selSetMenu(innerWidth / 2 - 120, 140), "4": () => navMenu(innerWidth / 2 - 120, 140), "5": openQuery, "6": openPrototypes, "7": () => showTab("links"), "9": () => showTab("profile") }[e.key];
+    const k = { "1": () => (typeof symDock === "function" ? symDock(!document.body.classList.contains("sym-docked")) : $("#sym-edit").click()), "3": () => selSetMenu(innerWidth / 2 - 120, 140), "4": () => navMenu(innerWidth / 2 - 120, 140), "5": openQuery, "6": openPrototypes, "7": () => showTab("links"), "9": () => showTab("profile") }[e.key];
     if (k && state.model) { e.preventDefault(); k(); }
   });
   tag();

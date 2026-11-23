@@ -176,7 +176,7 @@ function openLibraries() {
     if (tab) { $$("#lib-tabs button", b).forEach(x => x.classList.toggle("on", x === t)); $$("[data-p]", b).forEach(p => { p.hidden = p.dataset.p !== tab; }); return; }
     if (!act) return;
     if (act === "close") { d.hidden = true; return; }
-    if (act === "goto-cat" || act === "goto-set") { d.hidden = true; showTab("settings"); if (ui.bottomCollapsed) setBottom(false); setTimeout(() => { const el = $("#tbl-design-catalogue"); if (el && act === "goto-cat") el.scrollIntoView({ block: "start" }); }, 50); return; }
+    if (act === "goto-cat" || act === "goto-set") { d.hidden = true; showTab("settings"); if (ui.bottomCollapsed) setBottom(false); if (typeof openSettingsGroup === "function") openSettingsGroup("Design constraints"); setTimeout(() => { const el = $("#tbl-design-catalogue"); if (el && act === "goto-cat") el.scrollIntoView({ block: "start" }); }, 50); return; }
     collect();
     if (act === "add") { draft.push({ name: `Box ${draft.length + 1}`, section: { shape: "box", span_m: 2, rise_m: 1.5, n: 0.015 } }); render(); return; }
     const i = +t.closest("tr[data-i]")?.dataset.i;

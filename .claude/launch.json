@@ -7,6 +7,13 @@
       "runtimeArgs": ["-m", "sewerapp.api"],
       "cwd": "W19 sewer design app",
       "port": 8765
+    },
+    {
+      "name": "w19-dev",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-c", "import uvicorn; uvicorn.run('sewerapp.api.app:app', host='127.0.0.1', port=8766)"],
+      "cwd": "W19 sewer design app",
+      "port": 8766
     }
   ]
 }

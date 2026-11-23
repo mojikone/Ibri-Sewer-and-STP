@@ -565,9 +565,10 @@ async function act(ll, mods) {
   if (t === "measure") { addMeasure(ll); return; }
   if (t === "poly") { state.draw = state.draw || { pts: [] }; state.draw.pts.push([ll.lng, ll.lat]); if (multi) selWhat.addPoly = true; drawPreview(); return; }
   if (t === "select" || t === "box") {
-    if (nn) setSel("nodes", multi ? toggled("nodes", nn.id) : [nn.id]);
-    else if (nl) setSel("links", multi ? toggled("links", nl.id) : [nl.id]);
-    else { const c = catchAt(ll); if (c) setSel("catchments", multi ? toggled("catchments", c) : [c]); else if (!multi) setSel(null, []); }
+    const pick = (tb, id) => typeof selClick === "function" ? selClick(tb, id, multi) : setSel(tb, multi ? toggled(tb, id) : [id]);   // features5: any element types together
+    if (nn) pick("nodes", nn.id);
+    else if (nl) pick("links", nl.id);
+    else { const c = catchAt(ll); if (c) pick("catchments", c); else if (!multi) setSel(null, []); }
   } else if (ADD_NODE[t]) {
     const [kind, pre] = ADD_NODE[t];
     if (nn) {                                                         // morph (F5): the node becomes this kind, keeping its id, place, levels and pipes
@@ -956,7 +957,7 @@ function renderProfile(rows) {
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   if (!rows.length) { svg.innerHTML = `<text x="20" y="30">No links.</text>`; prof.view = null; return; }
   const bands = ui.profBands, NB = bands ? 4 : 0;
-  const L = 64, R = 18, T = 26, B = 20 + NB * 14 + 24, pw = W - L - R, ph = Math.max(60, H - T - B);
+  const L = 64, R = 46, T = 66, B = 20 + NB * 14 + 24, pw = W - L - R, ph = Math.max(60, H - T - B);   // room above and right for the slanted manhole names (F17)
   const total = rows[rows.length - 1].ch1 || 1, [c0, c1] = prof.range || [0, total], span = Math.max(c1 - c0, 1e-6);
   const vis = rows.filter(r => r.ch1 >= c0 && r.ch0 <= c1);
   let lo = 1e9, hi = -1e9;
@@ -968,7 +969,7 @@ function renderProfile(rows) {
   const X = c => L + (c - c0) / span * pw, Y = v => T + (hi - v) / (hi - lo) * ph;
   prof.view = { L, T, pw, ph, c0, c1, total, X, Y, W, H, lo, hi };
   let s = `<rect x="${L}" y="${T}" width="${pw}" height="${ph}" fill="#fafbfc" stroke="#d5dbe3"/>`;
-  s += `<defs><clipPath id="pclip"><rect x="${L}" y="${T - 20}" width="${pw}" height="${ph + 20}"/></clipPath></defs>`;
+  s += `<defs><clipPath id="pclip"><rect x="${L}" y="2" width="${pw + R - 4}" height="${T + ph - 2}"/></clipPath></defs>`;
   const sx = niceStep(span, Math.max(2, pw / 90)), sy = niceStep(hi - lo, Math.max(2, ph / 36));
   for (let c = Math.ceil(c0 / sx) * sx; c <= c1 + 1e-9; c += sx) s += `<line x1="${X(c)}" x2="${X(c)}" y1="${T}" y2="${T + ph}" stroke="#eef1f5"/><text x="${X(c)}" y="${T + ph + 13}" text-anchor="middle">${+c.toFixed(1)}</text>`;
   for (let v = Math.ceil(lo / sy) * sy; v <= hi; v += sy) s += `<line x1="${L}" x2="${L + pw}" y1="${Y(v)}" y2="${Y(v)}" stroke="#eef1f5"/><text x="${L - 6}" y="${Y(v) + 3}" text-anchor="end">${+v.toFixed(2)}</text>`;
@@ -1574,7 +1575,8 @@ function asstSend() {
       const u = r.usage || {}, tc = (r.tool_calls || []);
       wait.dataset.testid = "asst-reply";
       wait.innerHTML = mdToHtml(r.reply) + tc.map(c => `<div class="tc ${c.ok === false ? "bad" : ""}" data-testid="asst-tool">tool: ${esc(c.name)}(${esc(JSON.stringify(c.input || {}).slice(0, 160))}) ${c.ok === false ? "failed" : "ok"}</div>`).join("") +
-        `<div class="usage" data-testid="asst-usage">tokens: ${u.input_tokens ?? 0} in, ${u.output_tokens ?? 0} out, ${u.cache_write_tokens ?? 0} cache write, ${u.cache_read_tokens ?? 0} cache read</div>`;
+        `<div class="usage" data-testid="asst-usage">tokens: ${u.input_tokens ?? 0} in, ${u.output_tokens ?? 0} out, ${u.cache_write_tokens ?? 0} cache write, ${u.cache_read_tokens ?? 0} cache read${u.usd != null ? `, about ${(+u.usd).toFixed(3)} USD` : ""}</div>`;
+      if (r.budget && typeof showBudget === "function") showBudget(r.budget);
       const info = await jget(`/projects/${state.pid}`);            // the assistant may have made new scenarios
       state.info.scenarios = info.scenarios; await loadResults(); renderAll();
       for (const a of r.ui_actions || []) {                          // what it pointed at: selected and zoomed, or a profile drawn
@@ -1582,6 +1584,11 @@ function asstSend() {
         else if (a.kind === "profile") { $("#prof-start").value = a.start; $("#prof-end").value = a.end || ""; $("#prof-via").value = a.via || ""; await drawProfile();
           wait.insertAdjacentHTML("beforeend", `<div class="tc" data-testid="asst-action">profile drawn from ${esc(a.start)} (Profile tab)</div>`); }
       }
+      const built = (r.ui_actions || []).filter(a => a.kind === "open_project").pop();      // the agent built a project: offer it
+      if (built && built.project !== state.pid) {
+        wait.insertAdjacentHTML("beforeend", `<div class="tc" data-testid="asst-built">built project ${esc(built.project)} <button class="mini" data-testid="asst-open-built">Open it</button></div>`);
+        wait.querySelector("[data-testid=asst-open-built]").onclick = () => enqueue(async () => { await openProject(await jget(`/projects/${built.project}`)); toast("The agent's project is open: every change it made is one Undo step.", "info"); });
+      } else if ((r.ui_actions || []).some(a => a.kind === "refresh")) { await loadModel(); await loadResults(); renderAll(); }
     } catch (e) { wait.className = "msg err"; wait.textContent = e.message; }
     finally { document.body.dataset.asstBusy = "0"; if (state.asstOn) { inp.disabled = $("#asst-send").disabled = false; } $("#asst-log").scrollTop = $("#asst-log").scrollHeight; }
   });
@@ -1609,7 +1616,7 @@ function renderActiveTab() {
 
 /* ------------------------------------------------------------------ project actions */
 async function openProject(info, fit = true) {
-  state.pid = info.id; state.info = info; state.sid = "base"; state.sel = { table: null, ids: [] }; state.pipeStart = null;
+  state.pid = info.id; state.info = info; state.sid = "base"; state.sel = { table: null, ids: [] }; state.mix = null; state.pipeStart = null;
   state.toolout = null; state.results = null; state.summary = null; state.storm = null; state.draw = null; state.catchPending = null;
   state.rain = { step_min: 5, duration_min: 60, mode: "idf", idf: [], series: [] }; state.rainSig = null; state.history = [];
   state.source = "engine"; state.stored = null; state.storedCache = {}; $("#results-source").value = "engine";
@@ -1824,6 +1831,7 @@ function wireUi() {
     else if (k === "enter" && state.tool === "catchment") finishCatchment();
     else if (k === "enter" && state.tool === "poly") finishPolySelect();
     else if (k === "escape") { clearMeasure(); state.pipeStart = null; state.movePick = null; layout.last = null; state.reconnect = null; if (state.tool === "catchment") setTool("catchment"); setSel(null, []); $("#hint").textContent = state.pid ? HINTS[state.tool] : ""; highlight(); }
+    else if (k === "delete" && typeof deleteSelection === "function" && (state.mix || state.sel.ids.length)) deleteSelection();
     else if (k === "delete" && state.sel.ids.length) { const t = state.sel.table, ids = state.sel.ids.slice(); enqueue(() => deleteIds(t, ids)); }
     else if (!e.ctrlKey) { const m = { s: "select", b: "box", l: "layout", m: "manhole", o: "outfall", w: "wetwell", p: "pipe", v: "move", c: "catchment" }[k]; if (m) setTool(m); }
   });
@@ -2227,7 +2235,7 @@ const selWhat = { target: "links" };
 function boxStart(e) {
   const o = e.originalEvent || {}, bt = state.tool === "box";
   if (!state.model || o.button !== 0 || !(bt || (state.tool === "select" && (o.shiftKey || o.ctrlKey)))) return;
-  const target = bt ? selWhat.target : (o.ctrlKey && !o.shiftKey ? "nodes" : "links");
+  const target = bt ? selWhat.target : selWhat.target === "all" ? "all" : (o.ctrlKey && !o.shiftKey ? "nodes" : "links");   // F13: every type by default
   box = { a: e.point, b: e.point, target, nodes: target === "nodes", add: bt && (o.shiftKey || o.ctrlKey), el: null }; map.dragPan.disable();
 }
 function boxMove(e) {
@@ -2386,7 +2394,7 @@ function renderScenDlg() {
   tag($("#scen-list"));
 }
 async function switchScenario(sid) {
-  state.sid = sid; state.sel = { table: null, ids: [] }; $("#settings-form").dataset.sig = "";
+  state.sid = sid; state.sel = { table: null, ids: [] }; state.mix = null; $("#settings-form").dataset.sig = "";
   if (state.compare && state.compare.b !== sid) clearCompare();
   stopStormPlay(); state.stormFrame = null;
   await refreshAll(false); saveSession();

@@ -89,9 +89,10 @@ function buildRibbon() {
         rbBtn({ press: "export-csv-btn", icon: "exp", label: "CSV" }), rbBtn({ press: "export-kmz-btn", icon: "exp", label: "KMZ (as the map)" })]),
     ]],
     ["home", "Home", () => [
-      rbGroup("Scenario", [rbField("Active", $("#scenario-select"), "wide"), rbBtn({ press: "copy-btn", icon: "copy", label: "Copy" }), rbBtn({ press: "scen-btn", icon: "scen", label: "Scenarios..." })]),
+      rbGroup("Scenario", [rbField("Active", $("#scenario-select"), "wide"), rbBtn({ press: "copy-btn", icon: "copy", label: "Copy" }), rbBtn({ press: "scen-btn", icon: "scen", label: "Scenarios..." }),
+        rbBtn({ icon: "layers", label: "Alternatives...", title: "Named sets of loads, pumps, settings... shared by the scenarios that take them", run: () => openAlternatives() })]),
       rbGroup("Edit", [rbBtn({ press: "undo-btn", icon: "undo", label: "Undo" }), rbBtn({ press: "redo-btn", icon: "redo", label: "Redo" }),
-        rbBtn({ icon: "del", label: "Delete", title: "Delete the selection (Del)", run: () => { if (!state.sel.ids.length) { toast("Select something first.", "info"); return; } const t = state.sel.table, ids = state.sel.ids.slice(); enqueue(() => deleteIds(t, ids)); } }),
+        rbBtn({ icon: "del", label: "Delete", title: "Delete the selection (Del)", run: () => { if (!state.sel.ids.length && !state.mix) { toast("Select something first.", "info"); return; } if (typeof deleteSelection === "function") { deleteSelection(); return; } const t = state.sel.table, ids = state.sel.ids.slice(); enqueue(() => deleteIds(t, ids)); } }),
         rbBtn({ icon: "find", label: "Find", title: "Find an element by its ID (Ctrl+F)", run: () => { $("#find-input").focus(); $("#find-input").select(); } })]),
       rbGroup("Select", [rbBtn({ press: "tool-select", label: "Select", big: true }), rbBtn({ press: "tool-box", label: "Box" }), rbBtn({ press: "tool-poly", label: "Polygon" }),
         rbField("Selects", $("#sel-target")),
@@ -143,6 +144,7 @@ function buildRibbon() {
       rbGroup("Calculate", [rbBtn({ icon: "design", label: "Design...", big: true, run: () => openDesignDlg() }), rbBtn({ icon: "check", label: "Checks", run: () => runNamed("checks") }),
         rbBtn({ icon: "storm", label: "Run storm (SWMM)", run: () => runNamed("storm") }), rbBtn({ icon: "qty", label: "Quantities", run: () => runNamed("quantities") })]),
       rbGroup("Results", [rbField("Shown", $("#results-source"), "wide")], { cls: "rb-form" }),
+      rbGroup("Design", [rbBtn({ icon: "design", label: "Design constraints", big: true, title: "Velocity, cover, d/D and minimum gradient by size, the pipe catalogues", run: () => openSettingsGroup("Design constraints") })]),
       rbGroup("Options", [rbBtn({ icon: "props", label: "Calculation options", big: true, title: "Named sets of options, saved and applied per scenario; the options themselves in Settings",
         run: () => { if (!state.model) return; const r = $("#rb-page-analysis").getBoundingClientRect(); calcMenu(r.left + 420, r.bottom + 2); } }),
         rbBtn({ icon: "scen", label: "Batch run...", title: "The steady run of several scenarios side by side", run: () => openBatch() })]),
@@ -158,7 +160,7 @@ function buildRibbon() {
     ]],
     ["view", "View", () => [
       rbGroup("Symbology", [rbField("Pipes by", $("#color-by")), rbField("Structures by", $("#node-color-by")), rbField("Catchments by", $("#catch-color-by")),
-        rbField("Set", $("#sym-def")), rbBtn({ press: "sym-edit", icon: "sym", label: "Symbology..." })], { cls: "rb-form" }),
+        rbField("Set", $("#sym-def")), rbBtn({ icon: "sym", label: "Element Symbology", title: "The Element Symbology pane on the left (Ctrl+1)", on: () => document.body.classList.contains("sym-docked"), run: () => state.model && symDock(!document.body.classList.contains("sym-docked")) })], { cls: "rb-form" }),
       rbGroup("On the map", [rbCheck($("#arrows-toggle")), rbCheck($("#fail-toggle")), rbBtn({ icon: "legend", label: "Legend", title: "Show or hide the legend", on: () => !ui.legendHidden, run: () => { ui.legendHidden = !ui.legendHidden; saveUi(); rbLegend(); } })], { cls: "rb-form" }),
       rbGroup("Basemap", [rbField("Map", $("#basemap-select")), rbField("Opacity", $("#basemap-opacity")), rbCheck($("#labels-toggle")), rbCheck($("#hillshade-toggle"))], { cls: "rb-form" }),
       rbGroup("Layers", [rbBtn({ icon: "layers", label: "Reference layers...", big: true, title: "Plots, roads, a survey DXF under the network", run: () => rbPop("refs") })]),
@@ -228,7 +230,7 @@ function rbTools() {
   for (const b of $$("#tools-menu button[data-tool]")) host.appendChild(rbBtn({ icon: "run", label: b.textContent.trim(), title: b.title, run: () => b.click(), id: "rb-tool-" + b.dataset.tool }));
   if (!host.children.length) host.innerHTML = `<span class="muted small">Open a project.</span>`;
 }
-function scrollSet(id) { setTimeout(() => { const el = document.getElementById(id); if (el) { el.scrollIntoView({ block: "center" }); el.focus && el.focus(); } }, 60); }
+function scrollSet(id) { setTimeout(() => { const el = document.getElementById(id); if (el && typeof revealSetting === "function") revealSetting(el); if (el) { el.scrollIntoView({ block: "center" }); el.focus && el.focus(); } }, 60); }
 function runNamed(name) {
   if (!state.pid) { toast("Open a project first.", "info"); return; }
   const b = $(`#tools-menu button[data-tool="${name}"]`); if (b) { b.click(); return; }
