@@ -948,3 +948,37 @@ def test_v3_pump_station_force_main_unit_loads_notifications_query(server, brows
     pg.evaluate("document.getElementById('tab-links').click()"); expect(pg.locator("#tbl-links tfoot")).to_have_count(1)
     assert errs == [], errs
     pg.screenshot(path=os.path.join(SHOTS, "screenshot_v3_station.png")); ctx.close()
+
+
+def test_v4_gvf_profile_controls_rational_batch_and_option_sets(server, browser):
+    """GVF chosen in Settings draws its water levels; the pond sample gets a control rule, curve-number infiltration and
+    a run; a drawn catchment gets C and Tc for the rational method; a batch run; a named set of options (2026-11-23 v4)."""
+    ctx = browser.new_context(viewport={"width": 1600, "height": 950}); pg = ctx.new_page(); pg.set_default_timeout(60000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
+    pg.click("#rb-tab-file"); pg.get_by_test_id("rb-sample").click(); pg.locator("#sample-list button", has_text="Pond").click(); idle(pg)
+    # Components > Controls: the pump starts above 1.2 m in the wet well
+    pg.click("#rb-tab-components"); pg.locator("#rb-page-components .rb-btn", has_text="Controls").click(); pg.get_by_test_id("ctl-add").click()
+    pg.locator("#dlg-ctl tr[data-i] [data-f=value]").fill("1.2"); pg.locator("#dlg-ctl [data-act=ok]").click(); idle(pg)
+    assert pg.evaluate("window.ed.state.model.controls.length") == 1
+    # the catchment: C, Tc and a curve number
+    pg.evaluate("window.ed.selectElement('catchments', 'CM-1')"); pg.wait_for_timeout(200)
+    pg.fill("#hy-C", "0.85"); pg.fill("#hy-tc", "12"); pg.fill("#hy-cn", "88"); pg.get_by_test_id("hy-apply").click(); idle(pg)
+    # Settings: curve-number infiltration and the GVF profile
+    pg.evaluate("document.getElementById('tab-settings').click()"); pg.wait_for_timeout(300)
+    pg.select_option("[data-testid='set-storm_infiltration']", "curve_number"); idle(pg)
+    pg.select_option("[data-testid='set-flow_profile']", "gvf"); idle(pg)
+    pg.click("#rb-tab-home"); pg.locator("#rb-page-home .rb-btn", has_text="Run storm").click(); idle(pg)
+    assert pg.evaluate("window.ed.state.storm.data.links['PMP-1'].q_peak") > 0
+    # the rational method on the pond's inlet pipe
+    pg.click("#rb-tab-analysis"); pg.locator("#rb-page-analysis .rb-btn", has_text="Rational method").click(); idle(pg)
+    expect(pg.locator("#tbl-toolout")).to_contain_text("POS-1")
+    # batch run and a named set of options
+    pg.evaluate("document.getElementById('copy-btn').click()"); idle(pg)
+    pg.locator("#rb-page-analysis .rb-btn", has_text="Batch run").click(); pg.locator("#dlg-batch [data-act=ok]").click(); idle(pg)
+    assert pg.locator("#tbl-toolout tbody tr").count() == 2
+    pg.locator("#rb-page-analysis .rb-btn", has_text="Calculation options").click(); pg.get_by_test_id("ctx-co-save").click()
+    pg.get_by_test_id("ask-input").fill("GVF storm"); pg.get_by_test_id("ask-ok").click(); idle(pg)
+    assert "GVF storm" in pg.evaluate("Object.keys(window.ed.state.model.settings.calc_option_sets)")
+    assert errs == [], errs
+    pg.screenshot(path=os.path.join(SHOTS, "screenshot_v4.png")); ctx.close()

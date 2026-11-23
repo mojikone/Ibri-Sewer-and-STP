@@ -134,7 +134,8 @@ function buildRibbon() {
       rbGroup("Loads", [rbBtn({ icon: "tbl", label: "Loads table", title: "The Nodes table: each structure's unit load (peaked) and sanitary load (not peaked); paste columns from Excel", run: panel("nodes") }),
         rbBtn({ icon: "peak", label: "Peaking", title: "The peaking method and table (Settings)", run: panel("settings", () => scrollSet("set-peaking.method")) }),
         rbBtn({ icon: "infil", label: "Infiltration", title: "The infiltration method and rate (Settings); a pipe's own rate in its Properties", run: panel("settings", () => scrollSet("set-infiltration.method")) })]),
-      rbGroup("Storm", [rbBtn({ icon: "rain", label: "Rain", title: "The rain (Settings)", run: panel("settings", () => scrollSet("rain-box")) })]),
+      rbGroup("Storm", [rbBtn({ icon: "rain", label: "Rain", title: "The rain (Settings)", run: panel("settings", () => scrollSet("rain-box")) }),
+        rbBtn({ icon: "run", label: "Controls...", title: "Control rules for pumps, orifices and weirs in the storm run", run: () => openControls() })]),
       rbGroup("Units", [rbBtn({ icon: "units", label: "Units...", big: true, title: "Flows, loads and infiltration units", run: () => openUnits() })]),
     ]],
     ["analysis", "Analysis", () => [
@@ -142,7 +143,10 @@ function buildRibbon() {
       rbGroup("Calculate", [rbBtn({ icon: "design", label: "Design...", big: true, run: () => openDesignDlg() }), rbBtn({ icon: "check", label: "Checks", run: () => runNamed("checks") }),
         rbBtn({ icon: "storm", label: "Run storm (SWMM)", run: () => runNamed("storm") }), rbBtn({ icon: "qty", label: "Quantities", run: () => runNamed("quantities") })]),
       rbGroup("Results", [rbField("Shown", $("#results-source"), "wide")], { cls: "rb-form" }),
-      rbGroup("Options", [rbBtn({ icon: "props", label: "Calculation options", big: true, title: "Friction, peaking, flows, design limits (Settings)", run: panel("settings") })]),
+      rbGroup("Options", [rbBtn({ icon: "props", label: "Calculation options", big: true, title: "Named sets of options, saved and applied per scenario; the options themselves in Settings",
+        run: () => { if (!state.model) return; const r = $("#rb-page-analysis").getBoundingClientRect(); calcMenu(r.left + 420, r.bottom + 2); } }),
+        rbBtn({ icon: "scen", label: "Batch run...", title: "The steady run of several scenarios side by side", run: () => openBatch() })]),
+      rbGroup("Storm (steady)", [rbBtn({ icon: "storm", label: "Rational method", title: "Q = C i A / 360 with the catchments' C and Tc and the IDF table", run: () => enqueue(runRational) })]),
       rbGroup("SewerGEMS", [rbBtn({ press: "sg-btn", icon: "sg", label: "Open model..." }), rbBtn({ icon: "check", label: "Compare (stored)", title: "Compare with the results SewerGEMS stored", run: () => runNamed("compare_stored") })]),
     ]],
     ["report", "Report", () => [
@@ -162,7 +166,8 @@ function buildRibbon() {
       rbGroup("Panels", [rbBtn({ press: "props-btn", icon: "props", label: "Properties", toggle: true }), rbBtn({ press: "bottom-btn", icon: "bottom", label: "Tables", toggle: true }),
         rbBtn({ press: "maxmap-btn", icon: "max", label: "Map only", toggle: true }), rbBtn({ press: "theme-btn", icon: "theme", label: "Theme" })]),
     ]],
-    ["tools", "Tools", () => [rbGroup("Tools", [], { cls: "rb-tools" }), rbGroup("Assistant", [rbBtn({ icon: "asst", label: "Design assistant", big: true, run: panel("assistant") })])]],
+    ["tools", "Tools", () => [rbGroup("Builders", [rbBtn({ icon: "load", label: "LoadBuilder...", big: true, title: "Loads from a GIS layer to the nearest structures", run: () => openLoadBuilder() }),
+        rbBtn({ icon: "imp", label: "TRex...", big: true, title: "Ground levels from a terrain GeoTIFF", run: () => openTRex() })]), rbGroup("Tools", [], { cls: "rb-tools" }), rbGroup("Assistant", [rbBtn({ icon: "asst", label: "Design assistant", big: true, run: panel("assistant") })])]],
     ["help", "Help", () => [
       rbGroup("Help", [rbBtn({ press: "keys-btn", icon: "keys", label: "Keyboard and mouse", big: true })]),
       rbGroup("Interface", [rbBtn({ icon: "classic", label: "Classic toolbar", big: true, title: "The same editor with the earlier toolbar", run: () => { location.href = "/"; } })]),

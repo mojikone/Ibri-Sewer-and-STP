@@ -309,7 +309,7 @@ async function loadModel() {
   const nodeFeat = d.nodes.features, linkFeat = d.links.features, catchFeat = d.catchments.features;
   for (const f of catchFeat) { const r = f.geometry.coordinates[0]; if (r.length && (r[0][0] !== r[r.length - 1][0] || r[0][1] !== r[r.length - 1][1])) r.push(r[0]); }
   state.model = {
-    nodeFeat, linkFeat, catchFeat, settings: d.settings, loads: d.loads, unit_rows: d.unit_rows || {},
+    nodeFeat, linkFeat, catchFeat, settings: d.settings, loads: d.loads, unit_rows: d.unit_rows || {}, controls: d.controls || [],
     nodes: new Map(nodeFeat.map(f => [String(f.id), f])), links: new Map(linkFeat.map(f => [String(f.id), f])),
     catchments: new Map(catchFeat.map(f => [String(f.id), f])),
     fcNodes: { type: "FeatureCollection", features: nodeFeat }, fcLinks: { type: "FeatureCollection", features: linkFeat },
@@ -397,7 +397,7 @@ async function exec(op, more) {
   updateScenario(r.scenario); state.summary = r.summary;
   if (state.storm) state.storm.stale = true;
   if (op.op === "set_rain") state.rainApplied = true;
-  const reread = r.structural || ["set_many", "set_loads", "lock", "set_section", "set_infiltration", "set_storage", "set_pump", "set_prototype", "batch", "set_unit_rows", "set_ppipe", "set_outlet", "set_tailwater"].includes(op.op) || (op.op === "set" && op.table === "nodes" && op.field === "invert");
+  const reread = r.structural || ["set_many", "set_loads", "lock", "set_section", "set_infiltration", "set_storage", "set_pump", "set_prototype", "batch", "set_unit_rows", "set_ppipe", "set_outlet", "set_tailwater", "set_hydrology", "set_controls"].includes(op.op) || (op.op === "set" && op.table === "nodes" && op.field === "invert");
   if (reread) await loadModel(); else patchLocal(op);
   if (!more) { await loadResults(); renderAll(); }
   return r;
@@ -1342,8 +1342,11 @@ function renderSettings() {
     `<fieldset><legend>Flows</legend>${row("design_load", "Design load set", "select", loadOpts)}${row("check_load", "Check load set", "select", [["", "(none)"], ...loadOpts])}` +
     `<p class="muted small">Unit loads are peaked with the load upstream; sanitary loads (each structure's own) are added unpeaked.</p></fieldset>` +
     infilHtml(S, row) +
+    `<fieldset><legend>Water profile and losses</legend>${row("flow_profile", "Profile", "select", [["normal", "Normal depth in each pipe"], ["gvf", "Gradually varied (backwater from the outfalls)"]])}` +
+    `${row("structure_loss.K", "Structure loss K (x v2/2g)", "num")}<p class="muted small">GVF carries the water level up from the outfalls (their tailwater, or critical depth at a free outfall) with the structure loss at each structure; the long section draws it.</p></fieldset>` +
+    `<fieldset><legend>Storm run</legend>${row("storm_infiltration", "Infiltration", "select", [["horton", "Horton (SWMM's typical values)"], ["curve_number", "SCS curve number (each catchment's CN)"]])}</fieldset>` +
     `<fieldset><legend>Force mains</legend>${row("pressure.method", "Friction", "select", [["hazen", "Hazen-Williams"], ["darcy", "Darcy-Weisbach"], ["manning", "Manning"]])}${row("pressure.C", "Hazen-Williams C", "num")}${row("pressure.e_mm", "Darcy roughness e (mm)", "num")}${row("pressure.n", "Manning's n", "num")}` +
-    `${row("pressure.suction", "Pumps lift from", "select", [["off", "the stop level (largest lift)"], ["on", "the start level"]])}<p class="muted small">A pipe's own values are set in its Properties; the pump curves in Components &gt; Pump definitions.</p></fieldset>` +
+    `${row("pressure.suction", "Pumps lift from", "select", [["off", "the stop level (largest lift)"], ["on", "the start level"]])}${row("pressure.use_pumped_flows", "Flow downstream of a pump", "select", [["false", "its inflow"], ["true", "what it pumps on its curve (use pumped flows)"]])}<p class="muted small">A pipe's own values are set in its Properties; the pump curves in Components &gt; Pump definitions.</p></fieldset>` +
     `<fieldset><legend>Design limits</legend>${row("design.v_min", "v min (m/s)", "num")}${row("design.v_max", "v max (m/s)", "num")}${row("design.cover_min", "Cover min (m)", "num")}${row("design.cover_max", "Cover max (m)", "num")}${row("self_cleansing_min_dn", "Self-cleansing above DN (mm)", "num")}</fieldset>` +
     SET_TABLES.map(t => tableHtml(t, S)).join("");
   host.insertAdjacentHTML("beforeend", rainHtml());
@@ -1352,6 +1355,7 @@ function renderSettings() {
   $$("[data-path]", host).forEach(inp => inp.addEventListener("change", () => {
     let v = inp.value; if (inp.dataset.type === "num") { if (v === "") return; v = toModel(inp.dataset.path, Number(v)); }
     if (inp.dataset.path === "check_load" && v === "") v = null;
+    if (inp.dataset.path === "pressure.use_pumped_flows") v = v === "true";
     const path = inp.dataset.path;
     enqueue(async () => { await exec({ op: "set_setting", path, value: v }); if (path === "infiltration.method") { host.dataset.sig = ""; renderSettings(); } });
   }));
