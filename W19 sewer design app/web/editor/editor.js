@@ -22,11 +22,28 @@ const tmap = table => state.model ? (table === "nodes" ? state.model.nodes : tab
 let map, mapReady, chain = Promise.resolve();
 
 /* ------------------------------------------------------------------ plumbing */
+/* a gateway error (the tunnel's 502 page), a server restart or a dropped connection never reached the app: the request
+   is sent again (up to 6 times over about 20 s) with a banner; the app's own errors come back at once, as text */
+const RETRY_STATUS = new Set([502, 503, 504]);
+function netBanner(on, text) {
+  let b = document.getElementById("net-banner");
+  if (!b) { b = document.createElement("div"); b.id = "net-banner"; b.setAttribute("role", "status"); document.body.appendChild(b); }
+  b.hidden = !on; if (text) b.textContent = text;
+}
 async function api(path, opts) {
-  const r = await fetch(API + path, opts);
+  let r, wait = 800;
+  for (let k = 0; ; k++) {
+    try { r = await fetch(API + path, opts); } catch (e) { r = null; }
+    if (r && !RETRY_STATUS.has(r.status)) break;
+    if (k >= 5) { netBanner(false); throw new Error("The app's server cannot be reached. Check that it is running, then try again."); }
+    netBanner(true, `The app's server is not answering (${r ? "gateway error " + r.status : "no connection"}). Retrying...`);
+    await new Promise(res => setTimeout(res, wait)); wait = Math.min(wait * 1.8, 6000);
+  }
+  netBanner(false);
   if (!r.ok) {
     let t = await r.text();
-    try { const j = JSON.parse(t); t = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail || j); } catch (e) { /* keep text */ }
+    try { const j = JSON.parse(t); t = typeof j.detail === "string" ? j.detail : JSON.stringify(j.detail || j); }
+    catch (e) { if (/^\s*</.test(t)) t = `The server answered ${r.status} ${r.statusText || ""}`.trim() + "."; }
     throw new Error(t.slice(0, 400));
   }
   return r;
@@ -186,7 +203,7 @@ function initMap() {
     updateGrid(); applyBasemap(); applyTheme();
   });
   map.on("click", e => { if (suppressClick) return; if (state.tool === "move") return; enqueue(() => act(e.lngLat, e.originalEvent)); });
-  map.on("dblclick", e => { e.preventDefault(); if (state.tool === "catchment") finishCatchment(); });
+  map.on("dblclick", e => { e.preventDefault(); if (state.tool === "poly") finishPolySelect(); else if (state.tool === "catchment") finishCatchment(); else if (state.tool === "layout") { layout.last = null; $("#hint").textContent = HINTS.layout; } });
   map.on("mousemove", e => { map.getCanvas().style.cursor = state.pid ? (state.tool === "select" ? "" : "crosshair") : ""; if (dragging) dragMove(e.lngLat); hover(e); });
   map.on("mouseout", () => { $("#maptip").hidden = true; setHot(null); });
   map.on("zoomend", () => showCoords());
@@ -364,7 +381,7 @@ function patchLocal(op) {
   } else if (op.op === "set_rain") {
     m.rain = JSON.parse(JSON.stringify(op.rain)); syncRain();
   } else if (op.op === "set_setting") {
-    const k = op.path.split("."); let d = m.settings; for (const x of k.slice(0, -1)) d = d[x]; d[k[k.length - 1]] = op.value;
+    const k = op.path.split("."); let d = m.settings; for (const x of k.slice(0, -1)) d = (d[x] = d[x] || {}); d[k[k.length - 1]] = op.value;
   }
 }
 function updateScenario(sc) {
@@ -377,7 +394,7 @@ async function exec(op, more) {
   updateScenario(r.scenario); state.summary = r.summary;
   if (state.storm) state.storm.stale = true;
   if (op.op === "set_rain") state.rainApplied = true;
-  const reread = r.structural || op.op === "set_many" || op.op === "set_loads" || op.op === "lock" || op.op === "set_section" || (op.op === "set" && op.table === "nodes" && op.field === "invert");
+  const reread = r.structural || ["set_many", "set_loads", "lock", "set_section", "set_infiltration", "set_storage", "set_pump", "set_prototype", "batch"].includes(op.op) || (op.op === "set" && op.table === "nodes" && op.field === "invert");
   if (reread) await loadModel(); else patchLocal(op);
   if (!more) { await loadResults(); renderAll(); }
   return r;
@@ -490,7 +507,13 @@ function newId(table, prefix) {
 
 /* ------------------------------------------------------------------ tools */
 const ADD_NODE = { manhole: ["manhole", "MH-"], outfall: ["outfall", "O-"], wetwell: ["wetwell", "WW-"] };
+/* the layout tool (F1, F2): each click places the node prototype and a pipe from the last click; with a maximum spacing
+   the run between two clicks gets manholes at the engineer's rounded spacing (server op add_run, engine/spacing.py) */
+const layout = { node: "manhole", spacing: "table12", custom: 100, last: null };
 const HINTS = {
+  box: "Drag a box to select (what it selects: the Selects list); Shift or Ctrl adds to the selection; a click selects one.",
+  poly: "Click the corners of a polygon; double-click or Enter selects what is inside (Shift adds).",
+  layout: "Click to place a structure; each next click adds a pipe from the last one (manholes at the spacing in between). Esc, right-click or double-click ends the run.",
   select: "Click a node or pipe. Shift or Ctrl adds to the selection.", manhole: "Click the map to add a manhole; click on a pipe to split it.",
   outfall: "Click the map to add an outfall.", wetwell: "Click the map to add a wet well.", pipe: "Click the start node, then the end node (an empty spot makes a manhole).",
   pump: "Click the start node, then the end node.", catchment: "Click the corners; double-click or Enter to finish; then click the outlet node.", move: "Drag a node to move it.", delete: "Click a node or pipe to delete it.",
@@ -498,7 +521,8 @@ const HINTS = {
 };
 function setTool(t) {
   if (t !== "measure") clearMeasure();
-  state.tool = t; state.pipeStart = null; state.movePick = null; state.draw = t === "catchment" ? { pts: [] } : null; state.catchPending = null;
+  layout.last = null; state.reconnect = null;
+  state.tool = t; state.pipeStart = null; state.movePick = null; state.draw = t === "catchment" || t === "poly" ? { pts: [] } : null; state.catchPending = null;
   if (typeof drawPreview === "function" && map && map.getSource && map.getSource("drawpoly")) drawPreview();
   $$(".tool").forEach(b => { const on = b.id === "tool-" + t; b.classList.toggle("active", on); b.setAttribute("aria-pressed", on); });
   $("#hint").textContent = state.pid ? HINTS[t] : "";
@@ -511,14 +535,39 @@ async function act(ll, mods) {
   const nn = nearestNode(pt, 12), nl = nn ? null : nearestLink(pt, 8);
   const multi = mods.shiftKey || mods.ctrlKey || mods.metaKey;
   if (state.routePick) { const id = nn ? nn.id : nl ? nl.id : null; if (id) pickStop(id); else toast("Click a manhole or a pipe.", "info"); return; }
+  if (state.reconnect) {                                              // right-click > Reconnect: the new node for that end
+    const rc = state.reconnect; if (!nn) { toast("Click the node to connect to (Esc cancels).", "info"); return; }
+    state.reconnect = null; $("#hint").textContent = HINTS[state.tool] || "";
+    await exec({ op: "reconnect", id: rc.id, end: rc.end, node: nn.id }); setSel("links", [rc.id]); return;
+  }
+  if (t === "layout") {
+    if (!layout.last) {
+      if (nn) layout.last = nn.id;
+      else if (nl) { const id = newId("nodes", "MH-"); await exec({ op: "split_link", id: nl.id, lon: nl.lng, lat: nl.lat }); layout.last = id; }
+      else { const id = newId("nodes", ADD_NODE[layout.node][1]); await exec({ op: "add_node", id, kind: layout.node, ...lonlat }); layout.last = id; }
+      setSel("nodes", [layout.last]); $("#hint").textContent = "Click the next point; Esc or right-click ends the run."; return;
+    }
+    if (nn && nn.id === layout.last) return;
+    const sp = layout.spacing === "none" ? null : layout.spacing === "table12" ? "table12" : Number(layout.custom) || null;
+    const e = { op: "add_run", from_node: layout.last, max_spacing: sp, ...(nn ? { to_node: nn.id } : { kind: layout.node, ...lonlat }) };
+    const r = await exec(e); const c = r.created || {};
+    layout.last = nn ? nn.id : c.end_id; setSel("nodes", [layout.last]);
+    if ((c.mid_ids || []).length) toast(`${c.link_ids.length} pipes, ${c.mid_ids.length} manhole${c.mid_ids.length > 1 ? "s" : ""} at the spacing in between (one undo step).`, "info");
+    return;
+  }
   if (t === "measure") { addMeasure(ll); return; }
-  if (t === "select") {
+  if (t === "poly") { state.draw = state.draw || { pts: [] }; state.draw.pts.push([ll.lng, ll.lat]); if (multi) selWhat.addPoly = true; drawPreview(); return; }
+  if (t === "select" || t === "box") {
     if (nn) setSel("nodes", multi ? toggled("nodes", nn.id) : [nn.id]);
     else if (nl) setSel("links", multi ? toggled("links", nl.id) : [nl.id]);
     else { const c = catchAt(ll); if (c) setSel("catchments", multi ? toggled("catchments", c) : [c]); else if (!multi) setSel(null, []); }
   } else if (ADD_NODE[t]) {
     const [kind, pre] = ADD_NODE[t];
-    if (nn) { setSel("nodes", [nn.id]); return; }
+    if (nn) {                                                         // morph (F5): the node becomes this kind, keeping its id, place, levels and pipes
+      const f = state.model.nodes.get(nn.id);
+      if (f && f.properties.kind !== kind) { const was = f.properties.kind; await exec({ op: "set", table: "nodes", ids: [nn.id], field: "kind", value: kind }); toast(`${nn.id}: ${was} changed to ${kind} (Ctrl+Z undoes).`, "info"); }
+      setSel("nodes", [nn.id]); return;
+    }
     if (t === "manhole" && nl) {
       const id = newId("nodes", "MH-");
       await exec({ op: "split_link", id: nl.id, lon: nl.lng, lat: nl.lat });
@@ -539,14 +588,14 @@ async function act(ll, mods) {
     if (!endId) { endId = newId("nodes", "MH-"); await exec({ op: "add_node", id: endId, kind: "manhole", ...lonlat }, true); }
     const id = newId("links", kind === "pump" ? "PMP-" : "P-");
     const from = state.pipeStart; state.pipeStart = null;
-    await exec({ op: "add_link", id, kind, from_node: from, to_node: endId, dn_mm: state.info.catalogue[0] });
+    await exec({ op: "add_link", id, kind, from_node: from, to_node: endId });           // the size from the conduit prototype
     setSel("links", [id]); $("#hint").textContent = HINTS[t];
   } else if (t === "catchment") {
     if (state.catchPending) {
       if (!nn) { toast("Click the outlet node."); return; }
       const pts = state.catchPending, m2 = areaM2(pts), id = newId("catchments", "CM-");
       state.catchPending = null; state.draw = { pts: [] }; drawPreview();
-      await exec({ op: "add_catchment", id, outlet: nn.id, area_ha: m2 / 1e4, imperv_pc: 50, width_m: Math.sqrt(m2), slope_pc: 1, coords_ll: pts });
+      await exec({ op: "add_catchment", id, outlet: nn.id, area_ha: m2 / 1e4, width_m: Math.sqrt(m2), coords_ll: pts });   // the rest from the prototype
       setSel("catchments", [id]); $("#hint").textContent = HINTS.catchment;
     } else { state.draw = state.draw || { pts: [] }; state.draw.pts.push([ll.lng, ll.lat]); drawPreview(); }
   } else if (t === "delete") {
@@ -575,6 +624,22 @@ function setSel(table, ids, opt) {
   if (state.tab === "hydro") drawHydro();
 }
 
+/* ------------------------------------------------------------------ units (F7): what is shown and typed; the model
+   keeps m3/d for loads, L/s for results and m3/d per km for infiltration. Chosen per quantity, kept in this browser. */
+const UNIT_CHOICES = {
+  flow_res: { title: "Flows (results)", base: "L/s", opts: { "L/s": 1, "m3/s": 1e-3, "m3/h": 3.6, "m3/d": 86.4, "ML/d": 0.0864, "L/d": 86400 } },
+  flow_load: { title: "Loads", base: "m3/d", opts: { "m3/d": 1, "L/s": 1 / 86.4, "m3/s": 1 / 86400, "m3/h": 1 / 24, "ML/d": 1e-3, "L/d": 1000 } },
+  infil: { title: "Infiltration by length", base: "m3/d/km", opts: { "m3/d/km": 1, "L/d/km": 1000, "L/s/km": 1 / 86.4, "m3/d/m": 1e-3, "L/d/m": 1 } },
+};
+const FIELD_QTY = { q_ls: "flow_res", q_check_ls: "flow_res", q_full_ls: "flow_res", inflow_m3d: "flow_load", load: "flow_load", infiltration_m3d_per_km: "infil" };
+const unitPick = q => { const c = UNIT_CHOICES[q], u = (ui.units || {})[q]; return c.opts[u] != null ? u : c.base; };
+/* {u, k}: the unit shown for a field and the factor from the model's value to it (null: shown as stored) */
+function unitOf(field) { const q = FIELD_QTY[field]; if (!q) return null; const u = unitPick(q); return { u, k: UNIT_CHOICES[q].opts[u] }; }
+const toShow = (field, v) => { const c = unitOf(field); return c && typeof v === "number" ? v * c.k : v; };
+const toModel = (field, v) => { const c = unitOf(field); return c && typeof v === "number" ? v / c.k : v; };
+const LABELS = { inflow_m3d: "Sanitary load (not peaked)", load: "Unit load (peaked)", infil: "Infiltration rate (own)" };
+function setUnit(q, u) { ui.units = Object.assign({}, ui.units, { [q]: u }); saveUi(); $("#settings-form").dataset.sig = ""; gridSig = ""; renderAll(); }
+
 /* ------------------------------------------------------------------ property grid */
 const RO = new Set(["id", "x", "y", "from_node", "to_node", "inside_mm", "outlet"]);
 const UNITS = { area_ha: "ha", imperv_pc: "%", width_m: "m", slope_pc: "%", x: "m", y: "m", ground: "m", invert: "m", inflow_m3d: "m3/d", length_m: "m", dn_mm: "mm", inside_mm: "mm", up_inv: "m", dn_inv: "m" };
@@ -598,7 +663,7 @@ function renderProps() {
   const focusedField = document.activeElement && host.contains(document.activeElement) ? document.activeElement.dataset.field : null;
   const val = k => { const v0 = fs[0].properties[k]; return fs.every(f => f.properties[k] === v0) ? v0 : undefined; };
   if (sig === gridSig && focusedField != null) {          // same selection and the user is typing: update the other controls in place
-    for (const inp of $$("[data-field]", host)) { if (inp.dataset.field === focusedField || inp.dataset.kind === "load") continue; const v = val(inp.dataset.field); if (v !== undefined) inp.type === "checkbox" ? (inp.checked = !!v) : (inp.value = v == null ? "" : v); }
+    for (const inp of $$("[data-field]", host)) { if (inp.dataset.field === focusedField || inp.dataset.kind === "load") continue; const v = val(inp.dataset.field); if (v !== undefined) inp.type === "checkbox" ? (inp.checked = !!v) : (inp.value = v == null ? "" : typeof v === "number" ? +toShow(inp.dataset.field, v).toFixed(4) : v); }
     renderResultsBlock(); return;
   }
   gridSig = sig;
@@ -612,28 +677,42 @@ function renderProps() {
   if (!multi && (table === "nodes" || table === "links")) h += `<div class="trace-bar">Trace <button id="trace-up" title="Everything that drains here (U)">&#8593; Upstream</button><button id="trace-down" title="The way to the outfall (D)">&#8595; Downstream</button></div>`;
   if (table === "links" && fs.every(f => f.properties.kind === "conduit")) h += sectionEditor(fs);
   for (const k of keys) {
-    if (k === "sec" || k === "section") continue;                                   // shown by the section editor
+    if (["sec", "section", "infil", "inflow_m3d", "storage", "pump"].includes(k)) continue;   // shown in their own blocks below
     if (multi && ["id", "x", "y", "from_node", "to_node"].includes(k)) continue;
     const v = val(k), ty = fieldType(table, k, fs[0].properties[k]);
-    h += `<div class="pr"><label for="prop-${k}">${esc(k)}</label>${control(table, k, ty, v)}<span class="u">${UNITS[k] || ""}</span></div>`;
+    h += `<div class="pr"><label for="prop-${k}">${esc(LABELS[k] || k)}</label>${control(table, k, ty, v)}<span class="u">${(unitOf(k) || {}).u || UNITS[k] || ""}</span></div>`;
   }
   if (table === "nodes") {
-    const sets = Object.keys(state.model.loads || {});
-    h += `<h5>Load (m3/d) per load set</h5>`;
+    // SewerGEMS's two kinds of dry-weather load: a unit load is peaked (with everything upstream, by the peaking
+    // method); a sanitary load is added as it is and carried down unpeaked
+    const sets = Object.keys(state.model.loads || {}), lu = unitOf("load").u, v0 = val("inflow_m3d");
+    h += `<h5>Loads</h5><div class="pr"><label for="prop-inflow_m3d" title="Added as it is and carried down unpeaked (a fixed flow, a transfer)">${LABELS.inflow_m3d}</label>${control(table, "inflow_m3d", "num", v0)}<span class="u">${lu}</span></div>`;
+    h += `<p class="muted small">Unit load (peaked), per load set:</p>`;
     for (const s of sets) {
-      const vals = fs.map(f => (state.model.loads[s] || {})[f.id] ?? 0), v = vals.every(x => x === vals[0]) ? vals[0] : "";
-      h += `<div class="pr"><label>${esc(s)}</label><input type="number" step="any" id="load-${esc(s)}" data-testid="load-${esc(s)}" data-kind="load" data-set="${esc(s)}" value="${v}"><span class="u">m3/d</span></div>`;
+      const vals = fs.map(f => (state.model.loads[s] || {})[f.id] ?? 0), v = vals.every(x => x === vals[0]) ? +toShow("load", vals[0]).toFixed(6) : "";
+      h += `<div class="pr"><label title="Peaked with the load upstream by the project's peaking method">${esc(s)}${s === state.model.settings.design_load ? " (design)" : ""}</label><input type="number" step="any" id="load-${esc(s)}" data-testid="load-${esc(s)}" data-kind="load" data-set="${esc(s)}" value="${v}"><span class="u">${lu}</span></div>`;
     }
   }
+  if (table === "links" && fs.every(f => f.properties.kind === "conduit")) {
+    const S = state.model.settings, inf = S.infiltration || { method: "length" }, meth = inf.method || "length";
+    const vals = fs.map(f => f.properties.infil), same = vals.every(x => x === vals[0]), own = same ? vals[0] : undefined;
+    const proj = meth === "length" ? toShow("infiltration_m3d_per_km", S.infiltration_m3d_per_km) : (inf.rate || 0);
+    const u = meth === "length" ? unitOf("infiltration_m3d_per_km").u : INFIL_UNIT[meth];
+    const shown = own == null ? "" : +(meth === "length" ? toShow("infiltration_m3d_per_km", own) : own).toFixed(6);
+    h += `<h5>Infiltration <span class="muted small">(${INFIL_NAME[meth]})</span></h5><div class="pr"><label for="prop-infil" title="Blank: the project's rate">${LABELS.infil}</label>` +
+      `<input type="number" step="any" min="0" id="prop-infil" data-testid="prop-infil" value="${shown}" placeholder="${same ? "project: " + +(+proj).toFixed(4) : "mixed"}"><span class="u">${u}</span></div>`;
+  }
+  if (typeof stormBlock === "function") h += stormBlock(table, fs);            // a pond's area, a pump's capacity and levels (features.js)
   h += `<div id="res-block"></div>`;
   host.innerHTML = h; tag(host);
+  if (typeof wireStormBlock === "function") wireStormBlock(host);
   $$("[data-field]", host).forEach(inp => {
     const field = inp.dataset.field, ty = inp.dataset.type;
     const go = () => {
       if (inp.dataset.kind === "load") return;
       let v = inp.type === "checkbox" ? inp.checked : inp.value;
-      if (ty === "num" || ty === "dn") { if (v === "") return; v = Number(v); if (!isFinite(v)) return; }
-      const cur = val(field); if (cur !== undefined && (cur === v || (typeof cur === "number" && +cur.toFixed(4) === v))) return;   // unchanged as shown
+      if (ty === "num" || ty === "dn") { if (v === "") return; v = Number(v); if (!isFinite(v)) return; if (ty === "num") v = toModel(field, v); }
+      const cur = val(field); if (cur !== undefined && (cur === v || (typeof cur === "number" && Math.abs(cur - v) < 1e-9 * Math.max(1, Math.abs(cur))))) return;   // unchanged
       if (inp._sent === v) return; inp._sent = v;
       const ids = state.sel.ids.slice(), tb = state.sel.table;
       enqueue(() => setField(tb, ids, field, v));
@@ -643,8 +722,15 @@ function renderProps() {
     inp.addEventListener("keydown", e => { if (e.key === "Enter") { go(); inp.blur && inp.blur(); } });
   });
   wireSectionEditor();
+  const pin = $("#prop-infil", host);
+  if (pin) pin.addEventListener("change", () => {
+    const ids = state.sel.ids.slice(), meth = (state.model.settings.infiltration || {}).method || "length";
+    let v = pin.value === "" ? null : Number(pin.value); if (v != null && !(v >= 0)) { toast("An infiltration rate is a number, 0 or more."); return; }
+    if (v != null && meth === "length") v = toModel("infiltration_m3d_per_km", v);
+    enqueue(() => exec({ op: "set_infiltration", ids, rate: v }));
+  });
   $$("[data-kind=load]", host).forEach(inp => {
-    const go = () => { if (inp.value === "" || inp._sent === inp.value) return; inp._sent = inp.value; const v = Number(inp.value), set = inp.dataset.set, ids = state.sel.ids.slice(); enqueue(() => execMany(ids.map((n, k) => ({ op: "set_load", set, node: n, value: v })))); };
+    const go = () => { if (inp.value === "" || inp._sent === inp.value) return; inp._sent = inp.value; const v = toModel("load", Number(inp.value)), set = inp.dataset.set, ids = state.sel.ids.slice(); enqueue(() => execMany([{ op: "set_loads", set, values: Object.fromEntries(ids.map(n => [n, v])) }])); };
     inp.addEventListener("focus", () => { inp._sent = undefined; });
     inp.addEventListener("change", go);
     inp.addEventListener("keydown", e => { if (e.key === "Enter") { go(); inp.blur(); } });
@@ -694,6 +780,7 @@ function wireSectionEditor() {
   };
 }
 function control(table, k, ty, v) {
+  if (typeof v === "number") v = toShow(k, v);
   const a = `id="prop-${k}" data-testid="prop-${k}" data-field="${k}" data-type="${ty}"`, vs = v === undefined ? "" : esc(typeof v === "number" ? +v.toFixed(4) : (v ?? ""));   // shown to 0.1 mm; sent only if edited
   const ph = v === undefined ? ` placeholder="mixed"` : "";
   if (ty === "ro") return `<input type="text" ${a} value="${vs}"${ph} readonly>`;
@@ -711,11 +798,12 @@ function renderResultsBlock() {
   if (state.sel.table !== "links" || state.sel.ids.length !== 1) { host.innerHTML = ""; return; }
   const r = R[state.sel.ids[0]];
   if (!r) { host.innerHTML = `<h5>Results</h5><p class="muted">No result (the network could not be solved, or this is a pump).</p>`; return; }
-  const rows = sg ? [["q_ls", "Flow (L/s)"], ["v_ms", "Velocity (m/s)"], ["depth_m", "Depth (m)"], ["d_over_D", "d/D"]] : [["q_ls", "Flow (L/s)"], ["v_ms", "Velocity (m/s)"], ["d_over_D", "d/D"], ["limit", "d/D limit"], ["s_pc", "Slope (%)"]];
-  if (r.depth_m != null && !sg) rows.splice(2, 2, ["depth_m", "Normal depth (m)"], ["d_over_D", "Depth / rise"], ["yc_m", "Critical depth (m)"], ["q_full_ls", "Full capacity (L/s)"]);
+  const fu = unitOf("q_ls").u;
+  const rows = sg ? [["q_ls", `Flow (${fu})`], ["v_ms", "Velocity (m/s)"], ["depth_m", "Depth (m)"], ["d_over_D", "d/D"]] : [["q_ls", `Flow (${fu})`], ["v_ms", "Velocity (m/s)"], ["d_over_D", "d/D"], ["limit", "d/D limit"], ["s_pc", "Slope (%)"]];
+  if (r.depth_m != null && !sg) rows.splice(2, 2, ["depth_m", "Normal depth (m)"], ["d_over_D", "Depth / rise"], ["yc_m", "Critical depth (m)"], ["q_full_ls", `Full capacity (${fu})`]);
   if (sg && r.yn_sg_m != null) rows.push(["yn_sg_m", "Normal depth (m)"], ["yc_sg_m", "Critical depth (m)"]);
   let h = `<h5>Results ${sg ? "from SewerGEMS (stored)" : "(W19 engine)"}, read-only</h5>`;
-  for (const [k, l] of rows) h += `<div class="pr"><label>${l}</label><span data-testid="res-${k}">${num(r[k], 4)}</span><span></span></div>`;
+  for (const [k, l] of rows) h += `<div class="pr"><label>${l}</label><span data-testid="res-${k}">${num(toShow(k, r[k]), 4)}</span><span></span></div>`;
   const fl = sg ? [] : ["over_limit", "over_vmax", "surcharged", "negative_slope", "under_vmin"].filter(k => r[k]);
   if (!sg) h += `<div class="pr"><label>Flags</label><span class="${fl.length ? "flag" : ""}" data-testid="res-flags">${fl.length ? fl.join(", ") : "none"}</span><span></span></div>`;
   host.innerHTML = h;
@@ -759,9 +847,10 @@ function renderTable(kind) {
   const selTable = kind === "results" || kind === "toolout" ? "links" : kind;
   const sel = new Set(state.sel.table === selTable ? state.sel.ids : []);
   const cols = colsOf(kind);
-  tbl.innerHTML = `<thead><tr>${cols.map(c => `<th data-col="${c}" class="${c === k ? "sorted" + (d < 0 ? " desc" : "") : ""}">${kind === "toolout" ? esc(REPORT_LABEL[c] || c) : c}</th>`).join("")}</tr></thead><tbody>` +
+  const head = c => { const un = kind !== "toolout" && unitOf(c); return kind === "toolout" ? esc(REPORT_LABEL[c] || c) : esc((LABELS[c] || c) + (un ? ` (${un.u})` : "")); };
+  tbl.innerHTML = `<thead><tr>${cols.map(c => `<th data-col="${c}" class="${c === k ? "sorted" + (d < 0 ? " desc" : "") : ""}">${head(c)}</th>`).join("")}</tr></thead><tbody>` +
     slice.map(r => `<tr data-id="${esc(r.id)}" class="${sel.has(String(r.id)) ? "sel" : ""}">${cols.map(c => {
-      const v = r[c], cur = state.cell && state.cell.kind === kind && state.cell.col === c && state.cell.id === String(r.id);
+      const v = kind === "toolout" ? r[c] : toShow(c, r[c]), cur = state.cell && state.cell.kind === kind && state.cell.col === c && state.cell.id === String(r.id);
       return `<td class="${c === "flags" ? "flag" : ""}${cur ? " cur" : ""}">${esc(typeof v === "number" ? +v.toFixed(4) : v)}</td>`;
     }).join("")}</tr>`).join("") + `</tbody>`;
   const cnt = $("#count-" + kind);
@@ -793,7 +882,7 @@ function initTables() {
     $("#bulk-apply-" + kind).addEventListener("click", () => {
       if (state.sel.table !== kind || !state.sel.ids.length) { toast("Select rows first (Ctrl or Shift for several)."); return; }
       const field = fsel.value, c = $("#bulk-value-" + kind); let v = c.type === "checkbox" ? c.checked : c.value;
-      if (c.dataset.type === "num") { if (v === "") return; v = Number(v); }
+      if (c.dataset.type === "num") { if (v === "") return; v = toModel(field, Number(v)); }
       else if (field === "transfer") v = v === "true";
       const ids = state.sel.ids.slice();
       enqueue(() => setField(kind, ids, field, v));
@@ -1238,17 +1327,40 @@ function renderSettings() {
   host.innerHTML =
     `<fieldset><legend>Friction</legend>${row("friction.method", "Method", "select", [["colebrook", "Colebrook-White"], ["manning", "Manning"]])}${row("friction.ks_mm", "ks (mm)", "num")}${row("friction.manning_n", "Manning n", "num")}</fieldset>` +
     `<fieldset><legend>Peaking</legend>${row("peaking.method", "Method", "select", ["table", "peltier", "merrimack", "constant", "none"].map(x => [x, x]))}${row("peaking.constant", "Constant factor", "num")}</fieldset>` +
-    `<fieldset><legend>Flows</legend>${row("infiltration_m3d_per_km", "Infiltration (m3/d/km)", "num")}${row("design_load", "Design load set", "select", loadOpts)}${row("check_load", "Check load set", "select", [["", "(none)"], ...loadOpts])}</fieldset>` +
+    unitsHtml() +
+    `<fieldset><legend>Flows</legend>${row("design_load", "Design load set", "select", loadOpts)}${row("check_load", "Check load set", "select", [["", "(none)"], ...loadOpts])}` +
+    `<p class="muted small">Unit loads are peaked with the load upstream; sanitary loads (each structure's own) are added unpeaked.</p></fieldset>` +
+    infilHtml(S, row) +
     `<fieldset><legend>Design limits</legend>${row("design.v_min", "v min (m/s)", "num")}${row("design.v_max", "v max (m/s)", "num")}${row("design.cover_min", "Cover min (m)", "num")}${row("design.cover_max", "Cover max (m)", "num")}${row("self_cleansing_min_dn", "Self-cleansing above DN (mm)", "num")}</fieldset>` +
     SET_TABLES.map(t => tableHtml(t, S)).join("");
   host.insertAdjacentHTML("beforeend", rainHtml());
   host.dataset.sig = state.pid + state.sid; tag(host);
+  $$("[data-unit]", host).forEach(s => s.addEventListener("change", () => setUnit(s.dataset.unit, s.value)));
   $$("[data-path]", host).forEach(inp => inp.addEventListener("change", () => {
-    let v = inp.value; if (inp.dataset.type === "num") { if (v === "") return; v = Number(v); }
+    let v = inp.value; if (inp.dataset.type === "num") { if (v === "") return; v = toModel(inp.dataset.path, Number(v)); }
     if (inp.dataset.path === "check_load" && v === "") v = null;
-    const path = inp.dataset.path; enqueue(() => exec({ op: "set_setting", path, value: v }));
+    const path = inp.dataset.path;
+    enqueue(async () => { await exec({ op: "set_setting", path, value: v }); if (path === "infiltration.method") { host.dataset.sig = ""; renderSettings(); } });
   }));
   wireRain(host); wireTables(host);
+}
+function unitsHtml() {
+  return `<fieldset><legend>Units</legend>` + Object.entries(UNIT_CHOICES).map(([q, c]) => `<div class="sr"><label for="unit-${q}">${c.title}</label><select id="unit-${q}" data-testid="unit-${q}" data-unit="${q}">` +
+    Object.keys(c.opts).map(u => `<option${u === unitPick(q) ? " selected" : ""}>${u}</option>`).join("") + `</select></div>`).join("") +
+    `<p class="muted small">How values are shown and typed in this browser; the model is unchanged.</p></fieldset>`;
+}
+/* conduit infiltration, as SewerGEMS's: by length (the project's rate, G201 p72), by length x diameter, by inside surface
+   or per conduit; a conduit's own rate (Properties) replaces the project's */
+const INFIL_NAME = { length: "by length", length_diameter: "by length x diameter", surface_area: "by inside surface", count: "per conduit" };
+const INFIL_UNIT = { length_diameter: "m3/d per km per m", surface_area: "m3/d per m2", count: "m3/d" };
+function infilHtml(S, row) {
+  const inf = S.infiltration || { method: "length", rate: 0 }, meth = inf.method || "length";
+  const sel = `<div class="sr"><label for="set-infiltration.method">Method</label><select id="set-infiltration.method" data-testid="set-infiltration.method" data-path="infiltration.method" data-type="select">` +
+    Object.entries(INFIL_NAME).map(([k, l]) => `<option value="${k}"${k === meth ? " selected" : ""}>${l}</option>`).join("") + `</select></div>`;
+  const rate = meth === "length"
+    ? `<div class="sr"><label for="set-infiltration_m3d_per_km">Rate (${unitOf("infiltration_m3d_per_km").u})</label><input type="number" step="any" id="set-infiltration_m3d_per_km" data-testid="set-infiltration_m3d_per_km" data-path="infiltration_m3d_per_km" data-type="num" value="${+toShow("infiltration_m3d_per_km", S.infiltration_m3d_per_km).toFixed(6)}"></div>`
+    : `<div class="sr"><label for="set-infiltration.rate">Rate (${INFIL_UNIT[meth]})</label><input type="number" step="any" id="set-infiltration.rate" data-testid="set-infiltration.rate" data-path="infiltration.rate" data-type="num" value="${inf.rate ?? 0}"></div>`;
+  return `<fieldset><legend>Infiltration</legend>${sel}${rate}<p class="muted small">Not peaked. A conduit's own rate is set in its Properties.</p></fieldset>`;
 }
 /* the project's tables (catalogue, minimum gradient, d/D limit, peaking): edited as a draft, applied as one undoable edit */
 const SET_TABLES = [
@@ -1692,9 +1804,10 @@ function wireUi() {
     if (e.ctrlKey && k === "z") { e.preventDefault(); $("#undo-btn").click(); }
     else if (e.ctrlKey && k === "y") { e.preventDefault(); $("#redo-btn").click(); }
     else if (k === "enter" && state.tool === "catchment") finishCatchment();
-    else if (k === "escape") { clearMeasure(); state.pipeStart = null; state.movePick = null; if (state.tool === "catchment") setTool("catchment"); setSel(null, []); $("#hint").textContent = state.pid ? HINTS[state.tool] : ""; highlight(); }
+    else if (k === "enter" && state.tool === "poly") finishPolySelect();
+    else if (k === "escape") { clearMeasure(); state.pipeStart = null; state.movePick = null; layout.last = null; state.reconnect = null; if (state.tool === "catchment") setTool("catchment"); setSel(null, []); $("#hint").textContent = state.pid ? HINTS[state.tool] : ""; highlight(); }
     else if (k === "delete" && state.sel.ids.length) { const t = state.sel.table, ids = state.sel.ids.slice(); enqueue(() => deleteIds(t, ids)); }
-    else if (!e.ctrlKey) { const m = { s: "select", m: "manhole", o: "outfall", w: "wetwell", p: "pipe", v: "move", c: "catchment" }[k]; if (m) setTool(m); }
+    else if (!e.ctrlKey) { const m = { s: "select", b: "box", l: "layout", m: "manhole", o: "outfall", w: "wetwell", p: "pipe", v: "move", c: "catchment" }[k]; if (m) setTool(m); }
   });
 }
 
@@ -1964,7 +2077,7 @@ async function reattach() {
 const EDITABLE = { nodes: ["kind", "ground", "invert", "inflow_m3d", "load"], links: ["kind", "length_m", "dn_mm", "up_inv", "dn_inv", "transfer"] };
 function cellEditor(kind, td, id, col) {
   const f = tmap(kind).get(id); if (!f) return;
-  const m = state.model, cur = col === "load" ? ((m.loads[m.settings.design_load] || {})[id] ?? 0) : f.properties[col];
+  const m = state.model, cur = toShow(col, col === "load" ? ((m.loads[m.settings.design_load] || {})[id] ?? 0) : f.properties[col]);
   let html;
   if (col === "kind") html = `<select>${(kind === "nodes" ? state.info.node_kinds : state.info.link_kinds).map(o => `<option${o === cur ? " selected" : ""}>${o}</option>`).join("")}</select>`;
   else if (col === "dn_mm") html = `<select>${state.info.catalogue.map(o => `<option${o === cur ? " selected" : ""}>${o}</option>`).join("")}</select>`;
@@ -1980,6 +2093,7 @@ function cellEditor(kind, td, id, col) {
     const same = typeof cur === "number" && typeof v === "number" ? +cur.toFixed(4) === v : cur === v;
     const after = () => { if (next) { const vw = state.view[kind], i = vw.indexOf(id); if (i >= 0 && i + 1 < vw.length) openCell(kind, vw[i + 1], col); } };
     if (same) { renderTable(kind); after(); return; }
+    if (typeof v === "number") v = toModel(col, v);
     enqueue(async () => {
       if (col === "load") await execMany([{ op: "set_loads", set: m.settings.design_load, values: { [id]: v } }]);
       else await setField(kind, [id], col, v);
@@ -2016,7 +2130,7 @@ function pasteCells(text) {
       const id = view[r0 + i]; if (id == null || row[j] == null || row[j].trim() === "") return;
       let v = row[j].trim();
       if (col === "transfer") v = /^(true|1|yes)$/i.test(v);
-      else if (col !== "kind") { v = Number(v.replace(/,/g, "")); if (!isFinite(v)) return; }
+      else if (col !== "kind") { v = Number(v.replace(/,/g, "")); if (!isFinite(v)) return; v = toModel(col, v); }
       values[id] = v; n++;
     });
     if (!Object.keys(values).length) continue;
@@ -2090,10 +2204,13 @@ function traceProfile() {
 
 /* ---- box select: Shift+drag selects the pipes whose middle is inside the box, Ctrl+drag the nodes */
 let box = null;
+/* what the box and polygon tools select: pipes, structures or catchments (Select > Box / Polygon, "Selects") */
+const selWhat = { target: "links" };
 function boxStart(e) {
-  const o = e.originalEvent || {};
-  if (state.tool !== "select" || !state.model || !(o.shiftKey || o.ctrlKey) || o.button !== 0) return;
-  box = { a: e.point, b: e.point, nodes: o.ctrlKey && !o.shiftKey, el: null }; map.dragPan.disable();
+  const o = e.originalEvent || {}, bt = state.tool === "box";
+  if (!state.model || o.button !== 0 || !(bt || (state.tool === "select" && (o.shiftKey || o.ctrlKey)))) return;
+  const target = bt ? selWhat.target : (o.ctrlKey && !o.shiftKey ? "nodes" : "links");
+  box = { a: e.point, b: e.point, target, nodes: target === "nodes", add: bt && (o.shiftKey || o.ctrlKey), el: null }; map.dragPan.disable();
 }
 function boxMove(e) {
   if (!box) return; box.b = e.point;
@@ -2107,14 +2224,29 @@ function boxEnd(e) {
   if (x1 - x0 < 4 && y1 - y0 < 4) return;                      // a click: the Select tool handles it
   suppressClick = true; setTimeout(() => { suppressClick = false; }, 80);
   const inside = c => { const q = map.project(c); return q.x >= x0 && q.x <= x1 && q.y >= y0 && q.y <= y1; };
+  selectInside(b.target, inside, b.add);
+}
+/* the elements of one kind whose point (a node, a pipe's middle, a catchment's centre) passes the test; add: to the selection */
+function selectInside(target, inside, add) {
   const m = state.model, ids = [];
-  if (b.nodes) { for (const f of m.nodeFeat) if (inside(f.geometry.coordinates)) ids.push(String(f.id)); }
+  if (target === "nodes") { for (const f of m.nodeFeat) if (inside(f.geometry.coordinates)) ids.push(String(f.id)); }
+  else if (target === "catchments") { for (const f of m.catchFeat) if (inside(centroidOf(ringOf(f)))) ids.push(String(f.id)); }
   else for (const f of m.linkFeat) {
     const c = f.geometry.coordinates, a0 = c[0], a1 = c[c.length - 1];
     if (inside([(a0[0] + a1[0]) / 2, (a0[1] + a1[1]) / 2])) ids.push(String(f.id));
   }
-  setSel(b.nodes ? "nodes" : "links", ids);
-  toast(`${ids.length} ${b.nodes ? "nodes" : "pipes"} selected. Edit them together in Properties or with Set field in the table.`, "info");
+  const all = add && state.sel.table === target ? [...new Set([...state.sel.ids, ...ids])] : ids;
+  setSel(target, all);
+  const w = { nodes: "structures", links: "pipes", catchments: "catchments" }[target];
+  toast(`${all.length} ${w} selected${add ? " in all" : ""}. Edit them together in Properties or with Set field in the table.`, "info");
+}
+/* the polygon tool: click the corners, double-click or Enter closes it and selects what is inside */
+function finishPolySelect() {
+  const pts = (state.draw && state.draw.pts) || []; state.draw = { pts: [] }; drawPreview();
+  if (pts.length < 3) { toast("Click at least three corners, then double-click.", "info"); return; }
+  const P = pts.map(c => map.project(c));
+  const inside = c => { const q = map.project(c); let o = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { if ((P[i].y > q.y) !== (P[j].y > q.y) && q.x < (P[j].x - P[i].x) * (q.y - P[i].y) / (P[j].y - P[i].y) + P[i].x) o = !o; } return o; };
+  selectInside(selWhat.target, inside, !!selWhat.addPoly); selWhat.addPoly = false;
 }
 
 /* ---- reference layers: GIS files drawn under the network for orientation; display only, kept with the project */

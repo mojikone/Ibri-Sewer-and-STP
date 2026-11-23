@@ -832,3 +832,70 @@ def test_symbology_colour_by_any_field_labels_and_named_definitions(page):
 
 def test_no_javascript_errors(page):
     assert page.errors == [], page.errors
+
+
+# ------------------------------------------------------------------ v2 (2026-11-23): the ribbon, layout runs, morph, reconnect, units
+def vtool(pg, name):
+    """In the ribbon the old tool strip is hidden: press its button as the ribbon does."""
+    pg.evaluate("n => document.getElementById('tool-' + n).click()", name)
+
+
+def test_v2_ribbon_layout_run_morph_reconnect_units_and_pond(server, browser):
+    ctx = browser.new_context(viewport={"width": 1600, "height": 950}); pg = ctx.new_page(); pg.set_default_timeout(60000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
+    assert not pg.locator("#topbar").is_visible() and pg.locator("#ribbon").is_visible()
+    # File > New (a local-metre project)
+    pg.click("#rb-tab-file"); pg.get_by_test_id("rb-new").click(); pg.get_by_test_id("new-name").fill("Ribbon")
+    pg.get_by_test_id("new-crs-mode").select_option("local"); pg.get_by_test_id("new-create").click()
+    pg.wait_for_function("window.ed.state.pid && window.ed.state.model && document.body.dataset.pending === '0'")
+    # Layout: a 230 m run at a 100 m maximum gives 80 + 80 + 70 (the engineer's rule), one undo step
+    pg.click("#rb-tab-layout"); pg.locator("#rb-page-layout .rb-btn", has_text="Layout").first.click()
+    pg.select_option("#layout-spacing", "custom"); pg.fill("#layout-custom", "100"); pg.dispatch_event("#layout-custom", "change")
+    click_at(pg, 0, 0); idle(pg); click_at(pg, 230, 0); idle(pg)
+    lens = sorted(round(x, 3) for x in pg.evaluate("window.ed.state.model.linkFeat.map(f => f.properties.length_m)"))
+    assert lens == [70.0, 80.0, 80.0], lens
+    click_at(pg, 230, -60); idle(pg)                                         # the run goes on from the last structure
+    assert len(ids(pg, "links")) == 4
+    pg.keyboard.press("Escape")
+    pg.get_by_test_id("qat-undo-btn").click(); idle(pg); assert len(ids(pg, "links")) == 3
+    # morph: the outfall tool on the run's last structure turns it into an outfall (keeping its pipes)
+    last = pg.evaluate("window.ed.state.model.links.get(window.ed.state.model.linkFeat.find(f => !window.ed.state.model.linkFeat.some(g => g.properties.from_node === f.properties.to_node)).id).properties.to_node")
+    vtool(pg, "outfall"); click_at(pg, 230, 0); idle(pg)
+    assert pg.evaluate("id => window.ed.state.model.nodes.get(id).properties.kind", last) == "outfall" and len(ids(pg, "links")) == 3
+    # right-click a pipe: Reverse; then Reconnect its stop to a new manhole
+    vtool(pg, "select")
+    pg.evaluate("window.ed.ctx(40 / 111319.49, 0)"); expect(pg.locator("#ctx-menu")).to_be_visible()
+    first = pg.evaluate("window.ed.state.sel.ids[0]")
+    pg.get_by_test_id("ctx-reverse").click(); idle(pg)
+    p = pg.evaluate("id => window.ed.state.model.links.get(id).properties", first)
+    vtool(pg, "manhole"); click_at(pg, 40, 60); idle(pg); vtool(pg, "select")
+    new = [n for n in ids(pg, "nodes") if pg.evaluate("id => window.ed.state.model.nodes.get(id).geometry.coordinates[1]", n) > 0][0]
+    pg.evaluate("window.ed.ctx(40 / 111319.49, 0)"); pg.get_by_test_id("ctx-reconnect-to").click()
+    click_at(pg, 40, 60); idle(pg)
+    assert pg.evaluate("id => window.ed.state.model.links.get(id).properties.to_node", first) == new
+    assert p["from_node"] != pg.evaluate("id => window.ed.state.model.links.get(id).properties.to_node", first)
+    # box select (Home > Box): a drag over the whole run selects its pipes; the navigator finds the connected network
+    pg.click("#rb-tab-home"); pg.locator("#rb-page-home [data-testid=rb-box]").click()
+    r = pg.evaluate("(() => { const b = window.ed.map.getCanvas().getBoundingClientRect(); const a = window.ed.map.project([-20 / 111319.49, 80 / 110574]), c = window.ed.map.project([260 / 111319.49, -20 / 110574]); return [b.left + a.x, b.top + a.y, b.left + c.x, b.top + c.y]; })()")
+    pg.mouse.move(r[0], r[1]); pg.mouse.down(); pg.mouse.move((r[0] + r[2]) / 2, (r[1] + r[3]) / 2, steps=4); pg.mouse.move(r[2], r[3], steps=4); pg.mouse.up(); idle(pg)
+    assert pg.evaluate("window.ed.state.sel.table") == "links" and len(pg.evaluate("window.ed.state.sel.ids")) == 3
+    pg.evaluate("id => window.ed.selectElement('nodes', id)", new)
+    pg.locator("#rb-page-home [data-testid=rb-connected]").click(); idle(pg)
+    assert sorted(pg.evaluate("window.ed.state.sel.ids")) == sorted(ids(pg, "links"))
+    pg.locator("#rb-page-home [data-testid=rb-find-]").click(); pg.get_by_test_id("ctx-find-isolated").click()
+    pg.keyboard.press("Escape"); pg.evaluate("document.getElementById('tool-select').click()")    # units: loads typed in L/s are stored in m3/d
+    pg.click("#rb-tab-components"); pg.locator("#rb-page-components .rb-btn", has_text="Units").click()
+    pg.get_by_test_id("units-flow_load").select_option("L/s"); pg.locator("#dlg-units [data-act=ok]").click()
+    n0 = ids(pg, "nodes")[0]; pg.evaluate("id => window.ed.selectElement('nodes', id)", n0)
+    ld = pg.get_by_test_id("load-design"); ld.fill("1"); ld.press("Enter"); idle(pg)
+    assert abs(pg.evaluate("id => window.ed.state.model.loads.design[id]", n0) - 86.4) < 1e-6
+    # collapse the ribbon (double-click a tab), and back
+    pg.dblclick("#rb-tab-view"); assert not pg.locator("#rb-panel").is_visible()
+    pg.dblclick("#rb-tab-view"); assert pg.locator("#rb-panel").is_visible()
+    # the pond sample: rain fills it, the pump starts at its depth
+    pg.click("#rb-tab-file"); pg.get_by_test_id("rb-sample").click(); pg.locator("#sample-list button", has_text="Pond").click(); idle(pg)
+    pg.click("#rb-tab-home"); pg.locator("#rb-page-home .rb-btn", has_text="Run storm").click(); idle(pg)
+    assert abs(pg.evaluate("window.ed.state.storm.data.links['PMP-1'].q_peak") - 0.12) < 0.002
+    assert errs == [], errs
+    pg.screenshot(path=os.path.join(SHOTS, "screenshot_v2_ribbon.png")); ctx.close()

@@ -1,0 +1,95 @@
+/* W19 v2 (2026-11-23): the ribbon (at /v2), and what both interfaces share from this batch: the right-click menu, the
+   layout card, the server banner, the prototypes and libraries dialogs. Colours are editor.css's tokens. */
+
+/* ---------------------------------------------------------------- shared */
+#ctx-menu { position: fixed; z-index: 95; min-width: 220px; background: var(--panel); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 8px; box-shadow: var(--shadow); padding: 4px; font-size: 12.5px; }
+#ctx-menu .mh { color: var(--muted); font-size: 11px; padding: 5px 10px 2px; text-transform: none; font-weight: 600; }
+#ctx-menu button { display: flex; width: 100%; justify-content: space-between; gap: 18px; background: none; border: 0; border-radius: 5px; padding: 5px 10px; text-align: left; }
+#ctx-menu button:hover:not(:disabled) { background: var(--sel); }
+#ctx-menu button:disabled { color: var(--muted); cursor: default; }
+#ctx-menu .k { color: var(--muted); font-size: 11px; }
+#ctx-menu hr { border: 0; border-top: 1px solid var(--line2); margin: 3px 4px; }
+#net-banner { position: fixed; top: 0; left: 50%; transform: translateX(-50%); z-index: 99; background: #8a5a00; color: #fff; padding: 6px 18px;
+  border-radius: 0 0 8px 8px; font-size: 12.5px; box-shadow: var(--shadow); }
+#layout-card { position: absolute; left: 10px; bottom: 34px; z-index: 6; width: 236px; background: var(--overlay); border: 1px solid var(--line); border-radius: 9px;
+  box-shadow: var(--shadow); padding: 8px 10px; display: grid; grid-template-columns: 78px 1fr; gap: 5px 8px; align-items: center; font-size: 12px; }
+#layout-card .lc-h { grid-column: 1 / -1; font-weight: 650; }
+#layout-card select, #layout-card input { min-width: 0; border: 1px solid var(--line); border-radius: 5px; padding: 3px 5px; background: var(--input); }
+#layout-card #layout-note { grid-column: 1 / -1; }
+.small { font-size: 11.5px; }
+.proto-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.proto-grid fieldset { border: 1px solid var(--line); border-radius: 8px; margin: 0; }
+.proto-grid label { grid-template-columns: 1fr 90px; font-size: 12px; }
+.lib-tab { border-collapse: collapse; width: 100%; font-size: 12px; }
+.lib-tab th { text-align: left; color: var(--muted); font-weight: 600; padding: 3px 4px; }
+.lib-tab td { padding: 2px 3px; white-space: nowrap; }
+.lib-tab input { width: 74px; } .lib-tab input[data-f=name] { width: 120px; }
+.lib-tab button { padding: 3px 7px !important; margin-left: 2px; }
+.dlg.wide { max-width: min(980px, 94vw); }
+#dlg-proto .dlg, #dlg-lib .dlg { max-height: 88vh; overflow: auto; }
+
+/* ---------------------------------------------------------------- the ribbon */
+body.ribbon #main { grid-template-columns: minmax(0, 1fr) 6px var(--pw); }
+body.ribbon.props-collapsed #main { grid-template-columns: minmax(0, 1fr) 6px 30px; }
+#ribbon { background: var(--panel); border-bottom: 1px solid var(--line); position: relative; z-index: 30; min-width: 0; }
+#rb-top { display: flex; align-items: stretch; gap: 10px; height: 36px; padding: 0 10px; color: var(--brand-ink);
+  background: linear-gradient(180deg, var(--brand2), var(--brand)); }
+#rb-top .brand { display: flex; align-items: center; gap: 8px; font-weight: 650; white-space: nowrap; }
+#rb-top .logo { display: inline-flex; }
+#rb-qat { display: flex; align-items: center; gap: 2px; padding-right: 8px; border-right: 1px solid rgba(255,255,255,.18); }
+#rb-tabs { display: flex; align-items: flex-end; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.rb-tab { background: none; border: 0; color: var(--brand-muted); padding: 7px 13px 8px; border-radius: 7px 7px 0 0; font-weight: 550; white-space: nowrap; }
+.rb-tab:hover { color: #fff; background: rgba(255,255,255,.08); }
+.rb-tab.on { color: var(--ink); background: var(--panel); }
+#ribbon.collapsed .rb-tab.on { color: #fff; background: rgba(255,255,255,.12); }
+#ribbon.collapsed.peek .rb-tab.on { color: var(--ink); background: var(--panel); }
+#rb-right { display: flex; align-items: center; gap: 6px; }
+.rb-ico { background: none; border: 0; color: inherit; width: 30px; height: 30px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; align-self: center; padding: 0; }
+.rb-ico span { display: none; }
+.rb-ico:hover:not(:disabled) { background: rgba(255,255,255,.12); }
+.rb-ico:disabled { opacity: .4; cursor: default; }
+#rb-panel { display: block; border-top: 0; }
+#ribbon.collapsed #rb-panel { display: none; }
+#ribbon.collapsed.peek #rb-panel { display: block; position: absolute; left: 0; right: 0; top: 36px; background: var(--panel); box-shadow: var(--shadow); border-bottom: 1px solid var(--line); }
+.rb-page { display: flex; align-items: stretch; gap: 0; padding: 4px 6px 0; min-height: 92px; overflow-x: auto; scrollbar-width: thin; }
+.rb-group { display: flex; flex-direction: column; padding: 0 8px; border-right: 1px solid var(--line2); flex: 0 0 auto; }
+.rb-group:last-child { border-right: 0; }
+.rb-items { display: flex; flex-wrap: wrap; flex-direction: column; align-content: flex-start; gap: 1px 2px; max-height: 70px; flex: 1; }
+.rb-gt { text-align: center; color: var(--muted); font-size: 10.5px; padding: 2px 0 4px; letter-spacing: .2px; white-space: nowrap; }
+.rb-btn { display: flex; align-items: center; gap: 6px; background: none; border: 1px solid transparent; border-radius: 5px; padding: 2px 7px; height: 22px;
+  color: var(--ink); white-space: nowrap; font-size: 12px; }
+.rb-btn svg { width: 15px; height: 15px; flex: 0 0 auto; }
+.rb-btn svg.i { stroke-width: 1.7; }
+.rb-btn.big { flex-direction: column; justify-content: flex-start; height: 68px; width: auto; min-width: 54px; max-width: 92px; padding: 5px 6px 2px; gap: 3px; white-space: normal; text-align: center; line-height: 1.15; }
+.rb-btn.big svg { width: 26px; height: 26px; }
+.rb-btn:hover:not(:disabled) { background: var(--sel); border-color: var(--line); }
+.rb-btn.on { background: var(--sel); border-color: var(--focus); }
+.rb-btn:disabled { opacity: .45; cursor: default; }
+.rb-form .rb-items { gap: 3px 10px; }
+.rb-field { display: flex; align-items: center; gap: 6px; height: 22px; font-size: 12px; white-space: nowrap; }
+.rb-field > span { color: var(--ink2); min-width: 64px; }
+.rb-field select, .rb-field input[type=number] { height: 22px; border: 1px solid var(--line); border-radius: 4px; background: var(--input); padding: 0 4px; max-width: 170px; }
+.rb-field.wide select { max-width: 230px; }
+.rb-field input[type=range] { width: 110px; }
+.rb-field.note { height: auto; max-width: 240px; white-space: normal; }
+.rb-field.note > div { font-size: 11px; color: var(--muted); }
+.rb-chk { display: flex; align-items: center; gap: 5px; height: 22px; font-size: 12px; white-space: nowrap; }
+.rb-tools .rb-items { max-height: 70px; }
+body.ribbon #find-wrap { height: 26px; align-self: center; }
+body.ribbon #find-input { width: 130px; }
+#rb-pop { position: fixed; z-index: 80; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); padding: 8px 10px; min-width: 300px; }
+#legend-panel { position: absolute; left: 10px; bottom: 34px; z-index: 5; background: var(--overlay); border: 1px solid var(--line); border-radius: 9px; box-shadow: var(--shadow);
+  max-height: 55%; overflow: auto; min-width: 170px; max-width: 260px; }
+#legend-panel .lp-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 6px 4px 10px; font-weight: 650; font-size: 12px; cursor: pointer; border-bottom: 1px solid var(--line2); }
+#legend-panel .lp-h button { background: none; border: 0; color: var(--muted); font-size: 15px; line-height: 1; padding: 0 4px; }
+#legend-panel.folded #legend { display: none; }
+#legend-panel.folded .lp-h { border-bottom: 0; }
+#rb-top .rb-btn { color: var(--brand-ink); }
+#rb-top .rb-btn:hover:not(:disabled) { background: rgba(255,255,255,.12); border-color: transparent; }
+.rb-field:has(> select[hidden]), .rb-field:has(> input[hidden]) { display: none; }
+#select-card { position: absolute; left: 10px; bottom: 34px; z-index: 6; width: 236px; background: var(--overlay); border: 1px solid var(--line); border-radius: 9px; box-shadow: var(--shadow); padding: 8px 10px; display: grid; grid-template-columns: 78px 1fr; gap: 5px 8px; align-items: center; font-size: 12px; }
+#select-card .lc-h { grid-column: 1 / -1; font-weight: 650; }
+#select-card select { min-width: 0; border: 1px solid var(--line); border-radius: 5px; padding: 3px 5px; background: var(--input); }
+#select-card .row2 { grid-column: 1 / -1; display: flex; gap: 6px; }
+#select-card .row2 button { flex: 1; border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 4px 6px; }
