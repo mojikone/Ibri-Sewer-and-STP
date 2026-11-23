@@ -1869,18 +1869,22 @@ function splitter(el, axis) {
   let raf = 0;
   el.addEventListener("pointerdown", ev => {
     if (ev.button !== 0) return;
-    ev.preventDefault(); el.setPointerCapture(ev.pointerId); el.classList.add("drag"); document.body.classList.add("resizing");
+    ev.preventDefault(); try { el.setPointerCapture(ev.pointerId); } catch (x) {} el.classList.add("drag"); document.body.classList.add("resizing");
+    const y0 = ev.clientY, x0 = ev.clientX; let moved = false;
     const move = e => {
-      cancelAnimationFrame(raf);
+      if (!moved && Math.hypot(e.clientX - x0, e.clientY - y0) < 6) return;      // a tap is not a drag
+      moved = true; cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
         if (axis === "v") { const w = innerWidth - e.clientX - 3; ui.propsCollapsed = w < 150; if (!ui.propsCollapsed) ui.pw = w; }
         else { const h = innerHeight - e.clientY - 3; ui.bottomCollapsed = h < 80; if (!ui.bottomCollapsed) ui.bh = h; }
         ui.mapOnly = null; applyPanels();
       });
     };
-    const up = () => { el.releasePointerCapture(ev.pointerId); el.classList.remove("drag"); document.body.classList.remove("resizing");
-      el.removeEventListener("pointermove", move); el.removeEventListener("pointerup", up); redrawCharts(); };
-    el.addEventListener("pointermove", move); el.addEventListener("pointerup", up);
+    const up = e => { try { el.releasePointerCapture(ev.pointerId); } catch (x) {} el.classList.remove("drag"); document.body.classList.remove("resizing");
+      el.removeEventListener("pointermove", move); el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up);
+      if (!moved && e.type === "pointerup" && ev.pointerType !== "mouse") { if (axis === "v") setProps(!ui.propsCollapsed); else setBottom(!ui.bottomCollapsed); }   // a finger's tap opens or closes
+      redrawCharts(); };
+    el.addEventListener("pointermove", move); el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
   });
   el.addEventListener("dblclick", () => axis === "v" ? setProps(!ui.propsCollapsed) : setBottom(!ui.bottomCollapsed));
 }

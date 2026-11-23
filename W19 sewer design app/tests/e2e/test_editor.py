@@ -1055,3 +1055,28 @@ def test_v5_phone_layout_keeps_the_map_and_opens_properties_as_a_drawer(server, 
     assert not pg.locator("#props").is_visible()
     assert errs == [], errs
     pg.screenshot(path=os.path.join(SHOTS, "screenshot_v5_phone.png")); ctx.close()
+
+
+def test_v5_phone_bottom_pane_opens_with_a_tap_and_resizes_with_a_finger(server, browser):
+    """A real touch (Chrome DevTools touch events): a tap on the splitter opens the tables, a drag resizes them, and the
+    open/close arrow stays on screen while the tab strip scrolls (the engineer, 2026-11-23)."""
+    ctx = browser.new_context(viewport={"width": 375, "height": 812}, has_touch=True, is_mobile=True); pg = ctx.new_page(); pg.set_default_timeout(60000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
+    pg.evaluate("fetch('/api/g/projects/sample/pond', {method: 'POST'}).then(r => r.json()).then(i => openProject(i))"); idle(pg)
+    pg.evaluate("setBottom(true)"); pg.wait_for_timeout(200)
+    cdp = ctx.new_cdp_session(pg)
+    def touch(kind, x, y):
+        cdp.send("Input.dispatchTouchEvent", dict(type=kind, touchPoints=[] if kind == "touchEnd" else [dict(x=x, y=y)]))
+    r = pg.evaluate("(() => { const b = document.getElementById('split-bottom').getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; })()")
+    touch("touchStart", r[0], r[1] + 8); touch("touchEnd", 0, 0); pg.wait_for_timeout(300)   # 8 px off the 6 px bar: the finger-sized area
+    assert pg.evaluate("ui.bottomCollapsed") is False
+    r = pg.evaluate("(() => { const b = document.getElementById('split-bottom').getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; })()")
+    h0 = pg.evaluate("ui.bh"); touch("touchStart", r[0], r[1])
+    for k in range(1, 9): touch("touchMove", r[0], r[1] + 20 * k)
+    touch("touchEnd", 0, 0); pg.wait_for_timeout(300)
+    h = pg.evaluate("ui.bh"); assert 120 <= h < h0 - 80 and pg.evaluate("ui.bottomCollapsed") is False, (h0, h)   # dragged down: smaller, still open
+    t = pg.evaluate("document.getElementById('bottom-toggle').getBoundingClientRect().right")
+    assert t <= 376, t                                                                 # the arrow stays on screen
+    assert errs == [], errs
+    ctx.close()

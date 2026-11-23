@@ -184,3 +184,13 @@ body.compact-ui #find-wrap:focus-within #find-input { width: 100%; }
 body.compact-ui.props-collapsed #main { grid-template-columns: minmax(0, 1fr) 0 0 !important; }   /* no empty strip: it opens on a choice */
 body.compact-ui.props-collapsed #props { display: none; }
 body.compact-ui #find-wrap:not(:focus-within) #find-input { width: 0; padding: 0; opacity: 0; }
+/* the panes' splitters by finger (2026-11-23): the drag is not taken for a page scroll, the grab area is finger-sized,
+   and the tables' open/close arrow stays in view while the tab strip scrolls */
+.splitter { touch-action: none; }
+@media (pointer: coarse) {
+  .splitter::before { content: ""; position: absolute; left: 0; right: 0; top: -14px; bottom: -14px; }
+  .splitter.v::before { left: -14px; right: -14px; top: 0; bottom: 0; }
+  .splitter.h::after { width: 56px; height: 4px; top: 0; }
+}
+#tabs .tabs-end { position: sticky; right: 0; background: var(--panel2); padding-left: 6px; box-shadow: -8px 0 8px -6px rgba(0,0,0,.18); }
+body.compact-ui #bottom-toggle { min-width: 40px; min-height: 30px; }
