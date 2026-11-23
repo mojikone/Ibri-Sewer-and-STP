@@ -1,4 +1,4 @@
-# SewerGEMS inventory and the app's coverage (2026-11-23, v3)
+# SewerGEMS inventory and the app's coverage (2026-11-23, v4)
 
 Built clean-room from two sources only:
 
@@ -15,7 +15,7 @@ No SewerGEMS file was read. A Fable 5.2 review of the first draft found that it 
 
 **Status:**
 - `have`: in the app and tested.
-- `v3`: built and tested in this pass (2026-11-23).
+- `v3`, `v4`: built and tested in the passes of 2026-11-23 (v4: GVF profile, pumped flows, controls, LoadBuilder, TRex, rational method, curve number, batch runs, named calculation options).
 - `part`: some of it.
 - `gap`: not yet.
 - `out`: outside a sewer design app's scope (2D surface flow, live SCADA, snow, pollutants).
@@ -45,7 +45,7 @@ No SewerGEMS file was read. A Fable 5.2 review of the first draft found that it 
 
 | SewerGEMS | App | Notes |
 |---|---|---|
-| GVF-Convex steady sanitary | part | The app's steady engine accumulates flow (unit loads peaked on their combined load or population, sanitary loads unpeaked, infiltration, transfers) and solves normal depth per conduit. Matched SewerGEMS's flows within 0.1 % on SC1-2056. No backwater (GVF) profile, HGL or structure losses. |
+| GVF-Convex steady sanitary | v4 | The steady engine accumulates flow (unit loads peaked on their combined load or population, sanitary loads unpeaked, infiltration, transfers), matched SewerGEMS's flows within 0.1 % on SC1-2056, and (v4, Settings > Water profile) carries a gradually varied water profile up from the outfalls: direct step M1/M2, steep (entrance control), full pipes by their friction slope, a structure loss K v^2/2g; water level per structure, surcharge and flooding flagged; the long section draws it. Checked against an independent fine integration within 2 mm. Circular pipes; boxes and channels keep normal depth. |
 | Pressure engine (steady) | v3 | Force-main friction and minor losses; the pump's head at the flow; the operating point on its curve (from the stop and the start levels); the system curve; the discharge level is the higher of the main's crown and the water in the receiving structure; shutoff below the static lift gives Q = 0, flagged; negative pressure flagged. |
 | GVF-Rational | part | Block 04 sections matched at SewerGEMS's flows. The rational method itself: gap. |
 | Implicit / Explicit (SWMM) dynamic | have | EPA SWMM 5. Storm runs, plus v3: force mains (FORCE_MAIN, H-W or D-W; a Manning main as a full circular conduit), pump curves (Type 3, strictly falling, n pumps in parallel), constant pumps (Type 2), storage tables, orifices, weirs, fixed tailwater, dry-weather flow with hourly patterns. The dry-weather switch applies to projects made in the app; an imported .inp keeps its own [DWF]. |
@@ -55,8 +55,8 @@ No SewerGEMS file was read. A Fable 5.2 review of the first draft found that it 
 | Pressure friction method (H-W, D-W, Manning) | v3 | |
 | Extreme flow setup | v3 | Settings > Peaking. |
 | Pattern setup, EPS | v3 | Dry-weather EPS on SWMM with an hourly pattern. |
-| Use pumped flows, wet well fixed level in steady state, controls in steady state | gap | The app passes the inflow (SewerGEMS's default with "use pumped flows" off). |
-| Several named calculation options; structure loss mode | gap | |
+| Use pumped flows | v4 | Settings > Force mains: downstream of a pump, its inflow (default) or what it pumps on its curve. Wet-well level fixed in steady state: the lift is from the stop or start level. Controls in the steady run: gap. |
+| Several named calculation options | v4 | Named sets of options saved with the project and applied to a scenario (Analysis > Calculation options). Structure loss methods beyond K v^2/2g (HEC-22, AASHTO): gap. |
 
 ## 3. Loading
 
@@ -67,7 +67,7 @@ No SewerGEMS file was read. A Fable 5.2 review of the first draft found that it 
 | Sanitary load (fixed, unpeaked) | have | |
 | Pattern loads (dry weather) | v3 | SWMM DWF with hourly patterns. Hydrograph loads: gap. |
 | Conduit infiltration (length, length x diameter, surface, count) | have | |
-| RDII / RTK, LoadBuilder, Thiessen | gap | |
+| LoadBuilder | v4 | Points or polygons (by their centre) to the nearest manhole, wet well or storage, summed, as loads or unit-load counts; preview, then one undo step. |
 | Sanitary Load Control Center | part | The Nodes table with bulk edit and paste. |
 
 ## 4. Pumps and force mains
@@ -78,7 +78,7 @@ No SewerGEMS file was read. A Fable 5.2 review of the first draft found that it 
 | Pump definition: constant power, standard/custom extended, depth-flow, volume-flow | gap | |
 | Efficiency, motor, VSD | gap | |
 | On/off levels | have | As depths at the inlet, shown with their elevations. |
-| Controls, logical controls | gap | |
+| Controls | v4 | Rules for the storm run (SWMM [CONTROLS]): a structure's depth or the time against a value switches a pump or sets an orifice or weir, with an else. Logical controls with several conditions: gap. |
 | Minor losses | v3 | K per pipe. Check valves: gap (the steady run has no reverse flow; SWMM pumps do not run backwards). |
 | System head curves | v3 | Drawn with the pump curve and the steady duty in Pump definitions. |
 
@@ -87,7 +87,7 @@ No SewerGEMS file was read. A Fable 5.2 review of the first draft found that it 
 | SewerGEMS | App | Notes |
 |---|---|---|
 | EPA SWMM runoff | have | |
-| Rational, modified rational, SCS UH, generic UH, RTK, time-area, ILSAX; Tc methods | gap | |
+| Rational method | v4 | A steady storm run: Q = C i A / 360 with each catchment's C and Tc, the travel time down the pipes and the IDF table. |
 | Storm data: IDF tables, time series | part | IDF table (alternating block) and time series. |
 
 ## 6. Gravity structures and design
@@ -102,7 +102,7 @@ No SewerGEMS file was read. A Fable 5.2 review of the first draft found that it 
 
 | SewerGEMS | App | Notes |
 |---|---|---|
-| Scenarios | have | Edit lists with inheritance; compare. Batch run: gap. |
+| Scenarios | have | Edit lists with inheritance; compare; batch run of several scenarios side by side (v4). |
 | Alternatives (19 types) | part | Scenarios carry all edits; separate alternatives: gap. |
 | FlexTables | v3 | Sort, filter, global edit, paste and CSV, plus v3: choose columns, and a statistics row (mean, range, sum). |
 | Element Symbology, Background layers, Network Navigator, Prototypes, Profiles, Time Browser | have | |
@@ -113,7 +113,7 @@ No SewerGEMS file was read. A Fable 5.2 review of the first draft found that it 
 | Graphs | part | Hydrographs per element; pump and system curves. |
 | Calculation summaries | part | Summary tab. |
 | ModelBuilder | have | |
-| TRex, LoadBuilder, user data extensions, hyperlinks, active topology | gap | |
+| TRex | v4 | Ground levels from a terrain GeoTIFF (reprojected), the inverts moved with the ground when asked; no-data cells reported. |
 | Batch morph, batch split | part | Morph a selection; layout runs split at the spacing. |
 | Energy and capital cost, H2S, water quality | gap / out | |
 
@@ -126,10 +126,6 @@ No SewerGEMS file was read. A Fable 5.2 review of the first draft found that it 
 | Drawing | have | Layout tool, morph, reconnect, split, reverse, box/polygon select, context menus. Tools for force mains, pressure junctions, orifices and weirs: v3. |
 | Docking managers | part | Properties and tables dock; floating managers: gap. |
 
-## 9. Next, in the reviewer's order of value for a sewer designer
+## 9. Next
 
-1. Use pumped flows and a fixed wet-well level in the steady run; pump controls.
-2. A backwater (GVF) profile with structure losses, for the steady HGL.
-3. LoadBuilder (points or polygons to manholes); TRex from a GeoTIFF.
-4. Rational and SCS hydrology on catchments; outfall tailwater curves.
-5. Named calculation options; batch runs; energy cost.
+The engineer's trial items F13-F22 (`docs/USER_TRIAL_FEEDBACK.md`): a mixed selection by default, alternatives, the hint as a fading tooltip, selection sets as the scope of runs and edits, profile labels kept in view, the Element Symbology pane on the left, settings as dedicated managers with paste and several catalogues, a Design constraints manager, the assistant as a full agent working from a project folder. Then: structure loss methods (HEC-22, AASHTO), logical controls, SCS unit hydrographs and Tc methods, RDII, energy cost.

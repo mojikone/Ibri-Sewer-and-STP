@@ -68,6 +68,21 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
   load set puts no load on the network (a storm model: only infiltration flows). The profile draws the rise as the crown or bank. SWMM files read and write
   RECT_CLOSED, RECT_OPEN and TRAPEZOIDAL with their barrels and n. For an export run in SewerGEMS,
   `GET .../section_check` compares the app's normal and critical depth at SewerGEMS's own flow with SewerGEMS's.
+- **v4 (2026-11-23): the rest of the SewerGEMS list.**
+  - **GVF water profile** (Settings > Water profile, `engine/gvf.py`): from the outfalls up, direct step M1/M2 (checked on
+    10 m and 5 m pipes against an independent fine integration within 2 mm), steep pipes under entrance control,
+    overloaded and drowned pipes by the full-pipe friction slope, flat and adverse pipes, a structure loss K v^2/2g;
+    a water level per structure, surcharge and flooding in Properties and Notifications; the long section draws it.
+  - **Use pumped flows** (Settings > Force mains): downstream of a pump, what it pumps on its curve; a short pump stays
+    flagged on its inflow.
+  - **Controls** for the storm run (Components > Controls): a structure's depth or the time switches a pump or sets an
+    orifice or weir, with an else (SWMM [CONTROLS]).
+  - **LoadBuilder** (Tools): points or polygons to the nearest structures, as loads or unit-load counts, preview first.
+  - **TRex** (Tools): ground levels from a terrain GeoTIFF or a VRT path (the project's 0.5 m VRT), inverts moved with
+    the ground; structures off the terrain kept and reported.
+  - **Rational method** (Analysis): Q = C i A / 360 with each catchment's C and Tc, the travel time and the IDF table.
+  - **SCS curve number** for the storm run's infiltration (Settings > Storm run, each catchment's CN).
+  - **Batch run** of several scenarios and **named calculation options** applied per scenario (Analysis).
 - **v3 (2026-11-23): closer to SewerGEMS, from an inventory of its help and of its data model read through the API**
   (`docs/SEWERGEMS_INVENTORY.md`, reviewed by Fable 5.2; each item marked have / v3 / part / gap):
   - **pump stations and force mains:** pressure pipes and junctions (Layout tools), pump definitions (design point,
@@ -225,7 +240,7 @@ The Ibri W18 viewer of phase 1B (the 12 frozen designs with their W18 tools) is 
 - the W18 viewer (`/w18`): the design chain does not take a what-if's edits; BOQ, costs, station flows, DWG and
   schematics are still to be placed (`docs/SCRIPT_REGISTER.md`, "Planned").
 
-All tests (2026-11-23, after v3 and its review fixes): 303 passed, 1 skipped, 2 expected failures. After v2: 277 passed, 1 skipped, 2 expected failures (the full suite, then the browser tests again after the selection tools: 68 passed). Before: (2026-11-22, after the symbology): `python -m pytest` - 252 passed, 1 skipped (a live assistant test), 2 expected
+All tests (2026-11-23, after v4 and its review fixes): 330 passed, 1 skipped, 2 expected failures. After v3 and its review fixes: 303 passed, 1 skipped, 2 expected failures. After v2: 277 passed, 1 skipped, 2 expected failures (the full suite, then the browser tests again after the selection tools: 68 passed). Before: (2026-11-22, after the symbology): `python -m pytest` - 252 passed, 1 skipped (a live assistant test), 2 expected
 failures (EPA Example1, a SWMM build difference), 11 min, 43 end-to-end tests among them.
 
 ## Reproduction and speed (2026-11-21)
