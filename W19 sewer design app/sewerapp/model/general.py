@@ -59,7 +59,14 @@ DEFAULT_SETTINGS = dict(
     # named selections kept with the project (SewerGEMS's selection sets): {name: {table, ids}}
     selection_sets={},
     # the force mains' friction (SewerGEMS's pressure friction method) and the wet-well level the pump lifts from
-    pressure=dict(method="hazen", C=130.0, e_mm=0.1, n=0.012, suction="off"),
+    pressure=dict(method="hazen", C=130.0, e_mm=0.1, n=0.012, suction="off", use_pumped_flows=False),
+    # the steady water profile: "normal" (normal depth in each pipe, the W18 basis) or "gvf" (gradually varied flow from
+    # the outfalls up, engine/gvf.py) with a structure loss K v^2/2g at each structure (0: none unless set)
+    flow_profile="normal", structure_loss=dict(method="standard", K=0.0),
+    # the storm run's infiltration: Horton (SWMM's typical values) or SCS curve number (each catchment's CN)
+    storm_infiltration="horton",
+    # named sets of calculation options, kept with the project: {name: {setting path: value}}
+    calc_option_sets={},
     design=dict(v_min=0.75, v_max=3.0, cover_min=1.3, cover_max=12.0,                  # G203 p26, p27, p33
                 dd_limits=[[355, 0.65], [99999, 0.50]],                                # G203 p27 Table 10
                 slope_min={"200": 0.005, "250": 0.00375, "315": 0.0027, "400": 0.00205, "500": 0.00155, "600": 0.00125,
@@ -90,10 +97,13 @@ class Project:
     unit_rows: dict = field(default_factory=dict)   # {load set: {node id: [[unit load name, count], ...]}}
     outlets: dict = field(default_factory=dict)
     tailwater: dict = field(default_factory=dict)
+    hydrology: dict = field(default_factory=dict)   # {catchment id: {C, tc_min, cn}}: the rational method and SCS curve number
+    controls: list = field(default_factory=list)    # SWMM control rules (pumps, orifices, weirs) for the storm run
 
     def __setstate__(self, d):                            # a project pickled before a field existed gets its default
         self.__dict__.update(d)
-        for k in ("sections", "infil", "storage", "pumps", "ppipes", "unit_rows", "outlets", "tailwater"): self.__dict__.setdefault(k, {})
+        for k in ("sections", "infil", "storage", "pumps", "ppipes", "unit_rows", "outlets", "tailwater", "hydrology"): self.__dict__.setdefault(k, {})
+        self.__dict__.setdefault("controls", [])
 
     def setting(self, key):
         """A top-level setting, the default filled in for a project made before the key existed."""
@@ -135,4 +145,4 @@ class Project:
 
     def to_json(self):
         return dict(name=self.name, crs=self.crs, settings=self.settings, load_sets=self.load_sets, inflow_sets=self.inflow_sets, fixed_flows=self.fixed_flows, rain=self.rain,
-                    passthrough=self.passthrough, sections=self.sections, infil=self.infil, storage=self.storage, pumps=self.pumps, ppipes=self.ppipes, unit_rows=self.unit_rows, outlets=self.outlets, tailwater=self.tailwater)
+                    passthrough=self.passthrough, sections=self.sections, infil=self.infil, storage=self.storage, pumps=self.pumps, ppipes=self.ppipes, unit_rows=self.unit_rows, outlets=self.outlets, tailwater=self.tailwater, hydrology=self.hydrology, controls=self.controls)

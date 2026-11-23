@@ -22,7 +22,7 @@ def project_dict(p):
 
 def project_from_dict(d):
     p = Project(name=d["name"], crs=d["crs"], settings=d["settings"], load_sets=d["load_sets"], inflow_sets=d.get("inflow_sets", {}),
-                fixed_flows=d.get("fixed_flows", {}), rain=d.get("rain", {}), passthrough=d.get("passthrough", {}), sections=d.get("sections", {}), infil=d.get("infil", {}), storage=d.get("storage", {}), pumps=d.get("pumps", {}), ppipes=d.get("ppipes", {}), unit_rows=d.get("unit_rows", {}), outlets=d.get("outlets", {}), tailwater=d.get("tailwater", {}))
+                fixed_flows=d.get("fixed_flows", {}), rain=d.get("rain", {}), passthrough=d.get("passthrough", {}), sections=d.get("sections", {}), infil=d.get("infil", {}), storage=d.get("storage", {}), pumps=d.get("pumps", {}), ppipes=d.get("ppipes", {}), unit_rows=d.get("unit_rows", {}), outlets=d.get("outlets", {}), tailwater=d.get("tailwater", {}), hydrology=d.get("hydrology", {}), controls=d.get("controls", []))
     for key, cols in (("nodes", NODE_COLS), ("links", LINK_COLS), ("catchments", CATCH_COLS)):
         t = d[key]; df = pd.DataFrame(t["data"], columns=t["columns"])
         df["id"] = df["id"].astype(str); df = df.set_index("id")
@@ -65,7 +65,7 @@ def load(path):
     import pyogrio
     layers = {l[0] for l in pyogrio.list_layers(path)}
     p = Project(name=meta["name"], crs=meta["crs"], settings=meta["settings"], load_sets=meta["load_sets"], fixed_flows=meta.get("fixed_flows", {}), inflow_sets=meta.get("inflow_sets", {}),
-                rain=meta.get("rain", {}), passthrough=meta.get("passthrough", {}), sections=meta.get("sections", {}), infil=meta.get("infil", {}), storage=meta.get("storage", {}), pumps=meta.get("pumps", {}), ppipes=meta.get("ppipes", {}), unit_rows=meta.get("unit_rows", {}), outlets=meta.get("outlets", {}), tailwater=meta.get("tailwater", {}))
+                rain=meta.get("rain", {}), passthrough=meta.get("passthrough", {}), sections=meta.get("sections", {}), infil=meta.get("infil", {}), storage=meta.get("storage", {}), pumps=meta.get("pumps", {}), ppipes=meta.get("ppipes", {}), unit_rows=meta.get("unit_rows", {}), outlets=meta.get("outlets", {}), tailwater=meta.get("tailwater", {}), hydrology=meta.get("hydrology", {}), controls=meta.get("controls", []))
     n = gpd.read_file(path, layer="nodes")
     n["x"] = n.geometry.x; n["y"] = n.geometry.y
     p.nodes = pd.DataFrame(n.drop(columns="geometry")).set_index("id")[NODE_COLS]

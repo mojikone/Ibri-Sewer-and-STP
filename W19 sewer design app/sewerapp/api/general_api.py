@@ -380,10 +380,10 @@ def model(pid: str, sid: str):
         if isinstance(c, list) and len(c) >= 3:
             a = np.array(c); x, y = coords.to_display(p.crs, a[:, 0], a[:, 1])
             catch.append(dict(type="Feature", id=i, geometry=dict(type="Polygon", coordinates=[[[float(u), float(v)] for u, v in zip(x, y)]]),
-                              properties=clean(dict(id=i, **r))))
+                              properties=clean(dict(id=i, **r, **({"hydro": p.hydrology[i]} if i in getattr(p, "hydrology", {}) else {})))))
     return dict(nodes=dict(type="FeatureCollection", features=nodes), links=dict(type="FeatureCollection", features=links),
                 catchments=dict(type="FeatureCollection", features=catch), settings=clean(p.settings), rain=clean(p.rain),
-                loads=clean({k: v for k, v in p.load_sets.items()}), unit_rows=clean(getattr(p, "unit_rows", {}) or {}))
+                loads=clean({k: v for k, v in p.load_sets.items()}), unit_rows=clean(getattr(p, "unit_rows", {}) or {}), controls=clean(getattr(p, "controls", []) or []))
 
 
 @router.get("/projects/{pid}/scenarios/{sid}/results")
@@ -405,7 +405,16 @@ def results(pid: str, sid: str):
         sub_ = res.loc[res.kind.isin(["pump", "pressure_pipe"]), pcols]
         for i, r in zip(sub_.index, sub_.to_dict("records")):
             links.setdefault(i, {}).update(clean({k: (round(v, 4) if isinstance(v, float) else v) for k, v in r.items() if v == v and v is not None}))
-    return dict(summary=clean(summ), links=links)
+    nodes = {}
+    if res.attrs.get("node_hgl"):                                         # the GVF run's water level at each structure
+        fl = set(res.attrs.get("flooding") or [])
+        nodes = {n: dict(hgl=round(h, 4), **({"flooding": True} if n in fl else {})) for n, h in res.attrs["node_hgl"].items()}
+    gcols = [c for c in ["hgl_up", "hgl_dn", "y_up_m", "y_dn_m", "regime", "surcharged_gvf"] if c in res.columns]
+    if gcols:
+        sub_ = res.loc[res.hgl_up.notna(), gcols] if "hgl_up" in res.columns else res.iloc[0:0]
+        for i, r in zip(sub_.index, sub_.to_dict("records")):
+            links.setdefault(i, {}).update(clean({k: (round(v, 4) if isinstance(v, float) else v) for k, v in r.items() if v == v and v is not None and v != ""}))
+    return dict(summary=clean(summ), links=links, **({"nodes": nodes} if nodes else {}))
 
 
 class Edit(BaseModel):
@@ -439,6 +448,98 @@ def edit(pid: str, sid: str, e: Edit):
             raise HTTPException(400, f"not applied: the model could not be solved with it ({type(x).__name__}: {x})")
     made = {k: ev[k] for k in ("end_id", "mid_ids", "link_ids") if k in ev}       # what a layout run created
     return dict(summary=clean(summ), structural=structural, scenario=s.scenarios[sid].to_dict(), **({"created": made} if made else {}))
+
+
+@router.post("/projects/{pid}/scenarios/{sid}/loadbuilder")
+async def loadbuilder(pid: str, sid: str, file: UploadFile = File(...), field: str = "", scale: float = 1.0, target: str = "load",
+                      unit: str = "", load_set: str = "", max_dist: float = 0.0, apply: bool = False):
+    """LoadBuilder: a layer's values to the nearest structures; a preview, or applied as one undoable edit."""
+    import tempfile
+    from sewerapp.engine import tools_v4
+    from sewerapp.io import gis_import
+    s = _s(pid); d = tempfile.mkdtemp(prefix="w19lb_"); path = os.path.join(d, os.path.basename(file.filename or "layer.gpkg"))
+    open(path, "wb").write(await file.read())
+    try: g = gis_import.read_layer(path)
+    except Exception as x: raise HTTPException(400, f"not a GIS layer: {x}")
+    if not field:
+        return dict(fields=[c for c in g.columns if c != "geometry" and pd.api.types.is_numeric_dtype(g[c])], features=int(len(g)), geometry=sorted(set(g.geom_type.dropna())))
+    with _lock:
+        p = s.model(sid)
+        try: per, rep = tools_v4.loadbuilder(p, g, field, scale, max_dist or None)
+        except (ValueError, KeyError) as x: raise HTTPException(400, str(x))
+        ls = load_set or p.settings["design_load"]
+        if apply:
+            if target == "unit":
+                if not unit: raise HTTPException(400, "choose the unit load the counts are of")
+                cur = (getattr(p, "unit_rows", {}) or {}).get(ls, {})              # the node's other units' rows stay
+                ops = [dict(op="set_unit_rows", set=ls, ids=[n], rows=[r for r in cur.get(n, []) if r[0] != unit] + [[unit, float(v)]]) for n, v in per.items()]
+                e = dict(op="batch", ops=ops)
+            else: e = dict(op="set_loads", set=ls, values={n: float(v) for n, v in per.items()})
+            try: s.edit(sid, e)
+            except (ValueError, KeyError) as x: raise HTTPException(400, str(x))
+            _, summ = s.solve(sid); rep["applied"] = True
+    import shutil; shutil.rmtree(d, ignore_errors=True)
+    top = per.sort_values(ascending=False).head(15)
+    return clean(dict(report=rep, top=[dict(id=k, value=float(v)) for k, v in top.items()], target=target, load_set=ls, scenario=s.scenarios[sid].to_dict()))
+
+
+@router.post("/projects/{pid}/scenarios/{sid}/trex")
+async def trex(pid: str, sid: str, file: UploadFile | None = File(None), path: str = "", keep_depth: bool = True, ids: str = ""):
+    """TRex: ground levels from a terrain GeoTIFF or VRT (an upload, or a path on this computer, e.g. the project's
+    0.5 m VRT); one undoable edit; the inverts follow when depths are kept (where the old depth is known)."""
+    import tempfile, shutil
+    from sewerapp.engine import tools_v4
+    s = _s(pid); d = None
+    if path:
+        if not os.path.exists(path): raise HTTPException(400, f"no file {path}")
+        src = path
+    elif file is not None:
+        d = tempfile.mkdtemp(prefix="w19tx_"); src = os.path.join(d, "dem.tif"); open(src, "wb").write(await file.read())
+    else: raise HTTPException(400, "give a terrain file or its path")
+    try:
+        with _lock:
+            p = s.model(sid)
+            try: lv, bad = tools_v4.trex(p, src, [i for i in ids.split(",") if i] or None)
+            except Exception as x: raise HTTPException(400, f"the terrain could not be read: {x}")
+            if not lv: raise HTTPException(400, "no structure lies on the terrain's cells")
+            ops = [dict(op="set_values", table="nodes", field="ground", values=lv)]
+            if keep_depth:
+                g0, i0 = p.nodes.ground.astype(float), p.nodes.invert.astype(float)
+                inv = {n: lv[n] - float(g0[n] - i0[n]) for n in lv if g0[n] == g0[n] and i0[n] == i0[n]}
+                if inv: ops.append(dict(op="set_inverts", values=inv))
+            dz = [lv[n] - float(p.nodes.ground[n]) for n in lv if p.nodes.ground[n] == p.nodes.ground[n]]
+            try: s.edit(sid, dict(op="batch", ops=ops)); _, summ = s.solve(sid)
+            except (ValueError, KeyError) as x: raise HTTPException(400, str(x))
+    finally:
+        if d: shutil.rmtree(d, ignore_errors=True)
+    dz = dz or [0.0]
+    return clean(dict(updated=len(lv), no_data=bad[:50], no_data_count=len(bad), mean_change_m=float(np.mean(dz)), max_change_m=float(np.max(np.abs(dz))), summary=summ, scenario=s.scenarios[sid].to_dict()))
+
+
+@router.get("/projects/{pid}/scenarios/{sid}/rational")
+def rational(pid: str, sid: str):
+    """The rational method on every conduit (a steady storm run)."""
+    from sewerapp.engine import tools_v4
+    s = _s(pid)
+    with _lock:
+        try: rows, summ = tools_v4.rational(s.model(sid))
+        except (ValueError, KeyError) as x: raise HTTPException(400, str(x))
+    return clean(dict(rows=[dict(id=k, **v) for k, v in sorted(rows.items(), key=lambda kv: -kv[1]["q_rational_ls"])], report=summ))
+
+
+class BatchB(BaseModel):
+    sids: list[str]
+
+
+@router.post("/projects/{pid}/batch")
+def batch_run(pid: str, b: BatchB):
+    """The steady run of several scenarios, side by side."""
+    from sewerapp.engine import tools_v4
+    s = _s(pid)
+    bad = [x for x in b.sids if x not in s.scenarios]
+    if bad: raise HTTPException(404, f"no scenario {bad[0]}")
+    with _lock: rows = tools_v4.batch(s, b.sids)
+    return clean(dict(rows=rows))
 
 
 @router.get("/projects/{pid}/scenarios/{sid}/validate")
@@ -782,13 +883,14 @@ def profile(pid: str, sid: str, start: str, end: str | None = None, via: str | N
         D = (bore(i, L) or 0) / 1000.0 if L.kind != "pump" else 0.0
         r = res.loc[i] if res is not None and i in res.index else None
         dd = float(r.d_over_D) if r is not None and "d_over_D" in r and r.d_over_D == r.d_over_D else 0.0
+        gh = (float(r.hgl_up), float(r.hgl_dn)) if r is not None and "hgl_up" in r and r.hgl_up == r.hgl_up else None
         up, dn = (L.up_inv, L.dn_inv) if L.kind != "pump" else (p.nodes.invert[L.from_node], p.nodes.invert[L.to_node])
         i0, i1 = (dn, up) if rev else (up, dn)
         ln = float(L.length_m) if L.length_m == L.length_m else 0.0
         g = lambda k: None if r is None or k not in r else r[k]
         rows.append(clean(dict(link=i, kind=L.kind, reversed=bool(rev), from_node=n0, to_node=n1, ch0=ch, ch1=ch + ln, length_m=ln,
                                ground0=p.nodes.ground[n0], ground1=p.nodes.ground[n1], inv0=i0, inv1=i1, crown0=i0 + D, crown1=i1 + D,
-                               water0=i0 + dd * D, water1=i1 + dd * D, dn_mm=L.dn_mm, section=_seclab(secs[i]) if i in secs else None,
+                               water0=(gh[1] if rev else gh[0]) if gh else i0 + dd * D, water1=(gh[0] if rev else gh[1]) if gh else i1 + dd * D, dn_mm=L.dn_mm, section=_seclab(secs[i]) if i in secs else None,
                                slope_pc=(up - dn) / ln * 100 if ln > 0 and L.kind != "pump" else None,
                                q_ls=g("q_ls"), v_ms=g("v_ms"), d_over_D=g("d_over_D"),
                                fail=bool(r is not None and any(bool(g(k)) for k in ("over_limit", "over_vmax", "surcharged", "negative_slope"))),

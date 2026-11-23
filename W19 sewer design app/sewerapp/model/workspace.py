@@ -31,6 +31,8 @@ Edit ops (dicts with "op"):
   set_unit_rows {set, ids, rows [[unit load, count]]}  nodes' unit-load rows (library settings.libraries.unit_loads)
   set_outlet {ids, values}   an orifice's or a weir's geometry (Project.outlets)
   set_tailwater {ids, level | None}  a fixed water level at outfalls
+  set_hydrology {ids, C, tc_min, cn}  catchments' rational C, time of concentration and SCS curve number
+  set_controls {rules}       the storm run's control rules [{link, if node|time, node, op, value, then, else}]
   set_ppipe  {ids, method, C, e_mm, n, K, check | clear}  a pressure pipe's own friction and minor loss
   set_pump   {ids, q_ls, on_m, off_m, definition | None}  a pump's capacity and its start/stop depths at the inlet (storm run)
   set_prototype {kind, values}  what a new element of that kind gets (manhole/outfall/wetwell: ground, depth;
@@ -155,6 +157,7 @@ def apply(p, e):
             for k in [k for k in dct if k not in live_n]: dct.pop(k)
         for S in p.unit_rows.values():
             for k in [k for k in S if k not in live_n]: S.pop(k)
+        p.controls = [r for r in (p.controls or []) if r.get("link") in live_l and (r.get("if") != "node" or r.get("node") in live_n)]
         return True
     if op == "move_node":
         p.nodes.loc[str(e["id"]), ["x", "y"]] = [float(e["x"]), float(e["y"])]; _relength(p, [str(e["id"])]); return True
@@ -367,6 +370,50 @@ def apply(p, e):
         for k, x in v.items():
             if k not in ("shape", "type", "gated") and not (isinstance(x, (int, float)) and x >= 0): raise ValueError(f"{k} is a number, 0 or more")
         for i in ids: p.outlets[i] = dict(v)
+        return False
+    if op == "set_inverts":                                              # many structures' inverts at once; pipe ends that sat on them follow
+        v = pd.Series({str(k): float(x) for k, x in e["values"].items()}, dtype=float)
+        missing = v.index.difference(p.nodes.index)
+        if len(missing): raise ValueError(f"no node {list(missing[:3])}")
+        old = p.nodes.invert.reindex(v.index)
+        for col, end in (("up_inv", "from_node"), ("dn_inv", "to_node")):
+            o = p.links[end].map(old); nw = p.links[end].map(v)
+            m = nw.notna() & ((p.links[col] - o).abs() < 1e-9)
+            p.links.loc[m, col] = nw[m]
+        p.nodes.loc[v.index, "invert"] = v.values
+        return False
+    if op == "set_hydrology":                                            # a catchment's C, Tc and curve number
+        ids = [str(i) for i in e["ids"]]; bad = [i for i in ids if i not in p.catchments.index]
+        if bad: raise ValueError(f"no catchment {bad[:3]}")
+        v = {k: e[k] for k in ("C", "tc_min", "cn") if k in e}
+        if v.get("C") is not None and not (0 < float(v["C"]) <= 1): raise ValueError("a runoff coefficient C is above 0 and at most 1")
+        if v.get("tc_min") is not None and not float(v["tc_min"]) > 0: raise ValueError("a time of concentration is above 0 minutes")
+        if v.get("cn") is not None and not (0 < float(v["cn"]) <= 100): raise ValueError("a curve number is above 0 and at most 100")
+        for i in ids:
+            o = p.hydrology.setdefault(i, {})
+            for k, x in v.items():
+                if x is None: o.pop(k, None)
+                else: o[k] = float(x)
+        return False
+    if op == "set_controls":                                             # the storm run's control rules
+        rules = list(e.get("rules") or [])
+        for k, r in enumerate(rules):
+            if r.get("link") not in p.links.index or p.links.kind[r["link"]] not in ("pump", "orifice", "weir"): raise ValueError(f"rule {k + 1}: {r.get('link')} is not a pump, orifice or weir")
+            if r.get("if") == "node" and r.get("node") not in p.nodes.index: raise ValueError(f"rule {k + 1}: no node {r.get('node')}")
+            if r.get("if") not in ("node", "time"): raise ValueError(f"rule {k + 1}: the condition is on a node's depth or the time")
+            if r.get("op") not in (">", "<", ">=", "<="): raise ValueError(f"rule {k + 1}: the comparison is >, <, >= or <=")
+            float(r["value"])
+            for side in ("then", "else"):
+                a = r.get(side)
+                if a in (None, "") and side == "else": continue
+                if p.links.kind[r["link"]] == "pump":
+                    if str(a).upper() not in ("ON", "OFF"): raise ValueError(f"rule {k + 1}: a pump is switched ON or OFF")
+                    r[side] = str(a).upper()
+                else:
+                    try: x = float(a)
+                    except (TypeError, ValueError): raise ValueError(f"rule {k + 1}: an orifice or weir is set to a number from 0 to 1")
+                    if not 0 <= x <= 1: raise ValueError(f"rule {k + 1}: an orifice or weir is set to a number from 0 to 1")
+        p.controls = rules
         return False
     if op == "set_tailwater":
         ids = [str(i) for i in e["ids"]]; bad = [i for i in ids if i not in p.nodes.index or p.nodes.kind[i] != "outfall"]

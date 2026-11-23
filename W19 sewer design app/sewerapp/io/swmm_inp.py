@@ -278,7 +278,16 @@ def _generated(p, rain):
                         "NORMAL_FLOW_LIMITED BOTH", "MIN_SURFAREA 1.167", "HEAD_TOLERANCE 0.0015"]
     gauges = sorted(set(p.catchments.gauge.astype(str))) or ["RG1"]
     extra["RAINGAGES"] = [f"{g} INTENSITY 0:{step:02d} 1.0 TIMESERIES TS1" for g in gauges]
-    extra["INFILTRATION"] = [f"{i} 76.2 3.81 4 7 0" for i in p.catchments.index]     # Horton, the SWMM manual's typical values (mm/h)
+    cn_mode = p.settings.get("storm_infiltration") == "curve_number"
+    hyd = getattr(p, "hydrology", None) or {}
+    if cn_mode:                                             # SCS curve number per catchment (SWMM's CURVE_NUMBER)
+        miss = [i for i in p.catchments.index if (hyd.get(i) or {}).get("cn") is None]
+        if miss: raise ValueError(f"the curve number method needs a CN on every catchment ({len(miss)} without, e.g. {miss[0]})")
+        extra["OPTIONS"] = [o.replace("INFILTRATION HORTON", "INFILTRATION CURVE_NUMBER") for o in extra["OPTIONS"]]
+        extra["INFILTRATION"] = [f"{i} {hyd[i]['cn']:.4g} 0.5 7" for i in p.catchments.index]
+    else: extra["INFILTRATION"] = [f"{i} 76.2 3.81 4 7 0" for i in p.catchments.index]     # Horton, the SWMM manual's typical values (mm/h)
+    ctl = controls_lines(p)
+    if ctl: extra["CONTROLS"] = ctl
     extra["TIMESERIES"] = [f"TS1 {int(t // 60)}:{int(t % 60):02d} {v:.4f}" for t, v in series]
     extra["REPORT"] = ["SUBCATCHMENTS ALL", "NODES ALL", "LINKS ALL"]
     if dwf: extra["DWF"], extra["PATTERNS"] = dwf
@@ -286,8 +295,21 @@ def _generated(p, rain):
         days, hh = divmod(end_h, 24)
         extra["OPTIONS"] = [f"END_DATE 01/{1 + days:02d}/2026" if o.startswith("END_DATE") else f"END_TIME {hh:02d}:00:00" if o.startswith("END_TIME") else o for o in extra["OPTIONS"]]
     order = ["TITLE", "OPTIONS", "RAINGAGES", "SUBCATCHMENTS", "SUBAREAS", "INFILTRATION", "JUNCTIONS", "OUTFALLS",
-             "STORAGE", "CONDUITS", "PUMPS", "ORIFICES", "WEIRS", "XSECTIONS", "CURVES", "DWF", "PATTERNS", "TIMESERIES", "REPORT", "COORDINATES", "VERTICES", "POLYGONS"]
+             "STORAGE", "CONDUITS", "PUMPS", "ORIFICES", "WEIRS", "XSECTIONS", "CONTROLS", "CURVES", "DWF", "PATTERNS", "TIMESERIES", "REPORT", "COORDINATES", "VERTICES", "POLYGONS"]
     return order, extra
+
+
+def controls_lines(p):
+    """SWMM [CONTROLS] rules from the project's rules: IF a node's depth (m, file units) or the simulation time (hours)
+    compares with a value THEN a pump's status (ON/OFF) or an orifice's or weir's setting (0-1), ELSE optional."""
+    out = []; mm = 304.8 if p.settings.get("units") == "US" else 1000.0
+    for k, r in enumerate(getattr(p, "controls", None) or []):
+        if r.get("link") not in p.links.index or (r.get("if") == "node" and r.get("node") not in p.nodes.index): continue
+        kind = {"pump": "PUMP", "orifice": "ORIFICE", "weir": "WEIR"}[p.links.kind[r["link"]]]
+        cond = f"IF NODE {r['node']} DEPTH {r['op']} {float(r['value']) * 1000.0 / mm:.6g}" if r["if"] == "node" else f"IF SIMULATION TIME {r['op']} {float(r['value']):.6g}"
+        act = lambda a: f"{kind} {r['link']} STATUS = {a}" if kind == "PUMP" else f"{kind} {r['link']} SETTING = {float(a):.4g}"
+        out += [f"RULE R{k + 1}", cond, "THEN " + act(r["then"])] + (["ELSE " + act(r["else"])] if r.get("else") not in (None, "") else []) + [f"PRIORITY {int(r.get('priority') or 1)}", ""]
+    return out
 
 
 def dwf_lines(p):

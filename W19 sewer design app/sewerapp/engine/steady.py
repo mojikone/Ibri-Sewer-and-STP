@@ -165,6 +165,25 @@ def normal_depth(project, Q, D, S, iters=50):
 def solve(project, load_set=None, check_set=None):
     """Flows and hydraulics; returns a DataFrame indexed by link id and a summary."""
     if project.links.kind.isin(STORM_ONLY).any(): project = _without_storm_only(project)     # pond outlets: storm run only
+    ps = project.settings.get("pressure") or {}
+    if ps.get("use_pumped_flows") and (project.links.kind == "pump").any() and not getattr(project, "_pumped_pass", False):
+        # SewerGEMS's "use pumped flows": downstream of a pump the flow is what the pump delivers on its curve, not its inflow
+        first = project.copy(); first._pumped_pass = True
+        res0, _ = solve(first, load_set, check_set)
+        q2 = project.copy(); q2._pumped_pass = True; ls = load_set or project.settings["design_load"]
+        ff = dict(q2.fixed_flows.get(ls, {}))
+        if "op_q_ls" in res0.columns:
+            for pid, v in res0.op_q_ls.dropna().items():
+                if pid not in ff: ff[pid] = float(v) * 86.4                  # a flow the engineer fixed on a pump stays
+        q2.fixed_flows = dict(q2.fixed_flows); q2.fixed_flows[ls] = ff
+        res, summ = solve(q2, load_set, check_set); summ["pumped_flows"] = True
+        # whether each pump copes is judged on its inflow (the first pass), not on the flow it is then given
+        for c in ("short", "cannot_lift", "pump_head_m", "tdh_m", "off_curve"):
+            if c in res0.columns:
+                pumps = res0.index[(project.links.kind == "pump").reindex(res0.index).fillna(False).to_numpy()]
+                res.loc[pumps, c + ("_at_inflow" if c in ("pump_head_m", "tdh_m") else "")] = res0.loc[pumps, c]
+        if "short" in res0.columns and "pressure" in summ: summ["pressure"]["pumps_short"] = int(res0.short.fillna(False).astype(bool).sum())
+        return res, summ
     t0 = time.perf_counter(); s = project.settings; L = project.links
     load_set = load_set or s["design_load"]; check_set = check_set if check_set is not None else s.get("check_load")
     q = flows(project, load_set)
@@ -220,10 +239,16 @@ def solve(project, load_set=None, check_set=None):
                 if k not in res.columns: res[k] = np.nan if not isinstance(v, bool) else False
                 res.at[lid, k] = v
     else: psum = None
+    gsum = None
+    if s.get("flow_profile") == "gvf":                                    # the gradually varied water profile (engine/gvf.py)
+        from sewerapp.engine import gvf
+        res, nh, gsum, flood = gvf.solve(project, res, q.to_dict())
+        res.attrs["node_hgl"] = {k: float(v) for k, v in nh.items()}; res.attrs["flooding"] = flood
     summ = dict(links=int(len(L)), conduits=int(cond.sum()), not_analysed=int(noD.sum()), km=round(float(L.length_m[cond | noD].sum()) / 1000, 3),
                 over_limit=int(res.over_limit.sum()), over_vmax=int(res.over_vmax.sum()),
                 surcharged=int((res.surcharged & cond).sum()), negative_slope=int(res.negative_slope.sum()),
                 km_under_vmin=round(float(L.length_m[res.get("under_vmin", pd.Series(False, index=L.index))].sum()) / 1000, 3)
                 if check_set else None, load_set=load_set, check_set=check_set, seconds=round(time.perf_counter() - t0, 3))
     if psum: summ["pressure"] = psum
+    if gsum: summ["gvf"] = gsum
     return res, summ
