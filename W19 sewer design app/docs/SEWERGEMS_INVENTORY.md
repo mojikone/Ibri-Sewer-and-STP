@@ -28,8 +28,8 @@ No SewerGEMS file was read. A Fable 5.2 review of the first draft found that it 
 | Outfall | v3 | Free, or a fixed tailwater level (SWMM FIXED). Time-elevation and elevation-flow tailwater: gap. |
 | Wet Well | part | Invert, start/stop depths (shown as elevations too), plan area or depth-area table for the storm run. Alarms and the steady fixed level: gap. |
 | Pump | v3 | A link from the wet well (SWMM's convention; SewerGEMS draws a node with a downstream link). Definition, start/stop, and identical pumps in parallel (count). |
-| Pressure Pipe | v3 | Bore, Hazen-Williams C / Darcy-Weisbach e (Colebrook-White) / Manning n per pipe or per project, minor loss K, check-valve flag. |
-| Pressure Junction | v3 | Elevation and ground; pressure head at the junctions in the results. |
+| Pressure Pipe | v3 | Bore, Hazen-Williams C / Darcy-Weisbach e (Colebrook-White) / Manning n per pipe or per project, minor loss K. Splitting one keeps both halves' values and inserts a pressure junction. |
+| Pressure Junction | v3 | Elevation and ground (a prototype of its own). Pressure head is given at the force main's pipe ends, not per junction. |
 | Conduit | have | Circular (catalogue), box, open rectangle, trapezoid, barrels, n; infiltration per conduit. |
 | Channel | part | As open-rectangle and trapezoid conduits. |
 | Catchment | have | SWMM runoff (area, imperviousness, width, slope, n). Rational, SCS UH and RTK: gap. |
@@ -48,7 +48,7 @@ No SewerGEMS file was read. A Fable 5.2 review of the first draft found that it 
 | GVF-Convex steady sanitary | part | The app's steady engine accumulates flow (unit loads peaked on their combined load or population, sanitary loads unpeaked, infiltration, transfers) and solves normal depth per conduit. Matched SewerGEMS's flows within 0.1 % on SC1-2056. No backwater (GVF) profile, HGL or structure losses. |
 | Pressure engine (steady) | v3 | Force-main friction and minor losses; the pump's head at the flow; the operating point on its curve (from the stop and the start levels); the system curve; the discharge level is the higher of the main's crown and the water in the receiving structure; shutoff below the static lift gives Q = 0, flagged; negative pressure flagged. |
 | GVF-Rational | part | Block 04 sections matched at SewerGEMS's flows. The rational method itself: gap. |
-| Implicit / Explicit (SWMM) dynamic | have | EPA SWMM 5. Storm runs, plus v3: force mains (FORCE_MAIN, H-W or D-W), pump curves (Type 3), constant pumps (Type 2), storage tables, orifices, weirs, fixed tailwater, dry-weather flow with hourly patterns. |
+| Implicit / Explicit (SWMM) dynamic | have | EPA SWMM 5. Storm runs, plus v3: force mains (FORCE_MAIN, H-W or D-W; a Manning main as a full circular conduit), pump curves (Type 3, strictly falling, n pumps in parallel), constant pumps (Type 2), storage tables, orifices, weirs, fixed tailwater, dry-weather flow with hourly patterns. The dry-weather switch applies to projects made in the app; an imported .inp keeps its own [DWF]. |
 | Pond routing (PondPack) | part | Through SWMM storage. |
 | Energy cost | gap | |
 | Gravity friction (Manning, Colebrook-White) | have | |
@@ -62,8 +62,8 @@ No SewerGEMS file was read. A Fable 5.2 review of the first draft found that it 
 
 | SewerGEMS | App | Notes |
 |---|---|---|
-| Unit sanitary loads (population, area, discharge, count; population equivalent) | v3 | Library (Components > Unit loads); rows of unit load and count per structure (Properties). |
-| Extreme flow methods | v3 | Table (flow), Peltier and Merrimack (G201), Federov (flow), Harmon, Ten States, Babbitt (population, on the population upstream), constant, cutoff. SewerGEMS's generic equation form: gap. |
+| Unit sanitary loads (population, area, discharge, count; population equivalent) | v3 | Library (Components > Unit loads); rows of unit load and count per structure (Properties), for every load set or for one. |
+| Extreme flow methods | v3 | Table (flow), Peltier and Merrimack (G201), Federov (flow), Harmon, Ten States, Babbitt (population, on the population upstream), constant; a cutoff capping any of them. A population method with no population is a notification. SewerGEMS's generic equation form: gap. |
 | Sanitary load (fixed, unpeaked) | have | |
 | Pattern loads (dry weather) | v3 | SWMM DWF with hourly patterns. Hydrograph loads: gap. |
 | Conduit infiltration (length, length x diameter, surface, count) | have | |
@@ -79,7 +79,7 @@ No SewerGEMS file was read. A Fable 5.2 review of the first draft found that it 
 | Efficiency, motor, VSD | gap | |
 | On/off levels | have | As depths at the inlet, shown with their elevations. |
 | Controls, logical controls | gap | |
-| Minor losses, check valve | v3 | K per pipe; the check valve is recorded (no reverse flow in the steady run). |
+| Minor losses | v3 | K per pipe. Check valves: gap (the steady run has no reverse flow; SWMM pumps do not run backwards). |
 | System head curves | v3 | Drawn with the pump curve and the steady duty in Pump definitions. |
 
 ## 5. Hydrology

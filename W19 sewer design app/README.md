@@ -225,7 +225,7 @@ The Ibri W18 viewer of phase 1B (the 12 frozen designs with their W18 tools) is 
 - the W18 viewer (`/w18`): the design chain does not take a what-if's edits; BOQ, costs, station flows, DWG and
   schematics are still to be placed (`docs/SCRIPT_REGISTER.md`, "Planned").
 
-All tests (2026-11-23, after v3): see FINDINGS 2026-11-23 (v3) for the count. After v2: 277 passed, 1 skipped, 2 expected failures (the full suite, then the browser tests again after the selection tools: 68 passed). Before: (2026-11-22, after the symbology): `python -m pytest` - 252 passed, 1 skipped (a live assistant test), 2 expected
+All tests (2026-11-23, after v3 and its review fixes): 303 passed, 1 skipped, 2 expected failures. After v2: 277 passed, 1 skipped, 2 expected failures (the full suite, then the browser tests again after the selection tools: 68 passed). Before: (2026-11-22, after the symbology): `python -m pytest` - 252 passed, 1 skipped (a live assistant test), 2 expected
 failures (EPA Example1, a SWMM build difference), 11 min, 43 end-to-end tests among them.
 
 ## Reproduction and speed (2026-11-21)
