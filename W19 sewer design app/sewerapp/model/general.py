@@ -53,7 +53,7 @@ DEFAULT_SETTINGS = dict(
     # the project's engineering libraries beyond the size catalogue: named cross-sections a conduit can take
     # unit_loads: [{name, type population|area|discharge|count, rate_m3d per unit, unit, pe people per unit}]
     # patterns: [{name, hourly: 24 multipliers}] for dry-weather runs on SWMM
-    libraries=dict(sections=[], pumps=[], unit_loads=[], patterns=[]),
+    libraries=dict(sections=[], pumps=[], unit_loads=[], patterns=[], catalogues={}),
     # the dry-weather flow in the SWMM run: off (a storm run alone) or on with a load set and an hourly pattern
     swmm_dwf=dict(on=False, load_set=None, pattern=None, hours=48),
     # named selections kept with the project (SewerGEMS's selection sets): {name: {table, ids}}
@@ -71,7 +71,7 @@ DEFAULT_SETTINGS = dict(
                 dd_limits=[[355, 0.65], [99999, 0.50]],                                # G203 p27 Table 10
                 slope_min={"200": 0.005, "250": 0.00375, "315": 0.0027, "400": 0.00205, "500": 0.00155, "600": 0.00125,
                            "700": 0.001, "800": 0.00085, "900": 0.00075},             # G203 p29 Table 11 (mm/m / 1000)
-                match="crowns", catalogue=DEFAULT_CATALOGUE),
+                match="crowns", catalogue=DEFAULT_CATALOGUE, catalogue_name=None),
     design_load="design", check_load=None, self_cleansing_min_dn=200,
 )
 

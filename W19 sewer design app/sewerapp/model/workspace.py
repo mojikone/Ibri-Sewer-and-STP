@@ -58,9 +58,34 @@ def _length(p, a, b, coords=None):
     return math.dist((p.nodes.x[a], p.nodes.y[a]), (p.nodes.x[b], p.nodes.y[b]))
 
 
+CATEGORIES = [("physical", "Physical"), ("loading", "Sanitary loading"), ("infiltration", "Infiltration"), ("hydrology", "Hydrology and rain"),
+              ("boundary", "Boundary conditions"), ("operational", "Operational"), ("options", "Calculation options")]
+CAT_ORDER = [c for c, _ in CATEGORIES]
+_OP_CAT = dict(set_load="loading", set_loads="loading", set_unit_rows="loading", set_infiltration="infiltration", set_hydrology="hydrology",
+               set_rain="hydrology", set_tailwater="boundary", set_pump="operational", set_controls="operational", set_setting="options")
+
+
+def category(e):
+    """The alternative category of an edit (a batch: its first edit's; batches are split by category before routing)."""
+    op = e.get("op")
+    if op == "batch": return category(e["ops"][0]) if e.get("ops") else "physical"
+    if op in ("set", "set_many", "set_values") and e.get("field") == "inflow_m3d": return "loading"
+    return _OP_CAT.get(op, "physical")
+
+
+def split_by_category(e):
+    """An edit as (category, edit) parts: a batch of mixed categories becomes one batch per category."""
+    if e.get("op") != "batch": return [(category(e), e)]
+    parts = {}
+    for x in e.get("ops") or []: parts.setdefault(category(x), []).append(x)
+    return [(c, ops[0] if len(ops) == 1 else dict(op="batch", ops=ops)) for c, ops in sorted(parts.items(), key=lambda kv: CAT_ORDER.index(kv[0]))]
+
+
 def apply(p, e):
     """Apply one edit to project p in place; returns True when the structure (elements, geometry) changed."""
     op = e["op"]
+    if op == "_alt":                                     # the parts of an edit that went into alternatives live there;
+        return apply(p, e["own"]) if e.get("own") else False     # the scenario's own part (if any) is here
     if op == "set":
         t = getattr(p, e["table"]); ids = [str(i) for i in e["ids"]]
         missing = [i for i in ids if i not in t.index]
@@ -463,10 +488,11 @@ class Scenario:
         self.id, self.name, self.parent = sid, name, parent
         self.edits = list(edits or []); self.redo = []
         self.fixed = 0                          # leading edits that define the scenario (an opened model's): not undoable
+        self.alts = {}                          # {category: alternative id}: the alternatives this scenario takes
 
     def to_dict(self):
         return dict(id=self.id, name=self.name, parent=self.parent, edits=len(self.edits), can_undo=len(self.edits) > self.fixed,
-                    can_redo=bool(self.redo))
+                    can_redo=bool(self.redo), alts=dict(getattr(self, "alts", {}) or {}))
 
 
 class Session:
@@ -477,16 +503,85 @@ class Session:
         self.scenarios = {"base": Scenario("base", "Base")}; self._cache = {}; self._n = 0
         self.external = {}                      # scenario id -> results another program computed (SewerGEMS), by link id
         self.refs = []                          # reference layers shown under the network: [{id, name, geojson, ...}]
+        self.alternatives = {}                  # {category: {alternative id: {name, parent, edits}}}
+        self._seq = 0                           # the session's edit clock: every new edit gets the next number
+        self._alt_n = 0                         # alternative ids A1, A2 ... never reused
 
-    def model(self, sid):
-        """The scenario's project (the base plus the parent chain's edits plus its own)."""
+    def _tick(self):
+        self._seq = int(getattr(self, "_seq", 0)) + 1; return self._seq
+
+    def _rescan(self):
+        """The clocks after a reload: past the largest number in use."""
+        seqs = [e.get("_seq", 0) for c in self.scenarios.values() for e in c.edits + c.redo] + \
+               [e.get("_seq", 0) for A in self.alternatives.values() for a in A.values() for e in a["edits"]]
+        self._seq = max([int(x or 0) for x in seqs] + [int(getattr(self, "_seq", 0) or 0)])
+        ns = [int(k[1:]) for A in self.alternatives.values() for k in A if k[:1] == "A" and k[1:].isdigit()]
+        self._alt_n = max(ns + [int(getattr(self, "_alt_n", 0) or 0)])
+
+    def new_alternative(self, cat, name, parent=None, edits=None):
+        self._alt_n = int(getattr(self, "_alt_n", 0)) + 1
+        while f"A{self._alt_n}" in self.alternatives.get(cat, {}): self._alt_n += 1
+        aid = f"A{self._alt_n}"
+        self.alternatives.setdefault(cat, {})[aid] = dict(name=name, parent=parent, edits=list(edits or [])); self._cache = {}
+        return aid
+
+    def fork_alts(self, sid):
+        """Give a scenario a private child of every alternative it takes, so its edits change no other scenario."""
+        sc = self.scenarios[sid]; sc.alts = dict(getattr(sc, "alts", {}) or {})
+        for cat, aid in self.alts_of(sid).items():
+            sc.alts[cat] = self.new_alternative(cat, f"{self.alternatives[cat][aid]['name']} ({sc.name})", parent=aid)
+        self._cache = {}
+
+    # ---- alternatives (F14)
+    def alts_of(self, sid):
+        """The alternatives a scenario takes: its own choices over its parents' (a child inherits them)."""
         chain, s = [], self.scenarios[sid]
         while s: chain.append(s); s = self.scenarios.get(s.parent) if s.parent else None
-        key = tuple((c.id, len(c.edits)) for c in chain)
+        out = {}
+        for c in reversed(chain): out.update(getattr(c, "alts", {}) or {})
+        return {k: v for k, v in out.items() if v and v in (getattr(self, "alternatives", {}) or {}).get(k, {})}
+
+    def alt_chain(self, cat, aid):
+        A = self.alternatives.get(cat, {}); out, k = [], aid
+        while k and k in A and len(out) < 1000: out.append(k); k = A[k].get("parent")
+        return list(reversed(out))
+
+    def alt_edits(self, cat, aid):
+        return [e for k in self.alt_chain(cat, aid) for e in self.alternatives[cat][k]["edits"]]
+
+    def _key(self, sid):
+        chain, s = [], self.scenarios[sid]
+        while s: chain.append(s); s = self.scenarios.get(s.parent) if s.parent else None
+        alts = self.alts_of(sid)
+        return chain, tuple((c.id, len(c.edits)) for c in chain) + tuple(sorted((k, a, len(self.alt_edits(k, a))) for k, a in alts.items())), alts
+
+    def model(self, sid):
+        """The scenario's project: the base plus the parent chain's edits plus its own. With alternatives: the chain's
+        own edits less the kinds taken from alternatives, and the alternatives' edits, merged in the order they were
+        made (the session's edit clock), so the history replays as it happened."""
+        chain, key, alts = self._key(sid)
         if self._cache.get("model_key") == key: return self._cache["model"]
         p = self.base.copy()
-        for c in reversed(chain):
-            for e in c.edits: apply(p, e)
+        if not alts:
+            for c in reversed(chain):
+                for e in c.edits: apply(p, e)
+        else:
+            items, k = [], 0
+            for c in reversed(chain):
+                last = -1
+                for e in c.edits:
+                    last = e.get("_seq", last)                        # an edit older than the clock keeps its place
+                    own = e.get("own") if e.get("op") == "_alt" else e
+                    if not own: continue
+                    for cat, part in split_by_category(own):
+                        if cat not in alts: items.append((last, CAT_ORDER.index(cat), k, part)); k += 1
+            for cat, aid in alts.items():
+                for e in self.alt_edits(cat, aid): items.append((e.get("_seq", -1), CAT_ORDER.index(cat), k, e)); k += 1
+            skipped = 0
+            for *_, e in sorted(items, key=lambda t: t[:3]):
+                try: apply(p, e)
+                except (ValueError, KeyError): skipped += 1           # an edit naming an element this scenario does not have
+            p.meta = dict(getattr(p, "meta", {}) or {}, alternatives_skipped=skipped)
         self._cache = dict(model_key=key, model=p)
         return p
 
@@ -505,6 +600,18 @@ class Session:
     def edit(self, sid, e):
         s = self.scenarios[sid]; trial = self.model(sid).copy()
         structural = apply(trial, e)                               # validates: raises before anything is recorded
+        alts = self.alts_of(sid); seq = self._tick()
+        flat = e["ops"] if e.get("op") == "batch" else [e]
+        if alts and any(category(x) in alts for x in flat):        # the parts of a kind taken from an alternative go there;
+            items = []                                             # the scenario keeps one entry: one undo step
+            for cat, part in split_by_category(e):
+                if cat in alts:
+                    self.alternatives[cat][alts[cat]]["edits"].append(dict(part, _seq=seq)); items.append([cat, alts[cat], seq])
+            own = [x for x in flat if category(x) not in alts]    # its own part in the order given
+            s.edits.append(dict(op="_alt", items=items, own=(own[0] if len(own) == 1 else dict(op="batch", ops=own)) if own else None, _seq=seq))
+            s.redo = []; self._cache = {}; self.model(sid)
+            return structural
+        e["_seq"] = seq                                            # the validated dict itself (a design's report is in it)
         s.edits.append(e); s.redo = []
         chain, c = [], s                                           # the validated copy is the new state: no replay
         while c: chain.append(c); c = self.scenarios.get(c.parent) if c.parent else None
@@ -526,17 +633,42 @@ class Session:
 
     def undo(self, sid):
         s = self.scenarios[sid]
-        if len(s.edits) > s.fixed: s.redo.append(s.edits.pop())
+        if len(s.edits) > s.fixed:
+            e = s.edits.pop()
+            if e.get("op") == "_alt":                              # its parts leave their alternatives: exactly those edits
+                taken = []
+                for cat, aid, seq in e.get("items", []):
+                    A = self.alternatives.get(cat, {}).get(aid)
+                    for i, x in enumerate(A["edits"] if A else []):
+                        if x.get("_seq") == seq: taken.append([cat, aid, A["edits"].pop(i)]); break
+                e = dict(e, taken=taken)
+            s.redo.append(e); self._cache = {}
 
     def redo_(self, sid):
         s = self.scenarios[sid]
-        if s.redo: s.edits.append(s.redo.pop())
+        if s.redo:
+            e = dict(s.redo.pop())
+            if e.get("op") == "_alt":
+                lost = []
+                for cat, aid, x in e.pop("taken", []):
+                    A = self.alternatives.get(cat, {}).get(aid)
+                    if A is None: lost.append({k: v for k, v in x.items() if k != "_seq"}); continue
+                    i = next((j for j, y in enumerate(A["edits"]) if y.get("_seq", -1) > x.get("_seq", -1)), len(A["edits"]))
+                    A["edits"].insert(i, x)                       # back in its place in time
+                if lost:                                           # its alternative is gone: the edit stays with the scenario
+                    own = ([e["own"]] if e.get("own") else []) + lost
+                    e["own"] = own[0] if len(own) == 1 else dict(op="batch", ops=own)
+                    e["items"] = [it for it in e.get("items", []) if self.alternatives.get(it[0], {}).get(it[1]) is not None]
+            s.edits.append(e); self._cache = {}
 
     def state(self):
         """What a snapshot keeps: the base model, the scenarios as edit lists, results read from other programs and
         reference layers. The base is never changed in place (scenarios copy it), so this can be pickled outside the lock."""
+        import copy as _copy
         return dict(id=self.id, base=self.base, n=self._n, external=self.external, refs=getattr(self, "refs", []), routes=getattr(self, "routes", []),
-                    symbology=getattr(self, "symbology", None),
+                    symbology=getattr(self, "symbology", None), alternatives=_copy.deepcopy(getattr(self, "alternatives", {})),
+                    seq=getattr(self, "_seq", 0), alt_n=getattr(self, "_alt_n", 0),
+                    scenario_alts={s.id: dict(getattr(s, "alts", {}) or {}) for s in self.scenarios.values()},
                     scenarios=[(s.id, s.name, s.parent, list(s.edits), list(s.redo), s.fixed) for s in self.scenarios.values()])
 
     @classmethod
@@ -545,6 +677,10 @@ class Session:
         s.scenarios = {}
         for sid, name, parent, edits, redo, fixed in st["scenarios"]:
             c = Scenario(sid, name, parent, edits); c.redo = redo; c.fixed = fixed; s.scenarios[sid] = c
+        s.alternatives = st.get("alternatives", {}) or {}
+        for sid, a in (st.get("scenario_alts") or {}).items():
+            if sid in s.scenarios: s.scenarios[sid].alts = dict(a)
+        s._seq, s._alt_n = st.get("seq", 0), st.get("alt_n", 0); s._rescan()
         return s
 
     def copy_scenario(self, sid, name=None):
