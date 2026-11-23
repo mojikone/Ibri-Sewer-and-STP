@@ -68,6 +68,22 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
   load set puts no load on the network (a storm model: only infiltration flows). The profile draws the rise as the crown or bank. SWMM files read and write
   RECT_CLOSED, RECT_OPEN and TRAPEZOIDAL with their barrels and n. For an export run in SewerGEMS,
   `GET .../section_check` compares the app's normal and critical depth at SewerGEMS's own flow with SewerGEMS's.
+- **v3 (2026-11-23): closer to SewerGEMS, from an inventory of its help and of its data model read through the API**
+  (`docs/SEWERGEMS_INVENTORY.md`, reviewed by Fable 5.2; each item marked have / v3 / part / gap):
+  - **pump stations and force mains:** pressure pipes and junctions (Layout tools), pump definitions (design point,
+    three points, table, constant flow; Components > Pump definitions, with the pump curve drawn against the selected
+    pump's force-main system curve and its steady duty), identical pumps in parallel, the steady pressure solve
+    (`engine/pressure.py`: H-W, D-W by Colebrook-White, Manning, minor losses, discharge at the higher of the main's crown
+    and the receiving structure's water, operating points from the stop and start levels, a pump that cannot lift
+    flagged, negative pressure flagged), shown in Properties in plain words (short / delivers, the head needed and given);
+    written to SWMM as FORCE_MAIN conduits and Type 3 pump curves;
+  - **loads:** unit sanitary loads by type (population, area, discharge, count, population equivalent) as a library and
+    rows per structure; extreme-flow methods Harmon, Ten States, Babbitt (on the population upstream), Federov, the
+    project's table, Peltier, Merrimack, constant, a cutoff; hourly patterns and the dry-weather flow on SWMM (an EPS run);
+  - **ponds:** orifice and weir outlets (Layout tools), a fixed tailwater at outfalls, all on SWMM; the steady run leaves
+    pond outlets out;
+  - **managers:** user notifications (Validate, F8; each note takes you to its element), selection sets, queries,
+    FlexTable columns and a statistics row, SewerGEMS's manager shortcuts (Ctrl+1/3/4/5/6/7/9).
 - **The ribbon interface (v2, 2026-11-23), at `http://127.0.0.1:8765/v2`:** the same editor with every tool in ribbon tabs as
   SewerGEMS's (File, Home, Layout, Components, Analysis, Report, View, Tools, Help), a quick-access bar (save, undo,
   redo), collapsible to the tab row (double-click a tab, the arrow, or Ctrl+F1; a click on a tab then shows it over the
@@ -209,7 +225,7 @@ The Ibri W18 viewer of phase 1B (the 12 frozen designs with their W18 tools) is 
 - the W18 viewer (`/w18`): the design chain does not take a what-if's edits; BOQ, costs, station flows, DWG and
   schematics are still to be placed (`docs/SCRIPT_REGISTER.md`, "Planned").
 
-All tests (2026-11-23, after v2): 277 passed, 1 skipped, 2 expected failures (the full suite, then the browser tests again after the selection tools: 68 passed). Before: (2026-11-22, after the symbology): `python -m pytest` - 252 passed, 1 skipped (a live assistant test), 2 expected
+All tests (2026-11-23, after v3): see FINDINGS 2026-11-23 (v3) for the count. After v2: 277 passed, 1 skipped, 2 expected failures (the full suite, then the browser tests again after the selection tools: 68 passed). Before: (2026-11-22, after the symbology): `python -m pytest` - 252 passed, 1 skipped (a live assistant test), 2 expected
 failures (EPA Example1, a SWMM build difference), 11 min, 43 end-to-end tests among them.
 
 ## Reproduction and speed (2026-11-21)
