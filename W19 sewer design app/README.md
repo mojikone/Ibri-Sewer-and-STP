@@ -68,6 +68,36 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
   load set puts no load on the network (a storm model: only infiltration flows). The profile draws the rise as the crown or bank. SWMM files read and write
   RECT_CLOSED, RECT_OPEN and TRAPEZOIDAL with their barrels and n. For an export run in SewerGEMS,
   `GET .../section_check` compares the app's normal and critical depth at SewerGEMS's own flow with SewerGEMS's.
+- **The ribbon interface (v2, 2026-11-23), at `http://127.0.0.1:8765/v2`:** the same editor with every tool in ribbon tabs as
+  SewerGEMS's (File, Home, Layout, Components, Analysis, Report, View, Tools, Help), a quick-access bar (save, undo,
+  redo), collapsible to the tab row (double-click a tab, the arrow, or Ctrl+F1; a click on a tab then shows it over the
+  map). The legend is its own panel (fold, hide from View > Legend); the basemap and display controls are in View. The
+  classic toolbar stays at `/` (Help > Classic toolbar). Both have, from the engineer's trial of 2026-11-23
+  (`docs/USER_TRIAL_FEEDBACK.md`):
+  - **Layout tool** (L): each click places the structure prototype and a pipe from the last click, until Esc,
+    right-click or double-click; manholes go in between at the engineer's rounded spacing (W13's rule of 2026-08-18,
+    ported with its tests to `engine/spacing.py`: 230 m at 100 m gives 80 + 80 + 70) at G203 Table 12's maximum for
+    the pipe's size or at a typed maximum; a run from a manhole that already drains becomes a branch into it; one
+    undo step per click;
+  - **morph:** a structure tool clicked on a structure changes it to that kind (id, place, levels and pipes kept); also
+    right-click > Morph to;
+  - **right-click menu** on structures, pipes, catchments and the map: properties, zoom, trace, long section from here,
+    reconnect start or stop to another node, reverse, split here, start a layout run, delete;
+  - **units** (Components > Units, or Settings): flows, loads and infiltration in the unit chosen (L/s, m3/s, m3/h,
+    m3/d, ML/d...); the model keeps its own units;
+  - **the two load kinds** as SewerGEMS's, in Properties and the Nodes table: the unit load (peaked with the load upstream)
+    and the sanitary load (added unpeaked);
+  - **infiltration** by length (the project's 0.72 m3/d/km, G201 p72), by length x diameter, by inside surface or per
+    conduit, and a conduit's own rate in its Properties;
+  - **prototypes** (what a new manhole, outfall, wet well, conduit or catchment gets) and **engineering libraries** (named
+    box and channel sections, applied to a selection or made the conduit prototype; the pipe catalogue);
+  - **ponds and pumps for the storm run:** a storage node's area or depth-area table and a pump's capacity with its
+    start and stop depths, written to SWMM; the sample "Pond and pump" is laid out on the engineer's Pond_Mouj model;
+  - a server that cannot be reached (the tunnel's 502 page) is retried with a banner instead of showing an HTML page;
+  - **selection:** box and polygon tools (pipes, structures or catchments; Shift adds), select by type, invert, clear;
+  - **network navigator:** find connected, upstream, downstream, the path between two structures, and finds for isolated
+    structures, two leaving pipes, ends that are not outfalls, pipes that reach no outfall, failing pipes, coincident
+    structures.
 - **Symbology (colour coding and labels), as in SewerGEMS's Element Symbology:** Display card > Symbology > Edit...
   opens a panel beside the map (the map stays live). For pipes, structures and catchments:
   - colour coding by any field: inputs (size or section, DN, length, gradient, inverts, depth at either end, ground,
@@ -179,7 +209,7 @@ The Ibri W18 viewer of phase 1B (the 12 frozen designs with their W18 tools) is 
 - the W18 viewer (`/w18`): the design chain does not take a what-if's edits; BOQ, costs, station flows, DWG and
   schematics are still to be placed (`docs/SCRIPT_REGISTER.md`, "Planned").
 
-All tests, one pass (2026-11-22, after the symbology): `python -m pytest` - 252 passed, 1 skipped (a live assistant test), 2 expected
+All tests (2026-11-23, after v2): 277 passed, 1 skipped, 2 expected failures (the full suite, then the browser tests again after the selection tools: 68 passed). Before: (2026-11-22, after the symbology): `python -m pytest` - 252 passed, 1 skipped (a live assistant test), 2 expected
 failures (EPA Example1, a SWMM build difference), 11 min, 43 end-to-end tests among them.
 
 ## Reproduction and speed (2026-11-21)
