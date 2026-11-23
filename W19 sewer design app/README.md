@@ -91,6 +91,11 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
   - **Phones and tablets:** below 900 px wide or 520 px high the map keeps the screen, Properties opens over it as a
     drawer when one element is chosen, the ribbon starts folded on phones, Find shrinks to its lens, dialogs fit the
     screen, touch targets grow.
+  - **Flow arrows run with the flow** (F23): 46 % of the Ibri sample's pipe lines were digitised from the downstream
+    end, so their arrows pointed upstream; lines are now turned on entry, and Validate names a line that misses one
+    of its structures (6 in the sample, in swapped pairs, carrying the wrong length).
+  - **The tables' pane by finger** (F24): a tap on the splitter opens or closes it, a finger drag resizes it, the
+    arrow stays in view.
   - Fixed after a Fable 5.2 review: an uploaded file's name could choose where the server wrote it (any folder, from
     the shared link); alternatives now replay in the order things were done (a session-wide edit clock), undo removes
     exactly its own edit from a shared alternative, a mixed batch is one undo step, a child can take its own edits,
