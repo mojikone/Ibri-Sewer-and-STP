@@ -171,6 +171,9 @@ function initMap() {
     map.addLayer({ id: "links-base", type: "line", source: "links", layout: { "line-cap": "round", "line-sort-key": dn }, paint: { "line-color": ["get", "_c"], "line-width": ws(1) } });
     map.addLayer({ id: "links-fail", type: "line", source: "links", filter: ["==", ["get", "_fail"], 1], layout: { "line-cap": "round" }, paint: { "line-color": "#d7301f", "line-width": w(1.3, 0.5) } });
     map.addLayer({ id: "links-pump", type: "line", source: "links", filter: ["==", ["get", "kind"], "pump"], paint: { "line-color": "#7b3fa0", "line-width": w(1.3), "line-dasharray": [2, 1.5] } });
+    // a force main: its colour coding with a dark core line, so it reads as a pressure pipe at any colouring
+    map.addLayer({ id: "links-outlet", type: "line", source: "links", filter: ["in", ["get", "kind"], ["literal", ["orifice", "weir"]]], paint: { "line-color": "#0e7c86", "line-width": w(1.2), "line-dasharray": [0.6, 1.2] } });
+    map.addLayer({ id: "links-pressure", type: "line", source: "links", filter: ["==", ["get", "kind"], "pressure_pipe"], layout: { "line-cap": "butt" }, paint: { "line-color": "#3b0a45", "line-width": w(0.35), "line-dasharray": [3, 2] } });
     map.addLayer({ id: "links-locked", type: "line", source: "links", filter: ["==", ["get", "_lock"], 1], paint: { "line-color": "#ffffff", "line-width": w(0.35), "line-dasharray": [1.5, 1.5] } });
     map.addImage("flow-arrow", arrowImage(), { sdf: true, pixelRatio: 2 });
     map.addLayer({ id: "links-arrow", type: "symbol", source: "links", minzoom: 15.5, layout: { "symbol-placement": "line", "symbol-spacing": 90, "icon-image": "flow-arrow", "icon-size": 1.25, "icon-rotation-alignment": "map", "icon-allow-overlap": true, "icon-ignore-placement": true }, paint: { "icon-color": "#1d2733", "icon-opacity": 0.75 } });
@@ -178,7 +181,7 @@ function initMap() {
     map.addLayer({ id: "hot-link", type: "line", source: "hot", paint: { "line-color": "#ffb000", "line-width": w(1, 5), "line-opacity": 0.85 } });
     map.addLayer({ id: "sel-links-casing", type: "line", source: "sel-links", paint: { "line-color": "#fff", "line-width": 9 } });
     map.addLayer({ id: "sel-links", type: "line", source: "sel-links", paint: { "line-color": "#00b3c7", "line-width": 5 } });
-    const kc = ["match", ["get", "kind"], "outfall", "#123e7c", "wetwell", "#7b3fa0", "storage", "#1b9e77", "junction", "#c9a227", "#8a94a0"];
+    const kc = ["match", ["get", "kind"], "outfall", "#123e7c", "wetwell", "#7b3fa0", "storage", "#1b9e77", "junction", "#c9a227", "pressure_junction", "#3b0a45", "#8a94a0"];
     const fl = ["==", ["coalesce", ["get", "_fl"], 0], 1];
     // at city scale plain manholes are hidden (they read as grey dots over the pipes); outfalls, wet wells and flagged nodes stay
     const mh = ["all", ["==", ["get", "kind"], "manhole"], ["!", fl]];
@@ -306,7 +309,7 @@ async function loadModel() {
   const nodeFeat = d.nodes.features, linkFeat = d.links.features, catchFeat = d.catchments.features;
   for (const f of catchFeat) { const r = f.geometry.coordinates[0]; if (r.length && (r[0][0] !== r[r.length - 1][0] || r[0][1] !== r[r.length - 1][1])) r.push(r[0]); }
   state.model = {
-    nodeFeat, linkFeat, catchFeat, settings: d.settings, loads: d.loads,
+    nodeFeat, linkFeat, catchFeat, settings: d.settings, loads: d.loads, unit_rows: d.unit_rows || {},
     nodes: new Map(nodeFeat.map(f => [String(f.id), f])), links: new Map(linkFeat.map(f => [String(f.id), f])),
     catchments: new Map(catchFeat.map(f => [String(f.id), f])),
     fcNodes: { type: "FeatureCollection", features: nodeFeat }, fcLinks: { type: "FeatureCollection", features: linkFeat },
@@ -351,7 +354,7 @@ function mergeResults() {
   const FR = state.stormFrame && state.stormFrame.sid === state.sid ? state.stormFrame : null;
   for (const f of m.linkFeat) {
     const r = R[f.id], p = f.properties, sl = S && S.links[f.id], e = E[f.id];
-    p._fail = !usingStored() && !NO_FAIL.has(by) && r && (r.over_limit || r.over_vmax || r.surcharged || r.negative_slope) ? 1 : 0;
+    p._fail = !usingStored() && !NO_FAIL.has(by) && r && (r.over_limit || r.over_vmax || r.surcharged || r.negative_slope || r.short) ? 1 : 0;
     p._lock = LK.has(String(f.id)) ? 1 : 0;
     const sq = FR ? (FR.links[f.id] == null ? null : Math.abs(FR.links[f.id])) : sl && sl.q_peak, scap = FR ? FR.links[f.id] : sl && sl.capacity_peak;
     p._c = by === "compare" ? CHANGE_COL[(CM && CM[f.id]) || "same"] : by === "dn_mm" && usingStored() ? colourFor(by, p.dn_mm) : by === "storm_q" ? colourFor(by, sq) : by === "storm_cap" ? colourFor(by, scap) : by === "storm_flood" ? GREY : colourFor(by, r && r[by]);
@@ -394,7 +397,7 @@ async function exec(op, more) {
   updateScenario(r.scenario); state.summary = r.summary;
   if (state.storm) state.storm.stale = true;
   if (op.op === "set_rain") state.rainApplied = true;
-  const reread = r.structural || ["set_many", "set_loads", "lock", "set_section", "set_infiltration", "set_storage", "set_pump", "set_prototype", "batch"].includes(op.op) || (op.op === "set" && op.table === "nodes" && op.field === "invert");
+  const reread = r.structural || ["set_many", "set_loads", "lock", "set_section", "set_infiltration", "set_storage", "set_pump", "set_prototype", "batch", "set_unit_rows", "set_ppipe", "set_outlet", "set_tailwater"].includes(op.op) || (op.op === "set" && op.table === "nodes" && op.field === "invert");
   if (reread) await loadModel(); else patchLocal(op);
   if (!more) { await loadResults(); renderAll(); }
   return r;
@@ -506,7 +509,7 @@ function newId(table, prefix) {
 }
 
 /* ------------------------------------------------------------------ tools */
-const ADD_NODE = { manhole: ["manhole", "MH-"], outfall: ["outfall", "O-"], wetwell: ["wetwell", "WW-"] };
+const ADD_NODE = { manhole: ["manhole", "MH-"], outfall: ["outfall", "O-"], wetwell: ["wetwell", "WW-"], pjunction: ["pressure_junction", "J-"] };
 /* the layout tool (F1, F2): each click places the node prototype and a pipe from the last click; with a maximum spacing
    the run between two clicks gets manholes at the engineer's rounded spacing (server op add_run, engine/spacing.py) */
 const layout = { node: "manhole", spacing: "table12", custom: 100, last: null };
@@ -516,7 +519,11 @@ const HINTS = {
   layout: "Click to place a structure; each next click adds a pipe from the last one (manholes at the spacing in between). Esc, right-click or double-click ends the run.",
   select: "Click a node or pipe. Shift or Ctrl adds to the selection.", manhole: "Click the map to add a manhole; click on a pipe to split it.",
   outfall: "Click the map to add an outfall.", wetwell: "Click the map to add a wet well.", pipe: "Click the start node, then the end node (an empty spot makes a manhole).",
-  pump: "Click the start node, then the end node.", catchment: "Click the corners; double-click or Enter to finish; then click the outlet node.", move: "Drag a node to move it.", delete: "Click a node or pipe to delete it.",
+  pump: "Click the wet well, then the node the pump delivers to (the start of its force main).",
+  ppipe: "Pressure pipe (force main): click the start node, then the end node (an empty spot makes a pressure junction).",
+  pjunction: "Click the map to add a pressure junction (a bend or high point on a force main).",
+  orifice: "Orifice (a pond outlet): click the pond or tank, then the node it discharges to.",
+  weir: "Weir (an overflow): click the pond or chamber, then the node it spills to.", catchment: "Click the corners; double-click or Enter to finish; then click the outlet node.", move: "Drag a node to move it.", delete: "Click a node or pipe to delete it.",
   measure: "Click points along the route to measure; Esc clears.",
 };
 function setTool(t) {
@@ -576,8 +583,8 @@ async function act(ll, mods) {
     const id = newId("nodes", pre);
     await exec({ op: "add_node", id, kind, ...lonlat });
     setSel("nodes", [id]);
-  } else if (t === "pipe" || t === "pump") {
-    const kind = t === "pump" ? "pump" : "conduit";
+  } else if (t === "pipe" || t === "pump" || t === "ppipe" || t === "orifice" || t === "weir") {
+    const kind = t === "pump" ? "pump" : t === "ppipe" ? "pressure_pipe" : t === "orifice" || t === "weir" ? t : "conduit";
     let endId = nn && nn.id;
     if (!state.pipeStart) {
       if (nn) { state.pipeStart = nn.id; highlight(); $("#hint").textContent = "Now click the end node."; }
@@ -585,8 +592,8 @@ async function act(ll, mods) {
       return;
     }
     if (nn && nn.id === state.pipeStart) return;
-    if (!endId) { endId = newId("nodes", "MH-"); await exec({ op: "add_node", id: endId, kind: "manhole", ...lonlat }, true); }
-    const id = newId("links", kind === "pump" ? "PMP-" : "P-");
+    if (!endId) { const pj = t === "ppipe"; endId = newId("nodes", pj ? "J-" : "MH-"); await exec({ op: "add_node", id: endId, kind: pj ? "pressure_junction" : "manhole", ...lonlat }, true); }
+    const id = newId("links", { pump: "PMP-", orifice: "OR-", weir: "WR-" }[kind] || (kind === "pressure_pipe" ? "FM-" : "P-"));
     const from = state.pipeStart; state.pipeStart = null;
     await exec({ op: "add_link", id, kind, from_node: from, to_node: endId });           // the size from the conduit prototype
     setSel("links", [id]); $("#hint").textContent = HINTS[t];
@@ -796,7 +803,8 @@ function renderResultsBlock() {
   const host = $("#res-block"); if (!host) return;
   const R = srcLinks(), sg = usingStored();
   if (state.sel.table !== "links" || state.sel.ids.length !== 1) { host.innerHTML = ""; return; }
-  const r = R[state.sel.ids[0]];
+  const r = R[state.sel.ids[0]], lf = state.model.links.get(state.sel.ids[0]);
+  if (lf && ["pump", "pressure_pipe"].includes(lf.properties.kind) && !sg) { host.innerHTML = ""; return; }      // their own blocks show their results
   if (!r) { host.innerHTML = `<h5>Results</h5><p class="muted">No result (the network could not be solved, or this is a pump).</p>`; return; }
   const fu = unitOf("q_ls").u;
   const rows = sg ? [["q_ls", `Flow (${fu})`], ["v_ms", "Velocity (m/s)"], ["depth_m", "Depth (m)"], ["d_over_D", "d/D"]] : [["q_ls", `Flow (${fu})`], ["v_ms", "Velocity (m/s)"], ["d_over_D", "d/D"], ["limit", "d/D limit"], ["s_pc", "Slope (%)"]];
@@ -830,7 +838,7 @@ function rowsFor(kind) {
   if (kind === "toolout") return (state.toolout && state.toolout.rows || []).map(r => ({ ...r, flags: flagText(r) }));
   return [];
 }
-function colsOf(kind) { if (kind === "results" && usingStored()) return ["id", "dn_mm", "q_ls", "v_ms", "depth_m", "d_over_D"]; return kind === "toolout" && state.toolout && state.toolout.cols ? state.toolout.cols : { nodes: NODE_COLS, links: LINK_COLS, results: RES_COLS, toolout: TOOL_COLS }[kind]; }
+function colsOf(kind) { if (state.table[kind] && state.table[kind].cols) return state.table[kind].cols; if (kind === "results" && usingStored()) return ["id", "dn_mm", "q_ls", "v_ms", "depth_m", "d_over_D"]; return kind === "toolout" && state.toolout && state.toolout.cols ? state.toolout.cols : { nodes: NODE_COLS, links: LINK_COLS, results: RES_COLS, toolout: TOOL_COLS }[kind]; }
 function renderTable(kind) {
   const st = state.table[kind], tbl = $("#tbl-" + kind); if (!tbl) return;
   let rows = rowsFor(kind);
@@ -855,6 +863,7 @@ function renderTable(kind) {
     }).join("")}</tr>`).join("") + `</tbody>`;
   const cnt = $("#count-" + kind);
   if (cnt) cnt.innerHTML = `${rows.length} rows` + (pages > 1 ? ` &middot; <span class="pager"><button class="tb" data-pg="-1">&lsaquo;</button> page ${st.page + 1} of ${pages} <button class="tb" data-pg="1">&rsaquo;</button></span>` : "") + (sel.size ? ` &middot; ${sel.size} selected` : "");
+  if (typeof tableFooter === "function") tableFooter(kind, tbl, rows, cols);          // statistics row (features3.js)
   tag(tbl);
   updateBulk(kind);
 }
@@ -1326,7 +1335,9 @@ function renderSettings() {
   const loadOpts = sets.map(s => [s, s]);
   host.innerHTML =
     `<fieldset><legend>Friction</legend>${row("friction.method", "Method", "select", [["colebrook", "Colebrook-White"], ["manning", "Manning"]])}${row("friction.ks_mm", "ks (mm)", "num")}${row("friction.manning_n", "Manning n", "num")}</fieldset>` +
-    `<fieldset><legend>Peaking</legend>${row("peaking.method", "Method", "select", ["table", "peltier", "merrimack", "constant", "none"].map(x => [x, x]))}${row("peaking.constant", "Constant factor", "num")}</fieldset>` +
+    `<fieldset><legend>Peaking (extreme flows)</legend>${row("peaking.method", "Method", "select", [["table", "Table (flow, L/s)"], ["peltier", "Peltier (flow, G201)"], ["merrimack", "Merrimack (flow, G201)"], ["federov", "Federov (flow)"], ["harmon", "Harmon (population)"], ["ten_states", "Ten States (population)"], ["babbitt", "Babbitt (population)"], ["constant", "Constant"], ["none", "None (factor 1)"]])}` +
+      `${row("peaking.constant", "Constant factor", "num")}${row("peaking.cutoff", "Cutoff (largest factor)", "num")}${row("peaking.pe_per_m3d", "People per m3/d of plain loads", "num")}` +
+      `<p class="muted small">Population methods peak each pipe on the population upstream: unit loads of the population type, others by their population equivalent, plain loads by the people per m3/d above (blank: none).</p></fieldset>` +
     unitsHtml() +
     `<fieldset><legend>Flows</legend>${row("design_load", "Design load set", "select", loadOpts)}${row("check_load", "Check load set", "select", [["", "(none)"], ...loadOpts])}` +
     `<p class="muted small">Unit loads are peaked with the load upstream; sanitary loads (each structure's own) are added unpeaked.</p></fieldset>` +
@@ -1587,6 +1598,7 @@ function renderActiveTab() {
   else if (t === "summary") renderSummary();
   else if (t === "hydro") drawHydro();
   else if (t === "profile") { if (!$("#prof-start").value) autoProfile(); else drawProfile(true); }
+  else if (t === "notes" && typeof renderNotes === "function") renderNotes();
 }
 
 /* ------------------------------------------------------------------ project actions */

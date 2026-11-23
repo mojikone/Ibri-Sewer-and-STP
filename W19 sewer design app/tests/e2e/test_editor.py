@@ -899,3 +899,52 @@ def test_v2_ribbon_layout_run_morph_reconnect_units_and_pond(server, browser):
     assert abs(pg.evaluate("window.ed.state.storm.data.links['PMP-1'].q_peak") - 0.12) < 0.002
     assert errs == [], errs
     pg.screenshot(path=os.path.join(SHOTS, "screenshot_v2_ribbon.png")); ctx.close()
+
+
+def test_v3_pump_station_force_main_unit_loads_notifications_query(server, browser):
+    """A wet well, a pump and a force main drawn with the tools; the pump defined in Pump definitions; its status in
+    Properties; unit loads; Validate; a query; the table's statistics row (2026-11-23 v3)."""
+    ctx = browser.new_context(viewport={"width": 1600, "height": 950}); pg = ctx.new_page(); pg.set_default_timeout(60000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
+    pg.click("#rb-tab-file"); pg.get_by_test_id("rb-new").click(); pg.get_by_test_id("new-name").fill("Station")
+    pg.get_by_test_id("new-crs-mode").select_option("local"); pg.get_by_test_id("new-create").click()
+    pg.wait_for_function("window.ed.state.pid && window.ed.state.model && document.body.dataset.pending === '0'")
+    vtool(pg, "manhole"); click_at(pg, 0, 0); vtool(pg, "wetwell"); click_at(pg, 60, 0); vtool(pg, "pjunction"); click_at(pg, 70, 20)
+    vtool(pg, "outfall"); click_at(pg, 300, 40); idle(pg)
+    vtool(pg, "pipe"); click_at(pg, 0, 0); click_at(pg, 60, 0); vtool(pg, "pump"); click_at(pg, 60, 0); click_at(pg, 70, 20)
+    vtool(pg, "ppipe"); click_at(pg, 70, 20); click_at(pg, 300, 40); idle(pg)
+    kinds = pg.evaluate("Object.fromEntries(window.ed.state.model.linkFeat.map(f => [f.id, f.properties.kind]))")
+    assert sorted(kinds.values()) == ["conduit", "pressure_pipe", "pump"], kinds
+    pump = [k for k, v in kinds.items() if v == "pump"][0]
+    nodes = {f: pg.evaluate("i => window.ed.state.model.nodes.get(i).properties.kind", f) for f in ids(pg, "nodes")}
+    vtool(pg, "select")
+    for n, k in nodes.items():                                                   # levels: wet well low, outfall high
+        g, i = {"manhole": (104, 102), "wetwell": (104, 99), "pressure_junction": (104, 102), "outfall": (118, 116)}[k]
+        pg.evaluate("id => window.ed.selectElement('nodes', id)", n); set_prop(pg, "ground", g); set_prop(pg, "invert", i)
+    mh = [n for n, k in nodes.items() if k == "manhole"][0]
+    pg.evaluate("id => window.ed.selectElement('nodes', id)", mh); ld = pg.get_by_test_id("load-design"); ld.fill("864"); ld.press("Enter"); idle(pg)   # 10 L/s, about 27 L/s once peaked
+    # Components > Pump definitions: a design point of 30 L/s at 25 m, then the pump takes it
+    pg.evaluate("id => window.ed.selectElement('links', id)", pump)
+    pg.click("#rb-tab-components"); pg.locator("#rb-page-components .rb-btn", has_text="Pump definitions").click()
+    pg.get_by_test_id("pd-add").click(); pg.fill("[data-testid=pd-q_ls]", "30"); pg.fill("[data-testid=pd-h_m]", "25")
+    pg.locator("#dlg-pumps [data-act=ok]").click(); idle(pg); pg.locator("#dlg-pumps [data-act=close]").click()
+    pg.get_by_test_id("pu-def").select_option("Pump 1"); pg.fill("#pu-on", "1.5"); pg.fill("#pu-off", "0.5"); pg.get_by_test_id("pu-apply").click(); idle(pg)
+    st = pg.get_by_test_id("pump-status").inner_text()
+    assert "delivers the flow" in st, st                                      # about 27 L/s against about 19 m: a 30 L/s @ 25 m pump copes
+    assert pg.evaluate(f"window.ed.state.results.links['{pump}'].tdh_m") > 116.2 - 100.5 - 0.01       # at least the static lift
+    # unit loads: 500 people on the manhole raise the flow
+    pg.get_by_test_id("rb-unit-loads-").click(); pg.get_by_test_id("ul-add").click(); pg.locator("#dlg-units-lib [data-act=ok]").click(); idle(pg)
+    q0 = pg.evaluate(f"window.ed.state.results.links['{pump}'].q_ls")
+    pg.evaluate("id => window.ed.selectElement('nodes', id)", mh); pg.get_by_test_id("ur-add").click(); pg.locator(".ur [data-k=c]").last.fill("500")
+    pg.get_by_test_id("ur-apply").click(); idle(pg)
+    assert pg.evaluate(f"window.ed.state.results.links['{pump}'].q_ls") > q0
+    # Validate lists the network's notes; a query selects the conduits
+    pg.click("#rb-tab-analysis"); pg.locator("#rb-page-analysis .rb-btn", has_text="Validate").first.click(); idle(pg)
+    expect(pg.locator("#pane-notes")).to_be_visible()
+    pg.click("#rb-tab-home"); pg.locator("#rb-page-home .rb-btn", has_text="Query").click()
+    pg.select_option("#q-f", "kind"); pg.select_option("#q-o", "="); pg.fill("#q-v", "pressure_pipe"); pg.locator("#dlg-query [data-act=ok]").click()
+    assert pg.evaluate("window.ed.state.sel.ids").__len__() == 1; pg.locator("#dlg-query [data-act=close]").click()
+    pg.evaluate("document.getElementById('tab-links').click()"); expect(pg.locator("#tbl-links tfoot")).to_have_count(1)
+    assert errs == [], errs
+    pg.screenshot(path=os.path.join(SHOTS, "screenshot_v3_station.png")); ctx.close()

@@ -74,6 +74,10 @@
     <button id="tool-wetwell" class="tool" title="Wet well: click the map; click a structure to change it to a wet well (W)"><svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" fill="#7b3fa0"/></svg><span>Wet well</span></button>
     <button id="tool-pipe" class="tool" title="Pipe: click start node, then end node (P)"><svg viewBox="0 0 24 24"><path d="M5 18L19 6" stroke="#2f6fd0" stroke-width="3" stroke-linecap="round"/><circle cx="5" cy="18" r="2.5" fill="#fff" stroke="#6b7785" stroke-width="1.5"/><circle cx="19" cy="6" r="2.5" fill="#fff" stroke="#6b7785" stroke-width="1.5"/></svg><span>Pipe</span></button>
     <button id="tool-pump" class="tool" title="Pump: click start node, then end node"><svg viewBox="0 0 24 24"><path d="M4 12h16" stroke="#7b3fa0" stroke-width="2.5" stroke-dasharray="3 2"/><circle cx="12" cy="12" r="6" fill="#fff" stroke="#7b3fa0" stroke-width="2"/><path d="M10 9l5 3-5 3z" fill="#7b3fa0"/></svg><span>Pump</span></button>
+    <button id="tool-ppipe" class="tool" title="Pressure pipe (force main): click start node, then end node"><svg viewBox="0 0 24 24"><path d="M5 18L19 6" stroke="#3b0a45" stroke-width="3.2" stroke-linecap="round"/><path d="M5 18L19 6" stroke="#fff" stroke-width="1" stroke-dasharray="2 2"/><circle cx="5" cy="18" r="2.4" fill="#3b0a45"/><circle cx="19" cy="6" r="2.4" fill="#3b0a45"/></svg><span>Force main</span></button>
+    <button id="tool-pjunction" class="tool" title="Pressure junction: a bend or high point on a force main"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="8" height="8" transform="rotate(45 12 12)" fill="#3b0a45"/></svg><span>Pr. junction</span></button>
+    <button id="tool-orifice" class="tool" title="Orifice: a pond or tank outlet (storm run)"><svg viewBox="0 0 24 24"><path d="M4 18L20 6" stroke="#0e7c86" stroke-width="2.4" stroke-dasharray="1 2.5" stroke-linecap="round"/><circle cx="12" cy="12" r="4" fill="#fff" stroke="#0e7c86" stroke-width="2"/></svg><span>Orifice</span></button>
+    <button id="tool-weir" class="tool" title="Weir: an overflow from a pond or chamber (storm run)"><svg viewBox="0 0 24 24"><path d="M4 18L20 6" stroke="#0e7c86" stroke-width="2.4" stroke-dasharray="1 2.5" stroke-linecap="round"/><path d="M7 15h10v3H7z" fill="#0e7c86"/></svg><span>Weir</span></button>
     <button id="tool-catchment" class="tool" title="Catchment: click the corners, double-click or Enter to finish, then click the outlet node (C)"><svg viewBox="0 0 24 24"><path d="M5 17l3-10 9-2 3 9-6 5z" fill="rgba(74,163,162,.35)" stroke="#2d7f7e" stroke-width="1.8"/></svg><span>Catchment</span></button>
     <div class="sep"></div>
     <button id="tool-move" class="tool" title="Move a node: drag it (V)"><svg viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg><span>Move</span></button>
@@ -165,6 +169,7 @@
     <button id="tab-settings" class="tab" role="tab">Settings</button>
     <button id="tab-hydro" class="tab" role="tab">Hydrograph</button>
     <button id="tab-toolout" class="tab" role="tab">Tool output</button>
+    <button id="tab-notes" class="tab" role="tab" title="User notifications: errors and warnings, each takes you to its element">Notifications <span id="notes-badge" class="badge" hidden></span></button>
     <button id="tab-assistant" class="tab" role="tab">Assistant</button>
     <div class="tabs-end"><button id="bottom-toggle" class="pbtn" title="Hide or show (F3)" aria-label="Hide or show the bottom panel"><svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button></div>
   </div>
@@ -210,6 +215,11 @@
       <div class="ptool"><span class="strong">Design assistant</span><span id="asst-status" class="muted"></span><span class="sp"></span><label for="asst-model">Model</label><select id="asst-model"><option value="sonnet" selected>Sonnet</option><option value="opus">Opus</option></select></div>
       <div id="asst-log"></div>
       <form id="asst-form"><textarea id="asst-input" rows="2" placeholder="Ask about the network, its checks, or what to change (Enter sends, Shift+Enter adds a line)"></textarea><button id="asst-send" class="tb" type="submit">Ask</button></form>
+    </div>
+    <div id="pane-notes" class="pane flex">
+      <div class="ptool"><span class="strong">User notifications</span><span id="notes-count" class="muted"></span><span class="sp"></span>
+        <label class="chk2"><input type="checkbox" id="notes-warn" checked> Warnings</label><button id="notes-run" class="tb" title="Check the model again">Validate</button></div>
+      <div class="twrap"><table id="tbl-notes" class="ft"></table></div>
     </div>
     <div id="pane-hydro" class="pane">
       <div class="ptool"><span id="hydro-title" class="strong">Hydrograph</span><label>Attribute</label><select id="hydro-attr"></select><span id="hydro-msg" class="muted"></span></div>
@@ -300,6 +310,7 @@
 <script src="/static/editor/symbology.js"></script>
 <script src="/static/editor/editor.js"></script>
 <script src="/static/editor/features.js"></script>
+<script src="/static/editor/features3.js"></script>
 <script src="/static/editor/ribbon.js"></script>
 </body>
 </html>

@@ -218,15 +218,55 @@ function stormBlock(table, fs) {
       `<div class="row"><button id="st-apply">Apply storage</button><button id="st-clear">Clear</button></div>`;
   }
   if (table === "links" && p.kind === "pump") {
-    const u = p.pump || {}, fu = unitOf("q_ls").u, k = unitOf("q_ls").k;
-    return `<h5>Pump (storm run)</h5><p class="muted small">Pumps its capacity while the depth at its inlet is between the start and stop depths (SWMM, constant-capacity curve).</p>` +
-      `<div class="pr"><label for="pu-q">Capacity</label><input type="number" step="any" min="0" id="pu-q" value="${u.q_ls != null ? +(u.q_ls * k).toFixed(4) : ""}" placeholder="ideal: passes its inflow"><span class="u">${fu}</span></div>` +
+    const u = p.pump || {}, fu = unitOf("q_ls").u, k = unitOf("q_ls").k, defs = pumpDefs();
+    const r = (state.results && state.results.links || {})[p.id] || {}, ww = state.model.nodes.get(p.from_node), wwInv = ww ? ww.properties.invert : null;
+    let h = `<h5>Pump</h5>` +
+      `<div class="pr"><label for="pu-def">Definition</label><select id="pu-def" data-testid="pu-def"><option value="">(none: a fixed capacity)</option>${defs.map(d => `<option${d.name === u.definition ? " selected" : ""}>${esc(d.name)}</option>`).join("")}</select><button class="mini" id="pu-defs" title="Pump definitions: curves and the force main's system curve">Edit...</button></div>` +
+      `<div class="pr" id="pu-q-row"${u.definition ? " hidden" : ""}><label for="pu-q">Capacity</label><input type="number" step="any" min="0" id="pu-q" value="${u.q_ls != null ? +(u.q_ls * k).toFixed(4) : ""}" placeholder="ideal: passes its inflow"><span class="u">${fu}</span></div>` +
       `<div class="pr"><label for="pu-on">Starts at depth</label><input type="number" step="any" min="0" id="pu-on" value="${u.on_m ?? ""}"><span class="u">m</span></div>` +
       `<div class="pr"><label for="pu-off">Stops at depth</label><input type="number" step="any" min="0" id="pu-off" value="${u.off_m ?? ""}"><span class="u">m</span></div>` +
-      `<div class="row"><button id="pu-apply">Apply pump</button><button id="pu-clear">Clear</button></div>`;
+      (wwInv != null ? `<p class="muted small" id="pu-elev">In the wet well (invert ${num(wwInv, 2)} m): starts at ${u.on_m != null ? num(wwInv + u.on_m, 2) : "-"} m, stops at ${u.off_m != null ? num(wwInv + u.off_m, 2) : "-"} m.</p>` : "") +
+      `<div class="row"><button id="pu-apply" data-testid="pu-apply">Apply pump</button><button id="pu-clear">Clear</button></div>`;
+    if (r.tdh_m != null) {
+      const st = r.cannot_lift ? ["bad", "cannot lift: the pump's shutoff head is below the static lift"] : r.short ? ["bad", "SHORT: less head than the main needs"] : r.pump_head_m != null || r.pump_q_ls != null ? ["ok", "delivers the flow"] : ["", "no definition: head needed only"];
+      h += `<div class="pump-res ${st[0]}" data-testid="pump-status"><b>${st[1]}</b><br>` +
+        `pumped ${num(toShow("q_ls", r.q_ls), 3)} ${fu} against ${num(r.tdh_m, 2)} m (static ${num(r.static_m, 2)} m, from ${num(r.suction_m, 2)} m)` +
+        (r.pump_head_m != null ? `<br>the pump gives ${num(r.pump_head_m, 2)} m at that flow; on its curve it runs at ${num(toShow("q_ls", r.op_q_ls), 3)} ${fu} and ${num(r.op_h_m, 2)} m` : "") + `</div>`;
+    }
+    return h;
+  }
+  if (table === "links" && (p.kind === "orifice" || p.kind === "weir")) {
+    const o = p.outlet || {}, f = (k, l, u, d) => `<div class="pr"><label for="ol-${k}">${l}</label><input type="number" step="any" min="0" id="ol-${k}" data-k="${k}" value="${o[k] ?? d}"><span class="u">${u}</span></div>`;
+    const r = (state.storm && state.storm.sid === state.sid && state.storm.data.links || {})[p.id];
+    return (p.kind === "orifice"
+      ? `<h5>Orifice (storm run)</h5><div class="pr"><label for="ol-shape">Shape</label><select id="ol-shape" data-k="shape"><option value="circular"${o.shape !== "rect" ? " selected" : ""}>Circular</option><option value="rect"${o.shape === "rect" ? " selected" : ""}>Rectangular</option></select><span></span></div>` +
+        (o.shape === "rect" ? f("h_m", "Height", "m", 0.3) + f("w_m", "Width", "m", 0.3) : f("d_m", "Diameter", "m", 0.3)) + f("offset_m", "Invert above the pond's", "m", 0) + f("cd", "Discharge coefficient", "", 0.65) +
+        `<div class="pr"><label for="ol-gated">Flap gate</label><input type="checkbox" id="ol-gated" data-k="gated"${o.gated ? " checked" : ""}><span></span></div>`
+      : `<h5>Weir (storm run)</h5><div class="pr"><label for="ol-type">Type</label><select id="ol-type" data-k="type"><option value="transverse"${o.type !== "v_notch" ? " selected" : ""}>Rectangular (transverse)</option><option value="v_notch"${o.type === "v_notch" ? " selected" : ""}>V-notch</option></select><span></span></div>` +
+        f("crest_m", "Crest above the inlet invert", "m", 0) + (o.type === "v_notch" ? f("top_m", "Top width", "m", 1) : f("length_m", "Crest length", "m", 1)) + f("height_m", "Opening height", "m", 1) + f("cd", "Discharge coefficient", "", o.type === "v_notch" ? 1.38 : 1.84)) +
+      `<div class="row"><button id="ol-apply" data-testid="ol-apply">Apply</button></div>` +
+      (o.shape === undefined && o.type === undefined && !Object.keys(o).length ? `<p class="muted small">Not set yet: the defaults shown are applied with Apply.</p>` : "") +
+      (r ? `<div class="pump-res">storm peak ${num(toShow("q_ls", r.q_peak * 1000), 3)} ${unitOf("q_ls").u}</div>` : "");
+  }
+  if (table === "nodes" && p.kind === "outfall") {
+    return `<h5>Outfall (storm run)</h5><div class="pr"><label for="tw-level">Fixed tailwater level</label><input type="number" step="any" id="tw-level" value="${p.tailwater ?? ""}" placeholder="free outfall"><span class="u">m</span></div>` +
+      `<div class="row"><button id="tw-apply" data-testid="tw-apply">Apply</button></div>`;
+  }
+  if (table === "links" && p.kind === "pressure_pipe") {
+    const o = p.ppipe || {}, S = (state.model.settings.pressure || {}), meth = o.method || S.method || "hazen";
+    const r = (state.results && state.results.links || {})[p.id] || {};
+    const fld = (k, l, u, d) => `<div class="pr"><label for="pp-${k}">${l}</label><input type="number" step="any" min="0" id="pp-${k}" value="${o[k] ?? ""}" placeholder="project: ${d ?? ""}"><span class="u">${u}</span></div>`;
+    return `<h5>Force main</h5><div class="pr"><label for="pp-method">Friction</label><select id="pp-method"><option value="">project (${PFRIC[S.method || "hazen"]})</option>${Object.entries(PFRIC).map(([k, l]) => `<option value="${k}"${o.method === k ? " selected" : ""}>${l}</option>`).join("")}</select><span></span></div>` +
+      (meth === "hazen" ? fld("C", "Hazen-Williams C", "", S.C ?? 130) : meth === "darcy" ? fld("e_mm", "Roughness e", "mm", S.e_mm ?? 0.1) : fld("n", "Manning's n", "", S.n ?? 0.012)) +
+      fld("K", "Minor loss K (sum)", "", 0) +
+      `<div class="pr"><label for="pp-check">Check valve</label><input type="checkbox" id="pp-check"${o.check ? " checked" : ""}><span></span></div>` +
+      `<div class="row"><button id="pp-apply" data-testid="pp-apply">Apply</button><button id="pp-clear">Project values</button></div>` +
+      (r.hf_m != null ? `<div class="pump-res" data-testid="pp-res">${num(toShow("q_ls", r.q_ls), 3)} ${unitOf("q_ls").u} at ${num(r.v_ms, 2)} m/s; friction ${num(r.hf_m, 2)} m (${num(r.s_f_m_per_km, 2)} m/km), minor ${num(r.hm_m, 2)} m<br>grade ${num(r.hgl_up, 2)} to ${num(r.hgl_dn, 2)} m; pressure head ${num(r.p_up_m, 1)} to ${num(r.p_dn_m, 1)} m</div>` : "");
   }
   return "";
 }
+const PFRIC = { hazen: "Hazen-Williams", darcy: "Darcy-Weisbach", manning: "Manning" };
+const pumpDefs = () => ((state.model && state.model.settings.libraries) || {}).pumps || [];
 function wireStormBlock(host) {
   const id = () => state.sel.ids[0];
   const sa = $("#st-apply", host);
@@ -244,12 +284,120 @@ function wireStormBlock(host) {
   }
   const pa = $("#pu-apply", host);
   if (pa) {
+    $("#pu-def", host).onchange = e => { $("#pu-q-row", host).hidden = !!e.target.value; };
+    $("#pu-defs", host).onclick = () => openPumpDefs(id());
     pa.onclick = () => {
-      const q = $("#pu-q", host).value; if (q === "") { toast("Give the pump's capacity."); return; }
-      enqueue(() => exec({ op: "set_pump", ids: [id()], q_ls: Number(q) / unitOf("q_ls").k, on_m: Number($("#pu-on", host).value || 0), off_m: Number($("#pu-off", host).value || 0) }));
+      const def = $("#pu-def", host).value, q = $("#pu-q", host).value;
+      if (!def && q === "") { toast("Choose a pump definition, or give a fixed capacity."); return; }
+      enqueue(() => exec({ op: "set_pump", ids: [id()], definition: def || null, q_ls: def ? null : Number(q) / unitOf("q_ls").k, on_m: Number($("#pu-on", host).value || 0), off_m: Number($("#pu-off", host).value || 0) }));
     };
     $("#pu-clear", host).onclick = () => enqueue(() => exec({ op: "set_pump", ids: [id()] }));
   }
+  const oa = $("#ol-apply", host);
+  if (oa) {
+    for (const s of $$("#ol-shape, #ol-type", host)) s.onchange = () => { const f = state.model.links.get(id()); f.properties.outlet = Object.assign({}, f.properties.outlet, { [s.dataset.k]: s.value }); gridSig = ""; renderProps(); };
+    oa.onclick = () => { const v = {}; for (const el of $$("[data-k]", host)) { if (!el.closest(".pr") || !el.id.startsWith("ol-")) continue; v[el.dataset.k] = el.type === "checkbox" ? el.checked : el.tagName === "SELECT" ? el.value : (el.value === "" ? null : Number(el.value)); }
+      enqueue(() => exec({ op: "set_outlet", ids: [id()], values: v })); };
+  }
+  const tw = $("#tw-apply", host);
+  if (tw) tw.onclick = () => { const v = $("#tw-level", host).value; enqueue(() => exec({ op: "set_tailwater", ids: [id()], level: v === "" ? null : Number(v) })); };
+  const pp = $("#pp-apply", host);
+  if (pp) {
+    $("#pp-method", host).onchange = e => enqueue(() => exec({ op: "set_ppipe", ids: state.sel.ids.slice(), method: e.target.value || null, clear: !e.target.value && false }));
+    pp.onclick = () => {
+      const v = k => { const el = $("#pp-" + k, host); return el && el.value !== "" ? Number(el.value) : undefined; };
+      enqueue(() => exec({ op: "set_ppipe", ids: state.sel.ids.slice(), C: v("C"), e_mm: v("e_mm"), n: v("n"), K: v("K"), check: $("#pp-check", host).checked }));
+    };
+    $("#pp-clear", host).onclick = () => enqueue(() => exec({ op: "set_ppipe", ids: state.sel.ids.slice(), clear: true }));
+  }
+}
+
+/* ------------------------------------------------------------------ pump definitions (a library), with the curve drawn
+   against the selected pump's force main (its system curve) */
+const PDEF_TYPES = { design_point: "Design point (1 point)", three_point: "Standard (3 points)", multi_point: "Multiple point (table)", constant_flow: "Constant flow" };
+function pdefCurve(d) {                                          // the same fits as engine/pressure.py, for the graph
+  if (d.type === "design_point") { const Q = d.q_ls, H = d.h_m; return { f: q => Math.max(4 / 3 * H - H / 3 / (Q * Q) * q * q, 0), qmax: 2 * Q }; }
+  if (d.type === "three_point") { const C = Math.log((d.shutoff_h_m - d.max_h_m) / (d.shutoff_h_m - d.h_m)) / Math.log(d.max_q_ls / d.q_ls), B = (d.shutoff_h_m - d.h_m) / Math.pow(d.q_ls, C);
+    return { f: q => Math.max(d.shutoff_h_m - B * Math.pow(q, C), 0), qmax: Math.pow(d.shutoff_h_m / B, 1 / C) }; }
+  if (d.type === "multi_point") { const P = (d.points || []).slice().sort((a, b) => a[0] - b[0]); return { f: q => { for (let i = 1; i < P.length; i++) if (q <= P[i][0]) return P[i - 1][1] + (P[i][1] - P[i - 1][1]) * (q - P[i - 1][0]) / (P[i][0] - P[i - 1][0]); return 0; }, qmax: P.length ? P[P.length - 1][0] : 1 }; }
+  return null;
+}
+function openPumpDefs(pumpId) {
+  if (!state.model) { toast("Open a project first.", "info"); return; }
+  const d = dlg("dlg-pumps", "Pump definitions", true), b = d.querySelector(".body");
+  const draft = JSON.parse(JSON.stringify(pumpDefs())); let cur = 0;
+  const S = state.model.settings.pressure || {};
+  const field = (k, l, u, v) => `<label>${l}${u ? ` (${u})` : ""}<input type="number" step="any" data-k="${k}" data-testid="pd-${k}" value="${v ?? ""}"></label>`;
+  const render = () => {
+    const x = draft[cur];
+    b.innerHTML = `<div class="pd-wrap"><div class="pd-list"><div class="list">${draft.map((p, i) => `<button data-i="${i}" class="${i === cur ? "on" : ""}">${esc(p.name)}<span class="muted small"> ${PDEF_TYPES[p.type].split(" (")[0]}</span></button>`).join("") || `<span class="muted">No pump definitions yet.</span>`}</div>
+      <div class="row"><button data-a="add" data-testid="pd-add">Add</button><button data-a="dup"${x ? "" : " disabled"}>Duplicate</button><button data-a="del"${x ? "" : " disabled"}>Delete</button></div>
+      <fieldset><legend>Force mains (project)</legend><label>Friction<select data-s="method">${Object.entries(PFRIC).map(([k, l]) => `<option value="${k}"${(S.method || "hazen") === k ? " selected" : ""}>${l}</option>`).join("")}</select></label>
+      <label>Hazen-Williams C<input type="number" step="any" data-s="C" value="${S.C ?? 130}"></label><label>Darcy e (mm)<input type="number" step="any" data-s="e_mm" value="${S.e_mm ?? 0.1}"></label><label>Manning's n<input type="number" step="any" data-s="n" value="${S.n ?? 0.012}"></label>
+      <label>Lift from<select data-s="suction"><option value="off"${(S.suction || "off") === "off" ? " selected" : ""}>the stop level (largest lift)</option><option value="on"${S.suction === "on" ? " selected" : ""}>the start level</option></select></label></fieldset></div>` +
+      (x ? `<div class="pd-ed"><label>Name<input data-k="name" data-testid="pd-name" value="${esc(x.name)}"></label><label>Type<select data-k="type" data-testid="pd-type">${Object.entries(PDEF_TYPES).map(([k, l]) => `<option value="${k}"${k === x.type ? " selected" : ""}>${l}</option>`).join("")}</select></label>` +
+        (x.type === "design_point" ? field("q_ls", "Design flow", "L/s", x.q_ls) + field("h_m", "Design head", "m", x.h_m)
+          : x.type === "three_point" ? field("shutoff_h_m", "Shutoff head", "m", x.shutoff_h_m) + field("q_ls", "Design flow", "L/s", x.q_ls) + field("h_m", "Design head", "m", x.h_m) + field("max_q_ls", "Maximum flow", "L/s", x.max_q_ls) + field("max_h_m", "Head at maximum flow", "m", x.max_h_m)
+          : x.type === "constant_flow" ? field("q_ls", "Flow", "L/s", x.q_ls)
+          : `<label>Flow (L/s) and head (m), a pair a line<textarea data-k="points" rows="6" style="font:12px monospace">${(x.points || []).map(p => p.join(" ")).join("\n")}</textarea></label>`) +
+        `<svg id="pd-graph" viewBox="0 0 420 240" data-testid="pd-graph"></svg><p class="muted small" id="pd-note"></p></div>` : `<div class="pd-ed muted">Add a pump definition: a design point, three points or a table of flow and head.</div>`) + `</div>`;
+    tag(b); graph();
+  };
+  const collect = () => {
+    const x = draft[cur]; if (!x) return;
+    for (const el of $$("[data-k]", b)) {
+      const k = el.dataset.k;
+      if (k === "name") x.name = el.value.trim() || x.name; else if (k === "type") x.type = el.value;
+      else if (k === "points") x.points = el.value.trim().split(/\n+/).map(l => l.trim().split(/[\s,;]+/).map(Number)).filter(r => r.length >= 2 && r.every(isFinite)).map(r => r.slice(0, 2));
+      else if (el.value !== "") x[k] = Number(el.value);
+    }
+  };
+  // the curve, the design point and, for the pump selected on the map, its force main's system curve
+  const graph = async () => {
+    const svg = $("#pd-graph", b); if (!svg) return; collect(); const x = draft[cur], c = pdefCurve(x);
+    const note = $("#pd-note", b); note.textContent = "";
+    if (!c || !isFinite(c.qmax) || !(c.qmax > 0)) { svg.innerHTML = `<text x="20" y="40" fill="currentColor">${x.type === "constant_flow" ? "A constant-flow pump: no head curve." : "Give the points to see the curve."}</text>`; return; }
+    let sys = null;
+    if (pumpId && state.model.links.get(pumpId)) {
+      try { sys = await jget(`${base()}/pump_system?id=${encodeURIComponent(pumpId)}&qmax=${c.qmax}`); } catch (e) { sys = null; }
+    }
+    const W = 420, H = 240, l = 46, r = 12, t = 12, bt = 34, hmax = Math.max(c.f(0), ...(sys ? sys.h : [0])) * 1.1 || 1;
+    const X = q => l + q / c.qmax * (W - l - r), Y = h => t + (1 - h / hmax) * (H - t - bt);
+    const pts = n => Array.from({ length: n + 1 }, (_, i) => c.qmax * i / n);
+    let s = `<rect x="${l}" y="${t}" width="${W - l - r}" height="${H - t - bt}" fill="none" stroke="var(--line)"/>`;
+    for (let i = 0; i <= 4; i++) { const h = hmax * i / 4, q = c.qmax * i / 4; s += `<text x="${l - 6}" y="${Y(h) + 4}" text-anchor="end" font-size="10" fill="var(--muted)">${+h.toFixed(1)}</text><text x="${X(q)}" y="${H - bt + 14}" text-anchor="middle" font-size="10" fill="var(--muted)">${+q.toFixed(1)}</text>`; }
+    s += `<text x="${(l + W - r) / 2}" y="${H - 4}" text-anchor="middle" font-size="11" fill="var(--ink2)">Flow (L/s)</text><text x="12" y="${(t + H - bt) / 2}" transform="rotate(-90 12 ${(t + H - bt) / 2})" text-anchor="middle" font-size="11" fill="var(--ink2)">Head (m)</text>`;
+    s += `<polyline fill="none" stroke="#1f6feb" stroke-width="2.2" points="${pts(40).map(q => X(q) + "," + Y(c.f(q))).join(" ")}"/>`;
+    if (x.q_ls && x.h_m && x.type !== "multi_point") s += `<circle cx="${X(x.q_ls)}" cy="${Y(x.h_m)}" r="4" fill="#1f6feb"/>`;
+    if (sys) {
+      s += `<polyline fill="none" stroke="#c0392b" stroke-width="2" stroke-dasharray="5 3" points="${sys.q.map((q, i) => X(q) + "," + Y(sys.h[i])).join(" ")}"/>`;
+      if (sys.duty_q != null) s += `<circle cx="${X(sys.duty_q)}" cy="${Y(sys.duty_h)}" r="4" fill="#c0392b"/>`;
+      note.innerHTML = `<span style="color:#1f6feb">&#9644;</span> pump curve &nbsp; <span style="color:#c0392b">&#9644;</span> ${esc(pumpId)}'s force main (system curve); the red dot is the steady duty (${num(sys.duty_q, 2)} L/s, ${num(sys.duty_h, 2)} m).`;
+    } else note.textContent = "Select a pump on the map and open this from its Properties to draw its force main's system curve.";
+    svg.innerHTML = s;
+  };
+  render(); d.hidden = false;
+  b.oninput = e => { if (e.target.dataset.k && e.target.dataset.k !== "name") { clearTimeout(graph._t); graph._t = setTimeout(graph, 250); } };
+  b.onchange = e => { if (e.target.dataset.k === "type") { collect(); render(); } };
+  d.onclick = e => {
+    const t = e.target.closest("button"); if (!t) return;
+    if (t.dataset.i != null) { collect(); cur = +t.dataset.i; render(); return; }
+    const a = t.dataset.a || t.dataset.act; if (!a) return;
+    if (a === "close") { d.hidden = true; return; }
+    collect();
+    if (a === "add") { draft.push({ name: `Pump ${draft.length + 1}`, type: "design_point", q_ls: 50, h_m: 20 }); cur = draft.length - 1; render(); return; }
+    if (a === "dup") { draft.push(Object.assign(JSON.parse(JSON.stringify(draft[cur])), { name: draft[cur].name + " copy" })); cur = draft.length - 1; render(); return; }
+    if (a === "del") { draft.splice(cur, 1); cur = Math.max(0, cur - 1); render(); return; }
+    if (a === "ok") {
+      const names = draft.map(x => x.name); if (new Set(names).size !== names.length) { toast("Two pump definitions have the same name."); return; }
+      for (const x of draft) { const c = pdefCurve(x); if (x.type !== "constant_flow" && (!c || !(c.qmax > 0) || !isFinite(c.qmax))) { toast(`${x.name}: the curve is not complete (check its points).`); return; } }
+      const sv = {}; for (const el of $$("[data-s]", b)) sv[el.dataset.s] = el.tagName === "SELECT" ? el.value : Number(el.value);
+      enqueue(async () => {
+        await exec({ op: "batch", ops: [{ op: "set_setting", path: "libraries.pumps", value: draft }, { op: "set_setting", path: "pressure", value: Object.assign({}, S, sv) }] });
+        toast(`${draft.length} pump definition${draft.length === 1 ? "" : "s"} saved with the project (one undo step).`, "info"); gridSig = ""; renderProps(); graph();
+      });
+    }
+  };
 }
 
 /* ------------------------------------------------------------------ selection by type, invert (F11) */

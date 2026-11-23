@@ -93,3 +93,26 @@ body.ribbon #find-input { width: 130px; }
 #select-card select { min-width: 0; border: 1px solid var(--line); border-radius: 5px; padding: 3px 5px; background: var(--input); }
 #select-card .row2 { grid-column: 1 / -1; display: flex; gap: 6px; }
 #select-card .row2 button { flex: 1; border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 4px 6px; }
+/* v3 (2026-11-23): pumps, force mains, libraries, notifications, tables */
+.pump-res { margin: 6px 0; padding: 7px 9px; border-radius: 7px; background: var(--panel2); border: 1px solid var(--line); font-size: 12px; line-height: 1.45; }
+.pump-res.ok { border-color: #1f8a4c; background: rgba(31,138,76,.08); }
+.pump-res.bad { border-color: #c0392b; background: rgba(192,57,43,.08); }
+.pd-wrap { display: grid; grid-template-columns: 250px 1fr; gap: 14px; align-items: start; }
+.pd-list .list button.on { background: var(--sel); font-weight: 600; }
+.pd-list fieldset, .pd-ed { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; margin: 8px 0 0; }
+.pd-list fieldset label, .pd-ed label { grid-template-columns: 130px 1fr; font-size: 12px; }
+.pd-ed textarea { width: 100%; border: 1px solid var(--line); border-radius: 5px; background: var(--input); }
+#pd-graph, #pat-svg { width: 100%; height: auto; background: var(--panel2); border-radius: 6px; margin-top: 6px; color: var(--ink); }
+.pat-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; }
+.pat-grid label { display: flex !important; flex-direction: column; font-size: 10px; color: var(--muted); margin: 0 !important; gap: 1px !important; }
+.pat-grid input { width: 100%; padding: 2px 3px !important; font-size: 11px; }
+.pr.ur { grid-template-columns: 1fr 80px 26px; }
+.badge { display: inline-block; min-width: 16px; padding: 0 5px; border-radius: 8px; background: #b7791f; color: #fff; font-size: 10.5px; line-height: 16px; text-align: center; }
+.badge.err { background: #c0392b; }
+#tbl-notes tr[data-n] { cursor: pointer; }
+#tbl-notes tr.note-error td:nth-child(3) { color: #c0392b; }
+table.ft tfoot tr.stats td { background: var(--panel2); border-top: 2px solid var(--line); font-size: 11.5px; position: sticky; bottom: 0; }
+@media (max-width: 900px) { .pd-wrap { grid-template-columns: 1fr; } }
+.pd-list fieldset label { grid-template-columns: 92px minmax(0, 1fr) !important; }
+.pd-list fieldset input, .pd-list fieldset select { width: 100%; min-width: 0; }
+.pd-list { min-width: 0; }
