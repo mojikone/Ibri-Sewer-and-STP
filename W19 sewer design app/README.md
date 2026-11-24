@@ -120,7 +120,9 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
   - **The assistant** shows each step live in plain words and answers without code; Sonnet runs at medium effort.
   - **SewerGEMS models without SewerGEMS** (F46, the clean-room rule lifted by the engineer): the .stsw.sqlite is read
     directly, every scenario, equal to SewerGEMS's own export of the Ibri final model, pumps and force mains with their
-    curves included (F47); the app runs every scenario itself, SewerGEMS in the VM only for its own results.
+    curves included (F47), variable-speed batteries as their lead and lag pumps at full speed (F49); a large model is
+    sent in compressed 32 MB pieces with its progress (F48: Cloudflare takes 100 MB a request); the app runs every
+    scenario itself, SewerGEMS in the VM only for its own results.
   - Fixed after a Fable 5.2 review: an uploaded file's name could choose where the server wrote it (any folder, from
     the shared link); alternatives now replay in the order things were done (a session-wide edit clock), undo removes
     exactly its own edit from a shared alternative, a mixed batch is one undo step, a child can take its own edits,
