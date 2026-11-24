@@ -195,12 +195,13 @@ function kfShow(kind, k, P) {
   if (kind === "catch_basin" || kind === "manhole") { if (k === "diameter_m") return (P.structure || "circular") === "circular"; if (["box_length_m", "box_width_m"].includes(k)) return P.structure === "box"; }
   if (kind === "catch_basin" && ["design_opening", "design_lengths", "min_efficiency_pc"].includes(k)) return (P.inlet_type || "full_capture") === "catalog" && (k === "design_opening" || !!P.design_opening) && (k !== "min_efficiency_pc" || (P.location || "on_grade") === "on_grade");
   if (kind === "headwall" && k === "tailwater_m") return P.boundary === "fixed";
+  if (kind === "conduit" && ["culvert_code", "ke", "max_headwater_m"].includes(k)) return !!P.is_culvert;
   if (kind === "gutter" && ["road_cross_slope", "gutter_cross_slope", "gutter_width_m"].includes(k)) return !!P.gutter_shape && P.gutter_shape !== "from_start_inlet";
   return true;
 }
 function kfControl(f, v) {
   const id = `kf-${f.key}`, a = `id="${id}" data-kf="${f.key}" data-testid="${id}"`;
-  if (f.type === "choice") return `<select ${a}>${v === undefined ? `<option value="" selected>(mixed)</option>` : ""}${f.options.map(o => `<option value="${o}"${o === v ? " selected" : ""}>${esc(OPT_NAMES[o] || o.replace(/_/g, " "))}</option>`).join("")}</select>`;
+  if (f.type === "choice") return `<select ${a}>${v === undefined || v === null ? `<option value="" selected>${v === undefined ? "(mixed)" : "(choose)"}</option>` : ""}${f.options.map(o => `<option value="${o}"${o === v ? " selected" : ""}>${esc((f.labels && f.labels[o]) || OPT_NAMES[o] || o.replace(/_/g, " "))}</option>`).join("")}</select>`;
   if (f.type === "bool") return `<input type="checkbox" ${a}${v ? " checked" : ""}>`;
   if (f.type === "text") return `<input type="text" ${a} value="${v == null ? "" : esc(String(v))}"${f.key === "link" ? ` list="kf-links"` : ""}>`;
   if (f.type === "table") {

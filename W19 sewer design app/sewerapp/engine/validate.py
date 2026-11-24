@@ -130,6 +130,7 @@ def run(p, res=None):
             if r.get("negative_pressure") is True or r.get("negative_pressure") == 1.0: add("warning", "links", lid, "negative pressure along the force main (a high point)")
             if r.get("surcharged") is True and r.get("kind") == "conduit": add("warning", "links", lid, "surcharged in the steady run")
             if r.get("off_curve") is True or r.get("off_curve") == 1.0: add("warning", "links", lid, "the pump runs off the end of its curve against this main")
+            if r.get("hw_over") is True: add("warning", "links", lid, f"the culvert needs {r.get('hw_m', float('nan')):.2f} m of headwater ({r.get('culvert_control')} control): above its allowable headwater, or the ground at its upstream structure")
     if res is not None:                                                           # the GVF profile (when chosen)
         for n in res.attrs.get("flooding") or []: add("warning", "nodes", n, "the water level (GVF) is above the ground")
         if "surcharged_gvf" in res.columns:

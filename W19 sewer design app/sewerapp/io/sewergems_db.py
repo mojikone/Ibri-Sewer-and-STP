@@ -139,6 +139,9 @@ def export(sqlite_path, out, log=None, only=None):
     hwbc = _df(con, "select DomainElementID, AlternativeID, BoundaryConditionType as bc from Headwall_BoundaryCondition_Data")
     hwtw = _df(con, "select * from Headwall_BoundaryCondition_BoundaryConditionType_UserDefinedTwType")
     trp = _df(con, "select DomainElementID, AlternativeID, Physical_TransitionLength as tl from JunctionChamber_Physical_Data")
+    cvp = _df(con, "select DomainElementID, AlternativeID, isCulvert as cv, CulvertKe as ke from Conduit_Physical_Data")
+    hwid = _df(con, "select DomainElementID, AlternativeID, Physical_InletDescription as inl from Headwall_Physical_Data")
+    cic = _df(con, "select SupportElementID as id, CulvertInletCoefficients_SwmmCulvertCode as code, CulvertInletCoefficients_CulvertKe as ke from CulvertInletCoefficients")
     ltop = _df(con, "select DomainElementID, AlternativeID, HMITopologyStartNodeID as a, HMITopologyStopNodeID as b from BaseLink_HMIDataSetTopology_Data")
     lgeo = _df(con, "select DomainElementID, AlternativeID, HMIGeometry, HMIGeometryScaledLength as sl from BaseLink_HmiDataSetGeometry_Data")
     lact = _df(con, "select DomainElementID, AlternativeID, HMIActiveTopologyIsActive as on_ from BaseLink_HMIActiveTopology_Data")
@@ -251,7 +254,8 @@ def export(sqlite_path, out, log=None, only=None):
                                      "flow_m3d", "velocity_ms", "depth_in_m", "depth_out_m", "kind"]).to_csv(os.path.join(out, f"conduits_{f}.csv"), index=False)
         _props(out, f, kind, link_kind, label, pick, alt, sid, ttype, LD,
                dict(cbp=cbp, cbpc=cbpc, cbmx=cbmx, cbcat=cbcat, cbrc=cbrc, cbhy=cbhy, inlcat=inlcat, inlslot=inlslot, gutp=gutp,
-                    tapr=tapr, tapp=tapp, hwbc=hwbc, hwtw=hwtw, trp=trp, avel=avel, cbpar=cbpar, cbirr=cbirr))
+                    tapr=tapr, tapp=tapp, hwbc=hwbc, hwtw=hwtw, trp=trp, avel=avel, cbpar=cbpar, cbirr=cbirr,
+                    cvp=cvp, hwid=hwid, cic=cic, starts={i: int(T.a[i]) for i in link_kind if i in T.index}))
         # pumps and force mains: the suction (pressure pipes and junctions from the wet well to the pump) is left out
         if pumps or ppipes:
             PD = pick(ppd, alt(sid, ttype(ppd)) if len(ppd) else None); PH = pick(pph, alt(sid, ttype(pph)) if len(pph) else None)
@@ -398,6 +402,18 @@ def _props(out, f, kind, link_kind, label, pick, alt, sid, ttype, LD, T):
             if LD.n[i]: d["n"] = float(LD.n[i])
             if LD.mat[i]: d["material"] = str(LD.mat[i])
             if d: P["links"][lab] = d
+    cv, hw = at(T["cvp"]), at(T["hwid"])                       # culverts: the inlet type of the headwall at their upstream end
+    codes = {int(r.id): (int(r.code) if r.code == r.code and r.code else None, float(r.ke) if r.ke == r.ke else None) for r in T["cic"].itertuples()} if len(T["cic"]) else {}
+    for i, k in link_kind.items():
+        if k != "conduit" or i not in cv.index or not cv.cv[i]: continue
+        d = dict(is_culvert=True)
+        a = T["starts"].get(i)
+        if a is not None and a in hw.index and hw.inl[a] == hw.inl[a] and int(hw.inl[a]) in codes:
+            code, ke = codes[int(hw.inl[a])]
+            if code and 1 <= code <= 57: d["culvert_code"] = str(code)
+            if ke: d["ke"] = ke
+        if cv.ke[i]: d["ke"] = float(cv.ke[i])
+        P["links"].setdefault(label.get(i, str(i)), {}).update(d)
     with open(os.path.join(out, f"props_{f}.json"), "w", encoding="utf-8") as fh: json.dump(P, fh)
 
 

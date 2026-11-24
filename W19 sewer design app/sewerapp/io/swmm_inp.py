@@ -153,7 +153,7 @@ def from_project(p, rain=None):
         out[sec] = [node_row(sec, i, r) for i, r in n.iterrows() if kind_sec.get(r.kind) == sec]
     cond = L[L.kind.isin(["conduit", "pressure_pipe"])]
     pres = {"method": "hazen", "C": 130.0, "e_mm": 0.1, **(p.settings.get("pressure") or {})}
-    out["CONDUITS"] = []; out["XSECTIONS"] = []
+    out["CONDUITS"] = []; out["XSECTIONS"] = []; culvert_losses = []
     for i, r in cond.iterrows():
         old = list(rows.get(f"CONDUITS|{i}", [])) or [i, r.from_node, r.to_node, 0, 0.013 if units == "SI" else 0.013, 0, 0, 0, 0]
         elev = p.settings.get("link_offsets", "DEPTH") == "ELEVATION"
@@ -178,8 +178,13 @@ def from_project(p, rain=None):
                 rough = o.get("C", pres["C"]) if pres["method"] == "hazen" else o.get("e_mm", pres["e_mm"]) * (1.0 if units == "SI" else 1 / 25.4)   # D-W: mm (inches in a US file)
                 x = [i, "FORCE_MAIN", _num(r.inside_mm / mm), _num(rough), 0, 0, 1]
         if str(x[1]).upper() in ("CIRCULAR", "FORCE_MAIN"): x[2] = _num(r.inside_mm / mm)
+        cd = ((getattr(p, "props", None) or {}).get("links") or {}).get(i) or {}
+        if cd.get("is_culvert") and cd.get("culvert_code"):          # a culvert: SWMM checks inlet control by its code
+            x = (list(x) + [0, 0, 0, 0, 1])[:7]; x[6] = x[6] or 1; x.append(int(cd["culvert_code"]))
+            if cd.get("ke"): culvert_losses.append([i, _num(cd["ke"]), 0, 0, "NO", 0])
         out["XSECTIONS"].append(x)
     out["XSECTIONS"] += [list(v) for v in (pt.get("xs_other") or {}).values()]
+    if culvert_losses and "LOSSES" not in (pt.get("sections") or {}): out["LOSSES"] = culvert_losses
     out["PUMPS"] = []
     for i, r in L[L.kind == "pump"].iterrows():
         old = list(rows.get(f"PUMPS|{i}") or [i, r.from_node, r.to_node, "*", "ON", 0, 0]); old[0:3] = [i, r.from_node, r.to_node]
@@ -239,7 +244,7 @@ def from_project(p, rain=None):
     for k in MODELLED + ["ORIFICES", "WEIRS"]:
         if k not in order and out.get(k): order.insert(order.index("REPORT") if "REPORT" in order else len(order), k)
     if my_curves and "CURVES" not in order: order.insert(order.index("REPORT") if "REPORT" in order else len(order), "CURVES")
-    for k in ("STREETS", "INLETS", "INLET_USAGE", "INFLOWS"):
+    for k in ("STREETS", "INLETS", "INLET_USAGE", "INFLOWS", "LOSSES"):
         if out.get(k) and k not in order: order.insert(order.index("REPORT") if "REPORT" in order else len(order), k)
     lines = []
     titles = pt.get("titles", {})

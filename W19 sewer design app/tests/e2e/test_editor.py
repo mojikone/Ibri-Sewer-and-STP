@@ -1746,3 +1746,24 @@ def test_v7_design_inlets_from_the_ribbon(server, browser):
     assert pg.evaluate("window.ed.state.model.nodes.get('CB1').properties.props.curb_length_m") == 1.5
     assert errs == [], errs
     ctx.close()
+
+
+def test_v7_a_conduit_becomes_a_culvert_with_its_headwater(server, browser):
+    """A conduit's Properties: Is culvert?, then its HDS-5 inlet type (named), Ke and allowable headwater; the steady run
+    gives its headwater and which control governs."""
+    ctx = browser.new_context(viewport={"width": 1600, "height": 950}); pg = ctx.new_page(); pg.set_default_timeout(60000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    _new_local(pg, server, "Culvert")
+    ops = [dict(op="add_node", id="A", x=0, y=0, ground=102, invert=100), dict(op="add_node", id="O", kind="outfall", x=30, y=0, ground=101, invert=99.7),
+           dict(op="add_link", id="C1", from_node="A", to_node="O", dn_mm=1200), dict(op="set_loads", set="design", values={"A": 129600.0})]
+    pg.evaluate("""async ops => { for (const e of ops) { const r = await fetch(`/api/g${base()}/edit`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(e)}); if (!r.ok) throw new Error(await r.text()); } }""", ops)
+    pg.evaluate("refreshAll()"); idle(pg)
+    pg.evaluate("window.ed.selectElement('links', 'C1')"); pg.wait_for_selector("[data-testid=kind-fields]")
+    assert pg.is_visible("#kf-is_culvert") and not pg.is_visible("#kf-culvert_code")
+    pg.check("#kf-is_culvert"); idle(pg); pg.wait_for_selector("#kf-culvert_code")
+    assert "Circular concrete, square edge with headwall" in pg.text_content("#kf-culvert_code")
+    pg.select_option("#kf-culvert_code", "1"); idle(pg)
+    r = pg.evaluate("window.ed.state.results.links.C1")
+    assert r["hw_m"] > 0 and r["culvert_control"] in ("inlet", "outlet"), r
+    assert errs == [], errs
+    ctx.close()

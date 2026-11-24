@@ -524,7 +524,8 @@ def results(pid: str, sid: str):
     with _lock: res, summ = s.solve(sid)
     if res is None: return dict(summary=clean(summ), links={})
     cols = [c for c in ["dn_mm", "q_ls", "v_ms", "d_over_D", "limit", "s_pc", "over_limit", "over_vmax", "surcharged",
-                        "negative_slope", "q_check_ls", "v_check_ms", "under_vmin", "depth_m", "yc_m", "q_full_ls"] if c in res.columns]
+                        "negative_slope", "q_check_ls", "v_check_ms", "under_vmin", "depth_m", "yc_m", "q_full_ls",
+                        "hw_m", "hw_inlet_m", "hw_outlet_m", "culvert_control", "hw_over"] if c in res.columns]
     out = res[cols].copy()
     for c in out.columns:
         if out[c].dtype.kind == "f": out[c] = out[c].round(4)

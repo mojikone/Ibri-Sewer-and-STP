@@ -197,6 +197,30 @@ def normal_depth(project, Q, D, S, iters=50):
     return np.where(pos, np.where(full, 1.0, y / D), 0.0), np.where(pos, Q / np.where(pos, A, 1.0), 0.0), pos & full
 
 
+def _culverts(project, res, q):
+    """Each culvert's headwater at its flow (engine/culverts.py: HDS-5 inlet control by its inlet type, outlet control with
+    the barrel full), and whether it is over its allowable headwater or the ground at its upstream structure (v7)."""
+    PL = ((getattr(project, "props", None) or {}).get("links") or {})
+    cv = [i for i, d in PL.items() if d.get("is_culvert") and d.get("culvert_code") and i in res.index]
+    if not cv: return
+    from sewerapp.engine import culverts as C
+    L, N, secs = project.links, project.nodes, getattr(project, "sections", None) or {}
+    n0 = float((project.settings.get("friction") or {}).get("manning_n") or 0.013)
+    for c in ("hw_m", "hw_inlet_m", "hw_outlet_m"): res[c] = np.nan
+    res["culvert_control"] = None; res["hw_over"] = False
+    for i in cv:
+        d = PL[i]; s = secs.get(i)
+        if s and s.get("shape") == "box": shape, D, B, n = "box", float(s["rise_m"]), float(s.get("span_m") or s["rise_m"]), float(s.get("n") or n0)
+        elif not s and L.inside_mm[i] == L.inside_mm[i] and L.inside_mm[i] > 0: shape, D, B, n = "circle", float(L.inside_mm[i]) / 1000.0, None, n0
+        else: continue
+        length = float(L.length_m[i]); S = (float(L.up_inv[i]) - float(L.dn_inv[i])) / length if length > 0 else 0.0
+        r = C.check(float(q[i]) / 86400.0, int(d["culvert_code"]), shape, D, B, length, S, n, float(d.get("ke") or 0.0))
+        res.at[i, "hw_m"], res.at[i, "hw_inlet_m"], res.at[i, "hw_outlet_m"], res.at[i, "culvert_control"] = r["hw_m"], r["hw_inlet_m"], r["hw_outlet_m"], r["control"]
+        u = L.from_node[i]; room = float(N.ground[u]) - float(L.up_inv[i]) if u in N.index else np.nan
+        lim = float(d["max_headwater_m"]) if d.get("max_headwater_m") else room
+        res.at[i, "hw_over"] = bool(lim == lim and r["hw_m"] > lim + 1e-9)
+
+
 def solve(project, load_set=None, check_set=None):
     """Flows and hydraulics; returns a DataFrame indexed by link id and a summary."""
     project = engine_view(project)                                        # every element kind as the engine's own (v7)
@@ -275,6 +299,7 @@ def solve(project, load_set=None, check_set=None):
                 if k not in res.columns: res[k] = np.nan if not isinstance(v, bool) else False
                 res.at[lid, k] = v
     else: psum = None
+    _culverts(project, res, q)
     gsum = None
     if s.get("flow_profile") == "gvf":                                    # the gradually varied water profile (engine/gvf.py)
         from sewerapp.engine import gvf

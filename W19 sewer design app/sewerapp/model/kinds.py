@@ -104,7 +104,15 @@ FIELDS = {
     "lateral": [("material", "Material", "text", "", None, "Lateral"), ("n", "Manning's n", "num", "", None, "Lateral")],
     "channel": [("material", "Material", "text", "", None, "Channel")],
     "pump": [("station", "Pump station", "text", "", None, "Station")],
+    # a culvert (SewerGEMS's Is Culvert?): its HDS-5 inlet type (SWMM's culvert code), entrance loss, allowable headwater
+    "conduit": [("is_culvert", "Is culvert?", "bool", "", None, "Culvert"), ("culvert_code", "Inlet (HDS-5 type)", "choice", "", tuple(str(k) for k in range(1, 58)), "Culvert"),
+                ("ke", "Entrance loss coefficient Ke", "num", "", None, "Culvert"), ("max_headwater_m", "Allowable headwater depth", "num", "m", None, "Culvert")],
 }
+
+
+def _labels():
+    from sewerapp.engine.culverts import TABLE
+    return {"culvert_code": {str(k): f"{k}: {v[5]}" for k, v in TABLE.items()}}
 # a new element's values when it is drawn (SewerGEMS's defaults for a new catch basin: full capture, on grade)
 DEFAULTS = {"catch_basin": dict(inlet_type="full_capture", location="on_grade", structure="circular"),
             "headwall": dict(boundary="free"), "tap": dict(connects_at="invert_to_center", offset_m=0.0),
@@ -141,4 +149,5 @@ def check_props(kind, values):
 
 def schema():
     """The fields per kind, for the editor's Properties."""
-    return {k: [dict(key=f[0], label=f[1], type=f[2], unit=f[3], options=list(f[4]) if f[4] else None, group=f[5]) for f in v] for k, v in FIELDS.items()}
+    L = _labels()
+    return {k: [dict(key=f[0], label=f[1], type=f[2], unit=f[3], options=list(f[4]) if f[4] else None, group=f[5], **({"labels": L[f[0]]} if f[0] in L else {})) for f in v] for k, v in FIELDS.items()}

@@ -295,3 +295,49 @@ def test_design_inlet_opening():
     assert e["report"]["CB2"]["result"] == "met" and I.capture(q2, d2)[1]["depth_m"] <= 0.10
     assert all(I.capture(q2, dict(d2, grate_length_m=x))[1]["depth_m"] > 0.10 for x in (0.6, 0.9, 1.2, 1.5, 1.8, 2.4) if x < d2["grate_length_m"])
     assert e["lengths"]["CB1"] == ["curb_length_m", d1["curb_length_m"]]
+
+
+# ------------------------------------------------------------------ culverts (HDS-5 by SWMM 5.2's inlet table)
+def test_culvert_headwater_equals_swmms_settled_depth():
+    """SWMM 5.2.4 run to a steady inflow, the depth it settles to above a 30 m culvert at 1 % (n 0.013, free outfall),
+    against engine/culverts.py: 1.2 m concrete pipe, square edge with headwall (code 1) at 1.5 and 3.0 m3/s: 0.99 and
+    1.72 m; projecting CMP (code 6) at 1.5: 1.07 m; a 1.2 x 1.5 m box, 90-degree headwall with 45-degree bevels (code
+    15) at 1.5: 0.74 m. All under inlet control."""
+    from sewerapp.engine import culverts as CV
+    for code, q, shape, B, swmm in ((1, 1.5, "circle", None, 0.99), (1, 3.0, "circle", None, 1.72), (6, 1.5, "circle", None, 1.07), (15, 1.5, "box", 1.5, 0.74)):
+        r = CV.check(q, code, shape, 1.2, B, 30.0, 0.01, 0.013)
+        assert r["control"] == "inlet" and r["hw_m"] == pytest.approx(swmm, abs=0.006), (code, q, r)
+    # outlet control governs a long, flat, rough barrel
+    r = CV.check(1.5, 1, "circle", 1.2, None, 300.0, 0.001, 0.024, ke=0.5)
+    assert r["control"] == "outlet" and r["hw_outlet_m"] > r["hw_inlet_m"]
+
+
+def test_culverts_in_the_steady_run_swmm_and_validate():
+    p = _net(); p.load_sets["design"] = {"CB1": 8640.0}                   # 100 L/s
+    W.apply(p, dict(op="set_props", table="links", ids=["P1"], values=dict(is_culvert=True, culvert_code="1", ke=0.5, max_headwater_m=0.2)))
+    with pytest.raises(ValueError, match="one of"): W.apply(p, dict(op="set_props", table="links", ids=["P1"], values=dict(culvert_code="99")))
+    res, s = steady.solve(p)
+    assert res.hw_m["P1"] > 0 and res.culvert_control["P1"] in ("inlet", "outlet") and res.hw_over["P1"]
+    assert any(m["id"] == "P1" and "headwater" in m["message"] for m in validate.run(p, res))
+    p.rain = dict(idf=dict(durations_min=[5, 10, 30, 60], intensities=[150.0, 120.0, 70.0, 45.0]))
+    t = swmm_inp.from_project(p)
+    xs = [l.split() for l in t.split("[XSECTIONS]")[1].split("\n[")[0].splitlines() if l.startswith("P1 ")][0]
+    assert xs[1] == "CIRCULAR" and xs[-1] == "1" and len(xs) == 8
+    assert "[LOSSES]" in t and t.split("[LOSSES]")[1].split()[0:2] == ["P1", "0.5"]
+
+
+FULAIJ = r"C:\Users\mojtaba\Desktop\Win10 shared folder"
+
+
+def test_reader_takes_sewergems_culverts():
+    """The engineer's Fulaij model: conduits marked Is Culvert?, whose upstream headwall's inlet is "90 deg headwall w/45
+    deg bevels" (SWMM code 15, K 0.495, M 0.667, c 0.0314, Y 0.82, Ke 0.2)."""
+    import glob
+    from sewerapp.io import sewergems_db, sewergems_export
+    dbs = glob.glob(FULAIJ + r"\**\Fulaij SewerGEMS.stsw.sqlite", recursive=True)
+    if not dbs: pytest.skip("the engineer's Fulaij model is on this computer only")
+    import tempfile
+    out = tempfile.mkdtemp(prefix="w19fulaij_"); sewergems_db.export(dbs[0], out)
+    p, _, _ = sewergems_export.load(out)
+    cv = {k: v for k, v in p.props["links"].items() if v.get("is_culvert")}
+    assert cv and any(v.get("culvert_code") == "15" for v in cv.values())
