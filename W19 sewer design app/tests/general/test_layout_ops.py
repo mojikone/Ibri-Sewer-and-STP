@@ -255,3 +255,28 @@ def test_contours_and_spot_levels_give_tin_levels(tmp_path):
         r = C.post(B + "/inspect", files=[("files", ("plan.dwg", b"AC1032", "application/acad"))])
         assert r.status_code == 400 and "ODA File Converter" in r.json()["detail"] and "DXF" in r.json()["detail"]
     assert C.post(B, json=dict(token="nope", field="ELEV")).status_code == 400
+
+
+def test_bends_move_split_and_a_layout_run_through_bends():
+    """v6 (2026-11-24): a pipe's bends (set_coords), a structure moved carries its lines' ends, a split keeps each half's
+    bends, and a layout run clicked through bends follows them, with manholes at the spacing along the bent line."""
+    import math
+    p = Project("b", crs=32640)
+    W.apply(p, dict(op="add_node", id="A", x=0, y=0, ground=10, invert=8)); W.apply(p, dict(op="add_node", id="B", kind="outfall", x=100, y=0, ground=9, invert=7))
+    W.apply(p, dict(op="add_link", id="P", from_node="A", to_node="B"))
+    W.apply(p, dict(op="set_coords", id="P", coords=[[0, 0], [50, 50], [100, 0]]))
+    assert abs(p.links.length_m["P"] - 2 * math.hypot(50, 50)) < 1e-9
+    W.apply(p, dict(op="move_node", id="B", x=100, y=20))
+    assert p.links.coords["P"][-1] == [100.0, 20.0] and p.links.coords["P"][1] == [50.0, 50.0]
+    W.apply(p, dict(op="split_link", id="P", node_id="M", x=25, y=25))
+    a, b = p.links.coords["P-a"], p.links.coords["P-b"]
+    assert a == [[0.0, 0.0], [25.0, 25.0]] or a is None
+    assert b[1] == [50.0, 50.0] and abs(p.nodes.x["M"] - 25) < 1e-9
+    W.apply(p, dict(op="set_coords", id="P-b", coords=[]))
+    assert p.links.coords["P-b"] is None and abs(p.links.length_m["P-b"] - math.dist((25, 25), (100, 20))) < 1e-9
+    q = Project("r", crs=32640); W.apply(q, dict(op="add_node", id="S", x=0, y=0, ground=10, invert=8))
+    e = dict(op="add_run", from_node="S", x=100, y=100, via=[[100, 0]], max_spacing=50)
+    W.apply(q, e)
+    assert len(e["link_ids"]) == 4 and len(e["mid_ids"]) == 3                       # 200 m along the bend at 50 m
+    assert sorted(round(q.links.length_m[i], 6) for i in e["link_ids"]) == [50.0] * 4
+    mid = q.nodes.loc[e["mid_ids"][1]]; assert abs(mid.x - 100) < 1e-9 and abs(mid.y) < 1e-9   # the second manhole at the bend

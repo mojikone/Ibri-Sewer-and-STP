@@ -27,6 +27,7 @@ Edit ops (dicts with "op"):
   add_run    {from_node, to_node | x, y, kind?, max_spacing?, dn_mm?, link_kind?}  the layout tool: a pipe to an existing
                              node or a new one, split by manholes at the engineer's spacing rule (engine/spacing.py)
   reverse    {ids}           turn links round (from and to, their end inverts and vertices swapped)
+  set_coords {id, coords}    a pipe's drawn line: its bends (the ends snap to its structures; under three points: straight)
   set_infiltration {ids, rate}  a conduit's own infiltration rate (basis: settings.infiltration.method); None clears it
   set_storage {ids, area_m2 | curve [[depth, area]] | None}  a storage node's plan area for the storm run
   set_unit_rows {set, ids, rows [[unit load, count]]}  nodes' unit-load rows (library settings.libraries.unit_loads)
@@ -207,7 +208,13 @@ def apply(p, e):
         if nid in p.nodes.index: raise ValueError(f"node {nid} exists")
         kind = e.get("kind") or ("pressure_junction" if pres else "manhole")         # morph: the tool's kind
         if kind not in NODE_KINDS: raise ValueError(f"kind must be one of {NODE_KINDS}")
-        f = _length(p, L.from_node, L.to_node) and math.dist((p.nodes.x[L.from_node], p.nodes.y[L.from_node]), (x, y)) / max(_length(p, L.from_node, L.to_node), 1e-9)
+        c0 = L.coords if isinstance(L.coords, list) and len(L.coords) >= 3 else None
+        if c0:                                                           # a line with bends: split where clicked, each half keeps its bends
+            k, (x, y), s = _along(c0, x, y); f = s / max(_length(p, None, None, c0), 1e-9)
+            halves = ([list(v)[:2] for v in c0[:k + 1]] + [[x, y]], [[x, y]] + [list(v)[:2] for v in c0[k + 1:]])
+        else:
+            halves = (None, None)
+            f = _length(p, L.from_node, L.to_node) and math.dist((p.nodes.x[L.from_node], p.nodes.y[L.from_node]), (x, y)) / max(_length(p, L.from_node, L.to_node), 1e-9)
         inv = L.up_inv + (L.dn_inv - L.up_inv) * f; g = p.nodes.ground[L.from_node] + (p.nodes.ground[L.to_node] - p.nodes.ground[L.from_node]) * f
         p.nodes.loc[nid] = dict(kind=kind, x=x, y=y, ground=g, invert=inv, inflow_m3d=0.0)
         p.links = p.links.drop(index=lid)
@@ -216,8 +223,8 @@ def apply(p, e):
                 v = dct.pop(lid)
                 for half in ("a", "b"): dct[f"{lid}-{half}"] = copy.deepcopy(v)
         for k, (a, b, ui, di) in enumerate(((L.from_node, nid, L.up_inv, inv), (nid, L.to_node, inv, L.dn_inv))):
-            p.links.loc[f"{lid}-{'ab'[k]}"] = dict(kind=L.kind, from_node=a, to_node=b, length_m=_length(p, a, b), dn_mm=L.dn_mm,
-                                                   inside_mm=L.inside_mm, up_inv=ui, dn_inv=di, transfer=L.transfer, coords=None)
+            p.links.loc[f"{lid}-{'ab'[k]}"] = dict(kind=L.kind, from_node=a, to_node=b, length_m=_length(p, a, b, halves[k]), dn_mm=L.dn_mm,
+                                                   inside_mm=L.inside_mm, up_inv=ui, dn_inv=di, transfer=L.transfer, coords=halves[k])
         return True
     if op == "set_load":
         if e["node"] not in p.nodes.index: raise ValueError(f"no node {e['node']}")
@@ -306,24 +313,34 @@ def apply(p, e):
             e["drains_into_start"] = True
         rev = bool(e.get("drains_into_start"))
         dn = int(e.get("dn_mm") or p.prototype("conduit").get("dn_mm") or p.catalogue().nominal_mm.iloc[0])
-        xa, ya, xb, yb = p.nodes.x[a], p.nodes.y[a], p.nodes.x[b], p.nodes.y[b]; L = math.hypot(xb - xa, yb - ya)
+        xa, ya, xb, yb = p.nodes.x[a], p.nodes.y[a], p.nodes.x[b], p.nodes.y[b]
+        path = [(float(xa), float(ya))] + [tuple(map(float, v[:2])) for v in (e.get("via") or [])] + [(float(xb), float(yb))]   # bends on the way
+        L = sum(math.dist(path[k], path[k + 1]) for k in range(len(path) - 1))
         mx = e.get("max_spacing")
         if mx == "table12": mx = spacing.table12(dn)
         lens = spacing.split_lengths(L, float(mx)) if (mx and kind == "conduit" and L > float(mx) + 1e-6) else [L]
         mids = e.get("mid_ids") or []; chain = [a]; s = 0.0; depth = p.prototype("manhole").get("depth", DEFAULT_DEPTH)
         ga, gb = float(p.nodes.ground[a]), float(p.nodes.ground[b])
+        cuts = [0.0]
         for k, piece in enumerate(lens[:-1]):
             s += piece; f = s / L
             nid = mids[k] if k < len(mids) else _new_id(p.nodes, "MH-")
-            g = ga + (gb - ga) * f
-            apply(p, dict(op="add_node", id=nid, kind="manhole", x=xa + (xb - xa) * f, y=ya + (yb - ya) * f, ground=g, invert=g - float(depth)))
-            chain.append(nid)
-        chain.append(b); e["mid_ids"] = chain[1:-1]
-        if rev: chain = chain[::-1]
+            g = ga + (gb - ga) * f; (mxx, myy), _ = _path_at(path, s)
+            apply(p, dict(op="add_node", id=nid, kind="manhole", x=mxx, y=myy, ground=g, invert=g - float(depth)))
+            chain.append(nid); cuts.append(s)
+        chain.append(b); e["mid_ids"] = chain[1:-1]; cuts.append(L)
+        bent = len(path) > 2
+
+        def piece_line(s0, s1):                                         # the part of the bent path between two distances
+            (x0, y0), k0 = _path_at(path, s0); (x1, y1), k1 = _path_at(path, s1)
+            return [[x0, y0]] + [list(path[j]) for j in range(k0 + 1, k1 + 1)] + [[x1, y1]]
+        lines = [piece_line(cuts[k], cuts[k + 1]) if bent else None for k in range(len(chain) - 1)]
+        if rev: chain = chain[::-1]; lines = [ln[::-1] if ln else None for ln in lines[::-1]]
         lids = e.get("link_ids") or []; made = []
         for k, (u, v) in enumerate(zip(chain[:-1], chain[1:])):
             lid = lids[k] if k < len(lids) else _new_id(p.links, "P-" if kind == "conduit" else "PMP-")
-            apply(p, dict(op="add_link", id=lid, kind=kind, from_node=u, to_node=v, dn_mm=dn)); made.append(lid)
+            extra = {"coords": lines[k]} if lines[k] and len(lines[k]) > 2 else {}
+            apply(p, dict(op="add_link", id=lid, kind=kind, from_node=u, to_node=v, dn_mm=dn, **extra)); made.append(lid)
         e["link_ids"] = made
         return True
     if op == "reconnect":
@@ -343,6 +360,17 @@ def apply(p, e):
             c = [list(v) for v in c]; c[0 if end == "from" else -1] = [float(p.nodes.x[nid]), float(p.nodes.y[nid])]
             p.links.at[lid, "coords"] = c
         p.links.at[lid, "length_m"] = _length(p, p.links.at[lid, "from_node"], p.links.at[lid, "to_node"], p.links.at[lid, "coords"])
+        return True
+    if op == "set_coords":
+        # a pipe's drawn line (its bends): the ends are its structures, the length follows the line; fewer than three
+        # points make it straight again
+        lid = str(e["id"])
+        if lid not in p.links.index: raise ValueError(f"no link {lid}")
+        r = p.links.loc[lid]; c = [list(map(float, v[:2])) for v in (e.get("coords") or [])]
+        if len(c) > 5000: raise ValueError("at most 5000 points on one pipe")
+        a, b = [float(p.nodes.x[r.from_node]), float(p.nodes.y[r.from_node])], [float(p.nodes.x[r.to_node]), float(p.nodes.y[r.to_node])]
+        c = [a] + c[1:-1] + [b] if len(c) >= 3 else None
+        p.links.at[lid, "coords"] = c; p.links.at[lid, "length_m"] = _length(p, r.from_node, r.to_node, c)
         return True
     if op == "reverse":
         ids = [str(i) for i in e["ids"]]; missing = [i for i in ids if i not in p.links.index]
@@ -493,11 +521,39 @@ def apply(p, e):
 
 
 def _relength(p, node_ids):
+    """After structures move: a drawn line's end follows its structure (its bends stay) and the length follows the line."""
     m = p.links.from_node.isin(node_ids) | p.links.to_node.isin(node_ids)
     for lid in p.links.index[m]:
         r = p.links.loc[lid]
-        if not (isinstance(r.coords, list) and len(r.coords) >= 2):
+        if isinstance(r.coords, list) and len(r.coords) >= 2:
+            c = [list(v)[:2] for v in r.coords]
+            if r.from_node in node_ids: c[0] = [float(p.nodes.x[r.from_node]), float(p.nodes.y[r.from_node])]
+            if r.to_node in node_ids: c[-1] = [float(p.nodes.x[r.to_node]), float(p.nodes.y[r.to_node])]
+            p.links.at[lid, "coords"] = c; p.links.at[lid, "length_m"] = _length(p, r.from_node, r.to_node, c)
+        else:
             p.links.at[lid, "length_m"] = _length(p, r.from_node, r.to_node)
+
+
+def _along(c, x, y):
+    """Where (x, y) falls on polyline c: (segment index, the point on it, distance along the line from its start)."""
+    best = (float("inf"), 0, (c[0][0], c[0][1]), 0.0); run = 0.0
+    for k in range(len(c) - 1):
+        (ax, ay), (bx, by) = c[k][:2], c[k + 1][:2]; dx, dy = bx - ax, by - ay; L2 = dx * dx + dy * dy
+        t = 0.0 if not L2 else max(0.0, min(1.0, ((x - ax) * dx + (y - ay) * dy) / L2))
+        px, py = ax + t * dx, ay + t * dy; d = math.hypot(x - px, y - py)
+        if d < best[0]: best = (d, k, (px, py), run + t * math.sqrt(L2))
+        run += math.sqrt(L2)
+    return best[1], best[2], best[3]
+
+
+def _path_at(pts, s):
+    """The point at distance s along polyline pts, and the index of the segment it lies on."""
+    for k in range(len(pts) - 1):
+        L = math.dist(pts[k], pts[k + 1])
+        if s <= L or k == len(pts) - 2:
+            f = 0.0 if not L else min(1.0, s / L)
+            return (pts[k][0] + (pts[k + 1][0] - pts[k][0]) * f, pts[k][1] + (pts[k + 1][1] - pts[k][1]) * f), k
+        s -= L
 
 
 class Scenario:
