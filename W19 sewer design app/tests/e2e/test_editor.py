@@ -1239,3 +1239,20 @@ def test_v5_trex_dialog_reads_a_picked_geotiff_and_keeps_its_source(server, brow
     expect(pg.get_by_test_id("trex-phone")).to_be_visible()
     assert errs == [], errs
     ctx.close()
+
+
+def test_v5_map_has_a_north_arrow_and_fit_all(server, browser):
+    """The engineer, 2026-11-23, on a phone: a rotated map needs a north arrow to put north up again, and the map box
+    needs Fit all to find the pipes."""
+    ctx = browser.new_context(viewport={"width": 375, "height": 812}, has_touch=True, is_mobile=True); pg = ctx.new_page(); pg.set_default_timeout(60000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
+    pg.evaluate("fetch('/api/g/projects/sample/pond', {method: 'POST'}).then(r => r.json()).then(i => openProject(i))"); idle(pg)
+    pg.evaluate("window.ed.map.jumpTo({ center: [10, 10], zoom: 3, bearing: 40 })")
+    expect(pg.locator(".maplibregl-ctrl-compass")).to_be_visible(); expect(pg.get_by_test_id("map-fit")).to_be_visible()
+    pg.click(".maplibregl-ctrl-compass"); pg.wait_for_function("Math.abs(window.ed.map.getBearing()) < 0.01")
+    pg.click("[data-testid=map-fit]"); pg.wait_for_timeout(300)
+    inside = pg.evaluate("(() => { const b = window.ed.map.getBounds(); return window.ed.state.model.nodeFeat.every(f => b.contains(f.geometry.coordinates)); })()")
+    assert inside and pg.evaluate("window.ed.map.getZoom()") > 10
+    assert errs == [], errs
+    pg.screenshot(path=os.path.join(SHOTS, "screenshot_v5_compass_fit.png")); ctx.close()

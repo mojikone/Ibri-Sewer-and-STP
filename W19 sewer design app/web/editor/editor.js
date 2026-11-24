@@ -140,7 +140,16 @@ function initMap() {
     container: "map", center: [0.001, 0.0005], zoom: 17, boxZoom: false, doubleClickZoom: false, attributionControl: { compact: true },
     style: { version: 8, glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf", sources, layers },
   });
-  map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+  // the compass is the north arrow: it turns with the map, a tap puts north up again (the engineer, 2026-11-23, on a phone)
+  map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: false }), "top-right");
+  map.addControl({                                                 // fit all: the whole network, from the map itself
+    onAdd() {
+      const d = document.createElement("div"); d.className = "maplibregl-ctrl maplibregl-ctrl-group";
+      d.innerHTML = `<button type="button" class="ctrl-fit" data-testid="map-fit" title="Fit all: the whole network (H)" aria-label="Fit all"><svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4"/></svg></button>`;
+      d.querySelector("button").onclick = () => fitModel(); return d;
+    },
+    onRemove() {},
+  }, "top-right");
   map.addControl(new maplibregl.ScaleControl({ unit: "metric" }), "bottom-right");
   mapReady = new Promise(res => {
     let done = false; const go = () => { if (!done) { done = true; res(); } };

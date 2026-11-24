@@ -191,6 +191,8 @@ table.ft td.editing input, table.ft td.editing select { width: 100%; min-width: 
 .row button:hover { background: var(--sel); }
 button.primary { background: var(--accent) !important; color: var(--accent-ink); border-color: var(--accent) !important; }
 .maplibregl-canvas { outline: none; }
+.maplibregl-ctrl-group button.ctrl-fit { display: flex; align-items: center; justify-content: center; color: #333; }
+body.dark .maplibregl-ctrl-group button.ctrl-fit { color: var(--ink); }
 body.dark .maplibregl-ctrl-group { background: var(--panel2); }
 body.dark .maplibregl-ctrl-group button .maplibregl-ctrl-icon { filter: invert(1); }
 body.dark .maplibregl-ctrl-attrib, body.dark .maplibregl-ctrl-scale { background: rgba(22,28,35,.8); color: var(--ink2); }
