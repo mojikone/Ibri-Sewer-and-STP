@@ -64,6 +64,7 @@ def load(folder, name="SewerGEMS model", crs=None):
     g = os.path.join(folder, "geometry.tsv")
     if os.path.exists(g):
         for line in open(g, encoding="utf-8").read().splitlines()[1:]:
+            if not line.strip(): continue
             i, lab, wkt = line.split("\t")
             geo[lab] = [[float(a) for a in pt.split()] for pt in wkt[wkt.index("(") + 1: wkt.rindex(")")].split(",")]
     first = sc.iloc[0]; c0, m0 = _read(folder, first.file)
@@ -91,6 +92,7 @@ def load(folder, name="SewerGEMS model", crs=None):
                             index=pd.Index(c.label.astype(str).values, name="id"))[LINK_COLS]
 
     p.links = link_table(c0)
+    _pressure(folder, sc, p, nodes_lab)
     secs0, _ = _sections(folder, first.file)
     p.sections = {k: v for k, v in secs0.items() if k in p.links.index}   # boxes and channels with their section: solved
     for k in p.sections: sections.pop(k, None)
@@ -127,6 +129,44 @@ def load(folder, name="SewerGEMS model", crs=None):
         results[str(r.label)] = res
     for sc_ in scenarios: sc_["has_loads"] = loads_found
     return p, scenarios, results
+
+
+def _pressure(folder, sc, p, nodes_lab):
+    """Pumps and force mains (the direct reading's pressure_<file>.csv): from the first scenario in which any runs (a
+    station switched off in the first scenario is still part of the network); the pump library from pump_definitions.csv."""
+    files = [r.file for r in sc.itertuples() if os.path.exists(os.path.join(folder, f"pressure_{r.file}.csv"))]
+    if not files: return
+    pick = None
+    for f in files:
+        t = pd.read_csv(os.path.join(folder, f"pressure_{f}.csv"))
+        if len(t) and t.active.astype(bool).any(): pick = t; break
+    dfile = os.path.join(folder, "pump_definitions.csv")
+    if pick is None:                                   # switched off in every scenario: out of the network, as in SewerGEMS
+        pick = pd.read_csv(os.path.join(folder, f"pressure_{files[0]}.csv")).iloc[0:0]
+    pick = pick[pick.active.astype(bool)]
+    if os.path.exists(dfile):
+        lib = []
+        for r in pd.read_csv(dfile).to_dict("records"):
+            d = {k: v for k, v in r.items() if v == v and v != "" and k != "points"}
+            if r.get("points") == r.get("points") and r.get("points"): d["points"] = [[float(a), float(b)] for a, b in (x.split(":") for x in str(r["points"]).split(";"))]
+            lib.append(d)
+        p.settings.setdefault("libraries", {})["pumps"] = lib
+    rows = {}
+    for r in pick.itertuples():
+        a, b = nodes_lab.get(r.start, str(r.start)), nodes_lab.get(r.stop, str(r.stop))
+        if a not in p.nodes.index or b not in p.nodes.index: continue
+        lab = str(r.label)
+        if r.kind == "pump":
+            rows[lab] = dict(kind="pump", from_node=a, to_node=b, length_m=0.0, dn_mm=0, inside_mm=np.nan, up_inv=np.nan, dn_inv=np.nan, transfer=False, coords=None)
+            pu = {k: float(v) for k, v in (("q_ls", r.q_ls), ("on_m", r.on_m), ("off_m", r.off_m)) if v == v}
+            if isinstance(r.definition, str) and r.definition: pu["definition"] = r.definition
+            if pu: p.pumps[lab] = pu
+        else:
+            d = float(r.diameter_mm) if r.diameter_mm == r.diameter_mm else np.nan
+            rows[lab] = dict(kind="pressure_pipe", from_node=a, to_node=b, length_m=float(r.length_m), dn_mm=int(round(d)) if d == d else 0, inside_mm=d,
+                             up_inv=float(p.nodes.invert[a]), dn_inv=float(p.nodes.invert[b]), transfer=False, coords=None)
+            if r.C == r.C and r.C > 0: p.ppipes[lab] = dict(method="hazen", C=float(r.C))
+    if rows: p.links = pd.concat([p.links, pd.DataFrame.from_dict(rows, orient="index")[LINK_COLS]])
 
 
 M3D_PER_CFS = 2446.575545

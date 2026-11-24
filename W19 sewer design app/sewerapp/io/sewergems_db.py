@@ -18,14 +18,20 @@ Results are not in the database (SewerGEMS keeps them in .out files): the app so
 
 export() writes the files of the bridge export (scenarios.csv; conduits_, manholes_, loads_ per scenario; geometry.tsv;
 support_loads.csv), so io/sewergems_export.load() opens the model exactly as it opens SewerGEMS's own export.
-Not read yet: pumps and pressure pipes (counted in the log), boxes and channels' dimensions (shown, not analysed)."""
+Pumps and force mains (2026-11-24): SewerGEMS's pump is a node between pressure pipes (the suction from the wet well, the
+force main beyond); the app's pump is a link from the wet well to a junction at the pump ("<pump>-out"), from which the
+force main's pressure pipes run. Suction pipes and their junctions are inside the station and are left out. Each pump's
+definition goes to the pump library (design point, three-point or multiple-point), its on and off elevations become
+depths above the wet well's floor; pressure pipes keep their bore, length and Hazen-Williams C (pressure_<file>.csv,
+pump_definitions.csv). Not read yet: variable-speed pump batteries, boxes and channels' dimensions."""
 import os, sqlite3
 import numpy as np, pandas as pd
 
 FT = 0.3048
 M3D_PER_CFS = 2446.575545
 NODE_KINDS = {"Manhole": "manhole", "Outfall": "outfall", "WetWell": "wetwell", "PressureJunction": "pressure_junction",
-              "CatchBasin": "manhole", "JunctionChamber": "manhole"}
+              "CatchBasin": "manhole", "JunctionChamber": "manhole", "Pond": "storage", "PondOutletStructure": "storage"}
+PUMP_TYPES = {1: "design_point", 2: "three_point", 5: "multi_point"}      # IdahoPumpDefinition.PumpDefinitionType, as stored
 
 
 def _connect(path):
@@ -83,7 +89,8 @@ def export(sqlite_path, out, log=None, only=None):
     for t, k in NODE_KINDS.items():
         for i in _ids(con, t) & alive: kind[i] = k
     conduits = _ids(con, "Conduit") & alive
-    skipped = {t: len(_ids(con, t) & alive) for t in ("StandardPump", "VariableSpeedPumpBattery", "PressurePipe")}
+    pumps = _ids(con, "StandardPump") & alive; ppipes = _ids(con, "PressurePipe") & alive
+    skipped = {t: len(_ids(con, t) & alive) for t in ("VariableSpeedPumpBattery",)}
     if any(skipped.values()): say(f"  not read yet: {skipped}")
 
     # the tables, read once; each scenario picks its rows
@@ -107,6 +114,37 @@ def export(sqlite_path, out, log=None, only=None):
                        "SanitaryUnitLoadType_UnitSanitaryLoadId as unit, SanitaryUnitLoadType_LoadingUnitNumber as cnt from Manhole_SanitaryLoading_SanitaryLoads")
     unit_cfs = dict(_df(con, "select SupportElementID, UnitSanitaryLoad_UnitLoad from UnitSanitaryLoad").itertuples(index=False, name=None))
 
+    # pumps and force mains
+    atype = dict(zip(A.AlternativeID, A.AlternativeTypeID))
+    ttype = lambda df: int(atype.get(int(df.AlternativeID.iloc[0]))) if len(df) else None
+    dgeo = _df(con, "select DomainElementID, AlternativeID, HMIGeometry from BaseDirectedNode_HmiDataSetGeometry_Data")
+    dphy = _df(con, "select DomainElementID, AlternativeID, Physical_GroundElevation as g, Physical_InvertElevation as inv from BaseDirectedNode_Physical_Data")
+    dact = _df(con, "select DomainElementID, AlternativeID, HMIActiveTopologyIsActive as on_ from BaseDirectedNode_HMIActiveTopology_Data")
+    pjel = _df(con, "select DomainElementID, AlternativeID, Physical_PressureJunctionElevation as el from PressureJunction_Physical_Data")
+    wwph = _df(con, "select DomainElementID, AlternativeID, Physical_TankBaseElevation as base, Physical_TankMinimumElevation as mn from WetWell_Physical_Data")
+    ppd = _df(con, "select DomainElementID, AlternativeID, Physical_PipeDiameter as d from PressurePipe_Physical_Data")
+    pph = _df(con, "select DomainElementID, AlternativeID, Physical_HazenWilliamsC as C, Physical_Material as mat from GravityLinkBase_Physical_Data")
+    pmp = _df(con, "select DomainElementID, AlternativeID, Physical_PumpDefinitionID as defid from StandardPump_Physical_Data")
+    pop = _df(con, "select DomainElementID, AlternativeID, Operational_OnElevation as on_el, Operational_OffElevation as off_el, Operational_IgnoreOnOffElevations as ign from StandardPump_Operational_Data")
+    defs = _df(con, "select SupportElementID as id, PumpDefinitionType as t, DesignDischarge as q, DesignHead as h, ShutoffHead as h0, MaxOperatingDischarge as q2, MaxOperatingHead as h2 from IdahoPumpDefinition")
+    curves = _df(con, "select SupportElementID as id, PumpCurve_Discharge as q, PumpCurve_Head as h from IdahoPumpDefinition_PumpCurve order by ItemID")
+    used_defs = {}
+
+    def pump_def(i):
+        """A pump definition in the app's library form (L/s, m), or None when it holds no usable curve."""
+        if i is None or i != i or defs.empty or int(i) not in set(defs.id): return None
+        r = defs[defs.id == int(i)].iloc[0]; t = PUMP_TYPES.get(int(r.t)); name = label.get(int(i), f"Pump definition {int(i)}")
+        ls, m = lambda v: float(v) * 28.316846592, lambda v: float(v) * FT
+        if t == "design_point" and r.q > 0 and r.h > 0: d = dict(name=name, type=t, q_ls=ls(r.q), h_m=m(r.h))
+        elif t == "three_point" and r.h0 > r.h > r.h2 >= 0 and r.q2 > r.q > 0:
+            d = dict(name=name, type=t, shutoff_h_m=m(r.h0), q_ls=ls(r.q), h_m=m(r.h), max_q_ls=ls(r.q2), max_h_m=m(r.h2))
+        elif t == "multi_point":
+            pts = [[ls(a), m(b)] for a, b in zip(curves[curves.id == int(i)].q, curves[curves.id == int(i)].h)]
+            d = dict(name=name, type=t, points=pts) if len(pts) >= 2 and any(b > 0 for _, b in pts) else None
+        elif r.q > 0 and r.h > 0: d = dict(name=name, type="design_point", q_ls=ls(r.q), h_m=m(r.h))
+        else: d = None
+        if d: used_defs[name] = d
+        return d
     from shapely import from_wkb, get_coordinates
     rows_s, geo_written = [], False
     for k, sc in enumerate(S.itertuples(), start=1):
@@ -122,7 +160,21 @@ def export(sqlite_path, out, log=None, only=None):
             nodes.append(dict(id=i, label=label.get(i, str(i)), active=bool(ACT.on_[i]) if i in ACT.index else True, x=xy[0], y=xy[1],
                               ground=G.g[i] * FT if i in G.index else np.nan, rim=G.g[i] * FT if i in G.index else np.nan,
                               invert=inv * FT if inv == inv else np.nan, diameter_m=np.nan if kind[i] == "outfall" else 1.0, kind=kind[i]))
-        N = pd.DataFrame(nodes); N.to_csv(os.path.join(out, f"manholes_{f}.csv"), index=False)
+        # pressure junctions and wet wells: their own levels; each pump's outlet: a junction at the pump
+        PJ, WW = pick(pjel, alt(sid, ttype(pjel)) if len(pjel) else None), pick(wwph, alt(sid, ttype(wwph)) if len(wwph) else None)
+        for r in nodes:
+            if r["kind"] == "pressure_junction" and r["id"] in PJ.index: r["invert"] = r["ground"] = PJ.el[r["id"]] * FT
+            if r["kind"] == "wetwell" and r["id"] in WW.index:
+                b = WW.base[r["id"]] if WW.base[r["id"]] else WW.mn[r["id"]]
+                if b: r["invert"] = b * FT
+        DG, DP, DA = (pick(t_, alt(sid, ttype(t_)) if len(t_) else None) for t_ in (dgeo, dphy, dact))
+        for i in sorted(pumps):
+            if i not in DG.index: continue
+            xy = get_coordinates(from_wkb(DG.HMIGeometry[i]))[0] * FT
+            el = DP.inv[i] * FT if i in DP.index else np.nan
+            nodes.append(dict(id=-i, label=f"{label.get(i, i)}-out", active=bool(DA.on_[i]) if i in DA.index else True, x=xy[0], y=xy[1],
+                              ground=DP.g[i] * FT if i in DP.index else el, rim=np.nan, invert=el, diameter_m=1.0, kind="pressure_junction"))
+        N = pd.DataFrame(nodes)
         ninv_of = dict(zip(N.id, N.invert / FT))
         # pipes
         T = pick(ltop, g2); LG = pick(lgeo, g1); LA = pick(lact, g3); LL = pick(llen, g4); LI = pick(linv, g4); LC = pick(lcon, g4); CA = pick(lcat, g4)
@@ -146,9 +198,43 @@ def export(sqlite_path, out, log=None, only=None):
                               length_m=length, diameter_mm=dmm, size_label=lab, start_inv=ui * FT, stop_inv=di * FT,
                               flow_m3d=np.nan, velocity_ms=np.nan, depth_in_m=np.nan, depth_out_m=np.nan))
             if not geo_written and line is not None: geo.append(f"{i}\t{label.get(i, i)}\tLINESTRING (" + ", ".join(f"{float(x)!r} {float(y)!r}" for x, y in line[:, :2]) + ")")
-        pd.DataFrame(links).to_csv(os.path.join(out, f"conduits_{f}.csv"), index=False)
+        pd.DataFrame(links, columns=["id", "label", "start", "stop", "active", "length_m", "diameter_mm", "size_label", "start_inv", "stop_inv",
+                                     "flow_m3d", "velocity_ms", "depth_in_m", "depth_out_m"]).to_csv(os.path.join(out, f"conduits_{f}.csv"), index=False)
+        # pumps and force mains: the suction (pressure pipes and junctions from the wet well to the pump) is left out
+        if pumps or ppipes:
+            PD = pick(ppd, alt(sid, ttype(ppd)) if len(ppd) else None); PH = pick(pph, alt(sid, ttype(pph)) if len(pph) else None)
+            PM = pick(pmp, alt(sid, ttype(pmp)) if len(pmp) else None); PO = pick(pop, alt(sid, ttype(pop)) if len(pop) else None)
+            stop_of = {i: (int(T.a[i]), int(T.b[i])) for i in ppipes if i in T.index}
+            into = {}
+            for i, (a, b) in stop_of.items(): into.setdefault(b, []).append(i)
+            inv_of = dict(zip(N.id, N.invert)); suction_p, suction_j, prow = set(), set(), []
+            for i in sorted(pumps):
+                n, src = i, None
+                for _ in range(50):                                  # upstream through the suction to the wet well
+                    up = into.get(n, [])
+                    if not up: break
+                    suction_p.add(up[0]); a = stop_of[up[0]][0]
+                    if kind.get(a) == "pressure_junction": suction_j.add(a); n = a; continue
+                    src = a; break
+                d = pump_def(PM.defid[i]) if i in PM.index else None
+                base = inv_of.get(src, np.nan)
+                on = PO.on_el[i] * FT - base if i in PO.index and PO.on_el[i] and base == base else np.nan
+                off = PO.off_el[i] * FT - base if i in PO.index and PO.off_el[i] and base == base else np.nan
+                prow.append(dict(id=i, label=label.get(i, str(i)), kind="pump", start=src, stop=-i, active=bool(DA.on_[i]) if i in DA.index else True,
+                                 length_m=0.0, diameter_mm=np.nan, C=np.nan, material="", on_m=on if on == on and on > 0 else np.nan,
+                                 off_m=off if off == off and off >= 0 else np.nan, definition=d["name"] if d else "", q_ls=d.get("q_ls", np.nan) if d else np.nan))
+            for i in sorted(ppipes):
+                if i in suction_p or i not in stop_of: continue
+                a, b = stop_of[i]; a, b = (-a if a in pumps else a), (-b if b in pumps else b)
+                length = (LL.ul[i] if i in LL.index and LL.ud[i] else (LG.sl[i] if i in LG.index else np.nan)) * FT
+                prow.append(dict(id=i, label=label.get(i, str(i)), kind="pressure_pipe", start=a, stop=b, active=bool(LA.on_[i]) if i in LA.index else True,
+                                 length_m=length, diameter_mm=PD.d[i] * FT * 1000.0 if i in PD.index else np.nan, C=PH.C[i] if i in PH.index else np.nan,
+                                 material=PH.mat[i] if i in PH.index else "", on_m=np.nan, off_m=np.nan, definition="", q_ls=np.nan))
+            pd.DataFrame(prow).to_csv(os.path.join(out, f"pressure_{f}.csv"), index=False)
+            if suction_j: N = N[~N.id.isin(suction_j)]
+        N.to_csv(os.path.join(out, f"manholes_{f}.csv"), index=False)
         if not geo_written:
-            with open(os.path.join(out, "geometry.tsv"), "w", encoding="utf-8") as fh: fh.write("id\tlabel\twkt\n" + "\n".join(geo) + "\n")
+            with open(os.path.join(out, "geometry.tsv"), "w", encoding="utf-8") as fh: fh.write("id\tlabel\twkt\n" + "".join(g + "\n" for g in geo))
             geo_written = True
         # sanitary loads: each manhole's collection in the nearest alternative that has one
         ch = chain(g12) if g12 is not None else []
@@ -166,6 +252,7 @@ def export(sqlite_path, out, log=None, only=None):
         rows_s.append(dict(id=sid, label=str(sc.label), parent=int(sc.parent) if sc.parent == sc.parent and sc.parent is not None else 0, file=f))
         say(f"  scenario {sid} '{sc.label}' -> {f}: {len(N)} structures, {len(links)} pipes")
     _support(con, out)
+    if used_defs: pd.DataFrame([dict(d, points=";".join(f"{a}:{b}" for a, b in d.get("points", []))) for d in used_defs.values()]).to_csv(os.path.join(out, "pump_definitions.csv"), index=False)
     pd.DataFrame(rows_s).to_csv(os.path.join(out, "scenarios.csv"), index=False)       # last, as the bridge export: the folder is complete
     con.close()
     return rows_s
