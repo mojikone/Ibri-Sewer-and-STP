@@ -92,3 +92,16 @@ def test_the_assistant_reports_its_steps_while_it_works(monkeypatch):
     assert [x["name"] for x in s["steps"] if x["kind"] == "tool"] == ["project_summary"]
     assert C.get(f"/api/g/assistant/job/{j['job']}").status_code == 404                  # collected once
     assert runner.EFFORT["sonnet"] == "medium" and "Never show JSON" in runner.SYSTEM_GENERAL
+
+
+def test_scripts_are_addressed_by_version_and_new_ids_autosave(monkeypatch, tmp_path):
+    """A reload behind a caching proxy gets the current scripts (each addressed by its file's version), and an edit to
+    a project with a v6 id is autosaved (the filter knew only p<digits>)."""
+    html = C.get("/v2").text
+    assert re.search(r'src="/static/editor/features7\.js\?v=\d+"', html) and re.search(r'href="/static/editor/features7\.css\?v=\d+"', html)
+    assert C.get("/v2").headers["cache-control"] == "no-cache"
+    seen = []
+    monkeypatch.setattr(general_api, "schedule", lambda pid, *a, **k: seen.append(pid))
+    pid = general_api._open(_p())
+    C.post(f"/api/g/projects/{pid}/scenarios/base/edit", json=dict(op="set", table="nodes", ids=["N0"], field="ground", value=11.0))
+    assert pid in seen

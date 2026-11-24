@@ -2,7 +2,7 @@
 import io, json, math, os, threading, time
 import numpy as np, pandas as pd
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sewerapp import fixtures
@@ -22,7 +22,7 @@ async def _autosave(request, call_next):
     if request.method == "POST" and resp.status_code < 300:
         import re
         from sewerapp.api import general_api
-        m = re.match(r"/api/g/projects/(p\d+)/", request.url.path)
+        m = re.match(r"/api/g/projects/(" + general_api.PID_RE + r")/", request.url.path)        # p40 or p + 16 hex (v6)
         if m: general_api.schedule(m.group(1))
     if request.method == "GET" and (request.url.path in ("/", "/v2", "/w18") or request.url.path.startswith("/static/")):
         resp.headers["Cache-Control"] = "no-cache"        # the page and its script always come as a matched pair after an update
@@ -220,16 +220,27 @@ if os.path.isdir(WEB):
     app.mount("/static", StaticFiles(directory=WEB), name="static")
 
 
+def _editor_page():
+    """The editor's page with each of its scripts and stylesheets addressed by version (?v=<file time>): a cache in
+    between (Cloudflare keeps static files 4 hours in the browser) then never serves an old script after an update."""
+    import re
+    html = open(os.path.join(WEB, "editor", "index.html"), encoding="utf-8").read()
+    def stamp(m):
+        f = os.path.join(WEB, *m.group(2).split("/"))
+        return f'{m.group(1)}="/static/{m.group(2)}?v={int(os.path.getmtime(f))}"' if os.path.exists(f) else m.group(0)
+    return HTMLResponse(re.sub(r'(src|href)="/static/([^"?#]+)"', stamp, html), headers={"Cache-Control": "no-cache"})
+
+
 @app.get("/")
 def index():
     """The general editor (any project, sewer and stormwater)."""
-    return FileResponse(os.path.join(WEB, "editor", "index.html"))
+    return _editor_page()
 
 
 @app.get("/v2")
 def index_v2():
     """The same editor with the ribbon interface (web/editor/ribbon.js switches it on for this path)."""
-    return FileResponse(os.path.join(WEB, "editor", "index.html"))
+    return _editor_page()
 
 
 @app.get("/w18")
