@@ -1055,6 +1055,27 @@ def test_v5_phone_layout_keeps_the_map_and_opens_properties_as_a_drawer(server, 
     assert not pg.locator("#props").is_visible()
     assert errs == [], errs
     pg.screenshot(path=os.path.join(SHOTS, "screenshot_v5_phone.png")); ctx.close()
+    
+
+def test_v5_phone_drawing_a_manhole_leaves_properties_closed(server, browser):
+    """The engineer, 2026-11-23: on a phone, Properties opened on every manhole drawn. Now only Select opens it, and a
+    drawing tool folds it away."""
+    ctx = browser.new_context(viewport={"width": 375, "height": 812}, has_touch=True, is_mobile=True); pg = ctx.new_page(); pg.set_default_timeout(60000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
+    pg.evaluate("fetch('/api/g/projects/sample/pond', {method: 'POST'}).then(r => r.json()).then(i => openProject(i))"); idle(pg)
+    pg.wait_for_function("document.body.classList.contains('compact-ui')")
+    pg.evaluate("window.ed.selectElement('nodes', 'WW-1')"); pg.wait_for_timeout(200)
+    expect(pg.locator("#props")).to_be_visible()                                  # Select still opens it
+    pg.evaluate("setTool('manhole')"); pg.wait_for_timeout(200)
+    assert not pg.locator("#props").is_visible()                                   # a drawing tool: the map
+    n0 = pg.evaluate("state.model.nodes.size")
+    b = pg.evaluate("(() => { const r = document.getElementById('map').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 3]; })()")
+    pg.mouse.click(b[0], b[1]); idle(pg); pg.wait_for_function(f"state.model.nodes.size > {n0}")
+    pg.wait_for_timeout(300)
+    assert not pg.locator("#props").is_visible()                                   # the new manhole is chosen, Properties stays shut
+    assert errs == [], errs
+    ctx.close()
 
 
 def test_v5_phone_bottom_pane_opens_with_a_tap_and_resizes_with_a_finger(server, browser):

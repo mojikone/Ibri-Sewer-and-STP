@@ -324,9 +324,16 @@ async function openLimits() {
   setSel = function (table, ids, opt) {
     const r = ss.apply(this, arguments);
     if (document.body.classList.contains("compact-ui") && !(opt && opt._mix)) {
-      if (ids && ids.length === 1 && ui.propsCollapsed) setProps(false);                  // one element chosen: its properties
+      if (ids && ids.length === 1 && ui.propsCollapsed && state.tool === "select") setProps(false);   // chosen with Select: its properties (not on every manhole drawn)
       else if ((!ids || !ids.length) && !ui.propsCollapsed) setProps(true);             // nothing chosen: the map again
     }
+    return r;
+  };
+  // a drawing tool picked on a small screen: the map, not Properties (the engineer, 2026-11-23)
+  const st = setTool;
+  setTool = function (t) {
+    const r = st.apply(this, arguments);
+    if (document.body.classList.contains("compact-ui") && t !== "select" && !ui.propsCollapsed) setProps(true);
     return r;
   };
 })();
