@@ -118,6 +118,9 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
   - **Made for other users:** every model has its link in the address bar (File > Copy link, File > Recent); Find
     finds tools too; a SewerGEMS model is picked from any device; tools that read the server's files show only on it.
   - **The assistant** shows each step live in plain words and answers without code; Sonnet runs at medium effort.
+  - **SewerGEMS models without SewerGEMS** (F46, the clean-room rule lifted by the engineer): the .stsw.sqlite is read
+    directly, every scenario, equal to SewerGEMS's own export of the Ibri final model; SewerGEMS in the VM only to
+    compute every scenario first.
   - Fixed after a Fable 5.2 review: an uploaded file's name could choose where the server wrote it (any folder, from
     the shared link); alternatives now replay in the order things were done (a session-wide edit clock), undo removes
     exactly its own edit from a shared alternative, a mixed batch is one undo step, a child can take its own edits,
