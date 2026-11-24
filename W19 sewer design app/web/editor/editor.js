@@ -141,7 +141,7 @@ function initMap() {
     style: { version: 8, glyphs: "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf", sources, layers },
   });
   // the compass is the north arrow: it turns with the map, a tap puts north up again (the engineer, 2026-11-23, on a phone)
-  map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: false }), "top-right");
+  map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), "top-right");
   map.addControl({                                                 // fit all: the whole network, from the map itself
     onAdd() {
       const d = document.createElement("div"); d.className = "maplibregl-ctrl maplibregl-ctrl-group";
@@ -523,10 +523,10 @@ const ADD_NODE = { manhole: ["manhole", "MH-"], outfall: ["outfall", "O-"], wetw
    the run between two clicks gets manholes at the engineer's rounded spacing (server op add_run, engine/spacing.py) */
 const layout = { node: "manhole", spacing: "table12", custom: 100, last: null };
 const HINTS = {
-  box: "Drag a box to select (what it selects: the Selects list); Shift or Ctrl adds to the selection; a click selects one.",
-  poly: "Click the corners of a polygon; double-click or Enter selects what is inside (Shift adds).",
+  box: "Drag a box to select (what it selects: the Selects list); Shift adds, Ctrl removes, or use New / Add / Remove; the middle button pans.",
+  poly: "Click the corners of a polygon; double-click or Enter selects what is inside (Shift adds, Ctrl removes).",
   layout: "Click to place a structure; each next click adds a pipe from the last one (manholes at the spacing in between). Esc, right-click or double-click ends the run.",
-  select: "Click a node or pipe. Shift or Ctrl adds to the selection.", manhole: "Click the map to add a manhole; click on a pipe to split it.",
+  select: "Click a node or pipe; Shift or Ctrl adds or removes it, Shift+drag adds a box, Ctrl+drag removes one. Drag a selected structure to move it.", manhole: "Click the map to add a manhole; click on a pipe to split it.",
   outfall: "Click the map to add an outfall.", wetwell: "Click the map to add a wet well.", pipe: "Click the start node, then the end node (an empty spot makes a manhole).",
   pump: "Click the wet well, then the node the pump delivers to (the start of its force main).",
   ppipe: "Pressure pipe (force main): click the start node, then the end node (an empty spot makes a pressure junction).",
@@ -562,6 +562,10 @@ async function act(ll, mods) {
     await exec({ op: "reconnect", id: rc.id, end: rc.end, node: nn.id }); setSel("links", [rc.id]); return;
   }
   if (t === "layout") {
+    if (layout.last && layout.bend) {                                // a bend of the pipe being drawn, not a structure (F33)
+      (layout.via = layout.via || []).push([ll.lng, ll.lat]); if (typeof layoutPreview === "function") layoutPreview();
+      $("#hint").textContent = `${layout.via.length} bend${layout.via.length > 1 ? "s" : ""}: click on, or right-click > a structure type for the next point.`; return;
+    }
     if (!layout.last) {
       if (nn) layout.last = nn.id;
       else if (nl) { const id = newId("nodes", "MH-"); await exec(splitOp(nl, "manhole", id)); layout.last = id; }
@@ -570,13 +574,14 @@ async function act(ll, mods) {
     }
     if (nn && nn.id === layout.last) return;
     const sp = layout.spacing === "none" ? null : layout.spacing === "table12" ? "table12" : Number(layout.custom) || null;
+    const via = layout.via && layout.via.length ? { via_ll: layout.via.slice() } : {};
     if (nl) {                                                         // the run ends on a pipe: split it there and join (one undo step)
       const id = newId("nodes", "MH-");
-      await exec({ op: "batch", ops: [splitOp(nl, "manhole", id), { op: "add_run", from_node: layout.last, max_spacing: sp, to_node: id }] });
-      layout.last = id; setSel("nodes", [id]); return;
+      await exec({ op: "batch", ops: [splitOp(nl, "manhole", id), { op: "add_run", from_node: layout.last, max_spacing: sp, to_node: id, ...via }] });
+      layout.last = id; layout.via = []; setSel("nodes", [id]); if (typeof layoutPreview === "function") layoutPreview(); return;
     }
-    const e = { op: "add_run", from_node: layout.last, max_spacing: sp, ...(nn ? { to_node: nn.id } : { kind: layout.node, ...lonlat }) };
-    const r = await exec(e); const c = r.created || {};
+    const e = { op: "add_run", from_node: layout.last, max_spacing: sp, ...via, ...(nn ? { to_node: nn.id } : { kind: layout.node, ...lonlat }) };
+    const r = await exec(e); const c = r.created || {}; layout.via = []; if (typeof layoutPreview === "function") layoutPreview();
     layout.last = nn ? nn.id : c.end_id; setSel("nodes", [layout.last]);
     if ((c.mid_ids || []).length) toast(`${c.link_ids.length} pipes, ${c.mid_ids.length} manhole${c.mid_ids.length > 1 ? "s" : ""} at the spacing in between (one undo step).`, "info");
     return;
@@ -587,7 +592,7 @@ async function act(ll, mods) {
     const pick = (tb, id) => typeof selClick === "function" ? selClick(tb, id, multi) : setSel(tb, multi ? toggled(tb, id) : [id]);   // features5: any element types together
     if (nn) pick("nodes", nn.id);
     else if (nl) pick("links", nl.id);
-    else { const c = catchAt(ll); if (c) pick("catchments", c); else if (!multi) setSel(null, []); }
+    else { const c = catchAt(ll); if (c) pick("catchments", c); else if (!multi && (!state.selMode || state.selMode === "new")) setSel(null, []); }
   } else if (ADD_NODE[t]) {
     const [kind, pre] = ADD_NODE[t];
     if (nn) {                                                         // morph (F5): the node becomes this kind, keeping its id, place, levels and pipes
@@ -1601,12 +1606,14 @@ function asstSend() {
                  route: $("#prof-start").value.trim() ? { start: $("#prof-start").value.trim(), end: $("#prof-end").value.trim(), via: $("#prof-via").value.trim() } : null };
   enqueue(async () => {
     try {
-      const r = await jpost("/assistant", body);
+      const r = typeof asstAsk === "function" ? await asstAsk(body, (steps, sec) => { wait.innerHTML = asstStepsHtml(steps, sec); }) : await jpost("/assistant", body);
       state.history.push({ role: "user", content: text }, { role: "assistant", content: r.reply });
       const u = r.usage || {}, tc = (r.tool_calls || []);
       wait.dataset.testid = "asst-reply";
-      wait.innerHTML = mdToHtml(r.reply) + tc.map(c => `<div class="tc ${c.ok === false ? "bad" : ""}" data-testid="asst-tool">tool: ${esc(c.name)}(${esc(JSON.stringify(c.input || {}).slice(0, 160))}) ${c.ok === false ? "failed" : "ok"}</div>`).join("") +
-        `<div class="usage" data-testid="asst-usage">tokens: ${u.input_tokens ?? 0} in, ${u.output_tokens ?? 0} out, ${u.cache_write_tokens ?? 0} cache write, ${u.cache_read_tokens ?? 0} cache read${u.usd != null ? `, about ${(+u.usd).toFixed(3)} USD` : ""}</div>`;
+      // the answer first; its steps folded in plain words (the engineer, 2026-11-24: no code in the answer)
+      wait.innerHTML = mdToHtml(r.reply) + (tc.length ? `<details class="asst-steps"><summary>${tc.length} step${tc.length > 1 ? "s" : ""}</summary>` +
+        tc.map(c => `<div class="tc ${c.ok === false ? "bad" : ""}" data-testid="asst-tool" title="${esc(c.name)}">${esc(typeof toolWords === "function" ? toolWords(c.name, c.input) : c.name)}${c.ok === false ? " (failed, retried)" : ""}</div>`).join("") + `</details>` : "") +
+        `<div class="usage" data-testid="asst-usage" title="tokens: ${u.input_tokens ?? 0} in, ${u.output_tokens ?? 0} out, ${u.cache_write_tokens ?? 0} cache write, ${u.cache_read_tokens ?? 0} cache read">${r.seconds != null ? `${r.seconds} s` : ""}${u.usd != null ? `${r.seconds != null ? " · " : ""}about ${(+u.usd).toFixed(3)} USD` : ""}</div>`;
       if (r.budget && typeof showBudget === "function") showBudget(r.budget);
       const info = await jget(`/projects/${state.pid}`);            // the assistant may have made new scenarios
       const known = new Set((state.info.scenarios || []).map(s => s.id));
@@ -1693,8 +1700,8 @@ async function openSgDlg() {
 async function refreshSg() {
   try { sgData = await jget("/sewergems/models"); } catch (e) { $("#sg-list").textContent = e.message; return; }
   const d = sgData, w = d.watcher, list = $("#sg-list");
-  $("#sg-watch").innerHTML = w.alive ? `<span class="ok">&#9679;</span> The VM bridge is running${w.busy ? " (busy with a job)" : ""}.`
-    : `<span class="bad">&#9679;</span> The VM bridge is not running: ${esc(w.reason || "")}. Exports wait in the queue until it runs.`;
+  $("#sg-watch").innerHTML = w.alive ? `<span class="ok">&#9679;</span> The SewerGEMS link is running${w.busy ? " (busy with a job)" : ""}.`
+    : `<span class="bad">&#9679;</span> The SewerGEMS link is not running: ${esc(w.reason || "")}. Exports wait in the queue until it runs.`;
   list.innerHTML = d.exports.length ? d.exports.map(e => `<button data-name="${esc(e.name)}" id="sg-${esc(e.name)}">${esc(e.name)} (${e.scenarios} scenarios)</button>`).join("")
     : `<p data-testid="sg-empty" class="muted">No exports yet: export a model below.</p>`;
   tag(list);
@@ -2122,6 +2129,9 @@ function saveSession() {
   clearTimeout(sessT);
   sessT = setTimeout(() => {
     try {
+      const u = new URL(location.href);                       // the model's own link (F35): copy it to open the model anywhere
+      if (state.pid) { u.searchParams.set("p", state.pid); u.searchParams.set("s", state.sid || "base"); } else { u.searchParams.delete("p"); u.searchParams.delete("s"); }
+      if (u.href !== location.href) history.replaceState(null, "", u.href);
       if (!state.pid) { localStorage.removeItem(SESS_KEY); return; }
       const c = map.getCenter();
       localStorage.setItem(SESS_KEY, JSON.stringify({ pid: state.pid, sid: state.sid, tab: state.tab, center: [c.lng, c.lat], zoom: map.getZoom() }));
@@ -2130,14 +2140,20 @@ function saveSession() {
 }
 async function reattach() {
   let s = null; try { s = JSON.parse(localStorage.getItem(SESS_KEY) || "null"); } catch (e) { /* none */ }
+  const q = new URLSearchParams(location.search), lp = q.get("p"), byLink = !!(lp && /^p[0-9a-f]{1,32}$/.test(lp));
+  if (byLink && (!s || s.pid !== lp)) s = { pid: lp, sid: q.get("s") || "base" };          // a model's link opens that model
   if (!s || !s.pid) return;
-  let info; try { info = await jget(`/projects/${encodeURIComponent(s.pid)}`); } catch (e) { try { localStorage.removeItem(SESS_KEY); } catch (x) { /* */ } return; }
+  let info; try { info = await jget(`/projects/${encodeURIComponent(s.pid)}`); } catch (e) {
+    try { localStorage.removeItem(SESS_KEY); } catch (x) { /* */ }
+    if (byLink) toast("This model's link no longer opens a model: it was closed on the server, or the link is incomplete.", "err");
+    return;
+  }
   await withBusy(`Reopening ${info.name}...`, async () => {
     await openProject(info, false);
     if (s.sid && s.sid !== "base" && info.scenarios.some(x => x.id === s.sid)) { state.sid = s.sid; await refreshAll(false); }
     if (s.center) map.jumpTo({ center: s.center, zoom: s.zoom });
     if (s.tab && s.tab !== state.tab) showTab(s.tab);
-    toast(`Reopened ${info.name} where you left it.`, "info");
+    toast(byLink && !s.center ? `${info.name}: opened from its link.` : `Reopened ${info.name} where you left it.`, "info");
   });
 }
 

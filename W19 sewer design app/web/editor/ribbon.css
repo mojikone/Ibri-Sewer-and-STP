@@ -126,11 +126,22 @@ table.ft tfoot tr.stats td { background: var(--panel2); border-top: 2px solid va
 .mix-bar button.on { background: var(--sel); border-color: var(--focus); font-weight: 600; }
 #hint.tip { transform: none; max-width: 320px; opacity: 0; transition: opacity .35s; left: 10px; top: 10px; }
 #hint.tip.show { opacity: .96; }
-body.sym-docked #dlg-sym { inset: auto; left: 0; top: var(--dock-top, 130px); bottom: var(--dock-bottom, 0); width: 380px; display: block; }
-body.sym-docked #dlg-sym .dlg { margin: 0; width: 380px; min-width: 0; max-width: none; height: 100%; max-height: none; border-radius: 0; box-shadow: 2px 0 10px rgba(0,0,0,.12); overflow: auto; }
-body.sym-docked #dlg-sym .dlg h3::before { content: "Element "; }
-body.sym-docked #map { left: 380px; }
-body.sym-docked #legend-panel, body.sym-docked #layout-card, body.sym-docked #select-card { left: 390px; }
+/* the left dock (v6): Element Symbology and Background Layers as tabs, its right edge dragged to widen it */
+#ldock { position: fixed; left: 0; top: var(--dock-top, 130px); bottom: var(--dock-bottom, 0); width: var(--ldock-w, 380px); z-index: 45; background: var(--panel); border-right: 1px solid var(--line); box-shadow: 2px 0 10px rgba(0,0,0,.12); display: flex; flex-direction: column; }
+#ldock[hidden] { display: none; }
+#ldock .ld-head { display: flex; align-items: stretch; border-bottom: 1px solid var(--line); background: var(--panel2, var(--panel)); min-height: 32px; }
+#ldock .ld-tabs { display: flex; flex: 1; overflow-x: auto; }
+#ldock .ld-tabs button { border: 0; border-right: 1px solid var(--line); background: none; padding: 6px 12px; font-size: 12.5px; white-space: nowrap; color: var(--muted); }
+#ldock .ld-tabs button.on { color: var(--ink); font-weight: 650; box-shadow: inset 0 -2px 0 var(--focus); background: var(--panel); }
+#ldock .ld-x { border: 0; background: none; font-size: 18px; padding: 0 10px; color: var(--muted); }
+#ldock .ld-body { flex: 1; overflow: auto; }
+#ldock .ld-body > .dlg, #ldock .ld-body > .bg-pane { position: static; margin: 0; width: auto; min-width: 0; max-width: none; height: auto; max-height: none; border-radius: 0; box-shadow: none; border: 0; padding: 10px 12px; }
+#ldock .ld-body > .dlg > h3, #ldock .ld-body > .bg-pane > h3 { display: none; }
+#ldock .ld-grip { position: absolute; top: 0; bottom: 0; right: -4px; width: 8px; cursor: ew-resize; touch-action: none; }
+#ldock .ld-grip:hover { background: rgba(80,140,220,.25); }
+body.ldock-on:not(.compact-ui) #map { left: var(--ldock-w, 380px); }
+body.ldock-on:not(.compact-ui) #legend-panel, body.ldock-on:not(.compact-ui) #layout-card, body.ldock-on:not(.compact-ui) #select-card, body.ldock-on:not(.compact-ui) #sel-mode, body.ldock-on:not(.compact-ui) #display-card { left: calc(var(--ldock-w, 380px) + 10px); }
+body.compact-ui #ldock { width: min(var(--ldock-w, 380px), 100vw); }
 #pane-settings.with-nav { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 10px; }
 #pane-settings.with-nav:not(.active) { display: none; }
 #set-nav { display: flex; flex-direction: column; gap: 2px; padding: 6px 0; border-right: 1px solid var(--line2); position: sticky; top: 0; align-self: start; }

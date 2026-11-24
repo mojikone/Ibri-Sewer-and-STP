@@ -249,10 +249,10 @@ async function openAgentFolders() {
   d.querySelector("[data-act=ok]").textContent = "Add folder"; d.querySelector("[data-act=ok]").hidden = false;
   const draw = async () => {
     const r = await jget("/assistant/folders");
-    b.innerHTML = r.remote ? `<p class="muted">Folders are managed on the engineer's own computer only; over the shared link the assistant reads no folder.</p>` :
-      `<p class="muted">The assistant reads only these folders (and their sub-folders) to build and run models: GIS layers, terrain, SWMM files, tables. It changes only projects and scenarios it made itself, each change one Undo step. Kept on this computer.</p>
+    b.innerHTML = r.remote ? `<p class="muted">Folders are managed on the computer that runs the app; over a shared link the assistant reads no folder.</p>` :
+      `<p class="muted">The assistant reads only these folders (and their sub-folders) to build and run models: GIS layers, terrain, SWMM files, tables. It changes only projects and scenarios it made itself, each change one Undo step. Kept on the server.</p>
        <ul class="fold-list" data-testid="folder-list">${r.folders.map(f => `<li><code>${esc(f)}</code> <button class="mini" data-rm="${esc(f)}" title="Remove">&times;</button></li>`).join("") || "<li class='muted'>none yet</li>"}</ul>
-       <label>Folder path<input id="fold-path" data-testid="folder-path" placeholder="D:\\Data\\Ibri GIS" style="width:100%"></label>`;
+       <label>Folder path<input id="fold-path" data-testid="folder-path" placeholder="D:\\Data\\GIS" style="width:100%"></label>`;
     d.querySelector("[data-act=ok]").hidden = !!r.remote;
   };
   await draw(); d.hidden = false;
@@ -279,7 +279,7 @@ async function showBudget(b) {
   state.budget = b;
 }
 async function openLimits() {
-  const b = await jget("/assistant/usage"); if (!b.limits) { toast("The limits are set on the engineer's computer.", "info"); return; }
+  const b = await jget("/assistant/usage"); if (!b.limits) { toast("The limits are set on the computer that runs the app.", "info"); return; }
   const d = dlg("dlg-limits", "Assistant spending limits", false), body = d.querySelector(".body"), L = b.limits;
   d.querySelector("[data-act=ok]").hidden = false; d.querySelector("[data-act=ok]").textContent = "Apply";
   const F = [["local_daily_usd", "This computer, per day"], ["web_daily_usd", "Each shared-link visitor, per day"], ["web_all_daily_usd", "All shared-link visitors together, per day"]];

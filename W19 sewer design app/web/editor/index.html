@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <link rel="stylesheet" href="/static/editor/editor.css">
 <link rel="stylesheet" href="/static/editor/ribbon.css">
+<link rel="stylesheet" href="/static/editor/features7.css">
 </head>
 <body data-pending="0">
 <header id="topbar">
@@ -212,7 +213,7 @@
     <div id="pane-settings" class="pane"><div id="settings-form"></div></div>
     <div id="pane-summary" class="pane"><div id="summary"></div></div>
     <div id="pane-assistant" class="pane flex">
-      <div class="ptool"><span class="strong">Design assistant</span><span id="asst-status" class="muted"></span><span class="sp"></span><span id="asst-budget" class="muted" data-testid="asst-budget"></span><button id="asst-limits" class="tb" type="button" title="What the assistant may spend per day (this computer, each shared-link visitor, all visitors together)">Limits...</button><button id="asst-folders" class="tb" type="button" title="The folders the assistant may read to build and run models (this computer only)">Folders...</button><label for="asst-model">Model</label><select id="asst-model"><option value="sonnet" selected>Sonnet</option><option value="opus">Opus</option></select></div>
+      <div class="ptool"><span class="strong">Design assistant</span><span id="asst-status" class="muted"></span><span class="sp"></span><span id="asst-budget" class="muted" data-testid="asst-budget"></span><button id="asst-limits" class="tb" type="button" title="What the assistant may spend per day (here, each shared-link visitor, all visitors together)">Limits...</button><button id="asst-folders" class="tb local-only" type="button" title="The folders on the server the assistant may read to build and run models">Folders...</button><label for="asst-model">Model</label><select id="asst-model"><option value="sonnet" selected>Sonnet</option><option value="opus">Opus</option></select></div>
       <div id="asst-log"></div>
       <form id="asst-form"><textarea id="asst-input" rows="2" placeholder="Ask about the network, its checks, or what to change (Enter sends, Shift+Enter adds a line)"></textarea><button id="asst-send" class="tb" type="submit">Ask</button></form>
     </div>
@@ -315,6 +316,7 @@
 <script src="/static/editor/features5.js"></script>
 <script src="/static/editor/vendor/geotiff-2.1.3.js"></script>
 <script src="/static/editor/features6.js"></script>
+<script src="/static/editor/features7.js"></script>
 <script src="/static/editor/ribbon.js"></script>
 </body>
 </html>

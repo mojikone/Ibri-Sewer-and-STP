@@ -1,0 +1,31 @@
+/* W19 v6 (2026-11-24): the selection switch, Find's list of elements and tools, Background Layers, the public link */
+body.remote-ui .local-only { display: none !important; }
+#sel-mode { position: absolute; left: 10px; top: 46px; z-index: 6; display: flex; background: var(--overlay, rgba(255,255,255,.95)); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+#sel-mode[hidden] { display: none; }
+#sel-mode button { border: 0; background: none; padding: 4px 12px; font-size: 12.5px; color: var(--ink); }
+#sel-mode button + button { border-left: 1px solid var(--line); }
+#sel-mode button.on { background: var(--focus, #2f6fd6); color: #fff; font-weight: 600; }
+@media (pointer: coarse) { #sel-mode button { padding: 8px 14px; font-size: 14px; } }
+#find-list { position: fixed; z-index: 80; width: 320px; max-height: 60vh; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.2); padding: 4px; }
+#find-list[hidden] { display: none; }
+#find-list button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 6px 8px; border-radius: 6px; font-size: 13px; color: var(--ink); }
+#find-list button:hover { background: var(--sel); }
+#find-list button .muted { float: right; font-size: 11.5px; }
+#find-list > .muted { padding: 6px 8px; }
+.bg-pane h4 { margin: 10px 0 6px; }
+.bg-base label { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 13px; }
+.bg-base select, .bg-base input[type=range] { flex: 1; }
+.bg-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px solid var(--line2, var(--line)); }
+.bg-row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.bg-row input[type=range] { width: 70px; }
+.bg-row input[type=color] { width: 26px; height: 22px; padding: 0; border: 1px solid var(--line); background: none; }
+.p7 { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.rec { margin: 4px 0; }
+.asst-steps { margin-top: 6px; font-size: 12px; }
+.asst-steps summary { cursor: pointer; color: var(--muted); }
+.asst-live .tc { color: var(--muted); font-size: 12.5px; padding-left: 14px; position: relative; }
+.asst-live .tc::before { content: "¹3"; position: absolute; left: 0; color: #2b8a3e; }
+.asst-live .tc.now::before { content: "CF"; color: var(--focus, #2f6fd6); animation: asstblink 1s infinite; }
+@keyframes asstblink { 50% { opacity: .3; } }
+body.compact-ui .dlg label.chk, body.compact-ui .dlg label.rad { display: flex; align-items: center; gap: 8px; grid-template-columns: none; }
+body.compact-ui #sel-mode { top: auto; bottom: 74px; }            /* on a phone: by the thumb, clear of the hint */

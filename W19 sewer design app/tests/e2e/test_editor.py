@@ -352,8 +352,8 @@ def test_assistant_answers_with_a_tool_call_and_rain_follows_the_model(page):
     page.get_by_test_id("asst-send").click(); idle(page)
     expect(page.get_by_test_id("asst-reply")).to_contain_text("over the d/D limit")
     expect(page.get_by_test_id("asst-tool")).to_have_count(1)
-    expect(page.get_by_test_id("asst-tool")).to_contain_text("project_summary")
-    assert "tokens" in page.get_by_test_id("asst-usage").inner_text()
+    expect(page.get_by_test_id("asst-tool")).to_contain_text("Reading the scenario's summary"); assert page.get_by_test_id("asst-tool").get_attribute("title") == "project_summary"   # plain words, the tool in the tooltip (v6)
+    assert "tokens" in page.get_by_test_id("asst-usage").get_attribute("title") and "USD" in page.get_by_test_id("asst-usage").inner_text()
     assert page.evaluate("window.ed.state.history.length") == 2
     # the Rain form is filled from the scenario's own rain: apply, undo, and the form follows
     settings_all(page)
@@ -612,8 +612,8 @@ def test_batch1_cells_paste_trace_box_select_reference_and_reload(page, tmp_path
     page.evaluate("id => window.ed.selectElement('links', id)", lid[0]); page.get_by_test_id("trace-down").click(); idle(page)
     assert sorted(page.evaluate("window.ed.state.sel.ids")) == sorted(lid)
     page.get_by_test_id("trace-profile").click(); idle(page); page.wait_for_function("prof.rows && prof.rows.length === 3")
-    # Shift+drag selects the pipes whose middle is in the box (P-1 at 50 m, P-2 at 150 m, not P-3 at 250 m)
-    tool(page, "select"); page.get_by_test_id("tab-nodes").click()
+    # Shift+drag adds the pipes whose middle is in the box (P-1 at 50 m, P-2 at 150 m, not P-3 at 250 m) to an empty selection
+    tool(page, "select"); page.get_by_test_id("tab-nodes").click(); page.evaluate("setSel(null, [])")
     page.get_by_test_id("display-head").click()                         # the Display card folded: it must not lie under the drag
     a, b = _screen(page, 20, -30), _screen(page, 180, 30)
     page.keyboard.down("Shift"); page.mouse.move(*a); page.mouse.down(); page.mouse.move(*b, steps=6); page.mouse.up(); page.keyboard.up("Shift"); idle(page)
@@ -703,10 +703,10 @@ def test_batch2_storm_slider_saved_route_and_assistant_on_the_map(page):
         sent.update(_j.loads(route.request.post_data))
         route.fulfill(status=200, content_type="application/json", body=_j.dumps(dict(reply="Here they are.", tool_calls=[], usage={},
                       ui_actions=[dict(kind="select", table="links", ids=ids)])))
-    page.route("**/api/g/assistant", fake)
+    page.route("**/api/g/assistant/start", fake)
     page.get_by_test_id("tab-assistant").click(); page.get_by_test_id("asst-input").fill("Show me these"); page.get_by_test_id("asst-input").press("Enter")
     expect(page.get_by_test_id("asst-action")).to_contain_text("shown on the map: 2 links"); idle(page)
-    page.unroute("**/api/g/assistant")
+    page.unroute("**/api/g/assistant/start")
     assert sent["selection"] == {"table": "links", "ids": [ids[0]]} and sent["route"]["start"] == first
     assert sorted(page.evaluate("window.ed.state.sel.ids")) == sorted(ids)
 
@@ -715,7 +715,7 @@ def test_any_sewergems_model_exported_through_the_bridge_then_opened(page, bridg
     import shutil, glob
     os.utime(os.path.join(bridge["root"], "out", "_alive.txt"))                       # the watcher's heartbeat
     file_menu(page, "sg-btn")
-    expect(page.get_by_test_id("sg-watch")).to_contain_text("bridge is running")
+    expect(page.get_by_test_id("sg-watch")).to_contain_text("SewerGEMS link is running")
     row = page.locator("#sg-models .sgm", has_text="Area 7 model.stsw"); expect(row).to_have_count(1)
     row.locator("button[data-act=export]").click(); idle(page)
     jobs = glob.glob(os.path.join(bridge["root"], "jobs", "w19x_*_Area_7_model.ps1")); assert len(jobs) == 1
@@ -794,7 +794,7 @@ def test_symbology_colour_by_any_field_labels_and_named_definitions(page):
     nid, lid = draw_network(page)
     feat = lambda t, i: page.evaluate("([t, i]) => window.ed.state.model[t].find(f => f.id === i).properties", [t, i])
     assert feat("linkFeat", lid[0])["_lab"].startswith("DN")                       # the Default labels: as before
-    page.get_by_test_id("sym-edit").click(); expect(page.get_by_test_id("dlg-sym")).to_be_visible()
+    page.get_by_test_id("sym-edit").click(); expect(page.locator("#ldock .sym")).to_be_visible()   # v6: in the left dock
     page.get_by_test_id("sym-new").click()
     page.get_by_test_id("sym-field").select_option("up_inv")                         # pipes by upstream invert, 3 classes
     page.get_by_test_id("sym-steps").fill("3"); page.get_by_test_id("sym-init").click()
@@ -1162,7 +1162,7 @@ def test_v5_phone_design_changes_the_elements_and_the_assistants_scenario_opens(
         req = urllib.request.Request(f"{server}/api/g/projects/{pid}/scenarios/base/copy", data=b'{"name": "made by the assistant"}', headers={"Content-Type": "application/json"}, method="POST")
         urllib.request.urlopen(req).read()
         route.fulfill(status=200, content_type="application/json", body=_json.dumps(dict(reply="Done.", tool_calls=[], usage={}, ui_actions=[])))
-    pg.route("**/api/g/assistant", fake)
+    pg.route("**/api/g/assistant/start", fake)
     pg.evaluate("showTab('assistant'); state.asstOn = true; document.getElementById('asst-input').disabled = false; document.getElementById('asst-input').value = 'make a scenario'; asstSend()")
     pg.wait_for_selector("[data-testid=asst-made-scenario] button"); pg.click("[data-testid=asst-made-scenario] button"); idle(pg)
     assert pg.evaluate("window.ed.state.sid") != "base"
@@ -1282,5 +1282,117 @@ def test_v5_trex_dialog_takes_dxf_contours(server, browser, tmp_path):
     pg.select_option("[data-testid=trex-vdxf]", "CONT"); pg.click("[data-testid=trex-vapply]"); pg.wait_for_selector("[data-testid=trex-done]"); idle(pg)
     a = pg.evaluate("window.ed.state.model.nodes.get('A').properties")
     assert abs(a["ground"] - 11.0) < 1e-6 and "layer CONT" in a["ground_src"], a
+    assert errs == [], errs
+    ctx.close()
+
+
+# ------------------------------------------------------------------ v6 (2026-11-24): the engineer's F30-F41
+def _xy(pg, lon, lat):
+    return pg.evaluate(f"(() => {{ const r = window.ed.map.getCanvas().getBoundingClientRect(), p = window.ed.map.project([{lon}, {lat}]); return [r.left + p.x, r.top + p.y]; }})()")
+
+
+def test_v6_select_remove_pan_move_bends_layout_menu(server, browser):
+    """Selection: the Remove switch takes elements out with a box; the middle button pans; a selected structure is
+    dragged to move it and its pipe's line follows; a pipe gets a bend from its right-click menu and loses it again;
+    the layout tool's right-click chooses Bend, and the run's pipe follows the bend."""
+    import json as _json
+    def post(path, body):
+        req = urllib.request.Request(server + "/api/g" + path, data=_json.dumps(body).encode(), headers={"Content-Type": "application/json"}, method="POST")
+        return _json.loads(urllib.request.urlopen(req).read())
+    info = post("/projects/new", dict(name="v6")); B = f"/projects/{info['id']}/scenarios/base/edit"
+    for i, x in enumerate((0, 60, 120)): post(B, dict(op="add_node", id=f"M{i}", x=float(x), y=0.0, ground=10.0, invert=8.0))
+    post(B, dict(op="add_node", id="O", kind="outfall", x=180.0, y=0.0, ground=9.0, invert=7.0))
+    for i, (a, b) in enumerate((("M0", "M1"), ("M1", "M2"), ("M2", "O"))): post(B, dict(op="add_link", id=f"P{i}", from_node=a, to_node=b))
+    ctx = browser.new_context(viewport={"width": 1500, "height": 900}); pg = ctx.new_page(); pg.set_default_timeout(30000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
+    pg.evaluate(f"jget('/projects/{info['id']}').then(i => openProject(i))"); idle(pg)
+    pg.evaluate("window.ed.map.jumpTo({ center: [90 / 111319.49, 0], zoom: 18.5 })"); pg.wait_for_timeout(200)
+    L = lambda x, y: _xy(pg, x / M_LON, y / M_LAT)
+    # select everything with a box, then Remove + a box around M1 and its pipes' middles
+    vtool(pg, "box"); a, b = L(-20, 30), L(200, -30)
+    pg.mouse.move(*a); pg.mouse.down(); pg.mouse.move(*b, steps=5); pg.mouse.up(); idle(pg)
+    assert pg.evaluate("mixCount(currentMix())") == 7
+    pg.click("[data-testid=sel-mode-remove]")
+    a, b = L(20, 20), L(100, -20); pg.mouse.move(*a); pg.mouse.down(); pg.mouse.move(*b, steps=5); pg.mouse.up(); idle(pg)
+    m = pg.evaluate("currentMix()"); assert "M1" not in m["nodes"] and "P0" not in m["links"] and "P1" not in m["links"] and len(m["nodes"]) == 3, m
+    pg.click("[data-testid=sel-mode-new]")
+    # the middle button pans in any tool
+    c0 = pg.evaluate("window.ed.map.getCenter().toArray()"); x, y = L(150, 40)
+    pg.mouse.move(x, y); pg.mouse.down(button="middle"); pg.mouse.move(x + 80, y + 30, steps=4); pg.mouse.up(button="middle")
+    assert pg.evaluate("window.ed.map.getCenter().toArray()") != c0
+    pg.evaluate("window.ed.map.jumpTo({ center: [90 / 111319.49, 0], zoom: 18.5 })"); pg.wait_for_timeout(200)
+    # drag a selected structure: it moves, its pipes follow
+    vtool(pg, "select"); pg.evaluate("window.ed.selectElement('nodes', 'M2')"); idle(pg)
+    x, y = L(120, 0); pg.mouse.move(x, y); pg.mouse.down(); pg.mouse.move(x, y - 60, steps=6); pg.mouse.up(); idle(pg)
+    m2 = pg.evaluate("window.ed.state.model.nodes.get('M2').properties"); assert m2["y"] > 5, m2
+    p1 = pg.evaluate("window.ed.state.model.links.get('P1').geometry.coordinates"); assert abs(p1[-1][1] * M_LAT - m2["y"]) < 0.5
+    # a bend from the pipe's right-click menu, then straighten
+    x, y = L(30, 0); pg.mouse.click(x, y, button="right"); pg.click("[data-testid=ctx-bend-add]"); idle(pg)
+    assert len(pg.evaluate("window.ed.state.model.links.get('P0').geometry.coordinates")) == 3
+    pg.mouse.click(x, y, button="right"); pg.click("[data-testid=ctx-bend-clear]"); idle(pg)
+    assert len(pg.evaluate("window.ed.state.model.links.get('P0').geometry.coordinates")) == 2
+    # the layout tool: start at O, right-click > Bend, a bend, right-click > Manhole, the end
+    pg.click("#rb-tab-layout"); pg.locator("#rb-page-layout .rb-btn", has_text="Layout").first.click()
+    pg.select_option("#layout-spacing", "none"); pg.dispatch_event("#layout-spacing", "change")
+    click_at(pg, 180, 0); idle(pg)
+    x, y = L(150, -40); pg.mouse.click(x, y, button="right"); pg.click("[data-testid=ctx-lay-next-bend]")
+    click_at(pg, 180, -40); idle(pg); assert pg.evaluate("layout.via.length") == 1
+    pg.mouse.click(x, y, button="right"); pg.click("[data-testid=ctx-lay-next-manhole]")
+    click_at(pg, 140, -40); idle(pg); pg.keyboard.press("Escape")
+    new = [f for f in pg.evaluate("window.ed.state.model.linkFeat.map(f => [f.id, f.geometry.coordinates.length, f.properties.length_m])") if f[0] not in ("P0", "P1", "P2")]
+    assert len(new) == 1 and new[0][1] == 3 and abs(new[0][2] - 80.0) < 0.01, new           # 40 m down to the bend, 40 m along
+    assert errs == [], errs
+    ctx.close()
+
+
+def test_v6_dock_find_link_subnetwork_and_the_public_view(server, browser):
+    """The left dock's tabs and its edge; closing the last pane gives the map back (no grey strip); Find finds a tool;
+    the address bar carries the model and opens it in another browser; colour by subnetwork; over a shared link the
+    tools that read the server's files are hidden."""
+    ctx = browser.new_context(viewport={"width": 1500, "height": 900}); pg = ctx.new_page(); pg.set_default_timeout(30000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
+    pg.evaluate("fetch('/api/g/projects/sample/pond', {method: 'POST'}).then(r => r.json()).then(i => openProject(i))"); idle(pg)
+    pg.evaluate("symDock(true); openBackgroundLayers()"); pg.wait_for_timeout(200)
+    assert pg.evaluate("[...document.querySelectorAll('#ldock .ld-tabs button')].map(b => b.textContent)") == ["Element Symbology", "Background Layers"]
+    g = pg.locator("#ldock .ld-grip").bounding_box(); pg.mouse.move(g["x"] + 4, g["y"] + 200); pg.mouse.down(); pg.mouse.move(g["x"] + 124, g["y"] + 200, steps=4); pg.mouse.up()
+    assert pg.evaluate("document.getElementById('ldock').getBoundingClientRect().width") > 470
+    pg.click("[data-testid=ldock-close]"); pg.click("[data-testid=ldock-close]"); pg.wait_for_timeout(200)
+    assert pg.evaluate("getComputedStyle(document.getElementById('map')).left") == "0px" and pg.evaluate("document.getElementById('ldock').hidden")
+    pg.fill("#find-input", "trex"); pg.wait_for_selector("[data-testid=find-hit-0]"); pg.keyboard.press("Enter")
+    expect(pg.locator("#dlg-trex")).to_be_visible(); pg.evaluate("document.getElementById('dlg-trex').hidden = true")
+    pg.evaluate("(() => { const s = document.getElementById('color-by'); s.value = 'subnet_out'; s.dispatchEvent(new Event('change')); })()")
+    assert "Subnetwork by outfall (1)" in pg.inner_text("#legend")
+    pg.wait_for_function("location.search.includes('p=')"); url = pg.url; pid = pg.evaluate("window.ed.state.pid")
+    ctx2 = browser.new_context(viewport={"width": 1200, "height": 800}); p2 = ctx2.new_page(); p2.set_default_timeout(30000)
+    p2.goto(url); p2.wait_for_function(f"window.ed && window.ed.state.pid === '{pid}' && window.ed.state.model")
+    # over a shared link: the server's own paths are hidden
+    p2.route("**/api/g/env", lambda r: r.fulfill(status=200, content_type="application/json", body='{"local": false, "sewergems": null}'))
+    p2.evaluate("loadEnv().then(() => openTRex())"); p2.wait_for_selector("#dlg-trex:not([hidden])")
+    assert not p2.locator("#trex-path").is_visible()
+    ctx2.close()
+    assert errs == [], errs
+    ctx.close()
+
+
+def test_v6_phone_long_press_opens_the_menu_and_the_select_switch(server, browser):
+    """On a phone (no right-click, no Shift or Ctrl): a long press on a pipe opens its menu (bends there), and the
+    New / Add / Remove switch sits by the thumb with the Box tool."""
+    ctx = browser.new_context(viewport={"width": 390, "height": 844}, has_touch=True, is_mobile=True); pg = ctx.new_page(); pg.set_default_timeout(30000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
+    pg.evaluate("fetch('/api/g/projects/sample/pond', {method: 'POST'}).then(r => r.json()).then(i => openProject(i))"); idle(pg)
+    pg.evaluate("setTool('box')"); expect(pg.get_by_test_id("sel-mode-remove")).to_be_visible()
+    r = pg.evaluate("document.getElementById('sel-mode').getBoundingClientRect().bottom"); assert r > 600            # low on the screen
+    pg.evaluate("setTool('select')")
+    f = pg.evaluate("window.ed.state.model.linkFeat.find(f => f.properties.kind === 'conduit') || window.ed.state.model.linkFeat[0]")
+    c = f["geometry"]["coordinates"]; mid = [(c[0][0] + c[-1][0]) / 2, (c[0][1] + c[-1][1]) / 2]
+    pg.evaluate("m => window.ed.map.jumpTo({ center: m, zoom: 22 })", mid); pg.wait_for_timeout(200)   # the pipe, clear of its structures
+    x, y = _xy(pg, mid[0], mid[1])
+    cdp = ctx.new_cdp_session(pg)
+    cdp.send("Input.dispatchTouchEvent", dict(type="touchStart", touchPoints=[dict(x=x, y=y)])); pg.wait_for_timeout(900)
+    cdp.send("Input.dispatchTouchEvent", dict(type="touchEnd", touchPoints=[]))
+    expect(pg.locator("#ctx-menu")).to_be_visible(); expect(pg.get_by_test_id("ctx-bend-add")).to_be_visible()
     assert errs == [], errs
     ctx.close()

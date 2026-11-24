@@ -81,7 +81,7 @@ function layoutCard() {
   const c = document.createElement("div"); c.id = "layout-card"; c.hidden = true;
   c.innerHTML = `<div class="lc-h">Layout</div>
     <label for="layout-node">Structure</label><select id="layout-node" title="What each click places (its levels from the prototype)"><option value="manhole">Manhole</option><option value="outfall">Outfall</option><option value="wetwell">Wet well</option></select>
-    <label for="layout-spacing">Manholes</label><select id="layout-spacing" title="Manholes put in between two clicks so no pipe is longer than this (the engineer's rounded spacing, 2026-08-18)">
+    <label for="layout-spacing">Manholes</label><select id="layout-spacing" title="Manholes put in between two clicks so no pipe is longer than this (rounded to 10 m pieces, never over the maximum)">
       <option value="table12">at G203 Table 12 spacing (by size)</option><option value="custom">at most every...</option><option value="none">none: one pipe per click</option></select>
     <label for="layout-custom" id="layout-custom-l">Max spacing (m)</label><input id="layout-custom" type="number" min="5" step="any" value="100">
     <div class="muted small" id="layout-note"></div>`;

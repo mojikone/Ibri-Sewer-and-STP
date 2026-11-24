@@ -30,7 +30,7 @@ async function t6Tiff(file) {
   const W = img.getWidth(), H = img.getHeight(), tiled = img.isTiled;
   const tw = tiled ? img.getTileWidth() : W, th = tiled ? img.getTileHeight() : (fd.RowsPerStrip || H);
   if (!tiled && tw * Math.min(th, H) * (fd.BitsPerSample ? fd.BitsPerSample[0] / 8 : 4) > 64e6)
-    throw new Error(`${file.name} is stored in strips of ${Math.round(tw * th * 4 / 1e6)} MB: save it tiled (gdal_translate -co TILED=YES) or give its path on this computer`);
+    throw new Error(`${file.name} is stored in strips of ${Math.round(tw * th * 4 / 1e6)} MB: save it tiled (gdal_translate -co TILED=YES)${typeof ENV === "undefined" || ENV.local ? " or give its path on the server" : ""}`);
   const nd = img.getGDALNoData();
   /* the values of cells [[c, r], ...] (NaN off the grid or on no-data), each block decoded once */
   async function cells(cr, progress) {
@@ -140,9 +140,9 @@ async function openTRex() {
     <p class="muted">A GeoTIFF, or a VRT picked together with its GeoTIFFs. It is read here, only the parts under the structures; nothing is uploaded, so its size does not matter.</p>
     <div class="row"><button data-a="files" data-testid="trex-files">Choose files...</button>${folder ? `<button data-a="folder" data-testid="trex-folder">Choose a VRT's folder...</button>` : ""}<span class="muted" id="trex-name">none</span></div>
     ${t6Phone() ? `<p class="muted" data-testid="trex-phone">On a phone a VRT does not work (it needs its folder): pick one GeoTIFF, or use Copernicus below.</p>` : ""}
-    <label>or a terrain path on this computer (only when the app is opened on this computer)<input id="trex-path" type="text" placeholder="e.g. D:\\...\\IBRI_0p5_VRT2.vrt"></label>
+    <label class="local-only">or a terrain file's path on the server<input id="trex-path" type="text" placeholder="e.g. D:\\Data\\terrain.vrt"></label>
     <h5>Contours or spot levels</h5>
-    <p class="muted">A shapefile with its .shx, .dbf and .prj (or all of them zipped), a GeoPackage, GeoJSON, DXF or DWG. Each structure takes its level from a triangulated surface (TIN) of their vertices. A DXF or DWG carries no coordinate system: it is taken to be in the project's. A DWG needs the free ODA File Converter on this computer; otherwise save it as DXF.</p>
+    <p class="muted">A shapefile with its .shx, .dbf and .prj (or all of them zipped), a GeoPackage, GeoJSON, DXF or DWG. Each structure takes its level from a triangulated surface (TIN) of their vertices. A DXF or DWG carries no coordinate system: it is taken to be in the project's. A DWG needs the free ODA File Converter on the server; otherwise save it as DXF.</p>
     <div class="row"><button data-a="vec" data-testid="trex-vec">Choose contours or points...</button><span class="muted" id="trex-vname">none</span></div>
     <div id="trex-vopts" hidden><div class="row"><label>Level from <select id="trex-vfield" data-testid="trex-vfield"></select></label>
       <label id="trex-vdxfl">Drawing layer <select id="trex-vdxf" data-testid="trex-vdxf"></select></label>
@@ -214,7 +214,7 @@ async function openTRex() {
     }
     if (a === "ok") {
       const pth = $("#trex-path", b).value.trim();
-      if (!files && !pth) { toast("Choose a terrain, give its path on this computer, or fetch Copernicus.", "info"); return; }
+      if (!files && !pth) { toast("Choose a terrain, contours or points, or fetch Copernicus.", "info"); return; }
       enqueue(() => withBusy("Reading the terrain...", async () => {
         try {
           if (files && files.length) {
