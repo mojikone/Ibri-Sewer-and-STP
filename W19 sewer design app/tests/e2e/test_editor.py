@@ -1665,3 +1665,32 @@ def test_v7_every_kind_has_its_tool_menu_tab_and_fields(server, browser):
     assert pg.evaluate("!!window.ed.map.getLayer('nodes-icon') && window.ed.map.hasImage('k-catch_basin') && !!window.ed.map.getLayer('links-gutter')")
     assert errs == [], errs
     pg.screenshot(path=os.path.join(SHOTS, "screenshot_v7_kinds.png")); ctx.close()
+
+
+def test_v7_storm_run_shows_each_inlets_capture(server, browser):
+    """The storm run puts catch basins on SWMM 5.2's streets: a catch basin's Properties show what its inlet captured
+    and bypassed at the peak, with the street's spread and depth."""
+    ctx = browser.new_context(viewport={"width": 1600, "height": 950}); pg = ctx.new_page(); pg.set_default_timeout(60000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    _new_local(pg, server, "Streets")
+    street = dict(street_halfwidth_m=6, street_curb_m=0.15, road_cross_slope=0.025, n_gutter=0.016, long_slope=0.04)
+    ops = [dict(op="add_node", id="CB1", kind="catch_basin", x=0, y=0, ground=20, invert=18.5), dict(op="add_node", id="CB2", kind="catch_basin", x=100, y=0, ground=16, invert=14.5),
+           dict(op="add_node", id="MH1", x=150, y=-20, ground=15, invert=13), dict(op="add_node", id="O", kind="outfall", x=250, y=-20, ground=14, invert=11),
+           dict(op="add_link", id="G1", kind="gutter", from_node="CB1", to_node="CB2"),
+           dict(op="add_link", id="P1", from_node="CB1", to_node="MH1", dn_mm=450), dict(op="add_link", id="P2", from_node="CB2", to_node="MH1", dn_mm=450),
+           dict(op="add_link", id="P3", from_node="MH1", to_node="O", dn_mm=450),
+           dict(op="set_props", table="nodes", ids=["CB1"], values=dict(inlet_type="catalog", inlet_class="grate", grate_type="p50", grate_length_m=0.6, grate_width_m=0.6, **street)),
+           dict(op="set_props", table="nodes", ids=["CB2"], values=dict(inlet_type="percent_capture", capture_pc=70, **street)),
+           dict(op="add_catchment", id="C1", outlet="CB1", area_ha=1, coords=[[0, 0], [50, 0], [50, 50], [0, 50]]),
+           dict(op="add_catchment", id="C2", outlet="CB2", area_ha=1, coords=[[60, 0], [110, 0], [110, 50], [60, 50]]),
+           dict(op="set_hydrology", ids=["C1", "C2"], C=0.9, tc_min=10),
+           dict(op="set_rain", rain=dict(idf=dict(durations_min=[5, 10, 30, 60], intensities=[150, 120, 70, 45]), duration_min=60, step_min=5))]
+    pg.evaluate("""async ops => { for (const e of ops) { const r = await fetch(`/api/g${base()}/edit`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(e)}); if (!r.ok) throw new Error(await r.text()); } }""", ops)
+    pg.evaluate("refreshAll()"); idle(pg)
+    pg.evaluate("runTool(state.tools.find(t => t.endpoint.endsWith('/storm')))")
+    pg.wait_for_function("window.ed.state.storm && window.ed.state.storm.data && Object.keys(window.ed.state.storm.data.inlets || {}).length === 2")
+    pg.evaluate("window.ed.selectElement('nodes', 'CB1')"); pg.wait_for_selector("[data-testid=kf-storm]")
+    txt = pg.text_content("[data-testid=kf-storm]"); assert "captured at most" in txt and "spread" in txt, txt
+    assert pg.is_visible("#kf-street_halfwidth_m") and pg.is_visible("#kf-street_curb_m")
+    assert errs == [], errs
+    ctx.close()

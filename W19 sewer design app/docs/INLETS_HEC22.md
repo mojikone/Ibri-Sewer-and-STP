@@ -63,3 +63,19 @@ Qi 0.031 m3/s. Chart 5A's example: reticuline 0.91 m at 2.4 m/s, Rf 0.8.
 
 The curved-vane fit drifts above about 0.9 m (2.27 m/s at 1.0 m where Chart 5A reads about 2.43): the app uses
 SWMM's fit for every grate so that the steady run and the storm run agree.
+
+## The storm run (SWMM 5.2.4's streets and inlets)
+
+`io/swmm_streets.py` writes each catch basin with an inlet (not full capture) and a street (half-width curb to crown,
+curb height, cross slope, n; optional depressed gutter from the gutter cross slope and width) as SWMM's dual drainage:
+a street node at the ground takes the catchments' runoff, the gutter to the next catch basin is a STREET conduit (no
+gutter: a 10 m stub at the inlet's longitudinal slope, or 1 %, to an outfall on grade or a dead end in a sag), and the
+inlet sits on that conduit (SWMM puts it at the conduit's downstream end; AUTOMATIC is not used, the placement is the
+inlet's location) and sends what it captures into the catch basin. Conventional gutters use SWMM's own HEC-22 inlets
+(the grate type, length and width; an opening ratio of its own makes it SWMM's GENERIC grate with this module's
+splash-over velocity); percent capture, maximum capacity, inflow-capture curves, V-shaped and ditch gutters use CUSTOM
+inlets whose DIVERSION curve (on grade) or RATING curve (in a sag) engine/inlets.py makes.
+
+SWMM against engine/inlets.py, HEC-22 Example 4-8's gutter at a steady 0.19 m3/s (SWMM's average capture against
+ours): P-50 46.8 % / 46.6 %, reticuline 41.6 % / 41.3 %; curb opening 3 m at 0.05 m3/s, 49.0 % / 48.8 %. In a design
+storm, the P-50's capture at the street's peak: 45.4 % / 45.6 %.

@@ -180,12 +180,13 @@ function kfShow(kind, k, P) {
     if (k === "capture_pc") return t === "percent_capture";
     if (k === "q_max_ls") return t === "max_capacity";
     if (k === "rating") return t === "rating_curve";
-    if (["location", "inlet_class", "clogging_pc", "road_cross_slope", "n_gutter", "gutter_shape", "max_gutter_depth_m", "max_spread_m"].includes(k)) return cat;
+    if (["location", "inlet_class", "clogging_pc", "gutter_shape", "max_gutter_depth_m", "max_spread_m"].includes(k)) return cat;
+    if (["road_cross_slope", "n_gutter", "street_halfwidth_m", "street_curb_m"].includes(k)) return t !== "full_capture";   // the street the storm run routes the bypass down
     if (k === "long_slope") return cat && (P.location || "on_grade") === "on_grade";
     if (["grate_type", "grate_length_m", "grate_width_m", "opening_ratio"].includes(k)) return cat && ["grate", "combination"].includes(c);
     if (["curb_length_m", "curb_height_m", "throat"].includes(k)) return cat && ["curb", "combination"].includes(c);
     if (["slot_length_m", "slot_width_m"].includes(k)) return cat && c === "slot";
-    if (["gutter_cross_slope", "gutter_width_m"].includes(k)) return cat && sh === "conventional";
+    if (["gutter_cross_slope", "gutter_width_m"].includes(k)) return t !== "full_capture" && sh === "conventional";
     if (k === "curb_cross_slope") return cat && sh === "v_shaped";
     if (["ditch_bottom_m", "side_slope_l", "side_slope_r"].includes(k)) return cat && sh === "trapezoidal";
   }
@@ -212,7 +213,8 @@ function kindFieldsBlock() {
   if (!fs.length || !["nodes", "links"].includes(table)) { if (old) old.remove(); return; }
   const kind = fs[0].properties.kind, spec = state.info.kind_fields[kind];
   if (!spec || !fs.every(f => f.properties.kind === kind)) { if (old) old.remove(); return; }
-  const sig = [table, state.sel.ids.join(","), JSON.stringify(fs.map(f => f.properties.props || {})), JSON.stringify(state.inletRows || {})].join("|");
+  const SR = kind === "catch_basin" && fs.length === 1 && state.storm && state.storm.sid === state.sid && state.storm.data && (state.storm.data.inlets || {})[fs[0].id];
+  const sig = [table, state.sel.ids.join(","), JSON.stringify(fs.map(f => f.properties.props || {})), JSON.stringify(state.inletRows || {}), JSON.stringify(SR || {})].join("|");
   const ae = document.activeElement, typing = old && old.contains(ae) && ae.tagName === "INPUT" && /^(text|number)$/.test(ae.type);   // a choice re-draws at once
   if (old && old.parentElement === host && (old.dataset.sig === sig || typing)) return;
   const same = k => { const v0 = (fs[0].properties.props || {})[k]; return fs.every(f => JSON.stringify((f.properties.props || {})[k]) === JSON.stringify(v0)) ? v0 : undefined; };
@@ -227,7 +229,8 @@ function kindFieldsBlock() {
   }
   const R = kind === "catch_basin" && fs.length === 1 && state.inletRows && state.inletRows[fs[0].id];
   if (R) h += `<details class="kf-g" open data-testid="kf-results"><summary>Last rational run</summary><p class="small">Surface flow ${num(R.q_gutter_ls, 1)} L/s (local ${num(R.q_local_ls, 1)}, from upstream ${num(R.q_carry_in_ls, 1)});
-    captured ${num(R.q_captured_ls, 1)} L/s${R.efficiency != null ? ` (${num(100 * R.efficiency, 0)} %)` : ""}; bypass ${num(R.q_bypass_ls, 1)} L/s${R.bypass_to ? ` to ${esc(R.bypass_to)}` : ""}${R.spread_m != null ? `; spread ${num(R.spread_m, 2)} m, depth ${num(R.depth_m, 3)} m` : ""}${R.spread_over ? ` <b class="bad">over the maximum spread</b>` : ""}${R.depth_over ? ` <b class="bad">over the maximum depth</b>` : ""}</p></details>`;
+    captured ${num(R.q_captured_ls, 1)} L/s${R.efficiency != null ? ` (${num(100 * R.efficiency, 0)} %)` : ""}; bypass ${num(R.q_bypass_ls, 1)} L/s${R.bypass_to ? ` to ${esc(R.bypass_to)}` : ""}${R.spread_m != null ? `; spread ${num(R.spread_m, 2)} m, depth ${num(R.depth_m, 3)} m` : ""}${R.spread_over ? ` <b class="bad">over the maximum spread</b>` : ""}${R.depth_over ? ` <b class="bad">over the maximum depth</b>` : ""}${R.floods ? ` <b class="bad">the sag fills above the curb: the street floods</b>` : ""}</p></details>`;
+  if (SR) h += `<details class="kf-g" open data-testid="kf-storm"><summary>Last storm run (SWMM)</summary><p class="small">Street ${esc(SR.street)}: peak ${num(SR.q_street_peak_ls, 1)} L/s; captured at most ${num(SR.q_captured_peak_ls, 1)} L/s${SR.capture_at_peak_pc != null ? ` (${num(SR.capture_at_peak_pc, 0)} % at the peak)` : ""}, bypass at most ${num(SR.q_bypass_peak_ls, 1)} L/s${SR.spread_m != null ? `; spread ${num(SR.spread_m, 2)} m, depth ${num(SR.depth_m, 3)} m` : ""}.</p></details>`;
   if (kind === "tap") h += `<datalist id="kf-links">${state.model.linkFeat.filter(f => ["conduit", "channel"].includes(f.properties.kind)).slice(0, 3000).map(f => `<option value="${esc(String(f.id))}">`).join("")}</datalist>`;
   const box = old || document.createElement("div"); box.id = "kind-fields"; box.dataset.testid = "kind-fields"; box.innerHTML = h; box.dataset.sig = sig;
   if (box.parentElement !== host) host.appendChild(box);

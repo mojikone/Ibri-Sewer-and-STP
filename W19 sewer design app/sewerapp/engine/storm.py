@@ -16,7 +16,38 @@ def run(project, support_dir=None, rain=None):
             if os.path.isfile(os.path.join(support_dir, f)) and not f.endswith(".inp"): shutil.copy(os.path.join(support_dir, f), d)
     inp = os.path.join(d, "model.inp"); open(inp, "w", encoding="utf-8").write(swmm_inp.from_project(project, rain))
     r = swmm.run(inp, tempfile.mkdtemp(prefix="w19stormrun_"))
-    return dict(inp=inp, out=r["out"], rpt=r["rpt"], seconds=r["seconds"], **read(r["out"], r["rpt"]))
+    res = dict(inp=inp, out=r["out"], rpt=r["rpt"], seconds=r["seconds"], **read(r["out"], r["rpt"]))
+    res["inlets"] = inlets(open(inp, encoding="utf-8").read(), r["out"], r["rpt"])
+    if res["inlets"]: res["summary"]["inlets"] = len(res["inlets"])
+    return res
+
+
+def inlets(inp_text, out_path, rpt_path):
+    """Each catch basin's inlet in the storm run (v7): the approach flow in its street, what it captured (the lateral
+    inflow SWMM gives its structure) and bypassed, at their peaks, with the street's spread and depth (SWMM's Street
+    Flow Summary)."""
+    from sewerapp.io import swmm_streets
+    use = swmm_streets.usage(inp_text)
+    if not use: return {}
+    rep = swmm_streets.read_report(open(rpt_path, encoding="utf-8", errors="ignore").read()) if rpt_path and os.path.exists(rpt_path) else {}
+    h = output.init(); output.open(h, out_path); res = {}
+    try:
+        nt = output.get_times(h, E.Time.NUM_PERIODS)
+        ln = {output.get_elem_name(h, E.ElementType.LINK, j).strip(): j for j in range(output.get_proj_size(h)[2])}
+        nn = {output.get_elem_name(h, E.ElementType.NODE, j).strip(): j for j in range(output.get_proj_size(h)[1])}
+        for cb, (link, inlet) in use.items():
+            if link not in ln or cb not in nn: continue
+            q = np.abs(np.array(output.get_link_series(h, ln[link], E.LinkAttribute.FLOW_RATE, 0, nt - 1)))
+            c = np.array(output.get_node_series(h, nn[cb], E.NodeAttribute.LATERAL_INFLOW, 0, nt - 1))
+            by = np.clip(q - c, 0, None); k = int(np.argmax(q))
+            r = dict(street=link, inlet=inlet, q_street_peak_ls=float(q.max()) * 1000, q_captured_peak_ls=float(c.max()) * 1000,
+                     q_bypass_peak_ls=float(by.max()) * 1000, capture_at_peak_pc=float(c[k] / q[k] * 100) if q[k] > 0 else None)
+            rr = rep.get(inlet)
+            if rr: r.update(spread_m=rr["spread_m"], depth_m=rr["depth_m"], location=rr["location"], capture_avg_pc=rr["capture_avg_pc"])
+            res[cb] = r
+    finally:
+        output.close(h)
+    return res
 
 
 def _peaks(h, kind, attrs):

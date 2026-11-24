@@ -274,7 +274,7 @@ def storm_run(pid: str, sid: str):
         except (ValueError, KeyError) as e: raise HTTPException(400, str(e))
         except Exception as e: raise HTTPException(400, f"SWMM could not run the model: {e}")
         STORM[(pid, sid)] = r
-    return clean(dict(summary=r["summary"], seconds=r["seconds"], links=r["links"], nodes=r["nodes"], subcatchments=r["subcatchments"]))
+    return clean(dict(summary=r["summary"], seconds=r["seconds"], links=r["links"], nodes=r["nodes"], subcatchments=r["subcatchments"], inlets=r.get("inlets") or {}))
 
 
 @router.get("/projects/{pid}/scenarios/{sid}/storm/frame")
@@ -819,7 +819,8 @@ def rational(pid: str, sid: str):
     if inl:                                                                 # catch basins: capture, bypass, spread (v7)
         summ = dict(summ, inlets=len(inl), captured_ls=round(sum(r["q_captured_ls"] for r in inl.values()), 3),
                     bypass_lost_ls=round(sum(r["q_bypass_ls"] for r in inl.values() if r["bypass_to"] == "lost"), 3),
-                    spread_over=sum(1 for r in inl.values() if r.get("spread_over")), depth_over=sum(1 for r in inl.values() if r.get("depth_over")))
+                    spread_over=sum(1 for r in inl.values() if r.get("spread_over")), depth_over=sum(1 for r in inl.values() if r.get("depth_over")),
+                    sag_floods=sum(1 for r in inl.values() if r.get("floods")))
     return clean(dict(rows=[dict(id=k, **v) for k, v in sorted(rows.items(), key=lambda kv: -kv[1]["q_rational_ls"])], report=summ,
                       inlets=[dict(id=k, **v) for k, v in inl.items()]))
 

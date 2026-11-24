@@ -204,3 +204,48 @@ def test_reader_takes_catch_basins_with_their_inlets_and_headwalls(tmp_path):
     assert d["grate_length_m"] == pytest.approx(0.6096) and d["grate_width_m"] == pytest.approx(0.6096) and d["clogging_pc"] == 50.0
     assert p.props["nodes"][hw[0]]["boundary"] == "free" and p.nodes.invert[hw[0]] == p.nodes.invert[hw[0]]
     assert steady.engine_view(p).nodes.kind[hw[0]] == "outfall"
+
+
+# ------------------------------------------------------------------ the storm run: catch basins on SWMM 5.2's streets
+def _street_net(cb2):
+    from sewerapp.model.general import Project as P_
+    p = P_("s", crs=32640); add = lambda **e: W.apply(p, dict(op="add_node", **e))
+    add(id="CB1", kind="catch_basin", x=0, y=0, ground=20, invert=18.5); add(id="CB2", kind="catch_basin", x=100, y=0, ground=16, invert=14.5)
+    add(id="MH1", x=150, y=-20, ground=15, invert=13); add(id="O", kind="outfall", x=250, y=-20, ground=14, invert=11)
+    W.apply(p, dict(op="add_link", id="G1", kind="gutter", from_node="CB1", to_node="CB2"))
+    for i, a, b in (("P1", "CB1", "MH1"), ("P2", "CB2", "MH1"), ("P3", "MH1", "O")): W.apply(p, dict(op="add_link", id=i, from_node=a, to_node=b, dn_mm=450))
+    street = dict(street_halfwidth_m=6, street_curb_m=0.15, road_cross_slope=0.025, n_gutter=0.016, long_slope=0.04)
+    W.apply(p, dict(op="set_props", table="nodes", ids=["CB1"], values=dict(inlet_type="catalog", inlet_class="grate", grate_type="p50", grate_length_m=0.6, grate_width_m=0.6, **street)))
+    W.apply(p, dict(op="set_props", table="nodes", ids=["CB2"], values=dict(cb2, **street)))
+    for cid, cb in (("C1", "CB1"), ("C2", "CB2")):
+        W.apply(p, dict(op="add_catchment", id=cid, outlet=cb, area_ha=1.0, coords=[[0, 0], [100, 0], [100, 100], [0, 100]]))
+        W.apply(p, dict(op="set_hydrology", ids=[cid], C=0.9, tc_min=10))
+    p.rain = dict(idf=dict(durations_min=[5, 10, 30, 60], intensities=[150.0, 120.0, 70.0, 45.0]), duration_min=60, step_min=5)
+    return p
+
+
+def test_storm_run_captures_at_the_inlets_as_the_steady_engine_does():
+    """SWMM's own HEC-22 grate on the gutter street captures, at its peak, what engine/inlets.py captures of that flow
+    (within half a point); the catchments drain to the street; the bypass runs down the gutter to the next inlet; a sag
+    inlet that cannot take its flow floods its street, in both runs."""
+    from sewerapp.engine import storm
+    p = _street_net(dict(inlet_type="catalog", inlet_class="grate", grate_type="reticuline", grate_length_m=0.6, grate_width_m=0.6, location="in_sag"))
+    t = swmm_inp.from_project(p)
+    assert "[STREETS]" in t and "IN_CB1           GRATE" in t and "CB2_BYP" in t and "C1               RG1              CB1_STR" in t
+    r = storm.run(p); a = r["inlets"]["CB1"]
+    q = a["q_street_peak_ls"] / 1000.0
+    assert abs(I.capture(q, p.props["nodes"]["CB1"])[0] / q * 100 - a["capture_at_peak_pc"]) < 0.5
+    assert r["inlets"]["CB2"]["location"] == "on_sag" and r["summary"]["flooded_nodes"] >= 1
+    inl = {}; tools_v4.rational(p, inl); assert inl["CB2"]["floods"] is True
+
+
+def test_storm_run_custom_inlets_and_the_fallback():
+    from sewerapp.engine import storm
+    p = _street_net(dict(inlet_type="percent_capture", capture_pc=70))
+    t = swmm_inp.from_project(p)
+    assert "IN_CB2           CUSTOM           IC_CB2" in t and "IC_CB2           DIVERSION" in t
+    r = storm.run(p)
+    assert abs(r["inlets"]["CB2"]["capture_at_peak_pc"] - 70.0) < 1.0
+    W.apply(p, dict(op="set_props", table="nodes", ids=["CB2"], values=dict(street_halfwidth_m=None)))
+    assert "CB2_BYP" not in swmm_inp.from_project(p)
+    assert any("no street" in m["message"] for m in validate.run(p))

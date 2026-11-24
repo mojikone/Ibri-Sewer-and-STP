@@ -66,6 +66,8 @@ _INLET = [
     ("ditch_bottom_m", "Bottom width (ditch)", "num", "m", None, "Gutter"),
     ("side_slope_l", "Left side slope (H:1V)", "num", "", None, "Gutter"),
     ("side_slope_r", "Right side slope (H:1V)", "num", "", None, "Gutter"),
+    ("street_halfwidth_m", "Street half-width, curb to crown (storm run)", "num", "m", None, "Gutter"),
+    ("street_curb_m", "Curb height (storm run)", "num", "m", None, "Gutter"),
     ("max_gutter_depth_m", "Maximum gutter depth", "num", "m", None, "Design"),
     ("max_spread_m", "Maximum spread", "num", "m", None, "Design"),
     ("carryover_ls", "Flow (additional carryover)", "num", "L/s", None, "Flows"),

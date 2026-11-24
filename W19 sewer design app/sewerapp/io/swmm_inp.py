@@ -123,6 +123,7 @@ def from_project(p, rain=None):
     from sewerapp.engine.steady import engine_view
     PN = (getattr(p, "props", None) or {}).get("nodes", {})
     hw_tw = {i: d["tailwater_m"] for i, d in PN.items() if i in p.nodes.index and p.nodes.kind[i] == "headwall" and d.get("boundary") == "fixed" and d.get("tailwater_m") is not None}
+    raw = p
     p = engine_view(p)
     if hw_tw: p = _copy.copy(p); p.tailwater = {**(getattr(p, "tailwater", None) or {}), **hw_tw}
     pt = p.passthrough or {}; rows = pt.get("rows", {}); units = p.settings.get("units", "SI")
@@ -224,8 +225,10 @@ def from_project(p, rain=None):
         out["SUBCATCHMENTS"].append(old)
         s = list(rows.get(f"SUBAREAS|{i}") or []) or [i, 0, 0, 1.27, 5.08, 25, "OUTLET"]
         s[0], s[1], s[2] = i, _num(r.n_imperv), _num(r.n_perv); out["SUBAREAS"].append(s)
+    from sewerapp.io import swmm_streets                    # catch basins: their streets and inlets (dual drainage, v7)
+    _, st_curves = swmm_streets.add(raw, out, units)
     my_curves = [[name, typ if k == 0 else "", _num(a * 1000.0 / mm), _num(b / mm2 if typ == "Storage" else b)]
-                 for name, typ, pts in curves for k, (a, b) in enumerate(pts)]   # the app's own curves (ST_, PC_)
+                 for name, typ, pts in curves for k, (a, b) in enumerate(pts)] + st_curves   # the app's own curves (ST_, PC_, IC_)
     if my_curves and "CURVES" not in (pt.get("sections") or {}): out["CURVES"] = my_curves
     out["COORDINATES"] = [[i, _num(r.x), _num(r.y)] for i, r in n.iterrows()]
     out["VERTICES"] = [[i, _num(x), _num(y)] for i, r in L.iterrows() if isinstance(r.coords, list) and len(r.coords) > 2 for x, y in r.coords[1:-1]]
@@ -236,6 +239,8 @@ def from_project(p, rain=None):
     for k in MODELLED + ["ORIFICES", "WEIRS"]:
         if k not in order and out.get(k): order.insert(order.index("REPORT") if "REPORT" in order else len(order), k)
     if my_curves and "CURVES" not in order: order.insert(order.index("REPORT") if "REPORT" in order else len(order), "CURVES")
+    for k in ("STREETS", "INLETS", "INLET_USAGE", "INFLOWS"):
+        if out.get(k) and k not in order: order.insert(order.index("REPORT") if "REPORT" in order else len(order), k)
     lines = []
     titles = pt.get("titles", {})
     for k in order:

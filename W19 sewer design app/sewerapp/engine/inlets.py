@@ -229,5 +229,7 @@ def route(project, local_q):
             if k in det: r[k] = det[k]
         if p.get("max_spread_m") and r["spread_m"] is not None: r["spread_over"] = r["spread_m"] > float(p["max_spread_m"]) + 1e-9
         if p.get("max_gutter_depth_m") and r["depth_m"] is not None: r["depth_over"] = r["depth_m"] > float(p["max_gutter_depth_m"]) + 1e-9
+        if p.get("street_curb_m") and r["depth_m"] is not None and r["location"] == "in_sag":   # the sag fills above the curb: the street floods
+            r["floods"] = r["depth_m"] > float(p["street_curb_m"]) + 1e-9
         rows[n] = r
     return rows

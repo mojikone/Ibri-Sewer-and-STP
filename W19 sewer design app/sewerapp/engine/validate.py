@@ -52,8 +52,10 @@ def _kinds(p, add):
             if miss: add("error", "nodes", n, f"the inlet's gutter needs {', '.join(miss)}")
             if c in ("grate", "combination") and d.get("grate_type") == "tilt_bar_45" and d.get("location") == "in_sag" and not d.get("opening_ratio"):
                 add("warning", "nodes", n, "HEC-22 gives no opening ratio for the 45-degree tilt-bar grate: 0.17 is assumed (as SWMM 5.2 does); set its own")
-    if len(cbs): add("warning", "nodes", cbs[0], f"{len(cbs)} catch basin{'s' if len(cbs) > 1 else ''}: the rational run computes the inlet capture and the gutter bypass (HEC-22); "
-                                              "the storm run (SWMM) takes all the surface inflow into the pipes")
+    from sewerapp.io.swmm_streets import street_ready
+    loose = [n for n in cbs if (PN.get(n) or {}).get("inlet_type", "full_capture") != "full_capture" and not street_ready(PN.get(n) or {})]
+    if loose: add("warning", "nodes", loose[0], f"{len(loose)} catch basin{'s' if len(loose) > 1 else ''} with an inlet but no street (half-width, curb height, cross slope, n): "
+                                                "the storm run takes all their inflow into the pipes; the rational run computes their capture")
     for n in N.index[N.kind == "headwall"]:
         d = PN.get(n) or {}
         if d.get("boundary") == "fixed" and d.get("tailwater_m") is None: add("warning", "nodes", n, "a fixed boundary with no tailwater elevation: taken as free")
