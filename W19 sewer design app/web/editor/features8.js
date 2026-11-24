@@ -129,7 +129,7 @@ function layoutMenu(x, y) {
     { label: (cur === "bend" ? "● " : "○ ") + "Bend (a vertex of the link, no structure)", key: "lay-next-bend", run: () => setLayoutNext("bend") },
     "-", { head: "Next link" },
     ...LAY_LINKS.map(([k, l]) => ({ label: (lk === k ? "● " : "○ ") + l, key: "lay-link-" + k, run: () => setLayoutLink(k) })),
-    { label: "Pump (from a wet well): use the Pump tool", key: "lay-link-pump", run: () => { layout.last = null; setTool("pump"); } }]);
+    { label: "Pump (from a wet well or sump): use the Pump tool", key: "lay-link-pump", run: () => { layout.last = null; setTool("pump"); } }]);
 }
 
 /* ------------------------------------------------------------------ the map: each kind's colour and symbol */
@@ -171,7 +171,7 @@ const ICON_KINDS = ["catch_basin", "headwall", "transition", "cross_section", "a
 const OPT_NAMES = { full_capture: "Full capture", percent_capture: "Percent capture", max_capacity: "Maximum capacity", rating_curve: "Inflow-capture curve", catalog: "Catalogue inlet (HEC-22)",
   on_grade: "On grade", in_sag: "In sag", grate: "Grate", curb: "Curb opening", combination: "Combination (grate and curb)", slot: "Slotted drain",
   p50: "P-50 mm", p50x100: "P-50 x 100 mm", p30: "P-30 mm", curved_vane: "Curved vane", tilt_bar_45: "45-degree tilt bar", tilt_bar_30: "30-degree tilt bar", reticuline: "Reticuline",
-  vertical: "Vertical", inclined: "Inclined", horizontal: "Horizontal", conventional: "Conventional", v_shaped: "V-shaped", trapezoidal: "Trapezoidal (ditch)",
+  vertical: "Vertical", inclined: "Inclined", horizontal: "Horizontal", conventional: "Conventional", v_shaped: "V-shaped", trapezoidal: "Trapezoidal (ditch)", parabolic: "Parabolic", irregular: "Irregular",
   circular: "Circular", box: "Box", free: "Free outfall", fixed: "Fixed tailwater", invert_to_center: "Invert to centre", invert_to_crown: "Invert to crown",
   from_start_inlet: "Derived from the start inlet" };
 function kfShow(kind, k, P) {
@@ -189,8 +189,11 @@ function kfShow(kind, k, P) {
     if (["gutter_cross_slope", "gutter_width_m"].includes(k)) return t !== "full_capture" && sh === "conventional";
     if (k === "curb_cross_slope") return cat && sh === "v_shaped";
     if (["ditch_bottom_m", "side_slope_l", "side_slope_r"].includes(k)) return cat && sh === "trapezoidal";
+    if (["parabola_height_m", "parabola_width_m"].includes(k)) return cat && sh === "parabolic";
+    if (k === "gutter_section") return cat && sh === "irregular";
   }
   if (kind === "catch_basin" || kind === "manhole") { if (k === "diameter_m") return (P.structure || "circular") === "circular"; if (["box_length_m", "box_width_m"].includes(k)) return P.structure === "box"; }
+  if (kind === "catch_basin" && ["design_opening", "design_lengths", "min_efficiency_pc"].includes(k)) return (P.inlet_type || "full_capture") === "catalog" && (k === "design_opening" || !!P.design_opening) && (k !== "min_efficiency_pc" || (P.location || "on_grade") === "on_grade");
   if (kind === "headwall" && k === "tailwater_m") return P.boundary === "fixed";
   if (kind === "gutter" && ["road_cross_slope", "gutter_cross_slope", "gutter_width_m"].includes(k)) return !!P.gutter_shape && P.gutter_shape !== "from_start_inlet";
   return true;
@@ -202,7 +205,8 @@ function kfControl(f, v) {
   if (f.type === "text") return `<input type="text" ${a} value="${v == null ? "" : esc(String(v))}"${f.key === "link" ? ` list="kf-links"` : ""}>`;
   if (f.type === "table") {
     const rows = (v || []).concat([["", ""]]);
-    return `<table class="kf-tab" data-kf="${f.key}"><thead><tr><th>Inflow (L/s)</th><th>Captured (L/s)</th></tr></thead><tbody>${rows.map(r => `<tr><td><input type="number" step="any" value="${r[0]}"></td><td><input type="number" step="any" value="${r[1]}"></td></tr>`).join("")}</tbody></table>` +
+    const heads = f.key === "gutter_section" ? ["Station from the curb (m)", "Relative elevation (m)"] : ["Inflow (L/s)", "Captured (L/s)"];
+    return `<table class="kf-tab" data-kf="${f.key}"><thead><tr><th>${heads[0]}</th><th>${heads[1]}</th></tr></thead><tbody>${rows.map(r => `<tr><td><input type="number" step="any" value="${r[0]}"></td><td><input type="number" step="any" value="${r[1]}"></td></tr>`).join("")}</tbody></table>` +
       `<button id="kf-${f.key}-add" data-testid="kf-${f.key}-add" class="small">+ Add row</button>`;
   }
   return `<input type="number" step="any" min="0" ${a} value="${v == null ? "" : +(+v).toFixed(6)}">`;
@@ -268,3 +272,26 @@ runRational = async function () {
       : ["id", "q_rational_ls", "ca_ha", "tc_min", "i_mm_h", "v_ms", "d_over_D", "surcharged"], report: r.report };
   showTab("toolout"); renderAll();
 };
+
+/* ------------------------------------------------------------------ Design inlets (SewerGEMS's Design inlet opening) */
+async function designInlets() {
+  if (!state.pid) return;
+  const r = await exec({ op: "design_inlets" }); const des = (r.created || {}).inlets || {};
+  const rows = Object.entries(des).map(([id, d]) => ({ id, length_m: d.length_m, opening: d.key.replace("_length_m", ""), q_ls: d.q_ls, result: d.result }));
+  state.toolout = { tool: { label: `Design inlets: ${rows.length} inlet opening${rows.length === 1 ? "" : "s"} sized down the gutters (undo takes it back)` }, rows, cols: ["id", "opening", "length_m", "q_ls", "result"],
+    report: { inlets: rows.length, not_met: rows.filter(x => x.result !== "met").length } };
+  if (!rows.length) toast("No inlet is marked Design inlet opening with design lengths (a catch basin's Properties > Design).", "info");
+  showTab("toolout"); renderAll();
+}
+
+/* ------------------------------------------------------------------ the network type: what a pump station draws from */
+SET_GROUPS.unshift(["Project", ["Network"]]);
+function networkType() {
+  const m = state.model; if (!m) return "sanitary";
+  const s = (m.settings || {}).network; if (s && s !== "auto") return s;
+  const loads = Object.values(m.loads || {}).some(set => Object.values(set || {}).some(v => v > 0)) || Object.values(m.unit_rows || {}).some(S => Object.keys(S || {}).length)
+    || m.nodeFeat.some(f => f.properties.inflow_m3d > 0);
+  if (loads) return "sanitary";
+  return m.catchFeat.length || m.nodeFeat.some(f => f.properties.kind === "catch_basin") ? "storm" : "sanitary";
+}
+function pumpSump() { return networkType() === "storm" ? "storage" : "wetwell"; }

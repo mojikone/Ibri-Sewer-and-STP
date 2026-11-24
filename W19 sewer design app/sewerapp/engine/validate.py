@@ -48,6 +48,8 @@ def _kinds(p, add):
             need = ["road_cross_slope", "n_gutter"] + (["long_slope"] if d.get("location", "on_grade") == "on_grade" else [])
             if g == "v_shaped": need.append("curb_cross_slope")
             if g == "trapezoidal": need += ["ditch_bottom_m", "side_slope_l", "side_slope_r"]
+            if g == "parabolic": need = [k for k in need if k != "road_cross_slope"] + ["parabola_height_m", "parabola_width_m"]
+            if g == "irregular": need = [k for k in need if k != "road_cross_slope"] + ["gutter_section"]
             miss = [k for k in need if not d.get(k)]
             if miss: add("error", "nodes", n, f"the inlet's gutter needs {', '.join(miss)}")
             if c in ("grate", "combination") and d.get("grate_type") == "tilt_bar_45" and d.get("location") == "in_sag" and not d.get("opening_ratio"):

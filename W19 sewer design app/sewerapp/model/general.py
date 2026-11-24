@@ -37,6 +37,9 @@ DEFAULT_CATALOGUE = [[200, 176.4], [250, 220.6], [280, 247.0], [315, 278.0], [35
                      [1100, 970.6], [1200, 1058.8], [1400, 1235.2], [1600, 1411.8], [1800, 1588.2], [2000, 1764.8]]
 DEFAULT_SETTINGS = dict(
     units="SI",
+    # what the network carries (v7): auto (sanitary when it has sanitary loads; stormwater when it has catchments or catch
+    # basins and none), sanitary, storm or combined; a stormwater pump draws from a storage sump or pond, not a wet well
+    network="auto",
     friction=dict(method="colebrook", ks_mm=1.5, manning_n=0.013, nu=1.141e-6),       # PAM-GUD-203 p24-25, p28
     peaking=dict(method="table", table=[[0.1, 4.66], [0.15, 4.08], [0.2, 3.74], [0.3, 3.33], [0.5, 2.91], [0.75, 2.65],
                                         [1, 2.5], [1.001, 3.56], [1.5, 3.39], [2, 3.28], [3, 3.12], [5, 2.93], [7.5, 2.79],

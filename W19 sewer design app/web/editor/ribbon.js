@@ -154,7 +154,8 @@ function buildRibbon() {
       rbGroup("Options", [rbBtn({ icon: "props", label: "Calculation options", big: true, title: "Named sets of options, saved and applied per scenario; the options themselves in Settings",
         run: () => { if (!state.model) return; const r = $("#rb-page-analysis").getBoundingClientRect(); calcMenu(r.left + 420, r.bottom + 2); } }),
         rbBtn({ icon: "scen", label: "Batch run...", title: "The steady run of several scenarios side by side", run: () => openBatch() })]),
-      rbGroup("Storm (steady)", [rbBtn({ icon: "storm", label: "Rational method", title: "Q = C i A / 360 with the catchments' C and Tc and the IDF table", run: () => enqueue(runRational) })]),
+      rbGroup("Storm (steady)", [rbBtn({ icon: "storm", label: "Rational method", title: "Q = C i A / 360 with the catchments' C and Tc and the IDF table", run: () => enqueue(runRational) }),
+        rbBtn({ icon: "storm", label: "Design inlets", title: "Size each catalogue inlet marked Design inlet opening: the shortest of its design lengths that meets its minimum efficiency on grade, or its maximum depth and spread in a sag (undo takes it back)", run: () => enqueue(designInlets) })]),
       rbGroup("SewerGEMS", [rbBtn({ press: "sg-btn", icon: "sg", label: "Open model..." }), rbBtn({ icon: "check", label: "Compare (stored)", title: "Compare with the results SewerGEMS stored", run: () => runNamed("compare_stored") })]),
     ]],
     ["report", "Report", () => [

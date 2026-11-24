@@ -1694,3 +1694,55 @@ def test_v7_storm_run_shows_each_inlets_capture(server, browser):
     assert pg.is_visible("#kf-street_halfwidth_m") and pg.is_visible("#kf-street_curb_m")
     assert errs == [], errs
     ctx.close()
+
+
+def test_v7_a_stormwater_pump_station_draws_from_a_sump_not_a_wet_well(server, browser):
+    """The engineer, 2026-11-24: "for pump, when the project is not sewer and is stormwater, a pump station is not a wet
+    well". With catch basins and no sanitary loads (Network type: Auto) the pump tool makes the manhole a storage sump;
+    set to Sanitary sewer, it makes a wet well."""
+    ctx = browser.new_context(viewport={"width": 1600, "height": 950}); pg = ctx.new_page(); pg.set_default_timeout(60000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    _new_local(pg, server, "Storm pump")
+    vtool(pg, "catchbasin"); click_at(pg, 0, 0); idle(pg)
+    vtool(pg, "manhole"); click_at(pg, 100, 0); click_at(pg, 100, 100); idle(pg)
+    assert pg.evaluate("networkType()") == "storm"
+    kind = lambda i: pg.evaluate("id => window.ed.state.model.nodes.get(id).properties.kind", i)
+    mh = [i for i in ids(pg, "nodes") if i.startswith("MH-")]
+    vtool(pg, "pump"); click_ask(pg, 100, 0)
+    pg.wait_for_selector("#dlg-morph:not([hidden])"); assert "storage sump" in pg.text_content("#morph-text"); answer(pg); idle(pg)
+    assert kind(mh[0]) == "storage"
+    pg.keyboard.press("Escape")
+    pg.evaluate("""() => fetch(`/api/g${base()}/edit`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({op: 'set_setting', path: 'network', value: 'sanitary'})})""")
+    pg.evaluate("refreshAll()"); idle(pg); assert pg.evaluate("networkType()") == "sanitary"
+    vtool(pg, "pump"); click_ask(pg, 100, 100)
+    pg.wait_for_selector("#dlg-morph:not([hidden])"); assert "wet well" in pg.text_content("#morph-text"); answer(pg); idle(pg)
+    assert kind(mh[1]) == "wetwell"
+    pg.evaluate("document.getElementById('settings-form').dataset.sig = ''; renderSettings()")
+    assert pg.evaluate("[...document.querySelectorAll('#set-network option')].map(o => o.value)") == ["auto", "sanitary", "storm", "combined"]
+    assert errs == [], errs
+    ctx.close()
+
+
+def test_v7_design_inlets_from_the_ribbon(server, browser):
+    """Analysis > Design inlets sizes a catch basin's curb opening to its minimum efficiency (SewerGEMS's Design inlet
+    opening) as one undoable edit, and lists what it chose."""
+    ctx = browser.new_context(viewport={"width": 1600, "height": 950}); pg = ctx.new_page(); pg.set_default_timeout(60000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    _new_local(pg, server, "Inlet design")
+    ops = [dict(op="add_node", id="CB1", kind="catch_basin", x=0, y=0, ground=20, invert=18.5), dict(op="add_node", id="O", kind="outfall", x=100, y=0, ground=19, invert=17),
+           dict(op="add_link", id="P1", from_node="CB1", to_node="O", dn_mm=300),
+           dict(op="set_props", table="nodes", ids=["CB1"], values=dict(inlet_type="catalog", inlet_class="curb", curb_length_m=1.5, curb_height_m=0.15, road_cross_slope=0.02,
+                                                                       n_gutter=0.016, long_slope=0.01, design_opening=True, design_lengths="1.5, 3, 4.5, 6, 7.5", min_efficiency_pc=80)),
+           dict(op="add_catchment", id="C1", outlet="CB1", area_ha=0.3, coords=[[0, 0], [50, 0], [50, 50], [0, 50]]),
+           dict(op="set_hydrology", ids=["C1"], C=0.9, tc_min=10),
+           dict(op="set_rain", rain=dict(idf=dict(durations_min=[5, 10, 30, 60], intensities=[150, 120, 70, 45])))]
+    pg.evaluate("""async ops => { for (const e of ops) { const r = await fetch(`/api/g${base()}/edit`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(e)}); if (!r.ok) throw new Error(await r.text()); } }""", ops)
+    pg.evaluate("refreshAll()"); idle(pg)
+    pg.click("#rb-tab-analysis"); pg.locator("#rb-page-analysis .rb-btn", has_text="Design inlets").first.click(); idle(pg)
+    rows = pg.evaluate("window.ed.state.toolout.rows")
+    assert len(rows) == 1 and rows[0]["id"] == "CB1" and rows[0]["result"] == "met" and rows[0]["length_m"] > 1.5
+    assert pg.evaluate("window.ed.state.model.nodes.get('CB1').properties.props.curb_length_m") == rows[0]["length_m"]
+    pg.get_by_test_id("qat-undo-btn").click(); idle(pg)
+    assert pg.evaluate("window.ed.state.model.nodes.get('CB1').properties.props.curb_length_m") == 1.5
+    assert errs == [], errs
+    ctx.close()

@@ -41,6 +41,14 @@ class Gutter:
         self.Sc = float(d.get("curb_cross_slope") or self.Sx)
         self.B = float(d.get("ditch_bottom_m") or 0.0); self.z1 = float(d.get("side_slope_l") or 0.0); self.z2 = float(d.get("side_slope_r") or 0.0)
         self.a = (self.Sw - self.Sx) * self.W if self.shape == "conventional" else 0.0      # the gutter depression, m
+        self.H = float(d.get("parabola_height_m") or 0.0); self.Wp = float(d.get("parabola_width_m") or 0.0)
+        sec = sorted(d.get("gutter_section") or [])
+        if self.shape == "irregular" and len(sec) >= 3:
+            self.sx_ = np.array([a for a, _ in sec], float); z = np.array([b for _, b in sec], float); self.sz_ = z - z.min()
+            self.xlow = float(self.sx_[int(np.argmin(z))])
+            if not d.get("road_cross_slope"): self.Sx = max(float(np.ptp(z)) / max(float(np.ptp(self.sx_)), 1e-9), 1e-4)   # an equivalent cross slope
+        elif self.shape == "irregular": self.shape = "conventional"
+        if self.shape == "parabolic" and self.H > 0 and self.Wp > 0 and not d.get("road_cross_slope"): self.Sx = self.H / self.Wp
 
     def span(self, d):
         """The wetted width [x0, x1] at depth d (x from the curb, or from the low point of a V or the ditch's left toe)."""
@@ -50,6 +58,13 @@ class Gutter:
         if self.shape == "v_shaped":
             left = min(self.W, d / self.Sc) if self.W > 0 else 0.0
             return -left, d / self.Sx
+        if self.shape == "parabolic":                                                   # z = H (1 - (1 - x/W)^2) from the curb to the crown
+            return 0.0, self.Wp if d >= self.H else self.Wp * (1.0 - math.sqrt(1.0 - d / self.H))
+        if self.shape == "irregular":
+            wet = self.sx_[self.sz_ < d]
+            if not len(wet): return self.xlow, self.xlow
+            xs = np.linspace(self.sx_.min(), self.sx_.max(), 2001); w = xs[np.interp(xs, self.sx_, self.sz_) < d]
+            return float(w.min()), float(w.max())
         return -self.z1 * d, self.B + self.z2 * d                                       # trapezoidal ditch
 
     def depth_at(self, d, x):
@@ -58,6 +73,10 @@ class Gutter:
             z = np.where(x <= self.W, self.Sw * x, self.Sw * self.W + self.Sx * (x - self.W))
         elif self.shape == "v_shaped":
             z = np.where(x < 0, self.Sc * -x, self.Sx * x)
+        elif self.shape == "parabolic":
+            z = self.H * (1.0 - (1.0 - np.clip(x, 0, self.Wp) / self.Wp) ** 2)
+        elif self.shape == "irregular":
+            z = np.interp(x, self.sx_, self.sz_)
         else:
             z = np.where(x < 0, -x / max(self.z1, 1e-9), np.where(x > self.B, (x - self.B) / max(self.z2, 1e-9), 0.0))
         return np.clip(d - z, 0.0, None)
@@ -93,8 +112,10 @@ class Gutter:
         """Eo: the share of the gutter flow over the inlet's width (against the curb; centred on a V's or ditch's low point)."""
         I, _ = self._strips(d)
         if I <= 0: return 1.0
-        if self.shape == "conventional": x0, x1 = 0.0, width
+        if self.shape in ("conventional", "parabolic"): x0, x1 = 0.0, width
         elif self.shape == "v_shaped": x0, x1 = -width / 2, width / 2
+        elif self.shape == "irregular":                                                  # against the curb when the low point is there, else centred on it
+            x0 = self.xlow if self.xlow <= self.sx_.min() + 1e-9 else self.xlow - width / 2; x1 = x0 + width
         else: x0, x1 = (self.B - width) / 2, (self.B + width) / 2
         return min(1.0, self._strips(d, x0, x1)[0] / I)
 
@@ -197,7 +218,33 @@ def capture(Q, p):
     return min(Q, qi * clog), dict(det, type=t, location="on_grade", depth_m=d, spread_m=T)
 
 
-def route(project, local_q):
+LENGTH_KEY = {"grate": "grate_length_m", "curb": "curb_length_m", "combination": "curb_length_m", "slot": "slot_length_m"}
+
+
+def design_lengths(p):
+    try: return sorted({float(x) for x in str(p.get("design_lengths") or "").replace(";", ",").split(",") if x.strip() and float(x) > 0})
+    except ValueError: return []
+
+
+def design_one(Q, p):
+    """The shortest design length that meets the inlet's criteria at the flow Q reaching it (on grade: its minimum
+    efficiency; in a sag: its maximum depth and spread). Returns (length or None, its capture, why)."""
+    key = LENGTH_KEY.get(p.get("inlet_class")); L = design_lengths(p)
+    if not key or not L: return None, None, "no design lengths"
+    sag = (p.get("location") or "on_grade") == "in_sag"; last = None
+    for x in L:
+        q = dict(p, **{key: x})
+        if p.get("inlet_class") == "combination" and x < float(p.get("grate_length_m") or 0): continue
+        qi, det = capture(Q, q); last = (x, qi, det)
+        if sag:
+            ok = (not p.get("max_gutter_depth_m") or det["depth_m"] <= float(p["max_gutter_depth_m"]) + 1e-9) and \
+                 (not p.get("max_spread_m") or det["spread_m"] <= float(p["max_spread_m"]) + 1e-9)
+        else: ok = Q <= 0 or qi / Q * 100.0 >= float(p.get("min_efficiency_pc") or 0.0) - 1e-9
+        if ok: return x, qi, "met"
+    return (last[0], last[1], "not met at the longest design length") if last else (None, None, "no length")
+
+
+def route(project, local_q, design=None):
     """Every catch basin's surface flow (its local flow m3/s, plus what the gutters bring and its own additional
     carryover), what its inlet captures, and where the rest goes (down its gutter to the next inlet, or lost when none
     leaves it). Returns {node: row} in L/s and m, in the order the gutters chain them."""
@@ -219,6 +266,9 @@ def route(project, local_q):
         p = PN.get(n) or {}
         q_loc = float(local_q.get(n, 0.0)); q_in = carry.get(n, 0.0) + float(p.get("carryover_ls") or 0.0) / 1000.0
         Q = q_loc + q_in
+        if design is not None and p.get("design_opening") and p.get("inlet_type") == "catalog":   # size it first, at the flow it now gets
+            x, _, why = design_one(Q, p)
+            if x is not None: p = dict(p, **{LENGTH_KEY[p["inlet_class"]]: x}); design[n] = dict(length_m=x, key=LENGTH_KEY[p["inlet_class"]], result=why, q_ls=Q * 1000)
         qi, det = capture(Q, p)
         by = max(Q - qi, 0.0); to = nxt.get(n)
         if to is not None: carry[to] = carry.get(to, 0.0) + by

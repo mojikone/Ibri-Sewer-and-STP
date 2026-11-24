@@ -58,7 +58,7 @@ _INLET = [
     ("slot_width_m", "Slot width", "num", "m", None, "Inlet"),
     ("long_slope", "Longitudinal slope (inlet)", "num", "m/m", None, "Gutter"),
     ("n_gutter", "Manning's n (inlet)", "num", "", None, "Gutter"),
-    ("gutter_shape", "Gutter shape", "choice", "", ("conventional", "v_shaped", "trapezoidal"), "Gutter"),
+    ("gutter_shape", "Gutter shape", "choice", "", ("conventional", "v_shaped", "trapezoidal", "parabolic", "irregular"), "Gutter"),
     ("road_cross_slope", "Road cross slope", "num", "m/m", None, "Gutter"),
     ("gutter_cross_slope", "Gutter cross slope", "num", "m/m", None, "Gutter"),
     ("gutter_width_m", "Gutter width", "num", "m", None, "Gutter"),
@@ -66,10 +66,16 @@ _INLET = [
     ("ditch_bottom_m", "Bottom width (ditch)", "num", "m", None, "Gutter"),
     ("side_slope_l", "Left side slope (H:1V)", "num", "", None, "Gutter"),
     ("side_slope_r", "Right side slope (H:1V)", "num", "", None, "Gutter"),
+    ("parabola_height_m", "Height (parabolic gutter, curb to crown)", "num", "m", None, "Gutter"),
+    ("parabola_width_m", "Width (parabolic gutter, curb to crown)", "num", "m", None, "Gutter"),
+    ("gutter_section", "Irregular section (station from the curb, relative elevation)", "table", "m", None, "Gutter"),
     ("street_halfwidth_m", "Street half-width, curb to crown (storm run)", "num", "m", None, "Gutter"),
     ("street_curb_m", "Curb height (storm run)", "num", "m", None, "Gutter"),
     ("max_gutter_depth_m", "Maximum gutter depth", "num", "m", None, "Design"),
     ("max_spread_m", "Maximum spread", "num", "m", None, "Design"),
+    ("design_opening", "Design inlet opening?", "bool", "", None, "Design"),
+    ("design_lengths", "Design lengths (m, comma-separated)", "text", "m", None, "Design"),
+    ("min_efficiency_pc", "Minimum efficiency on grade", "pct", "%", None, "Design"),
     ("carryover_ls", "Flow (additional carryover)", "num", "L/s", None, "Flows"),
 ]
 _STRUCTURE = [
@@ -126,7 +132,8 @@ def check_props(kind, values):
         elif typ == "table":
             try: v = [[float(a), float(b)] for a, b in v]
             except Exception: raise ValueError(f"{label}: rows of two numbers")
-            if any(a < 0 or b < 0 or b > a + 1e-9 for a, b in v): raise ValueError(f"{label}: the captured flow is 0 to the inflow")
+            if k == "rating" and any(a < 0 or b < 0 or b > a + 1e-9 for a, b in v): raise ValueError(f"{label}: the captured flow is 0 to the inflow")
+            if k == "gutter_section" and (len(v) < 3 or any(a < 0 for a, _ in v)): raise ValueError(f"{label}: three rows or more, stations 0 or more")
             v = sorted(v)
         out[k] = v
     return out

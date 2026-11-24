@@ -524,6 +524,17 @@ def apply(p, e):
             if e.get("level") is None: p.tailwater.pop(i, None)
             else: p.tailwater[i] = float(e["level"])
         return False
+    if op == "design_inlets":
+        # SewerGEMS's "Design inlet opening": the rational run sizes each flagged catalogue inlet down the gutters; the
+        # lengths it chose are written into the inlets (the edit keeps them, so a replay writes the same)
+        if "lengths" not in e:
+            from sewerapp.engine import tools_v4
+            des = {}; tools_v4.rational(p, {}, des)
+            e["lengths"] = {n: [d["key"], d["length_m"]] for n, d in des.items()}; e["report"] = des
+        P = _props(p, "nodes")
+        for n, (key, x) in e["lengths"].items():
+            if n in p.nodes.index: P.setdefault(n, {})[key] = float(x)
+        return False
     if op == "set_props":
         table = e.get("table", "nodes")
         if table not in ("nodes", "links"): raise ValueError("table: nodes or links")

@@ -36,7 +36,7 @@ NODE_KINDS = {"Manhole": "manhole", "Outfall": "outfall", "WetWell": "wetwell", 
 LINK_TABLES = {"Conduit": "conduit", "Channel": "channel", "GutterLink": "gutter", "LateralLink": "lateral"}
 # SewerGEMS's option lists (enum values as stored), docs/INLETS_HEC22.md
 INLET_TYPE = {0: "max_capacity", 1: "rating_curve", 2: "full_capture", 3: "catalog", 4: "percent_capture"}
-GUTTER_SHAPE = {0: "conventional", 1: "trapezoidal", 2: "conventional", 3: "conventional", 4: "v_shaped"}
+GUTTER_SHAPE = {0: "conventional", 1: "trapezoidal", 2: "irregular", 3: "parabolic", 4: "v_shaped"}
 CATALOG_CLASS = {0: "combination", 1: "curb", 2: "grate", 3: "grate", 4: "slot"}
 GRATE = {0: "p50", 1: "p30", 2: "curved_vane", 3: "tilt_bar_45", 4: "tilt_bar_30", 5: "p50x100", 6: "reticuline"}
 THROAT = {0: "horizontal", 1: "inclined", 2: "vertical"}
@@ -129,6 +129,8 @@ def export(sqlite_path, out, log=None, only=None):
     cbcat = _df(con, "select DomainElementID, AlternativeID, CatalogInletType_InletID as inlet from CatchBasin_Physical_InletType_CatalogInletType")
     cbrc = _df(con, "select DomainElementID, AlternativeID, HydologicRatingCurveListItem_TotalInletInflow as qin, HydologicRatingCurveListItem_InletCapture as qc from CatchBasin_Physical_HydologicRatingCurveListItem order by ItemID")
     cbhy = _df(con, "select DomainElementID, AlternativeID, Hydrologic_CarryoverFlow as q from CatchBasin_Hydrologic_Data")
+    cbpar = _df(con, "select DomainElementID, AlternativeID, ParabolicGutterType_Height as h, ParabolicGutterType_Width as w from CatchBasin_Physical_GutterShape_ParabolicGutterType")
+    cbirr = _df(con, "select DomainElementID, AlternativeID, IrregularGutterCrossSection_Station as x, IrregularGutterCrossSection_RelativeElevation as z from CatchBasin_Physical_IrregularGutterCrossSection order by ItemID")
     inlcat = _df(con, "select * from Inlet")
     inlslot = _df(con, "select * from Inlet_InletType_SlotType")
     gutp = _df(con, "select * from GutterLink_Physical_Data")
@@ -249,7 +251,7 @@ def export(sqlite_path, out, log=None, only=None):
                                      "flow_m3d", "velocity_ms", "depth_in_m", "depth_out_m", "kind"]).to_csv(os.path.join(out, f"conduits_{f}.csv"), index=False)
         _props(out, f, kind, link_kind, label, pick, alt, sid, ttype, LD,
                dict(cbp=cbp, cbpc=cbpc, cbmx=cbmx, cbcat=cbcat, cbrc=cbrc, cbhy=cbhy, inlcat=inlcat, inlslot=inlslot, gutp=gutp,
-                    tapr=tapr, tapp=tapp, hwbc=hwbc, hwtw=hwtw, trp=trp, avel=avel))
+                    tapr=tapr, tapp=tapp, hwbc=hwbc, hwtw=hwtw, trp=trp, avel=avel, cbpar=cbpar, cbirr=cbirr))
         # pumps and force mains: the suction (pressure pipes and junctions from the wet well to the pump) is left out
         if pumps or ppipes:
             PD = pick(ppd, alt(sid, ttype(ppd)) if len(ppd) else None); PH = pick(pph, alt(sid, ttype(pph)) if len(pph) else None)
@@ -354,6 +356,14 @@ def _props(out, f, kind, link_kind, label, pick, alt, sid, ttype, LD, T):
                 if cls == "slot" and len(slot) and int(cat.inlet[i]) in slot.index:
                     s_ = slot.loc[int(cat.inlet[i])]; d["slot_width_m"] = num(s_.get("SlotType_SlotWidth"), FT)
         if i in hy.index and hy.q[i]: d["carryover_ls"] = num(hy.q[i], LS_PER_CFS)
+        if d["gutter_shape"] == "parabolic":
+            pa = at(T["cbpar"])
+            if i in pa.index: d["parabola_height_m"] = num(pa.h[i], FT); d["parabola_width_m"] = num(pa.w[i], FT)
+        if d["gutter_shape"] == "irregular" and len(T["cbirr"]):
+            rows = T["cbirr"][T["cbirr"].DomainElementID == i]
+            if len(rows):
+                a0 = rows.AlternativeID.iloc[0]; rows = rows[rows.AlternativeID == a0]
+                d["gutter_section"] = [[float(x) * FT, float(z) * FT] for x, z in zip(rows.x, rows.z)]
         P["nodes"][label.get(i, str(i))] = {k: v for k, v in d.items() if v is not None and not (isinstance(v, float) and v == 0 and k not in ("road_cross_slope",))}
     tr, hb, tw = at(T["trp"]), at(T["hwbc"]), at(T["hwtw"])
     for i, k in kind.items():

@@ -64,7 +64,7 @@ def idf_intensity(idf, minutes):
     return float(np.exp(np.interp(math.log(max(minutes, d.min())), np.log(d), np.log(i))))
 
 
-def rational(project, inlet_rows=None):
+def rational(project, inlet_rows=None, design=None):
     """The rational method on every conduit: a steady storm run. Returns (rows by link id, summary). A catch basin's
     inlet takes what it captures of its surface flow into the pipes (engine/inlets.py, HEC-22): its catchments' C A in
     that proportion, and the captured part of the flow its gutter brings as a known flow; the rest goes down its gutter
@@ -86,7 +86,7 @@ def rational(project, inlet_rows=None):
     KNOWN = {}                                                             # flows that enter as they are (m3/s)
     if (raw.nodes.kind == "catch_basin").any():
         local = {n: CA[n] * idf_intensity(idf, TC[n]) / 360.0 for n in CA if n in raw.nodes.index and raw.nodes.kind[n] == "catch_basin"}
-        rows_in = inlets.route(raw, local)
+        rows_in = inlets.route(raw, local, design)
         for n, r in rows_in.items():
             f = r["q_captured_ls"] / r["q_gutter_ls"] if r["q_gutter_ls"] > 0 else 1.0
             if n in CA: CA[n] *= f

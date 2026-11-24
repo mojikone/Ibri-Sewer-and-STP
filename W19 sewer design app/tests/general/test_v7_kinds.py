@@ -249,3 +249,49 @@ def test_storm_run_custom_inlets_and_the_fallback():
     W.apply(p, dict(op="set_props", table="nodes", ids=["CB2"], values=dict(street_halfwidth_m=None)))
     assert "CB2_BYP" not in swmm_inp.from_project(p)
     assert any("no street" in m["message"] for m in validate.run(p))
+
+
+def test_parabolic_and_irregular_gutters():
+    """SewerGEMS's other two gutter shapes. An irregular section drawn as a uniform cross slope from the curb carries what
+    the conventional gutter does; a parabolic crown (z = H (1 - (1 - x/W)^2)) carries Izzard's integral of its own depths;
+    both capture through the same HEC-22 inlets."""
+    import math
+    import numpy as np
+    conv = I.Gutter(G848)
+    irr = I.Gutter(dict(G848, gutter_shape="irregular", gutter_section=[[0, 0.0], [3, 0.075], [6, 0.15]]))
+    d = conv.depth_for(0.19)
+    assert irr.flow(d)[0] == pytest.approx(conv.flow(d)[0], rel=0.002) and irr.frontal_ratio(d, 0.6) == pytest.approx(conv.frontal_ratio(d, 0.6), rel=0.002)
+    par = I.Gutter(dict(G848, gutter_shape="parabolic", parabola_height_m=0.12, parabola_width_m=6.0))
+    d = 0.06; x1 = 6.0 * (1 - math.sqrt(1 - d / 0.12)); x = np.linspace(0, x1, 20001); y = d - 0.12 * (1 - (1 - x / 6.0) ** 2)
+    want = math.sqrt(0.04) / 0.016 * np.trapezoid(np.clip(y, 0, None) ** (5 / 3), x)
+    assert par.flow(d)[0] == pytest.approx(want, rel=0.002) and par.span(d)[1] == pytest.approx(x1)
+    for g in (dict(gutter_shape="parabolic", parabola_height_m=0.12, parabola_width_m=6.0), dict(gutter_shape="irregular", gutter_section=[[0, 0.0], [0.6, 0.03], [6, 0.15]])):
+        q, det = I.capture(0.1, dict(G848, inlet_class="grate", grate_type="p50", grate_length_m=0.6, grate_width_m=0.6, **g))
+        assert 0 < q < 0.1 and 0 < det["Eo"] < 1
+    with pytest.raises(ValueError, match="three rows"):
+        K.check_props("catch_basin", dict(gutter_section=[[0, 0], [1, 0.1]]))
+
+
+def test_design_inlet_opening():
+    """SewerGEMS's Design inlet opening: CB1's curb opening takes the shortest design length meeting 80 % on grade at
+    the flow reaching it; a sag inlet the shortest meeting its maximum depth; the lengths are written as one edit."""
+    p = _net()
+    for cid, cb in (("C1", "CB1"), ("C2", "CB2")):
+        W.apply(p, dict(op="add_catchment", id=cid, outlet=cb, area_ha=0.3, coords=[[0, 0], [100, 0], [100, 100], [0, 100]]))
+        W.apply(p, dict(op="set_hydrology", ids=[cid], C=0.9, tc_min=10))
+    p.rain = dict(idf=dict(durations_min=[5, 10, 30, 60], intensities=[150.0, 120.0, 70.0, 45.0]))
+    gut = dict(road_cross_slope=0.02, n_gutter=0.016, long_slope=0.01)
+    W.apply(p, dict(op="set_props", table="nodes", ids=["CB1"], values=dict(inlet_type="catalog", inlet_class="curb", curb_length_m=1.5, curb_height_m=0.15,
+                                                                           design_opening=True, design_lengths="1.5, 3, 4.5, 6, 7.5", min_efficiency_pc=80, **gut)))
+    W.apply(p, dict(op="set_props", table="nodes", ids=["CB2"], values=dict(inlet_type="catalog", inlet_class="grate", grate_type="p50", grate_length_m=0.6, grate_width_m=0.6,
+                                                                           location="in_sag", max_gutter_depth_m=0.10, design_opening=True, design_lengths="0.6, 0.9, 1.2, 1.5, 1.8, 2.4", **gut)))
+    e = dict(op="design_inlets"); W.apply(p, e)
+    d1, d2 = p.props["nodes"]["CB1"], p.props["nodes"]["CB2"]
+    q1 = e["report"]["CB1"]["q_ls"] / 1000
+    assert d1["curb_length_m"] in (1.5, 3, 4.5, 6, 7.5) and I.capture(q1, d1)[0] / q1 >= 0.8
+    shorter = [x for x in (1.5, 3, 4.5, 6, 7.5) if x < d1["curb_length_m"]]
+    assert all(I.capture(q1, dict(d1, curb_length_m=x))[0] / q1 < 0.8 for x in shorter)
+    q2 = e["report"]["CB2"]["q_ls"] / 1000
+    assert e["report"]["CB2"]["result"] == "met" and I.capture(q2, d2)[1]["depth_m"] <= 0.10
+    assert all(I.capture(q2, dict(d2, grate_length_m=x))[1]["depth_m"] > 0.10 for x in (0.6, 0.9, 1.2, 1.5, 1.8, 2.4) if x < d2["grate_length_m"])
+    assert e["lengths"]["CB1"] == ["curb_length_m", d1["curb_length_m"]]

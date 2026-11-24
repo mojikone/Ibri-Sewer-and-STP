@@ -584,6 +584,7 @@ def edit(pid: str, sid: str, e: Edit, want_model: bool = Query(False, alias="mod
             s.undo(sid); s.scenarios[sid].redo.pop(); s.solve(sid)
             raise HTTPException(400, f"not applied: the model could not be solved with it ({type(x).__name__}: {x})")
     made = {k: ev[k] for k in ("end_id", "mid_ids", "link_ids") if k in ev}       # what a layout run created
+    if ev.get("op") == "design_inlets": made["inlets"] = ev.get("report") or {}
     out = dict(summary=clean(summ), structural=structural, scenario=s.scenarios[sid].to_dict(), **({"created": made} if made else {}))
     if want_model or structural: out["model"] = model(pid, sid)
     if want_results: out["results"] = results(pid, sid)

@@ -408,7 +408,7 @@ function updateScenario(sc) {
    edit's answer carries the model when it must be re-read and the results when the screen is drawn now, instead of
    two more requests after it */
 const REREAD_OPS = ["set_many", "set_loads", "lock", "set_section", "set_infiltration", "set_storage", "set_pump", "set_prototype", "batch", "set_unit_rows", "set_ppipe", "set_outlet", "set_tailwater", "set_hydrology", "set_controls",
-  "add_node", "add_link", "add_run", "split_link", "delete", "move_node", "reconnect", "reverse", "set_coords", "add_catchment", "set_props"];
+  "add_node", "add_link", "add_run", "split_link", "delete", "move_node", "reconnect", "reverse", "set_coords", "add_catchment", "set_props", "design_inlets"];
 async function exec(op, more) {
   const guess = REREAD_OPS.includes(op.op) || (op.op === "set" && (op.field === "kind" || (op.table === "nodes" && op.field === "invert")));
   const q = [guess ? "model=1" : "", more ? "" : "results=1"].filter(Boolean).join("&");
@@ -662,20 +662,23 @@ async function act(ll, mods) {
            into a pump?" A pump here is the link out of a wet well (SWMM's convention; SewerGEMS draws it as a node right
            after the wet well, and the reader turns that into the same thing). So a manhole clicked becomes the pump's wet
            well, after asking; an empty spot makes a new wet well; the next click is where the pump delivers. */
+        // a sewer's pump station draws from a wet well; a stormwater one from a storage sump or pond (the engineer,
+        // 2026-11-24: "when the project is stormwater, a pump station is not a wet well"): Settings > Project > Network type
+        const sump = typeof pumpSump === "function" ? pumpSump() : "wetwell", sName = sump === "storage" ? "storage sump" : "wet well", sPre = sump === "storage" ? "PO-" : "WW-";
         const f = nn && state.model.nodes.get(nn.id), was = f && f.properties.kind;
-        if (nn && ["outfall", "pressure_junction", "air_valve"].includes(was)) { toast(`A pump draws from a wet well: ${nn.id} is ${aKind(was)}. Click a wet well, or a manhole to make it one.`, "info"); return; }
+        if (nn && ["outfall", "pressure_junction", "air_valve"].includes(was)) { toast(`A pump draws from a ${sName}: ${nn.id} is ${aKind(was)}. Click a ${sName}, or a structure to make it one.`, "info"); return; }
         if (nn && !["wetwell", "storage"].includes(was)) {
-          if (!await askChange("morph", `Put a pump at ${nn.id}?`, `A pump is drawn out of a wet well: ${nn.id} (${kindName(was)}) becomes the pump station's wet well, keeping its id, levels and pipes. Then click where the pump delivers, the start of its force main.`, "Make it the wet well")) return;
-          await exec({ op: "set", table: "nodes", ids: [nn.id], field: "kind", value: "wetwell" }); toast(`${nn.id}: ${kindName(was)} changed to wet well (Ctrl+Z undoes).`, "info");
+          if (!await askChange("morph", `Put a pump at ${nn.id}?`, `A pump is drawn out of a ${sName}: ${nn.id} (${kindName(was)}) becomes the pump station's ${sName}, keeping its id, levels and pipes. Then click where the pump delivers, the start of its force main.`, `Make it the ${sName}`)) return;
+          await exec({ op: "set", table: "nodes", ids: [nn.id], field: "kind", value: sump }); toast(`${nn.id}: ${kindName(was)} changed to ${sName} (Ctrl+Z undoes).`, "info");
         }
-        if (!nn && !nl) { sid = newId("nodes", "WW-"); await exec({ op: "add_node", id: sid, kind: "wetwell", ...lonlat }); }
+        if (!nn && !nl) { sid = newId("nodes", sPre); await exec({ op: "add_node", id: sid, kind: sump, ...lonlat }); }
       }
       const startKind = { gutter: "catch_basin", lateral: "property_connection", channel: "cross_section" }[t];
       if (startKind && !nn && !nl) { sid = newId("nodes", KINDS[startKind][3]); await exec({ op: "add_node", id: sid, kind: startKind, ...lonlat }); }
       if (!sid && nl) {                                               // start on a pipe: split it there
-        const sk = t === "pump" ? "wetwell" : t === "ppipe" ? "pressure_junction" : "manhole";
+        const sk = t === "pump" ? (typeof pumpSump === "function" ? pumpSump() : "wetwell") : t === "ppipe" ? "pressure_junction" : "manhole";
         if (!await askSplit(nl.id, sk)) return;
-        sid = newId("nodes", t === "pump" ? "WW-" : t === "ppipe" ? "J-" : "MH-");
+        sid = newId("nodes", t === "pump" ? (sk === "storage" ? "PO-" : "WW-") : t === "ppipe" ? "J-" : "MH-");
         await exec(splitOp(nl, sk, sid));
       }
       if (sid) { state.pipeStart = sid; highlight(); $("#hint").textContent = t === "pump" ? `Pump from ${sid}: now click where it delivers (an empty spot makes the force main's first junction).` : "Now click the end node."; }
@@ -1437,6 +1440,8 @@ function renderSettings() {
   };
   const loadOpts = sets.map(s => [s, s]);
   host.innerHTML =
+    `<fieldset><legend>Network</legend>${row("network", "Network type", "select", [["auto", "Auto (from the model)"], ["sanitary", "Sanitary sewer"], ["storm", "Stormwater"], ["combined", "Combined"]])}` +
+      `<p class="muted small">A stormwater pump station draws from a storage sump or pond; a sewer's from a wet well. Auto: sanitary when the model has sanitary loads, stormwater when it has catchments or catch basins and none.</p></fieldset>` +
     `<fieldset><legend>Friction</legend>${row("friction.method", "Method", "select", [["colebrook", "Colebrook-White"], ["manning", "Manning"]])}${row("friction.ks_mm", "ks (mm)", "num")}${row("friction.manning_n", "Manning n", "num")}</fieldset>` +
     `<fieldset><legend>Peaking (extreme flows)</legend>${row("peaking.method", "Method", "select", [["table", "Table (flow, L/s)"], ["peltier", "Peltier (flow, G201)"], ["merrimack", "Merrimack (flow, G201)"], ["federov", "Federov (flow)"], ["harmon", "Harmon (population)"], ["ten_states", "Ten States (population)"], ["babbitt", "Babbitt (population)"], ["constant", "Constant"], ["none", "None (factor 1)"]])}` +
       `${row("peaking.constant", "Constant factor", "num")}${row("peaking.cutoff", "Cutoff (largest factor)", "num")}${row("peaking.pe_per_m3d", "People per m3/d of plain loads", "num")}` +
