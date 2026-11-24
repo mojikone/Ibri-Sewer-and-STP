@@ -104,6 +104,14 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
     this computer still works; Copernicus 30 m is fetched on request (a surface model: screening only, flagged by
     Validate); contours or spot levels (SHP, GPKG, GeoJSON, DXF; DWG when the free ODA File Converter is installed) by a
     TIN; each structure keeps the source of its ground level. The map box has a north arrow and Fit all (F29).
+- **v8 (2026-11-24): accounts (F61).** Over the shared address the sign-in is Cloudflare Access's (an emailed code,
+  Google or any identity provider set there); the app checks its signed token (`api/accounts.py`) and never keeps a
+  password. Each project belongs to the account that made it, is kept on the server under it and opens from any device
+  (File > My projects, with Remove); other accounts cannot open it, through the assistant either; the administrator
+  opens any and has Users; the ribbon shows the email and Sign out; the assistant's daily limit is per account. On
+  this computer nothing changes. Settings: `access.json` (team, the Access application's AUD tag, admins) and the
+  accounts' folder sit in the server's own folder outside the repository (`python -m sewerapp.api` looks there); without
+  `access.json` the app works as before. Who may sign in, and how, is set in Cloudflare (Zero Trust Free: 50 users).
 - **v7 (2026-11-24): every element SewerGEMS draws, catch basins by HEC-22, ask-first morphs, drawing at the click
   (F51-F55).**
   - **Elements:** manhole, catch basin, outfall, headwall, transition, cross section, wet well, pond, pressure junction,
