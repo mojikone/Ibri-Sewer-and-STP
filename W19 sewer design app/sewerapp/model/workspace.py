@@ -3,7 +3,8 @@ list of edits (by element id), with undo and redo. Every edit re-solves at once 
 
 Edit ops (dicts with "op"):
   set        {table: nodes|links|catchments, ids: [...], field, value}         one field on one or many elements (bulk)
-  set_values {table, field, values: {id: value}}                             one field, a value per element (imports)
+  set_values {table, field, values: {id: value}, source?}                    one field, a value per element (imports); for nodes'
+                             ground, `source` records where the levels came from (TRex), otherwise the record is cleared
   set_many   {table, field, values: {id: value}}                             as `set`, a value per element (a pasted column):
                                                                              node inverts carry link ends; one undo step
   set_loads  {set, values: {node: m3/d}}                                     unit loads of many nodes, one undo step
@@ -44,6 +45,14 @@ from sewerapp.engine import steady
 from sewerapp.model.general import Project, NODE_KINDS, LINK_KINDS, LINK_COLS, NODE_COLS, CATCH_COLS
 
 DEFAULT_DEPTH = 1.5
+
+
+def _ground_src(p, ids, source):
+    """Where these structures' ground levels came from: `source` (TRex), or cleared by any other write or a move."""
+    g = p.__dict__.setdefault("ground_src", {})
+    for i in ids:
+        if source: g[str(i)] = str(source)[:200]
+        else: g.pop(str(i), None)
 
 
 def _new_id(df, prefix):
@@ -108,7 +117,8 @@ def apply(p, e):
                 allowed = NODE_KINDS if e["table"] == "nodes" else LINK_KINDS
                 if v not in allowed: raise ValueError(f"kind must be one of {allowed}")
             t.loc[ids, e["field"]] = v
-        if e["table"] == "nodes" and e["field"] in ("x", "y"): _relength(p, ids); return True
+        if e["table"] == "nodes" and e["field"] == "ground": _ground_src(p, ids, e.get("source"))
+        if e["table"] == "nodes" and e["field"] in ("x", "y"): _ground_src(p, ids, None); _relength(p, ids); return True
         return False
     if op == "set_many":
         structural = False
@@ -127,6 +137,7 @@ def apply(p, e):
         if len(missing): raise ValueError(f"no {e['table'][:-1]} {list(missing[:3])}")
         if e["field"] not in t.columns: raise ValueError(f"{e['table']} has no field {e['field']}")
         t.loc[v.index, e["field"]] = v.values
+        if e["table"] == "nodes" and e["field"] == "ground": _ground_src(p, list(v.index), e.get("source"))
         if e["table"] == "links" and e["field"] == "dn_mm":
             ins = [p.inside_of(x) for x in v.values]
             t.loc[v.index, "inside_mm"] = [a if a == a else float(x) for a, x in zip(ins, v.values)]
@@ -179,14 +190,14 @@ def apply(p, e):
         live_l, live_n = set(p.links.index), set(p.nodes.index)
         for dct in (p.pumps, p.ppipes, p.outlets, p.infil, p.sections):
             for k in [k for k in dct if k not in live_l]: dct.pop(k)
-        for dct in (p.storage, p.tailwater):
+        for dct in (p.storage, p.tailwater, p.ground_src):
             for k in [k for k in dct if k not in live_n]: dct.pop(k)
         for S in p.unit_rows.values():
             for k in [k for k in S if k not in live_n]: S.pop(k)
         p.controls = [r for r in (p.controls or []) if r.get("link") in live_l and (r.get("if") != "node" or r.get("node") in live_n)]
         return True
     if op == "move_node":
-        p.nodes.loc[str(e["id"]), ["x", "y"]] = [float(e["x"]), float(e["y"])]; _relength(p, [str(e["id"])]); return True
+        p.nodes.loc[str(e["id"]), ["x", "y"]] = [float(e["x"]), float(e["y"])]; _ground_src(p, [str(e["id"])], None); _relength(p, [str(e["id"])]); return True
     if op == "split_link":
         lid = str(e["id"]); L = p.links.loc[lid].copy()
         pres = L.kind == "pressure_pipe"

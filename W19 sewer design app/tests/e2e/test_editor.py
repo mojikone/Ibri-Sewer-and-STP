@@ -1168,3 +1168,74 @@ def test_v5_phone_design_changes_the_elements_and_the_assistants_scenario_opens(
     assert pg.evaluate("window.ed.state.sid") != "base"
     assert errs == [], errs
     ctx.close()
+
+
+IBRI_TERRAIN = r"D:\Mojtaba\Renardet\2621 Ibri Sewer STP\Data\Terrain\Sat_0p5m"
+
+
+@pytest.mark.skipif(not os.path.isdir(IBRI_TERRAIN), reason="the engineer's Ibri terrain is on this computer only")
+def test_v5_terrain_read_in_the_browser_matches_the_servers_reading(server, browser):
+    """The gate for F28: 200 Ibri structures read in the browser (nothing uploaded) from the 7.4 GB 0.5 m GeoTIFF, the
+    5 m GeoTIFF and the VRT over both, against rasterio on the same files. Exact on a GeoTIFF; on the VRT exact where the
+    0.5 m source covers, within 1 cm where the 5 m source is resampled bilinearly."""
+    import numpy as np
+    from sewerapp.io import ibri_sample
+    from sewerapp.engine import tools_v4
+    p = ibri_sample.build("SC1-2056"); ids = list(p.nodes.index[::max(1, len(p.nodes) // 200)][:200])
+    ctx = browser.new_context(viewport={"width": 1400, "height": 900}); pg = ctx.new_page(); pg.set_default_timeout(180000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
+    pg.evaluate("fetch('/api/g/projects/sample/SC1-2056', {method: 'POST'}).then(r => r.json()).then(i => openProject(i))"); idle(pg)
+    pg.evaluate("(() => { const i = document.createElement('input'); i.type = 'file'; i.multiple = true; i.id = 't6-in'; document.body.appendChild(i); })()")
+    def browser_levels(names):
+        pg.set_input_files("#t6-in", [os.path.join(IBRI_TERRAIN, n) for n in names])
+        return pg.evaluate("ids => terrainLevels(document.getElementById('t6-in').files, ids).then(r => r.levels)", ids)
+    for names, ref in ((["ibri_0p5_blend.tif"], "ibri_0p5_blend.tif"), (["ibri_blend.tif"], "ibri_blend.tif"),
+                       (["IBRI_0p5_VRT2.vrt", "ibri_blend.tif", "ibri_0p5_blend.tif"], "IBRI_0p5_VRT2.vrt")):
+        got = browser_levels(names); want, bad = tools_v4.trex(p, os.path.join(IBRI_TERRAIN, ref), ids)
+        both = [i for i in ids if got.get(i) is not None and i in want]
+        assert len(both) >= 0.9 * len(want) and not [i for i in want if got.get(i) is None], (names, len(both), len(want))
+        d = np.array([got[i] - want[i] for i in both])
+        tol = 1e-6 if ref.endswith(".tif") else 0.01
+        assert np.abs(d).max() <= tol, (names, float(np.abs(d).max()), int((np.abs(d) > tol).sum()))
+    # a VRT without its files names what is missing
+    pg.set_input_files("#t6-in", [os.path.join(IBRI_TERRAIN, "IBRI_0p5_VRT2.vrt")])
+    msg = pg.evaluate("ids => terrainLevels(document.getElementById('t6-in').files, ids).then(() => '', e => e.message)", ids[:3])
+    assert "ibri_blend.tif" in msg and "ibri_0p5_blend.tif" in msg, msg
+    assert errs == [], errs
+    ctx.close()
+
+
+def test_v5_trex_dialog_reads_a_picked_geotiff_and_keeps_its_source(server, browser, tmp_path):
+    """F28 in the dialog: Choose files... (a GeoTIFF on this device, read here), Apply, the ground and its source in
+    Properties; Copernicus offered for a project in a real CRS; on a phone a VRT is said not to work."""
+    import json as _json, numpy as np, rasterio
+    from rasterio.transform import from_origin
+    tif = str(tmp_path / "dem.tif")
+    with rasterio.open(tif, "w", driver="GTiff", width=100, height=100, count=1, dtype="float32", crs="EPSG:32640", tiled=True, blockxsize=32, blockysize=32,
+                       transform=from_origin(445000, 2565100, 2, 2), nodata=-9999) as d:
+        d.write(np.fromfunction(lambda r, c: 300 + c * 0.1, (100, 100), dtype=float).astype("float32"), 1)
+    def post(path, body):
+        req = urllib.request.Request(server + "/api/g" + path, data=_json.dumps(body).encode(), headers={"Content-Type": "application/json"}, method="POST")
+        return _json.loads(urllib.request.urlopen(req).read())
+    info = post("/projects/new", dict(name="terrain", crs=32640)); B = f"/projects/{info['id']}/scenarios/base/edit"
+    post(B, dict(op="add_node", id="A", x=445021.0, y=2565001.0)); post(B, dict(op="add_node", id="B", kind="outfall", x=445101.0, y=2565001.0))
+    post(B, dict(op="add_link", id="P", from_node="A", to_node="B"))
+    ctx = browser.new_context(viewport={"width": 1400, "height": 900}); pg = ctx.new_page(); pg.set_default_timeout(60000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
+    pg.evaluate(f"jget('/projects/{info['id']}').then(i => openProject(i))"); idle(pg)
+    pg.evaluate("openTRex()")
+    assert pg.is_enabled("[data-testid=trex-cop]") and "DLR" in pg.inner_text("#dlg-trex")
+    with pg.expect_file_chooser() as fc: pg.click("[data-testid=trex-files]")
+    fc.value.set_files(tif)
+    pg.click("#dlg-trex [data-act=ok]"); pg.wait_for_selector("[data-testid=trex-done]"); idle(pg)
+    a = pg.evaluate("window.ed.state.model.nodes.get('A').properties")
+    assert abs(a["ground"] - (300 + 10 * 0.1)) < 1e-4 and a["ground_src"] == "file dem.tif, 2 m cells", a   # column 10 of the grid
+    assert abs(a["invert"] - (a["ground"] - 1.5)) < 1e-6                                                   # the depth kept
+    pg.evaluate("document.getElementById('dlg-trex').hidden = true; window.ed.selectElement('nodes', 'A')")
+    expect(pg.locator("#prop-ground_src")).to_have_value("file dem.tif, 2 m cells")
+    pg.evaluate("delete window.showDirectoryPicker; window.matchMedia = q => ({ matches: /coarse/.test(q), addEventListener() {}, removeEventListener() {} }); openTRex()")
+    expect(pg.get_by_test_id("trex-phone")).to_be_visible()
+    assert errs == [], errs
+    ctx.close()

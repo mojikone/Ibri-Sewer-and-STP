@@ -457,7 +457,8 @@ def model(pid: str, sid: str):
     n = p.nodes; lon, lat = coords.to_display(p.crs, n.x.values, n.y.values); ll = dict(zip(n.index, zip(lon, lat)))
     nodes = [dict(type="Feature", id=i, geometry=dict(type="Point", coordinates=[float(ll[i][0]), float(ll[i][1])]),
                   properties=clean(dict(id=i, **r, **({"storage": p.storage[i]} if i in getattr(p, "storage", {}) else {}),
-                                        **({"tailwater": p.tailwater[i]} if i in getattr(p, "tailwater", {}) else {}))))
+                                        **({"tailwater": p.tailwater[i]} if i in getattr(p, "tailwater", {}) else {}),
+                                        **({"ground_src": p.ground_src[i]} if i in getattr(p, "ground_src", {}) else {}))))
              for i, r in zip(n.index, n.to_dict("records"))]
     links = []; sections = (getattr(p, "meta", None) or {}).get("sections", {})
     for i, r in zip(p.links.index, p.links.to_dict("records")):
@@ -604,19 +605,84 @@ async def trex(pid: str, sid: str, request: Request, file: UploadFile | None = F
             p = s.model(sid)
             try: lv, bad = tools_v4.trex(p, src, [i for i in ids.split(",") if i] or None)
             except Exception as x: raise HTTPException(400, f"the terrain could not be read: {x}")
-            if not lv: raise HTTPException(400, "no structure lies on the terrain's cells")
-            ops = [dict(op="set_values", table="nodes", field="ground", values=lv)]
-            if keep_depth:
-                g0, i0 = p.nodes.ground.astype(float), p.nodes.invert.astype(float)
-                inv = {n: lv[n] - float(g0[n] - i0[n]) for n in lv if g0[n] == g0[n] and i0[n] == i0[n]}
-                if inv: ops.append(dict(op="set_inverts", values=inv))
-            dz = [lv[n] - float(p.nodes.ground[n]) for n in lv if p.nodes.ground[n] == p.nodes.ground[n]]
-            try: s.edit(sid, dict(op="batch", ops=ops)); _, summ = s.solve(sid)
-            except (ValueError, KeyError) as x: raise HTTPException(400, str(x))
+            name = os.path.basename(path) if path else _safe_name(getattr(file, "filename", ""), "terrain.tif")
+            return _apply_levels(s, sid, lv, bad, keep_depth, f"file {name}")
     finally:
         if d: shutil.rmtree(d, ignore_errors=True)
-    dz = dz or [0.0]
-    return clean(dict(updated=len(lv), no_data=bad[:50], no_data_count=len(bad), mean_change_m=float(np.mean(dz)), max_change_m=float(np.max(np.abs(dz))), summary=summ, scenario=s.scenarios[sid].to_dict()))
+
+
+def _apply_levels(s, sid, lv, bad, keep_depth, source):
+    """TRex's one undoable edit (under _lock): the ground levels with their source, and the inverts when depths are kept."""
+    p = s.model(sid)
+    lv = {n: float(v) for n, v in lv.items() if n in p.nodes.index and v == v}       # structures deleted meanwhile drop out
+    if not lv: raise HTTPException(400, "no structure lies on the terrain's cells")
+    ops = [dict(op="set_values", table="nodes", field="ground", values=lv, source=source)]
+    if keep_depth:
+        g0, i0 = p.nodes.ground.astype(float), p.nodes.invert.astype(float)
+        inv = {n: lv[n] - float(g0[n] - i0[n]) for n in lv if g0[n] == g0[n] and i0[n] == i0[n]}
+        if inv: ops.append(dict(op="set_inverts", values=inv))
+    dz = [lv[n] - float(p.nodes.ground[n]) for n in lv if p.nodes.ground[n] == p.nodes.ground[n]] or [0.0]
+    try: s.edit(sid, dict(op="batch", ops=ops)); _, summ = s.solve(sid)
+    except (ValueError, KeyError) as x: raise HTTPException(400, str(x))
+    return clean(dict(updated=len(lv), no_data=list(bad)[:50], no_data_count=len(bad), mean_change_m=float(np.mean(dz)), max_change_m=float(np.max(np.abs(dz))),
+                      source=source, summary=summ, scenario=s.scenarios[sid].to_dict()))
+
+
+class TerrainPts(BaseModel):
+    crs: str | None = None                       # the terrain's CRS: "EPSG:32640" or a WKT (a VRT's SRS)
+    ids: list[str] | None = None
+
+
+@router.post("/projects/{pid}/scenarios/{sid}/trex/points")
+def trex_points(pid: str, sid: str, b: TerrainPts):
+    """The structures in the terrain's own CRS: the browser reads the engineer's GeoTIFF or VRT where it is (nothing is
+    uploaded) and sends back only the levels (trex/levels)."""
+    from sewerapp.engine import terrain
+    s = _s(pid)
+    with _lock: p = s.model(sid)
+    if b.crs is not None and len(b.crs) > 20000: raise HTTPException(400, "the coordinate system text is too long")
+    try: ids, x, y = terrain.points_in(p, b.crs, b.ids)
+    except ValueError as x: raise HTTPException(400, str(x))
+    return dict(ids=ids, x=x, y=y, project_crs=p.crs)
+
+
+class TerrainLevels(BaseModel):
+    levels: dict[str, float | None]
+    keep_depth: bool = True
+    name: str = "terrain"                        # the file's name, for the record of where the levels came from
+    res_m: float | None = None
+
+
+@router.post("/projects/{pid}/scenarios/{sid}/trex/levels")
+def trex_levels(pid: str, sid: str, b: TerrainLevels):
+    s = _s(pid)
+    lv = {str(k): v for k, v in b.levels.items() if v is not None and np.isfinite(v) and -500 < v < 9000}
+    bad = [str(k) for k in b.levels if str(k) not in lv]
+    name = _safe_name(b.name, "terrain")[:120]
+    src = f"file {name}" + (f", {b.res_m:g} m cells" if b.res_m and b.res_m > 0 else "")
+    with _lock: return _apply_levels(s, sid, lv, bad, b.keep_depth, src)
+
+
+class TerrainCop(BaseModel):
+    keep_depth: bool = True
+    ids: list[str] | None = None
+
+
+@router.post("/projects/{pid}/scenarios/{sid}/trex/copernicus")
+def trex_copernicus(pid: str, sid: str, b: TerrainCop):
+    """Ground levels from the Copernicus GLO-30 surface model, fetched a window at a time from its public tiles (only
+    the cells around the network). Read outside the app lock; applied under it."""
+    from sewerapp.engine import terrain
+    s = _s(pid)
+    with _lock:
+        p = s.model(sid)
+        from sewerapp.model.general import Project
+        q = Project(name="t", crs=p.crs); q.nodes = p.nodes[["x", "y"]].copy()     # what the read needs, nothing shared
+    try: lv, bad, read = terrain.copernicus(q, b.ids)
+    except ValueError as x: raise HTTPException(400, str(x))
+    if not lv: raise HTTPException(400, "Copernicus has no level at these structures (sea, or no tile there)")
+    with _lock: out = _apply_levels(s, sid, lv, bad, b.keep_depth, terrain.COPERNICUS_SRC)
+    return out | dict(tiles=read, notice=terrain.COPERNICUS_NOTICE, liability=terrain.COPERNICUS_LIABILITY)
 
 
 @router.get("/projects/{pid}/scenarios/{sid}/rational")

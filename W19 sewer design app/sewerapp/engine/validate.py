@@ -76,5 +76,9 @@ def run(p, res=None):
         if max(da, db) > 1.0:
             add("warning", "links", lid, f"its drawn line misses {'its upstream' if da >= db else 'its downstream'} structure by {max(da, db):.1f} m "
                                          f"(the line {sum(math.dist(c[i][:2], c[i + 1][:2]) for i in range(len(c) - 1)):.1f} m, the structures {math.dist((xs[a], ys[a]), (xs[b], ys[b])):.1f} m apart)")
+    cop = [n for n, v in (getattr(p, "ground_src", None) or {}).items() if str(v).startswith("Copernicus") and n in ids]
+    if cop:                                                                       # one line, not one per structure
+        add("warning", "nodes", cop[0], f"{len(cop)} structure{'s take' if len(cop) > 1 else ' takes'} its ground level from the Copernicus 30 m surface model "
+                                        f"(roofs and trees included, metres of error, EGM2008 heights): screening only, not design levels; replace them from a survey or a finer terrain")
     order = {"error": 0, "warning": 1}
     return sorted(out, key=lambda x: (order[x["level"]], x["table"], x["id"]))

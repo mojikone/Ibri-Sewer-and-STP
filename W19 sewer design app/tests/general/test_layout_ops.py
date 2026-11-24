@@ -165,3 +165,54 @@ def test_split_names_the_new_node_and_takes_the_tools_kind():
     q = _p(); W.apply(q, dict(op="split_link", id=lid, x=50, y=0)); assert lid in q.nodes.index and q.nodes.kind[lid] == "manhole"
     with pytest.raises(ValueError): W.apply(_p(), dict(op="split_link", id=lid, node_id="N1", x=50, y=0))
     with pytest.raises(ValueError): W.apply(_p(), dict(op="split_link", id=lid, node_id="X", kind="tank", x=50, y=0))
+
+
+def test_terrain_levels_record_their_source_and_any_other_write_clears_it():
+    """TRex from the browser (2026-11-23): the structures in the terrain's CRS out, levels in, one undo step, the source
+    kept with each structure and cleared by a hand edit or a move; Copernicus levels give one Validate warning."""
+    from sewerapp.engine import validate, terrain
+    p = _p(); W.apply(p, dict(op="set_values", table="nodes", field="ground", values={"N0": 101.0, "N1": 100.5}, source="file dem.tif"))
+    assert p.ground_src == {"N0": "file dem.tif", "N1": "file dem.tif"}
+    W.apply(p, dict(op="set", table="nodes", ids=["N0"], field="ground", value=102.0)); assert "N0" not in p.ground_src
+    W.apply(p, dict(op="move_node", id="N1", x=110, y=0)); assert p.ground_src == {}
+    W.apply(p, dict(op="set_values", table="nodes", field="ground", values={"N0": 101.0, "N2": 99.0}, source=terrain.COPERNICUS_SRC))
+    w = [x for x in validate.run(p) if "Copernicus" in x["message"]]; assert len(w) == 1 and w[0]["message"].startswith("2 structures")
+    W.apply(p, dict(op="delete", table="nodes", ids=["N2"])); assert list(p.ground_src) == ["N0"]
+    p.crs = 32640; ids, x, y = terrain.points_in(p, "EPSG:4326")
+    assert len(ids) == 3 and 50 < x[0] < 60 and 0 <= y[0] < 1                       # UTM 40N near the equator, in lon/lat
+    with pytest.raises(ValueError): terrain.points_in(p, "EPSG:999999")
+
+
+def test_trex_endpoints_points_levels_and_copernicus(monkeypatch):
+    """The endpoints: points in the terrain's CRS, levels back with the file's name as the source, Copernicus read through
+    a stand-in tile (no network in tests) and refused for a local-metre project."""
+    import numpy as np, rasterio
+    from rasterio.transform import from_origin
+    from sewerapp.engine import terrain
+    p = _p(); p.crs = 32640
+    for i, (x, y) in enumerate([(445000, 2565000), (445100, 2565000), (445200, 2565000)]): p.nodes.loc[f"N{i}", ["x", "y"]] = [x, y]
+    p.nodes.loc["O", ["x", "y"]] = [445300, 2565000]
+    pid = general_api._open(p); B = f"/api/g/projects/{pid}/scenarios/base"
+    r = C.post(B + "/trex/points", json=dict(crs="EPSG:32640")).json(); assert r["x"][0] == 445000
+    r = C.post(B + "/trex/levels", json=dict(levels={"N0": 330.0, "N1": None, "ZZ": 5.0}, name="..\dem.tif", res_m=0.5)).json()
+    assert r["updated"] == 1 and r["source"] == "file dem.tif, 0.5 m cells" and r["no_data_count"] == 1
+    m = C.get(B + "/model").json(); n0 = next(f for f in m["nodes"]["features"] if f["id"] == "N0")["properties"]
+    assert n0["ground"] == 330.0 and n0["ground_src"] == "file dem.tif, 0.5 m cells"
+    import tempfile, os
+    f = os.path.join(tempfile.mkdtemp(), "tile.tif")                        # a stand-in GLO-30 tile: 1 degree, 1/3600 cells
+    a = np.fromfunction(lambda r, c: 300.0 + c * 0.01, (3600, 3600), dtype=float).astype("float32")
+    with rasterio.open(f, "w", driver="GTiff", width=3600, height=3600, count=1, dtype="float32", crs="EPSG:4326",
+                       transform=from_origin(56 - 0.5 / 3600, 24 + 0.5 / 3600, 1 / 3600, 1 / 3600)) as d: d.write(a, 1)
+    seen = []
+    def opener(url):
+        seen.append(url)
+        if "N23_00_E056" not in url: raise rasterio.errors.RasterioIOError("404")
+        return rasterio.open(f)
+    real = terrain.copernicus
+    monkeypatch.setattr(terrain, "copernicus", lambda q, ids=None: real(q, ids, opener=opener))
+    r = C.post(B + "/trex/copernicus", json=dict(keep_depth=True)).json()
+    assert r["updated"] == 4 and r["tiles"] and "DLR" in r["notice"] and all(u.startswith(terrain.BUCKET) for u in seen)
+    m = C.get(B + "/model").json(); g = {f["id"]: f["properties"] for f in m["nodes"]["features"]}
+    assert g["N0"]["ground_src"].startswith("Copernicus") and 300 < g["N0"]["ground"] < 340
+    q = _p(); pid2 = general_api._open(q)
+    assert C.post(f"/api/g/projects/{pid2}/scenarios/base/trex/copernicus", json={}).status_code == 400   # local metres

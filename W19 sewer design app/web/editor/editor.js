@@ -667,7 +667,7 @@ const unitPick = q => { const c = UNIT_CHOICES[q], u = (ui.units || {})[q]; retu
 function unitOf(field) { const q = FIELD_QTY[field]; if (!q) return null; const u = unitPick(q); return { u, k: UNIT_CHOICES[q].opts[u] }; }
 const toShow = (field, v) => { const c = unitOf(field); return c && typeof v === "number" ? v * c.k : v; };
 const toModel = (field, v) => { const c = unitOf(field); return c && typeof v === "number" ? v / c.k : v; };
-const LABELS = { inflow_m3d: "Sanitary load (not peaked)", load: "Unit load (peaked)", infil: "Infiltration rate (own)" };
+const LABELS = { ground_src: "Ground level from", inflow_m3d: "Sanitary load (not peaked)", load: "Unit load (peaked)", infil: "Infiltration rate (own)" };
 function setUnit(q, u) { ui.units = Object.assign({}, ui.units, { [q]: u }); saveUi(); $("#settings-form").dataset.sig = ""; gridSig = ""; renderAll(); }
 
 /* ------------------------------------------------------------------ property grid */

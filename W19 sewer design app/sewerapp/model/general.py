@@ -15,6 +15,8 @@ pumps      {link id: {q_ls, on_m, off_m, definition}}: a pump's capacity (or its
 outlets    {link id: {...}}: an orifice (shape circular|rect, d_m or h_m and w_m, cd, offset_m, gated) or a weir (type
            transverse|v_notch, crest_m above the inlet invert, length_m or top_m, height_m, cd) for the storm run
 tailwater  {outfall id: level m}: a fixed water level at an outfall (SWMM FIXED)
+ground_src {node id: text}: where the structure's ground level came from (a terrain file, Copernicus 30 m); any other
+           write of that ground level or a move clears it (2026-11-23)
 ppipes     {link id: {method, C, e_mm, n, K, check}}: a pressure pipe's own friction and minor loss (engine/pressure.py)
 infil      {link id: rate}: a conduit's own infiltration rate, in the basis of settings.infiltration.method (the project
            rate when absent)"""
@@ -97,12 +99,13 @@ class Project:
     unit_rows: dict = field(default_factory=dict)   # {load set: {node id: [[unit load name, count], ...]}}
     outlets: dict = field(default_factory=dict)
     tailwater: dict = field(default_factory=dict)
+    ground_src: dict = field(default_factory=dict)
     hydrology: dict = field(default_factory=dict)   # {catchment id: {C, tc_min, cn}}: the rational method and SCS curve number
     controls: list = field(default_factory=list)    # SWMM control rules (pumps, orifices, weirs) for the storm run
 
     def __setstate__(self, d):                            # a project pickled before a field existed gets its default
         self.__dict__.update(d)
-        for k in ("sections", "infil", "storage", "pumps", "ppipes", "unit_rows", "outlets", "tailwater", "hydrology"): self.__dict__.setdefault(k, {})
+        for k in ("sections", "infil", "storage", "pumps", "ppipes", "unit_rows", "outlets", "tailwater", "hydrology", "ground_src"): self.__dict__.setdefault(k, {})
         self.__dict__.setdefault("controls", [])
 
     def setting(self, key):
@@ -160,4 +163,4 @@ class Project:
 
     def to_json(self):
         return dict(name=self.name, crs=self.crs, settings=self.settings, load_sets=self.load_sets, inflow_sets=self.inflow_sets, fixed_flows=self.fixed_flows, rain=self.rain,
-                    passthrough=self.passthrough, sections=self.sections, infil=self.infil, storage=self.storage, pumps=self.pumps, ppipes=self.ppipes, unit_rows=self.unit_rows, outlets=self.outlets, tailwater=self.tailwater, hydrology=self.hydrology, controls=self.controls)
+                    passthrough=self.passthrough, sections=self.sections, infil=self.infil, storage=self.storage, pumps=self.pumps, ppipes=self.ppipes, unit_rows=self.unit_rows, outlets=self.outlets, tailwater=self.tailwater, hydrology=self.hydrology, controls=self.controls, ground_src=self.ground_src)

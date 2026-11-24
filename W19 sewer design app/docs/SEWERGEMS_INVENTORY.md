@@ -113,7 +113,7 @@ No SewerGEMS file was read. A Fable 5.2 review of the first draft found that it 
 | Graphs | part | Hydrographs per element; pump and system curves. |
 | Calculation summaries | part | Summary tab. |
 | ModelBuilder | have | |
-| TRex | v4 | Ground levels from a terrain GeoTIFF (reprojected), the inverts moved with the ground when asked; no-data cells reported. |
+| TRex | v5 | Ground levels from a terrain GeoTIFF or VRT read in the browser (no upload, any size), a path on this computer, or Copernicus 30 m fetched on request; reprojected; the inverts moved with the ground when asked; each level keeps its source. Contours and points (SHP, DXF) and DWG: next. |
 | Batch morph, batch split | part | Morph a selection; layout runs split at the spacing. |
 | Energy and capital cost, H2S, water quality | gap / out | |
 
