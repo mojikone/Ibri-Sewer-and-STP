@@ -82,6 +82,9 @@ def build(case, w18_transfers=False):
                          up_inv=np.nan, dn_inv=np.nan, transfer=False, coords=None))
     p.nodes = nodes
     p.links = pd.DataFrame(rows).set_index("id")
+    # W18's lifts (P#L#): the wet well that lifts within a station's area (a cut lift's is the new "-WW"); colour by
+    # pumping station merges them into the station downstream (2026-11-24)
+    p.settings["lifts"] = sorted(f"{n}-WW" if n in cut_station else n for n, k in zip(N.new, N.kind) if k == "lift" and (f"{n}-WW" if n in cut_station else n) in nodes.index)
     for y in sorted({year, "2031", "2036"}):
         q = loads[f"Q_{y}"]
         p.load_sets[y] = {n: float(q.get(i, 0.0)) for n, i in oid.items() if q.get(i, 0.0)}

@@ -61,6 +61,7 @@ Rules:
 - Every number you give comes from a tool result in this conversation; never estimate a flow, velocity, depth or gradient yourself.
 - The project's own settings (friction, peaking, design limits, units) govern; quote them from project_summary. Cite the guideline page for a rule you apply (PAM-GUD-203 / -201 pages through lookup_criterion); never quote a value from memory.
 - Never change an existing scenario: make_scenario, design_scenario and storm testing work in NEW scenarios; say which one you created.
+- Write for an engineer who may be reading on a phone: the answer in the first line, then short sentences, a short list or a small table. Never show JSON, code, braces, tool names, parameter names or raw tool output; name pipes and structures by their ids and give numbers with their units.
 - Flow direction: a pipe runs from its from_node to its to_node, as it was drawn. That is the direction, whatever the levels say: a network drawn on flat ground has every level equal until a design lays it. The bottom of a network is the node no pipe leaves; if it is not an outfall, say so (Validate reports it).
 - The editor shows the scenario the engineer has on screen; your changes are in the scenario you made, which the editor offers with an Open it button. Say so, and that a design written there changes the pipes' sizes and the structures' levels in that scenario.
 - The message starts with what the engineer has selected and the profile route on screen; "this pipe", "these", "the route" refer to them.
@@ -76,7 +77,10 @@ Working as an agent (the engineer's folders and models):
 - The engineer's open QGIS can be read with the qgis_* tools (project, layers, fields, attribute rows, the selection). Use it when the engineer points at something in QGIS. Add a layer to QGIS (qgis_add_layer) only when asked."""
 
 
-def ask(project, sid, message, history=None, model="opus", max_turns=12, toolset=None, system=None, context=None, max_usd=None):
+EFFORT = {"opus": "high", "sonnet": "medium"}            # Sonnet answers the everyday questions quickly; Opus thinks longer
+
+
+def ask(project, sid, message, history=None, model="opus", max_turns=12, toolset=None, system=None, context=None, max_usd=None, on_step=None):
     """One user message, answered with as many tool calls as the model needs. Returns reply, tool_calls, usage.
     max_usd: the spending left for this client (assistant/budget.py); the answer stops between tool rounds once the
     estimated cost reaches it."""
@@ -89,10 +93,12 @@ def ask(project, sid, message, history=None, model="opus", max_turns=12, toolset
 
     def done(**kw):
         usage["usd"] = round(budget.cost(mid, usage), 5); return dict(kw, tool_calls=calls, usage=usage)
-    for _ in range(max_turns):
+    step = on_step or (lambda s: None)
+    for turn in range(max_turns):
+        step(dict(kind="turn", n=turn))
         r = client.beta.messages.create(
             model=MODELS.get(model, model), max_tokens=16000, system=system or SYSTEM, tools=tools, messages=messages,
-            output_config={"effort": "high"}, cache_control={"type": "ephemeral"},
+            output_config={"effort": EFFORT.get(model, "high")}, cache_control={"type": "ephemeral"},
             betas=["server-side-fallback-2026-07-01"], fallbacks="default")
         usage["input_tokens"] += r.usage.input_tokens; usage["output_tokens"] += r.usage.output_tokens
         usage["cache_write_tokens"] += getattr(r.usage, "cache_creation_input_tokens", 0) or 0   # cached prompt parts are
@@ -108,9 +114,10 @@ def ask(project, sid, message, history=None, model="opus", max_turns=12, toolset
             return done(reply=text)
         if max_usd is not None and budget.cost(mid, usage) >= max_usd:
             text = "\n".join(b.text for b in r.content if b.type == "text")
-            return done(reply=(text + "\n\n" if text else "") + "(stopped: today's spending limit for the assistant is reached; the limits are set in Assistant > Limits on the engineer's computer)", limit_reached=True)
+            return done(reply=(text + "\n\n" if text else "") + "(stopped: today's spending limit for the assistant is reached; the limits are set by whoever runs the app (Assistant > Limits))", limit_reached=True)
         results = []
         for b in uses:
+            step(dict(kind="tool", name=b.name, input=b.input))
             try:
                 out = toolset.call(project, b.name, b.input); ok = True
             except Exception as e:                       # the model sees the error and can correct itself

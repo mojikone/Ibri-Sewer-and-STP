@@ -60,6 +60,7 @@ DEFAULT_SETTINGS = dict(
     swmm_dwf=dict(on=False, load_set=None, pattern=None, hours=48),
     # named selections kept with the project (SewerGEMS's selection sets): {name: {table, ids}}
     selection_sets={},
+    lifts=[],                       # wet wells that are lifts within a station's area (colour by pumping station merges them)
     # the force mains' friction (SewerGEMS's pressure friction method) and the wet-well level the pump lifts from
     pressure=dict(method="hazen", C=130.0, e_mm=0.1, n=0.012, suction="off", use_pumped_flows=False),
     # the steady water profile: "normal" (normal depth in each pipe, the W18 basis) or "gvf" (gradually varied flow from

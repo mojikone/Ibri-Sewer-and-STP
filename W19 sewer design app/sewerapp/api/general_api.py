@@ -53,7 +53,7 @@ def schedule(pid, delay=2.0):
 
 
 def _restore(pid):
-    if not AUTOSAVE or not re.fullmatch(r"p\d+", pid) or not os.path.exists(_snap(pid)): return None
+    if not AUTOSAVE or not re.fullmatch(PID_RE, pid) or not os.path.exists(_snap(pid)): return None
     with open(_snap(pid), "rb") as f: st = pickle.load(f)
     SESSIONS[pid] = Session.from_state(st); return SESSIONS[pid]
 
@@ -62,7 +62,7 @@ def _init_autosave():
     """Drop snapshots older than KEEP_DAYS or beyond the newest KEEP_N, and number new projects after the kept ones."""
     global _ids
     if not AUTOSAVE or not os.path.isdir(AUTOSAVE): return
-    fs = sorted((f for f in os.listdir(AUTOSAVE) if re.fullmatch(r"p\d+\.pkl", f)), key=lambda f: -os.path.getmtime(os.path.join(AUTOSAVE, f)))
+    fs = sorted((f for f in os.listdir(AUTOSAVE) if re.fullmatch(PID_RE + r"\.pkl", f)), key=lambda f: -os.path.getmtime(os.path.join(AUTOSAVE, f)))
     for k, f in enumerate(fs):
         if k >= KEEP_N or time.time() - os.path.getmtime(os.path.join(AUTOSAVE, f)) > KEEP_DAYS * 86400: os.remove(os.path.join(AUTOSAVE, f))
     left = [int(f[1:-4]) for f in os.listdir(AUTOSAVE) if re.fullmatch(r"p\d+\.pkl", f)]
@@ -76,8 +76,15 @@ def _s(pid):
     return SESSIONS[pid]
 
 
+PID_RE = r"p[0-9a-f]{1,32}"                       # p40 (before 2026-11-24) or p + 16 random hex digits
+
+
 def _open(project):
-    pid = f"p{next(_ids)}"; SESSIONS[pid] = Session(pid, project); schedule(pid, 0.5); return pid
+    # the id is the model's link (?p=...): random, so a link cannot be guessed from another (accounts come later)
+    import secrets
+    pid = "p" + secrets.token_hex(8)
+    while pid in SESSIONS: pid = "p" + secrets.token_hex(8)
+    SESSIONS[pid] = Session(pid, project); schedule(pid, 0.5); return pid
 
 
 def _info(pid):
@@ -93,8 +100,23 @@ class New(BaseModel):
 
 
 @router.get("/projects")
-def projects():
+def projects(request: Request):
+    """The open projects, for this computer only: over a shared link each visitor sees the projects of their own
+    browser (kept there) and opens others' only by their link."""
+    if _remote(request): return []
     return [dict(id=k, name=s.base.name) for k, s in SESSIONS.items()]
+
+
+@router.get("/env")
+def env(request: Request):
+    """What this installation offers the page: tools that read this computer's files only when the page is opened on
+    it, and whether the SewerGEMS link (the virtual machine's bridge) is running."""
+    local = not _remote(request); alive = None
+    try:
+        from sewerapp.io import sg_bridge
+        alive = bool(sg_bridge.alive()) if hasattr(sg_bridge, "alive") else None
+    except Exception: alive = None
+    return dict(local=local, sewergems=alive)
 
 
 @router.post("/projects/new")
@@ -531,6 +553,9 @@ def _from_map(p, e):
     if e.get("coords_ll"):
         a = np.array(e.pop("coords_ll")); x, y = coords.from_display(p.crs, a[:, 0], a[:, 1])
         e["coords"] = [[float(u), float(v)] for u, v in zip(x, y)]
+    if e.get("via_ll"):                                               # a layout run's bends
+        a = np.array(e.pop("via_ll")); x, y = coords.from_display(p.crs, a[:, 0], a[:, 1])
+        e["via"] = [[float(u), float(v)] for u, v in zip(x, y)]
     if e.get("op") == "batch": e["ops"] = [_from_map(p, dict(x)) for x in (e.get("ops") or [])]
     return e
 
@@ -992,13 +1017,28 @@ def route(p, start, end=None, via=()):
 
 
 # ---- reference layers: a GIS layer drawn under the network for orientation (plots, roads, a DXF); display only
+_REF_EXT = (".shp", ".shx", ".dbf", ".prj", ".cpg", ".gpkg", ".geojson", ".json", ".dxf", ".kml", ".zip", ".gml", ".tab", ".map", ".id", ".dat")
+
+
 @router.post("/projects/{pid}/reference")
-def add_reference(pid: str, file: UploadFile = File(...)):
+def add_reference(pid: str, file: UploadFile | None = File(None), files: list[UploadFile] | None = File(None)):
+    """A background layer: one GIS file, a zip, or a shapefile with its sidecars picked together (`files`)."""
     from sewerapp.io import gis_import
     import shapely
     s = _s(pid); crs = s.base.crs
+    up = ([file] if file is not None else []) + list(files or [])
+    if not up: raise HTTPException(400, "pick a GIS file")
     with tempfile.TemporaryDirectory() as d:
-        f = os.path.join(d, _safe_name(file.filename, "layer")); open(f, "wb").write(file.file.read())
+        names = []
+        for u in up:
+            n = _safe_name(u.filename, "layer")
+            if len(up) > 1 and not n.lower().endswith(_REF_EXT): continue
+            open(os.path.join(d, n), "wb").write(u.file.read()); names.append(n)
+        main = next((n for ext in (".shp", ".gpkg", ".geojson", ".json", ".dxf", ".kml", ".zip", ".gml", ".tab") for n in names if n.lower().endswith(ext)), names[0] if names else None)
+        if not main: raise HTTPException(400, "pick a GIS file")
+        f = os.path.join(d, main); file = next(u for u in up if _safe_name(u.filename, "layer") == main)
+        if main.lower().endswith(".shp") and not any(n.lower() == main[:-4].lower() + ".dbf" for n in names) and len(up) == 1:
+            raise HTTPException(400, f"{main} needs its .shx and .dbf (and .prj): pick them together, or zip them")
         try: g = gis_import.read_layer(f)
         except Exception as e: raise HTTPException(400, f"could not read {file.filename}: {e}")
     g = g[g.geometry.notna() & ~g.geometry.is_empty]
@@ -1025,6 +1065,43 @@ def add_reference(pid: str, file: UploadFile = File(...)):
 @router.get("/projects/{pid}/reference")
 def list_references(pid: str):
     return clean(getattr(_s(pid), "refs", []))
+
+
+class RefStyle(BaseModel):
+    color: str | None = None
+    opacity: float | None = None
+    visible: bool | None = None
+    name: str | None = None
+
+
+@router.post("/projects/{pid}/reference/{rid}/style")
+def style_reference(pid: str, rid: str, b: RefStyle):
+    """A background layer's colour, opacity, visibility or name, kept with the project."""
+    s = _s(pid)
+    with _lock:
+        r = next((r for r in getattr(s, "refs", []) if r["id"] == rid), None)
+        if r is None: raise HTTPException(404, f"no layer {rid}")
+        if b.color is not None:
+            if not re.fullmatch(r"#[0-9a-fA-F]{6}", b.color): raise HTTPException(400, "a colour is #rrggbb")
+            r["color"] = b.color
+        if b.opacity is not None: r["opacity"] = max(0.0, min(1.0, float(b.opacity)))
+        if b.visible is not None: r["visible"] = bool(b.visible)
+        if b.name: r["name"] = b.name.strip()[:80]
+    schedule(pid); return dict(ok=True)
+
+
+class RefOrder(BaseModel):
+    ids: list[str]
+
+
+@router.post("/projects/{pid}/reference/order")
+def order_references(pid: str, b: RefOrder):
+    """The drawing order of the background layers (first: at the bottom)."""
+    s = _s(pid)
+    with _lock:
+        R = {r["id"]: r for r in getattr(s, "refs", [])}
+        s.refs = [R[i] for i in b.ids if i in R] + [r for i, r in R.items() if i not in b.ids]
+    schedule(pid); return dict(ok=True)
 
 
 @router.post("/projects/{pid}/reference/{rid}/delete")
@@ -1237,6 +1314,50 @@ def assistant_folder_remove(b: FolderB, request: Request):
 @router.post("/assistant")
 def assistant(q: Ask, request: Request):
     """The assistant on an open project: reads results, explains checks with guideline pages, works in new scenarios."""
+    return _assistant_run(q, _client_key(request), _remote(request))
+
+
+_AJOBS: dict = {}                                  # an answer being written: its steps so far, then the answer
+
+
+@router.post("/assistant/start")
+def assistant_start(q: Ask, request: Request):
+    """The same answer, started in the background: the page polls /assistant/job/{id} and shows each step as it runs."""
+    import secrets
+    who, remote = _client_key(request), _remote(request)
+    from sewerapp.assistant import runner, budget
+    st = runner.available()
+    if not st["available"]: raise HTTPException(503, st["reason"])
+    _s(q.project)
+    if budget.remaining(who) < budget.MIN_START_USD: return _assistant_run(q, who, remote)        # the 429 with its reason
+    for k, j in list(_AJOBS.items()):
+        if time.time() - j["t"] > 3600: _AJOBS.pop(k, None)
+    jid = secrets.token_hex(8); job = _AJOBS[jid] = dict(state="running", steps=[], out=None, error=None, t=time.time(), who=who)
+
+    def step(s):                                   # the step and the few inputs that name what it looks at
+        keep = {k: v for k, v in (s.get("input") or {}).items() if k in ("table", "ids", "start", "end", "query", "name", "path")}
+        job["steps"].append(clean(dict({k: v for k, v in s.items() if k != "input"}, **({"input": keep} if keep else {}))))
+
+    def work():
+        try: job["out"] = _assistant_run(q, who, remote, on_step=step)
+        except HTTPException as e: job["error"] = e.detail
+        except Exception as e: job["error"] = f"{type(e).__name__}: {e}"
+        finally: job["state"] = "done"
+    threading.Thread(target=work, daemon=True).start()
+    return dict(job=jid)
+
+
+@router.get("/assistant/job/{jid}")
+def assistant_job(jid: str, request: Request):
+    j = _AJOBS.get(jid)
+    if not j or j["who"] != _client_key(request): raise HTTPException(404, "no such answer")
+    out = dict(state=j["state"], steps=j["steps"], seconds=round(time.time() - j["t"]))
+    if j["state"] == "done":
+        out.update(out=j["out"], error=j["error"]); _AJOBS.pop(jid, None)
+    return out
+
+
+def _assistant_run(q, who, remote, on_step=None):
     from sewerapp.assistant import gtools, runner
     st = runner.available()
     if not st["available"]: raise HTTPException(503, st["reason"])
@@ -1250,12 +1371,12 @@ def assistant(q: Ask, request: Request):
     if q.route and q.route.get("start"):
         ctx += f"; profile on screen from {q.route['start']} to {q.route.get('end') or 'the outfall'}" + (f" via {q.route['via']}" if q.route.get("via") else "")
     from sewerapp.assistant import agent, budget
-    who = _client_key(request); left = budget.remaining(who)
+    left = budget.remaining(who)
     if left < budget.MIN_START_USD:
         raise HTTPException(429, f"today's spending limit for the assistant is reached ({budget.status(who)['limit_today_usd']:.2f} USD a day for {budget.status(who)['client']}); it resets at midnight")
     with _alock:                                     # one answer at a time; the model's turns run outside the app lock, each
-        gtools.ACTIONS.clear(); agent.CTX["remote"] = _remote(request)          # tool call takes it (gtools.call)
-        try: out = runner.ask(None, q.scenario, q.message, q.history, q.model, toolset=gtools, system=runner.SYSTEM_GENERAL, context=ctx, max_turns=30, max_usd=left)
+        gtools.ACTIONS.clear(); agent.CTX["remote"] = remote                    # tool call takes it (gtools.call)
+        try: out = runner.ask(None, q.scenario, q.message, q.history, q.model, toolset=gtools, system=runner.SYSTEM_GENERAL, context=ctx, max_turns=30, max_usd=left, on_step=on_step)
         finally: agent.CTX["remote"] = False
         budget.charge(who, out["usage"].get("usd", 0.0)); out["budget"] = budget.status(who)
         out["ui_actions"] = list(gtools.ACTIONS); gtools.ACTIONS.clear()
@@ -1277,11 +1398,51 @@ def sewergems_exports():
 
 
 @router.get("/sewergems/models")
-def sewergems_models():
+def sewergems_models(request: Request, mine: str = ""):
     """What can be opened (exports), what can be exported (SewerGEMS models in the shared folders), the VM watcher, and
-    the export jobs the app has written."""
+    the export jobs the app has written. Over the shared link: only the visitor's own uploads (`mine`, their tags)."""
     from sewerapp.io import bridge_jobs as B
-    return dict(watcher=B.watcher(), exports=sewergems_exports(), models=B.models(), jobs=B.jobs(), shares=[g for _, g in B.SHARES])
+    if _remote(request):
+        tags = {t for t in mine.split(",") if t}
+        return dict(watcher=B.watcher(), exports=[e for e in sewergems_exports() if e["name"] in tags], models=[],
+                    jobs=[j for j in B.jobs() if j["tag"] in tags], shares=[], remote=True)
+    return dict(watcher=B.watcher(), exports=sewergems_exports(), models=B.models(), jobs=B.jobs(), shares=[g for _, g in B.SHARES], remote=False)
+
+
+@router.post("/sewergems/upload")
+async def sewergems_upload(files: list[UploadFile] = File(...), run: bool = False):
+    """A SewerGEMS model picked on the visitor's device: its .stsw and .stsw.sqlite (or both zipped) are copied into a
+    new folder of the bridge's models share, and the export job is written (SewerGEMS reads a copy in the VM)."""
+    import zipfile, secrets, shutil
+    from sewerapp.io import bridge_jobs as B
+    root = os.path.join(B.BRIDGE, "models", "uploads")
+    if not B.guest_path(root): raise HTTPException(400, "this installation has no SewerGEMS link to read a model with")
+    stamp = time.strftime("%Y%m%d_%H%M%S"); d = None
+    try:
+        got = {}
+        for f in files:
+            n = _safe_name(f.filename, "model"); data = await f.read()
+            if n.lower().endswith(".zip"):
+                with zipfile.ZipFile(io.BytesIO(data)) as z:
+                    for m in z.infolist():
+                        k = _safe_name(m.filename, "")
+                        if k and k.lower().endswith((".stsw", ".stsw.sqlite")): got[k] = z.read(m)
+            elif n.lower().endswith((".stsw", ".stsw.sqlite")): got[n] = data
+        stsw = [k for k in got if k.lower().endswith(".stsw")]
+        if len(stsw) != 1: raise HTTPException(400, "pick one model: its .stsw file and its .stsw.sqlite (or both in one zip)")
+        if stsw[0] + ".sqlite" not in got and not any(k.lower() == stsw[0].lower() + ".sqlite" for k in got):
+            raise HTTPException(400, f"{stsw[0]} needs its {stsw[0]}.sqlite beside it: pick both (or zip them)")
+        tag = f"{B.tag_of(stsw[0])}_{secrets.token_hex(3)}"
+        d = os.path.join(root, f"{stamp}_{tag}"); os.makedirs(d)
+        for k, v in got.items(): open(os.path.join(d, k), "wb").write(v)
+        r = B.submit(B.guest_path(os.path.join(d, stsw[0])), tag, run)
+        return dict(r, name=stsw[0], mb=round(sum(len(v) for v in got.values()) / 1e6, 1))
+    except HTTPException:
+        if d: shutil.rmtree(d, ignore_errors=True)
+        raise
+    except ValueError as e:
+        if d: shutil.rmtree(d, ignore_errors=True)
+        raise HTTPException(400, str(e))
 
 
 class SgExport(BaseModel):
@@ -1291,9 +1452,11 @@ class SgExport(BaseModel):
 
 
 @router.post("/sewergems/export")
-def sewergems_export_job(b: SgExport):
-    """Write the bridge job that exports a SewerGEMS model (every scenario, results and loads) from a copy, in the VM."""
+def sewergems_export_job(b: SgExport, request: Request):
+    """Write the bridge job that exports a SewerGEMS model (every scenario, results and loads) from a copy, in the VM.
+    A path in the VM is this computer's: not over the shared link (a visitor uploads the model instead)."""
     from sewerapp.io import bridge_jobs as B
+    if _remote(request): raise HTTPException(403, "a model in this computer's folders is opened from this computer; over the shared link, pick the model's files")
     try: return B.submit(b.guest, b.tag, b.run)
     except ValueError as e: raise HTTPException(400, str(e))
 
@@ -1321,7 +1484,10 @@ def open_sewergems_folder(folder, name, crs=None):
 
 
 @router.post("/projects/open_sewergems/{name}")
-def open_sewergems(name: str, crs: int | None = 32640):
+def open_sewergems(name: str, request: Request, crs: int | None = 32640):
+    if not re.fullmatch(r"[A-Za-z0-9_.-]{1,80}", name): raise HTTPException(404, f"no export {name}")
+    if _remote(request) and not re.fullmatch(r".+_[0-9a-f]{6}", name):          # over the shared link: an upload's own export
+        raise HTTPException(403, "over the shared link, a SewerGEMS model is opened from its files (Open a SewerGEMS model > Choose the model's files)")
     folder = os.path.join(SG_EXPORTS, name)
     if not os.path.exists(os.path.join(folder, "scenarios.csv")): raise HTTPException(404, f"no export {name}")
     try: pid = open_sewergems_folder(folder, f"SewerGEMS: {name}", crs)
