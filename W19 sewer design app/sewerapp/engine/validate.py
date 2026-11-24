@@ -8,6 +8,22 @@ INLET_NEEDS = {"grate": ("grate_type", "grate_length_m", "grate_width_m"), "curb
                "combination": ("grate_type", "grate_length_m", "grate_width_m", "curb_length_m", "curb_height_m"), "slot": ("slot_length_m", "slot_width_m")}
 
 
+def _drops(p, add):
+    """A gravity pipe that arrives below the pipe leaving its structure: the water cannot leave (v7, the engineer: a pipe
+    reconnected to a manhole "simply sent the flow to the next manhole")."""
+    L, N = p.links, p.nodes
+    g = L[L.kind.isin(["conduit", "channel", "lateral"])]
+    if not len(g): return
+    leave = g.groupby("from_node").up_inv.min()
+    for lid, r in g.iterrows():
+        n = r.to_node
+        if n not in leave.index or N.kind.get(n) in ("wetwell", "storage", "outfall") or not (r.dn_inv == r.dn_inv): continue
+        out = leave[n]; gap = out - float(r.dn_inv)
+        if gap > 0.02:                                                  # levels are kept to the centimetre: 2 cm is a real drop (the Ibri design has none over 1.03 cm)
+            add("error", "links", lid, f"arrives at {n} {gap:.2f} m below the pipe that leaves it (invert {float(r.dn_inv):.2f} against {out:.2f}): "
+                                       "the water cannot leave. Design the network (or this pipe with the ones below it) to lower them, or raise this pipe")
+
+
 def _kinds(p, add):
     """The element kinds' own checks (v7): what each needs before the runs can use it."""
     N, L = p.nodes, p.links; P = (getattr(p, "props", None) or {}); PN, PL = P.get("nodes", {}), P.get("links", {})
@@ -84,6 +100,7 @@ def run(p, res=None):
     for n in set(piped.from_node) | set(piped.to_node):
         if n in ids and n not in fr and n not in outs and N.kind.get(n) not in ("storage", "tap"): add("warning", "nodes", n, "the flow ends here: it is not an outfall")
     _kinds(p, add)
+    _drops(p, add)
     for lid, r in L.iterrows():
         if r.kind in ("conduit", "pressure_pipe", "channel", "lateral") and not (r.length_m > 0): add("error", "links", lid, "zero length")
         if r.kind == "channel" and lid not in (p.sections or {}): add("error", "links", lid, "a channel with no section: give it its open section (Properties > Section)")

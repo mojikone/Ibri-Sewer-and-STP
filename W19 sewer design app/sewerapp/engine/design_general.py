@@ -43,9 +43,10 @@ def size(project, q_m3s, start, max_passes=20, fixed=None):
     raise RuntimeError(f"sizing did not settle in {max_passes} passes")
 
 
-def relay(project, links, slope, fixed=frozenset()):
+def relay(project, links, slope, fixed=frozenset(), soft=frozenset()):
     """Inverts of every gravity conduit from the heads down; returns (up_inv, dn_inv) Series and node inverts. A fixed
-    conduit keeps its own inverts, and the conduits below it are laid from them."""
+    conduit keeps its own inverts, and the conduits below it are laid from them. A `soft` one (kept only because it is
+    outside the selection designed) keeps its gradient but drops to what arrives when that is below it (v7)."""
     cover = float(project.settings["design"]["cover_min"]); ground = project.nodes.ground.astype(float)
     grav = links[(links.kind == "conduit")]
     D = grav.inside_mm.astype(float) / 1000.0; L = grav.length_m.astype(float); S = slope.reindex(grav.index)
@@ -63,6 +64,9 @@ def relay(project, links, slope, fixed=frozenset()):
                    if x == x]
             if i in fixed:
                 u, d = float(grav.up_inv[i]), float(grav.dn_inv[i])
+                if i in soft:                                  # a selected pipe arrives below it: it drops, keeping its fall
+                    low = min(arr.get(n, np.inf), crown.get(n, np.inf) - D[i])
+                    if np.isfinite(low) and low < u - 1e-9: d -= u - low; u = low
             else:
                 u = min(arr.get(n, np.inf), crown.get(n, np.inf) - D[i], min(lim) if lim else np.inf)
                 if not np.isfinite(u):                     # no ground and nothing arriving: keep the drawn invert
@@ -91,16 +95,19 @@ def design(project, load_set=None, only=None):
     L.loc[cond, "dn_mm"] = new
     L.loc[cond, "inside_mm"] = [p.inside_of(n) for n in new]
     slope = pd.Series([slope_for(s, n) for n in L.dn_mm[cond]], index=L.index[cond])
-    up, dn, inv = relay(p, L, slope, fixed)
+    soft = (fixed - set(map(str, s["design"].get("locked", []))) - set(map(str, getattr(p, "sections", None) or {}))) if only is not None else set()
+    before = L[["up_inv", "dn_inv"]].copy()
+    up, dn, inv = relay(p, L, slope, fixed, soft)
     L.loc[up.index, "up_inv"] = up; L.loc[dn.index, "dn_inv"] = dn
-    free = L[cond & ~L.index.isin(fixed)]                          # a node's invert moves only where a free pipe meets it
+    dropped = [i for i in soft if abs(float(L.up_inv[i]) - float(before.up_inv[i])) > 1e-9]
+    free = L[cond & (~L.index.isin(fixed) | L.index.isin(dropped))]   # a node's invert moves only where a free or dropped pipe meets it
     touch = set(free.from_node) | set(free.to_node)
     nid = inv.index.intersection(p.nodes.index); nid = nid[nid.isin(list(touch))]
     p.nodes.loc[nid, "invert"] = inv[nid]
     on = list(set(L.from_node[cond]) | set(L.to_node[cond]))       # nodes on a conduit: a lone node's placeholder levels are not a depth
     depth = (p.nodes.ground - p.nodes.invert).astype(float).reindex(on).dropna()
     cmax = float(s["design"]["cover_max"])
-    report = dict(load_set=load_set, passes=passes, sizes_changed=changed, conduits=int(cond.sum()), kept=len(fixed),
+    report = dict(load_set=load_set, passes=passes, sizes_changed=changed, conduits=int(cond.sum()), kept=len(fixed), dropped_below=len(dropped),
                   deepest_node=None if depth.dropna().empty else str(depth.idxmax()),
                   deepest_m=None if depth.dropna().empty else round(float(depth.max()), 3),
                   nodes_deeper_than_cover_max=int((depth > cmax).sum()),
