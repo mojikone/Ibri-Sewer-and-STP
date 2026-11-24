@@ -123,6 +123,10 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
     curves included (F47), variable-speed batteries as their lead and lag pumps at full speed (F49); a large model is
     sent in compressed 32 MB pieces with its progress (F48: Cloudflare takes 100 MB a request); the app runs every
     scenario itself, SewerGEMS in the VM only for its own results.
+  - **Symbology by element kind (F50):** Pipes / Structures, then All and a tab per kind in the model (conduit,
+    pressure pipe, pump; manhole, outfall, wet well, pressure junction, storage); a kind's own colour coding and labels
+    override the All ones for that kind; the sections fold and the pane folds to a tab at the map's edge; a block
+    copied from Excel fills any table of inputs, adding rows with the table's own Add.
   - Fixed after a Fable 5.2 review: an uploaded file's name could choose where the server wrote it (any folder, from
     the shared link); alternatives now replay in the order things were done (a session-wide edit clock), undo removes
     exactly its own edit from a shared alternative, a mixed batch is one undo step, a child can take its own edits,
