@@ -69,7 +69,8 @@ def load(folder, name="SewerGEMS model", crs=None):
     first = sc.iloc[0]; c0, m0 = _read(folder, first.file)
     nodes_lab = dict(zip(m0.id, m0.label.astype(str)))
     p = Project(name=name, crs=crs); p.load_sets = {"design": {}}
-    p.nodes = pd.DataFrame(dict(kind=["outfall" if r.diameter_m != r.diameter_m else "manhole" for r in m0.itertuples()],
+    kinds = m0["kind"].astype(str).values if "kind" in m0.columns else ["outfall" if r.diameter_m != r.diameter_m else "manhole" for r in m0.itertuples()]
+    p.nodes = pd.DataFrame(dict(kind=kinds,                     # the direct reading (io/sewergems_db.py) names wet wells too
                                 x=m0.x.values, y=m0.y.values, ground=m0.ground.values, invert=m0.invert.values, inflow_m3d=0.0),
                            index=pd.Index(m0.label.astype(str).values, name="id"))
     p.nodes = p.nodes[~p.nodes.index.duplicated()]

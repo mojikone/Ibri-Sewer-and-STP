@@ -65,11 +65,19 @@ def test_a_sewergems_model_sent_from_any_device(bridge):
     B, root, exports = bridge
     z = io.BytesIO()
     with zipfile.ZipFile(z, "w") as zz: zz.writestr("Town.stsw", "x"); zz.writestr("Town.stsw.sqlite", b"y" * 1000); zz.writestr("../evil.stsw.sqlite", "z")
-    r = C.post("/api/g/sewergems/upload", files=[("files", ("Town.zip", z.getvalue(), "application/zip"))], headers=REMOTE).json()
+    r = C.post("/api/g/sewergems/upload?run=true", files=[("files", ("Town.zip", z.getvalue(), "application/zip"))], headers=REMOTE).json()   # SewerGEMS computes: the VM
     assert r["name"] == "Town.stsw" and re.fullmatch(r"Town_[0-9a-f]{6}", r["tag"])
     up = [d for d in os.listdir(root / "models" / "uploads")]; assert len(up) == 1
     assert sorted(os.listdir(root / "models" / "uploads" / up[0])) == ["Town.stsw", "Town.stsw.sqlite", "evil.stsw.sqlite"]   # nothing outside its folder
     body = open(root / "jobs" / (r["job"] + ".ps1"), encoding="utf-8").read(); assert "\\\\VBOXSVR\\VBOX\\bridge\\models\\uploads\\" in body
+    # read directly (the default): no VM job; a file that is not a SewerGEMS database fails with a reason, and the copy is gone
+    d = C.post("/api/g/sewergems/upload", files=[("files", ("Bad.stsw", b"x", "application/octet-stream")), ("files", ("Bad.stsw.sqlite", b"not a database", "application/octet-stream"))]).json()
+    assert d["direct"] and d["job"].startswith("w19d_")
+    for _ in range(100):
+        j = C.get(f"/api/g/sewergems/jobs/{d['job']}").json()
+        if j["state"] != "running": break
+        time.sleep(0.05)
+    assert j["state"] == "failed" and "could not be read" in j["error"]
     alone = C.post("/api/g/sewergems/upload", files=[("files", ("Town.stsw", b"x", "application/octet-stream"))])
     assert alone.status_code == 400 and ".sqlite" in alone.json()["detail"]
     # a visitor sees only their own uploads; this computer's folders and paths stay here

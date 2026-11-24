@@ -654,3 +654,19 @@ let ctxAt = 0;
     cv.addEventListener("touchend", e => { if (lp) { clearTimeout(lp.t); lp = null; } else if (Date.now() - fired < 800 && e.cancelable) e.preventDefault(); }, { passive: false });
   })();
 })();
+
+/* ------------------------------------------------------------------ SewerGEMS models read without SewerGEMS (2026-11-24) */
+(function wireSgDirect() {
+  const se = sgExport;
+  sgExport = async function (guest, tag) {                           // a model in this computer's folders: read directly,
+    const m = ((sgData && sgData.models) || []).find(x => x.guest === guest);   // SewerGEMS only to compute every scenario
+    if (!m || ($("#sg-run") && $("#sg-run").checked)) return se.apply(this, arguments);
+    try { await jpost("/sewergems/read", { host: m.host }); } catch (e) { toast(e.message || String(e)); return; }
+    toast(`${m.name} is being read (no SewerGEMS needed): it appears under Ready to open in a minute or two.`, "info"); await refreshSg(); sgPoll();
+  };
+  const h = [...document.querySelectorAll("#dlg-sg h4")].find(x => /Export from SewerGEMS/.test(x.textContent));
+  if (h) h.innerHTML = `Models on this computer <span class="muted">(read as they are, without SewerGEMS; tick "Run every scenario first" for SewerGEMS to compute them in the VM)</span>`;
+  const up = document.querySelector("#dlg-sg .sg-up p.muted");
+  if (up) up.textContent = "Pick the folder the model is in: the app finds the .stsw and its .stsw.sqlite and reads the model as it is, without SewerGEMS (a browser cannot reach a file beside the one you pick, so it asks for the folder). Or pick both files, or one zip of them. Your files are not changed, and the copy sent is deleted once read. Through a shared link a file can be up to about 100 MB: zip a larger model.";
+  const rl = document.getElementById("sg-up-run"); if (rl && rl.parentElement) rl.parentElement.lastChild.textContent = " SewerGEMS computes every scenario first (needs the SewerGEMS link)";
+})();

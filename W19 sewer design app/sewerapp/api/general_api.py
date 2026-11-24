@@ -1405,18 +1405,67 @@ def sewergems_models(request: Request, mine: str = ""):
     if _remote(request):
         tags = {t for t in mine.split(",") if t}
         return dict(watcher=B.watcher(), exports=[e for e in sewergems_exports() if e["name"] in tags], models=[],
-                    jobs=[j for j in B.jobs() if j["tag"] in tags], shares=[], remote=True)
-    return dict(watcher=B.watcher(), exports=sewergems_exports(), models=B.models(), jobs=B.jobs(), shares=[g for _, g in B.SHARES], remote=False)
+                    jobs=_sg_jobs(tags) + [j for j in B.jobs() if j["tag"] in tags], shares=[], remote=True)
+    return dict(watcher=B.watcher(), exports=sewergems_exports(), models=B.models(), jobs=_sg_jobs() + B.jobs(), shares=[g for _, g in B.SHARES], remote=False)
+
+
+_SGJOBS: dict = {}                                 # direct readings of SewerGEMS models (no SewerGEMS): job -> state
+
+
+def _sg_direct(src, tag, cleanup=None):
+    """Read a .stsw.sqlite directly into the exports folder (io/sewergems_db.py) in the background; the job's state is
+    read like a bridge job's. The uploaded copy is deleted once read (cleanup)."""
+    import secrets, shutil
+    from sewerapp.io import sewergems_db
+    name = f"w19d_{time.strftime('%Y%m%d_%H%M%S')}_{secrets.token_hex(2)}_{tag}"
+    job = _SGJOBS[name] = dict(job=name, tag=tag, state="running", exit=None, scenarios_done=0, ready=False, error=None, t0=time.time(), direct=True)
+    dst = os.path.join(SG_EXPORTS, tag)
+
+    def step(s):
+        if s.startswith("  scenario"): job["scenarios_done"] += 1
+
+    def work():
+        try:
+            if os.path.isdir(dst): shutil.rmtree(dst, ignore_errors=True)
+            sewergems_db.export(src, dst, log=step); job.update(state="ready", ready=True)
+        except Exception as e:
+            job.update(state="failed", error=f"the model could not be read: {type(e).__name__}: {str(e)[:300]}")
+        finally:
+            if cleanup: shutil.rmtree(cleanup, ignore_errors=True)
+    threading.Thread(target=work, daemon=True).start()
+    return job
+
+
+def _sg_jobs(tags=None):
+    out = []
+    for j in list(_SGJOBS.values()):
+        if tags is not None and j["tag"] not in tags: continue
+        out.append({k: v for k, v in j.items() if k != "t0"} | dict(seconds=round(time.time() - j["t0"])))
+    return sorted(out, key=lambda j: j["job"], reverse=True)
+
+
+class SgRead(BaseModel):
+    host: str
+
+
+@router.post("/sewergems/read")
+def sewergems_read(b: SgRead, request: Request):
+    """A model in this computer's folders, read directly (no SewerGEMS, nothing written beside it)."""
+    from sewerapp.io import bridge_jobs as B
+    if _remote(request): raise HTTPException(403, "a model in this computer's folders is opened from this computer; over the shared link, pick the model's files")
+    if not b.host.lower().endswith(".stsw") or not os.path.isfile(b.host + ".sqlite"): raise HTTPException(400, f"no {os.path.basename(b.host)}.sqlite beside the model")
+    return _sg_direct(b.host + ".sqlite", B.tag_of(b.host))
 
 
 @router.post("/sewergems/upload")
 async def sewergems_upload(files: list[UploadFile] = File(...), run: bool = False):
-    """A SewerGEMS model picked on the visitor's device: its .stsw and .stsw.sqlite (or both zipped) are copied into a
-    new folder of the bridge's models share, and the export job is written (SewerGEMS reads a copy in the VM)."""
+    """A SewerGEMS model picked on the visitor's device: its .stsw and .stsw.sqlite (or both zipped). Read directly
+    (io/sewergems_db.py, no SewerGEMS; the files are deleted once read); with `run`, copied into a new folder of the
+    bridge's models share for SewerGEMS to compute every scenario on a copy in the VM."""
     import zipfile, secrets, shutil
     from sewerapp.io import bridge_jobs as B
     root = os.path.join(B.BRIDGE, "models", "uploads")
-    if not B.guest_path(root): raise HTTPException(400, "this installation has no SewerGEMS link to read a model with")
+    if run and not B.guest_path(root): raise HTTPException(400, "this installation has no SewerGEMS to compute the scenarios with: untick it to open the model as it is")
     stamp = time.strftime("%Y%m%d_%H%M%S"); d = None
     try:
         got = {}
@@ -1433,6 +1482,12 @@ async def sewergems_upload(files: list[UploadFile] = File(...), run: bool = Fals
         if stsw[0] + ".sqlite" not in got and not any(k.lower() == stsw[0].lower() + ".sqlite" for k in got):
             raise HTTPException(400, f"{stsw[0]} needs its {stsw[0]}.sqlite beside it: pick both (or zip them)")
         tag = f"{B.tag_of(stsw[0])}_{secrets.token_hex(3)}"
+        if not run:                                   # read directly: no SewerGEMS, and the files are deleted once read
+            d = tempfile.mkdtemp(prefix="w19sg_")
+            for k, v in got.items(): open(os.path.join(d, k), "wb").write(v)
+            sq = next(k for k in got if k.lower() == stsw[0].lower() + ".sqlite")
+            j = _sg_direct(os.path.join(d, sq), tag, cleanup=d); d = None
+            return dict(job=j["job"], tag=tag, name=stsw[0], mb=round(sum(len(v) for v in got.values()) / 1e6, 1), direct=True)
         d = os.path.join(root, f"{stamp}_{tag}"); os.makedirs(d)
         for k, v in got.items(): open(os.path.join(d, k), "wb").write(v)
         r = B.submit(B.guest_path(os.path.join(d, stsw[0])), tag, run)
@@ -1464,6 +1519,7 @@ def sewergems_export_job(b: SgExport, request: Request):
 @router.get("/sewergems/jobs/{name}")
 def sewergems_job(name: str):
     from sewerapp.io import bridge_jobs as B
+    if name in _SGJOBS: return _sg_jobs({_SGJOBS[name]["tag"]})[0]
     if not re.fullmatch(r"w19x_[A-Za-z0-9_-]+", name): raise HTTPException(404, name)
     return B.job(name)
 

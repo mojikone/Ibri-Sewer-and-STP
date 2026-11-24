@@ -1724,7 +1724,7 @@ function renderSgModels() {
 function renderSgJobs() {
   const d = sgData; if (!d) return;
   const lab = { queued: "waiting for the VM", running: "SewerGEMS is exporting", ready: "ready", failed: "failed", done: "finished", unknown: "?" };
-  $("#sg-jobs").innerHTML = d.jobs.length ? `<h4>Exports</h4>` + d.jobs.slice(0, 6).map(j => `<div class="sgj ${j.state}" data-tag="${esc(j.tag)}"><b>${esc(j.tag)}</b> <span>${lab[j.state] || j.state}` +
+  $("#sg-jobs").innerHTML = d.jobs.length ? `<h4>Exports</h4>` + d.jobs.slice(0, 6).map(j => `<div class="sgj ${j.state}" data-tag="${esc(j.tag)}"><b>${esc(j.tag)}</b> <span>${j.direct && j.state === "running" ? "being read (no SewerGEMS needed)" : lab[j.state] || j.state}` +
       (j.state === "running" ? ` (${j.scenarios_done} scenarios so far, ${j.seconds ?? 0} s)` : "") + `</span>` +
       (j.state === "ready" ? `<button data-act="open">Open</button>` : "") + (j.error ? `<div class="errtxt">${esc(j.error.slice(0, 300))}</div>` : "") + `</div>`).join("") : "";
 }
@@ -1736,7 +1736,7 @@ function sgPoll() {
     const before = new Map(sgData.jobs.map(j => [j.job, j.state]));
     await refreshSg();
     for (const j of sgData.jobs) if (before.get(j.job) && before.get(j.job) !== j.state && (j.state === "ready" || j.state === "failed"))
-      toast(j.state === "ready" ? `${j.tag} is exported: File > Open SewerGEMS model to open it.` : `The export of ${j.tag} failed (see the dialog).`, j.state === "ready" ? "info" : "err");
+      toast(j.state === "ready" ? `${j.tag} is ready: open it from Open a SewerGEMS model.` : `The export of ${j.tag} failed (see the dialog).`, j.state === "ready" ? "info" : "err");
     if (!active()) clearInterval(sgTimer);
   }, 3000);
 }

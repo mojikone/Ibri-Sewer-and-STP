@@ -717,7 +717,9 @@ def test_any_sewergems_model_exported_through_the_bridge_then_opened(page, bridg
     file_menu(page, "sg-btn")
     expect(page.get_by_test_id("sg-watch")).to_contain_text("SewerGEMS link is running")
     row = page.locator("#sg-models .sgm", has_text="Area 7 model.stsw"); expect(row).to_have_count(1)
+    page.locator("#sg-run").check()                                   # SewerGEMS computes it in the VM (v6: otherwise read directly)
     row.locator("button[data-act=export]").click(); idle(page)
+    page.locator("#sg-run").uncheck()
     jobs = glob.glob(os.path.join(bridge["root"], "jobs", "w19x_*_Area_7_model.ps1")); assert len(jobs) == 1
     body = open(jobs[0], encoding="utf-8").read()
     assert "$src = '\\\\VBOXSVR\\TestShare\\Area 7\\Area 7 model.stsw'" in body and "$tag = 'Area_7_model'" in body
