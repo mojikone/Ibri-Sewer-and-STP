@@ -160,6 +160,10 @@ def _pressure(folder, sc, p, nodes_lab):
             rows[lab] = dict(kind="pump", from_node=a, to_node=b, length_m=0.0, dn_mm=0, inside_mm=np.nan, up_inv=np.nan, dn_inv=np.nan, transfer=False, coords=None)
             pu = {k: float(v) for k, v in (("q_ls", r.q_ls), ("on_m", r.on_m), ("off_m", r.off_m)) if v == v}
             if isinstance(r.definition, str) and r.definition: pu["definition"] = r.definition
+            n = getattr(r, "count", 1)
+            if n == n and int(n) > 1: pu["count"] = int(n)                        # a battery: lead and lag pumps together
+            tg = getattr(r, "vspb_target_m", np.nan)
+            if tg == tg: pu["vspb"] = dict(target_m=float(tg), control=str(getattr(r, "vspb_control", "") or ""))
             if pu: p.pumps[lab] = pu
         else:
             d = float(r.diameter_mm) if r.diameter_mm == r.diameter_mm else np.nan

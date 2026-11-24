@@ -46,6 +46,8 @@ def run(p, res=None):
         if r.kind == "pump":
             pu = (getattr(p, "pumps", None) or {}).get(lid)
             if not pu: add("warning", "links", lid, "no definition or capacity: the steady run passes its inflow, the storm run pumps ideally")
+            elif pu.get("vspb"): add("warning", "links", lid, f"a variable-speed battery in SewerGEMS (target head {pu['vspb'].get('target_m', 0):.2f} m"
+                                                          f"{' at ' + pu['vspb']['control'] if pu['vspb'].get('control') else ''}): run here at full speed, {pu.get('count', 1)} pump(s) together")
             if N.kind.get(r.from_node) not in ("wetwell", "storage"): add("warning", "links", lid, f"draws from {r.from_node}, which is not a wet well")
         if r.kind in ("orifice", "weir") and not (getattr(p, "outlets", None) or {}).get(lid): add("warning", "links", lid, f"its {r.kind} geometry is not set: SWMM takes the defaults shown in Properties")
     out_kinds = L.groupby("from_node").kind.apply(set) if len(L) else {}

@@ -60,3 +60,27 @@ def test_a_pump_definition_and_a_station_switched_off(tmp_path):
     assert d.type == "three_point" and abs(d.shutoff_h_m - 14.0) < 1e-6 and abs(d.h_m - 10.85) < 1e-6 and abs(d.max_q_ls - 75 / 3.6) < 1e-4 and abs(d.max_h_m - 9.5) < 1e-6
     p, _, _ = sewergems_export.load(out, "ib01", 32640)
     assert not (p.links.kind == "pump").any() and p.settings["libraries"]["pumps"][0]["name"] == "Pump Definition - 1"
+
+
+@pytest.mark.skipif(not os.path.exists(POND), reason="the engineer's Pond_Mouj model is on this computer only")
+def test_a_variable_speed_pump_battery(tmp_path):
+    """No model here holds a battery, so a COPY of Pond_Mouj gets one: its pump redeclared as a battery of a lead and
+    two lag pumps on a design-point definition (1 cfs at 40 ft), held at 50 ft at J-1. It becomes the app's pump of
+    3 pumps at full speed on that definition (28.32 L/s at 12.19 m), and Validate says the speed control is not run."""
+    import shutil, sqlite3
+    from sewerapp.engine import validate
+    db = str(tmp_path / "vsp.stsw.sqlite"); shutil.copy(POND, db)
+    c = sqlite3.connect(db)
+    c.execute("delete from StandardPump where DomainElementID = 37")
+    c.execute("insert into VariableSpeedPumpBattery (DomainElementID) values (37)")
+    c.execute("insert into VariableSpeedPumpBattery_Physical_Data (DomainElementID, AlternativeID, Physical_VspbDefinition, Physical_VspbControlNode, "
+              "Physical_VspbTargetHead, Physical_MaximumRelativeSpeedFactor, Physical_NumberOfLagPumps, Physical_IsSuctionSideVSPB) values (37, 6, 990001, 39, 50.0, 1.0, 2, 0)")
+    c.execute("insert into IdahoPumpDefinition (SupportElementID, PumpDefinitionType, DesignDischarge, DesignHead, ShutoffHead, MaxOperatingDischarge, MaxOperatingHead) values (990001, 1, 1.0, 40.0, 0, 0, 0)")
+    c.execute("insert into HMIModelingElement (ElementID, DomainDataSetID, IsDeleted, ElementType, HMIModelingElementGISIDsCount, Label) values (990001, 1, 0, 99, 0, 'Battery curve')")
+    c.commit(); c.close()
+    out = str(tmp_path / "out"); sewergems_db.export(db, out)
+    p, _, _ = sewergems_export.load(out, "vsp", 32640)
+    pu = p.pumps["PMP-1"]
+    assert pu["count"] == 3 and pu["definition"] == "Battery curve" and abs(pu["vspb"]["target_m"] - 15.24) < 1e-9 and pu["vspb"]["control"] == "J-1"
+    d = p.settings["libraries"]["pumps"][0]; assert d["type"] == "design_point" and abs(d["q_ls"] - 28.3168) < 1e-3 and abs(d["h_m"] - 12.192) < 1e-9
+    assert any("variable-speed battery" in v["message"] and "3 pump(s)" in v["message"] for v in validate.run(p))
