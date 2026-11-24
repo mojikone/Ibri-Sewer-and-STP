@@ -58,6 +58,12 @@ def _kinds(p, add):
     loose = [n for n in cbs if (PN.get(n) or {}).get("inlet_type", "full_capture") != "full_capture" and not street_ready(PN.get(n) or {})]
     if loose: add("warning", "nodes", loose[0], f"{len(loose)} catch basin{'s' if len(loose) > 1 else ''} with an inlet but no street (half-width, curb height, cross slope, n): "
                                                 "the storm run takes all their inflow into the pipes; the rational run computes their capture")
+    PC = P.get("catchments", {}) or {}                               # LID units: within their catchment
+    for cid, d in PC.items():
+        rows = d.get("lid_usage") or []
+        if cid in p.catchments.index and rows:
+            a = sum(r[1] * r[2] for r in rows); A = float(p.catchments.area_ha[cid]) * 1e4
+            if a > A + 1e-6: add("error", "catchments", cid, f"its LID units cover {a:.0f} m2, more than the catchment's {A:.0f} m2")
     for n in N.index[N.kind == "headwall"]:
         d = PN.get(n) or {}
         if d.get("boundary") == "fixed" and d.get("tailwater_m") is None: add("warning", "nodes", n, "a fixed boundary with no tailwater elevation: taken as free")

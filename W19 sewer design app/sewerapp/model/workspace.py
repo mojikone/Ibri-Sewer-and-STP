@@ -222,6 +222,8 @@ def apply(p, e):
             for k in [k for k in dct if k not in live_n]: dct.pop(k)
         PL = _props(p, "links")
         for k in [k for k in PL if k not in live_l]: PL.pop(k)
+        PC = _props(p, "catchments")
+        for k in [k for k in PC if k not in set(p.catchments.index)]: PC.pop(k)
         for S in p.unit_rows.values():
             for k in [k for k in S if k not in live_n]: S.pop(k)
         p.controls = [r for r in (p.controls or []) if r.get("link") in live_l and (r.get("if") != "node" or r.get("node") in live_n)]
@@ -275,6 +277,12 @@ def apply(p, e):
                 names.add(x.get("name")); pressure.curve(x)                     # raises on an incomplete curve
             used = sorted({v["definition"] for v in p.pumps.values() if v.get("definition")} - names)
             if used: raise ValueError(f"pump definition {used[0]} is used by a pump: give that pump another definition first")
+        if e["path"] == "libraries.lid":
+            from sewerapp.io.swmm_lid import check_library
+            check_library(e["value"])
+            names = {c["name"] for c in e["value"] or []}
+            used = sorted({r[0] for d in _props(p, "catchments").values() for r in (d.get("lid_usage") or [])} - names)
+            if used: raise ValueError(f"LID control {used[0]} is used by a catchment: remove it there first")
         if e["path"] == "pressure" and isinstance(e["value"], dict):
             for k in ("C", "n"):
                 if k in e["value"] and not (isinstance(e["value"][k], (int, float)) and e["value"][k] > 0): raise ValueError(f"{k} must be above 0")
@@ -537,15 +545,19 @@ def apply(p, e):
         return False
     if op == "set_props":
         table = e.get("table", "nodes")
-        if table not in ("nodes", "links"): raise ValueError("table: nodes or links")
+        if table not in ("nodes", "links", "catchments"): raise ValueError("table: nodes, links or catchments")
         T = getattr(p, table); ids = [str(i) for i in e["ids"]]
         missing = [i for i in ids if i not in T.index]
         if missing: raise ValueError(f"no {table[:-1]} {missing[:3]}")
-        P = _props(p, table)
+        P = _props(p, table); kind_of = (lambda i: "catchment") if table == "catchments" else (lambda i: T.kind[i])
         for i in ids:
-            if e.get("clear"): P.pop(i, None); _kind_props(p, table, [i], T.kind[i]); continue
-            vals = K.check_props(T.kind[i], e.get("values") or {})
-            if T.kind[i] == "tap" and vals.get("link") and vals["link"] not in p.links.index: raise ValueError(f"no conduit {vals['link']} to tap")
+            if e.get("clear"): P.pop(i, None); _kind_props(p, table, [i], kind_of(i)); continue
+            vals = K.check_props(kind_of(i), e.get("values") or {})
+            if vals.get("lid_usage"):
+                lib = {c.get("name") for c in ((p.settings.get("libraries") or {}).get("lid") or [])}
+                bad = [r[0] for r in vals["lid_usage"] if r[0] not in lib]
+                if bad: raise ValueError(f"no LID control {bad[0]} (Components > LID controls)")
+            if kind_of(i) == "tap" and vals.get("link") and vals["link"] not in p.links.index: raise ValueError(f"no conduit {vals['link']} to tap")
             cur = P.setdefault(i, {})
             for k, v in vals.items():
                 if v is None: cur.pop(k, None)

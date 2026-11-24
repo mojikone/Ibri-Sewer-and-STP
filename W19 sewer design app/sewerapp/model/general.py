@@ -62,7 +62,7 @@ DEFAULT_SETTINGS = dict(
     # the project's engineering libraries beyond the size catalogue: named cross-sections a conduit can take
     # unit_loads: [{name, type population|area|discharge|count, rate_m3d per unit, unit, pe people per unit}]
     # patterns: [{name, hourly: 24 multipliers}] for dry-weather runs on SWMM
-    libraries=dict(sections=[], pumps=[], unit_loads=[], patterns=[], catalogues={}),
+    libraries=dict(sections=[], pumps=[], unit_loads=[], patterns=[], catalogues={}, lid=[]),        # lid: LID controls (io/swmm_lid.py)
     # the dry-weather flow in the SWMM run: off (a storm run alone) or on with a load set and an hourly pattern
     swmm_dwf=dict(on=False, load_set=None, pattern=None, hours=48),
     # named selections kept with the project (SewerGEMS's selection sets): {name: {table, ids}}
@@ -110,7 +110,7 @@ class Project:
     ground_src: dict = field(default_factory=dict)
     hydrology: dict = field(default_factory=dict)   # {catchment id: {C, tc_min, cn}}: the rational method and SCS curve number
     controls: list = field(default_factory=list)    # SWMM control rules (pumps, orifices, weirs) for the storm run
-    props: dict = field(default_factory=lambda: {"nodes": {}, "links": {}})   # each kind's own fields (model/kinds.py)
+    props: dict = field(default_factory=lambda: {"nodes": {}, "links": {}, "catchments": {}})   # each kind's own fields (model/kinds.py)
 
     def __setstate__(self, d):                            # a project pickled before a field existed gets its default
         self.__dict__.update(d)

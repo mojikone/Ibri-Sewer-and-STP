@@ -341,3 +341,40 @@ def test_reader_takes_sewergems_culverts():
     p, _, _ = sewergems_export.load(out)
     cv = {k: v for k, v in p.props["links"].items() if v.get("is_culvert")}
     assert cv and any(v.get("culvert_code") == "15" for v in cv.values())
+
+
+# ------------------------------------------------------------------ LID controls (SWMM 5.2's lid.c)
+BC = dict(name="BC1", type="BC", surface=dict(stor_mm=150, veg_frac=0.0, n=0.1, slope_pc=1.0, side_slope=5),
+          soil=dict(thick_mm=600, porosity=0.5, field_cap=0.2, wilt_pt=0.1, ksat_mmh=13, kslope=10, suction_mm=89),
+          storage=dict(thick_mm=300, void_ratio=0.75, ksat_mmh=5, clog=0), drain=dict(coeff=0, expon=0.5, offset_mm=150, delay_h=6))
+
+
+def test_lid_library_is_checked_as_swmm_does():
+    from sewerapp.io import swmm_lid as LD
+    LD.check_library([BC])
+    with pytest.raises(ValueError, match="soil layer needs"): LD.check_library([dict(BC, soil=dict(thick_mm=600))])
+    with pytest.raises(ValueError, match="porosity > field capacity"): LD.check_library([dict(BC, soil=dict(BC["soil"], field_cap=0.6))])
+    with pytest.raises(ValueError, match="type is one of"): LD.check_library([dict(BC, type="XX")])
+    rb = dict(name="RB1", type="RB", storage=dict(thick_mm=1000, void_ratio=0.75, ksat_mmh=0, clog=0), drain=dict(coeff=1, expon=0.5, offset_mm=0, delay_h=6))
+    LD.check_library([BC, rb])
+
+
+def test_lid_units_on_a_catchment_reduce_its_runoff_in_the_storm_run():
+    """A bio-retention cell treating all the impervious runoff of a hectare: SWMM 5.2 runs it, and the outfall's peak
+    drops against the same storm without it."""
+    from sewerapp.engine import storm
+    p = _net()
+    W.apply(p, dict(op="add_catchment", id="C1", outlet="MH1", area_ha=1.0, imperv_pc=60, coords=[[0, 0], [100, 0], [100, 100], [0, 100]]))
+    p.rain = dict(idf=dict(durations_min=[5, 10, 30, 60], intensities=[150.0, 120.0, 70.0, 45.0]), duration_min=60, step_min=5)
+    base = storm.run(p)["links"]["P3"]["q_peak"]
+    with pytest.raises(ValueError, match="no LID control"):
+        W.apply(p, dict(op="set_props", table="catchments", ids=["C1"], values=dict(lid_usage=[["BC1", 1, 1500, 30, 0, 100, 0, 0]])))
+    W.apply(p, dict(op="set_setting", path="libraries.lid", value=[BC]))
+    W.apply(p, dict(op="set_props", table="catchments", ids=["C1"], values=dict(lid_usage=[["BC1", 1, 1500, 30, 0, 100, 0, 0]])))
+    t = swmm_inp.from_project(p)
+    assert "[LID_CONTROLS]" in t and "BC1              SOIL" in t and "C1               BC1" in t
+    r = storm.run(p)
+    assert r["links"]["P3"]["q_peak"] < 0.9 * base
+    with pytest.raises(ValueError, match="used by a catchment"): W.apply(p, dict(op="set_setting", path="libraries.lid", value=[]))
+    W.apply(p, dict(op="set_props", table="catchments", ids=["C1"], values=dict(lid_usage=[["BC1", 10, 1500, 30, 0, 100, 0, 0]])))
+    assert any(m["id"] == "C1" and "LID units cover" in m["message"] for m in validate.run(p))

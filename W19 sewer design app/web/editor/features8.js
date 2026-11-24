@@ -204,6 +204,12 @@ function kfControl(f, v) {
   if (f.type === "choice") return `<select ${a}>${v === undefined || v === null ? `<option value="" selected>${v === undefined ? "(mixed)" : "(choose)"}</option>` : ""}${f.options.map(o => `<option value="${o}"${o === v ? " selected" : ""}>${esc((f.labels && f.labels[o]) || OPT_NAMES[o] || o.replace(/_/g, " "))}</option>`).join("")}</select>`;
   if (f.type === "bool") return `<input type="checkbox" ${a}${v ? " checked" : ""}>`;
   if (f.type === "text") return `<input type="text" ${a} value="${v == null ? "" : esc(String(v))}"${f.key === "link" ? ` list="kf-links"` : ""}>`;
+  if (f.type === "lidtable") {
+    const names = (((state.model.settings || {}).libraries || {}).lid || []).map(c => c.name);
+    if (!names.length) return `<p class="muted small">No LID controls yet: Components > LID controls...</p>`;
+    return `<table class="kf-tab kf-lidtab" data-kf="${f.key}"><thead><tr><th>LID</th><th>Number</th><th>Area each (m2)</th><th>Width (m)</th><th>Saturated at start %</th><th>% impervious treated</th><th>To pervious</th><th>% pervious treated</th></tr></thead><tbody>` +
+      (v || []).map(r => lidRow(names, r)).join("") + `</tbody></table><button id="kf-${f.key}-add" data-testid="kf-${f.key}-add" class="small">+ Add an LID unit</button>`;
+  }
   if (f.type === "table") {
     const rows = (v || []).concat([["", ""]]);
     const heads = f.key === "gutter_section" ? ["Station from the curb (m)", "Relative elevation (m)"] : ["Inflow (L/s)", "Captured (L/s)"];
@@ -215,9 +221,9 @@ function kfControl(f, v) {
 function kindFieldsBlock() {
   const host = $("#prop-grid"); if (!host || !state.info || !state.info.kind_fields || !state.model) return;
   const fs = selFeatures(), table = state.sel.table, old = $("#kind-fields");
-  if (!fs.length || !["nodes", "links"].includes(table)) { if (old) old.remove(); return; }
-  const kind = fs[0].properties.kind, spec = state.info.kind_fields[kind];
-  if (!spec || !fs.every(f => f.properties.kind === kind)) { if (old) old.remove(); return; }
+  if (!fs.length || !["nodes", "links", "catchments"].includes(table)) { if (old) old.remove(); return; }
+  const kind = table === "catchments" ? "catchment" : fs[0].properties.kind, spec = state.info.kind_fields[kind];
+  if (!spec || (table !== "catchments" && !fs.every(f => f.properties.kind === kind))) { if (old) old.remove(); return; }
   const SR = kind === "catch_basin" && fs.length === 1 && state.storm && state.storm.sid === state.sid && state.storm.data && (state.storm.data.inlets || {})[fs[0].id];
   const sig = [table, state.sel.ids.join(","), JSON.stringify(fs.map(f => f.properties.props || {})), JSON.stringify(state.inletRows || {}), JSON.stringify(SR || {})].join("|");
   const ae = document.activeElement, typing = old && old.contains(ae) && ae.tagName === "INPUT" && /^(text|number)$/.test(ae.type);   // a choice re-draws at once
@@ -228,7 +234,7 @@ function kindFieldsBlock() {
   let h = `<h5>${esc(KINDS[kind] ? KINDS[kind][1] : kind)}</h5>`;
   for (const [g, fl] of Object.entries(groups)) {
     h += `<details class="kf-g" open data-testid="kf-group-${esc(g)}"><summary>${esc(g)}</summary>`;
-    for (const f of fl) h += f.type === "table" ? `<div class="kf-t"><label>${esc(f.label)}</label>${kfControl(f, P[f.key])}</div>`
+    for (const f of fl) h += f.type === "table" || f.type === "lidtable" ? `<div class="kf-t"><label>${esc(f.label)}</label>${kfControl(f, P[f.key])}</div>`
       : `<div class="pr"><label for="kf-${f.key}">${esc(f.label)}</label>${kfControl(f, P[f.key])}<span class="u">${esc(f.unit || "")}</span></div>`;
     h += `</details>`;
   }
@@ -242,6 +248,10 @@ function kindFieldsBlock() {
   const ids = state.sel.ids.slice(), send = values => enqueue(() => exec({ op: "set_props", table, ids, values }));
   box.onchange = e => {
     const el = e.target, tab = el.closest(".kf-tab");
+    if (tab && tab.classList.contains("kf-lidtab")) {
+      const rows = [...tab.querySelectorAll("tbody tr")].map(tr => [tr.querySelector("select").value, ...[...tr.querySelectorAll("input")].map(i => i.type === "checkbox" ? (i.checked ? 1 : 0) : Number(i.value || 0))]).filter(r => r[0] && r[1] > 0);
+      send({ [tab.dataset.kf]: rows.length ? rows : null }); return;
+    }
     if (tab) {
       const rows = [...tab.querySelectorAll("tbody tr")].map(tr => [...tr.querySelectorAll("input")].map(i => i.value.trim())).filter(r => r[0] !== "" && r[1] !== "").map(r => [Number(r[0]), Number(r[1])]);
       send({ [tab.dataset.kf]: rows.length ? rows : null }); return;
@@ -254,7 +264,9 @@ function kindFieldsBlock() {
   };
   box.onclick = e => {
     const b = e.target.closest("button[id$='-add']"); if (!b) return;
-    const tb = b.previousElementSibling.querySelector("tbody"); tb.insertAdjacentHTML("beforeend", `<tr><td><input type="number" step="any"></td><td><input type="number" step="any"></td></tr>`);
+    const tab = b.previousElementSibling, tb = tab.querySelector("tbody");
+    if (tab.classList.contains("kf-lidtab")) { tb.insertAdjacentHTML("beforeend", lidRow((((state.model.settings || {}).libraries || {}).lid || []).map(c => c.name), null)); return; }
+    tb.insertAdjacentHTML("beforeend", `<tr><td><input type="number" step="any"></td><td><input type="number" step="any"></td></tr>`);
   };
 }
 (function wireKindFields() {
@@ -296,3 +308,41 @@ function networkType() {
   return m.catchFeat.length || m.nodeFeat.some(f => f.properties.kind === "catch_basin") ? "storm" : "sanitary";
 }
 function pumpSump() { return networkType() === "storm" ? "storage" : "wetwell"; }
+
+/* ------------------------------------------------------------------ LID controls (SewerGEMS's LID element, run on SWMM 5.2) */
+function lidRow(names, r) {
+  r = r || [names[0], 1, "", "", 0, 100, 0, 0];
+  const num = (k, v) => `<td><input type="number" step="any" min="0" value="${v ?? ""}"></td>`;
+  return `<tr><td><select>${names.map(n => `<option${n === r[0] ? " selected" : ""}>${esc(n)}</option>`).join("")}</select></td>${num(1, r[1])}${num(2, r[2])}${num(3, r[3])}${num(4, r[4])}${num(5, r[5])}` +
+    `<td><input type="checkbox"${r[6] > 0 ? " checked" : ""}></td>${num(7, r[7])}</tr>`;
+}
+function openLidLibrary() {
+  if (!state.model) { toast("Open a project first.", "info"); return; }
+  const spec = state.info.kind_fields._lid, d = dlg("dlg-lid-lib", "LID controls", true), b = d.querySelector(".body");
+  const draft = JSON.parse(JSON.stringify(((state.model.settings.libraries || {}).lid) || []));
+  const render = () => {
+    b.innerHTML = `<p class="muted">SWMM's low impact development controls. Each needs its layers' values (no value is assumed); a catchment takes them in Properties > LID units.</p>` +
+      draft.map((c, i) => {
+        const layers = [...spec.needs[c.type], ...(spec.optional[c.type] || [])];
+        return `<fieldset class="lid-c" data-i="${i}"><legend><input data-f="name" value="${esc(c.name)}" data-testid="lid-name-${i}"> <select data-f="type" data-testid="lid-type-${i}">${Object.entries(spec.types).map(([k, l]) => `<option value="${k}"${k === c.type ? " selected" : ""}>${esc(l)}</option>`).join("")}</select> <button data-a="del">&times;</button></legend>` +
+          layers.map(L => `<div class="lid-l"><b>${L[0].toUpperCase() + L.slice(1)}${(spec.optional[c.type] || []).includes(L) ? " (optional)" : ""}</b>` + spec.layers[L].map(([k, lab, u]) =>
+            `<label>${esc(lab)}${u ? ` (${esc(u)})` : ""}<input type="number" step="any" min="0" data-l="${L}" data-k="${k}" data-testid="lid-${i}-${L}-${k}" value="${(c[L] || {})[k] ?? ""}"></label>`).join("") + `</div>`).join("") + `</fieldset>`;
+      }).join("") + `<div class="row"><button data-a="add" data-testid="lid-add">Add an LID control</button></div>`;
+  };
+  const collect = () => {
+    for (const fs of $$("fieldset.lid-c", b)) {
+      const c = draft[+fs.dataset.i]; c.name = fs.querySelector("[data-f=name]").value.trim(); c.type = fs.querySelector("[data-f=type]").value;
+      for (const el of $$("input[data-l]", fs)) { const L = el.dataset.l; c[L] = c[L] || {}; if (el.value === "") delete c[L][el.dataset.k]; else c[L][el.dataset.k] = Number(el.value); }
+    }
+  };
+  render(); d.hidden = false;
+  b.onchange = e => { if (e.target.dataset.f === "type") { collect(); render(); } };
+  d.onclick = e => {
+    const t = e.target.closest("button"); if (!t) return; const a = t.dataset.a || t.dataset.act; if (!a) return;
+    if (a === "close") { d.hidden = true; return; }
+    collect();
+    if (a === "add") { draft.push({ name: `LID${draft.length + 1}`, type: "BC" }); render(); return; }
+    if (a === "del") { draft.splice(+t.closest("fieldset").dataset.i, 1); render(); return; }
+    if (a === "ok") enqueue(async () => { await exec({ op: "set_setting", path: "libraries.lid", value: draft }); d.hidden = true; toast(`${draft.length} LID control${draft.length === 1 ? "" : "s"} saved with the project.`, "info"); });
+  };
+}

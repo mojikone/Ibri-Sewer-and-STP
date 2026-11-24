@@ -136,6 +136,7 @@ function buildRibbon() {
       rbGroup("Defaults", [rbBtn({ icon: "proto", label: "Prototypes...", big: true, run: () => openPrototypes() }), rbBtn({ icon: "lib", label: "Engineering libraries...", big: true, run: () => openLibraries() })]),
       rbGroup("Pumps", [rbBtn({ icon: "run", label: "Pump definitions...", big: true, title: "Pump curves (design point, three points, table) and the force mains' friction, with each pump's system curve",
         run: () => openPumpDefs(state.sel.table === "links" && state.sel.ids.length === 1 && state.model.links.get(state.sel.ids[0]) && state.model.links.get(state.sel.ids[0]).properties.kind === "pump" ? state.sel.ids[0] : null) })]),
+      rbGroup("Stormwater", [rbBtn({ icon: "storm", label: "LID...", title: "LID: low impact development controls (SWMM's): bio-retention, rain gardens, green roofs, trenches, permeable pavement, rain barrels, swales, rooftop disconnection; a catchment takes them in Properties > LID", run: () => openLidLibrary() })]),
       rbGroup("Sanitary", [rbBtn({ icon: "load", label: "Unit loads...", title: "Unit sanitary loads: population, area, discharge, count", run: () => openUnitLoads() }),
         rbBtn({ icon: "hydro", label: "Patterns...", title: "Hourly patterns and the dry-weather flow in SWMM runs", run: () => openPatterns() })]),
       rbGroup("Loads", [rbBtn({ icon: "tbl", label: "Loads table", title: "The Nodes table: each structure's unit load (peaked) and sanitary load (not peaked); paste columns from Excel", run: panel("nodes") }),

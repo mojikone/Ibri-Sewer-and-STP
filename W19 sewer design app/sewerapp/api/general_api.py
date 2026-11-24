@@ -89,7 +89,10 @@ def _open(project):
 
 def _kinds_schema():
     from sewerapp.model.kinds import schema
-    return schema()
+    from sewerapp.io import swmm_lid as LD
+    s = schema()
+    s["_lid"] = dict(types=LD.TYPES, layers={k: [list(x) for x in v] for k, v in LD.LAYERS.items()}, needs=LD.NEEDS, optional=LD.OPTIONAL)
+    return s
 
 
 def _info(pid):
@@ -483,6 +486,7 @@ def model(pid: str, sid: str):
     with _lock: p = s.model(sid)
     n = p.nodes; lon, lat = coords.to_display(p.crs, n.x.values, n.y.values); ll = dict(zip(n.index, zip(lon, lat)))
     PN, PL = (getattr(p, "props", None) or {}).get("nodes", {}), (getattr(p, "props", None) or {}).get("links", {})
+    PCa = (getattr(p, "props", None) or {}).get("catchments", {}) or {}
     nodes = [dict(type="Feature", id=i, geometry=dict(type="Point", coordinates=[float(ll[i][0]), float(ll[i][1])]),
                   properties=clean(dict(id=i, **r, **({"storage": p.storage[i]} if i in getattr(p, "storage", {}) else {}),
                                         **({"tailwater": p.tailwater[i]} if i in getattr(p, "tailwater", {}) else {}),
@@ -512,7 +516,8 @@ def model(pid: str, sid: str):
         if isinstance(c, list) and len(c) >= 3:
             a = np.array(c); x, y = coords.to_display(p.crs, a[:, 0], a[:, 1])
             catch.append(dict(type="Feature", id=i, geometry=dict(type="Polygon", coordinates=[[[float(u), float(v)] for u, v in zip(x, y)]]),
-                              properties=clean(dict(id=i, **r, **({"hydro": p.hydrology[i]} if i in getattr(p, "hydrology", {}) else {})))))
+                              properties=clean(dict(id=i, **r, **({"hydro": p.hydrology[i]} if i in getattr(p, "hydrology", {}) else {}),
+                                                    **({"props": PCa[i]} if i in PCa else {})))))
     return dict(nodes=dict(type="FeatureCollection", features=nodes), links=dict(type="FeatureCollection", features=links),
                 catchments=dict(type="FeatureCollection", features=catch), settings=clean(p.settings), rain=clean(p.rain),
                 loads=clean({k: v for k, v in p.load_sets.items()}), unit_rows=clean(getattr(p, "unit_rows", {}) or {}), controls=clean(getattr(p, "controls", []) or []))

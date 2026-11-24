@@ -1767,3 +1767,31 @@ def test_v7_a_conduit_becomes_a_culvert_with_its_headwater(server, browser):
     assert r["hw_m"] > 0 and r["culvert_control"] in ("inlet", "outlet"), r
     assert errs == [], errs
     ctx.close()
+
+
+def test_v7_lid_controls_and_a_catchments_lid_units(server, browser):
+    """Components > LID controls: a rain barrel with its storage and drain; a catchment's Properties > LID units take it."""
+    ctx = browser.new_context(viewport={"width": 1600, "height": 950}); pg = ctx.new_page(); pg.set_default_timeout(60000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    _new_local(pg, server, "LID")
+    ops = [dict(op="add_node", id="A", x=0, y=0, ground=102, invert=100), dict(op="add_node", id="O", kind="outfall", x=100, y=0, ground=101, invert=99),
+           dict(op="add_link", id="P1", from_node="A", to_node="O", dn_mm=300),
+           dict(op="add_catchment", id="C1", outlet="A", area_ha=1, coords=[[0, 0], [50, 0], [50, 50], [0, 50]])]
+    pg.evaluate("""async ops => { for (const e of ops) { const r = await fetch(`/api/g${base()}/edit`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(e)}); if (!r.ok) throw new Error(await r.text()); } }""", ops)
+    pg.evaluate("refreshAll()"); idle(pg)
+    pg.click("#rb-tab-components"); pg.locator("#rb-page-components .rb-btn", has_text="LID...").first.click()
+    pg.click("[data-testid=lid-add]"); pg.select_option("[data-testid=lid-type-0]", "RB")
+    for k, v in (("storage-thick_mm", "1000"), ("storage-void_ratio", "0.75"), ("storage-ksat_mmh", "0"), ("storage-clog", "0"),
+                 ("drain-coeff", "1"), ("drain-expon", "0.5"), ("drain-offset_mm", "0"), ("drain-delay_h", "6")):
+        pg.fill(f"[data-testid=lid-0-{k}]", v)
+    pg.fill("[data-testid=lid-name-0]", "RB1")
+    pg.click("#dlg-lid-lib [data-act=ok]"); idle(pg)
+    assert pg.evaluate("window.ed.state.model.settings.libraries.lid.map(c => c.name)") == ["RB1"]
+    pg.evaluate("window.ed.selectElement('catchments', 'C1')"); pg.wait_for_selector("[data-testid=kf-lid_usage-add]")
+    pg.click("[data-testid=kf-lid_usage-add]")
+    row = pg.locator("table.kf-lidtab tbody tr").first
+    row.locator("input").nth(1).fill("2"); row.locator("input").nth(2).fill("10"); row.locator("input").nth(2).dispatch_event("change"); idle(pg)
+    u = pg.evaluate("window.ed.state.model.catchments.get('C1').properties.props.lid_usage")
+    assert u and u[0][0] == "RB1" and u[0][1] == 1 and u[0][2] == 2 and u[0][3] == 10, u
+    assert errs == [], errs
+    ctx.close()

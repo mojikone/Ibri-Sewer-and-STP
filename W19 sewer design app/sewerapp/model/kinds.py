@@ -104,6 +104,9 @@ FIELDS = {
     "lateral": [("material", "Material", "text", "", None, "Lateral"), ("n", "Manning's n", "num", "", None, "Lateral")],
     "channel": [("material", "Material", "text", "", None, "Channel")],
     "pump": [("station", "Pump station", "text", "", None, "Station")],
+    # a catchment's LID units (SewerGEMS's LID element): rows of LID control, number, area each, width, initially
+    # saturated %, % of impervious runoff treated, outflow to pervious (0/1), % of pervious runoff treated (io/swmm_lid.py)
+    "catchment": [("lid_usage", "LID units", "lidtable", "", None, "LID")],
     # a culvert (SewerGEMS's Is Culvert?): its HDS-5 inlet type (SWMM's culvert code), entrance loss, allowable headwater
     "conduit": [("is_culvert", "Is culvert?", "bool", "", None, "Culvert"), ("culvert_code", "Inlet (HDS-5 type)", "choice", "", tuple(str(k) for k in range(1, 58)), "Culvert"),
                 ("ke", "Entrance loss coefficient Ke", "num", "", None, "Culvert"), ("max_headwater_m", "Allowable headwater depth", "num", "m", None, "Culvert")],
@@ -137,6 +140,9 @@ def check_props(kind, values):
             if v not in opts: raise ValueError(f"{label}: one of {', '.join(opts)}")
         elif typ == "bool": v = bool(v)
         elif typ == "text": v = str(v)[:200]
+        elif typ == "lidtable":
+            from sewerapp.io.swmm_lid import check_usage
+            v = check_usage(v)
         elif typ == "table":
             try: v = [[float(a), float(b)] for a, b in v]
             except Exception: raise ValueError(f"{label}: rows of two numbers")
