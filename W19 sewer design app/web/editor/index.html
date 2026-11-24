@@ -290,14 +290,17 @@
   <div class="row"><button id="des-run" class="primary" title="Sizes and levels written into the pipes and structures (Undo takes it back)">Design now</button><button id="des-preview" title="A table of what would change; nothing changes until you apply it">Preview only</button><button id="des-cancel">Cancel</button></div>
 </div></div>
 <div id="dlg-sym" class="modal" hidden><div class="dlg wide sym">
-  <h3>Symbology <span class="muted">- <span id="sym-def-name">Default</span></span></h3>
-  <div class="row"><button id="sym-def-new" title="A new named symbology, copied from this one">New symbology...</button><button id="sym-def-rename">Rename...</button><button id="sym-def-del">Delete</button></div>
+  <h3>Symbology</h3>
   <div id="sym-tabs" class="tabs-mini"><button data-type="links" class="on">Pipes</button><button data-type="nodes">Structures</button><button data-type="catchments">Catchments</button></div>
-  <h4>Colour coding <button id="sym-new" class="mini" title="A colour coding by any field">New</button></h4>
-  <div id="sym-codings" class="list"></div>
-  <div id="sym-coding-ed"></div>
-  <h4>Labels</h4>
-  <div id="sym-labels"></div>
+  <details class="sym-sec" open data-testid="sym-sec-colour"><summary>Colour coding</summary>
+    <div class="row"><button id="sym-new" title="A colour coding by any field, for the kind shown">New colour coding</button></div>
+    <div id="sym-codings" class="list"></div>
+    <div id="sym-coding-ed"></div>
+  </details>
+  <details class="sym-sec" open data-testid="sym-sec-labels"><summary>Labels</summary><div id="sym-labels"></div></details>
+  <details class="sym-sec" data-testid="sym-sec-sets"><summary>Named symbologies <span class="muted">(this one: <span id="sym-def-name">Default</span>)</span></summary>
+    <div class="row"><button id="sym-def-new" title="A new named symbology, copied from this one">New...</button><button id="sym-def-rename">Rename...</button><button id="sym-def-del">Delete</button></div>
+  </details>
   <div class="row"><button id="sym-close">Close</button></div>
 </div></div>
 <div id="dlg-keys" class="modal" hidden><div class="dlg">

@@ -35,6 +35,16 @@ const SYM_FIELDS = {
   ],
 };
 const symField = (type, k) => SYM_FIELDS[type].find(f => f[0] === k) || [k, k, "", "", "num"];
+/* the kinds of each type, as tabs under it (2026-11-24): "all" is the whole type; a kind's own coding overrides it */
+const SYM_GROUPS = {
+  links: [["all", "All pipes"], ["conduit", "Conduits"], ["pressure_pipe", "Force mains"], ["pump", "Pumps"], ["orifice", "Orifices"], ["weir", "Weirs"]],
+  nodes: [["all", "All structures"], ["manhole", "Manholes"], ["outfall", "Outfalls"], ["wetwell", "Wet wells"], ["storage", "Ponds and storage"],
+          ["pressure_junction", "Pressure junctions"], ["junction", "Junctions"], ["catch_basin", "Catch basins"]],
+  catchments: [["all", "Catchments"]],
+};
+const symGroupName = (type, g) => (SYM_GROUPS[type].find(x => x[0] === g) || [g, String(g).replace(/_/g, " ").replace(/^./, c => c.toUpperCase()) + "s"])[1];
+const symKinds = cd => (cd && cd.kinds && cd.kinds.length) ? cd.kinds : null;
+const symGroupOf = cd => symKinds(cd) ? symKinds(cd)[0] : "all";
 
 /* ---- default definition: what the map showed before symbology existed, so nothing changes until the engineer does */
 function symDefaultDef() {
@@ -102,7 +112,8 @@ function symRampAt(stops, t) {
   return "#" + a.map((v, j) => Math.round(v + (b[j] - v) * u).toString(16).padStart(2, "0")).join("");
 }
 function symScope(cd, type) {
-  const T = state.model[type === "links" ? "linkFeat" : type === "nodes" ? "nodeFeat" : "catchFeat"];
+  let T = state.model[type === "links" ? "linkFeat" : type === "nodes" ? "nodeFeat" : "catchFeat"];
+  const k = symKinds(cd); if (k) T = T.filter(f => k.includes(f.properties.kind));
   if (cd.scope !== "ids") return T;
   const s = new Set((cd.ids || []).map(String)); return T.filter(f => s.has(String(f.id)));
 }
@@ -167,15 +178,18 @@ function symApply() {
   const c = symContext(), def = symDef();
   for (const type of ["links", "nodes", "catchments"]) {
     const T = type === "links" ? m.linkFeat : type === "nodes" ? m.nodeFeat : m.catchFeat;
-    const cd = symActive(type), inScope = cd && cd.scope === "ids" ? new Set((cd.ids || []).map(String)) : null;
-    const L = def[type].labels;
+    const cd0 = symActive(type), L0 = def[type].labels, own = def[type].colors || {}, ownL = def[type].labelsBy || {};
+    const byKind = {}, scopes = {};
+    for (const [k, id] of Object.entries(own)) { const x = def[type].codings.find(y => y.id === id); if (x) byKind[k] = x; }
+    for (const x of [cd0, ...Object.values(byKind)]) if (x && x.scope === "ids") scopes[x.id] = new Set((x.ids || []).map(String));
     for (const f of T) {
-      const p = f.properties;
-      delete p._sc; if (type !== "links") delete p._c; delete p._w; delete p._r;
+      const p = f.properties, cd = byKind[p.kind] || cd0, inScope = cd ? scopes[cd.id] : null;
+      const L = ownL[p.kind] && ownL[p.kind].items ? ownL[p.kind] : L0;
+      delete p._sc; delete p._sk; if (type !== "links") delete p._c; delete p._w; delete p._r;
       if (cd && (!inScope || inScope.has(String(f.id)))) {
         const k = symClass(cd, symValue(type, f, cd.field, c));
         if (k) {
-          p._sc = k[0];
+          p._sc = k[0]; p._sk = cd.id;
           if (cd.mode !== "size") p._c = k[1];
           if (cd.mode !== "color") { if (type === "nodes") p._r = k[2]; else p._w = k[2]; }
         } else if (type === "links") p._c = GREY;
@@ -235,16 +249,22 @@ function symLayers() {
 
 /* ---- legend for the active codings, with counts; a row selects its elements */
 function symLegend(type) {
-  const cd = symActive(type); if (!cd) return "";
-  const m = state.model, T = type === "links" ? m.linkFeat : type === "nodes" ? m.nodeFeat : m.catchFeat;
-  const n = {}; for (const f of T) if (f.properties._sc != null) n[f.properties._sc] = (n[f.properties._sc] || 0) + 1;
-  const f = symField(type, cd.field), sw = r => cd.mode === "size" ? `background:#4b5563;height:${Math.max(2, Math.min(10, r.size))}px` : `background:${r.color}` + (cd.mode === "both" ? `;height:${Math.max(2, Math.min(10, r.size))}px` : "");
-  return `<div class="t">${esc(SYM_TYPES[type])}: ${esc(cd.name || f[1])}${f[2] ? ` (${esc(f[2])})` : ""}</div>` +
-    symRows(cd, type).map(r => `<div class="r sym-row" data-type="${type}" data-i="${r.i}" data-testid="sym-legend-${type}-${r.i}" title="Click to select these"><span class="sw" style="${sw(r)}"></span>${esc(r.label)} <span class="muted">(${n[r.i] || 0})</span></div>`).join("");
+  const d = symDef()[type], m = state.model, T = type === "links" ? m.linkFeat : type === "nodes" ? m.nodeFeat : m.catchFeat;
+  const list = [[symActive(type), "all"], ...Object.entries(d.colors || {}).map(([k, id]) => [d.codings.find(x => x.id === id), k])];
+  let out = "";
+  for (const [cd, g] of list) {
+    if (!cd) continue;
+    const n = {}; for (const f of T) if (f.properties._sk === cd.id && f.properties._sc != null) n[f.properties._sc] = (n[f.properties._sc] || 0) + 1;
+    if (g !== "all" && !Object.keys(n).length && !T.some(f => f.properties.kind === g)) continue;
+    const f = symField(type, cd.field), sw = r => cd.mode === "size" ? `background:#4b5563;height:${Math.max(2, Math.min(10, r.size))}px` : `background:${r.color}` + (cd.mode === "both" ? `;height:${Math.max(2, Math.min(10, r.size))}px` : "");
+    out += `<div class="t">${esc(g === "all" ? SYM_TYPES[type] : symGroupName(type, g))}: ${esc(cd.name || f[1])}${f[2] ? ` (${esc(f[2])})` : ""}</div>` +
+      symRows(cd, type).map(r => `<div class="r sym-row" data-type="${type}" data-cid="${esc(cd.id)}" data-i="${r.i}" data-testid="sym-legend-${type}-${g === "all" ? "" : g + "-"}${r.i}" title="Click to select these"><span class="sw" style="${sw(r)}"></span>${esc(r.label)} <span class="muted">(${n[r.i] || 0})</span></div>`).join("");
+  }
+  return out;
 }
-function symSelectClass(type, i) {
+function symSelectClass(type, i, cid) {
   const m = state.model, T = type === "links" ? m.linkFeat : type === "nodes" ? m.nodeFeat : m.catchFeat;
-  const ids = T.filter(f => f.properties._sc === i).map(f => String(f.id));
+  const ids = T.filter(f => f.properties._sc === i && (!cid || f.properties._sk === cid)).map(f => String(f.id));
   if (ids.length) setSel(SYM_TABLE[type], ids, { zoom: false }); else toast("No element in that class.", "info");
 }
 
@@ -289,13 +309,22 @@ function symPickLinks(v) {                                 // the pipes' Colour 
 }
 
 /* ---- the Symbology dialog */
-const symUi = { type: "links", cid: null };
+const symUi = { type: "links", group: "all", cid: null };
+const symCodingsOf = (type, g) => symDef()[type].codings.filter(x => g === "all" ? !symKinds(x) : (symKinds(x) || []).includes(g));
+const symUsedId = (type, g) => g === "all" ? (type === "links" ? (state.colorBy && state.colorBy.startsWith("sym:") ? state.colorBy.slice(4) : null) : symDef()[type].color) : ((symDef()[type].colors || {})[g] || null);
+function symSetUsed(type, g, id) {
+  const d = symDef()[type];
+  if (g === "all") { d.color = id || null; if (type === "links") state.colorBy = id ? "sym:" + id : "v_ms"; return; }
+  d.colors = d.colors || {}; if (id) d.colors[g] = id; else delete d.colors[g];
+}
+/* the labels being edited: the type's, or a kind's own (null while that kind follows the type's) */
+const symLabelsCur = () => { const d = symDef()[symUi.type]; return symUi.group === "all" ? d.labels : ((d.labelsBy || {})[symUi.group] || null); };
 let symSeq = 0;
 const symNewId = () => "c" + Date.now().toString(36) + (symSeq++);
 function symOpen(type) {
   if (!state.model) { toast("Open a project first."); return; }
-  symUi.type = type || symUi.type; const d = symDef()[symUi.type];
-  symUi.cid = d.color || (d.codings[0] && d.codings[0].id) || null;
+  symUi.type = type || symUi.type; symUi.group = "all";
+  const mine = symCodingsOf(symUi.type, "all"); symUi.cid = symUsedId(symUi.type, "all") || (mine[0] && mine[0].id) || null;
   $("#dlg-sym").hidden = false; symRender();
 }
 function symFieldOptions(type, cur, withText = true) {
@@ -304,15 +333,20 @@ function symFieldOptions(type, cur, withText = true) {
   return Object.entries(groups).map(([g, fs]) => `<optgroup label="${g}">${fs.map(f => `<option value="${f[0]}"${f[0] === cur ? " selected" : ""}>${esc(f[1])}${f[2] ? ` (${esc(f[2])})` : ""}</option>`).join("")}</optgroup>`).join("");
 }
 function symRender() {
-  const type = symUi.type, def = symDef(), d = def[type], cd = d.codings.find(x => x.id === symUi.cid) || null;
-  $$("#sym-tabs button").forEach(b => b.classList.toggle("on", b.dataset.type === type));
+  const type = symUi.type, g = symUi.group, def = symDef(), d = def[type], cd = d.codings.find(x => x.id === symUi.cid) || null;
+  const T = type === "links" ? state.model.linkFeat : type === "nodes" ? state.model.nodeFeat : state.model.catchFeat, cnt = {};
+  for (const f of T) cnt[f.properties.kind] = (cnt[f.properties.kind] || 0) + 1;
+  const groups = SYM_GROUPS[type].filter(([k]) => k === "all" || cnt[k]).concat(Object.keys(cnt).filter(k => k && k !== "undefined" && !SYM_GROUPS[type].some(x => x[0] === k)).map(k => [k, symGroupName(type, k)]));
+  $("#sym-tabs").innerHTML = `<div class="sym-types" role="tablist">${Object.entries(SYM_TYPES).map(([t, n]) => `<button data-type="${t}" class="${t === type ? "on" : ""}" data-testid="sym-type-${t}">${n}</button>`).join("")}</div>` +
+    (groups.length > 1 ? `<div class="sym-groups" role="tablist">${groups.map(([k, n]) => `<button data-group="${k}" class="${k === g ? "on" : ""}" data-testid="sym-group-${k}">${esc(n)}${k !== "all" ? ` <span class="muted">${cnt[k]}</span>` : ""}</button>`).join("")}</div>` : "");
   $("#sym-def-name").textContent = state.sym.active;
-  // colour codings list
-  $("#sym-codings").innerHTML = d.codings.length ? d.codings.map(x => `<div class="sym-c${x.id === symUi.cid ? " on" : ""}" data-id="${esc(x.id)}" data-testid="sym-coding-${esc(x.name || x.field)}">` +
-    `<label title="Show this colour coding on the map"><input type="radio" name="sym-use" data-act="use" ${d.color === x.id ? "checked" : ""}> ${esc(x.name || symField(type, x.field)[1])}</label>` +
+  // colour codings list: those of this kind (or of the whole type)
+  const mine = symCodingsOf(type, g), used = symUsedId(type, g);
+  $("#sym-codings").innerHTML = mine.length ? mine.map(x => `<div class="sym-c${x.id === symUi.cid ? " on" : ""}" data-id="${esc(x.id)}" data-testid="sym-coding-${esc(x.name || x.field)}">` +
+    `<label title="Show this colour coding on the map"><input type="radio" name="sym-use" data-act="use" ${used === x.id ? "checked" : ""}> ${esc(x.name || symField(type, x.field)[1])}</label>` +
     `<span class="muted">${esc(symField(type, x.field)[1])}</span><button class="mini" data-act="del" title="Delete this colour coding">&#215;</button></div>`).join("") +
-    `<div class="sym-c" data-id=""><label><input type="radio" name="sym-use" data-act="use" ${d.color ? "" : "checked"}> none (${type === "links" ? "the Colour by choice" : type === "nodes" ? "colour by type" : "plain"})</label></div>`
-    : `<p class="muted">No colour coding yet. New makes one; its colours show on the map once it is used.</p>`;
+    `<div class="sym-c" data-id=""><label><input type="radio" name="sym-use" data-act="use" ${used ? "" : "checked"}> none (${g !== "all" ? "as " + symGroupName(type, "all").toLowerCase() : type === "links" ? "the Colour by choice" : type === "nodes" ? "colour by type" : "plain"})</label></div>`
+    : `<p class="muted">No colour coding for ${esc(symGroupName(type, g).toLowerCase())} yet${g !== "all" ? `: they take ${esc(symGroupName(type, "all").toLowerCase())}' coding` : ""}. New makes one.</p>`;
   // the selected coding's editor
   const ed = $("#sym-coding-ed");
   if (!cd) { ed.innerHTML = ""; }
@@ -322,7 +356,7 @@ function symRender() {
       `<div class="sym-grid"><label>Name<input id="sym-name" type="text" value="${esc(cd.name || "")}" placeholder="${esc(f[1])}"></label>` +
       `<label>Field<select id="sym-field">${symFieldOptions(type, cd.field)}</select></label>` +
       `<label>Show as<select id="sym-mode"><option value="color"${cd.mode === "color" ? " selected" : ""}>colour</option><option value="size"${cd.mode === "size" ? " selected" : ""}>${type === "nodes" ? "symbol size" : "line width"}</option><option value="both"${cd.mode === "both" ? " selected" : ""}>colour and size</option></select></label>` +
-      `<label>Applies to<select id="sym-scope"><option value="all"${cd.scope !== "ids" ? " selected" : ""}>all ${SYM_TYPES[type].toLowerCase()}</option><option value="ids"${cd.scope === "ids" ? " selected" : ""}>the ${(cd.ids || []).length} kept from a selection</option></select></label></div>` +
+      `<label>Applies to<select id="sym-scope"><option value="all"${cd.scope !== "ids" ? " selected" : ""}>${symKinds(cd) ? "all " + esc(symGroupName(type, symGroupOf(cd)).toLowerCase()) : esc(symGroupName(type, "all").toLowerCase())}</option><option value="ids"${cd.scope === "ids" ? " selected" : ""}>the ${(cd.ids || []).length} kept from a selection</option></select></label></div>` +
       `<div class="row"><button id="sym-take-sel" title="Keep the elements selected on the map as this coding's scope">Use the current selection</button>` +
       (text ? "" : `<span class="muted" id="sym-range">${r ? `range ${symRound(r[0])} to ${symRound(r[1])}${f[2] ? " " + esc(f[2]) : ""}` : "no values"}</span>`) + `</div>` +
       (text ? `<p class="muted">One class per value (up to 30).</p><div class="row"><button id="sym-init" class="primary">Initialize from the values</button></div>`
@@ -338,9 +372,14 @@ function symRender() {
       `</tbody></table>` + (text ? "" : `<div class="row"><button id="sym-row-add">Add a class</button></div>`) +
       `<div class="row"><button id="sym-apply" class="primary" data-testid="sym-apply">Apply and show</button></div>`;
   }
-  // labels
-  const L = d.labels;
-  $("#sym-labels").innerHTML =
+  // labels: the type's, or a kind's own
+  const L = symLabelsCur();
+  if (!L) {
+    $("#sym-labels").innerHTML = `<p class="muted">${esc(symGroupName(type, g))} are labelled as ${esc(symGroupName(type, "all").toLowerCase())}.</p>` +
+      `<div class="row"><button id="sym-lab-own" data-testid="sym-lab-own">Give ${esc(symGroupName(type, g).toLowerCase())} their own labels</button></div>`;
+    tag($("#ldock") || $("#dlg-sym")); return;
+  }
+  $("#sym-labels").innerHTML = (g !== "all" ? `<div class="row"><span class="muted">${esc(symGroupName(type, g))}' own labels</span><button id="sym-lab-shared" title="Label them as ${esc(symGroupName(type, "all").toLowerCase())} again">Use ${esc(symGroupName(type, "all").toLowerCase())}' labels</button></div>` : "") +
     `<table class="sym-tab"><thead><tr><th>On</th><th>Field or text</th><th>Prefix</th><th>Suffix</th><th>Decimals</th><th title="On the same line as the label above">Same line</th><th></th></tr></thead><tbody>` +
     L.items.map((it, i) => `<tr data-i="${i}"><td><input type="checkbox" data-k="on"${it.on ? " checked" : ""}></td>` +
       (it.template != null ? `<td colspan="4"><input type="text" data-k="template" value="${esc(it.template)}" title="Free text: {field}, {field:2} for 2 decimals, {field:2:u} with units"></td>`
@@ -349,15 +388,16 @@ function symRender() {
       `<td><input type="checkbox" data-k="same"${it.same ? " checked" : ""}></td><td><button class="mini" data-act="lab-del">&#215;</button></td></tr>`).join("") +
     `</tbody></table>` +
     `<div class="row"><button id="sym-lab-add">Add a field</button><button id="sym-lab-free" title="Free text with fields in braces, e.g. {id} L={length_m:1} m">Add free text</button>` +
-    `<label>Text size<input id="sym-lab-size" type="number" min="6" max="30" step="0.5" value="${L.size}"></label>` +
+    (g === "all" ? `<label>Text size<input id="sym-lab-size" type="number" min="6" max="30" step="0.5" value="${L.size}"></label>` +
     `<label>Shown from zoom<input id="sym-lab-zoom" type="number" min="0" max="22" step="0.5" value="${L.minzoom}"></label>` +
-    `<label title="Draw every label, even where labels overlap; off hides those that would overlap"><input id="sym-lab-overlap" type="checkbox"${(L.overlap ?? type === "links") ? " checked" : ""}> Overlap</label></div>` +
+    `<label title="Draw every label, even where labels overlap; off hides those that would overlap"><input id="sym-lab-overlap" type="checkbox"${(L.overlap ?? type === "links") ? " checked" : ""}> Overlap</label>` : "") + `</div>` +
     `<div class="row"><button id="sym-lab-apply" class="primary" data-testid="sym-lab-apply">Apply labels</button><span class="muted">Example: <span id="sym-lab-ex">${esc(symExample(type))}</span></span></div>`;
-  tag($("#dlg-sym"));
+  tag($("#ldock") || $("#dlg-sym"));
 }
 function symExample(type) {
-  const m = state.model, T = type === "links" ? m.linkFeat : type === "nodes" ? m.nodeFeat : m.catchFeat;
-  const f = T.find(x => x.properties.kind !== "pump") || T[0]; return f ? (symLabel(type, f, symDef()[type].labels, symContext()) || "(no label)").replace(/\n/g, " / ") : "-";
+  const m = state.model, T = type === "links" ? m.linkFeat : type === "nodes" ? m.nodeFeat : m.catchFeat, g = symUi.group;
+  const f = (g !== "all" ? T.find(x => x.properties.kind === g) : null) || T.find(x => x.properties.kind !== "pump") || T[0];
+  return f ? (symLabel(type, f, symLabelsCur() || symDef()[type].labels, symContext()) || "(no label)").replace(/\n/g, " / ") : "-";
 }
 /* read the editor back into the coding (classes, options) */
 function symReadCoding(cd) {
@@ -375,30 +415,39 @@ function symReadCoding(cd) {
   return cd;
 }
 function symReadLabels() {
-  const L = symDef()[symUi.type].labels;
+  const L = symLabelsCur(); if (!L) return null;
   $$("#sym-labels tbody tr").forEach((tr, i) => {
     const it = L.items[i], v = k => tr.querySelector(`[data-k=${k}]`);
     it.on = v("on").checked; it.same = v("same").checked;
     if (it.template != null) it.template = v("template").value;
     else { it.field = v("field").value; it.prefix = v("prefix").value; it.suffix = v("suffix").value; it.dec = v("dec").value === "" ? null : +v("dec").value; }
   });
-  L.size = +$("#sym-lab-size").value || L.size; L.minzoom = +$("#sym-lab-zoom").value; L.overlap = $("#sym-lab-overlap").checked;
+  if ($("#sym-lab-size")) { L.size = +$("#sym-lab-size").value || L.size; L.minzoom = +$("#sym-lab-zoom").value; L.overlap = $("#sym-lab-overlap").checked; }
   return L;
 }
 function wireSymbology() {
   const dlg = $("#dlg-sym");
   $("#sym-edit").onclick = () => symOpen("links");
   $("#sym-close").onclick = () => { dlg.hidden = true; };
-  $("#sym-tabs").onclick = e => { const b = e.target.closest("button[data-type]"); if (!b) return; symUi.type = b.dataset.type; const d = symDef()[symUi.type]; symUi.cid = d.color || (d.codings[0] && d.codings[0].id) || null; symRender(); };
+  $("#sym-tabs").onclick = e => {
+    const b = e.target.closest("button[data-type],button[data-group]"); if (!b) return;
+    if (b.dataset.type) { symUi.type = b.dataset.type; symUi.group = "all"; } else symUi.group = b.dataset.group;
+    const mine = symCodingsOf(symUi.type, symUi.group); symUi.cid = symUsedId(symUi.type, symUi.group) || (mine[0] && mine[0].id) || null; symRender();
+  };
   $("#sym-new").onclick = () => {
-    const type = symUi.type, d = symDef()[type], field = type === "links" ? "v_ms" : type === "nodes" ? "depth" : "imperv_pc";
-    const cd = symInitialize({ id: symNewId(), name: "", field, mode: "color", scope: "all", ids: [] }, type, {});
+    const type = symUi.type, g = symUi.group, d = symDef()[type];
+    const field = type === "links" ? (g === "pump" || g === "pressure_pipe" ? "q_ls" : "v_ms") : type === "nodes" ? "depth" : "imperv_pc";
+    const cd = symInitialize({ id: symNewId(), name: "", field, mode: "color", scope: "all", ids: [], kinds: g === "all" ? [] : [g] }, type, {});
     d.codings.push(cd); symUi.cid = cd.id; symRender();
   };
   $("#sym-codings").onclick = e => {
     const row = e.target.closest(".sym-c"); if (!row) return; const type = symUi.type, d = symDef()[type], id = row.dataset.id, act = e.target.dataset.act;
-    if (act === "del") { d.codings = d.codings.filter(x => x.id !== id); if (d.color === id) d.color = null; if (symUi.cid === id) symUi.cid = null; symRender(); symRefresh(true); return; }
-    if (act === "use") { d.color = id || null; if (type === "links") state.colorBy = id ? "sym:" + id : "v_ms"; symRefresh(true); }
+    if (act === "del") {
+      d.codings = d.codings.filter(x => x.id !== id); if (d.color === id) d.color = null;
+      for (const [k, v] of Object.entries(d.colors || {})) if (v === id) delete d.colors[k];
+      if (symUi.cid === id) symUi.cid = null; symRender(); symRefresh(true); return;
+    }
+    if (act === "use") { symSetUsed(type, symUi.group, id || null); symRefresh(true); }
     if (id) { symUi.cid = id; symRender(); }
   };
   $("#sym-coding-ed").addEventListener("change", e => {
@@ -416,10 +465,13 @@ function wireSymbology() {
       if (state.sel.table !== SYM_TABLE[type] || !state.sel.ids.length) { toast(`Select some ${SYM_TYPES[type].toLowerCase()} on the map first.`); return; }
       symReadCoding(cd); cd.ids = state.sel.ids.slice(); cd.scope = "ids"; symRender();
     }
-    else if (id === "sym-apply") { symReadCoding(cd); d.color = cd.id; if (type === "links") state.colorBy = "sym:" + cd.id; symRender(); symRefresh(true); }
+    else if (id === "sym-apply") { symReadCoding(cd); symSetUsed(type, symGroupOf(cd), cd.id); symRender(); symRefresh(true); }
   });
   $("#sym-labels").addEventListener("click", e => {
-    const L = symDef()[symUi.type].labels, id = e.target.id;
+    const d = symDef()[symUi.type], id = e.target.id;
+    if (id === "sym-lab-own") { d.labelsBy = d.labelsBy || {}; d.labelsBy[symUi.group] = JSON.parse(JSON.stringify(d.labels)); symRender(); return; }
+    if (id === "sym-lab-shared") { delete (d.labelsBy || {})[symUi.group]; symRender(); symRefresh(true); return; }
+    const L = symLabelsCur(); if (!L) return;
     if (id === "sym-lab-add") { symReadLabels(); L.items.push({ on: true, field: "id" }); symRender(); }
     else if (id === "sym-lab-free") { symReadLabels(); L.items.push({ on: true, template: symUi.type === "links" ? "{id} L={length_m:1:u}" : "{id}" }); symRender(); }
     else if (e.target.dataset.act === "lab-del") { symReadLabels(); L.items.splice(+e.target.closest("tr").dataset.i, 1); symRender(); }
@@ -445,5 +497,5 @@ function wireSymbology() {
   // Display card selects for structures and catchments
   for (const [type, sel] of [["nodes", "#node-color-by"], ["catchments", "#catch-color-by"]])
     $(sel).onchange = e => { symDef()[type].color = e.target.value || null; symRefresh(true); };
-  $("#legend").addEventListener("click", e => { const r = e.target.closest(".sym-row"); if (r) symSelectClass(r.dataset.type, +r.dataset.i); });
+  $("#legend").addEventListener("click", e => { const r = e.target.closest(".sym-row"); if (r) symSelectClass(r.dataset.type, +r.dataset.i, r.dataset.cid); });
 }

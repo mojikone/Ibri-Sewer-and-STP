@@ -695,3 +695,72 @@ let ctxAt = 0;
   if (up) up.textContent = "Pick the folder the model is in: the app finds the .stsw and its .stsw.sqlite and reads the model as it is, without SewerGEMS (a browser cannot reach a file beside the one you pick, so it asks for the folder). Or pick both files, or one zip of them. Your files are not changed, and the copy sent is deleted once read. Through a shared link a file can be up to about 100 MB: zip a larger model.";
   const rl = document.getElementById("sg-up-run"); if (rl && rl.parentElement) rl.parentElement.lastChild.textContent = " SewerGEMS computes every scenario first (needs the SewerGEMS link)";
 })();
+
+/* ------------------------------------------------------------------ paste from Excel into any table of inputs (2026-11-24)
+   A block copied from Excel (tab-separated rows) pasted into a cell fills that cell and those to its right and below;
+   rows are added first with the table's own Add button when the block is longer. Thousands commas are dropped from
+   numbers. Settings tables keep their own paste (features5). */
+function xlCells(tr) { return [...tr.querySelectorAll("input, select, textarea")].filter(x => !["checkbox", "radio", "hidden", "button", "file"].includes(x.type) && !x.disabled); }
+function xlAddButton(table) {
+  const panel = table.closest("details, fieldset, .dlg, .pane, #ldock, .bg-pane") || document.body;
+  const all = [...panel.querySelectorAll("button")].filter(b => /(^|-)add$|row-add/.test(b.id || "") || /^(add\b|\+)/i.test((b.textContent || "").trim()));
+  return all.find(b => table.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) || all[0] || null;
+}
+async function xlPasteBlock(el, rows) {
+  let tb = el.closest("tbody"), table = el.closest("table");
+  const start = el.closest("tr"), width = xlCells(start).length, col0 = xlCells(start).indexOf(el);
+  const host = table.closest("[id]"), tIndex = host ? [...host.querySelectorAll("table")].indexOf(table) : -1;
+  const dataRows = () => [...tb.querySelectorAll("tr")].filter(r => xlCells(r).length === width);
+  let row0 = dataRows().indexOf(start);
+  const typed = new Map(xlCells(start).map((x, i) => [i, x.value]));
+  let need = row0 + rows.length - dataRows().length;
+  if (need > 0) {
+    const add = xlAddButton(table);
+    for (let k = 0; add && k < need && k < 500; k++) {
+      (document.body.contains(add) ? add : xlAddButton(table)).click(); await new Promise(r => setTimeout(r, 0));
+      if (host && !document.body.contains(table)) { table = (document.getElementById(host.id) || host).querySelectorAll("table")[tIndex]; if (!table) return; }
+      tb = table.querySelector("tbody") || table;
+    }
+  }
+  const R = dataRows(); let n = 0;
+  rows.forEach((vals, i) => {
+    const tr = R[row0 + i]; if (!tr) return; const cells = xlCells(tr);
+    vals.forEach((v, j) => {
+      const x = cells[col0 + j]; if (!x) return; let s = String(v).trim();
+      if (x.type === "number") s = s.replace(/,(?=\d{3}(\D|$))/g, "").replace(/\s/g, "");
+      if (x.tagName === "SELECT") { const o = [...x.options].find(o => o.value === s || o.textContent.trim() === s); if (!o) return; s = o.value; }
+      x.value = s; x.dispatchEvent(new Event("input", { bubbles: true })); x.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    n++;
+  });
+  toast(`${n} row${n === 1 ? "" : "s"} pasted from Excel: check them, then apply.`, "info");
+}
+document.addEventListener("paste", e => {
+  const el = e.target; if (!el || !el.closest || !/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) return;
+  if (el.closest(".tbl-set, table[id^=tbl-]") || !el.closest("tbody") || !el.closest("tr")) return;
+  const text = (e.clipboardData || window.clipboardData).getData("text"); if (!/[\t\n]/.test(text.replace(/\r?\n$/, ""))) return;
+  e.preventDefault(); e.stopPropagation();
+  xlPasteBlock(el, text.replace(/\r/g, "").replace(/\n$/, "").split("\n").map(l => l.split("\t")));
+}, true);
+
+/* ------------------------------------------------------------------ the left dock folds to a tab at the edge (2026-11-24) */
+(function wireDockFold() {
+  const go = () => {
+    const d = dockEl(), head = d.querySelector(".ld-head"); if (!head || head.querySelector(".ld-fold")) return;
+    head.insertAdjacentHTML("afterbegin", `<button class="ld-fold" title="Fold the pane to the edge" data-testid="ldock-fold">&#171;</button>`);
+    head.querySelector(".ld-fold").onclick = () => { ui.ldockMin = true; saveUi(); dockLayout(); };
+    const h = document.createElement("button"); h.id = "ldock-handle"; h.dataset.testid = "ldock-handle"; h.title = "Open the pane again";
+    h.onclick = () => { ui.ldockMin = false; saveUi(); dockLayout(); }; document.body.appendChild(h);
+  };
+  const dl = dockLayout;
+  dockLayout = function () {
+    go(); const on = DOCK.open.length > 0, min = on && !!ui.ldockMin;
+    if (min) { const was = DOCK.open.slice(); dl.apply(this, arguments); document.body.classList.remove("ldock-on"); dockEl().hidden = true; DOCK.open = was; }
+    else dl.apply(this, arguments);
+    const h = document.getElementById("ldock-handle");
+    if (h) { h.hidden = !min; h.textContent = "» " + DOCK.open.map(k => DOCK.panes[k].title).join(" · "); }
+    if (window.map) setTimeout(() => map.resize(), 30);
+  };
+  const dop = dockOpen;
+  dockOpen = function () { ui.ldockMin = false; return dop.apply(this, arguments); };
+})();

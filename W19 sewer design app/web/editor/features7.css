@@ -29,3 +29,23 @@ body.remote-ui .local-only { display: none !important; }
 @keyframes asstblink { 50% { opacity: .3; } }
 body.compact-ui .dlg label.chk, body.compact-ui .dlg label.rad { display: flex; align-items: center; gap: 8px; grid-template-columns: none; }
 body.compact-ui #sel-mode { top: auto; bottom: 74px; }            /* on a phone: by the thumb, clear of the hint */
+/* the symbology pane in the dock (2026-11-24): its old rules were scoped to the floating dialog; types and kinds as tabs; folding sections */
+.dlg.sym .sym-grid label { display: flex; flex-direction: column; gap: 2px; font-size: 12px; margin: 0; grid-template-columns: none; }
+.dlg.sym .sym-grid label.chk { flex-direction: row; align-items: center; align-self: end; }
+.dlg.sym .sym-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+.dlg.sym .sym-grid input, .dlg.sym .sym-grid select { width: 100%; min-width: 0; box-sizing: border-box; }
+.dlg.sym .sym-c label, .dlg.sym .row label { display: flex; grid-template-columns: none; gap: 6px; align-items: center; margin: 0; }
+.dlg.sym .row label input { width: 70px; }
+.dlg.sym .sym-c { padding: 2px 6px; }
+.dlg.sym .row { flex-wrap: wrap; gap: 6px; }
+.sym-types, .sym-groups { display: flex; flex-wrap: wrap; gap: 0; border-bottom: 1px solid var(--line); margin: 4px 0 6px; }
+.sym-types button, .sym-groups button { border: 0; background: none; padding: 5px 10px; font-size: 12.5px; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.sym-types button.on, .sym-groups button.on { color: var(--ink); font-weight: 650; border-bottom-color: var(--focus, #2f6fd6); }
+.sym-groups button { font-size: 12px; padding: 4px 8px; }
+#sym-tabs.tabs-mini { display: block; }
+#sym-tabs.tabs-mini button.on { background: none; color: var(--ink); }
+.sym-sec { border-top: 1px solid var(--line); padding: 4px 0; }
+.sym-sec > summary { cursor: pointer; font-weight: 650; padding: 6px 0; list-style: revert; }
+#ldock .ld-fold { border: 0; background: none; font-size: 16px; padding: 0 8px; color: var(--muted); }
+#ldock-handle { position: fixed; left: 0; top: calc(var(--dock-top, 130px) + 8px); z-index: 45; writing-mode: vertical-rl; transform: rotate(180deg); border: 1px solid var(--line); border-left: 0; background: var(--panel); color: var(--ink); padding: 10px 4px; border-radius: 0 6px 6px 0; font-size: 12px; box-shadow: 1px 0 6px rgba(0,0,0,.12); }
+#ldock-handle[hidden] { display: none; }

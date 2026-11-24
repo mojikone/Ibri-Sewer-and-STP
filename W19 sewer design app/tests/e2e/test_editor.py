@@ -823,7 +823,7 @@ def test_symbology_colour_by_any_field_labels_and_named_definitions(page):
     assert all("_c" in feat("nodeFeat", i) for i in nid)
     page.get_by_test_id("sym-close").click()
     # a second named symbology starts as a copy; switching back restores the first
-    page.get_by_test_id("sym-edit").click(); page.get_by_test_id("sym-def-new").click()
+    page.get_by_test_id("sym-edit").click(); page.click("[data-testid=sym-sec-sets] summary"); page.get_by_test_id("sym-def-new").click()
     page.get_by_test_id("ask-input").fill("Review"); page.get_by_test_id("ask-ok").click(); idle(page)
     assert page.get_by_test_id("sym-def").input_value() == "Review"
     page.get_by_test_id("sym-close").click()
@@ -1470,3 +1470,40 @@ def test_v6_sewergems_folder_finds_the_model_and_its_sqlite(server, browser):
     assert wait_for(lambda: len(seen["finish"]) == 2) and seen["start"][1] == {"B.stsw", "B.stsw.sqlite"}
     assert errs == [], errs
     ctx.close()
+
+
+def test_v6_symbology_by_kind_paste_from_excel_and_fold(server, browser):
+    """The engineer, 2026-11-24: symbology tabs per element kind with an All, kind-own labels, fields that no longer
+    overlap, paste from Excel into a table of inputs (rows added), and the pane folding to the edge."""
+    ctx = browser.new_context(viewport={"width": 1500, "height": 950}); pg = ctx.new_page(); pg.set_default_timeout(30000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
+    pg.evaluate("fetch('/api/g/projects/sample/pond', {method: 'POST'}).then(r => r.json()).then(i => openProject(i))"); idle(pg)
+    pg.evaluate("symDock(true)"); pg.wait_for_timeout(200)
+    groups = pg.evaluate("[...document.querySelectorAll('#sym-tabs .sym-groups button')].map(b => b.dataset.group)")
+    assert groups[0] == "all" and "conduit" in groups and "pump" in groups, groups
+    # conduits get their own coding; the pump keeps the Colour by choice
+    pg.click("[data-testid=sym-group-conduit]"); pg.click("#sym-new"); pg.click("[data-testid=sym-apply]"); idle(pg)
+    k = pg.evaluate("Object.fromEntries(window.ed.state.model.linkFeat.map(f => [f.properties.kind, f.properties._sk || null]))")
+    cid = pg.evaluate("symDef().links.colors.conduit"); assert k["conduit"] == cid and k["pump"] is None, (k, cid)
+    # fields stacked, not overlapping (the dock had lost the dialog's rules)
+    assert pg.evaluate("getComputedStyle(document.querySelector('#sym-coding-ed .sym-grid label')).flexDirection") == "column"
+    # paste six rows into the five classes: a row is added, the values land
+    block = "\n".join("\t".join(r) for r in [["1", "#ff0000", "3"], ["2", "#00ff00", "4"], ["3", "#0000ff", "5"], ["4", "#00ffff", "6"], ["5", "#ff00ff", "7"], ["6", "#000000", "8"]])
+    pg.evaluate("""b => { const el = document.querySelector('#sym-coding-ed tbody tr input[data-k=to]'); el.focus();
+        const dt = new DataTransfer(); dt.setData('text', b); el.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); }""", block)
+    pg.wait_for_timeout(400)
+    vals = pg.evaluate("[...document.querySelectorAll('#sym-coding-ed tbody tr')].filter(r => r.dataset.i !== 'above').map(r => [r.querySelector('[data-k=to]').value, r.querySelector('[data-k=color]').value, r.querySelector('[data-k=size]').value])")
+    assert vals == [["1", "#ff0000", "3"], ["2", "#00ff00", "4"], ["3", "#0000ff", "5"], ["4", "#00ffff", "6"], ["5", "#ff00ff", "7"], ["6", "#000000", "8"]], vals
+    # structures: outfalls get their own labels
+    pg.click("[data-testid=sym-type-nodes]"); pg.click("[data-testid=sym-group-outfall]"); pg.click("[data-testid=sym-lab-own]")
+    pg.locator("#sym-labels tbody tr").first.locator("select[data-k=field]").select_option("ground"); pg.click("[data-testid=sym-lab-apply]"); idle(pg)
+    labs = pg.evaluate("Object.fromEntries(window.ed.state.model.nodeFeat.map(f => [f.properties.kind, f.properties._lab]))")
+    assert labs["outfall"] == "106" and labs["storage"] == "BO-1", labs
+    # the pane folds to a tab at the edge and opens again
+    pg.click("[data-testid=ldock-fold]"); pg.wait_for_timeout(200)
+    assert pg.evaluate("document.getElementById('ldock').hidden") and pg.is_visible("[data-testid=ldock-handle]")
+    assert pg.evaluate("getComputedStyle(document.getElementById('map')).left") == "0px"
+    pg.click("[data-testid=ldock-handle]"); pg.wait_for_timeout(200); assert not pg.evaluate("document.getElementById('ldock').hidden")
+    assert errs == [], errs
+    pg.screenshot(path=os.path.join(SHOTS, "screenshot_v6_symbology.png")); ctx.close()
