@@ -1101,3 +1101,70 @@ def test_v5_phone_bottom_pane_opens_with_a_tap_and_resizes_with_a_finger(server,
     assert t <= 376, t                                                                 # the arrow stays on screen
     assert errs == [], errs
     ctx.close()
+
+
+def test_v5_tools_morph_onto_pipes_and_structures(server, browser):
+    """The engineer, 2026-11-23: a click with the layout or a structure tool on an existing pipe or structure uses it.
+    A run ending on a pipe splits it and joins (one undo step); a wet well on a pipe splits it as a wet well; the pump
+    tool turns the manhole it starts on into a wet well."""
+    ctx = browser.new_context(viewport={"width": 1600, "height": 950}); pg = ctx.new_page(); pg.set_default_timeout(60000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
+    pg.click("#rb-tab-file"); pg.get_by_test_id("rb-new").click(); pg.get_by_test_id("new-name").fill("Morph")
+    pg.get_by_test_id("new-crs-mode").select_option("local"); pg.get_by_test_id("new-create").click()
+    pg.wait_for_function("window.ed.state.pid && window.ed.state.model && document.body.dataset.pending === '0'")
+    pg.click("#rb-tab-layout"); pg.locator("#rb-page-layout .rb-btn", has_text="Layout").first.click()
+    pg.select_option("#layout-spacing", "none"); pg.dispatch_event("#layout-spacing", "change")
+    click_at(pg, 0, 0); idle(pg); click_at(pg, 200, 0); idle(pg); pg.keyboard.press("Escape")
+    assert len(ids(pg, "links")) == 1
+    click_at(pg, 100, 80); idle(pg); click_at(pg, 100, 0.5); idle(pg); pg.keyboard.press("Escape")   # the run ends on the pipe
+    kinds = pg.evaluate("[...window.ed.state.model.nodes.values()].map(f => f.properties.kind)")
+    assert len(ids(pg, "links")) == 3 and len(kinds) == 4 and set(kinds) == {"manhole"}, (ids(pg, "links"), kinds)
+    pg.get_by_test_id("qat-undo-btn").click(); idle(pg); assert len(ids(pg, "links")) == 1   # split and pipe: one step
+    vtool(pg, "wetwell"); click_at(pg, 50, 0.5); idle(pg)
+    sel = pg.evaluate("window.ed.state.sel.ids[0]")
+    assert pg.evaluate("id => window.ed.state.model.nodes.get(id).properties.kind", sel) == "wetwell" and len(ids(pg, "links")) == 2
+    start = [n for n in ids(pg, "nodes") if pg.evaluate("id => window.ed.state.model.nodes.get(id).geometry.coordinates[1]", n) > 0][0]
+    vtool(pg, "pump"); click_at(pg, 100, 80); idle(pg)
+    assert pg.evaluate("id => window.ed.state.model.nodes.get(id).properties.kind", start) == "wetwell"
+    assert errs == [], errs
+    ctx.close()
+
+
+def test_v5_phone_design_changes_the_elements_and_the_assistants_scenario_opens(server, browser):
+    """The engineer, 2026-11-23, on a phone: Design seemed to change nothing (a preview, the old main button), and the
+    assistant's changes stayed in a scenario that was not on screen. Design now is the main button and writes sizes and
+    levels into the elements and their labels; a preview says it changed nothing and offers Apply; a scenario the
+    assistant made is offered with Open it."""
+    import json as _json
+    ctx = browser.new_context(viewport={"width": 375, "height": 812}, has_touch=True, is_mobile=True); pg = ctx.new_page(); pg.set_default_timeout(60000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
+    pg.evaluate("fetch('/api/g/projects/new', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({name: 'phone'})}).then(r => r.json()).then(i => openProject(i))"); idle(pg)
+    vtool(pg, "manhole")
+    for x in (0, 60): click_at(pg, x, 0); idle(pg)
+    vtool(pg, "outfall"); click_at(pg, 120, 0); idle(pg)
+    vtool(pg, "pipe")
+    for a, b in ((0, 60), (60, 120)): click_at(pg, a, 0); idle(pg); click_at(pg, b, 0); idle(pg)
+    vtool(pg, "select")
+    lab = lambda: pg.evaluate("window.ed.state.model.linkFeat.map(f => f.properties._lab)")
+    assert lab() == ["DN200 · 0.00 %"] * 2
+    pg.evaluate("openDesignDlg()")
+    assert "primary" in pg.get_attribute("#des-run", "class") and "primary" not in (pg.get_attribute("#des-preview", "class") or "")
+    pg.click("#des-preview"); idle(pg)
+    assert lab() == ["DN200 · 0.00 %"] * 2 and "primary" in pg.get_attribute("#toolout-apply", "class")   # a preview changes nothing
+    pg.click("#toolout-apply"); idle(pg)
+    assert all(l.endswith("0.50 %") for l in lab()), lab()                                            # applied: laid at the gradient
+    assert pg.evaluate("Math.max(...window.ed.state.model.nodeFeat.map(f => -f.properties.invert))") > 1.5
+    # the assistant made a scenario while answering: the reply offers it, and Open it puts it on screen
+    pid = pg.evaluate("window.ed.state.pid")
+    def fake(route):
+        req = urllib.request.Request(f"{server}/api/g/projects/{pid}/scenarios/base/copy", data=b'{"name": "made by the assistant"}', headers={"Content-Type": "application/json"}, method="POST")
+        urllib.request.urlopen(req).read()
+        route.fulfill(status=200, content_type="application/json", body=_json.dumps(dict(reply="Done.", tool_calls=[], usage={}, ui_actions=[])))
+    pg.route("**/api/g/assistant", fake)
+    pg.evaluate("showTab('assistant'); state.asstOn = true; document.getElementById('asst-input').disabled = false; document.getElementById('asst-input').value = 'make a scenario'; asstSend()")
+    pg.wait_for_selector("[data-testid=asst-made-scenario] button"); pg.click("[data-testid=asst-made-scenario] button"); idle(pg)
+    assert pg.evaluate("window.ed.state.sid") != "base"
+    assert errs == [], errs
+    ctx.close()
