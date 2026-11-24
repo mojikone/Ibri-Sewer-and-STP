@@ -663,6 +663,90 @@ def trex_levels(pid: str, sid: str, b: TerrainLevels):
     with _lock: return _apply_levels(s, sid, lv, bad, b.keep_depth, src)
 
 
+_VEC: dict = {}                                   # token -> (folder, main file, time): a contour or spot-level upload kept between inspect and apply
+_VEC_EXT = (".shp", ".shx", ".dbf", ".prj", ".cpg", ".qix", ".sbn", ".sbx", ".gpkg", ".geojson", ".json", ".dxf", ".dwg")
+
+
+def _vec_main(folder):
+    from sewerapp.engine import terrain
+    fs = sorted(os.listdir(folder))
+    for ext in terrain.VECTOR_EXT:                    # the shapefile before its sidecars, and so on
+        m = [f for f in fs if f.lower().endswith(ext)]
+        if m: return os.path.join(folder, m[0])
+    raise HTTPException(400, "no contour or spot-level file among them (a shapefile with its .shx and .dbf, a GeoPackage, GeoJSON, DXF or DWG)")
+
+
+@router.post("/projects/{pid}/scenarios/{sid}/trex/vector/inspect")
+async def trex_vector_inspect(pid: str, sid: str, request: Request, files: list[UploadFile] | None = File(None), path: str = ""):
+    """Contours or spot levels: the files (a shapefile with its sidecars, a zip of them, a GeoPackage, GeoJSON, DXF or
+    DWG) are kept under a token; what they offer is returned so the engineer picks the layer and the level field."""
+    import zipfile, shutil, uuid
+    from sewerapp.engine import terrain
+    _s(pid)
+    for k, (d, _, t0) in list(_VEC.items()):
+        if time.time() - t0 > 7200: shutil.rmtree(d, ignore_errors=True); _VEC.pop(k, None)
+    d = tempfile.mkdtemp(prefix="w19vec_")
+    try:
+        if path:
+            if _remote(request): raise HTTPException(403, "a path on this computer can be read only from the computer itself, not over the shared web link: pick the files instead")
+            if path.startswith(("\\\\", "//")): raise HTTPException(400, "a network path is not read: copy the file to this computer or pick it")
+            if not os.path.isfile(path): raise HTTPException(400, f"no file {path}")
+            base = os.path.splitext(path)[0]
+            for f in os.listdir(os.path.dirname(path) or "."):                  # a shapefile's sidecars come with it
+                full = os.path.join(os.path.dirname(path), f)
+                if os.path.splitext(full)[0].lower() == base.lower() and f.lower().endswith(_VEC_EXT): shutil.copy(full, d)
+            main = os.path.join(d, os.path.basename(path))
+        else:
+            if not files: raise HTTPException(400, "pick the contour or spot-level files")
+            for f in files:
+                name = _safe_name(f.filename, "layer"); data = await f.read()
+                if name.lower().endswith(".zip"):
+                    with zipfile.ZipFile(io.BytesIO(data)) as z:
+                        for m in z.infolist():
+                            n = _safe_name(m.filename, "")
+                            if n and n.lower().endswith(_VEC_EXT) and m.file_size < 2_000_000_000:
+                                with z.open(m) as src, open(os.path.join(d, n), "wb") as dst: shutil.copyfileobj(src, dst)
+                elif name.lower().endswith(_VEC_EXT): open(os.path.join(d, name), "wb").write(data)
+            main = _vec_main(d)
+        try: info = terrain.vector_inspect(main)
+        except ValueError as x: raise HTTPException(400, str(x))
+        except Exception as x: raise HTTPException(400, f"the file could not be read: {str(x)[:300]}")
+    except HTTPException:
+        shutil.rmtree(d, ignore_errors=True); raise
+    tok = uuid.uuid4().hex; _VEC[tok] = (d, main, time.time())
+    return dict(info, token=tok, name=os.path.basename(main))
+
+
+class TerrainVec(BaseModel):
+    token: str
+    field: str
+    layer: str | None = None
+    dxf_layer: str | None = None
+    keep_depth: bool = True
+    ids: list[str] | None = None
+
+
+@router.post("/projects/{pid}/scenarios/{sid}/trex/vector")
+def trex_vector(pid: str, sid: str, b: TerrainVec):
+    """Ground levels from the contours or spot levels kept under `token`: a TIN of their vertices near the network."""
+    from sewerapp.engine import terrain
+    s = _s(pid)
+    if b.token not in _VEC: raise HTTPException(400, "pick the contour or spot-level files again (they are kept for two hours)")
+    d, main, _ = _VEC[b.token]
+    with _lock:
+        p = s.model(sid)
+        from sewerapp.model.general import Project
+        q = Project(name="t", crs=p.crs); q.nodes = p.nodes[["x", "y"]].copy()
+    try: lv, bad, nv = terrain.vector_levels(q, main, b.field, b.layer, b.dxf_layer, b.ids)
+    except ValueError as x: raise HTTPException(400, str(x))
+    except Exception as x: raise HTTPException(400, f"the file could not be read: {str(x)[:300]}")
+    if not lv: raise HTTPException(400, "no structure lies inside the contours or spot levels (check the coordinate system: a DXF or DWG is taken to be in the project's)")
+    what = "spot levels" if b.field == terrain.TEXT_FIELD else "contours or spot levels"
+    src = f"{what} {_safe_name(os.path.basename(main), 'file')[:80]}" + (f", layer {b.dxf_layer[:40]}" if b.dxf_layer else "") +           (f", field {b.field[:40]}" if b.field not in (terrain.Z_FIELD, terrain.TEXT_FIELD) else "") + f", TIN of {nv:,} vertices"
+    with _lock: out = _apply_levels(s, sid, lv, bad, b.keep_depth, src)
+    return out | dict(vertices=nv)
+
+
 class TerrainCop(BaseModel):
     keep_depth: bool = True
     ids: list[str] | None = None

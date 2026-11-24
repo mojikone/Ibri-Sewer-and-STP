@@ -216,3 +216,42 @@ def test_trex_endpoints_points_levels_and_copernicus(monkeypatch):
     assert g["N0"]["ground_src"].startswith("Copernicus") and 300 < g["N0"]["ground"] < 340
     q = _p(); pid2 = general_api._open(q)
     assert C.post(f"/api/g/projects/{pid2}/scenarios/base/trex/copernicus", json={}).status_code == 400   # local metres
+
+
+def test_contours_and_spot_levels_give_tin_levels(tmp_path):
+    """F28 contours and points: a DXF (contours as elevations, spot levels as points and as text), a zipped shapefile
+    with an elevation field, and a DWG refused with what to do when the ODA converter is absent."""
+    import ezdxf, zipfile, geopandas as gpd
+    from shapely.geometry import LineString
+    from sewerapp.engine import terrain
+    p = _p(); p.crs = 32640
+    for i, (x, y) in enumerate([(445020, 2565025), (445050, 2565025), (445080, 2565075)]): p.nodes.loc[f"N{i}", ["x", "y"]] = [x, y]
+    p.nodes.loc["O", ["x", "y"]] = [446000, 2569000]                                 # outside the data: no value
+    pid = general_api._open(p); B = f"/api/g/projects/{pid}/scenarios/base/trex/vector"
+    doc = ezdxf.new(); m = doc.modelspace()
+    for k, z in enumerate((10, 12, 14)):                                              # contours every 50 m, 2 m apart
+        m.add_lwpolyline([(445000, 2565000 + 50 * k), (445100, 2565000 + 50 * k)], dxfattribs={"elevation": z, "layer": "CONT"})
+    m.add_text("99.5", dxfattribs={"layer": "TXT", "insert": (445000, 2565000)})
+    f = tmp_path / "survey.dxf"; doc.saveas(f)
+    r = C.post(B + "/inspect", files=[("files", ("survey.dxf", f.read_bytes(), "application/dxf"))]).json()
+    assert r["has_z"] and r["fields"][0] == terrain.Z_FIELD and terrain.TEXT_FIELD in r["fields"] and r["dxf_layers"] == ["CONT", "TXT"]
+    out = C.post(B, json=dict(token=r["token"], field=terrain.Z_FIELD, dxf_layer="CONT")).json()
+    m0 = C.get(f"/api/g/projects/{pid}/scenarios/base/model").json(); g = {x["id"]: x["properties"] for x in m0["nodes"]["features"]}
+    assert abs(g["N0"]["ground"] - 11.0) < 1e-6 and abs(g["N2"]["ground"] - 13.0) < 1e-6 and out["no_data_count"] == 1   # 25 m up a 2 m / 50 m slope
+    assert g["N0"]["ground_src"].startswith("contours or spot levels survey.dxf, layer CONT, TIN of")
+    # a zipped shapefile of contours with a level field (no Z)
+    gdf = gpd.GeoDataFrame(dict(ELEV=[20.0, 30.0]), geometry=[LineString([(445000, 2565000), (445100, 2565000)]), LineString([(445000, 2565100), (445100, 2565100)])], crs="EPSG:32640")
+    gdf.to_file(tmp_path / "cont.shp"); z = tmp_path / "cont.zip"
+    with zipfile.ZipFile(z, "w") as zz:
+        for ext in ("shp", "shx", "dbf", "prj", "cpg"):
+            if (tmp_path / f"cont.{ext}").exists(): zz.write(tmp_path / f"cont.{ext}", f"cont.{ext}")
+    r = C.post(B + "/inspect", files=[("files", ("cont.zip", z.read_bytes(), "application/zip"))]).json()
+    assert "ELEV" in r["fields"] and not r["has_z"] and "32640" in r["crs"]
+    C.post(B, json=dict(token=r["token"], field="ELEV"))
+    m0 = C.get(f"/api/g/projects/{pid}/scenarios/base/model").json(); g = {x["id"]: x["properties"] for x in m0["nodes"]["features"]}
+    assert abs(g["N0"]["ground"] - 22.5) < 1e-6 and "field ELEV" in g["N0"]["ground_src"]
+    from ezdxf.addons import odafc
+    if not odafc.is_installed():
+        r = C.post(B + "/inspect", files=[("files", ("plan.dwg", b"AC1032", "application/acad"))])
+        assert r.status_code == 400 and "ODA File Converter" in r.json()["detail"] and "DXF" in r.json()["detail"]
+    assert C.post(B, json=dict(token="nope", field="ELEV")).status_code == 400

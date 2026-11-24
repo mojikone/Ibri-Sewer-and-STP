@@ -93,3 +93,93 @@ def copernicus(project, ids=None, opener=None):
                 vals[np.where(m)[0]] = v
     out = {str(k): float(v) for k, v in zip(N.index, vals) if np.isfinite(v)}
     return out, [str(k) for k, v in zip(N.index, vals) if not np.isfinite(v)], read
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Contours and spot levels (F28, 2026-11-23): a TIN of every vertex near the network, linear inside each triangle.
+# Sources: a GIS layer (shapefile, GeoPackage, GeoJSON) with an elevation field or Z, a DXF (contours carry their
+# elevation as Z; spot levels as points with Z, or as numbers written in TEXT), a DWG through the free ODA File
+# Converter when it is installed on this computer. A DXF or DWG has no coordinate system: it is taken as the project's.
+# Contours make flat triangles along ridges and valleys (three vertices on one contour); a structure there gets that
+# contour's level. Outside the TIN (beyond the data) a structure gets no value.
+VECTOR_EXT = (".shp", ".gpkg", ".geojson", ".json", ".dxf", ".dwg")
+MAX_VERTICES = 3_000_000
+Z_FIELD = "(Z of the lines or points)"
+TEXT_FIELD = "(numbers written in the drawing's text)"
+
+
+def dwg_to_dxf(path):
+    """A DWG converted to a DXF beside it by the ODA File Converter, if this computer has it; otherwise a clear refusal."""
+    from ezdxf.addons import odafc
+    if not odafc.is_installed():
+        raise ValueError("a DWG cannot be read without the free ODA File Converter on this computer "
+                         "(opendesign.com, File Converter): install it, or save the drawing as DXF (AutoCAD: Save As > DXF)")
+    out = path[:-4] + ".dxf"; odafc.convert(path, out, version="R2018", audit=True, replace=True); return out
+
+
+def _frame(path, layer=None):
+    import geopandas as gpd
+    if path.lower().endswith(".dwg"): path = dwg_to_dxf(path)
+    g = gpd.read_file(path, layer=layer) if layer else gpd.read_file(path)
+    return g[g.geometry.notna() & ~g.geometry.is_empty], path.lower().endswith(".dxf")
+
+
+def _num(s):
+    import pandas as pd
+    return pd.to_numeric(s.astype(str).str.replace(",", ".", regex=False).str.extract(r"(-?\d+(?:\.\d+)?)")[0], errors="coerce")
+
+
+def vector_inspect(path):
+    """What a contour or spot-level file offers: its layers; for the chosen (first) one the geometry types, the count,
+    the fields that can carry a level, whether the geometry has non-zero Z, its CRS and (a DXF) its drawing layers."""
+    import pyogrio
+    if path.lower().endswith(".dwg"): path = dwg_to_dxf(path)
+    layers = [str(l[0]) for l in pyogrio.list_layers(path)]
+    g, dxf = _frame(path, layers[0] if len(layers) > 1 else None)
+    import numpy as np
+    from shapely import get_coordinates
+    xyz = get_coordinates(g.geometry.values, include_z=True)
+    hasz = xyz.shape[1] == 3 and np.isfinite(xyz[:, 2]).any() and bool((np.nan_to_num(xyz[:, 2]) != 0).any())
+    fields = [c for c in g.columns if c != "geometry" and c not in ("Layer", "SubClasses", "EntityHandle", "Linetype", "PaperSpace", "Text")
+              and _num(g[c]).notna().mean() > 0.5]
+    if hasz: fields = [Z_FIELD] + fields
+    if dxf and "Text" in g.columns and _num(g["Text"]).notna().sum() > 0: fields.append(TEXT_FIELD)
+    return dict(layers=layers, count=int(len(g)), geometry=sorted(set(g.geom_type)), fields=fields, has_z=bool(hasz),
+                crs=(g.crs.to_string() if g.crs else None), dxf_layers=sorted(set(g["Layer"].astype(str))) if dxf and "Layer" in g.columns else [])
+
+
+def vector_levels(project, path, field, layer=None, dxf_layer=None, ids=None):
+    """Ground levels {id: level} at the structures from a TIN of the file's vertices, the structures outside it, and the
+    number of vertices used."""
+    import numpy as np
+    from scipy.interpolate import LinearNDInterpolator
+    from shapely import get_coordinates
+    g, dxf = _frame(path, layer)
+    if dxf_layer and "Layer" in g.columns: g = g[g["Layer"].astype(str) == str(dxf_layer)]
+    if not len(g): raise ValueError("no lines or points in that selection")
+    crs = g.crs.to_wkt() if g.crs is not None else None
+    nid, x, y = points_in(project, crs, ids)
+    if not nid: return {}, [], 0
+    X, Y = np.asarray(x), np.asarray(y)
+    span = max(X.max() - X.min(), Y.max() - Y.min(), 1.0); geo = g.crs is not None and g.crs.is_geographic
+    buf = max(span * 0.1, 0.005 if geo else 300.0)            # the data around the network, not a whole country's contours
+    g = g.cx[X.min() - buf:X.max() + buf, Y.min() - buf:Y.max() + buf]
+    if field == TEXT_FIELD:
+        g = g.assign(_z=_num(g["Text"])); g = g[g._z.notna()]
+        pts = np.column_stack([get_coordinates(g.geometry.values)[:, :2], g._z.to_numpy(float)]) if len(g) else np.empty((0, 3))
+    elif field == Z_FIELD:
+        pts = get_coordinates(g.geometry.values, include_z=True)
+    else:
+        if field not in g.columns: raise ValueError(f"no field {field}")
+        z = _num(g[field]).to_numpy(float); parts = []
+        for geom, zz in zip(g.geometry.values, z):
+            if np.isfinite(zz): c = get_coordinates(geom); parts.append(np.column_stack([c[:, :2], np.full(len(c), zz)]))
+        pts = np.vstack(parts) if parts else np.empty((0, 3))
+    pts = pts[np.isfinite(pts).all(axis=1)] if len(pts) else pts
+    if field == Z_FIELD and dxf and len(pts) and (pts[:, 2] != 0).any(): pts = pts[pts[:, 2] != 0]   # DXF entities drawn with no elevation
+    if len(pts) < 3: raise ValueError("fewer than three levelled vertices near the network: check the elevation field and the coordinate system")
+    _, keep = np.unique(np.round(pts[:, :2], 3), axis=0, return_index=True); pts = pts[np.sort(keep)]
+    if len(pts) > MAX_VERTICES: pts = pts[np.linspace(0, len(pts) - 1, MAX_VERTICES).astype(int)]
+    v = LinearNDInterpolator(pts[:, :2], pts[:, 2])(X, Y)
+    out = {i: float(z) for i, z in zip(nid, v) if np.isfinite(z)}
+    return out, [i for i, z in zip(nid, v) if not np.isfinite(z)], int(len(pts))

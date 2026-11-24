@@ -102,7 +102,8 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
   - **Terrain without uploading it** (F28, Tools > TRex): a GeoTIFF, or a VRT with its GeoTIFFs, is read in the browser
     where it is, only the blocks under the structures (Ibri's 19,112 structures through the 0.5 m VRT: 67 s); a path on
     this computer still works; Copernicus 30 m is fetched on request (a surface model: screening only, flagged by
-    Validate); each structure keeps the source of its ground level. Contours and points (SHP, DXF) and DWG come next.
+    Validate); contours or spot levels (SHP, GPKG, GeoJSON, DXF; DWG when the free ODA File Converter is installed) by a
+    TIN; each structure keeps the source of its ground level. The map box has a north arrow and Fit all (F29).
   - Fixed after a Fable 5.2 review: an uploaded file's name could choose where the server wrote it (any folder, from
     the shared link); alternatives now replay in the order things were done (a session-wide edit clock), undo removes
     exactly its own edit from a shared alternative, a mixed batch is one undo step, a child can take its own edits,

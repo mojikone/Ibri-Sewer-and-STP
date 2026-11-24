@@ -12,7 +12,7 @@
  "timing_12_cases": {
   "passes": 1,
   "unconverged": [],
-  "seconds_design_split": 23.8,
-  "seconds_total": 73.9
+  "seconds_design_split": 22.2,
+  "seconds_total": 72.2
  }
 }

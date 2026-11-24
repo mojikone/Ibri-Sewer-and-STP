@@ -1256,3 +1256,31 @@ def test_v5_map_has_a_north_arrow_and_fit_all(server, browser):
     assert inside and pg.evaluate("window.ed.map.getZoom()") > 10
     assert errs == [], errs
     pg.screenshot(path=os.path.join(SHOTS, "screenshot_v5_compass_fit.png")); ctx.close()
+
+
+def test_v5_trex_dialog_takes_dxf_contours(server, browser, tmp_path):
+    """F28: contours in a DXF picked in the TRex dialog, the drawing layer chosen, levels from the TIN with their source."""
+    import json as _json, ezdxf
+    doc = ezdxf.new(); m = doc.modelspace()
+    for k, z in enumerate((10, 12, 14)): m.add_lwpolyline([(445000, 2565000 + 50 * k), (445100, 2565000 + 50 * k)], dxfattribs={"elevation": z, "layer": "CONT"})
+    m.add_lwpolyline([(445000, 2565010), (445100, 2565010)], dxfattribs={"elevation": 500, "layer": "ROADS"})
+    f = str(tmp_path / "survey.dxf"); doc.saveas(f)
+    def post(path, body):
+        req = urllib.request.Request(server + "/api/g" + path, data=_json.dumps(body).encode(), headers={"Content-Type": "application/json"}, method="POST")
+        return _json.loads(urllib.request.urlopen(req).read())
+    info = post("/projects/new", dict(name="contours", crs=32640)); B = f"/projects/{info['id']}/scenarios/base/edit"
+    post(B, dict(op="add_node", id="A", x=445020.0, y=2565025.0)); post(B, dict(op="add_node", id="B", kind="outfall", x=445080.0, y=2565075.0))
+    post(B, dict(op="add_link", id="P", from_node="A", to_node="B"))
+    ctx = browser.new_context(viewport={"width": 1400, "height": 900}); pg = ctx.new_page(); pg.set_default_timeout(60000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
+    pg.evaluate(f"jget('/projects/{info['id']}').then(i => openProject(i))"); idle(pg)
+    pg.evaluate("openTRex()")
+    with pg.expect_file_chooser() as fc: pg.click("[data-testid=trex-vec]")
+    fc.value.set_files(f); idle(pg)
+    expect(pg.get_by_test_id("trex-vapply")).to_be_visible()
+    pg.select_option("[data-testid=trex-vdxf]", "CONT"); pg.click("[data-testid=trex-vapply]"); pg.wait_for_selector("[data-testid=trex-done]"); idle(pg)
+    a = pg.evaluate("window.ed.state.model.nodes.get('A').properties")
+    assert abs(a["ground"] - 11.0) < 1e-6 and "layer CONT" in a["ground_src"], a
+    assert errs == [], errs
+    ctx.close()

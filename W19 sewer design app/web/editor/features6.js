@@ -141,6 +141,12 @@ async function openTRex() {
     <div class="row"><button data-a="files" data-testid="trex-files">Choose files...</button>${folder ? `<button data-a="folder" data-testid="trex-folder">Choose a VRT's folder...</button>` : ""}<span class="muted" id="trex-name">none</span></div>
     ${t6Phone() ? `<p class="muted" data-testid="trex-phone">On a phone a VRT does not work (it needs its folder): pick one GeoTIFF, or use Copernicus below.</p>` : ""}
     <label>or a terrain path on this computer (only when the app is opened on this computer)<input id="trex-path" type="text" placeholder="e.g. D:\\...\\IBRI_0p5_VRT2.vrt"></label>
+    <h5>Contours or spot levels</h5>
+    <p class="muted">A shapefile with its .shx, .dbf and .prj (or all of them zipped), a GeoPackage, GeoJSON, DXF or DWG. Each structure takes its level from a triangulated surface (TIN) of their vertices. A DXF or DWG carries no coordinate system: it is taken to be in the project's. A DWG needs the free ODA File Converter on this computer; otherwise save it as DXF.</p>
+    <div class="row"><button data-a="vec" data-testid="trex-vec">Choose contours or points...</button><span class="muted" id="trex-vname">none</span></div>
+    <div id="trex-vopts" hidden><div class="row"><label>Level from <select id="trex-vfield" data-testid="trex-vfield"></select></label>
+      <label id="trex-vdxfl">Drawing layer <select id="trex-vdxf" data-testid="trex-vdxf"></select></label>
+      <button data-a="vapply" data-testid="trex-vapply">Apply contours or points</button></div></div>
     <h5>Copernicus 30 m (download)</h5>
     <p class="muted">A free worldwide surface model: roofs and trees are in it, its error is metres and its heights are above the EGM2008 geoid. For screening and a first layout, not for design levels; Validate counts the structures that rest on it. Only the cells around the network are read.</p>
     <div class="row"><button data-a="cop" data-testid="trex-cop"${local ? " disabled title=\"needs a project in a real coordinate system\"" : ""}>Fetch Copernicus 30 m and apply</button></div>
@@ -173,6 +179,30 @@ async function openTRex() {
         if (v.length > 1) { toast(`The folder has ${v.length} VRTs: the first, ${v[0].name}, is read.`, "info"); files = fs.filter(f => !/\.vrt$/i.test(f.name) || f === v[0]); }
         $("#trex-name", b).textContent = v.length ? `${v[0].name} and its folder` : files.length ? files[0].name : "no terrain in that folder";
       } catch (x) { if (x.name !== "AbortError") fail(x); }
+      return;
+    }
+    if (a === "vec") {
+      const i = document.createElement("input"); i.type = "file"; i.multiple = true; i.accept = ".shp,.shx,.dbf,.prj,.cpg,.zip,.gpkg,.geojson,.json,.dxf,.dwg";
+      i.onchange = () => enqueue(() => withBusy("Reading the contours or points...", async () => {
+        if (!i.files.length) return;
+        const fd = new FormData(); for (const f of i.files) fd.append("files", f);
+        try {
+          const r = await (await api(`${base()}/trex/vector/inspect`, { method: "POST", body: fd })).json(); T6.vec = r;
+          $("#trex-vname", b).textContent = `${r.name}: ${r.count} ${r.geometry.join(", ")}${r.crs ? "" : " (no coordinate system: the project's)"}`;
+          $("#trex-vfield", b).innerHTML = r.fields.map(f => `<option>${esc(f)}</option>`).join("");
+          $("#trex-vdxf", b).innerHTML = `<option value="">all</option>` + r.dxf_layers.map(l => `<option>${esc(l)}</option>`).join("");
+          $("#trex-vdxfl", b).hidden = !r.dxf_layers.length; $("#trex-vopts", b).hidden = !r.fields.length; out.innerHTML = "";
+          if (!r.fields.length) fail(new Error(`${r.name} has no level: no Z on its lines or points and no numeric field`));
+        } catch (x) { fail(x); }
+      }));
+      i.click(); return;
+    }
+    if (a === "vapply") {
+      if (!T6.vec) return;
+      enqueue(() => withBusy("Levels from the contours or points...", async () => {
+        try { await done(await jpost(`${base()}/trex/vector`, { token: T6.vec.token, field: $("#trex-vfield", b).value, dxf_layer: $("#trex-vdxf", b).value || null, keep_depth: $("#trex-keep", b).checked, ids: ids() })); }
+        catch (x) { fail(x); }
+      }));
       return;
     }
     if (a === "cop") {
