@@ -77,7 +77,9 @@ def _sess(a):
 
 
 def call(ctx, name, a):
-    from sewerapp.api.general_api import _lock
+    from sewerapp.api.general_api import _lock, _can
+    if a.get("project") is not None and not _can(str(a["project"])):        # a signed-in account reaches its own projects only
+        raise ValueError(f"no open project {a['project']}")
     with _lock:                                    # each tool call holds the app lock; the model's thinking does not
         return _call(ctx, name, a)
 
@@ -89,7 +91,8 @@ def _call(ctx, name, a):
         from sewerapp.api.general_api import _open
         return agent.call(name, a, SESSIONS, _open, clean, ACTIONS)
     if name == "list_projects":
-        return [dict(id=k, name=s.base.name, scenarios=[c.to_dict() for c in s.scenarios.values()]) for k, s in SESSIONS.items()]
+        from sewerapp.api.general_api import _can
+        return [dict(id=k, name=s.base.name, scenarios=[c.to_dict() for c in s.scenarios.values()]) for k, s in SESSIONS.items() if _can(k)]
     if name == "project_summary":
         s = _sess(a); p = s.model(a["scenario"]); _, summ = s.solve(a["scenario"])
         return clean(dict(name=p.name, units=p.settings.get("units", "SI"), crs=p.crs, nodes=len(p.nodes), links=len(p.links),

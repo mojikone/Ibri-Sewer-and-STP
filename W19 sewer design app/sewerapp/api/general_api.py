@@ -1,18 +1,39 @@
 """The general app's API (/api/g): projects (new, sample, open, save), scenarios (copy, undo, redo), edits by element
 id with instant re-solve, the model and results for the map, the profile. Positions from the map arrive as lon/lat
 and are converted at this one boundary (api/coords.py)."""
-import io, json, math, os, pickle, re, tempfile, threading, itertools, time
+import contextvars, io, json, math, os, pickle, re, tempfile, threading, itertools, time
 import numpy as np, pandas as pd
-from fastapi import APIRouter, HTTPException, UploadFile, File, Request, Query
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request, Query
 from fastapi.responses import Response
 from pydantic import BaseModel
-from sewerapp.api import coords
+from sewerapp.api import coords, accounts
 from sewerapp.io import gpkg_project, ibri_sample
 from sewerapp.model.general import Project, NODE_KINDS, LINK_KINDS
 from sewerapp.model.workspace import Session
 
-router = APIRouter(prefix="/api/g")
 SESSIONS: dict[str, Session] = {}
+WHO = contextvars.ContextVar("w19_who", default=accounts.LOCAL)     # the caller of this request (api/accounts.py)
+
+
+def _exists(pid):
+    return pid in SESSIONS or bool(AUTOSAVE and os.path.exists(os.path.join(AUTOSAVE, f"{pid}.pkl"))) or bool(accounts.owner(pid))
+
+
+def _can(pid):
+    return accounts.can_open(pid, WHO.get(), exists=_exists(pid))
+
+
+async def _guard(request: Request):
+    """Every /api/g request: who is calling (over the web, Cloudflare Access's signed sign-in when accounts are on), and a
+    project named in the path opens only for its account (an admin, and this computer, open any)."""
+    try: who = accounts.identity(request.headers, request.cookies, _remote(request))
+    except accounts.Unauthorized as e: raise HTTPException(401, str(e))
+    WHO.set(who); accounts.touch(who)
+    pid = request.path_params.get("pid")
+    if pid and not _can(pid): raise HTTPException(403, "this project belongs to another account")
+
+
+router = APIRouter(prefix="/api/g", dependencies=[Depends(_guard)])
 _lock = threading.RLock()
 _alock = threading.Lock()                     # the assistant: one answer at a time
 _ids = itertools.count(1)
@@ -33,16 +54,18 @@ KEEP_DAYS, KEEP_N = 7, 12
 _timers: dict[str, threading.Timer] = {}
 
 
-def _snap(pid): return os.path.join(AUTOSAVE, f"{pid}.pkl")
+def _snap(pid):
+    """An account's project is kept in its account's folder (never cleared); the rest in the autosave folder."""
+    return accounts.snap_path(pid) or os.path.join(AUTOSAVE, f"{pid}.pkl")
 
 
 def snapshot(pid):
     if not AUTOSAVE or pid not in SESSIONS: return None
-    os.makedirs(AUTOSAVE, exist_ok=True)
-    with _lock: st = SESSIONS[pid].state()                   # lists copied under the lock; the base is never changed in place
-    tmp = _snap(pid) + ".tmp"
-    with open(tmp, "wb") as f: pickle.dump(st, f, protocol=5)
-    os.replace(tmp, _snap(pid)); return _snap(pid)
+    f = _snap(pid); os.makedirs(os.path.dirname(f), exist_ok=True)
+    with _lock: st = SESSIONS[pid].state(); name = SESSIONS[pid].base.name   # lists copied under the lock; the base is never changed in place
+    tmp = f + ".tmp"
+    with open(tmp, "wb") as h: pickle.dump(st, h, protocol=5)
+    os.replace(tmp, f); accounts.note(pid, name); return f
 
 
 def schedule(pid, delay=2.0):
@@ -73,6 +96,7 @@ def _s(pid):
     if pid not in SESSIONS:
         with _lock:
             if pid not in SESSIONS and _restore(pid) is None: raise HTTPException(404, f"no open project {pid}")
+    if not _can(pid): raise HTTPException(403, "this project belongs to another account")
     return SESSIONS[pid]
 
 
@@ -80,11 +104,12 @@ PID_RE = r"p[0-9a-f]{1,32}"                       # p40 (before 2026-11-24) or p
 
 
 def _open(project):
-    # the id is the model's link (?p=...): random, so a link cannot be guessed from another (accounts come later)
+    # the id is the model's link (?p=...): random, so a link cannot be guessed from another; a signed-in user's project
+    # is that account's (api/accounts.py)
     import secrets
     pid = "p" + secrets.token_hex(8)
     while pid in SESSIONS: pid = "p" + secrets.token_hex(8)
-    SESSIONS[pid] = Session(pid, project); schedule(pid, 0.5); return pid
+    SESSIONS[pid] = Session(pid, project); accounts.own(pid, WHO.get(), project.name); schedule(pid, 0.5); return pid
 
 
 def _kinds_schema():
@@ -109,8 +134,10 @@ class New(BaseModel):
 
 @router.get("/projects")
 def projects(request: Request):
-    """The open projects, for this computer only: over a shared link each visitor sees the projects of their own
-    browser (kept there) and opens others' only by their link."""
+    """The open projects, for this computer; a signed-in account's own projects (kept on the server, from any device);
+    over a shared link without accounts, none (each visitor keeps its own in its browser)."""
+    who = WHO.get()
+    if who["kind"] == "user": return accounts.projects(who["uid"])
     if _remote(request): return []
     return [dict(id=k, name=s.base.name) for k, s in SESSIONS.items()]
 
@@ -125,6 +152,36 @@ def env(request: Request):
         alive = bool(sg_bridge.alive()) if hasattr(sg_bridge, "alive") else None
     except Exception: alive = None
     return dict(local=local, sewergems=alive)
+
+
+@router.get("/me")
+def me():
+    """Who this page is: this computer, a signed-in account (and whether it is an admin), or a visitor without accounts."""
+    who = WHO.get()
+    return dict(mode=who["kind"], email=who.get("email"), admin=bool(who.get("admin")), accounts=accounts.on(), logout="/cdn-cgi/access/logout")
+
+
+@router.get("/admin/users")
+def admin_users():
+    """The accounts, their projects and today's assistant spending: for the engineer (this computer or an admin)."""
+    who = WHO.get()
+    if not who.get("admin"): raise HTTPException(403, "for the app's administrator only")
+    from sewerapp.assistant import budget
+    return [dict(u, spent_today_usd=round(budget.spent("web:" + u["uid"])[0], 4)) for u in accounts.users()]
+
+
+@router.post("/projects/{pid}/delete")
+def delete_project(pid: str):
+    """Remove a project from the server (its account's list and its kept copy). Over the shared link only by its account."""
+    if WHO.get()["kind"] == "anon": raise HTTPException(403, "a project is removed on this computer, or by the account that owns it")
+    with _lock:
+        t = _timers.pop(pid, None)
+        if t: t.cancel()
+        SESSIONS.pop(pid, None)
+        f = _snap(pid) if AUTOSAVE else None
+        accounts.drop(pid)
+        if f and os.path.exists(f): os.remove(f)
+    return dict(deleted=pid)
 
 
 @router.post("/projects/new")
@@ -1289,7 +1346,10 @@ class FolderB(BaseModel):
 
 
 def _client_key(request) -> str:
-    """Who spends: this computer, or one visitor of the shared link (by the address Cloudflare reports)."""
+    """Who spends: this computer (and the administrator's account), a signed-in account, or one visitor of the shared
+    link without accounts (by the address Cloudflare reports)."""
+    who = WHO.get()
+    if who["kind"] == "user": return "local" if who["admin"] else "web:" + who["uid"]
     if not _remote(request): return "local"
     h = request.headers
     return "web:" + (h.get("cf-connecting-ip") or (h.get("x-forwarded-for") or "").split(",")[0].strip() or (request.client.host if request.client else "?"))
@@ -1370,7 +1430,7 @@ def assistant_start(q: Ask, request: Request):
         except HTTPException as e: job["error"] = e.detail
         except Exception as e: job["error"] = f"{type(e).__name__}: {e}"
         finally: job["state"] = "done"
-    threading.Thread(target=work, daemon=True).start()
+    threading.Thread(target=contextvars.copy_context().run, args=(work,), daemon=True).start()    # the caller goes with it
     return dict(job=jid)
 
 

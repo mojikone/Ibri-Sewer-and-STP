@@ -64,3 +64,10 @@ body.compact-ui #sel-mode { top: auto; bottom: 74px; }            /* on a phone:
 #dlg-lid-lib .lid-l > b { grid-column: 1 / -1; font-size: 12.5px; }
 #dlg-lid-lib .lid-l label { display: flex; flex-direction: column; font-size: 12px; gap: 2px; }
 #kind-fields table.kf-lidtab select { width: 100%; }
+/* accounts (features9.js) */
+#me-box { display: flex; align-items: center; gap: 6px; font-size: 12px; min-width: 0; }
+#me-chip { max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .9; }
+#me-out { color: inherit; opacity: .85; white-space: nowrap; }
+body.compact-ui #me-chip { max-width: 12ch; }
+#dlg-mine .rec { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+#dlg-users .users-tbl td { vertical-align: top; }
