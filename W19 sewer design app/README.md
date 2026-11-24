@@ -123,6 +123,8 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
   - **Culverts (F59):** a conduit's Properties > Culvert: its HDS-5 inlet type (SWMM's 57, named), Ke and allowable
     headwater; the steady run gives the governing headwater (inlet or outlet control) and flags it; the storm run hands
     SWMM the same inlet code; read from SewerGEMS (the headwall's inlet description).
+  - **LID (F60):** Components > LID controls (SWMM's eight types and their layers); a catchment's Properties > LID
+    units; written to SWMM.
   - **Stormwater pumps (F58):** Settings > Project > Network type; a stormwater pump station draws from a storage sump or
     pond, a sewer's from a wet well (Auto decides from the model).
   - **Asking first:** a structure tool on a structure asks before morphing it, on a pipe before splitting it. The pump

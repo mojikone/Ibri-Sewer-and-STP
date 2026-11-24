@@ -45,7 +45,7 @@ No SewerGEMS file was read. A Fable 5.2 review of the first draft found that it 
 | Channel | v7 | A link with its open section (the section editor); not designed. |
 | VSP battery | v6 | Read as its lead and lag pumps at full speed. |
 | Pump Station | part | A pump's station name (Properties); energy cost: gap. |
-| LID | gap | |
+| LID | v7 | SWMM 5.2's LID controls (8 types, their layers checked as lid.c does) and a catchment's LID units, in the storm run (F60). SewerGEMS draws an LID as its own polygon; here it is a catchment's rows. |
 | SCADA, Grid2D, Boundary, Surface polygon, line, point, Profile path | out | |
 
 ## 2. Solvers and calculation options
