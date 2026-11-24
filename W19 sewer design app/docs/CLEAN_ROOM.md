@@ -19,3 +19,11 @@ opens without SewerGEMS. The rest stands: Bentley's binaries are never decompile
 is still the referee for the engines through its API, and Bentley's sample models stay out of this repository.
 The reader was checked against SewerGEMS's own API export of the Ibri SC1-2056 final model: all 23 scenarios, every
 structure and pipe, levels, lengths, sizes and loads equal (`tests/general/test_sewergems_db.py`).
+
+## Note, 2026-11-24 (v7): SewerGEMS's option lists
+
+The names of SewerGEMS's option lists (inlet types, grate types, gutter shapes, headloss methods...) were listed from
+the public enum types of the API assemblies in `D:\VBOX\bridge\refs` by a reflection-only load: names and values
+only, the same metadata the compiler reads in `compile_check.ps1`; no code executed, nothing decompiled or
+disassembled. The inlet equations come from FHWA HEC-22 (3rd ed.) and EPA SWMM 5.2's public-domain `inlet.c`
+(docs/INLETS_HEC22.md).

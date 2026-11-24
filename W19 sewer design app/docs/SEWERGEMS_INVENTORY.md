@@ -35,9 +35,15 @@ No SewerGEMS file was read. A Fable 5.2 review of the first draft found that it 
 | Catchment | have | SWMM runoff (area, imperviousness, width, slope, n). Rational, SCS UH and RTK: gap. |
 | Pond | v3 | A storage node with a constant area or a depth-area table. |
 | Pond Outlet Structure | v3 | Orifice (circular or rectangular, Cd, offset, flap gate) and weir (rectangular or V-notch, crest, Cd) links, written to SWMM. Composite outlet and rating curve: gap. |
-| Catch Basin, inlets | gap | |
-| Transition, Cross Section node, Headwall, Property Connection, Tap, Lateral, Gutter | gap | |
-| Air Valve, Pump Station, VSP battery | gap | |
+| Catch Basin, inlets | v7 | Structure, inlet (full capture, percent, maximum capacity, inflow-capture curve, HEC-22 catalogue: grate, curb opening, combination, slotted; on grade or in sag; clogging), gutter section (conventional, depressed, V-shaped, ditch), design limits (spread, depth), additional carryover. The rational run computes capture, bypass, spread and depth (docs/INLETS_HEC22.md); SWMM takes all the inflow (its own street and inlet model: gap). Irregular and parabolic gutters, UK inlets, inlet design (sizing the opening): gap. |
+| Gutter | v7 | A link between catch basins that carries the bypass; its section derived from the start inlet or its own. Travel time along it: gap. |
+| Transition, Cross Section node | v7 | Gravity structures (a transition's length; a cross section's trapezoidal section, as attributes). |
+| Headwall | v7 | The outfall of its network when nothing leaves it (free or fixed tailwater, in SWMM too), else a structure. Culvert inlet control: gap. |
+| Property Connection, Lateral, Tap | v7 | A property connection carries its load; its lateral (bore, n) runs to a manhole or to a tap on a conduit, whose flow enters that conduit at its upstream structure. Read from SewerGEMS when a lateral connects them. |
+| Air Valve | v7 | A pressure junction on the force main (its elevation); air release itself is not modelled. |
+| Channel | v7 | A link with its open section (the section editor); not designed. |
+| VSP battery | v6 | Read as its lead and lag pumps at full speed. |
+| Pump Station | part | A pump's station name (Properties); energy cost: gap. |
 | LID | gap | |
 | SCADA, Grid2D, Boundary, Surface polygon, line, point, Profile path | out | |
 

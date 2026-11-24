@@ -104,6 +104,25 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
     this computer still works; Copernicus 30 m is fetched on request (a surface model: screening only, flagged by
     Validate); contours or spot levels (SHP, GPKG, GeoJSON, DXF; DWG when the free ODA File Converter is installed) by a
     TIN; each structure keeps the source of its ground level. The map box has a north arrow and Fit all (F29).
+- **v7 (2026-11-24): every element SewerGEMS draws, catch basins by HEC-22, ask-first morphs, drawing at the click
+  (F51-F55).**
+  - **Elements:** manhole, catch basin, outfall, headwall, transition, cross section, wet well, pond, pressure junction,
+    air valve, property connection, tap; conduit, channel, gutter, lateral, pressure pipe, pump, orifice, weir;
+    catchment. Each kind has its own fields as SewerGEMS groups them (`model/kinds.py`), its ribbon tool, its symbology
+    tab (shown with 0 when the model has none), its place in the layout card and right-click (Next point, Next link), its
+    map colour and symbol, and is read from SewerGEMS models. The engines see each as their own (`engine_view`).
+  - **Catch basins:** full capture, percent, maximum capacity, inflow-capture curve, or a HEC-22 catalogue inlet
+    (grate, curb opening, combination, slotted; on grade or in sag) in a conventional, depressed, V-shaped or ditch
+    gutter (`engine/inlets.py`, checked against HEC-22's examples 4-8 and 4-9, `docs/INLETS_HEC22.md`). The rational
+    run captures at each inlet and sends the bypass down its gutter to the next; capture, bypass, spread and depth per
+    inlet in Tool output and Properties. SWMM takes all the inflow at a catch basin (its street model: not yet).
+  - **Asking first:** a structure tool on a structure asks before morphing it, on a pipe before splitting it. The pump
+    tool makes a manhole the station's wet well (after asking), then the force main's first junction, and drawing goes
+    on as force main; pumps show SewerGEMS's pump symbol.
+  - **Realtime drawing:** a ghost shows each click at once; an edit is one request (its answer carries the model and the
+    results). The left dock follows the map's height as Properties does.
+  - **Reconnect and design (F55):** a design of selected pipes drops the pipes below where a selected one now arrives
+    lower; Validate flags any gravity pipe arriving below the pipe that leaves its structure.
 - **v6 (2026-11-24): the engineer's trial items F30-F42.**
   - **Selection:** Shift adds, Ctrl removes, with a click, a box or a polygon; a New / Add / Remove switch on a phone;
     no 3D tilt (the compass puts north up); the middle button pans in every tool.
