@@ -104,6 +104,20 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
     this computer still works; Copernicus 30 m is fetched on request (a surface model: screening only, flagged by
     Validate); contours or spot levels (SHP, GPKG, GeoJSON, DXF; DWG when the free ODA File Converter is installed) by a
     TIN; each structure keeps the source of its ground level. The map box has a north arrow and Fit all (F29).
+- **v6 (2026-11-24): the engineer's trial items F30-F42.**
+  - **Selection:** Shift adds, Ctrl removes, with a click, a box or a polygon; a New / Add / Remove switch on a phone;
+    no 3D tilt (the compass puts north up); the middle button pans in every tool.
+  - **Editing as in SewerGEMS:** drag a selected structure to move it (or Move... then a tap), its lines follow; a
+    pipe's right-click adds, removes or straightens bends, and a selected pipe's bends are dragged; the layout tool's
+    right-click ends the run or sets the next point (a structure type, or a bend); a long press is the right-click on
+    a phone.
+  - **Panes:** the left dock holds Element Symbology and Background Layers as tabs, widened by its edge; closing the
+    last gives the map back. Background Layers: the basemap and GIS layers with colour, opacity and order.
+  - **Colour by subnetwork:** by outfall, pumping station (lifts merged), lift, or every wet well; a wet well is
+    marked a lift in Properties.
+  - **Made for other users:** every model has its link in the address bar (File > Copy link, File > Recent); Find
+    finds tools too; a SewerGEMS model is picked from any device; tools that read the server's files show only on it.
+  - **The assistant** shows each step live in plain words and answers without code; Sonnet runs at medium effort.
   - Fixed after a Fable 5.2 review: an uploaded file's name could choose where the server wrote it (any folder, from
     the shared link); alternatives now replay in the order things were done (a session-wide edit clock), undo removes
     exactly its own edit from a shared alternative, a mixed batch is one undo step, a child can take its own edits,
