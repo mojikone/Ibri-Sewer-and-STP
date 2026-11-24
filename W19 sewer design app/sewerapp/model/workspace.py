@@ -674,6 +674,7 @@ class Session:
 
     @classmethod
     def from_state(cls, st):
+        if hasattr(st["base"], "orient_lines"): st["base"].orient_lines()   # autosaves made before 2026-11-23 kept the source's direction
         s = cls(st["id"], st["base"]); s._n = st["n"]; s.external = st["external"]; s.refs = st.get("refs", []); s.routes = st.get("routes", []); s.symbology = st.get("symbology")
         s.scenarios = {}
         for sid, name, parent, edits, redo, fixed in st["scenarios"]:

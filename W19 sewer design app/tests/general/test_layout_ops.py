@@ -146,3 +146,11 @@ def test_a_line_drawn_from_the_downstream_end_is_turned_to_run_with_the_flow():
     assert not [x for x in validate.run(p) if "drawn line" in x["message"]]
     p.links.at["P", "coords"] = [[0, 0], [40, 0]]                                      # a line that stops short of B
     assert [x for x in validate.run(p) if "drawn line" in x["message"]][0]["id"] == "P"
+
+
+def test_a_restored_autosave_has_its_lines_turned_too():
+    """The engineer's phone, 2026-11-23: a project reopened from the server's autosave kept the lines it was saved with."""
+    p = _p(); p.links.at[p.links.index[0], "coords"] = [[100, 0], [0, 0]]
+    s = W.Session("pX", p); st = s.state(); st["base"].links.at[p.links.index[0], "coords"] = [[100, 0], [0, 0]]
+    r = W.Session.from_state(st)
+    assert r.model("base").links.coords.iloc[0][0] == [0, 0]
