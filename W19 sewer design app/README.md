@@ -120,6 +120,9 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
     steady engine does within half a point; each inlet's capture, bypass, spread and depth reach Properties.
   - **Gutters and inlet design (F57):** parabolic and irregular gutters too; Analysis > Design inlets sizes each inlet
     marked for design to its minimum efficiency on grade, or its maximum depth and spread in a sag.
+  - **Culverts (F59):** a conduit's Properties > Culvert: its HDS-5 inlet type (SWMM's 57, named), Ke and allowable
+    headwater; the steady run gives the governing headwater (inlet or outlet control) and flags it; the storm run hands
+    SWMM the same inlet code; read from SewerGEMS (the headwall's inlet description).
   - **Stormwater pumps (F58):** Settings > Project > Network type; a stormwater pump station draws from a storage sump or
     pond, a sewer's from a wet well (Auto decides from the model).
   - **Asking first:** a structure tool on a structure asks before morphing it, on a pipe before splitting it. The pump
