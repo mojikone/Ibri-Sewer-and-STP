@@ -524,19 +524,44 @@ const sgMine = () => { try { return JSON.parse(localStorage.getItem(SG_MINE) || 
     <div class="row"><button id="sg-folder" class="primary" data-testid="sg-folder" title="The app finds the .stsw and its .stsw.sqlite in the folder; only those two files are read">Choose the model's folder...</button><button id="sg-upload" data-testid="sg-upload">or the model's files...</button><label class="chk"><input type="checkbox" id="sg-up-run"> compute every scenario first</label></div></div>`);
   // the model is two files: a .stsw picked alone is completed by a second pick of its .stsw.sqlite (a browser cannot
   // fetch the file beside it); a file SewerGEMS keeps locked is named, not sent half-read (the engineer, 2026-11-24)
-  const send = files => enqueue(() => withBusy("Sending the model...", async () => {
+  // sent in 32 MB pieces, each compressed here (a request through Cloudflare carries 100 MB at most; a SewerGEMS
+  // database shrinks about 3 times), with the progress shown; then the reading is followed to its Open button
+  const say = html => { $("#sg-up-more").innerHTML = html; };
+  async function follow(r) {
+    for (;;) {
+      await new Promise(res => setTimeout(res, 2000));
+      let j; try { j = await jget(`/sewergems/jobs/${encodeURIComponent(r.job)}`); } catch (e) { say(` ${esc(r.name)}: the reading stopped (the server restarted): send the model again.`); return; }
+      if (j.state === "ready") {
+        say(` ${esc(r.name)} is read. <button class="primary" data-testid="sg-up-open">Open it</button>`);
+        $("#sg-up-more button").onclick = () => openSgExport(r.tag); refreshSg(); return;
+      }
+      if (j.state === "failed") { say(` ${esc(r.name)}: ${esc(j.error || "the reading failed")}`); toast(`${r.name}: ${j.error || "the reading failed"}`); return; }
+      say(` Reading ${esc(r.name)}${j.direct ? " (no SewerGEMS needed)" : " in SewerGEMS"}: ${j.scenarios_total ? `scenario ${j.scenarios_done} of ${j.scenarios_total}` : `${j.scenarios_done || 0} scenarios so far`}, ${j.seconds || 0} s...`);
+    }
+  }
+  const send = async files => {
     for (const f of files) {
       try { await f.slice(0, 16).arrayBuffer(); }
       catch (x) { toast(`${f.name} cannot be read: if the model is open in SewerGEMS, close it (or Save As a copy) and pick the files again.`); return; }
     }
-    const fd = new FormData(); for (const f of files) fd.append("files", f);
+    const run = $("#sg-up-run").checked, total = files.reduce((s, f) => s + f.size, 0), gz = typeof CompressionStream === "function";
     try {
-      const r = await (await api(`/sewergems/upload?run=${$("#sg-up-run").checked}`, { method: "POST", body: fd })).json();
+      const st = await jpost("/sewergems/upload/start", { files: files.map(f => ({ name: f.name, size: f.size })) });
+      let done = 0, sent = 0;
+      for (const f of files) {
+        for (let off = 0; off < f.size; off += st.chunk) {
+          const part = f.slice(off, off + st.chunk);
+          const body = gz ? await new Response(part.stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer() : part;
+          await api(`/sewergems/upload/${st.uid}/chunk?name=${encodeURIComponent(f.name)}&offset=${off}&gz=${gz}`, { method: "POST", headers: { "Content-Type": "application/octet-stream" }, body });
+          done += part.size; sent += gz ? body.byteLength : part.size;
+          say(` Sending ${esc(files.map(x => x.name).join(" and "))}: ${Math.round(100 * done / total)} % of ${(total / 1e6).toFixed(0)} MB${gz ? ` (${(sent / 1e6).toFixed(0)} MB sent, compressed)` : ""}...`);
+        }
+      }
+      const r = await (await api(`/sewergems/upload/${st.uid}/finish?run=${run}`, { method: "POST" })).json();
       try { localStorage.setItem(SG_MINE, JSON.stringify([...new Set([r.tag, ...sgMine()])].slice(0, 30))); } catch (e) { /* */ }
-      $("#sg-up-more").innerHTML = "";
-      toast(`${r.name} (${r.mb} MB) is with SewerGEMS: it is listed below when ready (from seconds to minutes).`, "info"); await refreshSg(); sgPoll();
-    } catch (x) { toast(x.message || String(x)); }
-  }));
+      say(` ${esc(r.name)} (${r.mb} MB) has arrived; reading it...`); follow(r);
+    } catch (x) { say(` The model did not arrive: ${esc(x.message || String(x))}`); toast(`The model did not arrive: ${x.message || String(x)}`); }   // seen, not only beside the button
+  };
   const pick = (accept, then) => { const i = document.createElement("input"); i.type = "file"; i.multiple = true; i.accept = accept; i.onchange = () => then([...i.files]); i.click(); };
   $("#sg-upload").insertAdjacentHTML("afterend", `<span id="sg-up-more" data-testid="sg-up-more"></span>`);
   // the model's folder: every .stsw there with its .stsw.sqlite; one is sent at once, several are offered (2026-11-24)

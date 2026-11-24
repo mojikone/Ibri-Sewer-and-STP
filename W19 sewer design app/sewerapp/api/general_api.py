@@ -1422,7 +1422,8 @@ def _sg_direct(src, tag, cleanup=None):
     dst = os.path.join(SG_EXPORTS, tag)
 
     def step(s):
-        if s.startswith("  scenario"): job["scenarios_done"] += 1
+        if s.startswith("  scenarios "): job["scenarios_total"] = int(s.split()[1])
+        elif s.startswith("  scenario "): job["scenarios_done"] += 1
 
     def work():
         try:
@@ -1442,6 +1443,85 @@ def _sg_jobs(tags=None):
         if tags is not None and j["tag"] not in tags: continue
         out.append({k: v for k, v in j.items() if k != "t0"} | dict(seconds=round(time.time() - j["t0"])))
     return sorted(out, key=lambda j: j["job"], reverse=True)
+
+
+_UPL: dict = {}                                     # a model arriving in pieces: upload id -> folder, declared files, time
+UPL_CHUNK = 32 * 1024 * 1024
+
+
+class UplStart(BaseModel):
+    files: list[dict]                                # [{name, size}]
+
+
+@router.post("/sewergems/upload/start")
+def sewergems_upload_start(b: UplStart):
+    """Start a model sent in pieces (each under the 100 MB a request may carry through Cloudflare)."""
+    import secrets, shutil
+    for k, u in list(_UPL.items()):
+        if time.time() - u["t"] > 7200: shutil.rmtree(u["dir"], ignore_errors=True); _UPL.pop(k, None)
+    live = {u["dir"] for u in _UPL.values()}
+    for d0 in os.listdir(tempfile.gettempdir()):                          # pieces left by a stopped upload or reading
+        full = os.path.join(tempfile.gettempdir(), d0)
+        if d0.startswith("w19sg_") and full not in live and time.time() - os.path.getmtime(full) > 7200: shutil.rmtree(full, ignore_errors=True)
+    files = {}
+    for f in b.files:
+        n = _safe_name(str(f.get("name", "")), "")
+        if not n.lower().endswith((".stsw", ".stsw.sqlite", ".zip")): raise HTTPException(400, f"{n or 'a file'}: a SewerGEMS model is its .stsw and .stsw.sqlite (or a zip)")
+        files[n] = int(f.get("size") or 0)
+    if not files or sum(files.values()) > 8 * 1024 ** 3: raise HTTPException(400, "pick the model's files (8 GB at most)")
+    uid = secrets.token_hex(8); _UPL[uid] = dict(dir=tempfile.mkdtemp(prefix="w19sg_"), files=files, t=time.time())
+    for n in files: open(os.path.join(_UPL[uid]["dir"], n), "wb").close()
+    return dict(uid=uid, chunk=UPL_CHUNK)
+
+
+@router.post("/sewergems/upload/{uid}/chunk")
+async def sewergems_upload_chunk(uid: str, request: Request, name: str, offset: int, gz: bool = False):
+    """One piece of a file, written at its offset (a piece sent twice is written twice to the same place)."""
+    import gzip
+    u = _UPL.get(uid); n = _safe_name(name, "")
+    if not u or n not in u["files"]: raise HTTPException(404, "no such upload (start it again)")
+    data = await request.body()
+    if gz:
+        try: data = gzip.decompress(data)
+        except Exception: raise HTTPException(400, "a piece arrived damaged: send the model again")
+    if offset < 0 or offset + len(data) > u["files"][n]: raise HTTPException(400, "a piece beyond the file's size")
+    with open(os.path.join(u["dir"], n), "r+b") as fh: fh.seek(offset); fh.write(data)
+    u["t"] = time.time()
+    return dict(ok=True, received=len(data))
+
+
+@router.post("/sewergems/upload/{uid}/finish")
+def sewergems_upload_finish(uid: str, run: bool = False):
+    """All pieces in: read the model directly (or, with run, give it to SewerGEMS in the VM), as a one-piece upload."""
+    import zipfile, secrets, shutil
+    from sewerapp.io import bridge_jobs as B
+    u = _UPL.pop(uid, None)
+    if not u: raise HTTPException(404, "no such upload (start it again)")
+    d = u["dir"]
+    for n, size in u["files"].items():
+        if os.path.getsize(os.path.join(d, n)) != size: shutil.rmtree(d, ignore_errors=True); raise HTTPException(400, f"{n} did not arrive whole: send the model again")
+    for n in [n for n in u["files"] if n.lower().endswith(".zip")]:
+        with zipfile.ZipFile(os.path.join(d, n)) as z:
+            for m in z.infolist():
+                k = _safe_name(m.filename, "")
+                if k and k.lower().endswith((".stsw", ".stsw.sqlite")):
+                    with z.open(m) as src, open(os.path.join(d, k), "wb") as dst: shutil.copyfileobj(src, dst)
+        os.remove(os.path.join(d, n))
+    names = os.listdir(d); stsw = [k for k in names if k.lower().endswith(".stsw")]
+    sq = [k for k in names if stsw and k.lower() == stsw[0].lower() + ".sqlite"]
+    if len(stsw) != 1 or not sq: shutil.rmtree(d, ignore_errors=True); raise HTTPException(400, "pick one model: its .stsw and its .stsw.sqlite (or both in one zip)")
+    tag = f"{B.tag_of(stsw[0])}_{secrets.token_hex(3)}"; mb = round(sum(os.path.getsize(os.path.join(d, k)) for k in names if k in stsw + sq) / 1e6, 1)
+    if not run:
+        j = _sg_direct(os.path.join(d, sq[0]), tag, cleanup=d)
+        return dict(job=j["job"], tag=tag, name=stsw[0], mb=mb, direct=True)
+    root = os.path.join(B.BRIDGE, "models", "uploads")
+    if not B.guest_path(root): shutil.rmtree(d, ignore_errors=True); raise HTTPException(400, "this installation has no SewerGEMS to compute the scenarios with: untick it to open the model as it is")
+    dst = os.path.join(root, f"{time.strftime('%Y%m%d_%H%M%S')}_{tag}"); os.makedirs(dst)
+    for k in stsw + sq: shutil.move(os.path.join(d, k), os.path.join(dst, k))
+    shutil.rmtree(d, ignore_errors=True)
+    try: r = B.submit(B.guest_path(os.path.join(dst, stsw[0])), tag, run)
+    except ValueError as e: raise HTTPException(400, str(e))
+    return dict(r, name=stsw[0], mb=mb)
 
 
 class SgRead(BaseModel):

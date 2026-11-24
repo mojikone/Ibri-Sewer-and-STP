@@ -61,8 +61,9 @@ def bridge(tmp_path, monkeypatch):
     monkeypatch.delenv("W19_BRIDGE"); monkeypatch.delenv("W19_MODEL_SHARES"); monkeypatch.delenv("W19_SG_EXPORTS"); importlib.reload(bridge_jobs)
 
 
-def test_a_sewergems_model_sent_from_any_device(bridge):
+def test_a_sewergems_model_sent_from_any_device(bridge, monkeypatch):
     B, root, exports = bridge
+    monkeypatch.setattr(general_api, "SG_EXPORTS", str(exports))
     z = io.BytesIO()
     with zipfile.ZipFile(z, "w") as zz: zz.writestr("Town.stsw", "x"); zz.writestr("Town.stsw.sqlite", b"y" * 1000); zz.writestr("../evil.stsw.sqlite", "z")
     r = C.post("/api/g/sewergems/upload?run=true", files=[("files", ("Town.zip", z.getvalue(), "application/zip"))], headers=REMOTE).json()   # SewerGEMS computes: the VM
@@ -71,6 +72,7 @@ def test_a_sewergems_model_sent_from_any_device(bridge):
     assert sorted(os.listdir(root / "models" / "uploads" / up[0])) == ["Town.stsw", "Town.stsw.sqlite", "evil.stsw.sqlite"]   # nothing outside its folder
     body = open(root / "jobs" / (r["job"] + ".ps1"), encoding="utf-8").read(); assert "\\\\VBOXSVR\\VBOX\\bridge\\models\\uploads\\" in body
     # read directly (the default): no VM job; a file that is not a SewerGEMS database fails with a reason, and the copy is gone
+    general_api.SG_EXPORTS = str(exports)                                   # tests never write into the real exports folder
     d = C.post("/api/g/sewergems/upload", files=[("files", ("Bad.stsw", b"x", "application/octet-stream")), ("files", ("Bad.stsw.sqlite", b"not a database", "application/octet-stream"))]).json()
     assert d["direct"] and d["job"].startswith("w19d_")
     for _ in range(100):
@@ -113,3 +115,34 @@ def test_scripts_are_addressed_by_version_and_new_ids_autosave(monkeypatch, tmp_
     pid = general_api._open(_p())
     C.post(f"/api/g/projects/{pid}/scenarios/base/edit", json=dict(op="set", table="nodes", ids=["N0"], field="ground", value=11.0))
     assert pid in seen
+
+
+POND = os.path.join("D:" + os.sep, "VBOX", "bridge", "models", "Pond_Mouj", "Pond_Mouj.stsw")
+
+
+@pytest.mark.skipif(not os.path.exists(POND + ".sqlite"), reason="the engineer's Pond_Mouj model is on this computer only")
+def test_a_model_sent_in_compressed_pieces_is_read_and_opens(tmp_path, monkeypatch):
+    """The engineer's SC1-2056 (305 MB) never arrived: Cloudflare takes 100 MB a request. Sent in pieces, each gzipped,
+    written at its offset; the reading counts its scenarios; the model opens; the pieces' folder is gone."""
+    import gzip
+    monkeypatch.setattr(general_api, "SG_EXPORTS", str(tmp_path / "exports"))
+    files = {"Pond_Mouj.stsw": open(POND, "rb").read(), "Pond_Mouj.stsw.sqlite": open(POND + ".sqlite", "rb").read()}
+    s = C.post("/api/g/sewergems/upload/start", json=dict(files=[dict(name=n, size=len(b)) for n, b in files.items()]), headers=REMOTE).json()
+    step = 1024 * 1024
+    for n, b in files.items():
+        for off in range(0, len(b), step):
+            r = C.post(f"/api/g/sewergems/upload/{s['uid']}/chunk?name={n}&offset={off}&gz=true", content=gzip.compress(b[off:off + step]), headers=REMOTE)
+            assert r.status_code == 200, r.text
+    folder = general_api._UPL[s["uid"]]["dir"]
+    f = C.post(f"/api/g/sewergems/upload/{s['uid']}/finish", headers=REMOTE).json()
+    assert f["direct"] and f["name"] == "Pond_Mouj.stsw"
+    for _ in range(300):
+        j = C.get(f"/api/g/sewergems/jobs/{f['job']}").json()
+        if j["state"] != "running": break
+        time.sleep(0.1)
+    assert j["state"] == "ready" and j["scenarios_total"] == j["scenarios_done"] >= 1
+    assert not os.path.exists(folder)                                          # the copy sent is deleted once read
+    info = C.post(f"/api/g/projects/open_sewergems/{f['tag']}", headers=REMOTE).json()
+    m = C.get(f"/api/g/projects/{info['id']}/scenarios/base/model").json()
+    assert {x["properties"]["kind"] for x in m["links"]["features"]} == {"pump", "pressure_pipe"}
+    assert C.post(f"/api/g/sewergems/upload/{s['uid']}/chunk?name=x&offset=0", content=b"x").status_code == 404

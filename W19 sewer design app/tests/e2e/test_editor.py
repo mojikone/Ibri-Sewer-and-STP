@@ -1408,20 +1408,42 @@ def test_v6_sewergems_stsw_alone_asks_for_its_sqlite(server, browser, tmp_path):
     ctx = browser.new_context(viewport={"width": 1400, "height": 900}); pg = ctx.new_page(); pg.set_default_timeout(30000); errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
     pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
-    sent = []
-    def fake(route):
-        sent.append(route.request.post_data_buffer or b"")
-        route.fulfill(status=200, content_type="application/json", body=_json.dumps(dict(job="w19x_1", tag="Town_abc123", name="Town.stsw", mb=0.0)))
-    pg.route("**/api/g/sewergems/upload**", fake)
+    seen = upload_watch(pg); WAIT_PAGE[0] = pg
     pg.evaluate("openSgDlg()")
     with pg.expect_file_chooser() as fc: pg.click("[data-testid=sg-upload]")
     fc.value.set_files(str(st))
-    expect(pg.get_by_test_id("sg-up-sqlite")).to_be_visible(); assert not sent
+    expect(pg.get_by_test_id("sg-up-sqlite")).to_be_visible(); assert not seen["start"]
     with pg.expect_file_chooser() as fc: pg.click("[data-testid=sg-up-sqlite]")
-    fc.value.set_files(str(sq)); idle(pg)
-    assert len(sent) == 1 and b'filename="Town.stsw"' in sent[0] and b'filename="Town.stsw.sqlite"' in sent[0]
+    fc.value.set_files(str(sq))
+    assert wait_for(lambda: seen["finish"]) and seen["start"] == [{"Town.stsw", "Town.stsw.sqlite"}]
+    assert {c.split("name=")[1].split("&")[0] for c in seen["chunks"]} == {"Town.stsw", "Town.stsw.sqlite"} and all("gz=true" in c for c in seen["chunks"])
     assert errs == [], errs
     ctx.close()
+
+
+def upload_watch(pg):
+    """The model's upload as it goes (start, pieces, finish), passed on to the app's own server (v6: in pieces)."""
+    import json as _json
+    seen = dict(start=[], chunks=[], finish=[])
+    def watch(route):
+        u = route.request.url.split("?")[0]
+        if u.endswith("/upload/start"): seen["start"].append({f["name"] for f in _json.loads(route.request.post_data)["files"]})
+        elif "/chunk" in u: seen["chunks"].append(route.request.url)
+        elif u.endswith("/finish"): seen["finish"].append(route.request.url)
+        route.continue_()
+    pg.route("**/api/g/sewergems/upload/**", watch)
+    return seen
+
+
+def wait_for(cond, s=15, pg=None):
+    """Until cond() holds, letting the page work (its requests reach the route handlers only while Playwright waits)."""
+    for _ in range(int(s * 10)):
+        if cond(): return True
+        WAIT_PAGE[0].wait_for_timeout(100)
+    return cond()
+
+
+WAIT_PAGE = [None]
 
 
 FAKE_DIR = """names => { window.showDirectoryPicker = async () => ({ async *entries() {
@@ -1437,18 +1459,14 @@ def test_v6_sewergems_folder_finds_the_model_and_its_sqlite(server, browser):
     ctx = browser.new_context(viewport={"width": 1400, "height": 900}); pg = ctx.new_page(); pg.set_default_timeout(30000); errs = []
     pg.on("pageerror", lambda e: errs.append(str(e)))
     pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
-    sent = []
-    def fake(route):
-        sent.append(route.request.post_data_buffer or b"")
-        route.fulfill(status=200, content_type="application/json", body=_json.dumps(dict(job="w19x_1", tag="M_abc123", name="M.stsw", mb=0.0)))
-    pg.route("**/api/g/sewergems/upload**", fake)
+    seen = upload_watch(pg); WAIT_PAGE[0] = pg
     pg.evaluate("openSgDlg()")
     pg.evaluate(FAKE_DIR, ["IBRI_SC1-2056_final.stsw", "IBRI_SC1-2056_final.stsw.sqlite", "notes.docx", "old.stsw"])
-    pg.click("[data-testid=sg-folder]"); idle(pg)
-    assert len(sent) == 1 and b'filename="IBRI_SC1-2056_final.stsw"' in sent[0] and b'filename="IBRI_SC1-2056_final.stsw.sqlite"' in sent[0] and b"notes.docx" not in sent[0]
+    pg.click("[data-testid=sg-folder]")
+    assert wait_for(lambda: len(seen["finish"]) == 1) and seen["start"] == [{"IBRI_SC1-2056_final.stsw", "IBRI_SC1-2056_final.stsw.sqlite"}]
     pg.evaluate(FAKE_DIR, ["A.stsw", "A.stsw.sqlite", "B.stsw", "B.stsw.sqlite"])
-    pg.click("[data-testid=sg-folder]"); expect(pg.get_by_test_id("sg-up-model-1")).to_be_visible(); assert len(sent) == 1
-    pg.click("[data-testid=sg-up-model-1]"); idle(pg)
-    assert len(sent) == 2 and b'filename="B.stsw.sqlite"' in sent[1] and b'filename="A.stsw"' not in sent[1]
+    pg.click("[data-testid=sg-folder]"); expect(pg.get_by_test_id("sg-up-model-1")).to_be_visible(); assert len(seen["start"]) == 1
+    pg.click("[data-testid=sg-up-model-1]")
+    assert wait_for(lambda: len(seen["finish"]) == 2) and seen["start"][1] == {"B.stsw", "B.stsw.sqlite"}
     assert errs == [], errs
     ctx.close()

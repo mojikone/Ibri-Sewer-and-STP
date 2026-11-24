@@ -67,6 +67,7 @@ def export(sqlite_path, out, log=None, only=None):
     sa = {(r.ScenarioID, r.AlternativeTypeID): (r.AlternativeID, r.IsLocal) for r in SA.itertuples()}
     spar = dict(zip(S.id, S.parent))
     if only: S = S[S.id.isin(only)]
+    say(f"  scenarios {len(S)}")
 
     def alt(sid, typ, depth=0):
         a, local = sa.get((sid, typ), (None, 1))
@@ -89,8 +90,9 @@ def export(sqlite_path, out, log=None, only=None):
     for t, k in NODE_KINDS.items():
         for i in _ids(con, t) & alive: kind[i] = k
     conduits = _ids(con, "Conduit") & alive
-    pumps = _ids(con, "StandardPump") & alive; ppipes = _ids(con, "PressurePipe") & alive
-    skipped = {t: len(_ids(con, t) & alive) for t in ("VariableSpeedPumpBattery",)}
+    batteries = _ids(con, "VariableSpeedPumpBattery") & alive
+    pumps = (_ids(con, "StandardPump") & alive) | batteries; ppipes = _ids(con, "PressurePipe") & alive
+    skipped = {}
     if any(skipped.values()): say(f"  not read yet: {skipped}")
 
     # the tables, read once; each scenario picks its rows
@@ -125,6 +127,8 @@ def export(sqlite_path, out, log=None, only=None):
     ppd = _df(con, "select DomainElementID, AlternativeID, Physical_PipeDiameter as d from PressurePipe_Physical_Data")
     pph = _df(con, "select DomainElementID, AlternativeID, Physical_HazenWilliamsC as C, Physical_Material as mat from GravityLinkBase_Physical_Data")
     pmp = _df(con, "select DomainElementID, AlternativeID, Physical_PumpDefinitionID as defid from StandardPump_Physical_Data")
+    vsp = _df(con, "select DomainElementID, AlternativeID, Physical_VspbDefinition as defid, Physical_NumberOfLagPumps as lag, "
+                   "Physical_VspbTargetHead as target, Physical_VspbControlNode as ctl from VariableSpeedPumpBattery_Physical_Data")
     pop = _df(con, "select DomainElementID, AlternativeID, Operational_OnElevation as on_el, Operational_OffElevation as off_el, Operational_IgnoreOnOffElevations as ign from StandardPump_Operational_Data")
     defs = _df(con, "select SupportElementID as id, PumpDefinitionType as t, DesignDischarge as q, DesignHead as h, ShutoffHead as h0, MaxOperatingDischarge as q2, MaxOperatingHead as h2 from IdahoPumpDefinition")
     curves = _df(con, "select SupportElementID as id, PumpCurve_Discharge as q, PumpCurve_Head as h from IdahoPumpDefinition_PumpCurve order by ItemID")
@@ -204,6 +208,7 @@ def export(sqlite_path, out, log=None, only=None):
         if pumps or ppipes:
             PD = pick(ppd, alt(sid, ttype(ppd)) if len(ppd) else None); PH = pick(pph, alt(sid, ttype(pph)) if len(pph) else None)
             PM = pick(pmp, alt(sid, ttype(pmp)) if len(pmp) else None); PO = pick(pop, alt(sid, ttype(pop)) if len(pop) else None)
+            VB = pick(vsp, alt(sid, ttype(vsp)) if len(vsp) else None)
             stop_of = {i: (int(T.a[i]), int(T.b[i])) for i in ppipes if i in T.index}
             into = {}
             for i, (a, b) in stop_of.items(): into.setdefault(b, []).append(i)
@@ -216,13 +221,17 @@ def export(sqlite_path, out, log=None, only=None):
                     suction_p.add(up[0]); a = stop_of[up[0]][0]
                     if kind.get(a) == "pressure_junction": suction_j.add(a); n = a; continue
                     src = a; break
-                d = pump_def(PM.defid[i]) if i in PM.index else None
+                vb = i in batteries and i in VB.index
+                d = pump_def(VB.defid[i] if vb else (PM.defid[i] if i in PM.index else None))
+                count = 1 + int(VB.lag[i] or 0) if vb else 1                       # a battery: its lead pump and its lag pumps
                 base = inv_of.get(src, np.nan)
                 on = PO.on_el[i] * FT - base if i in PO.index and PO.on_el[i] and base == base else np.nan
                 off = PO.off_el[i] * FT - base if i in PO.index and PO.off_el[i] and base == base else np.nan
                 prow.append(dict(id=i, label=label.get(i, str(i)), kind="pump", start=src, stop=-i, active=bool(DA.on_[i]) if i in DA.index else True,
                                  length_m=0.0, diameter_mm=np.nan, C=np.nan, material="", on_m=on if on == on and on > 0 else np.nan,
-                                 off_m=off if off == off and off >= 0 else np.nan, definition=d["name"] if d else "", q_ls=d.get("q_ls", np.nan) if d else np.nan))
+                                 off_m=off if off == off and off >= 0 else np.nan, definition=d["name"] if d else "", q_ls=d.get("q_ls", np.nan) if d else np.nan,
+                                 count=count, vspb_target_m=(VB.target[i] * FT if vb and VB.target[i] else np.nan),
+                                 vspb_control=(label.get(int(VB.ctl[i]), "") if vb and VB.ctl[i] == VB.ctl[i] and VB.ctl[i] else "")))
             for i in sorted(ppipes):
                 if i in suction_p or i not in stop_of: continue
                 a, b = stop_of[i]; a, b = (-a if a in pumps else a), (-b if b in pumps else b)
