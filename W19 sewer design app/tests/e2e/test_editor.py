@@ -1396,3 +1396,27 @@ def test_v6_phone_long_press_opens_the_menu_and_the_select_switch(server, browse
     expect(pg.locator("#ctx-menu")).to_be_visible(); expect(pg.get_by_test_id("ctx-bend-add")).to_be_visible()
     assert errs == [], errs
     ctx.close()
+
+
+def test_v6_sewergems_stsw_alone_asks_for_its_sqlite(server, browser, tmp_path):
+    """The engineer, 2026-11-24: picking the .stsw alone failed ("needs its .stsw.sqlite"). The dialog now asks for the
+    data file with its own button and sends both."""
+    import json as _json
+    st = tmp_path / "Town.stsw"; st.write_text("x"); sq = tmp_path / "Town.stsw.sqlite"; sq.write_bytes(b"y" * 100)
+    ctx = browser.new_context(viewport={"width": 1400, "height": 900}); pg = ctx.new_page(); pg.set_default_timeout(30000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
+    sent = []
+    def fake(route):
+        sent.append(route.request.post_data_buffer or b"")
+        route.fulfill(status=200, content_type="application/json", body=_json.dumps(dict(job="w19x_1", tag="Town_abc123", name="Town.stsw", mb=0.0)))
+    pg.route("**/api/g/sewergems/upload**", fake)
+    pg.evaluate("openSgDlg()")
+    with pg.expect_file_chooser() as fc: pg.click("[data-testid=sg-upload]")
+    fc.value.set_files(str(st))
+    expect(pg.get_by_test_id("sg-up-sqlite")).to_be_visible(); assert not sent
+    with pg.expect_file_chooser() as fc: pg.click("[data-testid=sg-up-sqlite]")
+    fc.value.set_files(str(sq)); idle(pg)
+    assert len(sent) == 1 and b'filename="Town.stsw"' in sent[0] and b'filename="Town.stsw.sqlite"' in sent[0]
+    assert errs == [], errs
+    ctx.close()

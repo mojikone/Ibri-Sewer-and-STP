@@ -522,18 +522,36 @@ const sgMine = () => { try { return JSON.parse(localStorage.getItem(SG_MINE) || 
   const dlgEl = $("#dlg-sg .dlg"); if (!dlgEl || $("#sg-upload")) return;
   $("#sg-watch").insertAdjacentHTML("afterend", `<div class="sg-up"><h4>From this device</h4><p class="muted">Pick the model's .stsw and its .stsw.sqlite (both, or one zip of them). SewerGEMS reads a copy; your files are not changed. Through a shared link a file can be up to about 100 MB: zip a larger model.</p>
     <div class="row"><button id="sg-upload" data-testid="sg-upload">Choose the model's files...</button><label class="chk"><input type="checkbox" id="sg-up-run"> compute every scenario first</label></div></div>`);
-  $("#sg-upload").onclick = () => {
-    const i = document.createElement("input"); i.type = "file"; i.multiple = true; i.accept = ".stsw,.sqlite,.zip";
-    i.onchange = () => enqueue(() => withBusy("Sending the model...", async () => {
-      if (!i.files.length) return; const fd = new FormData(); for (const f of i.files) fd.append("files", f);
-      try {
-        const r = await (await api(`/sewergems/upload?run=${$("#sg-up-run").checked}`, { method: "POST", body: fd })).json();
-        try { localStorage.setItem(SG_MINE, JSON.stringify([...new Set([r.tag, ...sgMine()])].slice(0, 30))); } catch (e) { /* */ }
-        toast(`${r.name} (${r.mb} MB) is with SewerGEMS: it is listed below when ready (from seconds to minutes).`, "info"); await refreshSg(); sgPoll();
-      } catch (x) { toast(x.message || String(x)); }
-    }));
-    i.click();
-  };
+  // the model is two files: a .stsw picked alone is completed by a second pick of its .stsw.sqlite (a browser cannot
+  // fetch the file beside it); a file SewerGEMS keeps locked is named, not sent half-read (the engineer, 2026-11-24)
+  const send = files => enqueue(() => withBusy("Sending the model...", async () => {
+    for (const f of files) {
+      try { await f.slice(0, 16).arrayBuffer(); }
+      catch (x) { toast(`${f.name} cannot be read: if the model is open in SewerGEMS, close it (or Save As a copy) and pick the files again.`); return; }
+    }
+    const fd = new FormData(); for (const f of files) fd.append("files", f);
+    try {
+      const r = await (await api(`/sewergems/upload?run=${$("#sg-up-run").checked}`, { method: "POST", body: fd })).json();
+      try { localStorage.setItem(SG_MINE, JSON.stringify([...new Set([r.tag, ...sgMine()])].slice(0, 30))); } catch (e) { /* */ }
+      $("#sg-up-more").innerHTML = "";
+      toast(`${r.name} (${r.mb} MB) is with SewerGEMS: it is listed below when ready (from seconds to minutes).`, "info"); await refreshSg(); sgPoll();
+    } catch (x) { toast(x.message || String(x)); }
+  }));
+  const pick = (accept, then) => { const i = document.createElement("input"); i.type = "file"; i.multiple = true; i.accept = accept; i.onchange = () => then([...i.files]); i.click(); };
+  $("#sg-upload").insertAdjacentHTML("afterend", `<span id="sg-up-more" data-testid="sg-up-more"></span>`);
+  $("#sg-upload").onclick = () => pick(".stsw,.sqlite,.zip", files => {
+    if (!files.length) return;
+    const st = files.find(f => /\.stsw$/i.test(f.name)), zip = files.some(f => /\.zip$/i.test(f.name));
+    const has = st && files.some(f => f.name.toLowerCase() === st.name.toLowerCase() + ".sqlite");
+    if (!st || has || zip) { send(files); return; }
+    const host = $("#sg-up-more");
+    host.innerHTML = ` ${esc(st.name)} picked; now its data file: <button data-testid="sg-up-sqlite">Choose ${esc(st.name)}.sqlite...</button>`;
+    host.querySelector("button").onclick = () => pick(".sqlite", more => {
+      const q = more.find(f => f.name.toLowerCase() === st.name.toLowerCase() + ".sqlite");
+      if (!q) { toast(`That is not ${st.name}.sqlite: pick the file of that name beside the model.`); return; }
+      send([st, q]);
+    });
+  });
   for (const el of [$("#sg-filter"), $("#sg-models"), $("#sg-guest"), $("#sg-export-path")]) if (el) (el.closest(".row") || el).classList.add("local-only");
   for (const h of $$("#dlg-sg h4")) if (/Export from SewerGEMS/.test(h.textContent)) h.classList.add("local-only");
   const rl = $("#sg-run"); if (rl) (rl.closest("label") || rl).classList.add("local-only");
