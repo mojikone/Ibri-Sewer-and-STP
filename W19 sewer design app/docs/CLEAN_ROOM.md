@@ -9,3 +9,13 @@ Bentley's binaries are never decompiled, disassembled, patched or inspected, and
 are never read directly. SewerGEMS is used only as the licensed product, through its documented OpenFlows API, inside
 an offline virtual machine, to run models and export their results; those results are the black-box reference every
 engine is checked against. Bentley's sample models and anything exported from them are kept out of this repository.
+
+## Amendment, 2026-11-24 (the engineer's decision)
+
+The engineer lifted the rule against reading SewerGEMS's model files ("now I am asking it. I am the rule"), after being
+told that Bentley's licence may forbid reading its format; that risk is the engineer's. Since then
+`sewerapp/io/sewergems_db.py` reads a model's `.stsw.sqlite` directly (read-only, SQLite's immutable mode), so a model
+opens without SewerGEMS. The rest stands: Bentley's binaries are never decompiled, disassembled or patched, SewerGEMS
+is still the referee for the engines through its API, and Bentley's sample models stay out of this repository.
+The reader was checked against SewerGEMS's own API export of the Ibri SC1-2056 final model: all 23 scenarios, every
+structure and pipe, levels, lengths, sizes and loads equal (`tests/general/test_sewergems_db.py`).
