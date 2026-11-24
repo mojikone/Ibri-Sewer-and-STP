@@ -37,6 +37,8 @@ Edit ops (dicts with "op"):
   set_controls {rules}       the storm run's control rules [{link, if node|time, node, op, value, then, else}]
   set_ppipe  {ids, method, C, e_mm, n, K, check | clear}  a pressure pipe's own friction and minor loss
   set_pump   {ids, q_ls, on_m, off_m, definition | None}  a pump's capacity and its start/stop depths at the inlet (storm run)
+  set_props  {table, ids, values | clear}  each element kind's own fields (model/kinds.py: a catch basin's inlet and gutter,
+                             a headwall's boundary, a tap's conduit ...); a value None removes it (v7)
   set_prototype {kind, values}  what a new element of that kind gets (manhole/outfall/wetwell: ground, depth;
                              conduit: dn_mm, section; catchment: imperv_pc, width_m, slope_pc, n_imperv, n_perv)
 New elements take their prototype for every value the edit does not give."""
@@ -44,6 +46,7 @@ import copy, itertools, math
 import numpy as np, pandas as pd
 from sewerapp.engine import steady
 from sewerapp.model.general import Project, NODE_KINDS, LINK_KINDS, LINK_COLS, NODE_COLS, CATCH_COLS
+from sewerapp.model import kinds as K
 
 DEFAULT_DEPTH = 1.5
 
@@ -60,6 +63,20 @@ def _new_id(df, prefix):
     used = set(map(str, df.index))
     for k in itertools.count(len(df) + 1):
         if f"{prefix}{k}" not in used: return f"{prefix}{k}"
+
+
+def _props(p, table):
+    d = p.__dict__.setdefault("props", {"nodes": {}, "links": {}}); return d.setdefault(table, {})
+
+
+def _kind_props(p, table, ids, kind):
+    """After a morph or an add: the element keeps the fields its new kind has, and takes that kind's defaults."""
+    P = _props(p, table); spec = {f[0] for f in K.FIELDS.get(kind, [])}
+    for i in ids:
+        cur = {k: v for k, v in (P.get(i) or {}).items() if k in spec}
+        for k, v in K.DEFAULTS.get(kind, {}).items(): cur.setdefault(k, v)
+        if cur: P[i] = cur
+        else: P.pop(i, None)
 
 
 def _length(p, a, b, coords=None):
@@ -118,6 +135,7 @@ def apply(p, e):
                 allowed = NODE_KINDS if e["table"] == "nodes" else LINK_KINDS
                 if v not in allowed: raise ValueError(f"kind must be one of {allowed}")
             t.loc[ids, e["field"]] = v
+            if e["field"] == "kind": _kind_props(p, e["table"], ids, v); return True
         if e["table"] == "nodes" and e["field"] == "ground": _ground_src(p, ids, e.get("source"))
         if e["table"] == "nodes" and e["field"] in ("x", "y"): _ground_src(p, ids, None); _relength(p, ids); return True
         return False
@@ -152,25 +170,34 @@ def apply(p, e):
         inv = e.get("invert"); inv = float(inv) if inv is not None else g - float(pr.get("depth", DEFAULT_DEPTH))
         p.nodes.loc[nid] = dict(kind=kind, x=float(e["x"]), y=float(e["y"]), ground=g,
                                 invert=inv, inflow_m3d=float(e.get("inflow_m3d", 0.0)))
+        _kind_props(p, "nodes", [nid], kind)
         return True
     if op == "add_link":
         a, b = str(e["from_node"]), str(e["to_node"])
         for n in (a, b):
             if n not in p.nodes.index: raise ValueError(f"no node {n}")
         if a == b: raise ValueError("a link needs two different nodes")
-        lid = str(e.get("id") or _new_id(p.links, "P-" if e.get("kind", "conduit") == "conduit" else "PMP-"))
+        lk = e.get("kind", "conduit")
+        if lk not in LINK_KINDS: raise ValueError(f"kind must be one of {LINK_KINDS}")
+        lid = str(e.get("id") or _new_id(p.links, "P-" if lk == "conduit" else "PMP-"))
         if lid in p.links.index: raise ValueError(f"link {lid} exists")
-        pr = p.prototype("conduit") if e.get("kind", "conduit") == "conduit" else {}
-        dn = int(e.get("dn_mm") or pr.get("dn_mm") or p.catalogue().nominal_mm.iloc[0])
+        pr = p.prototype(lk) if lk in ("conduit", "lateral", "channel") else {}
         coords = e.get("coords")
-        p.links.loc[lid] = dict(kind=e.get("kind", "conduit"), from_node=a, to_node=b,
+        if lk in ("gutter", "channel") and not e.get("dn_mm"):        # a gutter runs on the surface; a channel takes its open section
+            dn, ins = 0, float("nan")
+        else:
+            dn = int(e.get("dn_mm") or pr.get("dn_mm") or p.catalogue().nominal_mm.iloc[0]); ins = p.inside_of(dn)
+            if ins != ins: ins = float(dn)
+        surf = lk == "gutter"                                         # a gutter's ends are the ground at its inlets
+        p.links.loc[lid] = dict(kind=lk, from_node=a, to_node=b,
                                 length_m=float(e.get("length_m") or _length(p, a, b, coords)), dn_mm=dn,
-                                inside_mm=p.inside_of(dn), up_inv=float(e.get("up_inv", p.nodes.invert[a])),
-                                dn_inv=float(e.get("dn_inv", p.nodes.invert[b])), transfer=bool(e.get("transfer", False)),
+                                inside_mm=ins, up_inv=float(e.get("up_inv", p.nodes.ground[a] if surf else p.nodes.invert[a])),
+                                dn_inv=float(e.get("dn_inv", p.nodes.ground[b] if surf else p.nodes.invert[b])), transfer=bool(e.get("transfer", False)),
                                 coords=coords)
         if coords: p.orient_lines({lid})                    # a line drawn from the downstream end runs with the flow
         sec = e.get("section", pr.get("section"))
         if sec: apply(p, dict(op="set_section", ids=[lid], section=dict(sec)))
+        _kind_props(p, "links", [lid], lk)
         return True
     if op == "add_catchment":
         cid = str(e.get("id") or _new_id(p.catchments, "CM-"))
@@ -191,8 +218,10 @@ def apply(p, e):
         live_l, live_n = set(p.links.index), set(p.nodes.index)
         for dct in (p.pumps, p.ppipes, p.outlets, p.infil, p.sections):
             for k in [k for k in dct if k not in live_l]: dct.pop(k)
-        for dct in (p.storage, p.tailwater, p.ground_src):
+        for dct in (p.storage, p.tailwater, p.ground_src, _props(p, "nodes")):
             for k in [k for k in dct if k not in live_n]: dct.pop(k)
+        PL = _props(p, "links")
+        for k in [k for k in PL if k not in live_l]: PL.pop(k)
         for S in p.unit_rows.values():
             for k in [k for k in S if k not in live_n]: S.pop(k)
         p.controls = [r for r in (p.controls or []) if r.get("link") in live_l and (r.get("if") != "node" or r.get("node") in live_n)]
@@ -217,8 +246,9 @@ def apply(p, e):
             f = _length(p, L.from_node, L.to_node) and math.dist((p.nodes.x[L.from_node], p.nodes.y[L.from_node]), (x, y)) / max(_length(p, L.from_node, L.to_node), 1e-9)
         inv = L.up_inv + (L.dn_inv - L.up_inv) * f; g = p.nodes.ground[L.from_node] + (p.nodes.ground[L.to_node] - p.nodes.ground[L.from_node]) * f
         p.nodes.loc[nid] = dict(kind=kind, x=x, y=y, ground=g, invert=inv, inflow_m3d=0.0)
+        _kind_props(p, "nodes", [nid], kind)
         p.links = p.links.drop(index=lid)
-        for dct in (p.ppipes, p.infil, p.sections):                      # the halves keep the pipe's own values
+        for dct in (p.ppipes, p.infil, p.sections, _props(p, "links")):  # the halves keep the pipe's own values
             if lid in dct:
                 v = dct.pop(lid)
                 for half in ("a", "b"): dct[f"{lid}-{half}"] = copy.deepcopy(v)
@@ -303,22 +333,24 @@ def apply(p, e):
             b = str(e["to_node"])
             if b not in p.nodes.index: raise ValueError(f"no node {b}")
         else:
-            b = e.get("end_id") or _new_id(p.nodes, {"outfall": "O-", "wetwell": "WW-"}.get(e.get("kind", "manhole"), "MH-"))
+            b = e.get("end_id") or _new_id(p.nodes, {"outfall": "O-", "wetwell": "WW-", "catch_basin": "CB-", "headwall": "HW-", "pressure_junction": "J-"}.get(e.get("kind", "manhole"), "MH-"))
             apply(p, dict(op="add_node", id=b, kind=e.get("kind", "manhole"), x=e["x"], y=e["y"], ground=e.get("ground")))
             e["end_id"] = b
         if a == b: raise ValueError("a link needs two different nodes")
-        if kind == "conduit" and (p.links.from_node == a).any():
+        if kind not in LINK_KINDS: raise ValueError(f"link kind must be one of {LINK_KINDS}")
+        if kind in ("conduit", "channel", "lateral") and (p.links[p.links.kind != "gutter"].from_node == a).any():
             # drawn from a manhole that already drains: the new branch drains INTO it (a sewer network is a tree)
             if (p.links.from_node == b).any(): raise ValueError(f"{a} and {b} both already have a leaving pipe (a sewer network is a tree)")
             e["drains_into_start"] = True
         rev = bool(e.get("drains_into_start"))
-        dn = int(e.get("dn_mm") or p.prototype("conduit").get("dn_mm") or p.catalogue().nominal_mm.iloc[0])
+        dn = int(e.get("dn_mm") or p.prototype("lateral" if kind == "lateral" else "conduit").get("dn_mm") or p.catalogue().nominal_mm.iloc[0])
+        if kind in ("gutter", "channel", "pump") and not e.get("dn_mm"): dn = None
         xa, ya, xb, yb = p.nodes.x[a], p.nodes.y[a], p.nodes.x[b], p.nodes.y[b]
         path = [(float(xa), float(ya))] + [tuple(map(float, v[:2])) for v in (e.get("via") or [])] + [(float(xb), float(yb))]   # bends on the way
         L = sum(math.dist(path[k], path[k + 1]) for k in range(len(path) - 1))
         mx = e.get("max_spacing")
         if mx == "table12": mx = spacing.table12(dn)
-        lens = spacing.split_lengths(L, float(mx)) if (mx and kind == "conduit" and L > float(mx) + 1e-6) else [L]
+        lens = spacing.split_lengths(L, float(mx)) if (mx and kind == "conduit" and L > float(mx) + 1e-6 and dn) else [L]
         mids = e.get("mid_ids") or []; chain = [a]; s = 0.0; depth = p.prototype("manhole").get("depth", DEFAULT_DEPTH)
         ga, gb = float(p.nodes.ground[a]), float(p.nodes.ground[b])
         cuts = [0.0]
@@ -338,7 +370,7 @@ def apply(p, e):
         if rev: chain = chain[::-1]; lines = [ln[::-1] if ln else None for ln in lines[::-1]]
         lids = e.get("link_ids") or []; made = []
         for k, (u, v) in enumerate(zip(chain[:-1], chain[1:])):
-            lid = lids[k] if k < len(lids) else _new_id(p.links, "P-" if kind == "conduit" else "PMP-")
+            lid = lids[k] if k < len(lids) else _new_id(p.links, {"conduit": "P-", "pressure_pipe": "FM-", "channel": "CH-", "gutter": "GT-", "lateral": "LT-"}.get(kind, "PMP-"))
             extra = {"coords": lines[k]} if lines[k] and len(lines[k]) > 2 else {}
             apply(p, dict(op="add_link", id=lid, kind=kind, from_node=u, to_node=v, dn_mm=dn, **extra)); made.append(lid)
         e["link_ids"] = made
@@ -491,6 +523,23 @@ def apply(p, e):
         for i in ids:
             if e.get("level") is None: p.tailwater.pop(i, None)
             else: p.tailwater[i] = float(e["level"])
+        return False
+    if op == "set_props":
+        table = e.get("table", "nodes")
+        if table not in ("nodes", "links"): raise ValueError("table: nodes or links")
+        T = getattr(p, table); ids = [str(i) for i in e["ids"]]
+        missing = [i for i in ids if i not in T.index]
+        if missing: raise ValueError(f"no {table[:-1]} {missing[:3]}")
+        P = _props(p, table)
+        for i in ids:
+            if e.get("clear"): P.pop(i, None); _kind_props(p, table, [i], T.kind[i]); continue
+            vals = K.check_props(T.kind[i], e.get("values") or {})
+            if T.kind[i] == "tap" and vals.get("link") and vals["link"] not in p.links.index: raise ValueError(f"no conduit {vals['link']} to tap")
+            cur = P.setdefault(i, {})
+            for k, v in vals.items():
+                if v is None: cur.pop(k, None)
+                else: cur[k] = v
+            if not cur: P.pop(i, None)
         return False
     if op == "set_ppipe":
         ids = [str(i) for i in e["ids"]]; missing = [i for i in ids if i not in p.links.index or p.links.kind[i] != "pressure_pipe"]

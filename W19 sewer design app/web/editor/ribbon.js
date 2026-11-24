@@ -114,11 +114,17 @@ function buildRibbon() {
     ["layout", "Layout", () => [
       rbGroup("Select", [rbBtn({ press: "tool-select", label: "Select", big: true }), rbBtn({ press: "tool-box", label: "Box" }), rbBtn({ press: "tool-poly", label: "Polygon" }),
         rbBtn({ press: "tool-move", label: "Move" }), rbBtn({ press: "tool-delete", label: "Delete" })]),
-      rbGroup("Draw", [rbBtn({ press: "tool-layout", label: "Layout", big: true }), rbBtn({ press: "tool-manhole", label: "Manhole" }), rbBtn({ press: "tool-outfall", label: "Outfall" }),
-        rbBtn({ press: "tool-wetwell", label: "Wet well" }), rbBtn({ press: "tool-pipe", label: "Pipe" }), rbBtn({ press: "tool-pump", label: "Pump" }),
-        rbBtn({ press: "tool-ppipe", label: "Force main" }), rbBtn({ press: "tool-pjunction", label: "Pr. junction" }), rbBtn({ press: "tool-orifice", label: "Orifice" }),
-        rbBtn({ press: "tool-weir", label: "Weir" }), rbBtn({ press: "tool-catchment", label: "Catchment" })]),
-      rbGroup("Layout run", [rbField("Structure", $("#layout-node")), rbField("Manholes", $("#layout-spacing"), "wide"), rbField("Max (m)", $("#layout-custom")), rbField("", $("#layout-note"), "note")], { cls: "rb-form" }),
+      rbGroup("Draw", [rbBtn({ press: "tool-layout", label: "Layout", big: true })]),
+      // every element SewerGEMS draws (v7, 2026-11-24): structures, then links, then areas
+      rbGroup("Structures", [rbBtn({ press: "tool-manhole", label: "Manhole" }), rbBtn({ press: "tool-catchbasin", label: "Catch basin" }), rbBtn({ press: "tool-outfall", label: "Outfall" }),
+        rbBtn({ press: "tool-headwall", label: "Headwall" }), rbBtn({ press: "tool-transition", label: "Transition" }), rbBtn({ press: "tool-xsection", label: "Cross section" }),
+        rbBtn({ press: "tool-wetwell", label: "Wet well" }), rbBtn({ press: "tool-pond", label: "Pond" }), rbBtn({ press: "tool-pjunction", label: "Pr. junction" }),
+        rbBtn({ press: "tool-airvalve", label: "Air valve" }), rbBtn({ press: "tool-propconn", label: "Property" }), rbBtn({ press: "tool-tap", label: "Tap" })]),
+      rbGroup("Links", [rbBtn({ press: "tool-pipe", label: "Conduit" }), rbBtn({ press: "tool-channel", label: "Channel" }), rbBtn({ press: "tool-gutter", label: "Gutter" }),
+        rbBtn({ press: "tool-lateral", label: "Lateral" }), rbBtn({ press: "tool-pump", label: "Pump" }), rbBtn({ press: "tool-ppipe", label: "Force main" }),
+        rbBtn({ press: "tool-orifice", label: "Orifice" }), rbBtn({ press: "tool-weir", label: "Weir" })]),
+      rbGroup("Areas", [rbBtn({ press: "tool-catchment", label: "Catchment" })]),
+      rbGroup("Layout run", [rbField("Structure", $("#layout-node")), rbField("Link", $("#layout-link")), rbField("Manholes", $("#layout-spacing"), "wide"), rbField("Max (m)", $("#layout-custom")), rbField("", $("#layout-note"), "note")], { cls: "rb-form" }),
       rbGroup("Modify", [
         rbBtn({ icon: "rev", label: "Reverse", title: "Turn the selected pipes round", run: needSel("links", ids => enqueue(() => exec({ op: "reverse", ids })), "Select the pipes to reverse.") }),
         rbBtn({ icon: "recon", label: "Reconnect", title: "Move the stop of the selected pipe to another node (right-click a pipe for the start)", run: needSel("links", ids => startReconnect(ids[0], "to"), "Select the pipe to reconnect.") }),
@@ -238,7 +244,7 @@ function runNamed(name) {
 }
 function morphPick(ids) {
   const kinds = state.info.node_kinds;
-  ctxOpen(innerWidth / 2 - 80, 150, [{ head: `Change ${ids.length > 1 ? ids.length + " structures" : ids[0]} to` }, ...kinds.map(k => ({ label: k, key: "morph-" + k,
+  ctxOpen(innerWidth / 2 - 80, 150, [{ head: `Change ${ids.length > 1 ? ids.length + " structures" : ids[0]} to` }, ...kinds.map(k => ({ label: (typeof KINDS !== "undefined" && KINDS[k]) ? KINDS[k][1] : k, key: "morph-" + k,
     run: () => enqueue(async () => { await exec({ op: "set", table: "nodes", ids, field: "kind", value: k }); toast(`Changed to ${k} (Ctrl+Z undoes).`, "info"); }) }))]);
 }
 

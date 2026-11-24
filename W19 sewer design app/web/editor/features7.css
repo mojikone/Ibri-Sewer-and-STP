@@ -49,3 +49,13 @@ body.compact-ui #sel-mode { top: auto; bottom: 74px; }            /* on a phone:
 #ldock .ld-fold { border: 0; background: none; font-size: 16px; padding: 0 8px; color: var(--muted); }
 #ldock-handle { position: fixed; left: 0; top: calc(var(--dock-top, 130px) + 8px); z-index: 45; writing-mode: vertical-rl; transform: rotate(180deg); border: 1px solid var(--line); border-left: 0; background: var(--panel); color: var(--ink); padding: 10px 4px; border-radius: 0 6px 6px 0; font-size: 12px; box-shadow: 1px 0 6px rgba(0,0,0,.12); }
 #ldock-handle[hidden] { display: none; }
+/* v7: each kind's own fields in Properties, the ask-first dialog */
+#kind-fields h5 { margin: 12px 0 4px; }
+#kind-fields details.kf-g { border-top: 1px solid var(--line); padding: 2px 0 4px; }
+#kind-fields details.kf-g > summary { cursor: pointer; font-weight: 600; font-size: 12.5px; padding: 4px 0; color: var(--muted); }
+#kind-fields .kf-t { margin: 4px 0 8px; }
+#kind-fields .kf-t > label { display: block; font-size: 12px; margin-bottom: 3px; }
+#kind-fields table.kf-tab { width: 100%; border-collapse: collapse; font-size: 12px; }
+#kind-fields table.kf-tab th { text-align: left; font-weight: 600; color: var(--muted); padding: 2px 4px; }
+#kind-fields table.kf-tab input { width: 100%; box-sizing: border-box; }
+#dlg-morph .morph-noask { display: block; margin: 10px 0 4px; font-size: 12.5px; }

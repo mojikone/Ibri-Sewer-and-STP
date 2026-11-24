@@ -37,9 +37,12 @@ const SYM_FIELDS = {
 const symField = (type, k) => SYM_FIELDS[type].find(f => f[0] === k) || [k, k, "", "", "num"];
 /* the kinds of each type, as tabs under it (2026-11-24): "all" is the whole type; a kind's own coding overrides it */
 const SYM_GROUPS = {
-  links: [["all", "All pipes"], ["conduit", "Conduits"], ["pressure_pipe", "Force mains"], ["pump", "Pumps"], ["orifice", "Orifices"], ["weir", "Weirs"]],
-  nodes: [["all", "All structures"], ["manhole", "Manholes"], ["outfall", "Outfalls"], ["wetwell", "Wet wells"], ["storage", "Ponds and storage"],
-          ["pressure_junction", "Pressure junctions"], ["junction", "Junctions"], ["catch_basin", "Catch basins"]],
+  // every kind the app draws (v7: "add all items; do not leave the work half done"), shown whether or not the model has one yet
+  links: [["all", "All links"], ["conduit", "Conduits"], ["channel", "Channels"], ["gutter", "Gutters"], ["lateral", "Laterals"], ["pressure_pipe", "Pressure pipes"],
+          ["pump", "Pumps"], ["orifice", "Orifices"], ["weir", "Weirs"]],
+  nodes: [["all", "All structures"], ["manhole", "Manholes"], ["catch_basin", "Catch basins"], ["outfall", "Outfalls"], ["headwall", "Headwalls"],
+          ["transition", "Transitions"], ["cross_section", "Cross sections"], ["wetwell", "Wet wells"], ["storage", "Ponds and storage"], ["junction", "Junctions"],
+          ["pressure_junction", "Pressure junctions"], ["air_valve", "Air valves"], ["property_connection", "Property connections"], ["tap", "Taps"]],
   catchments: [["all", "Catchments"]],
 };
 const symGroupName = (type, g) => (SYM_GROUPS[type].find(x => x[0] === g) || [g, String(g).replace(/_/g, " ").replace(/^./, c => c.toUpperCase()) + "s"])[1];
@@ -212,6 +215,9 @@ function symLabel(type, f, L, c) {
     if (it.template != null) s = it.template.replace(/\{(\w+)(?::(\d))?(:u)?\}/g, (_, k, d, u) => symFormat(type, k, symValue(type, f, k, c), d) + (u ? (symField(type, k)[2] ? " " + symField(type, k)[2] : "") : ""));
     else {
       if (type === "links" && it.field === "s_pc" && f.properties.kind === "pump") continue;                    // a pump has no gradient
+      if (type === "links" && ["dn_mm", "s_pc"].includes(it.field) && ["gutter", "channel"].includes(f.properties.kind) && !(f.properties.dn_mm > 0)) {
+        if (it.field === "dn_mm") { out += out && !it.same ? "\n" + f.properties.kind : f.properties.kind; } continue;   // a gutter or channel has no bore
+      }
       const unit = symField(type, it.field)[2];
       s = (it.prefix || "").replace(/%u/g, unit) + symFormat(type, it.field, symValue(type, f, it.field, c), it.dec) + (it.suffix || "").replace(/%u/g, unit);
     }
@@ -336,9 +342,9 @@ function symRender() {
   const type = symUi.type, g = symUi.group, def = symDef(), d = def[type], cd = d.codings.find(x => x.id === symUi.cid) || null;
   const T = type === "links" ? state.model.linkFeat : type === "nodes" ? state.model.nodeFeat : state.model.catchFeat, cnt = {};
   for (const f of T) cnt[f.properties.kind] = (cnt[f.properties.kind] || 0) + 1;
-  const groups = SYM_GROUPS[type].filter(([k]) => k === "all" || cnt[k]).concat(Object.keys(cnt).filter(k => k && k !== "undefined" && !SYM_GROUPS[type].some(x => x[0] === k)).map(k => [k, symGroupName(type, k)]));
+  const groups = SYM_GROUPS[type].concat(Object.keys(cnt).filter(k => k && k !== "undefined" && !SYM_GROUPS[type].some(x => x[0] === k)).map(k => [k, symGroupName(type, k)]));
   $("#sym-tabs").innerHTML = `<div class="sym-types" role="tablist">${Object.entries(SYM_TYPES).map(([t, n]) => `<button data-type="${t}" class="${t === type ? "on" : ""}" data-testid="sym-type-${t}">${n}</button>`).join("")}</div>` +
-    (groups.length > 1 ? `<div class="sym-groups" role="tablist">${groups.map(([k, n]) => `<button data-group="${k}" class="${k === g ? "on" : ""}" data-testid="sym-group-${k}">${esc(n)}${k !== "all" ? ` <span class="muted">${cnt[k]}</span>` : ""}</button>`).join("")}</div>` : "");
+    (groups.length > 1 ? `<div class="sym-groups" role="tablist">${groups.map(([k, n]) => `<button data-group="${k}" class="${k === g ? "on" : ""}" data-testid="sym-group-${k}">${esc(n)}${k !== "all" ? ` <span class="muted">${cnt[k] || 0}</span>` : ""}</button>`).join("")}</div>` : "");
   $("#sym-def-name").textContent = state.sym.active;
   // colour codings list: those of this kind (or of the whole type)
   const mine = symCodingsOf(type, g), used = symUsedId(type, g);

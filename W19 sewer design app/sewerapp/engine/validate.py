@@ -4,6 +4,51 @@ import math
 import numpy as np
 
 
+INLET_NEEDS = {"grate": ("grate_type", "grate_length_m", "grate_width_m"), "curb": ("curb_length_m", "curb_height_m"),
+               "combination": ("grate_type", "grate_length_m", "grate_width_m", "curb_length_m", "curb_height_m"), "slot": ("slot_length_m", "slot_width_m")}
+
+
+def _kinds(p, add):
+    """The element kinds' own checks (v7): what each needs before the runs can use it."""
+    N, L = p.nodes, p.links; P = (getattr(p, "props", None) or {}); PN, PL = P.get("nodes", {}), P.get("links", {})
+    gut = L[L.kind == "gutter"]
+    for n, k in gut.from_node.value_counts().items():
+        if k > 1: add("error", "nodes", n, f"{k} gutters leave it: an inlet's bypass takes one path")
+    for lid, r in gut.iterrows():
+        if N.kind.get(r.from_node) != "catch_basin" or N.kind.get(r.to_node) != "catch_basin":
+            add("warning", "links", lid, "a gutter carries the bypassed flow from one catch basin to the next: both its ends should be catch basins")
+    cbs = N.index[N.kind == "catch_basin"]
+    for n in cbs:
+        d = PN.get(n) or {}; t = d.get("inlet_type", "full_capture")
+        if t == "percent_capture" and d.get("capture_pc") is None: add("warning", "nodes", n, "percent capture with no capture efficiency: taken as 100 %")
+        if t == "max_capacity" and not d.get("q_max_ls"): add("warning", "nodes", n, "maximum capacity with no flow: it captures nothing")
+        if t == "rating_curve" and len(d.get("rating") or []) < 2: add("error", "nodes", n, "an inflow-capture curve needs two rows or more")
+        if t == "catalog":
+            c = d.get("inlet_class")
+            if not c: add("error", "nodes", n, "a catalogue inlet with no inlet type (grate, curb opening, combination or slot)"); continue
+            miss = [k for k in INLET_NEEDS[c] if d.get(k) in (None, 0)]
+            if miss: add("error", "nodes", n, f"the {c} inlet needs {', '.join(miss)}")
+            g = d.get("gutter_shape", "conventional")
+            need = ["road_cross_slope", "n_gutter"] + (["long_slope"] if d.get("location", "on_grade") == "on_grade" else [])
+            if g == "v_shaped": need.append("curb_cross_slope")
+            if g == "trapezoidal": need += ["ditch_bottom_m", "side_slope_l", "side_slope_r"]
+            miss = [k for k in need if not d.get(k)]
+            if miss: add("error", "nodes", n, f"the inlet's gutter needs {', '.join(miss)}")
+            if c in ("grate", "combination") and d.get("grate_type") == "tilt_bar_45" and d.get("location") == "in_sag" and not d.get("opening_ratio"):
+                add("warning", "nodes", n, "HEC-22 gives no opening ratio for the 45-degree tilt-bar grate: 0.17 is assumed (as SWMM 5.2 does); set its own")
+    if len(cbs): add("warning", "nodes", cbs[0], f"{len(cbs)} catch basin{'s' if len(cbs) > 1 else ''}: the rational run computes the inlet capture and the gutter bypass (HEC-22); "
+                                              "the storm run (SWMM) takes all the surface inflow into the pipes")
+    for n in N.index[N.kind == "headwall"]:
+        d = PN.get(n) or {}
+        if d.get("boundary") == "fixed" and d.get("tailwater_m") is None: add("warning", "nodes", n, "a fixed boundary with no tailwater elevation: taken as free")
+    ends = set(L.to_node) | set(L.from_node)
+    for n in N.index[N.kind == "tap"]:
+        host = (PN.get(n) or {}).get("link")
+        if not host or host not in L.index: add("error", "nodes", n, "a tap with no conduit: set the conduit it taps (Properties > Tapped conduit)")
+        elif L.kind[host] not in ("conduit", "channel"): add("warning", "nodes", n, f"it taps {host}, which is not a gravity conduit")
+        if n not in ends: add("warning", "nodes", n, "no lateral ends on it")
+
+
 def run(p, res=None):
     N, L = p.nodes, p.links; out = []
     add = lambda level, table, eid, msg: out.append(dict(level=level, table=table, id=str(eid), message=msg))
@@ -11,7 +56,7 @@ def run(p, res=None):
     for lid, r in L.iterrows():
         for end in (r.from_node, r.to_node):
             if end not in ids: add("error", "links", lid, f"its node {end} does not exist")
-    leave = L[~L.kind.isin(["orifice", "weir"])].from_node.value_counts()
+    leave = L[~L.kind.isin(["orifice", "weir", "gutter"])].from_node.value_counts()
     pumps_at = L[L.kind == "pump"].from_node.value_counts()
     for n, k in leave[leave > 1].items():
         if pumps_at.get(n, 0) > 1 and pumps_at.get(n, 0) == k:
@@ -28,17 +73,21 @@ def run(p, res=None):
     used = set(L.from_node) | set(L.to_node)
     for n, r in N.iterrows():
         if n not in used: add("warning", "nodes", n, "not connected to any pipe")
-        if r.kind != "pressure_junction" and r.ground == r.ground and r.invert == r.invert and r.invert > r.ground: add("error", "nodes", n, f"invert {r.invert:.2f} above ground {r.ground:.2f}")
-        if r.ground == 0 and r.invert in (-1.5, -3.0) and r.kind != "outfall": add("warning", "nodes", n, f"ground and invert still at the prototype's default (0 and {r.invert} m)")
-    outs = set(N.index[N.kind == "outfall"])
+        if r.kind not in ("pressure_junction", "air_valve", "tap") and r.ground == r.ground and r.invert == r.invert and r.invert > r.ground: add("error", "nodes", n, f"invert {r.invert:.2f} above ground {r.ground:.2f}")
+        if r.ground == 0 and r.invert in (-1.5, -3.0, -1.0, -2.0) and r.kind not in ("outfall", "headwall", "tap"): add("warning", "nodes", n, f"ground and invert still at the prototype's default (0 and {r.invert} m)")
+    piped = L[L.kind != "gutter"]
+    outs = set(N.index[N.kind == "outfall"]) | {n for n in N.index[N.kind == "headwall"] if n not in set(piped.from_node)}   # a headwall nothing leaves: its network's outfall
     for n, k in L.to_node[L.to_node.isin(outs)].value_counts().items():
         if k > 1: add("warning", "nodes", n, f"{k} links reach this outfall: SWMM takes one (join them at a manhole first)")
-    if len(L) and not outs: add("error", "nodes", "", "the network has no outfall")
-    fr = set(L.from_node)
-    for n in used:
-        if n in ids and n not in fr and n not in outs and N.kind.get(n) not in ("storage",): add("warning", "nodes", n, "the flow ends here: it is not an outfall")
+    if len(piped) and not outs: add("error", "nodes", "", "the network has no outfall")
+    fr = set(piped.from_node)
+    for n in set(piped.from_node) | set(piped.to_node):
+        if n in ids and n not in fr and n not in outs and N.kind.get(n) not in ("storage", "tap"): add("warning", "nodes", n, "the flow ends here: it is not an outfall")
+    _kinds(p, add)
     for lid, r in L.iterrows():
-        if r.kind in ("conduit", "pressure_pipe") and not (r.length_m > 0): add("error", "links", lid, "zero length")
+        if r.kind in ("conduit", "pressure_pipe", "channel", "lateral") and not (r.length_m > 0): add("error", "links", lid, "zero length")
+        if r.kind == "channel" and lid not in (p.sections or {}): add("error", "links", lid, "a channel with no section: give it its open section (Properties > Section)")
+        if r.kind == "lateral" and not (r.dn_mm > 0): add("error", "links", lid, "a lateral with no bore")
         if r.kind == "conduit" and not (r.dn_mm > 0) and lid not in (p.sections or {}): add("error", "links", lid, "no size or section")
         if r.kind == "conduit" and r.length_m and r.up_inv == r.up_inv and r.dn_inv == r.dn_inv and r.up_inv <= r.dn_inv:
             add("warning", "links", lid, f"flat or adverse ({(r.up_inv - r.dn_inv) / r.length_m * 100:.3f} %)")

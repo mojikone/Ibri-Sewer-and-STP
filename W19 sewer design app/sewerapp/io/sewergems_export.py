@@ -79,13 +79,15 @@ def load(folder, name="SewerGEMS model", crs=None):
 
     def link_table(c):
         c = c[c.active == True]
-        hi = (c.start_inv >= c.stop_inv).values
+        lk = c["kind"].fillna("conduit").astype(str).values if "kind" in c.columns else np.full(len(c), "conduit", dtype=object)
+        # a conduit runs from its higher end; a gutter, a channel without levels or a lateral keeps its drawn direction (v7)
+        hi = np.where(lk == "conduit", (c.start_inv >= c.stop_inv).values, ~(c.start_inv < c.stop_inv).values | (lk == "gutter"))
         a = np.where(hi, c.start, c.stop); b = np.where(hi, c.stop, c.start)
         circ = (c.diameter_mm.astype(float) > 0).values           # a box or an open channel has no diameter: kept, not analysed
         nom = c.size_label.astype(str).str.extract(r"(\d+)")[0].astype(float).fillna(c.diameter_mm).astype(int).values
         nom = np.where(circ, nom, 0); ins = np.where(circ, c.diameter_mm.astype(float).values, np.nan)
-        sections.update({str(l): str(s) for l, s, k in zip(c.label, c.size_label, circ) if not k})
-        return pd.DataFrame(dict(kind="conduit", from_node=[nodes_lab.get(x, str(x)) for x in a], to_node=[nodes_lab.get(x, str(x)) for x in b],
+        sections.update({str(l): str(s) for l, s, k, t in zip(c.label, c.size_label, circ, lk) if not k and t not in ("gutter",)})
+        return pd.DataFrame(dict(kind=lk, from_node=[nodes_lab.get(x, str(x)) for x in a], to_node=[nodes_lab.get(x, str(x)) for x in b],
                                  length_m=c.length_m.values, dn_mm=nom, inside_mm=ins,
                                  up_inv=c[["start_inv", "stop_inv"]].max(axis=1).values, dn_inv=c[["start_inv", "stop_inv"]].min(axis=1).values,
                                  transfer=False, coords=[geo.get(l) if l in geo and len(geo[l]) > 2 else None for l in c.label.astype(str)]),
@@ -98,6 +100,8 @@ def load(folder, name="SewerGEMS model", crs=None):
     for k in p.sections: sections.pop(k, None)
     p.meta = dict(getattr(p, "meta", {}) or {}, sections=sections)       # other non-circular sections: shown, not analysed
     loads_found = _loads(folder, sc, p, nodes_lab)
+    props0 = _props_file(folder, first.file)
+    if props0: p.props = {t: {k: v for k, v in props0.get(t, {}).items() if k in getattr(p, t).index} for t in ("nodes", "links")}
     scenarios, results = [], {}
     for r in sc.itertuples():
         c, _ = _read(folder, r.file); L = link_table(c); edits = []
@@ -125,10 +129,22 @@ def load(folder, name="SewerGEMS model", crs=None):
             res.loc[k, "depth_m"] = dep; res.loc[k, "d_over_D"] = dep / tt.rise_m.values
             res.loc[k, "yn_sg_m"] = tt.normal_depth_m.values; res.loc[k, "yc_sg_m"] = tt.critical_depth_m.values
             # SewerGEMS's typed full capacity is left out: on Block 04 it follows the stale typed box, not the catalogue size
+        pr = _props_file(folder, r.file)                                   # each kind's own fields, where this scenario differs
+        for t in ("nodes", "links"):
+            base_p = (getattr(p, "props", None) or {}).get(t, {})
+            for k, v in (pr.get(t, {}) if pr else {}).items():
+                if k in getattr(p, t).index and v != base_p.get(k): edits.append(dict(op="set_props", table=t, ids=[k], clear=True)); edits.append(dict(op="set_props", table=t, ids=[k], values=v))
         scenarios.append(dict(sg_id=int(r.id), label=str(r.label), parent=int(r.parent) if r.parent == r.parent else None, edits=edits))
         results[str(r.label)] = res
     for sc_ in scenarios: sc_["has_loads"] = loads_found
     return p, scenarios, results
+
+
+def _props_file(folder, file):
+    import json
+    f = os.path.join(folder, f"props_{file}.json")
+    if not os.path.exists(f): return None
+    with open(f, encoding="utf-8") as fh: return json.load(fh)
 
 
 def _pressure(folder, sc, p, nodes_lab):

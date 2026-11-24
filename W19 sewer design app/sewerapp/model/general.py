@@ -19,7 +19,9 @@ ground_src {node id: text}: where the structure's ground level came from (a terr
            write of that ground level or a move clears it (2026-11-23)
 ppipes     {link id: {method, C, e_mm, n, K, check}}: a pressure pipe's own friction and minor loss (engine/pressure.py)
 infil      {link id: rate}: a conduit's own infiltration rate, in the basis of settings.infiltration.method (the project
-           rate when absent)"""
+           rate when absent)
+props      {"nodes": {id: {...}}, "links": {id: {...}}}: each element kind's own fields (a catch basin's inlet and gutter,
+           a headwall's boundary, a tap's conduit, a gutter's section ...), model/kinds.py (v7, 2026-11-24)"""
 import copy, json
 from dataclasses import dataclass, field
 import numpy as np, pandas as pd
@@ -27,8 +29,7 @@ import numpy as np, pandas as pd
 NODE_COLS = ["kind", "x", "y", "ground", "invert", "inflow_m3d"]
 LINK_COLS = ["kind", "from_node", "to_node", "length_m", "dn_mm", "inside_mm", "up_inv", "dn_inv", "transfer", "coords"]
 CATCH_COLS = ["outlet", "area_ha", "imperv_pc", "width_m", "slope_pc", "n_imperv", "n_perv", "gauge", "coords"]
-NODE_KINDS = ("manhole", "wetwell", "outfall", "storage", "junction", "pressure_junction")
-LINK_KINDS = ("conduit", "pump", "pressure_pipe", "orifice", "weir")
+from sewerapp.model.kinds import NODE_KINDS, LINK_KINDS      # every kind SewerGEMS draws (v7)
 
 # PE pressure-pipe sizes, inside diameters of the Ibri model's catalogue (the user may replace them per project)
 DEFAULT_CATALOGUE = [[200, 176.4], [250, 220.6], [280, 247.0], [315, 278.0], [355, 313.2], [400, 353.0], [450, 397.0],
@@ -50,7 +51,10 @@ DEFAULT_SETTINGS = dict(
     # what a new element gets when it is drawn (SewerGEMS's prototypes); depth = ground - invert
     prototypes=dict(manhole=dict(ground=0.0, depth=1.5), outfall=dict(ground=0.0, depth=1.5), wetwell=dict(ground=0.0, depth=3.0),
                     pressure_junction=dict(ground=0.0, depth=1.5),
-                    conduit=dict(dn_mm=None, section=None),
+                    catch_basin=dict(ground=0.0, depth=1.5), headwall=dict(ground=0.0, depth=1.5), transition=dict(ground=0.0, depth=1.5),
+                    cross_section=dict(ground=0.0, depth=1.5), air_valve=dict(ground=0.0, depth=1.5), property_connection=dict(ground=0.0, depth=1.0),
+                    storage=dict(ground=0.0, depth=2.0), junction=dict(ground=0.0, depth=1.5), tap=dict(ground=0.0, depth=1.5),
+                    conduit=dict(dn_mm=None, section=None), lateral=dict(dn_mm=None), channel=dict(section=None),
                     catchment=dict(imperv_pc=50.0, width_m=100.0, slope_pc=1.0, n_imperv=0.013, n_perv=0.15)),
     # the project's engineering libraries beyond the size catalogue: named cross-sections a conduit can take
     # unit_loads: [{name, type population|area|discharge|count, rate_m3d per unit, unit, pe people per unit}]
@@ -103,11 +107,12 @@ class Project:
     ground_src: dict = field(default_factory=dict)
     hydrology: dict = field(default_factory=dict)   # {catchment id: {C, tc_min, cn}}: the rational method and SCS curve number
     controls: list = field(default_factory=list)    # SWMM control rules (pumps, orifices, weirs) for the storm run
+    props: dict = field(default_factory=lambda: {"nodes": {}, "links": {}})   # each kind's own fields (model/kinds.py)
 
     def __setstate__(self, d):                            # a project pickled before a field existed gets its default
         self.__dict__.update(d)
         for k in ("sections", "infil", "storage", "pumps", "ppipes", "unit_rows", "outlets", "tailwater", "hydrology", "ground_src"): self.__dict__.setdefault(k, {})
-        self.__dict__.setdefault("controls", [])
+        self.__dict__.setdefault("controls", []); self.__dict__.setdefault("props", {"nodes": {}, "links": {}})
 
     def setting(self, key):
         """A top-level setting, the default filled in for a project made before the key existed."""
@@ -158,10 +163,10 @@ class Project:
         for lid, r in self.links.iterrows():
             for end in (r.from_node, r.to_node):
                 if end not in n: msgs.append(f"link {lid}: node {end} does not exist")
-        lv = self.links[~self.links.kind.isin(["orifice", "weir"])].from_node.value_counts()     # pond outlets may share a pond
+        lv = self.links[~self.links.kind.isin(["orifice", "weir", "gutter"])].from_node.value_counts()     # pond outlets may share a pond; a gutter is surface flow
         msgs += [f"node {k} has {v} leaving links (a sewer network is a tree)" for k, v in lv[lv > 1].items()]
         return msgs
 
     def to_json(self):
         return dict(name=self.name, crs=self.crs, settings=self.settings, load_sets=self.load_sets, inflow_sets=self.inflow_sets, fixed_flows=self.fixed_flows, rain=self.rain,
-                    passthrough=self.passthrough, sections=self.sections, infil=self.infil, storage=self.storage, pumps=self.pumps, ppipes=self.ppipes, unit_rows=self.unit_rows, outlets=self.outlets, tailwater=self.tailwater, hydrology=self.hydrology, controls=self.controls, ground_src=self.ground_src)
+                    passthrough=self.passthrough, sections=self.sections, infil=self.infil, storage=self.storage, pumps=self.pumps, ppipes=self.ppipes, unit_rows=self.unit_rows, outlets=self.outlets, tailwater=self.tailwater, hydrology=self.hydrology, controls=self.controls, ground_src=self.ground_src, props=self.props)

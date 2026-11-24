@@ -1601,3 +1601,67 @@ def test_v7_drawing_shows_at_the_click_and_an_edit_is_one_round_trip(server, bro
     idle(pg); assert pg.evaluate("window.ed.ghosts()") == 0 and len(ids(pg, "links")) == 2
     assert errs == [], errs
     ctx.close()
+
+
+def test_v7_every_kind_has_its_tool_menu_tab_and_fields(server, browser):
+    """The engineer, 2026-11-24: "add catch basins carefully ... add any other remaining elements; when you add items to
+    the right click (layout) or symbology tabs (it has conduits, no pressure pipe, pump...), add all items". Every kind
+    the server knows has a ribbon tool, a symbology tab (shown with 0 when the model has none), and the layout tool's
+    right-click lists every structure and link; a catch basin's inlet fields follow its inlet type; a gutter carries one
+    inlet's bypass to the next in the rational run."""
+    ctx = browser.new_context(viewport={"width": 1600, "height": 950}); pg = ctx.new_page(); pg.set_default_timeout(60000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    _new_local(pg, server, "Kinds")
+    info = pg.evaluate("window.ed.state.info")
+    tool_of = pg.evaluate("Object.fromEntries(Object.entries(KINDS).map(([k, v]) => [k, v[5]]))")
+    for k in info["node_kinds"] + info["link_kinds"]:
+        if k == "junction": continue                                     # SWMM's generic junction: read from files, not drawn
+        assert pg.evaluate("t => !!document.getElementById('tool-' + t)", tool_of[k]), k
+    pg.evaluate("symDock(true)"); pg.wait_for_timeout(200)
+    for t, kinds in (("links", info["link_kinds"]), ("nodes", info["node_kinds"])):
+        pg.click(f"[data-testid=sym-type-{t}]")
+        tabs = pg.evaluate("[...document.querySelectorAll('#sym-tabs .sym-groups button')].map(b => b.dataset.group)")
+        assert set(kinds) <= set(tabs), (t, set(kinds) - set(tabs))
+    pg.click("[data-testid=sym-type-links]"); pg.click("[data-testid=sym-group-gutter]"); pg.click("#sym-new"); pg.wait_for_timeout(200)     # a kind with none yet
+    pg.evaluate("symDock(false)")
+    # draw: two catch basins joined by a gutter, each piped to a manhole and on to an outfall
+    vtool(pg, "catchbasin")
+    for x in (0, 60): click_at(pg, x, 0); idle(pg)
+    vtool(pg, "manhole"); click_at(pg, 100, -40); idle(pg); vtool(pg, "outfall"); click_at(pg, 200, -40); idle(pg)
+    n = {pg.evaluate("id => window.ed.state.model.nodes.get(id).properties.kind", i): i for i in ids(pg, "nodes")}
+    cbs = [i for i in ids(pg, "nodes") if i.startswith("CB-")]; assert len(cbs) == 2
+    vtool(pg, "gutter"); click_at(pg, 0, 0); idle(pg); click_at(pg, 60, 0); idle(pg)
+    vtool(pg, "pipe")
+    for a, b in (((0, 0), (100, -40)), ((60, 0), (100, -40)), ((100, -40), (200, -40))): click_at(pg, *a); idle(pg); click_at(pg, *b); idle(pg)
+    kinds = sorted(pg.evaluate("window.ed.state.model.linkFeat.map(f => f.properties.kind)")); assert kinds == ["conduit", "conduit", "conduit", "gutter"], kinds
+    # the layout tool's right-click: every structure and every link
+    pg.click("#rb-tab-layout"); pg.locator("#rb-page-layout .rb-btn", has_text="Layout").first.click()
+    pg.evaluate("window.ed.ctx(300 / 111319.49, 300 / 110574)"); pg.wait_for_selector("#ctx-menu")
+    keys = pg.evaluate("[...document.querySelectorAll('#ctx-menu [data-testid]')].map(e => e.dataset.testid)")
+    for k in ("catch_basin", "headwall", "transition", "cross_section", "storage", "air_valve", "property_connection", "pressure_junction"): assert f"ctx-lay-next-{k}" in keys, k
+    for k in ("conduit", "channel", "gutter", "lateral", "pressure_pipe", "pump"): assert f"ctx-lay-link-{k}" in keys, k
+    pg.keyboard.press("Escape"); vtool(pg, "select")
+    # Properties: the inlet's fields follow its type
+    pg.evaluate("id => window.ed.selectElement('nodes', id)", cbs[0]); pg.wait_for_selector("[data-testid=kind-fields]")
+    assert pg.is_visible("#kf-inlet_type") and not pg.is_visible("#kf-capture_pc")
+    pg.select_option("#kf-inlet_type", "percent_capture"); idle(pg)
+    pg.wait_for_selector("#kf-capture_pc"); pg.fill("#kf-capture_pc", "60"); pg.dispatch_event("#kf-capture_pc", "change"); idle(pg)
+    assert pg.evaluate("id => window.ed.state.model.nodes.get(id).properties.props", cbs[0])["capture_pc"] == 60
+    pg.select_option("#kf-inlet_type", "catalog"); idle(pg); pg.select_option("#kf-inlet_class", "grate"); idle(pg)
+    assert pg.is_visible("#kf-grate_type") and pg.is_visible("#kf-long_slope") and not pg.is_visible("#kf-curb_height_m")
+    pg.select_option("#kf-inlet_type", "percent_capture"); idle(pg)
+    # a rational run: catchments on both inlets; CB-1 keeps 60 %, the rest runs down the gutter to CB-2
+    for cid, cb in (("C1", cbs[0]), ("C2", cbs[1])):
+        pg.evaluate("""([cid, cb]) => fetch(`/api/g${base()}/edit`, {method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({op: 'add_catchment', id: cid, outlet: cb, area_ha: 1, coords: [[0, 0], [50, 0], [50, 50], [0, 50]]})})""", [cid, cb])
+    pg.evaluate("""() => fetch(`/api/g${base()}/edit`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({op: 'set_hydrology', ids: ['C1', 'C2'], C: 0.9, tc_min: 10})})""")
+    pg.evaluate("""() => fetch(`/api/g${base()}/edit`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({op: 'set_rain', rain: {idf: {durations_min: [5, 10, 30, 60], intensities: [150, 120, 70, 45]}}})})""")
+    pg.evaluate("refreshAll()"); idle(pg)
+    pg.evaluate("runRational()"); pg.wait_for_function("window.ed.state.inletRows && Object.keys(window.ed.state.inletRows).length === 2")
+    r = pg.evaluate("window.ed.state.inletRows")
+    assert abs(r[cbs[0]]["q_captured_ls"] - 0.6 * 300) < 0.01 and r[cbs[0]]["bypass_to"] == cbs[1] and abs(r[cbs[1]]["q_gutter_ls"] - 420) < 0.01
+    pg.evaluate("id => window.ed.selectElement('nodes', id)", cbs[0]); pg.wait_for_selector("[data-testid=kf-results]")
+    assert "captured 180" in pg.text_content("[data-testid=kf-results]")
+    assert pg.evaluate("!!window.ed.map.getLayer('nodes-icon') && window.ed.map.hasImage('k-catch_basin') && !!window.ed.map.getLayer('links-gutter')")
+    assert errs == [], errs
+    pg.screenshot(path=os.path.join(SHOTS, "screenshot_v7_kinds.png")); ctx.close()

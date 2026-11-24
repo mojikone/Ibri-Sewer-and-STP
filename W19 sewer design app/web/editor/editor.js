@@ -408,7 +408,7 @@ function updateScenario(sc) {
    edit's answer carries the model when it must be re-read and the results when the screen is drawn now, instead of
    two more requests after it */
 const REREAD_OPS = ["set_many", "set_loads", "lock", "set_section", "set_infiltration", "set_storage", "set_pump", "set_prototype", "batch", "set_unit_rows", "set_ppipe", "set_outlet", "set_tailwater", "set_hydrology", "set_controls",
-  "add_node", "add_link", "add_run", "split_link", "delete", "move_node", "reconnect", "reverse", "set_coords", "add_catchment", "set_inlet", "set_gutter", "set_tap", "set_structure"];
+  "add_node", "add_link", "add_run", "split_link", "delete", "move_node", "reconnect", "reverse", "set_coords", "add_catchment", "set_props"];
 async function exec(op, more) {
   const guess = REREAD_OPS.includes(op.op) || (op.op === "set" && (op.field === "kind" || (op.table === "nodes" && op.field === "invert")));
   const q = [guess ? "model=1" : "", more ? "" : "results=1"].filter(Boolean).join("&");
@@ -599,7 +599,7 @@ async function act(ll, mods) {
     if (!layout.last) {
       if (nn) layout.last = nn.id;
       else if (nl) { if (!await askSplit(nl.id, "manhole")) return; const id = newId("nodes", "MH-"); await exec(splitOp(nl, "manhole", id)); layout.last = id; }
-      else { const id = newId("nodes", ADD_NODE[layout.node][1]); await exec({ op: "add_node", id, kind: layout.node, ...lonlat }); layout.last = id; }
+      else { const id = newId("nodes", (typeof KINDS !== "undefined" && KINDS[layout.node] ? KINDS[layout.node][3] : "MH-")); await exec({ op: "add_node", id, kind: layout.node, ...lonlat }); layout.last = id; }
       setSel("nodes", [layout.last]); $("#hint").textContent = "Click the next point; Esc or right-click ends the run."; return;
     }
     if (nn && nn.id === layout.last) return;
@@ -608,10 +608,10 @@ async function act(ll, mods) {
     if (nl) {                                                         // the run ends on a pipe: split it there and join (one undo step)
       if (!await askSplit(nl.id, "manhole")) return;
       const id = newId("nodes", "MH-");
-      await exec({ op: "batch", ops: [splitOp(nl, "manhole", id), { op: "add_run", from_node: layout.last, max_spacing: sp, to_node: id, ...via }] });
+      await exec({ op: "batch", ops: [splitOp(nl, "manhole", id), { op: "add_run", from_node: layout.last, max_spacing: sp, to_node: id, link_kind: layout.link || "conduit", ...via }] });
       layout.last = id; layout.via = []; setSel("nodes", [id]); if (typeof layoutPreview === "function") layoutPreview(); return;
     }
-    const e = { op: "add_run", from_node: layout.last, max_spacing: sp, ...via, ...(nn ? { to_node: nn.id } : { kind: layout.node, ...lonlat }) };
+    const e = { op: "add_run", from_node: layout.last, max_spacing: sp, link_kind: layout.link || "conduit", ...via, ...(nn ? { to_node: nn.id } : { kind: layout.node, ...lonlat }) };
     const r = await exec(e); const c = r.created || {}; layout.via = []; if (typeof layoutPreview === "function") layoutPreview();
     layout.last = nn ? nn.id : c.end_id; setSel("nodes", [layout.last]);
     if ((c.mid_ids || []).length) toast(`${c.link_ids.length} pipes, ${c.mid_ids.length} manhole${c.mid_ids.length > 1 ? "s" : ""} at the spacing in between (one undo step).`, "info");
@@ -624,6 +624,11 @@ async function act(ll, mods) {
     if (nn) pick("nodes", nn.id);
     else if (nl) pick("links", nl.id);
     else { const c = catchAt(ll); if (c) pick("catchments", c); else if (!multi && (!state.selMode || state.selMode === "new")) setSel(null, []); }
+  } else if (t === "tap") {
+    if (!nl) { toast("A tap goes on a conduit: click the conduit where the lateral joins it.", "info"); return; }
+    const id = newId("nodes", "TAP-");
+    await exec({ op: "batch", ops: [{ op: "add_node", id, kind: "tap", ...lonlat }, { op: "set_props", table: "nodes", ids: [id], values: { link: nl.id } }] });
+    setSel("nodes", [id]);
   } else if (ADD_NODE[t]) {
     const [kind, pre] = ADD_NODE[t];
     if (nn) {                                                         // morph (F5): the node becomes this kind, keeping its id, place, levels and pipes
@@ -643,10 +648,13 @@ async function act(ll, mods) {
     const id = newId("nodes", pre);
     await exec({ op: "add_node", id, kind, ...lonlat });
     setSel("nodes", [id]);
-  } else if (t === "pipe" || t === "pump" || t === "ppipe" || t === "orifice" || t === "weir") {
-    const kind = t === "pump" ? "pump" : t === "ppipe" ? "pressure_pipe" : t === "orifice" || t === "weir" ? t : "conduit";
+  } else if (["pipe", "pump", "ppipe", "orifice", "weir", "channel", "gutter", "lateral"].includes(t)) {
+    const kind = { pump: "pump", ppipe: "pressure_pipe", orifice: "orifice", weir: "weir", channel: "channel", gutter: "gutter", lateral: "lateral" }[t] || "conduit";
     let endId = nn && nn.id;
-    const endKind = t === "ppipe" || t === "pump" ? "pressure_junction" : "manhole", endPre = endKind === "pressure_junction" ? "J-" : "MH-";
+    // what an empty click makes at either end: a force main's junction, a channel's cross section, a gutter's catch
+    // basin, a lateral's property connection (its start) or manhole (its end; on a conduit: a tap)
+    const endKind = { ppipe: "pressure_junction", pump: "pressure_junction", channel: "cross_section", gutter: "catch_basin", lateral: "manhole" }[t] || "manhole";
+    const endPre = { pressure_junction: "J-", cross_section: "CS-", catch_basin: "CB-" }[endKind] || "MH-";
     if (!state.pipeStart) {
       let sid = nn && nn.id;
       if (t === "pump") {
@@ -662,6 +670,8 @@ async function act(ll, mods) {
         }
         if (!nn && !nl) { sid = newId("nodes", "WW-"); await exec({ op: "add_node", id: sid, kind: "wetwell", ...lonlat }); }
       }
+      const startKind = { gutter: "catch_basin", lateral: "property_connection", channel: "cross_section" }[t];
+      if (startKind && !nn && !nl) { sid = newId("nodes", KINDS[startKind][3]); await exec({ op: "add_node", id: sid, kind: startKind, ...lonlat }); }
       if (!sid && nl) {                                               // start on a pipe: split it there
         const sk = t === "pump" ? "wetwell" : t === "ppipe" ? "pressure_junction" : "manhole";
         if (!await askSplit(nl.id, sk)) return;
@@ -674,9 +684,12 @@ async function act(ll, mods) {
     }
     if (nn && nn.id === state.pipeStart) return;
     let pre = [], madeEnd = false;
+    if (!endId && nl && t === "lateral") {                           // a lateral ends on a conduit at a tap; the conduit stays whole
+      endId = newId("nodes", "TAP-"); pre = [{ op: "add_node", id: endId, kind: "tap", ...lonlat }, { op: "set_props", table: "nodes", ids: [endId], values: { link: nl.id } }];
+    }
     if (!endId && nl) { if (!await askSplit(nl.id, endKind)) return; endId = newId("nodes", endPre); pre = [splitOp(nl, endKind, endId)]; }   // end on a pipe: split it
     if (!endId) { endId = newId("nodes", endPre); madeEnd = true; await exec({ op: "add_node", id: endId, kind: endKind, ...lonlat }, true); }
-    const id = newId("links", { pump: "PMP-", orifice: "OR-", weir: "WR-" }[kind] || (kind === "pressure_pipe" ? "FM-" : "P-"));
+    const id = newId("links", { pump: "PMP-", orifice: "OR-", weir: "WR-", channel: "CH-", gutter: "GT-", lateral: "LT-" }[kind] || (kind === "pressure_pipe" ? "FM-" : "P-"));
     const from = state.pipeStart; state.pipeStart = null;
     const add = { op: "add_link", id, kind, from_node: from, to_node: endId };           // the size from the conduit prototype
     await exec(pre.length ? { op: "batch", ops: [...pre, add] } : add);
@@ -772,9 +785,9 @@ function renderProps() {
       `<span class="muted" data-testid="lock-state">${n ? (n === state.sel.ids.length ? "locked" : `${n} of ${state.sel.ids.length} locked`) : "free"}</span></div>`;
   }
   if (!multi && (table === "nodes" || table === "links")) h += `<div class="trace-bar">Trace <button id="trace-up" title="Everything that drains here (U)">&#8593; Upstream</button><button id="trace-down" title="The way to the outfall (D)">&#8595; Downstream</button></div>`;
-  if (table === "links" && fs.every(f => f.properties.kind === "conduit")) h += sectionEditor(fs);
+  if (table === "links" && fs.every(f => ["conduit", "channel"].includes(f.properties.kind))) h += sectionEditor(fs);
   for (const k of keys) {
-    if (["sec", "section", "infil", "inflow_m3d", "storage", "pump"].includes(k)) continue;   // shown in their own blocks below
+    if (["sec", "section", "infil", "inflow_m3d", "storage", "pump", "props"].includes(k)) continue;   // shown in their own blocks below
     if (multi && ["id", "x", "y", "from_node", "to_node"].includes(k)) continue;
     const v = val(k), ty = fieldType(table, k, fs[0].properties[k]);
     h += `<div class="pr"><label for="prop-${k}">${esc(LABELS[k] || k)}</label>${control(table, k, ty, v)}<span class="u">${(unitOf(k) || {}).u || UNITS[k] || ""}</span></div>`;

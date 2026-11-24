@@ -116,6 +116,15 @@ def _num(v):
 
 
 def from_project(p, rain=None):
+    # every element kind as SWMM's (v7): catch basins, transitions, cross sections and property connections are junctions,
+    # a headwall nothing leaves is an outfall (its fixed tailwater kept), air valves are junctions of the force main,
+    # channels and laterals are conduits, gutters and taps are left out (engine/steady.py engine_view)
+    import copy as _copy
+    from sewerapp.engine.steady import engine_view
+    PN = (getattr(p, "props", None) or {}).get("nodes", {})
+    hw_tw = {i: d["tailwater_m"] for i, d in PN.items() if i in p.nodes.index and p.nodes.kind[i] == "headwall" and d.get("boundary") == "fixed" and d.get("tailwater_m") is not None}
+    p = engine_view(p)
+    if hw_tw: p = _copy.copy(p); p.tailwater = {**(getattr(p, "tailwater", None) or {}), **hw_tw}
     pt = p.passthrough or {}; rows = pt.get("rows", {}); units = p.settings.get("units", "SI")
     mm = 304.8 if units == "US" else 1000.0
     n, L, C = p.nodes, p.links, p.catchments

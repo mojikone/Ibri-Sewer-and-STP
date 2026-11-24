@@ -30,7 +30,17 @@ import numpy as np, pandas as pd
 FT = 0.3048
 M3D_PER_CFS = 2446.575545
 NODE_KINDS = {"Manhole": "manhole", "Outfall": "outfall", "WetWell": "wetwell", "PressureJunction": "pressure_junction",
-              "CatchBasin": "manhole", "JunctionChamber": "manhole", "Pond": "storage", "PondOutletStructure": "storage"}
+              "CatchBasin": "catch_basin", "JunctionChamber": "transition", "CrossSectionNode": "cross_section", "Headwall": "headwall",
+              "AirValve": "air_valve", "PropertyConnection": "property_connection", "TapNode": "tap",
+              "Pond": "storage", "PondOutletStructure": "storage"}
+LINK_TABLES = {"Conduit": "conduit", "Channel": "channel", "GutterLink": "gutter", "LateralLink": "lateral"}
+# SewerGEMS's option lists (enum values as stored), docs/INLETS_HEC22.md
+INLET_TYPE = {0: "max_capacity", 1: "rating_curve", 2: "full_capture", 3: "catalog", 4: "percent_capture"}
+GUTTER_SHAPE = {0: "conventional", 1: "trapezoidal", 2: "conventional", 3: "conventional", 4: "v_shaped"}
+CATALOG_CLASS = {0: "combination", 1: "curb", 2: "grate", 3: "grate", 4: "slot"}
+GRATE = {0: "p50", 1: "p30", 2: "curved_vane", 3: "tilt_bar_45", 4: "tilt_bar_30", 5: "p50x100", 6: "reticuline"}
+THROAT = {0: "horizontal", 1: "inclined", 2: "vertical"}
+LS_PER_CFS = 28.316846592
 PUMP_TYPES = {1: "design_point", 2: "three_point", 5: "multi_point"}      # IdahoPumpDefinition.PumpDefinitionType, as stored
 
 
@@ -90,6 +100,14 @@ def export(sqlite_path, out, log=None, only=None):
     for t, k in NODE_KINDS.items():
         for i in _ids(con, t) & alive: kind[i] = k
     conduits = _ids(con, "Conduit") & alive
+    link_kind = {i: k for t_, k in LINK_TABLES.items() for i in _ids(con, t_) & alive}
+    conduits = set(link_kind)                                           # every gravity and surface link (v7)
+    # a property connection counts when a lateral connects it (the Ibri model holds 73,365 that nothing connects)
+    le = _df(con, "select HMITopologyStartNodeID as a, HMITopologyStopNodeID as b from BaseLink_HMIDataSetTopology_Data where DomainElementID in (select DomainElementID from LateralLink)")
+    lat_ends = (set(le.a) | set(le.b)) if "a" in le.columns else set()
+    loose = [i for i, k in kind.items() if k == "property_connection" and i not in lat_ends]
+    for i in loose: kind.pop(i)
+    if loose: say(f"  {len(loose)} property connections no lateral connects were left out")
     batteries = _ids(con, "VariableSpeedPumpBattery") & alive
     pumps = (_ids(con, "StandardPump") & alive) | batteries; ppipes = _ids(con, "PressurePipe") & alive
     skipped = {}
@@ -101,6 +119,24 @@ def export(sqlite_path, out, log=None, only=None):
     ngr = _df(con, "select DomainElementID, AlternativeID, Physical_GroundElevation as g from BaseNode_Physical_Data")
     ninv = _df(con, "select DomainElementID, AlternativeID, Physical_InvertElevation as inv from GravityNode_Physical_Data")
     ninv2 = _df(con, "select DomainElementID, AlternativeID, Physical_InvertElevation as inv from BaseDirectedNode_Physical_Data")
+    xinv = pd.concat([_df(con, f"select DomainElementID, AlternativeID, Physical_InvertElevation as inv from {t_}") for t_ in
+                      ("CrossSectionNode_Physical_Data", "Headwall_Physical_Data", "PropertyConnection_Physical_Data")], ignore_index=True)
+    avel = _df(con, "select DomainElementID, AlternativeID, Physical_AirValveElevation as el, Physical_TreatAirValveAsJunction as tj from AirValve_Physical_Data")
+    latd = _df(con, "select DomainElementID, AlternativeID, Physical_LateralDiameter as d, Physical_LateralManningsN as n, Physical_LateralMaterial as mat from LateralLink_Physical_Data")
+    cbp = _df(con, "select * from CatchBasin_Physical_Data")
+    cbpc = _df(con, "select DomainElementID, AlternativeID, PercentCaptureType_PercentCaptureEfficiency as pc from CatchBasin_Physical_InletType_PercentCaptureType")
+    cbmx = _df(con, "select DomainElementID, AlternativeID, MaximumCapacityType_MaximumInflow as q from CatchBasin_Physical_InletType_MaximumCapacityType")
+    cbcat = _df(con, "select DomainElementID, AlternativeID, CatalogInletType_InletID as inlet from CatchBasin_Physical_InletType_CatalogInletType")
+    cbrc = _df(con, "select DomainElementID, AlternativeID, HydologicRatingCurveListItem_TotalInletInflow as qin, HydologicRatingCurveListItem_InletCapture as qc from CatchBasin_Physical_HydologicRatingCurveListItem order by ItemID")
+    cbhy = _df(con, "select DomainElementID, AlternativeID, Hydrologic_CarryoverFlow as q from CatchBasin_Hydrologic_Data")
+    inlcat = _df(con, "select * from Inlet")
+    inlslot = _df(con, "select * from Inlet_InletType_SlotType")
+    gutp = _df(con, "select * from GutterLink_Physical_Data")
+    tapr = _df(con, "select DomainElementID, AlternativeID, HMITopologyReferenceNodeLinkID as host from TapNode_HMIDataSetTopology_Data")
+    tapp = _df(con, "select DomainElementID, AlternativeID, TapConnectsAt as at_, TapElevationOffset as off from TapNode_Physical_Data")
+    hwbc = _df(con, "select DomainElementID, AlternativeID, BoundaryConditionType as bc from Headwall_BoundaryCondition_Data")
+    hwtw = _df(con, "select * from Headwall_BoundaryCondition_BoundaryConditionType_UserDefinedTwType")
+    trp = _df(con, "select DomainElementID, AlternativeID, Physical_TransitionLength as tl from JunctionChamber_Physical_Data")
     ltop = _df(con, "select DomainElementID, AlternativeID, HMITopologyStartNodeID as a, HMITopologyStopNodeID as b from BaseLink_HMIDataSetTopology_Data")
     lgeo = _df(con, "select DomainElementID, AlternativeID, HMIGeometry, HMIGeometryScaledLength as sl from BaseLink_HmiDataSetGeometry_Data")
     lact = _df(con, "select DomainElementID, AlternativeID, HMIActiveTopologyIsActive as on_ from BaseLink_HMIActiveTopology_Data")
@@ -155,19 +191,21 @@ def export(sqlite_path, out, log=None, only=None):
         sid, f = int(sc.id), f"s{k:03d}"
         g1, g2, g3, g4, g12 = (alt(sid, t) for t in (1, 2, 3, 4, 12))
         # structures
-        P = pick(ngeo, g1); G = pick(ngr, g4); I = pick(ninv, g4); I2 = pick(ninv2, g4); ACT = pick(nact, g3)
+        P = pick(ngeo, g1); G = pick(ngr, g4); I = pick(ninv, g4); I2 = pick(ninv2, g4); ACT = pick(nact, g3); XI = pick(xinv, g4)
         nodes = []
         for i in sorted(kind):
             if i not in P.index: continue
             xy = get_coordinates(from_wkb(P.HMIGeometry[i]))[0] * FT
-            inv = I.inv[i] if i in I.index else (I2.inv[i] if i in I2.index else np.nan)
+            inv = I.inv[i] if i in I.index else (I2.inv[i] if i in I2.index else (XI.inv[i] if i in XI.index else np.nan))
             nodes.append(dict(id=i, label=label.get(i, str(i)), active=bool(ACT.on_[i]) if i in ACT.index else True, x=xy[0], y=xy[1],
                               ground=G.g[i] * FT if i in G.index else np.nan, rim=G.g[i] * FT if i in G.index else np.nan,
                               invert=inv * FT if inv == inv else np.nan, diameter_m=np.nan if kind[i] == "outfall" else 1.0, kind=kind[i]))
         # pressure junctions and wet wells: their own levels; each pump's outlet: a junction at the pump
         PJ, WW = pick(pjel, alt(sid, ttype(pjel)) if len(pjel) else None), pick(wwph, alt(sid, ttype(wwph)) if len(wwph) else None)
+        AV = pick(avel, alt(sid, ttype(avel)) if len(avel) else None)
         for r in nodes:
             if r["kind"] == "pressure_junction" and r["id"] in PJ.index: r["invert"] = r["ground"] = PJ.el[r["id"]] * FT
+            if r["kind"] == "air_valve" and r["id"] in AV.index: r["invert"] = r["ground"] = AV.el[r["id"]] * FT
             if r["kind"] == "wetwell" and r["id"] in WW.index:
                 b = WW.base[r["id"]] if WW.base[r["id"]] else WW.mn[r["id"]]
                 if b: r["invert"] = b * FT
@@ -183,6 +221,7 @@ def export(sqlite_path, out, log=None, only=None):
         # pipes
         T = pick(ltop, g2); LG = pick(lgeo, g1); LA = pick(lact, g3); LL = pick(llen, g4); LI = pick(linv, g4); LC = pick(lcon, g4); CA = pick(lcat, g4)
         links, geo = [], []
+        LD = pick(latd, alt(sid, ttype(latd)) if len(latd) else None)
         for i in sorted(conduits):
             if i not in T.index: continue
             a, b = int(T.a[i]), int(T.b[i])
@@ -198,12 +237,19 @@ def export(sqlite_path, out, log=None, only=None):
             elif circ: lab, dmm = f"{LC.d[i] * FT * 1000.0:.0f} mm", LC.d[i] * FT * 1000.0
             elif i in LC.index and not shp.strip(): lab, dmm = "", LC.d[i] * FT * 1000.0            # no shape named: a circle at its typed bore
             else: lab, dmm = (str(LC.shp[i]) if i in LC.index else "?"), 0.0                    # a box or channel: shown, not analysed
+            lk = link_kind.get(i, "conduit")
+            if lk == "lateral" and i in LD.index and LD.d[i]: dmm = LD.d[i] * FT * 1000.0; lab = f"{dmm:.0f} mm"
+            elif lk in ("gutter", "channel"): dmm, lab = 0.0, lk
+            if a not in kind or b not in kind: continue                         # an end that is not read (a loose element)
             links.append(dict(id=i, label=label.get(i, str(i)), start=a, stop=b, active=bool(LA.on_[i]) if i in LA.index else True,
                               length_m=length, diameter_mm=dmm, size_label=lab, start_inv=ui * FT, stop_inv=di * FT,
-                              flow_m3d=np.nan, velocity_ms=np.nan, depth_in_m=np.nan, depth_out_m=np.nan))
+                              flow_m3d=np.nan, velocity_ms=np.nan, depth_in_m=np.nan, depth_out_m=np.nan, kind=lk))
             if not geo_written and line is not None: geo.append(f"{i}\t{label.get(i, i)}\tLINESTRING (" + ", ".join(f"{float(x)!r} {float(y)!r}" for x, y in line[:, :2]) + ")")
         pd.DataFrame(links, columns=["id", "label", "start", "stop", "active", "length_m", "diameter_mm", "size_label", "start_inv", "stop_inv",
-                                     "flow_m3d", "velocity_ms", "depth_in_m", "depth_out_m"]).to_csv(os.path.join(out, f"conduits_{f}.csv"), index=False)
+                                     "flow_m3d", "velocity_ms", "depth_in_m", "depth_out_m", "kind"]).to_csv(os.path.join(out, f"conduits_{f}.csv"), index=False)
+        _props(out, f, kind, link_kind, label, pick, alt, sid, ttype, LD,
+               dict(cbp=cbp, cbpc=cbpc, cbmx=cbmx, cbcat=cbcat, cbrc=cbrc, cbhy=cbhy, inlcat=inlcat, inlslot=inlslot, gutp=gutp,
+                    tapr=tapr, tapp=tapp, hwbc=hwbc, hwtw=hwtw, trp=trp, avel=avel))
         # pumps and force mains: the suction (pressure pipes and junctions from the wet well to the pump) is left out
         if pumps or ppipes:
             PD = pick(ppd, alt(sid, ttype(ppd)) if len(ppd) else None); PH = pick(pph, alt(sid, ttype(pph)) if len(pph) else None)
@@ -247,11 +293,11 @@ def export(sqlite_path, out, log=None, only=None):
             geo_written = True
         # sanitary loads: each manhole's collection in the nearest alternative that has one
         ch = chain(g12) if g12 is not None else []
-        if ch and not sl_data.empty:
+        if ch and not sl_data.empty and "cnt" in sl_rows.columns:
             rank = {x: j for j, x in enumerate(ch)}
             d = sl_data[sl_data.AlternativeID.isin(ch)].assign(_r=lambda t: t.AlternativeID.map(rank)).sort_values("_r").drop_duplicates("DomainElementID")
             own = set(zip(d.DomainElementID, d.AlternativeID))
-            r = sl_rows[[(e, a_) in own and e in kind for e, a_ in zip(sl_rows.DomainElementID, sl_rows.AlternativeID)]].copy()   # live structures only
+            r = sl_rows[np.array([(e, a_) in own and e in kind for e, a_ in zip(sl_rows.DomainElementID, sl_rows.AlternativeID)], dtype=bool)].copy()   # live structures only
             r["unit_m3d"] = r.cnt.fillna(0) * r.unit.map(unit_cfs).fillna(0) * M3D_PER_CFS
             r["pattern_m3d"] = r.base.fillna(0) * M3D_PER_CFS
             Ld = r.groupby("DomainElementID").agg(unit_m3d=("unit_m3d", "sum"), pattern_m3d=("pattern_m3d", "sum"),
@@ -265,6 +311,84 @@ def export(sqlite_path, out, log=None, only=None):
     pd.DataFrame(rows_s).to_csv(os.path.join(out, "scenarios.csv"), index=False)       # last, as the bridge export: the folder is complete
     con.close()
     return rows_s
+
+
+def _props(out, f, kind, link_kind, label, pick, alt, sid, ttype, LD, T):
+    """Each element kind's own fields in this scenario (model/kinds.py), by label, to props_<file>.json."""
+    import json
+    P = {"nodes": {}, "links": {}}
+    at = lambda df: pick(df, alt(sid, ttype(df)) if len(df) else None)
+    num = lambda v, k=1.0: float(v) * k if v is not None and v == v else None
+    cb = at(T["cbp"]); pc, mx, cat, hy = at(T["cbpc"]), at(T["cbmx"]), at(T["cbcat"]), at(T["cbhy"])
+    rc = T["cbrc"]; inl = T["inlcat"].set_index("SupportElementID") if len(T["inlcat"]) else T["inlcat"]
+    slot = T["inlslot"].set_index("SupportElementID") if len(T["inlslot"]) else T["inlslot"]
+    for i in [i for i, k in kind.items() if k == "catch_basin"]:
+        if i not in cb.index: continue
+        r = cb.loc[i]; t = INLET_TYPE.get(int(r.InletType), "full_capture")
+        d = dict(inlet_type=t, location="in_sag" if int(r.InletLocation or 0) == 1 else "on_grade",
+                 gutter_shape=GUTTER_SHAPE.get(int(r.GutterShape or 0), "conventional"),
+                 road_cross_slope=num(r.Physical_RoadCrossSlope), gutter_cross_slope=num(r.Physical_GutterCrossSlope) if r.Physical_DepressedGutter else None,
+                 gutter_width_m=num(r.Physical_GutterWidth, FT) if r.Physical_DepressedGutter else None, curb_cross_slope=num(r.VShapedGutterType_CurbCrossSlope),
+                 ditch_bottom_m=num(r.Physical_DitchBottomWidth, FT), side_slope_l=num(r.GutterShapeType_LeftSideSlope), side_slope_r=num(r.GutterShapeType_RightSideSlope),
+                 max_gutter_depth_m=num(r.Physical_MaximumGutterDepth, FT), long_slope=num(r.OnGradeType_LongitudinalSlope), n_gutter=num(r.OnGradeType_ManningsN),
+                 grate_length_m=num(r.Physical_GrateLength, FT), curb_length_m=num(r.Physical_CurbOpeningLength, FT), slot_length_m=num(r.Physical_SlotLength, FT),
+                 clogging_pc=num(r.Physical_GrateCloggingFactor))
+        if t == "percent_capture" and i in pc.index: d["capture_pc"] = num(pc.pc[i])
+        if t == "max_capacity" and i in mx.index: d["q_max_ls"] = num(mx.q[i], LS_PER_CFS)
+        if t == "rating_curve":
+            rows = rc[(rc.DomainElementID == i)] if len(rc) else rc
+            if len(rows):
+                a0 = rows.AlternativeID.iloc[0]; rows = rows[rows.AlternativeID == a0]
+                d["rating"] = [[float(x) * LS_PER_CFS, float(y) * LS_PER_CFS] for x, y in zip(rows.qin, rows.qc)]
+        if t == "catalog" and i in cat.index and len(inl) and int(cat.inlet[i]) in inl.index:
+            c = inl.loc[int(cat.inlet[i])]; cls = CATALOG_CLASS.get(int(c.InletType))
+            if cls:
+                d["inlet_class"] = cls
+                if int(c.InletType) == 2: d["gutter_shape"] = "trapezoidal"         # a ditch inlet: a grate in the ditch
+                if cls in ("grate", "combination"):
+                    d["grate_type"] = GRATE.get(int(c.GrateType or 0), "p50"); d["grate_width_m"] = num(c.InletType_GrateWidth, FT)
+                    if not d.get("grate_length_m"): d["grate_length_m"] = num(c.InletType_DefaultGrateLength, FT)
+                if cls in ("curb", "combination"):
+                    d["curb_height_m"] = num(c.InletType_CurbOpeningHeight, FT); d["throat"] = THROAT.get(int(c.CurbInletThroatType or 2), "vertical")
+                    if not d.get("curb_length_m"): d["curb_length_m"] = num(c.InletType_DefaultCurbOpeningLength, FT)
+                if cls == "slot" and len(slot) and int(cat.inlet[i]) in slot.index:
+                    s_ = slot.loc[int(cat.inlet[i])]; d["slot_width_m"] = num(s_.get("SlotType_SlotWidth"), FT)
+        if i in hy.index and hy.q[i]: d["carryover_ls"] = num(hy.q[i], LS_PER_CFS)
+        P["nodes"][label.get(i, str(i))] = {k: v for k, v in d.items() if v is not None and not (isinstance(v, float) and v == 0 and k not in ("road_cross_slope",))}
+    tr, hb, tw = at(T["trp"]), at(T["hwbc"]), at(T["hwtw"])
+    for i, k in kind.items():
+        lab = label.get(i, str(i))
+        if k == "transition" and i in tr.index and tr.tl[i]: P["nodes"][lab] = dict(transition_length_m=float(tr.tl[i]) * FT)
+        if k == "headwall":
+            d = dict(boundary="free")
+            if i in hb.index and int(hb.bc[i] or 0) == 2 and i in tw.index:
+                col = [c for c in tw.columns if "Tailwater" in c]
+                if col and tw[col[0]][i] == tw[col[0]][i]: d = dict(boundary="fixed", tailwater_m=float(tw[col[0]][i]) * FT)
+            P["nodes"][lab] = d
+    tp, ta = at(T["tapr"]), at(T["tapp"])
+    for i in [i for i, k in kind.items() if k == "tap"]:
+        d = dict(connects_at="invert_to_crown" if i in ta.index and int(ta.at_[i] or 0) == 1 else "invert_to_center",
+                 offset_m=float(ta.off[i]) * FT if i in ta.index and ta.off[i] == ta.off[i] else 0.0)
+        if i in tp.index and tp.host[i] == tp.host[i]: d["link"] = label.get(int(tp.host[i]), str(int(tp.host[i])))
+        P["nodes"][label.get(i, str(i))] = d
+    gp = at(T["gutp"])
+    for i, k in link_kind.items():
+        lab = label.get(i, str(i))
+        if k == "gutter":
+            d = dict(gutter_shape="from_start_inlet")
+            if i in gp.index:
+                r = gp.loc[i]
+                if int(r.GutterLinkGutterType or 2) == 0:
+                    d = dict(gutter_shape=GUTTER_SHAPE.get(int(r.GutterShape or 0), "conventional"), road_cross_slope=num(r.Physical_RoadCrossSlope),
+                             gutter_cross_slope=num(r.Physical_GutterCrossSlope), gutter_width_m=num(r.Physical_GutterWidth, FT))
+                if r.Physical_GutterManningsN: d["n"] = float(r.Physical_GutterManningsN)
+            P["links"][lab] = {k_: v for k_, v in d.items() if v is not None}
+        if k == "lateral" and i in LD.index:
+            d = {}
+            if LD.n[i]: d["n"] = float(LD.n[i])
+            if LD.mat[i]: d["material"] = str(LD.mat[i])
+            if d: P["links"][lab] = d
+    with open(os.path.join(out, f"props_{f}.json"), "w", encoding="utf-8") as fh: json.dump(P, fh)
 
 
 def _support(con, out):

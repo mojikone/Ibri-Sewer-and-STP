@@ -87,10 +87,15 @@ def _open(project):
     SESSIONS[pid] = Session(pid, project); schedule(pid, 0.5); return pid
 
 
+def _kinds_schema():
+    from sewerapp.model.kinds import schema
+    return schema()
+
+
 def _info(pid):
     s = SESSIONS[pid]; p = s.base
     return dict(id=pid, name=p.name, crs=p.crs, basemap=bool(p.crs), scenarios=[c.to_dict() for c in s.scenarios.values()],
-                load_sets=sorted(p.load_sets), node_kinds=NODE_KINDS, link_kinds=LINK_KINDS,
+                load_sets=sorted(p.load_sets), node_kinds=NODE_KINDS, link_kinds=LINK_KINDS, kind_fields=_kinds_schema(),
                 catalogue=p.catalogue().nominal_mm.tolist())
 
 
@@ -477,10 +482,12 @@ def model(pid: str, sid: str):
     s = _s(pid)
     with _lock: p = s.model(sid)
     n = p.nodes; lon, lat = coords.to_display(p.crs, n.x.values, n.y.values); ll = dict(zip(n.index, zip(lon, lat)))
+    PN, PL = (getattr(p, "props", None) or {}).get("nodes", {}), (getattr(p, "props", None) or {}).get("links", {})
     nodes = [dict(type="Feature", id=i, geometry=dict(type="Point", coordinates=[float(ll[i][0]), float(ll[i][1])]),
                   properties=clean(dict(id=i, **r, **({"storage": p.storage[i]} if i in getattr(p, "storage", {}) else {}),
                                         **({"tailwater": p.tailwater[i]} if i in getattr(p, "tailwater", {}) else {}),
-                                        **({"ground_src": p.ground_src[i]} if i in getattr(p, "ground_src", {}) else {}))))
+                                        **({"ground_src": p.ground_src[i]} if i in getattr(p, "ground_src", {}) else {}),
+                                        **({"props": PN[i]} if i in PN else {}))))
              for i, r in zip(n.index, n.to_dict("records"))]
     links = []; sections = (getattr(p, "meta", None) or {}).get("sections", {})
     for i, r in zip(p.links.index, p.links.to_dict("records")):
@@ -497,6 +504,7 @@ def model(pid: str, sid: str):
         if i in getattr(p, "pumps", {}): r["pump"] = p.pumps[i]           # a pump's capacity and start/stop depths
         if i in getattr(p, "ppipes", {}): r["ppipe"] = p.ppipes[i]        # a pressure pipe's own friction and minor loss
         if i in getattr(p, "outlets", {}): r["outlet"] = p.outlets[i]     # an orifice's or a weir's geometry
+        if i in PL: r["props"] = PL[i]                                    # the kind's own fields (model/kinds.py)
         links.append(dict(type="Feature", id=i, geometry=dict(type="LineString", coordinates=line), properties=clean(dict(id=i, **r))))
     catch = []
     for i, r in zip(p.catchments.index, p.catchments.to_dict("records")):
@@ -805,9 +813,15 @@ def rational(pid: str, sid: str):
     from sewerapp.engine import tools_v4
     s = _s(pid)
     with _lock:
-        try: rows, summ = tools_v4.rational(s.model(sid))
+        inl = {}
+        try: rows, summ = tools_v4.rational(s.model(sid), inl)
         except (ValueError, KeyError) as x: raise HTTPException(400, str(x))
-    return clean(dict(rows=[dict(id=k, **v) for k, v in sorted(rows.items(), key=lambda kv: -kv[1]["q_rational_ls"])], report=summ))
+    if inl:                                                                 # catch basins: capture, bypass, spread (v7)
+        summ = dict(summ, inlets=len(inl), captured_ls=round(sum(r["q_captured_ls"] for r in inl.values()), 3),
+                    bypass_lost_ls=round(sum(r["q_bypass_ls"] for r in inl.values() if r["bypass_to"] == "lost"), 3),
+                    spread_over=sum(1 for r in inl.values() if r.get("spread_over")), depth_over=sum(1 for r in inl.values() if r.get("depth_over")))
+    return clean(dict(rows=[dict(id=k, **v) for k, v in sorted(rows.items(), key=lambda kv: -kv[1]["q_rational_ls"])], report=summ,
+                      inlets=[dict(id=k, **v) for k, v in inl.items()]))
 
 
 class BatchB(BaseModel):

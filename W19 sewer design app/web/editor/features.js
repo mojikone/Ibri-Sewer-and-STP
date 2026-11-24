@@ -37,7 +37,7 @@ function ctxForPoint(e) {
       { label: "Start a layout run here", key: "layout-from", run: () => { setTool("layout"); layout.last = nn.id; setSel("nodes", [nn.id]); $("#hint").textContent = "Click the next point; Esc or right-click ends the run."; } },
       "-", { head: "Morph to" });
     for (const k of state.info.node_kinds) if (k !== kind)
-      items.push({ label: k[0].toUpperCase() + k.slice(1), key: "morph-" + k, title: "Keeps the id, the position, the levels and the pipes", run: () => enqueue(async () => { await exec({ op: "set", table: "nodes", ids, field: "kind", value: k }); toast(`${ids.length > 1 ? ids.length + " nodes" : ids[0]} changed to ${k} (Ctrl+Z undoes).`, "info"); }) });
+      items.push({ label: (typeof KINDS !== "undefined" && KINDS[k]) ? KINDS[k][1] : k[0].toUpperCase() + k.slice(1), key: "morph-" + k, title: "Keeps the id, the position, the levels and the pipes", run: () => enqueue(async () => { await exec({ op: "set", table: "nodes", ids, field: "kind", value: k }); toast(`${ids.length > 1 ? ids.length + " nodes" : ids[0]} changed to ${k} (Ctrl+Z undoes).`, "info"); }) });
     items.push("-", { label: "Delete", keys: "Del", run: () => enqueue(() => deleteIds("nodes", ids)) });
   } else if (nl) {
     const f = state.model.links.get(nl.id), ids = inSel("links", nl.id) ? state.sel.ids.slice() : [nl.id];
@@ -80,21 +80,22 @@ function startReconnect(id, end) {
 function layoutCard() {
   const c = document.createElement("div"); c.id = "layout-card"; c.hidden = true;
   c.innerHTML = `<div class="lc-h">Layout</div>
-    <label for="layout-node">Structure</label><select id="layout-node" title="What each click places (its levels from the prototype)"><option value="manhole">Manhole</option><option value="outfall">Outfall</option><option value="wetwell">Wet well</option></select>
+    <label for="layout-node">Structure</label><select id="layout-node" title="What each click places (its levels from the prototype)"><option value="manhole">Manhole</option><option value="catch_basin">Catch basin</option><option value="outfall">Outfall</option><option value="headwall">Headwall</option><option value="transition">Transition</option><option value="cross_section">Cross section</option><option value="wetwell">Wet well</option><option value="storage">Pond (storage)</option><option value="pressure_junction">Pressure junction</option><option value="air_valve">Air valve</option><option value="property_connection">Property connection</option></select>
+    <label for="layout-link">Link</label><select id="layout-link" title="What each click draws from the last point"><option value="conduit">Conduit</option><option value="channel">Channel</option><option value="gutter">Gutter</option><option value="lateral">Lateral</option><option value="pressure_pipe">Pressure pipe</option></select>
     <label for="layout-spacing">Manholes</label><select id="layout-spacing" title="Manholes put in between two clicks so no pipe is longer than this (rounded to 10 m pieces, never over the maximum)">
       <option value="table12">at G203 Table 12 spacing (by size)</option><option value="custom">at most every...</option><option value="none">none: one pipe per click</option></select>
     <label for="layout-custom" id="layout-custom-l">Max spacing (m)</label><input id="layout-custom" type="number" min="5" step="any" value="100">
     <div class="muted small" id="layout-note"></div>`;
   $("#map-wrap").appendChild(c);
   const sync = () => {
-    layout.node = $("#layout-node").value; layout.spacing = $("#layout-spacing").value; layout.custom = Number($("#layout-custom").value) || 100;
+    layout.node = $("#layout-node").value; layout.link = $("#layout-link").value; layout.spacing = $("#layout-spacing").value; layout.custom = Number($("#layout-custom").value) || 100;
     const cu = layout.spacing === "custom"; $("#layout-custom").hidden = !cu; $("#layout-custom-l").hidden = !cu;
     const dn = (state.model && state.model.settings.prototypes && state.model.settings.prototypes.conduit && state.model.settings.prototypes.conduit.dn_mm) || (state.info && state.info.catalogue[0]) || 200;
     $("#layout-note").textContent = layout.spacing === "table12" ? `DN${dn}: ${dn <= 315 ? 100 : dn <= 900 ? 120 : dn <= 1400 ? 150 : 200} m maximum (p30); 230 m gives 80 + 80 + 70.` : layout.spacing === "custom" ? "Rounded to 10 m pieces, never over the maximum." : "";
-    try { localStorage.setItem("w19.layout", JSON.stringify({ node: layout.node, spacing: layout.spacing, custom: layout.custom })); } catch (e) { /* not kept */ }
+    try { localStorage.setItem("w19.layout", JSON.stringify({ node: layout.node, link: layout.link, spacing: layout.spacing, custom: layout.custom })); } catch (e) { /* not kept */ }
   };
-  try { const s = JSON.parse(localStorage.getItem("w19.layout") || "{}"); if (s.node) $("#layout-node").value = s.node; if (s.spacing) $("#layout-spacing").value = s.spacing; if (s.custom) $("#layout-custom").value = s.custom; } catch (e) { /* defaults */ }
-  for (const id of ["layout-node", "layout-spacing", "layout-custom"]) $("#" + id).addEventListener("change", sync);
+  try { const s = JSON.parse(localStorage.getItem("w19.layout") || "{}"); if (s.node) $("#layout-node").value = s.node; if (s.link) $("#layout-link").value = s.link; if (s.spacing) $("#layout-spacing").value = s.spacing; if (s.custom) $("#layout-custom").value = s.custom; } catch (e) { /* defaults */ }
+  for (const id of ["layout-node", "layout-link", "layout-spacing", "layout-custom"]) $("#" + id).addEventListener("change", sync);
   sync(); layoutCard.sync = sync;
 }
 
