@@ -118,6 +118,10 @@ A network editor that works the way SewerGEMS does, on any project, sewer and st
     inlet in Tool output and Properties. The storm run puts each inlet on SWMM 5.2's streets (dual drainage, F56):
     SWMM's own HEC-22 inlets on conventional gutters, curves from the HEC-22 engine for the rest; it captures what the
     steady engine does within half a point; each inlet's capture, bypass, spread and depth reach Properties.
+  - **Gutters and inlet design (F57):** parabolic and irregular gutters too; Analysis > Design inlets sizes each inlet
+    marked for design to its minimum efficiency on grade, or its maximum depth and spread in a sag.
+  - **Stormwater pumps (F58):** Settings > Project > Network type; a stormwater pump station draws from a storage sump or
+    pond, a sewer's from a wet well (Auto decides from the model).
   - **Asking first:** a structure tool on a structure asks before morphing it, on a pipe before splitting it. The pump
     tool makes a manhole the station's wet well (after asking), then the force main's first junction, and drawing goes
     on as force main; pumps show SewerGEMS's pump symbol.

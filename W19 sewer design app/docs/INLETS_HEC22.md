@@ -79,3 +79,17 @@ inlets whose DIVERSION curve (on grade) or RATING curve (in a sag) engine/inlets
 SWMM against engine/inlets.py, HEC-22 Example 4-8's gutter at a steady 0.19 m3/s (SWMM's average capture against
 ours): P-50 46.8 % / 46.6 %, reticuline 41.6 % / 41.3 %; curb opening 3 m at 0.05 m3/s, 49.0 % / 48.8 %. In a design
 storm, the P-50's capture at the street's peak: 45.4 % / 45.6 %.
+
+## Gutter shapes and inlet design (F57)
+
+All five of SewerGEMS's gutter shapes are computed: conventional (with its depressed gutter), V-shaped, trapezoidal
+(ditch, Manning on the whole section), parabolic (z = H (1 - (1 - x/W)^2) from the curb to the crown, H and W as
+SewerGEMS's Height and Width) and irregular (station from the curb and relative elevation rows). The non-ditch shapes
+use Izzard's strip integral of their own depths; a parabolic or irregular gutter with no cross slope given takes an
+equivalent one (H/W, or the section's rise over its width) for HEC-22's side-flow and curb equations.
+
+Design inlet opening (SewerGEMS's Design inlet opening, Analysis > Design inlets): a catalogue inlet marked for design
+takes the shortest of its design lengths (grate, curb opening or slot; a combination's curb opening not shorter than
+its grate) that meets its minimum efficiency on grade, or its maximum gutter depth and spread in a sag, at the flow the
+rational run brings it; inlets are sized one after another down the gutters, each upstream choice changing what the
+next receives. The chosen lengths are written as one undoable edit and listed in Tool output.
