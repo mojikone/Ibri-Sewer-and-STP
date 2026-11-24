@@ -520,8 +520,8 @@ const sgMine = () => { try { return JSON.parse(localStorage.getItem(SG_MINE) || 
     return rs.apply(this, arguments);
   };
   const dlgEl = $("#dlg-sg .dlg"); if (!dlgEl || $("#sg-upload")) return;
-  $("#sg-watch").insertAdjacentHTML("afterend", `<div class="sg-up"><h4>From this device</h4><p class="muted">Pick the model's .stsw and its .stsw.sqlite (both, or one zip of them). SewerGEMS reads a copy; your files are not changed. Through a shared link a file can be up to about 100 MB: zip a larger model.</p>
-    <div class="row"><button id="sg-upload" data-testid="sg-upload">Choose the model's files...</button><label class="chk"><input type="checkbox" id="sg-up-run"> compute every scenario first</label></div></div>`);
+  $("#sg-watch").insertAdjacentHTML("afterend", `<div class="sg-up"><h4>From this device</h4><p class="muted">Pick the folder the model is in: the app finds the .stsw and its .stsw.sqlite (a browser cannot reach a file beside the one you pick, so it asks for the folder). Or pick both files, or one zip of them. SewerGEMS reads a copy; your files are not changed. Through a shared link a file can be up to about 100 MB: zip a larger model.</p>
+    <div class="row"><button id="sg-folder" class="primary" data-testid="sg-folder" title="The app finds the .stsw and its .stsw.sqlite in the folder; only those two files are read">Choose the model's folder...</button><button id="sg-upload" data-testid="sg-upload">or the model's files...</button><label class="chk"><input type="checkbox" id="sg-up-run"> compute every scenario first</label></div></div>`);
   // the model is two files: a .stsw picked alone is completed by a second pick of its .stsw.sqlite (a browser cannot
   // fetch the file beside it); a file SewerGEMS keeps locked is named, not sent half-read (the engineer, 2026-11-24)
   const send = files => enqueue(() => withBusy("Sending the model...", async () => {
@@ -539,6 +539,28 @@ const sgMine = () => { try { return JSON.parse(localStorage.getItem(SG_MINE) || 
   }));
   const pick = (accept, then) => { const i = document.createElement("input"); i.type = "file"; i.multiple = true; i.accept = accept; i.onchange = () => then([...i.files]); i.click(); };
   $("#sg-upload").insertAdjacentHTML("afterend", `<span id="sg-up-more" data-testid="sg-up-more"></span>`);
+  // the model's folder: every .stsw there with its .stsw.sqlite; one is sent at once, several are offered (2026-11-24)
+  const offer = models => {
+    if (!models.length) { toast("No SewerGEMS model in that folder: it needs a .stsw with its .stsw.sqlite beside it.", "info"); return; }
+    if (models.length === 1) { models[0].get().then(send); return; }
+    const host = $("#sg-up-more");
+    host.innerHTML = ` ${models.length} models there: ` + models.map((m, k) => `<button data-k="${k}" data-testid="sg-up-model-${k}">${esc(m.name)}</button>`).join(" ");
+    host.onclick = e => { const b = e.target.closest("button[data-k]"); if (b) { host.onclick = null; models[+b.dataset.k].get().then(send); } };
+  };
+  $("#sg-folder").onclick = async () => {
+    $("#sg-up-more").innerHTML = "";
+    if (window.showDirectoryPicker) {                                  // reads only the two files it sends
+      let h; try { h = await window.showDirectoryPicker({ mode: "read" }); } catch (x) { if (x.name !== "AbortError") toast(`That folder cannot be opened (${x.message}): pick the model's own folder, or its files.`); return; }
+      const all = new Map();
+      for await (const [n, fh] of h.entries()) if (fh.kind === "file" && /\.stsw(\.sqlite)?$/i.test(n)) all.set(n.toLowerCase(), fh);
+      offer([...all.keys()].filter(k => k.endsWith(".stsw") && all.has(k + ".sqlite")).sort().map(k => ({ name: all.get(k).name, get: async () => [await all.get(k).getFile(), await all.get(k + ".sqlite").getFile()] })));
+      return;
+    }
+    const i = document.createElement("input"); i.type = "file"; i.webkitdirectory = true;          // other browsers: the folder's list
+    i.onchange = () => { const all = new Map([...i.files].filter(f => !f.webkitRelativePath || f.webkitRelativePath.split("/").length === 2).map(f => [f.name.toLowerCase(), f]));
+      offer([...all.keys()].filter(k => k.endsWith(".stsw") && all.has(k + ".sqlite")).sort().map(k => ({ name: all.get(k).name, get: async () => [all.get(k), all.get(k + ".sqlite")] }))); };
+    i.click();
+  };
   $("#sg-upload").onclick = () => pick(".stsw,.sqlite,.zip", files => {
     if (!files.length) return;
     const st = files.find(f => /\.stsw$/i.test(f.name)), zip = files.some(f => /\.zip$/i.test(f.name));
