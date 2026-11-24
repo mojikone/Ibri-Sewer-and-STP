@@ -21,7 +21,7 @@ function ctxForPoint(e) {
   if (state.tool === "layout" && layout.last) { layout.last = null; $("#hint").textContent = HINTS.layout; return; }   // ends the run, as SewerGEMS
   if (state.reconnect) { state.reconnect = null; $("#hint").textContent = HINTS[state.tool] || ""; return; }
   if (state.pipeStart) { state.pipeStart = null; highlight(); $("#hint").textContent = HINTS[state.tool] || ""; return; }
-  const nn = nearestNode(pt, 12), nl = nn ? null : nearestLink(pt, 8), cm = nn || nl ? null : catchAt(ll);
+  const [tn, tl] = pickTol(), nn = nearestNode(pt, tn), nl = nn ? null : nearestLink(pt, tl), cm = nn || nl ? null : catchAt(ll);
   const items = [], X = e.originalEvent.clientX, Y = e.originalEvent.clientY;
   const inSel = (t, id) => state.sel.table === t && state.sel.ids.includes(id) && state.sel.ids.length > 1;
   if (nn) {

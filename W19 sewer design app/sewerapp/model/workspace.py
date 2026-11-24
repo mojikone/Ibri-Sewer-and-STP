@@ -12,7 +12,7 @@ Edit ops (dicts with "op"):
   add_catchment {id?, outlet, area_ha, imperv_pc, width_m, slope_pc, coords?}
   delete     {table, ids}                                                      deleting a node deletes its links
   move_node  {id, x, y}
-  split_link {id, x, y}                                                        a new manhole on the link, two links
+  split_link {id, x, y, node_id?, kind?}                                       a new node on the link (the tool's kind), two links
   set_load   {set, node, value}                                                unit load, m3/d
   set_setting {path: "a.b.c", value}
   set_rain   {rain: {step_min, duration_min, series [[min, intensity]] or idf {durations_min, intensities}}}
@@ -190,10 +190,15 @@ def apply(p, e):
     if op == "split_link":
         lid = str(e["id"]); L = p.links.loc[lid].copy()
         pres = L.kind == "pressure_pipe"
-        nid = str(e.get("id") or _new_id(p.nodes, "J-" if pres else "MH-")); x, y = float(e["x"]), float(e["y"])
+        # node_id names the new node (the editor sends it); without it the node takes the link's id, as edits saved before
+        # 2026-11-23 did, so they replay to the same ids
+        nid = str(e.get("node_id") or e.get("id") or _new_id(p.nodes, "J-" if pres else "MH-")); x, y = float(e["x"]), float(e["y"])
+        if nid in p.nodes.index: raise ValueError(f"node {nid} exists")
+        kind = e.get("kind") or ("pressure_junction" if pres else "manhole")         # morph: the tool's kind
+        if kind not in NODE_KINDS: raise ValueError(f"kind must be one of {NODE_KINDS}")
         f = _length(p, L.from_node, L.to_node) and math.dist((p.nodes.x[L.from_node], p.nodes.y[L.from_node]), (x, y)) / max(_length(p, L.from_node, L.to_node), 1e-9)
         inv = L.up_inv + (L.dn_inv - L.up_inv) * f; g = p.nodes.ground[L.from_node] + (p.nodes.ground[L.to_node] - p.nodes.ground[L.from_node]) * f
-        p.nodes.loc[nid] = dict(kind="pressure_junction" if pres else "manhole", x=x, y=y, ground=g, invert=inv, inflow_m3d=0.0)
+        p.nodes.loc[nid] = dict(kind=kind, x=x, y=y, ground=g, invert=inv, inflow_m3d=0.0)
         p.links = p.links.drop(index=lid)
         for dct in (p.ppipes, p.infil, p.sections):                      # the halves keep the pipe's own values
             if lid in dct:

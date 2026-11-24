@@ -535,11 +535,16 @@ function setTool(t) {
   $("#hint").textContent = state.pid ? HINTS[t] : "";
   highlight();
 }
+/* a finger is wider than a cursor: on a touch screen a tap picks a node within 24 px and a pipe within 16 px (the
+   engineer, 2026-11-23); a mouse keeps 12 and 8 */
+function pickTol() { return matchMedia("(pointer: coarse)").matches ? [24, 16] : [12, 8]; }
+/* morph onto a pipe: the split op, a new node of this kind where the pipe was clicked */
+function splitOp(nl, kind, id) { return { op: "split_link", id: nl.id, node_id: id, kind, lon: nl.lng, lat: nl.lat }; }
 async function act(ll, mods) {
   mods = mods || {};
   if (!state.pid || !state.model) return;
   const t = state.tool, pt = map.project(ll), lonlat = { lon: ll.lng, lat: ll.lat };
-  const nn = nearestNode(pt, 12), nl = nn ? null : nearestLink(pt, 8);
+  const [tn, tl] = pickTol(), nn = nearestNode(pt, tn), nl = nn ? null : nearestLink(pt, tl);
   const multi = mods.shiftKey || mods.ctrlKey || mods.metaKey;
   if (state.routePick) { const id = nn ? nn.id : nl ? nl.id : null; if (id) pickStop(id); else toast("Click a manhole or a pipe.", "info"); return; }
   if (state.reconnect) {                                              // right-click > Reconnect: the new node for that end
@@ -550,12 +555,17 @@ async function act(ll, mods) {
   if (t === "layout") {
     if (!layout.last) {
       if (nn) layout.last = nn.id;
-      else if (nl) { const id = newId("nodes", "MH-"); await exec({ op: "split_link", id: nl.id, lon: nl.lng, lat: nl.lat }); layout.last = id; }
+      else if (nl) { const id = newId("nodes", "MH-"); await exec(splitOp(nl, "manhole", id)); layout.last = id; }
       else { const id = newId("nodes", ADD_NODE[layout.node][1]); await exec({ op: "add_node", id, kind: layout.node, ...lonlat }); layout.last = id; }
       setSel("nodes", [layout.last]); $("#hint").textContent = "Click the next point; Esc or right-click ends the run."; return;
     }
     if (nn && nn.id === layout.last) return;
     const sp = layout.spacing === "none" ? null : layout.spacing === "table12" ? "table12" : Number(layout.custom) || null;
+    if (nl) {                                                         // the run ends on a pipe: split it there and join (one undo step)
+      const id = newId("nodes", "MH-");
+      await exec({ op: "batch", ops: [splitOp(nl, "manhole", id), { op: "add_run", from_node: layout.last, max_spacing: sp, to_node: id }] });
+      layout.last = id; setSel("nodes", [id]); return;
+    }
     const e = { op: "add_run", from_node: layout.last, max_spacing: sp, ...(nn ? { to_node: nn.id } : { kind: layout.node, ...lonlat }) };
     const r = await exec(e); const c = r.created || {};
     layout.last = nn ? nn.id : c.end_id; setSel("nodes", [layout.last]);
@@ -576,9 +586,9 @@ async function act(ll, mods) {
       if (f && f.properties.kind !== kind) { const was = f.properties.kind; await exec({ op: "set", table: "nodes", ids: [nn.id], field: "kind", value: kind }); toast(`${nn.id}: ${was} changed to ${kind} (Ctrl+Z undoes).`, "info"); }
       setSel("nodes", [nn.id]); return;
     }
-    if (t === "manhole" && nl) {
-      const id = newId("nodes", "MH-");
-      await exec({ op: "split_link", id: nl.id, lon: nl.lng, lat: nl.lat });
+    if (nl) {                                                         // morph onto a pipe: split it, the new node of this kind
+      const id = newId("nodes", pre);
+      await exec(splitOp(nl, kind, id));
       setSel("nodes", [id]); return;
     }
     const id = newId("nodes", pre);
@@ -588,15 +598,27 @@ async function act(ll, mods) {
     const kind = t === "pump" ? "pump" : t === "ppipe" ? "pressure_pipe" : t === "orifice" || t === "weir" ? t : "conduit";
     let endId = nn && nn.id;
     if (!state.pipeStart) {
-      if (nn) { state.pipeStart = nn.id; highlight(); $("#hint").textContent = "Now click the end node."; }
+      let sid = nn && nn.id;
+      if (t === "pump" && nn) {                                       // a pump starts at a wet well: a manhole clicked becomes one
+        const f = state.model.nodes.get(nn.id), was = f && f.properties.kind;
+        if (was === "manhole" || was === "junction") { await exec({ op: "set", table: "nodes", ids: [nn.id], field: "kind", value: "wetwell" }); toast(`${nn.id}: ${was} changed to wetwell (Ctrl+Z undoes).`, "info"); }
+      }
+      if (!sid && nl) {                                               // start on a pipe: split it there
+        sid = newId("nodes", t === "pump" ? "WW-" : t === "ppipe" ? "J-" : "MH-");
+        await exec(splitOp(nl, t === "pump" ? "wetwell" : t === "ppipe" ? "pressure_junction" : "manhole", sid));
+      }
+      if (sid) { state.pipeStart = sid; highlight(); $("#hint").textContent = "Now click the end node."; }
       else toast("Click a start node first.");
       return;
     }
     if (nn && nn.id === state.pipeStart) return;
+    let pre = [];
+    if (!endId && nl) { endId = newId("nodes", t === "ppipe" ? "J-" : "MH-"); pre = [splitOp(nl, t === "ppipe" ? "pressure_junction" : "manhole", endId)]; }   // end on a pipe: split it
     if (!endId) { const pj = t === "ppipe"; endId = newId("nodes", pj ? "J-" : "MH-"); await exec({ op: "add_node", id: endId, kind: pj ? "pressure_junction" : "manhole", ...lonlat }, true); }
     const id = newId("links", { pump: "PMP-", orifice: "OR-", weir: "WR-" }[kind] || (kind === "pressure_pipe" ? "FM-" : "P-"));
     const from = state.pipeStart; state.pipeStart = null;
-    await exec({ op: "add_link", id, kind, from_node: from, to_node: endId });           // the size from the conduit prototype
+    const add = { op: "add_link", id, kind, from_node: from, to_node: endId };           // the size from the conduit prototype
+    await exec(pre.length ? { op: "batch", ops: [...pre, add] } : add);
     setSel("links", [id]); $("#hint").textContent = HINTS[t];
   } else if (t === "catchment") {
     if (state.catchPending) {
@@ -1516,7 +1538,7 @@ const REPORT_LABEL = {                      // plain names for the keys a tool r
 };
 function renderToolOut() {
   const o = state.toolout, title = $("#toolout-title"), rep = $("#toolout-report");
-  $("#toolout-apply").hidden = !(o && o.apply); $("#toolout-csv").disabled = !(o && o.rows.length);
+  $("#toolout-apply").hidden = !(o && o.apply); $("#toolout-apply").classList.toggle("primary", !!(o && o.apply)); $("#toolout-csv").disabled = !(o && o.rows.length);
   if (!o) { title.textContent = "No tool run yet. Use the Tools menu."; rep.innerHTML = ""; $("#tbl-toolout").innerHTML = ""; return; }
   title.textContent = o.tool.label;
   let h = "";
@@ -1578,7 +1600,14 @@ function asstSend() {
         `<div class="usage" data-testid="asst-usage">tokens: ${u.input_tokens ?? 0} in, ${u.output_tokens ?? 0} out, ${u.cache_write_tokens ?? 0} cache write, ${u.cache_read_tokens ?? 0} cache read${u.usd != null ? `, about ${(+u.usd).toFixed(3)} USD` : ""}</div>`;
       if (r.budget && typeof showBudget === "function") showBudget(r.budget);
       const info = await jget(`/projects/${state.pid}`);            // the assistant may have made new scenarios
+      const known = new Set((state.info.scenarios || []).map(s => s.id));
       state.info.scenarios = info.scenarios; await loadResults(); renderAll();
+      for (const sc of info.scenarios.filter(s => !known.has(s.id))) {   // offer each one: its changes are there, not in the scenario on screen
+        const d = document.createElement("div"); d.className = "tc"; d.dataset.testid = "asst-made-scenario";
+        d.innerHTML = `made scenario ${esc(sc.name)} <button class="mini">Open it</button>`;
+        d.querySelector("button").onclick = () => enqueue(async () => { await switchScenario(sc.id); toast(`Scenario ${sc.name} is on screen: the assistant's changes are here.`, "info"); });
+        wait.appendChild(d);
+      }
       for (const a of r.ui_actions || []) {                          // what it pointed at: selected and zoomed, or a profile drawn
         if (a.kind === "select") { setSel(a.table, a.ids, { zoom: true }); wait.insertAdjacentHTML("beforeend", `<div class="tc" data-testid="asst-action">shown on the map: ${a.ids.length} ${esc(a.table)}</div>`); }
         else if (a.kind === "profile") { $("#prof-start").value = a.start; $("#prof-end").value = a.end || ""; $("#prof-via").value = a.via || ""; await drawProfile();
@@ -2528,6 +2557,7 @@ async function runDesign(preview, o) {
     state.toolout = { tool: { name: "design_preview", label: `Design preview${o.only ? ` (${o.only.length} selected pipes)` : ""}: nothing is changed until you apply it` },
                       rows: r.rows, cols: ["id", "dn_old", "dn_new", "up_old", "up_new", "dn_inv_old", "dn_inv_new", "d_up"],
                       report: { links_changed: r.links_changed, sizes_changed: r.sizes_changed, nodes_moved: r.nodes_moved, ...r.report }, apply: o };
+    toast("A preview only: the pipes and structures are unchanged until you press Apply this design (Tool output).", "info");   // the engineer, 2026-11-23: a preview read as a design
   } else {
     state.toolout = { tool: { name: "design", label: `Design${o.only ? ` of ${o.only.length} selected pipes` : ""}: sizes and levels (undo takes it back)` }, rows: [], report: r.report };
     if (r.scenario) updateScenario(r.scenario); state.summary = r.summary; await loadModel(); await loadResults();

@@ -154,3 +154,14 @@ def test_a_restored_autosave_has_its_lines_turned_too():
     s = W.Session("pX", p); st = s.state(); st["base"].links.at[p.links.index[0], "coords"] = [[100, 0], [0, 0]]
     r = W.Session.from_state(st)
     assert r.model("base").links.coords.iloc[0][0] == [0, 0]
+
+
+def test_split_names_the_new_node_and_takes_the_tools_kind():
+    """Morph onto a pipe (2026-11-23): the editor names the new node; its kind is the tool's. Without node_id the old
+    naming (the link's id) stays, so saved edits replay to the same ids."""
+    p = _p(); lid = p.links.index[0]
+    W.apply(p, dict(op="split_link", id=lid, node_id="WW-7", kind="wetwell", x=50, y=0))
+    assert p.nodes.kind["WW-7"] == "wetwell" and {f"{lid}-a", f"{lid}-b"} <= set(p.links.index)
+    q = _p(); W.apply(q, dict(op="split_link", id=lid, x=50, y=0)); assert lid in q.nodes.index and q.nodes.kind[lid] == "manhole"
+    with pytest.raises(ValueError): W.apply(_p(), dict(op="split_link", id=lid, node_id="N1", x=50, y=0))
+    with pytest.raises(ValueError): W.apply(_p(), dict(op="split_link", id=lid, node_id="X", kind="tank", x=50, y=0))
