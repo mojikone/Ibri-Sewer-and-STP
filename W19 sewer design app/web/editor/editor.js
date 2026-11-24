@@ -185,6 +185,9 @@ function initMap() {
     map.addLayer({ id: "links-pressure", type: "line", source: "links", filter: ["==", ["get", "kind"], "pressure_pipe"], layout: { "line-cap": "butt" }, paint: { "line-color": "#3b0a45", "line-width": w(0.35), "line-dasharray": [3, 2] } });
     map.addLayer({ id: "links-locked", type: "line", source: "links", filter: ["==", ["get", "_lock"], 1], paint: { "line-color": "#ffffff", "line-width": w(0.35), "line-dasharray": [1.5, 1.5] } });
     map.addImage("flow-arrow", arrowImage(), { sdf: true, pixelRatio: 2 });
+    // a pump: SewerGEMS's pump symbol (a circle with a triangle) at the middle of its link, from street scale in
+    map.addImage("pump-icon", pumpImage(), { pixelRatio: 2 });
+    map.addLayer({ id: "links-pump-icon", type: "symbol", source: "links", minzoom: 13, filter: ["==", ["get", "kind"], "pump"], layout: { "symbol-placement": "line-center", "icon-image": "pump-icon", "icon-size": ["interpolate", ["linear"], ["zoom"], 13, 0.6, 17, 1, 19, 1.3], "icon-rotation-alignment": "map", "icon-keep-upright": false, "icon-allow-overlap": true, "icon-ignore-placement": true } });
     map.addLayer({ id: "links-arrow", type: "symbol", source: "links", minzoom: 15.5, layout: { "symbol-placement": "line", "symbol-spacing": 90, "icon-image": "flow-arrow", "icon-size": 1.25, "icon-rotation-alignment": "map", "icon-allow-overlap": true, "icon-ignore-placement": true }, paint: { "icon-color": "#1d2733", "icon-opacity": 0.75 } });
     map.addLayer({ id: "links-label", type: "symbol", source: "link-labels", minzoom: 17, layout: { "text-field": ["get", "_lab"], "text-size": 10.5, "text-font": ["Open Sans Semibold"], "text-rotate": ["get", "_rot"], "text-rotation-alignment": "map", "text-anchor": "bottom", "text-offset": [0, -0.35], "text-max-width": 40 }, paint: { "text-color": "#1d2733", "text-halo-color": "#fff", "text-halo-width": 1.6 } });
     map.addLayer({ id: "hot-link", type: "line", source: "hot", paint: { "line-color": "#ffb000", "line-width": w(1, 5), "line-opacity": 0.85 } });
@@ -214,7 +217,7 @@ function initMap() {
     map.on("moveend", updateGrid);
     updateGrid(); applyBasemap(); applyTheme();
   });
-  map.on("click", e => { if (suppressClick) return; if (state.tool === "move") return; enqueue(() => act(e.lngLat, e.originalEvent)); });
+  map.on("click", e => { if (suppressClick) return; if (state.tool === "move") return; const g = typeof ghostAt === "function" ? ghostAt(e.lngLat) : null; enqueue(() => act(e.lngLat, e.originalEvent)).finally(() => g && ghostDone(g)); });
   map.on("dblclick", e => { e.preventDefault(); if (state.tool === "poly") finishPolySelect(); else if (state.tool === "catchment") finishCatchment(); else if (state.tool === "layout") { layout.last = null; $("#hint").textContent = HINTS.layout; } });
   map.on("mousemove", e => { map.getCanvas().style.cursor = state.pid ? (state.tool === "select" ? "" : "crosshair") : ""; if (dragging) dragMove(e.lngLat); hover(e); });
   map.on("mouseout", () => { $("#maptip").hidden = true; setHot(null); });
@@ -313,8 +316,8 @@ function zoomTo(table, ids) {
 }
 
 /* ------------------------------------------------------------------ data */
-async function loadModel() {
-  const d = await jget(`${base()}/model`);
+async function loadModel(pre) {
+  const d = pre || await jget(`${base()}/model`);
   const nodeFeat = d.nodes.features, linkFeat = d.links.features, catchFeat = d.catchments.features;
   for (const f of catchFeat) { const r = f.geometry.coordinates[0]; if (r.length && (r[0][0] !== r[r.length - 1][0] || r[0][1] !== r[r.length - 1][1])) r.push(r[0]); }
   state.model = {
@@ -341,8 +344,8 @@ function syncRain() {
   else if (Array.isArray(r.series)) { R.mode = "series"; R.series = r.series.map(x => [x[0], x[1]]); }
   state.rain = R; $("#settings-form").dataset.sig = "";
 }
-async function loadResults() {
-  const r = await jget(`${base()}/results`);
+async function loadResults(pre) {
+  const r = pre || await jget(`${base()}/results`);
   const key = state.pid + "/" + state.sid;
   if (!(key in state.storedCache)) { const st = await jget(`${base()}/stored`); state.storedCache[key] = Object.values(st.links || {}).some(r => r && r.q_ls != null) ? st.links : null; }   // a model that holds no results offers none
   state.stored = state.storedCache[key];
@@ -401,14 +404,21 @@ function updateScenario(sc) {
   if (i >= 0) state.info.scenarios[i] = sc; else state.info.scenarios.push(sc);
 }
 /* one edit: post, patch or reload the model, optionally skip the re-solve fetch when more edits follow */
+/* one edit is one round trip (v7, the engineer on the shared link, 2026-11-24: "it takes 1 or 2 seconds to appear"): the
+   edit's answer carries the model when it must be re-read and the results when the screen is drawn now, instead of
+   two more requests after it */
+const REREAD_OPS = ["set_many", "set_loads", "lock", "set_section", "set_infiltration", "set_storage", "set_pump", "set_prototype", "batch", "set_unit_rows", "set_ppipe", "set_outlet", "set_tailwater", "set_hydrology", "set_controls",
+  "add_node", "add_link", "add_run", "split_link", "delete", "move_node", "reconnect", "reverse", "set_coords", "add_catchment", "set_inlet", "set_gutter", "set_tap", "set_structure"];
 async function exec(op, more) {
-  const r = await jpost(`${base()}/edit`, op);
+  const guess = REREAD_OPS.includes(op.op) || (op.op === "set" && (op.field === "kind" || (op.table === "nodes" && op.field === "invert")));
+  const q = [guess ? "model=1" : "", more ? "" : "results=1"].filter(Boolean).join("&");
+  const r = await jpost(`${base()}/edit${q ? "?" + q : ""}`, op);
   updateScenario(r.scenario); state.summary = r.summary;
   if (state.storm) state.storm.stale = true;
   if (op.op === "set_rain") state.rainApplied = true;
-  const reread = r.structural || ["set_many", "set_loads", "lock", "set_section", "set_infiltration", "set_storage", "set_pump", "set_prototype", "batch", "set_unit_rows", "set_ppipe", "set_outlet", "set_tailwater", "set_hydrology", "set_controls"].includes(op.op) || (op.op === "set" && op.table === "nodes" && op.field === "invert");
-  if (reread) await loadModel(); else patchLocal(op);
-  if (!more) { await loadResults(); renderAll(); }
+  const reread = r.structural || guess;
+  if (reread) await loadModel(r.model); else patchLocal(op);
+  if (!more) { await loadResults(r.results); renderAll(); }
   return r;
 }
 async function execMany(ops) {
@@ -549,6 +559,26 @@ function setTool(t) {
 function pickTol() { return matchMedia("(pointer: coarse)").matches ? [24, 16] : [12, 8]; }
 /* morph onto a pipe: the split op, a new node of this kind where the pipe was clicked */
 function splitOp(nl, kind, id) { return { op: "split_link", id: nl.id, node_id: id, kind, lon: nl.lng, lat: nl.lat }; }
+/* a tool never changes an element silently (the engineer, 2026-11-24: "the user must be asked if it is ok to morph the
+   element clicked on to the new element"): a morph and a split ask first; "don't ask again" holds until the page reloads */
+const NOASK = {};
+const kindName = k => (window.KIND_NAMES && KIND_NAMES[k]) || String(k || "").replace(/_/g, " ");
+const aKind = k => (/^[aeiou]/.test(kindName(k)) ? "an " : "a ") + kindName(k);
+function askChange(key, title, text, ok) {
+  if (NOASK[key]) return Promise.resolve(true);
+  return new Promise(res => {
+    const d = $("#dlg-morph"); $("#morph-title").textContent = title; $("#morph-text").textContent = text;
+    $("#morph-ok").textContent = ok || "Yes"; $("#morph-noask").checked = false; d.hidden = false;
+    setTimeout(() => $("#morph-ok").focus(), 0);
+    const done = v => { d.hidden = true; if (v && $("#morph-noask").checked) NOASK[key] = true; $("#morph-ok").onclick = $("#morph-cancel").onclick = null; d.onkeydown = null; res(v); };
+    $("#morph-ok").onclick = () => done(true); $("#morph-cancel").onclick = () => done(false);
+    d.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); done(true); } else if (e.key === "Escape") done(false); };
+  });
+}
+const askMorph = (id, was, kind) => askChange("morph", `Morph ${id} to ${aKind(kind)}?`,
+  `${id} is ${aKind(was)}. It becomes ${aKind(kind)}, keeping its id, position, levels and pipes (Ctrl+Z undoes).`, `Morph to ${kindName(kind)}`);
+const askSplit = (lid, kind) => askChange("split", `Split ${lid}?`,
+  `A new ${kindName(kind)} goes on ${lid} where you clicked: the pipe becomes two, each keeping its size and the levels along the line (Ctrl+Z undoes).`, "Split the pipe");
 async function act(ll, mods) {
   mods = mods || {};
   if (!state.pid || !state.model) return;
@@ -568,7 +598,7 @@ async function act(ll, mods) {
     }
     if (!layout.last) {
       if (nn) layout.last = nn.id;
-      else if (nl) { const id = newId("nodes", "MH-"); await exec(splitOp(nl, "manhole", id)); layout.last = id; }
+      else if (nl) { if (!await askSplit(nl.id, "manhole")) return; const id = newId("nodes", "MH-"); await exec(splitOp(nl, "manhole", id)); layout.last = id; }
       else { const id = newId("nodes", ADD_NODE[layout.node][1]); await exec({ op: "add_node", id, kind: layout.node, ...lonlat }); layout.last = id; }
       setSel("nodes", [layout.last]); $("#hint").textContent = "Click the next point; Esc or right-click ends the run."; return;
     }
@@ -576,6 +606,7 @@ async function act(ll, mods) {
     const sp = layout.spacing === "none" ? null : layout.spacing === "table12" ? "table12" : Number(layout.custom) || null;
     const via = layout.via && layout.via.length ? { via_ll: layout.via.slice() } : {};
     if (nl) {                                                         // the run ends on a pipe: split it there and join (one undo step)
+      if (!await askSplit(nl.id, "manhole")) return;
       const id = newId("nodes", "MH-");
       await exec({ op: "batch", ops: [splitOp(nl, "manhole", id), { op: "add_run", from_node: layout.last, max_spacing: sp, to_node: id, ...via }] });
       layout.last = id; layout.via = []; setSel("nodes", [id]); if (typeof layoutPreview === "function") layoutPreview(); return;
@@ -597,10 +628,14 @@ async function act(ll, mods) {
     const [kind, pre] = ADD_NODE[t];
     if (nn) {                                                         // morph (F5): the node becomes this kind, keeping its id, place, levels and pipes
       const f = state.model.nodes.get(nn.id);
-      if (f && f.properties.kind !== kind) { const was = f.properties.kind; await exec({ op: "set", table: "nodes", ids: [nn.id], field: "kind", value: kind }); toast(`${nn.id}: ${was} changed to ${kind} (Ctrl+Z undoes).`, "info"); }
+      if (f && f.properties.kind !== kind) {
+        const was = f.properties.kind; if (!await askMorph(nn.id, was, kind)) return;
+        await exec({ op: "set", table: "nodes", ids: [nn.id], field: "kind", value: kind }); toast(`${nn.id}: ${kindName(was)} changed to ${kindName(kind)} (Ctrl+Z undoes).`, "info");
+      }
       setSel("nodes", [nn.id]); return;
     }
     if (nl) {                                                         // morph onto a pipe: split it, the new node of this kind
+      if (!await askSplit(nl.id, kind)) return;
       const id = newId("nodes", pre);
       await exec(splitOp(nl, kind, id));
       setSel("nodes", [id]); return;
@@ -611,29 +646,47 @@ async function act(ll, mods) {
   } else if (t === "pipe" || t === "pump" || t === "ppipe" || t === "orifice" || t === "weir") {
     const kind = t === "pump" ? "pump" : t === "ppipe" ? "pressure_pipe" : t === "orifice" || t === "weir" ? t : "conduit";
     let endId = nn && nn.id;
+    const endKind = t === "ppipe" || t === "pump" ? "pressure_junction" : "manhole", endPre = endKind === "pressure_junction" ? "J-" : "MH-";
     if (!state.pipeStart) {
       let sid = nn && nn.id;
-      if (t === "pump" && nn) {                                       // a pump starts at a wet well: a manhole clicked becomes one
-        const f = state.model.nodes.get(nn.id), was = f && f.properties.kind;
-        if (was === "manhole" || was === "junction") { await exec({ op: "set", table: "nodes", ids: [nn.id], field: "kind", value: "wetwell" }); toast(`${nn.id}: ${was} changed to wetwell (Ctrl+Z undoes).`, "info"); }
+      if (t === "pump") {
+        /* the engineer, 2026-11-24: "after picking the pump, clicking a manhole morphed it into a wet well; should it turn
+           into a pump?" A pump here is the link out of a wet well (SWMM's convention; SewerGEMS draws it as a node right
+           after the wet well, and the reader turns that into the same thing). So a manhole clicked becomes the pump's wet
+           well, after asking; an empty spot makes a new wet well; the next click is where the pump delivers. */
+        const f = nn && state.model.nodes.get(nn.id), was = f && f.properties.kind;
+        if (nn && ["outfall", "pressure_junction", "air_valve"].includes(was)) { toast(`A pump draws from a wet well: ${nn.id} is ${aKind(was)}. Click a wet well, or a manhole to make it one.`, "info"); return; }
+        if (nn && !["wetwell", "storage"].includes(was)) {
+          if (!await askChange("morph", `Put a pump at ${nn.id}?`, `A pump is drawn out of a wet well: ${nn.id} (${kindName(was)}) becomes the pump station's wet well, keeping its id, levels and pipes. Then click where the pump delivers, the start of its force main.`, "Make it the wet well")) return;
+          await exec({ op: "set", table: "nodes", ids: [nn.id], field: "kind", value: "wetwell" }); toast(`${nn.id}: ${kindName(was)} changed to wet well (Ctrl+Z undoes).`, "info");
+        }
+        if (!nn && !nl) { sid = newId("nodes", "WW-"); await exec({ op: "add_node", id: sid, kind: "wetwell", ...lonlat }); }
       }
       if (!sid && nl) {                                               // start on a pipe: split it there
+        const sk = t === "pump" ? "wetwell" : t === "ppipe" ? "pressure_junction" : "manhole";
+        if (!await askSplit(nl.id, sk)) return;
         sid = newId("nodes", t === "pump" ? "WW-" : t === "ppipe" ? "J-" : "MH-");
-        await exec(splitOp(nl, t === "pump" ? "wetwell" : t === "ppipe" ? "pressure_junction" : "manhole", sid));
+        await exec(splitOp(nl, sk, sid));
       }
-      if (sid) { state.pipeStart = sid; highlight(); $("#hint").textContent = "Now click the end node."; }
+      if (sid) { state.pipeStart = sid; highlight(); $("#hint").textContent = t === "pump" ? `Pump from ${sid}: now click where it delivers (an empty spot makes the force main's first junction).` : "Now click the end node."; }
       else toast("Click a start node first.");
       return;
     }
     if (nn && nn.id === state.pipeStart) return;
-    let pre = [];
-    if (!endId && nl) { endId = newId("nodes", t === "ppipe" ? "J-" : "MH-"); pre = [splitOp(nl, t === "ppipe" ? "pressure_junction" : "manhole", endId)]; }   // end on a pipe: split it
-    if (!endId) { const pj = t === "ppipe"; endId = newId("nodes", pj ? "J-" : "MH-"); await exec({ op: "add_node", id: endId, kind: pj ? "pressure_junction" : "manhole", ...lonlat }, true); }
+    let pre = [], madeEnd = false;
+    if (!endId && nl) { if (!await askSplit(nl.id, endKind)) return; endId = newId("nodes", endPre); pre = [splitOp(nl, endKind, endId)]; }   // end on a pipe: split it
+    if (!endId) { endId = newId("nodes", endPre); madeEnd = true; await exec({ op: "add_node", id: endId, kind: endKind, ...lonlat }, true); }
     const id = newId("links", { pump: "PMP-", orifice: "OR-", weir: "WR-" }[kind] || (kind === "pressure_pipe" ? "FM-" : "P-"));
     const from = state.pipeStart; state.pipeStart = null;
     const add = { op: "add_link", id, kind, from_node: from, to_node: endId };           // the size from the conduit prototype
     await exec(pre.length ? { op: "batch", ops: [...pre, add] } : add);
     setSel("links", [id]); $("#hint").textContent = HINTS[t];
+    if (t === "pump" && madeEnd) {                                    // the force main goes on from the pump's new junction
+      setTool("ppipe"); state.pipeStart = endId; highlight();
+      $("#hint").textContent = `Pump ${id} placed. Now click along its force main (pressure pipes from ${endId}); Esc ends.`;
+    } else if (t === "ppipe" && madeEnd) {                           // a force main is drawn point after point until Esc or an existing node
+      state.pipeStart = endId; highlight(); $("#hint").textContent = `Force main: click the next point (an existing structure ends it); Esc ends.`;
+    }
   } else if (t === "catchment") {
     if (state.catchPending) {
       if (!nn) { toast("Click the outlet node."); return; }
@@ -1979,6 +2032,12 @@ function setTheme(t) {
   saveUi(); applyTheme();
 }
 /* a small arrow drawn on a canvas, tinted by icon-color (SDF), placed along each pipe in its from -> to direction */
+function pumpImage() {
+  const c = document.createElement("canvas"); c.width = 40; c.height = 40; const g = c.getContext("2d");
+  g.fillStyle = "#fff"; g.strokeStyle = "#7b3fa0"; g.lineWidth = 3.5; g.beginPath(); g.arc(20, 20, 16, 0, 2 * Math.PI); g.fill(); g.stroke();
+  g.fillStyle = "#7b3fa0"; g.beginPath(); g.moveTo(13, 11); g.lineTo(30, 20); g.lineTo(13, 29); g.closePath(); g.fill();
+  return g.getImageData(0, 0, 40, 40);
+}
 function arrowImage() {
   const c = document.createElement("canvas"); c.width = 24; c.height = 24; const g = c.getContext("2d");
   g.fillStyle = "#000"; g.beginPath(); g.moveTo(5, 5); g.lineTo(20, 12); g.lineTo(5, 19); g.lineTo(9, 12); g.closePath(); g.fill();
@@ -2656,7 +2715,7 @@ initMap(); wireUi(); initTables(); wireBatch1(); wireBatch2(); wireSymbology(); 
 enqueue(reattach);
 window.ed = {
   state, map,
-  clickAt: (lon, lat, mods) => enqueue(() => act({ lng: lon, lat: lat }, mods)),
+  clickAt: (lon, lat, mods) => { const g = typeof ghostAt === "function" ? ghostAt({ lng: lon, lat: lat }) : null; return enqueue(() => act({ lng: lon, lat: lat }, mods)).finally(() => g && ghostDone(g)); },
   selectElement: (table, id) => { setSel(table, [String(id)], { zoom: false }); return chain; },
   counts: () => state.model ? { nodes: state.model.nodeFeat.length, links: state.model.linkFeat.length } : { nodes: 0, links: 0 },
   idle: () => chain,

@@ -92,6 +92,16 @@ def click_at(pg, x, y):
     pg.evaluate("([lon, lat]) => window.ed.clickAt(lon, lat)", ll(x, y))
 
 
+def click_ask(pg, x, y):
+    """A click that asks a question first (morph, split): not waited on, the answer comes next."""
+    pg.evaluate("([lon, lat]) => { window.ed.clickAt(lon, lat); }", ll(x, y))
+
+
+def answer(pg, ok=True):
+    """A tool asks before it morphs or splits an element (v7): answer the question."""
+    pg.wait_for_selector("#dlg-morph:not([hidden])"); pg.click("[data-testid=morph-ok]" if ok else "[data-testid=morph-cancel]")
+
+
 def tool(pg, name): pg.get_by_test_id("tool-" + name).click()
 
 
@@ -209,7 +219,7 @@ def test_undo_and_redo_a_pipe_edit(page):
 
 def test_split_a_pipe_and_delete_a_node(page):
     nid, lid = draw_network(page)
-    tool(page, "manhole"); click_at(page, 150, 0); idle(page)           # on the second pipe, away from any node
+    tool(page, "manhole"); click_ask(page, 150, 0); answer(page); idle(page)   # on the second pipe, away from any node
     assert page.evaluate("window.ed.counts()") == {"nodes": 5, "links": 4}
     assert set(ids(page, "links")) >= {lid[1] + "-a", lid[1] + "-b"}
     tool(page, "delete"); click_at(page, 100, 0); idle(page)             # MH at x = 100 and its two links
@@ -868,7 +878,7 @@ def test_v2_ribbon_layout_run_morph_reconnect_units_and_pond(server, browser):
     pg.get_by_test_id("qat-undo-btn").click(); idle(pg); assert len(ids(pg, "links")) == 3
     # morph: the outfall tool on the run's last structure turns it into an outfall (keeping its pipes)
     last = pg.evaluate("window.ed.state.model.links.get(window.ed.state.model.linkFeat.find(f => !window.ed.state.model.linkFeat.some(g => g.properties.from_node === f.properties.to_node)).id).properties.to_node")
-    vtool(pg, "outfall"); click_at(pg, 230, 0); idle(pg)
+    vtool(pg, "outfall"); click_ask(pg, 230, 0); answer(pg); idle(pg)
     assert pg.evaluate("id => window.ed.state.model.nodes.get(id).properties.kind", last) == "outfall" and len(ids(pg, "links")) == 3
     # right-click a pipe: Reverse; then Reconnect its stop to a new manhole
     vtool(pg, "select")
@@ -1119,15 +1129,15 @@ def test_v5_tools_morph_onto_pipes_and_structures(server, browser):
     pg.select_option("#layout-spacing", "none"); pg.dispatch_event("#layout-spacing", "change")
     click_at(pg, 0, 0); idle(pg); click_at(pg, 200, 0); idle(pg); pg.keyboard.press("Escape")
     assert len(ids(pg, "links")) == 1
-    click_at(pg, 100, 80); idle(pg); click_at(pg, 100, 0.5); idle(pg); pg.keyboard.press("Escape")   # the run ends on the pipe
+    click_at(pg, 100, 80); idle(pg); click_ask(pg, 100, 0.5); answer(pg); idle(pg); pg.keyboard.press("Escape")   # the run ends on the pipe
     kinds = pg.evaluate("[...window.ed.state.model.nodes.values()].map(f => f.properties.kind)")
     assert len(ids(pg, "links")) == 3 and len(kinds) == 4 and set(kinds) == {"manhole"}, (ids(pg, "links"), kinds)
     pg.get_by_test_id("qat-undo-btn").click(); idle(pg); assert len(ids(pg, "links")) == 1   # split and pipe: one step
-    vtool(pg, "wetwell"); click_at(pg, 50, 0.5); idle(pg)
+    vtool(pg, "wetwell"); click_ask(pg, 50, 0.5); answer(pg); idle(pg)
     sel = pg.evaluate("window.ed.state.sel.ids[0]")
     assert pg.evaluate("id => window.ed.state.model.nodes.get(id).properties.kind", sel) == "wetwell" and len(ids(pg, "links")) == 2
     start = [n for n in ids(pg, "nodes") if pg.evaluate("id => window.ed.state.model.nodes.get(id).geometry.coordinates[1]", n) > 0][0]
-    vtool(pg, "pump"); click_at(pg, 100, 80); idle(pg)
+    vtool(pg, "pump"); click_ask(pg, 100, 80); answer(pg); idle(pg)
     assert pg.evaluate("id => window.ed.state.model.nodes.get(id).properties.kind", start) == "wetwell"
     assert errs == [], errs
     ctx.close()
@@ -1507,3 +1517,87 @@ def test_v6_symbology_by_kind_paste_from_excel_and_fold(server, browser):
     pg.click("[data-testid=ldock-handle]"); pg.wait_for_timeout(200); assert not pg.evaluate("document.getElementById('ldock').hidden")
     assert errs == [], errs
     pg.screenshot(path=os.path.join(SHOTS, "screenshot_v6_symbology.png")); ctx.close()
+
+
+def _new_local(pg, server, name):
+    pg.goto(server + "/v2"); pg.wait_for_function("window.ed && window.ed.ribbon === true && window.ed.map")
+    pg.click("#rb-tab-file"); pg.get_by_test_id("rb-new").click(); pg.get_by_test_id("new-name").fill(name)
+    pg.get_by_test_id("new-crs-mode").select_option("local"); pg.get_by_test_id("new-create").click()
+    pg.wait_for_function("window.ed.state.pid && window.ed.state.model && document.body.dataset.pending === '0'")
+
+
+def test_v7_morph_and_split_ask_first_and_the_pump_tool_makes_a_station(server, browser):
+    """The engineer, 2026-11-24: "morph is very important: the user must be asked if it is ok to morph the element
+    clicked on"; and "after picking the pump, clicking a manhole morphed it into a wet well: should it turn into a pump?"
+    A tool asks before it morphs a structure or splits a pipe (Cancel changes nothing; "don't ask again" holds until a
+    reload). The pump tool makes the manhole the pump's wet well (after asking), the next empty click the force main's
+    first junction, and drawing goes on as force main; the pump shows its symbol."""
+    ctx = browser.new_context(viewport={"width": 1600, "height": 950}); pg = ctx.new_page(); pg.set_default_timeout(60000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    _new_local(pg, server, "Ask")
+    vtool(pg, "manhole")
+    for x in (0, 100): click_at(pg, x, 0); idle(pg)
+    vtool(pg, "pipe"); click_at(pg, 0, 0); idle(pg); click_at(pg, 100, 0); idle(pg)
+    nodes = ids(pg, "nodes"); kind = lambda i: pg.evaluate("id => window.ed.state.model.nodes.get(id).properties.kind", i)
+    # morph: asked; Cancel leaves it a manhole
+    vtool(pg, "outfall"); click_ask(pg, 100, 0)
+    pg.wait_for_selector("#dlg-morph:not([hidden])")
+    assert "manhole" in pg.text_content("#morph-text") and "outfall" in pg.text_content("#morph-title")
+    answer(pg, ok=False); idle(pg); assert kind(nodes[1]) == "manhole"
+    # split: asked separately; Cancel keeps one pipe
+    vtool(pg, "manhole"); click_ask(pg, 50, 0); answer(pg, ok=False); idle(pg); assert len(ids(pg, "links")) == 1
+    # the pump tool on the downstream manhole: asked, it becomes the wet well; an empty click is the pump's junction,
+    # then the force main goes on from there
+    vtool(pg, "pump"); click_ask(pg, 100, 0)
+    pg.wait_for_selector("#dlg-morph:not([hidden])"); assert "wet well" in pg.text_content("#morph-text"); answer(pg); idle(pg)
+    assert kind(nodes[1]) == "wetwell"
+    click_at(pg, 110, 0); idle(pg)
+    pumps = [l for l in ids(pg, "links") if pg.evaluate("id => window.ed.state.model.links.get(id).properties.kind", l) == "pump"]
+    assert len(pumps) == 1
+    j = pg.evaluate("id => window.ed.state.model.links.get(id).properties.to_node", pumps[0])
+    assert kind(j) == "pressure_junction"
+    assert pg.evaluate("window.ed.state.tool") == "ppipe" and pg.evaluate("window.ed.state.pipeStart") == j
+    click_at(pg, 200, 0); idle(pg); click_at(pg, 300, 0); idle(pg)                 # two pressure pipes, point after point
+    fm = [l for l in ids(pg, "links") if pg.evaluate("id => window.ed.state.model.links.get(id).properties.kind", l) == "pressure_pipe"]
+    assert len(fm) == 2, fm
+    pg.keyboard.press("Escape"); assert pg.evaluate("window.ed.state.pipeStart") is None
+    assert pg.evaluate("!!window.ed.map.getLayer('links-pump-icon') && window.ed.map.hasImage('pump-icon')")
+    # an empty click with the pump tool makes a new wet well to pump from
+    vtool(pg, "pump"); click_at(pg, 0, 200); idle(pg)
+    start = pg.evaluate("window.ed.state.pipeStart"); assert kind(start) == "wetwell"
+    # Yes with "don't ask again": the next morph goes straight through
+    pg.keyboard.press("Escape"); vtool(pg, "outfall"); click_ask(pg, 0, 0); pg.wait_for_selector("#dlg-morph:not([hidden])"); pg.check("#morph-noask"); answer(pg); idle(pg)
+    assert kind(nodes[0]) == "outfall"
+    vtool(pg, "manhole"); click_at(pg, 0, 0); idle(pg); assert kind(nodes[0]) == "manhole"
+    assert pg.is_hidden("#dlg-morph")
+    assert errs == [], errs
+    ctx.close()
+
+
+def test_v7_drawing_shows_at_the_click_and_an_edit_is_one_round_trip(server, browser):
+    """The engineer, 2026-11-24, over the shared link: "when I use elements to draw like manhole or the layout tool, it
+    takes 1 or 2 seconds to appear. Can it become realtime?" With every edit held 1.5 s on its way (a slow link), the
+    structure shows at the click while the edit travels; the real one replaces it; and an edit is one request (its answer
+    carries the model and the results), not three."""
+    ctx = browser.new_context(viewport={"width": 1600, "height": 950}); pg = ctx.new_page(); pg.set_default_timeout(60000); errs = []
+    pg.on("pageerror", lambda e: errs.append(str(e)))
+    _new_local(pg, server, "Ghost")
+    reqs = []
+    pg.on("request", lambda r: reqs.append(r.url) if "/scenarios/" in r.url else None)
+    pg.evaluate("""() => { const f = window.fetch; window.fetch = (u, o) => String(u).includes('/edit') ?
+        new Promise(r => setTimeout(r, 1500)).then(() => f(u, o)) : f(u, o); }""")
+    vtool(pg, "manhole"); reqs.clear()
+    pg.evaluate("([lon, lat]) => { window.ed.clickAt(lon, lat); }", ll(0, 0)); pg.wait_for_timeout(150)
+    assert pg.evaluate("window.ed.ghosts()") == 1 and pg.evaluate("window.ed.state.model.nodeFeat.length") == 0
+    idle(pg)
+    assert pg.evaluate("window.ed.ghosts()") == 0 and pg.evaluate("window.ed.state.model.nodeFeat.length") == 1
+    assert len(reqs) == 1 and "/edit" in reqs[0], reqs
+    # a layout run of quick clicks: each ghost chains from the one before while the edits queue
+    pg.click("#rb-tab-layout"); pg.locator("#rb-page-layout .rb-btn", has_text="Layout").first.click()
+    pg.select_option("#layout-spacing", "none"); pg.dispatch_event("#layout-spacing", "change")
+    for x in (0, 50, 100): pg.evaluate("([lon, lat]) => { window.ed.clickAt(lon, lat); }", ll(x, 40))
+    pg.wait_for_timeout(150)
+    assert pg.evaluate("window.ed.ghosts()") == 3
+    idle(pg); assert pg.evaluate("window.ed.ghosts()") == 0 and len(ids(pg, "links")) == 2
+    assert errs == [], errs
+    ctx.close()

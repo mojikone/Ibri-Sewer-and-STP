@@ -3,7 +3,7 @@ id with instant re-solve, the model and results for the map, the profile. Positi
 and are converted at this one boundary (api/coords.py)."""
 import io, json, math, os, pickle, re, tempfile, threading, itertools, time
 import numpy as np, pandas as pd
-from fastapi import APIRouter, HTTPException, UploadFile, File, Request
+from fastapi import APIRouter, HTTPException, UploadFile, File, Request, Query
 from fastapi.responses import Response
 from pydantic import BaseModel
 from sewerapp.api import coords
@@ -561,7 +561,9 @@ def _from_map(p, e):
 
 
 @router.post("/projects/{pid}/scenarios/{sid}/edit")
-def edit(pid: str, sid: str, e: Edit):
+def edit(pid: str, sid: str, e: Edit, want_model: bool = Query(False, alias="model"), want_results: bool = Query(False, alias="results")):
+    """One edit, solved at once. ?model=1 and ?results=1 carry the model and the results in the answer, so a drawing
+    click is one round trip on a slow link (v7)."""
     s = _s(pid)
     with _lock:
         try:
@@ -574,7 +576,10 @@ def edit(pid: str, sid: str, e: Edit):
             s.undo(sid); s.scenarios[sid].redo.pop(); s.solve(sid)
             raise HTTPException(400, f"not applied: the model could not be solved with it ({type(x).__name__}: {x})")
     made = {k: ev[k] for k in ("end_id", "mid_ids", "link_ids") if k in ev}       # what a layout run created
-    return dict(summary=clean(summ), structural=structural, scenario=s.scenarios[sid].to_dict(), **({"created": made} if made else {}))
+    out = dict(summary=clean(summ), structural=structural, scenario=s.scenarios[sid].to_dict(), **({"created": made} if made else {}))
+    if want_model or structural: out["model"] = model(pid, sid)
+    if want_results: out["results"] = results(pid, sid)
+    return out
 
 
 @router.post("/projects/{pid}/scenarios/{sid}/loadbuilder")

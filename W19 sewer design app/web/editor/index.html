@@ -275,6 +275,11 @@
   <h3 id="ask-title"></h3><p id="ask-label" class="muted"></p><input id="ask-input" type="text" style="width:100%">
   <div class="row"><button id="ask-ok" class="primary">OK</button><button id="ask-cancel">Cancel</button></div>
 </div></div>
+<div id="dlg-morph" class="modal" hidden><div class="dlg">
+  <h3 id="morph-title"></h3><p id="morph-text"></p>
+  <label class="muted morph-noask"><input type="checkbox" id="morph-noask"> Don't ask again until the page is reloaded</label>
+  <div class="row"><button id="morph-ok" class="primary">Yes</button><button id="morph-cancel">Cancel</button></div>
+</div></div>
 <div id="dlg-scen" class="modal" hidden><div class="dlg wide">
   <h3>Scenarios</h3><p class="muted">Each scenario is its parent plus its own edits. Compare colours the open scenario by what changed.</p>
   <div id="scen-list"></div>
@@ -320,6 +325,7 @@
 <script src="/static/editor/vendor/geotiff-2.1.3.js"></script>
 <script src="/static/editor/features6.js"></script>
 <script src="/static/editor/features7.js"></script>
+<script src="/static/editor/features8.js"></script>
 <script src="/static/editor/ribbon.js"></script>
 </body>
 </html>
